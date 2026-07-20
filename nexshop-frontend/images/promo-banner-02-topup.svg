@@ -1,0 +1,73 @@
+<svg viewBox="0 0 1600 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#070C1A"/>
+      <stop offset="50%" stop-color="#0A1730"/>
+      <stop offset="100%" stop-color="#0E2438"/>
+    </linearGradient>
+    <radialGradient id="glowCyan2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowViolet2" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gemBig" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D8F5FF"/>
+      <stop offset="40%" stop-color="#22D3EE"/>
+      <stop offset="100%" stop-color="#0EA5C4"/>
+    </linearGradient>
+    <linearGradient id="gemLight2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.7"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    </linearGradient>
+    <pattern id="grid2" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#22D3EE" stroke-opacity="0.08" stroke-width="1"/>
+    </pattern>
+    <mask id="gridMask2">
+      <radialGradient id="gridFade2" cx="70%" cy="50%" r="80%">
+        <stop offset="0%" stop-color="#fff"/>
+        <stop offset="100%" stop-color="#000"/>
+      </radialGradient>
+      <rect width="1600" height="600" fill="url(#gridFade2)"/>
+    </mask>
+    <filter id="softGlow2" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="16" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="600" fill="url(#bg2)"/>
+  <rect width="1600" height="600" fill="url(#grid2)" mask="url(#gridMask2)"/>
+  <circle cx="1300" cy="200" r="360" fill="url(#glowCyan2)"/>
+  <circle cx="300" cy="480" r="260" fill="url(#glowViolet2)"/>
+
+  <!-- big hero diamond, right-center -->
+  <g filter="url(#softGlow2)">
+    <polygon points="1230,90 1420,210 1380,420 1150,460 1040,260" fill="url(#gemBig)"/>
+    <polygon points="1230,90 1420,210 1290,240" fill="url(#gemLight2)"/>
+    <polygon points="1040,260 1230,90 1150,240" fill="url(#gemLight2)" opacity="0.5"/>
+    <polygon points="1150,460 1290,240 1380,420" fill="#ffffff" fill-opacity="0.1"/>
+  </g>
+
+  <!-- scattered smaller diamonds -->
+  <g filter="url(#softGlow2)" opacity="0.6">
+    <polygon points="220,140 280,175 268,235 200,245 165,190" fill="url(#gemBig)"/>
+  </g>
+  <g filter="url(#softGlow2)" opacity="0.5">
+    <polygon points="1460,440 1510,465 1500,510 1445,518 1420,478" fill="url(#gemBig)"/>
+  </g>
+  <g filter="url(#softGlow2)" opacity="0.4">
+    <polygon points="140,400 185,420 178,455 130,462 108,428" fill="url(#gemBig)"/>
+  </g>
+
+  <g fill="#D8F5FF">
+    <circle cx="900" cy="80" r="3.5" opacity="0.7"/>
+    <circle cx="1550" cy="330" r="3" opacity="0.6"/>
+    <circle cx="60" cy="80" r="3" opacity="0.5"/>
+  </g>
+  <g fill="#8B5CF6">
+    <circle cx="700" cy="510" r="3.5" opacity="0.5"/>
+  </g>
+</svg>

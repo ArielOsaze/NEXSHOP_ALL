@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexShop — Digital Gaming Marketplace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="grid-overlay" aria-hidden="true"></div>
+
+<header>
+    <nav class="navbar">
+        <div class="brand">
+            <img src="images/nexshop-icon.svg" class="logo" id="storeLogoImg" alt="NexShop logo">
+            <div>
+                <h1 id="storeNameText">Nex<span>Shop</span></h1>
+                <div class="tagline" id="storeTagline">Play More. Pay Less.</div>
+            </div>
+        </div>
+
+        <button class="menu-toggle" id="menuToggle" aria-label="Buka menu" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
+
+        <div class="menu" id="navMenu">
+            <a href="#top">Home</a>
+            <a href="#games">Katalog</a>
+            <a href="#topup">Topup Diamond</a>
+            <button class="menu-account-btn" id="accountBtn">Login</button>
+        </div>
+
+        <button class="cart-btn" id="cartBtn" aria-label="Buka keranjang">
+            🛒 <span class="cart-count" id="cartCount">0</span>
+        </button>
+    </nav>
+</header>
+
+<section class="hero-carousel" id="top">
+    <div class="hero-track" id="heroTrack">
+        <!-- slide diisi otomatis oleh JS dari /api/promo -->
+    </div>
+    <button class="hero-arrow hero-arrow-left" id="heroPrev" aria-label="Sebelumnya">‹</button>
+    <button class="hero-arrow hero-arrow-right" id="heroNext" aria-label="Berikutnya">›</button>
+    <div class="hero-dots" id="heroDots"></div>
+</section>
+
+<main>
+
+<div class="section-divider" aria-hidden="true"></div>
+
+<section class="games" id="games">
+    <div class="section-heading">
+        <span class="eyebrow">Katalog Toko</span>
+        <h3>Katalog Populer</h3>
+        <p>Dipilih langsung dari yang paling laris minggu ini</p>
+    </div>
+
+    <div class="category-filter" id="categoryFilter"></div>
+
+    <div class="card-grid" id="cardGrid"></div>
+</section>
+
+<div class="section-divider reverse" aria-hidden="true"></div>
+
+<section class="topup-section" id="topup">
+    <div class="section-heading topup-heading">
+        <span class="eyebrow eyebrow-cyan">Instan &amp; Otomatis</span>
+        <h3>Topup Diamond &amp; Voucher Game</h3>
+        <p>Masukkan ID game kamu, bayar, diamond langsung masuk — tanpa ribet, prosesnya otomatis 24 jam.</p>
+    </div>
+
+    <div class="topup-category-filter" id="topupCategoryFilter"></div>
+
+    <div class="topup-grid" id="topupGrid">
+        <div class="topup-empty" id="topupEmpty">Belum ada produk topup tersedia saat ini.</div>
+    </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+    <div class="footer-brand" id="footerBrand">Nex<span>Shop</span></div>
+    <p>Marketplace gaming digital terpercaya. Transaksi aman, proses cepat.</p>
+
+    <div class="footer-contact">
+        <a href="https://wa.me/6287792634063" id="footerWaLink" target="_blank" rel="noopener">
+            📱 WhatsApp Admin: 0877-9263-4063
+        </a>
+        <a href="mailto:nexshop.my.id@gmail.com" id="footerEmailLink">
+            ✉️ nexshop.my.id@gmail.com
+        </a>
+    </div>
+
+    <div class="footer-links">
+        <button type="button" class="footer-link-btn" data-policy-tab="terms">Syarat &amp; Ketentuan</button>
+        <span class="footer-link-sep">·</span>
+        <button type="button" class="footer-link-btn" data-policy-tab="refund">Kebijakan Refund</button>
+    </div>
+
+    <p class="footer-copy">© 2026 NexShop. All rights reserved.</p>
+</footer>
+
+<!-- Terms & Refund Policy Modal -->
+<div class="overlay" id="policyOverlay">
+    <div class="modal policy-modal" role="dialog" aria-modal="true" aria-labelledby="policyTitle">
+        <button class="modal-close" data-close="policyOverlay" aria-label="Tutup">✕</button>
+        <div class="policy-tabs">
+            <button class="policy-tab active" data-policy-tab="terms">Syarat &amp; Ketentuan</button>
+            <button class="policy-tab" data-policy-tab="refund">Kebijakan Refund</button>
+        </div>
+
+        <div class="policy-panel" id="policyTerms">
+            <h3 id="policyTitle">Syarat &amp; Ketentuan</h3>
+            <ol class="policy-list">
+                <li>Dengan melakukan pemesanan di NexShop, kamu dianggap telah membaca dan menyetujui seluruh syarat &amp; ketentuan ini.</li>
+                <li>Seluruh transaksi diproses melalui payment gateway resmi <strong>Midtrans</strong> (QRIS, Virtual Account/Transfer Bank, E-Wallet, dan Kartu Kredit/Debit). NexShop tidak menerima pembayaran manual di luar sistem.</li>
+                <li>Pastikan data akun/email yang kamu daftarkan sudah benar. Pesanan akan diproses dan dikirim ke email yang terdaftar setelah pembayaran terverifikasi oleh Midtrans.</li>
+                <li>Waktu proses pesanan umumnya beberapa menit hingga maksimal 24 jam pada jam kerja, tergantung ketersediaan stok.</li>
+                <li>Produk yang dijual berupa akun/akses/kode digital maupun topup diamond/voucher game. Dilarang keras memperjualbelikan kembali, membagikan, atau mengubah kredensial akun tanpa izin — pelanggaran membatalkan garansi.</li>
+                <li>Untuk produk Topup Diamond, pastikan ID/Server tujuan yang dimasukkan sudah benar. NexShop tidak bertanggung jawab atas kesalahan input ID dari pembeli.</li>
+                <li>NexShop berhak menolak atau membatalkan pesanan yang terindikasi penyalahgunaan, transaksi mencurigakan, atau melanggar kebijakan ini.</li>
+                <li>NexShop dapat memperbarui syarat &amp; ketentuan ini sewaktu-waktu; perubahan berlaku sejak dipublikasikan di halaman ini.</li>
+                <li>Untuk pertanyaan seputar transaksi, hubungi admin melalui WhatsApp atau email yang tercantum di footer.</li>
+            </ol>
+        </div>
+
+        <div class="policy-panel hidden" id="policyRefund">
+            <h3>Kebijakan Refund</h3>
+            <ol class="policy-list">
+                <li>Refund/pengembalian dana dapat diajukan apabila: pembayaran berhasil terpotong namun pesanan tidak diproses, produk yang diterima tidak sesuai deskripsi, atau akun/kode yang diberikan tidak valid/tidak bisa digunakan.</li>
+                <li>Pengajuan refund wajib disertai bukti pembayaran (order ID / bukti transaksi Midtrans) dan dilaporkan ke admin maksimal <strong>1x24 jam</strong> setelah pesanan diterima.</li>
+                <li>Refund <strong>tidak berlaku</strong> apabila akun/kode sudah digunakan, kredensial (email/password) sudah diubah oleh pembeli, atau ID/Server tujuan topup yang dimasukkan salah dari sisi pembeli.</li>
+                <li>Refund <strong>tidak berlaku</strong> untuk kesalahan input data dari pembeli (misalnya email tujuan atau ID game salah) setelah pesanan berhasil diproses.</li>
+                <li>Dana yang disetujui untuk direfund akan dikembalikan ke metode pembayaran asal melalui sistem Midtrans, dengan estimasi proses 3–14 hari kerja tergantung kebijakan bank/e-wallet/penyedia pembayaran terkait.</li>
+                <li>Untuk mengajukan refund atau komplain, hubungi admin melalui WhatsApp <a href="https://wa.me/6287792634063" target="_blank" rel="noopener">0877-9263-4063</a> atau email <a href="mailto:nexshop.my.id@gmail.com">nexshop.my.id@gmail.com</a> dengan menyertakan Order ID.</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<!-- Product Detail Modal -->
+<div class="overlay" id="productOverlay">
+    <div class="modal product-modal" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+        <button class="modal-close" data-close="productOverlay" aria-label="Tutup">✕</button>
+        <div class="product-modal-body">
+            <div class="product-modal-img">
+                <img id="pmImage" src="" alt="">
+                <span class="badge" id="pmBadge"></span>
+            </div>
+            <div class="product-modal-info">
+                <h3 id="pmTitle"></h3>
+                <div class="pm-rating">
+                    <span id="pmStars"></span>
+                    <span class="pm-sold" id="pmSold"></span>
+                </div>
+                <p class="pm-desc" id="pmDesc"></p>
+                <div class="pm-price" id="pmPrice"></div>
+
+                <div class="pm-qty">
+                    <span>Jumlah</span>
+                    <div class="qty-control">
+                        <button id="pmQtyMinus" aria-label="Kurangi jumlah">−</button>
+                        <span id="pmQtyValue">1</span>
+                        <button id="pmQtyPlus" aria-label="Tambah jumlah">+</button>
+                    </div>
+                </div>
+
+                <button class="btn-primary pm-add" id="pmAddBtn">Tambah ke Keranjang</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Topup Product Modal -->
+<div class="overlay" id="topupOverlay">
+    <div class="modal topup-modal" role="dialog" aria-modal="true" aria-labelledby="tpTitle">
+        <button class="modal-close" data-close="topupOverlay" aria-label="Tutup">✕</button>
+        <form class="topup-modal-body" id="topupForm">
+            <div class="topup-modal-head">
+                <span class="diamond-icon">◆</span>
+                <div>
+                    <h3 id="tpTitle"></h3>
+                    <div class="tp-price" id="tpPrice"></div>
+                </div>
+            </div>
+
+            <label>Player ID / User ID
+                <input type="text" id="tpTujuan" required placeholder="Masukkan Player ID kamu">
+            </label>
+            <label id="tpServerWrap" class="hidden">Server ID
+                <input type="text" id="tpServerId" placeholder="Masukkan Server ID">
+            </label>
+            <label>Email (buat kirim bukti transaksi)
+                <input type="email" id="tpEmail" required placeholder="kamu@email.com">
+            </label>
+
+            <p class="auth-error" id="tpError"></p>
+            <button type="submit" class="btn-primary btn-cyan" id="tpSubmitBtn">Bayar Sekarang</button>
+        </form>
+    </div>
+</div>
+
+<!-- Cart Drawer -->
+<div class="overlay" id="cartOverlay">
+    <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+        <div class="drawer-header">
+            <h3 id="cartTitle">Keranjang</h3>
+            <button class="modal-close" data-close="cartOverlay" aria-label="Tutup">✕</button>
+        </div>
+        <div class="drawer-body" id="cartItems">
+            <!-- populated by JS -->
+        </div>
+        <div class="drawer-footer">
+            <div class="cart-total-row">
+                <span>Total</span>
+                <span id="cartTotal">Rp0</span>
+            </div>
+            <button class="btn-primary" id="checkoutBtn">Checkout</button>
+        </div>
+    </div>
+</div>
+
+<!-- Login / Register Modal -->
+<div class="overlay" id="authOverlay">
+    <div class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
+        <button class="modal-close" data-close="authOverlay" aria-label="Tutup">✕</button>
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-tab="login">Masuk</button>
+            <button class="auth-tab" data-tab="register">Daftar</button>
+        </div>
+
+        <form id="loginForm" class="auth-form">
+            <h3 id="authTitle">Selamat Datang Kembali</h3>
+            <label>Email
+                <input type="email" id="loginEmail" required placeholder="kamu@email.com">
+            </label>
+            <label>Kata Sandi
+                <div class="password-field">
+                    <input type="password" id="loginPassword" required minlength="4" placeholder="••••••••">
+                    <button type="button" class="toggle-password" data-target="loginPassword" aria-label="Tampilkan password">👁</button>
+                </div>
+            </label>
+            <p class="auth-error" id="loginError"></p>
+            <button type="submit" class="btn-primary">Masuk</button>
+        </form>
+
+        <form id="registerForm" class="auth-form hidden">
+            <h3>Buat Akun Baru</h3>
+            <label>Nama
+                <input type="text" id="regName" required placeholder="Nama kamu">
+            </label>
+            <label>Email
+                <input type="email" id="regEmail" required placeholder="kamu@email.com">
+            </label>
+            <label>Kata Sandi
+                <div class="password-field">
+                    <input type="password" id="regPassword" required minlength="4" placeholder="Minimal 4 karakter">
+                    <button type="button" class="toggle-password" data-target="regPassword" aria-label="Tampilkan password">👁</button>
+                </div>
+            </label>
+            <p class="auth-error" id="regError"></p>
+            <button type="submit" class="btn-primary">Daftar</button>
+        </form>
+
+        <form id="otpForm" class="auth-form hidden">
+            <h3>Verifikasi Email</h3>
+            <p class="otp-info">Kode 6 digit sudah dikirim ke <strong id="otpEmailLabel"></strong>. Cek juga folder Spam kalau belum masuk.</p>
+            <input type="hidden" id="otpEmail">
+            <label>Kode OTP
+                <input type="text" id="otpCode" required maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="6 digit kode">
+            </label>
+            <p class="auth-error" id="otpError"></p>
+            <button type="submit" class="btn-primary">Verifikasi</button>
+            <button type="button" class="otp-resend" id="otpResendBtn">Kirim ulang kode</button>
+        </form>
+    </div>
+</div>
+
+<!-- Account Dropdown -->
+<div class="account-dropdown" id="accountDropdown">
+    <div class="account-info">
+        <div class="account-avatar" id="accountAvatar"></div>
+        <div>
+            <div class="account-name" id="accountName"></div>
+            <div class="account-email" id="accountEmail"></div>
+        </div>
+    </div>
+    <button class="dropdown-item" id="myOrdersBtn">Pesanan Saya</button>
+    <button class="dropdown-item logout" id="logoutBtn">Keluar</button>
+</div>
+
+<!-- Checkout Modal -->
+<div class="overlay" id="checkoutOverlay">
+    <div class="modal checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
+        <button class="modal-close" data-close="checkoutOverlay" aria-label="Tutup">✕</button>
+        <div id="checkoutStep">
+            <h3 id="checkoutTitle">Selesaikan Pesanan</h3>
+            <form id="checkoutForm">
+                <label>Nama Penerima
+                    <input type="text" id="checkoutName" required placeholder="Nama lengkap">
+                </label>
+                <label>Email
+                    <input type="email" id="checkoutEmail" required placeholder="kamu@email.com">
+                </label>
+                <div class="checkout-guest-note" id="checkoutGuestNote">
+                    <strong>👤 Belanja tanpa akun</strong>
+                    <p>
+                        Kamu tetap bisa checkout tanpa daftar. Tapi tanpa akun, Order ID cuma
+                        ditampilkan sekali di halaman ini setelah bayar — gak tersimpan di
+                        "Pesanan Saya". <button type="button" id="checkoutLoginLink">Login / Daftar dulu</button>
+                        kalau mau riwayat pesanan otomatis tersimpan.
+                    </p>
+                </div>
+                <div class="checkout-payment-note">
+                    <strong>💳 Pembayaran via Midtrans</strong>
+                    <p>Setelah klik "Bayar Sekarang", kamu akan memilih metode pembayaran (QRIS, Virtual Account/Transfer Bank, E-Wallet, atau Kartu Kredit/Debit) langsung di halaman pembayaran Midtrans yang aman.</p>
+                </div>
+                <div class="promo-code-row">
+                    <input type="text" id="promoCodeInput" placeholder="Punya kode promo?">
+                    <button type="button" id="applyPromoBtn">Terapkan</button>
+                </div>
+                <p class="promo-code-msg" id="promoCodeMsg"></p>
+                <div class="checkout-summary" id="checkoutSummary"></div>
+                <button type="submit" class="btn-primary">Bayar Sekarang</button>
+            </form>
+        </div>
+        <div id="checkoutSuccess" class="hidden">
+            <div class="success-icon">✓</div>
+            <h3>Pesanan Berhasil!</h3>
+            <p id="checkoutSuccessMsg">Terima kasih, pesanan kamu sedang diproses.</p>
+            <button class="btn-primary" data-close="checkoutOverlay">Selesai</button>
+        </div>
+    </div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!--
+  MIDTRANS SNAP.JS
+  - Sandbox (testing): https://app.sandbox.midtrans.com/snap/snap.js
+  - Production (live): https://app.midtrans.com/snap/snap.js
+  Ganti data-client-key dengan Client Key asli dari Midtrans Dashboard
+  (Settings > Access Keys). Client Key BOLEH ada di frontend, Server Key
+  JANGAN PERNAH ditaruh di sini — itu cuma boleh dipakai di backend.
+-->
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="SB-Mid-client-GANTI_DENGAN_CLIENT_KEY_ASLI"></script>
+<script src="script.js"></script>
+</body>
+</html>

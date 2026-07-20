@@ -1,0 +1,77 @@
+<svg viewBox="0 0 1600 600" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0F1D"/>
+      <stop offset="55%" stop-color="#140F2A"/>
+      <stop offset="100%" stop-color="#1A1030"/>
+    </linearGradient>
+    <radialGradient id="glowViolet" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowCyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="gemFace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#B79CFF"/>
+      <stop offset="45%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+    <linearGradient id="gemFaceLight" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#EDEFF7" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#EDEFF7" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="violetCyan" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="100%" stop-color="#22D3EE"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#8B5CF6" stroke-opacity="0.08" stroke-width="1"/>
+    </pattern>
+    <mask id="gridMask">
+      <radialGradient id="gridFade" cx="30%" cy="45%" r="75%">
+        <stop offset="0%" stop-color="#fff"/>
+        <stop offset="100%" stop-color="#000"/>
+      </radialGradient>
+      <rect width="1600" height="600" fill="url(#gridFade)"/>
+    </mask>
+    <filter id="softGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="600" fill="url(#bg)"/>
+  <rect width="1600" height="600" fill="url(#grid)" mask="url(#gridMask)"/>
+  <circle cx="220" cy="120" r="260" fill="url(#glowViolet)"/>
+  <circle cx="1180" cy="480" r="320" fill="url(#glowCyan)"/>
+
+  <polygon points="980,0 1600,0 1600,600 1120,600" fill="#ffffff" fill-opacity="0.02"/>
+  <line x1="980" y1="0" x2="1120" y2="600" stroke="url(#violetCyan)" stroke-width="2" stroke-opacity="0.5"/>
+  <line x1="1010" y1="0" x2="1150" y2="600" stroke="#22D3EE" stroke-width="1" stroke-opacity="0.25"/>
+
+  <g filter="url(#softGlow)" opacity="0.95">
+    <polygon points="1290,120 1410,190 1390,330 1250,360 1180,240" fill="url(#gemFace)"/>
+    <polygon points="1290,120 1410,190 1330,220" fill="url(#gemFaceLight)"/>
+    <polygon points="1180,240 1290,120 1250,215" fill="url(#gemFaceLight)" opacity="0.6"/>
+    <polygon points="1250,360 1330,220 1390,330" fill="#ffffff" fill-opacity="0.08"/>
+  </g>
+  <g filter="url(#softGlow)" opacity="0.7">
+    <polygon points="1430,350 1500,390 1490,460 1410,470 1370,410" fill="url(#gemFace)"/>
+    <polygon points="1430,350 1500,390 1455,405" fill="url(#gemFaceLight)"/>
+  </g>
+  <g filter="url(#softGlow)" opacity="0.55">
+    <polygon points="1120,380 1170,405 1160,450 1105,455 1080,415" fill="url(#gemFace)"/>
+  </g>
+
+  <g fill="#22D3EE">
+    <circle cx="1080" cy="90" r="4" opacity="0.8"/>
+    <circle cx="1520" cy="150" r="3" opacity="0.6"/>
+    <circle cx="1330" cy="480" r="3.5" opacity="0.7"/>
+  </g>
+  <g fill="#8B5CF6">
+    <circle cx="1470" cy="80" r="3" opacity="0.7"/>
+    <circle cx="1170" cy="470" r="4" opacity="0.6"/>
+  </g>
+</svg>

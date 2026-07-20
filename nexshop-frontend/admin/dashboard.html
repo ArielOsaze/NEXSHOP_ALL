@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NexShop Admin</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="d-flex">
+
+<aside class="sidebar bg-dark text-white p-3">
+    <h3 class="mb-4">Nex<span class="accent">Shop</span></h3>
+
+    <ul class="nav flex-column" id="sidebarNav">
+        <li class="nav-item"><a class="nav-link text-white active" href="#" data-view="dashboard"><i class="bi bi-grid me-2"></i>Dashboard &amp; Produk</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="#" data-view="orders"><i class="bi bi-cart me-2"></i>Orders</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Topup Diamond</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="#" data-view="users"><i class="bi bi-people me-2"></i>Users</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="#" data-view="promo"><i class="bi bi-megaphone me-2"></i>Promo</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="#" data-view="promocodes"><i class="bi bi-ticket-perforated me-2"></i>Kode Promo</a></li>
+        <li class="nav-item"><a class="nav-link text-white" href="#" data-view="settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
+    </ul>
+
+    <button onclick="logout()" class="btn btn-danger w-100 mt-5">
+        <i class="bi bi-box-arrow-right me-2"></i>Logout
+    </button>
+</aside>
+
+<main class="flex-grow-1 p-4">
+
+<div class="admin-topbar">
+    <div></div>
+    <div class="notif-bell-wrap">
+        <button class="notif-bell" id="notifBell">
+            <i class="bi bi-bell"></i>
+            <span class="notif-count d-none" id="notifCount">0</span>
+        </button>
+        <div class="notif-dropdown d-none" id="notifDropdown">
+            <div class="notif-dropdown-header">
+                <strong>Notifikasi</strong>
+                <button class="btn-mark-read" id="markAllReadBtn">Tandai semua dibaca</button>
+            </div>
+            <div class="notif-list" id="notifList">
+                <div class="text-muted text-center py-4 small">Memuat...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== Dashboard / Products view ===== -->
+<section id="view-dashboard" class="view-section">
+
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2>Dashboard</h2>
+            <p class="text-muted mb-0">Selamat datang di Admin NexShop</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <input id="search" class="form-control" placeholder="Cari produk...">
+            <button class="btn btn-success text-nowrap" data-bs-toggle="modal" data-bs-target="#productModal">
+                <i class="bi bi-plus-circle"></i>
+                Tambah Produk
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm accent-card accent-violet"><div class="card-body">
+                <small>Total Produk</small>
+                <h2 id="totalProduk">0</h2>
+            </div></div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm accent-card accent-cyan"><div class="card-body">
+                <small>Total Sold</small>
+                <h2 id="totalSold">0</h2>
+            </div></div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm accent-card accent-magenta"><div class="card-body">
+                <small>Total Nilai</small>
+                <h2 id="totalHarga">Rp 0</h2>
+            </div></div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Aktivitas Terbaru</h5>
+            <button onclick="loadNotifications()" class="btn btn-primary btn-sm"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+        </div>
+        <div class="card-body" id="activityFeed">
+            <div class="text-muted text-center py-3 small">Memuat...</div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Daftar Produk</h5>
+            <button onclick="loadProducts()" class="btn btn-primary btn-sm">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th>No.</th>
+                    <th>Gambar</th>
+                    <th>Nama</th>
+                    <th>Harga</th>
+                    <th>Badge</th>
+                    <th>Kategori</th>
+                    <th>Aksi</th>
+                </tr>
+                </thead>
+                <tbody id="products">
+                    <tr><td colspan="7" class="text-center text-muted py-4">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Orders view ===== -->
+<section id="view-orders" class="view-section d-none">
+    <div class="mb-4">
+        <h2>Orders</h2>
+        <p class="text-muted mb-0">Daftar pesanan dari pelanggan</p>
+    </div>
+    <div class="card shadow-sm">
+        <div class="card-body" id="ordersContainer"></div>
+    </div>
+</section>
+
+<!-- ===== Topup Diamond view ===== -->
+<section id="view-topup" class="view-section d-none">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2>Topup Diamond</h2>
+            <p class="text-muted mb-0">Kelola produk topup dari TokoVoucher &amp; pantau pesanan masuk</p>
+        </div>
+        <div class="d-flex gap-2">
+            <span class="badge bg-dark-subtle text-dark border" id="tvBalanceBadge">Saldo TokoVoucher: —</span>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs mb-3" id="topupTabs">
+        <li class="nav-item"><button class="nav-link active" data-topup-tab="products">Produk</button></li>
+        <li class="nav-item"><button class="nav-link" data-topup-tab="orders">Pesanan</button></li>
+    </ul>
+
+    <!-- Produk tab -->
+    <div id="topupTabProducts">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <label class="form-label">Sync produk dari TokoVoucher (masukkan kode/prefix, mis. <code>ML</code>, <code>FF</code>, <code>PUBG</code>)</label>
+                <div class="d-flex gap-2">
+                    <input id="tvSyncKode" class="form-control" placeholder="Contoh: ML atau FF5" style="max-width:280px;">
+                    <button class="btn btn-primary" onclick="syncTopupProducts()">
+                        <i class="bi bi-arrow-repeat"></i> Sync Produk
+                    </button>
+                </div>
+                <p class="text-muted small mt-2 mb-0">Produk baru masuk dalam keadaan <strong>nonaktif</strong> — atur harga jual lalu aktifkan supaya tampil di toko.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Daftar Produk Topup</h5>
+                <button onclick="loadTopupProducts()" class="btn btn-primary btn-sm"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th>Kode</th><th>Nama</th><th>Kategori</th><th>Harga Modal</th><th>Harga Jual</th><th>Server ID?</th><th>Status</th><th>Aksi</th>
+                    </tr>
+                    </thead>
+                    <tbody id="topupProducts">
+                        <tr><td colspan="8" class="text-center text-muted py-4">Klik "Refresh" untuk memuat data.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pesanan tab -->
+    <div id="topupTabOrders" class="d-none">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Pesanan Topup</h5>
+                <button onclick="loadTopupOrders()" class="btn btn-primary btn-sm"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                    <tr><th>Order ID</th><th>Produk</th><th>Tujuan</th><th>Harga</th><th>Status</th><th>Tanggal</th><th>Aksi</th></tr>
+                    </thead>
+                    <tbody id="topupOrders">
+                        <tr><td colspan="7" class="text-center text-muted py-4">Klik "Refresh" untuk memuat data.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Users view ===== -->
+<section id="view-users" class="view-section d-none">
+    <div class="mb-4">
+        <h2>Users</h2>
+        <p class="text-muted mb-0">Daftar pengguna terdaftar</p>
+    </div>
+    <div class="card shadow-sm">
+        <div class="card-body" id="usersContainer"></div>
+    </div>
+</section>
+
+<!-- ===== Promo view ===== -->
+<section id="view-promo" class="view-section d-none">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2>Promo / Iklan / Berita</h2>
+            <p class="text-muted mb-0">Slide-slide ini tampil bergantian (geser otomatis) di halaman utama toko</p>
+        </div>
+        <button class="btn btn-success text-nowrap" onclick="openPromoModal()">
+            <i class="bi bi-plus-circle"></i> Tambah Slide
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th>Urutan</th>
+                    <th>Gambar</th>
+                    <th>Tipe</th>
+                    <th>Judul</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+                </thead>
+                <tbody id="promoSlides">
+                    <tr><td colspan="6" class="text-center text-muted py-4">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Kode Promo view ===== -->
+<section id="view-promocodes" class="view-section d-none">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2>Kode Promo</h2>
+            <p class="text-muted mb-0">Redeem code buat diskon checkout produk toko</p>
+        </div>
+        <button class="btn btn-success text-nowrap" onclick="openPromoCodeModal()">
+            <i class="bi bi-plus-circle"></i> Buat Kode Promo
+        </button>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th>Kode</th><th>Diskon</th><th>Min. Belanja</th><th>Pemakaian</th><th>Kedaluwarsa</th><th>Status</th><th>Aksi</th>
+                </tr>
+                </thead>
+                <tbody id="promoCodes">
+                    <tr><td colspan="7" class="text-center text-muted py-4">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Settings view ===== -->
+<section id="view-settings" class="view-section d-none">
+    <div class="mb-4">
+        <h2>Settings</h2>
+        <p class="text-muted mb-0">Pengaturan akun, toko, dan integrasi API</p>
+    </div>
+
+    <ul class="nav nav-tabs mb-3" id="settingsTabs">
+        <li class="nav-item"><button class="nav-link active" data-settings-tab="profile">Profil Admin</button></li>
+        <li class="nav-item"><button class="nav-link" data-settings-tab="store">Pengaturan Toko</button></li>
+        <li class="nav-item"><button class="nav-link" data-settings-tab="apikeys">API Keys</button></li>
+    </ul>
+
+    <!-- Profil Admin -->
+    <div id="settingsTabProfile" class="card shadow-sm">
+        <div class="card-body">
+            <form id="profileForm" class="row g-3" style="max-width:520px;">
+                <div class="col-12">
+                    <label class="form-label">Nama Lengkap</label>
+                    <input id="profileName" class="form-control">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Email</label>
+                    <input id="profileEmail" type="email" class="form-control">
+                </div>
+                <hr class="mt-2">
+                <p class="text-muted small mb-0">Kosongkan bagian di bawah ini kalau tidak ingin mengganti password.</p>
+                <div class="col-12">
+                    <label class="form-label">Password Saat Ini</label>
+                    <input id="profileCurrentPassword" type="password" class="form-control" autocomplete="current-password">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Password Baru</label>
+                    <input id="profileNewPassword" type="password" class="form-control" autocomplete="new-password" minlength="4">
+                </div>
+                <p class="text-danger small mb-0" id="profileError"></p>
+                <div class="col-12">
+                    <button type="button" class="btn btn-success" onclick="saveProfile()">
+                        <i class="bi bi-floppy"></i> Simpan Profil
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pengaturan Toko -->
+    <div id="settingsTabStore" class="card shadow-sm d-none">
+        <div class="card-body">
+            <form id="storeForm" class="row g-3" style="max-width:560px;">
+                <div class="col-12">
+                    <label class="form-label">Nama Toko</label>
+                    <input id="storeName" class="form-control" placeholder="NexShop">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Tagline</label>
+                    <input id="storeTagline" class="form-control" placeholder="Play More. Pay Less.">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Nomor WhatsApp Admin</label>
+                    <input id="storeWhatsapp" class="form-control" placeholder="6287792634063">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Email Kontak</label>
+                    <input id="storeEmail" type="email" class="form-control" placeholder="nexshop.my.id@gmail.com">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Logo Toko</label>
+                    <input type="file" id="storeLogoInput" class="form-control" accept="image/*">
+                    <img id="storeLogoPreview" src="" class="img-thumbnail mt-3 d-none" style="max-height:100px;">
+                </div>
+                <p class="text-danger small mb-0" id="storeError"></p>
+                <div class="col-12">
+                    <button type="button" class="btn btn-success" onclick="saveStoreSettings()">
+                        <i class="bi bi-floppy"></i> Simpan Pengaturan Toko
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- API Keys -->
+    <div id="settingsTabApiKeys" class="card shadow-sm d-none">
+        <div class="card-body">
+            <form id="apiKeysForm" class="row g-3" style="max-width:600px;">
+                <div class="col-12"><h6 class="text-uppercase text-muted small mb-0">Midtrans</h6></div>
+                <div class="col-12">
+                    <label class="form-label">Server Key</label>
+                    <input id="midtransServerKey" class="form-control" placeholder="SB-Mid-server-...">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Client Key</label>
+                    <input id="midtransClientKey" class="form-control" placeholder="SB-Mid-client-...">
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="midtransIsProduction">
+                        <label class="form-check-label" for="midtransIsProduction">Mode Production (live, bukan sandbox)</label>
+                    </div>
+                </div>
+
+                <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">TokoVoucher</h6></div>
+                <div class="col-12">
+                    <label class="form-label">Member Code</label>
+                    <input id="tvMemberCode" class="form-control" placeholder="MEMBER20220801UAXH95">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Secret Key</label>
+                    <input id="tvSecret" class="form-control" placeholder="Secret key dari member.tokovoucher.net">
+                </div>
+
+                <p class="text-muted small mb-0">Key yang sudah tersimpan ditampilkan tersamar (••••). Isi ulang field hanya kalau mau menggantinya.</p>
+                <p class="text-danger small mb-0" id="apiKeysError"></p>
+                <div class="col-12">
+                    <button type="button" class="btn btn-success" onclick="saveApiKeys()">
+                        <i class="bi bi-floppy"></i> Simpan API Keys
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+</main>
+</div>
+
+<!-- Promo Slide Modal -->
+<div class="modal fade" id="promoModal" tabindex="-1">
+<div class="modal-dialog modal-lg">
+<div class="modal-content">
+
+    <div class="modal-header">
+        <h5 class="modal-title" id="promoModalTitle"><i class="bi bi-megaphone me-2"></i>Tambah Slide</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+
+    <div class="modal-body">
+        <form id="promoForm">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">Tipe</label>
+                    <select id="promoType" class="form-control">
+                        <option value="promo">Promo</option>
+                        <option value="iklan">Iklan</option>
+                        <option value="berita">Berita</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Urutan Tampil</label>
+                    <input id="promoSortOrder" type="number" min="0" class="form-control" placeholder="0">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Badge (teks kecil di atas judul)</label>
+                    <input id="promoBadge" class="form-control" placeholder="🔥 Promo Minggu Ini">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Judul</label>
+                    <input id="promoTitle" class="form-control" required placeholder="Stok Terbatas, Harga Bersahabat">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Deskripsi</label>
+                    <textarea id="promoDesc" rows="3" class="form-control" style="resize:vertical;" placeholder="Game key & akses premium mulai dari Rp29.000..."></textarea>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Teks Tombol</label>
+                    <input id="promoCtaText" class="form-control" placeholder="Jelajahi Katalog">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Link Tombol</label>
+                    <input id="promoCtaLink" class="form-control" placeholder="#games">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Gambar Banner</label>
+                    <input type="file" id="promoImageInput" class="form-control" accept="image/*">
+                    <img id="promoImagePreview" src="" class="img-thumbnail mt-3 d-none" style="max-height:160px;">
+                    <div class="form-text">Upload langsung dari sini — tidak perlu URL manual lagi.</div>
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="promoIsActive" checked>
+                        <label class="form-check-label" for="promoIsActive">Aktif (tampil di toko)</label>
+                    </div>
+                </div>
+            </div>
+            <p class="text-danger small mt-3 mb-0" id="promoError"></p>
+        </form>
+    </div>
+
+    <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-success" id="savePromoBtn" onclick="savePromo()">
+            <i class="bi bi-floppy"></i> Simpan Slide
+        </button>
+    </div>
+
+</div>
+</div>
+</div>
+
+<!-- Topup Product Edit Modal -->
+<div class="modal fade" id="topupProductModal" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-gem me-2"></i>Edit Produk Topup</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        <form id="topupProductForm" class="row g-3">
+            <div class="col-12">
+                <label class="form-label">Nama Produk</label>
+                <input id="tpEditNama" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Kategori</label>
+                <input id="tpEditKategori" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Harga Modal</label>
+                <input id="tpEditHargaBeli" class="form-control" disabled>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Harga Jual</label>
+                <input id="tpEditHargaJual" type="number" min="0" class="form-control">
+            </div>
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="tpEditButuhServerId">
+                    <label class="form-check-label" for="tpEditButuhServerId">Butuh Server ID</label>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="tpEditIsActive">
+                    <label class="form-check-label" for="tpEditIsActive">Aktif (tampil di toko)</label>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-success" onclick="saveTopupProduct()"><i class="bi bi-floppy"></i> Simpan</button>
+    </div>
+</div>
+</div>
+</div>
+
+<!-- Kode Promo Modal -->
+<div class="modal fade" id="promoCodeModal" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title" id="promoCodeModalTitle"><i class="bi bi-ticket-perforated me-2"></i>Buat Kode Promo</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        <form id="promoCodeForm" class="row g-3">
+            <div class="col-12">
+                <label class="form-label">Kode</label>
+                <input id="pcCode" class="form-control text-uppercase" placeholder="MERDEKA25" style="text-transform:uppercase;">
+            </div>
+            <div class="col-12">
+                <label class="form-label">Deskripsi <span class="text-muted">(opsional, buat catatan internal)</span></label>
+                <input id="pcDescription" class="form-control" placeholder="Promo 17 Agustus">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Tipe Diskon</label>
+                <select id="pcDiscountType" class="form-control">
+                    <option value="percent">Persen (%)</option>
+                    <option value="fixed">Nominal (Rp)</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Nilai Diskon</label>
+                <input id="pcDiscountValue" type="number" min="0" class="form-control" placeholder="Contoh: 25">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Maks. Potongan <span class="text-muted">(khusus tipe %, opsional)</span></label>
+                <input id="pcMaxDiscount" type="number" min="0" class="form-control" placeholder="Contoh: 50000">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Minimal Belanja</label>
+                <input id="pcMinPurchase" type="number" min="0" class="form-control" placeholder="0">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Batas Pemakaian <span class="text-muted">(opsional)</span></label>
+                <input id="pcMaxUses" type="number" min="1" class="form-control" placeholder="Tanpa batas">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Kedaluwarsa <span class="text-muted">(opsional)</span></label>
+                <input id="pcExpiresAt" type="date" class="form-control">
+            </div>
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="pcIsActive" checked>
+                    <label class="form-check-label" for="pcIsActive">Aktif</label>
+                </div>
+            </div>
+            <p class="text-danger small mb-0" id="promoCodeError"></p>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-success" id="savePromoCodeBtn" onclick="savePromoCode()">
+            <i class="bi bi-floppy"></i> Simpan
+        </button>
+    </div>
+</div>
+</div>
+</div>
+
+<!-- Product Modal -->
+<div class="modal fade" id="productModal" tabindex="-1">
+<div class="modal-dialog modal-lg">
+<div class="modal-content">
+
+    <div class="modal-header">
+        <h5 class="modal-title" id="modalTitle"><i class="bi bi-box-seam me-2"></i>Tambah Produk</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+
+    <div class="modal-body">
+        <form id="productForm" novalidate>
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label class="form-label">Nama Produk</label>
+                    <input id="name" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Harga</label>
+                    <input id="price" type="number" min="1" class="form-control" required>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Harga Coret <span class="text-muted">(opsional)</span></label>
+                    <input id="strikePrice" type="number" min="1" class="form-control" placeholder="Contoh: 200000">
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="isFlashSale">
+                        <label class="form-check-label" for="isFlashSale">
+                            🔥 Aktifkan Flash Sale (coret Harga Coret, tampilkan Harga sebagai harga promo)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Badge</label>
+                    <input id="badge" class="form-control">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Kategori</label>
+                    <input id="category" class="form-control">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Rating</label>
+                    <input id="rating" type="number" step="0.1" min="0" max="5" placeholder="Contoh: 4.9" class="form-control">
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">Sold</label>
+                    <input id="sold" type="number" min="0" class="form-control">
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Gambar Produk</label>
+                    <input type="file" id="image" class="form-control" accept="image/*">
+                    <img id="previewImage" src="" class="img-thumbnail mt-3 d-none" style="max-height:180px;">
+                </div>
+
+                <div class="col-12">
+                    <label class="form-label">Deskripsi</label>
+                    <textarea id="description" rows="4" class="form-control" style="resize:vertical;"></textarea>
+                    <div class="form-text">Tekan Enter untuk baris baru seperti biasa.</div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+
+    <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-success" id="saveProductBtn" onclick="saveProduct()">
+            <i class="bi bi-floppy"></i> Simpan Produk
+        </button>
+    </div>
+
+</div>
+</div>
+</div>
+
+<!-- Toast -->
+<div class="toast-container position-fixed top-0 end-0 p-3">
+    <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto">NexShop</strong>
+            <button class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">Berhasil</div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/dashboard.js"></script>
+
+</body>
+</html>
