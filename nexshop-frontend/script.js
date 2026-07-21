@@ -901,117 +901,345 @@ function formatPolicyText(text) {
     return `<ol class="policy-list">${lines.map(l => `<li>${escapeHtml(l)}</li>`).join("")}</ol>`;
 }
 
-/* ---------- Topup Diamond ---------- */
+/* ---------- Topup Diamond: Game Grid -> 4-Step Detail Wizard ---------- */
+// Alur baru: (1) grid game -> (2) halaman detail game (bukan modal) dengan
+// step Akun -> Nominal -> Pembayaran -> Ringkasan. Semua data (produk, logo
+// game, kategori) tetap dari /api/topup/products (admin dashboard), TIDAK
+// ada yang di-hardcode. Endpoint & kontrak API tidak berubah sama sekali
+// dari implementasi lama (check-nickname, create order) supaya checkout,
+// iPaymu, dan backend tetap jalan seperti sebelumnya.
 let TOPUP_PRODUCTS = [];
-let selectedTopupCategory = "Semua";
-let activeTopupProduct = null;
+let TOPUP_GAMES = [];
+
+// Kanal pembayaran ini murni lapisan UX/preferensi tampilan — backend cuma
+// punya 1 gateway (iPaymu) yang di dalam halamannya sendiri sudah
+// menyediakan semua kanal ini, jadi tidak ada payload baru yang dikirim ke
+// server hanya karena user memilih salah satu kartu di Step 3.
+const TW_PAYMENT_METHODS = [
+    { id: "qris", label: "QRIS", desc: "Scan sekali, bisa pakai e-wallet/m-banking apa saja", icon: "🔳" },
+    { id: "va", label: "Virtual Account", desc: "Transfer via BCA, BRI, Mandiri, dan bank lain", icon: "🏦" },
+    { id: "ewallet", label: "E-Wallet", desc: "OVO, DANA, ShopeePay, LinkAja", icon: "📱" },
+    { id: "card", label: "Kartu Kredit/Debit", desc: "Visa & Mastercard", icon: "💳" }
+];
+
+let twState = {
+    kategori: null,
+    step: 1,
+    products: [],
+    needsServerId: false,
+    userId: "",
+    serverId: "",
+    email: "",
+    nickname: null,
+    nicknameSupported: false,
+    product: null,
+    payment: null
+};
 
 async function loadTopupProducts() {
+    renderTopupGameSkeleton();
     try {
         const res = await fetch(`${API_BASE}/topup/products`);
-        if (!res.ok) return;
+        if (!res.ok) { renderTopupGameGrid(); return; }
         TOPUP_PRODUCTS = await res.json();
-        renderTopupCategories();
-        renderTopupGrid();
+        buildTopupGames();
+        renderTopupGameGrid();
     } catch (err) {
-        // biarin section kosong kalau API gagal
+        // biarin grid kosong kalau API gagal
+        renderTopupGameGrid();
     }
 }
 
-function renderTopupCategories() {
-    const filter = document.getElementById("topupCategoryFilter");
-    const categories = ["Semua", ...new Set(TOPUP_PRODUCTS.map(p => p.kategori).filter(Boolean))];
-
-    if (categories.length <= 1) {
-        filter.innerHTML = "";
-        return;
-    }
-
-    filter.innerHTML = categories.map(cat => {
-        const logo = cat !== "Semua" ? (TOPUP_PRODUCTS.find(p => p.kategori === cat && p.operator_logo) || {}).operator_logo : null;
-        return `
-        <button class="category-btn ${cat === selectedTopupCategory ? "active" : ""}" data-cat="${cat}">
-            ${logo ? `<img class="category-btn-logo" src="${logo}" alt="">` : ""}${escapeHtml(cat)}
-        </button>`;
-    }).join("");
-
-    filter.querySelectorAll(".category-btn").forEach(btn => {
-        btn.onclick = () => {
-            selectedTopupCategory = btn.dataset.cat;
-            renderTopupCategories();
-            renderTopupGrid();
-        };
+// Kelompokkan produk topup per kategori (= 1 game/kartu di grid). Logo game
+// diambil dari operator_logo yang diatur admin lewat Admin Dashboard.
+function buildTopupGames() {
+    const map = new Map();
+    TOPUP_PRODUCTS.forEach(p => {
+        const key = p.kategori || "Lainnya";
+        if (!map.has(key)) map.set(key, { kategori: key, logo: p.operator_logo || null, products: [] });
+        const g = map.get(key);
+        g.products.push(p);
+        if (!g.logo && p.operator_logo) g.logo = p.operator_logo;
     });
+    TOPUP_GAMES = [...map.values()].sort((a, b) => a.kategori.localeCompare(b.kategori));
 }
 
-function renderTopupGrid() {
-    const grid = document.getElementById("topupGrid");
-    const data = selectedTopupCategory === "Semua"
-        ? TOPUP_PRODUCTS
-        : TOPUP_PRODUCTS.filter(p => p.kategori === selectedTopupCategory);
+function renderTopupGameSkeleton() {
+    const grid = document.getElementById("topupGameGrid");
+    grid.innerHTML = Array.from({ length: 6 }).map(() => `
+        <div class="topup-game-card skeleton" aria-hidden="true">
+            <div class="tgc-logo skel-block"></div>
+            <div class="skel-line" style="width:70%"></div>
+            <div class="skel-line" style="width:40%"></div>
+        </div>
+    `).join("");
+}
 
-    if (data.length === 0) {
-        grid.innerHTML = `<div class="topup-empty">Belum ada produk topup tersedia saat ini.</div>`;
+function renderTopupGameGrid() {
+    const grid = document.getElementById("topupGameGrid");
+    if (!TOPUP_GAMES.length) {
+        grid.innerHTML = `<div class="topup-empty">Belum ada game topup tersedia saat ini.</div>`;
         return;
     }
 
-    grid.innerHTML = data.map(p => `
-        <div class="topup-card" data-kode="${p.kode_produk}">
-            ${p.kategori ? `<span class="topup-cat-tag">${escapeHtml(p.kategori)}</span>` : ""}
-            ${p.item_icon
-                ? `<img class="topup-item-icon" src="${p.item_icon}" alt="${escapeHtml(p.nama)}" loading="lazy">`
-                : `<span class="diamond-icon">◆</span>`}
-            <h5>${escapeHtml(p.nama)}</h5>
-            <div class="topup-price">${rupiah(p.harga_jual)}</div>
+    grid.innerHTML = TOPUP_GAMES.map(g => `
+        <div class="topup-game-card" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
+            <div class="tgc-logo">
+                ${g.logo ? `<img src="${g.logo}" alt="${escapeHtml(g.kategori)}" loading="lazy">` : `<span class="diamond-icon">◆</span>`}
+            </div>
+            <h5>${escapeHtml(g.kategori)}</h5>
+            <span class="tgc-count">${g.products.length} produk</span>
         </div>
     `).join("");
 
-    grid.querySelectorAll(".topup-card").forEach(card => {
-        card.addEventListener("click", () => openTopupModal(card.dataset.kode));
+    grid.querySelectorAll(".topup-game-card").forEach(card => {
+        card.addEventListener("click", () => openGameDetail(card.dataset.kategori));
+        card.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openGameDetail(card.dataset.kategori); }
+        });
     });
 }
 
-function openTopupModal(kodeProduk) {
-    const p = TOPUP_PRODUCTS.find(x => x.kode_produk === kodeProduk);
-    if (!p) return;
-    activeTopupProduct = p;
+/* ---- Halaman Detail Game (bukan modal) ---- */
 
-    document.getElementById("tpTitle").textContent = p.nama;
-    document.getElementById("tpPrice").textContent = rupiah(p.harga_jual);
-    const iconEl = document.getElementById("tpIcon");
-    if (iconEl) {
-        if (p.operator_logo) {
-            iconEl.innerHTML = `<img src="${p.operator_logo}" alt="${escapeHtml(p.kategori || p.nama)}">`;
-        } else {
-            iconEl.innerHTML = `<span class="diamond-icon">◆</span>`;
-        }
-    }
-    document.getElementById("tpTujuan").value = "";
-    document.getElementById("tpServerId").value = "";
-    document.getElementById("tpEmail").value = currentUser ? currentUser.email : "";
-    document.getElementById("tpError").textContent = "";
-    document.getElementById("tpServerWrap").classList.toggle("hidden", !p.butuh_server_id);
-    document.getElementById("tpServerId").required = !!p.butuh_server_id;
+function openGameDetail(kategori) {
+    const game = TOPUP_GAMES.find(g => g.kategori === kategori);
+    if (!game) return;
 
-    openOverlay("topupOverlay");
+    twState = {
+        kategori: game.kategori,
+        step: 1,
+        products: game.products,
+        needsServerId: game.products.some(p => p.butuh_server_id),
+        userId: "",
+        serverId: "",
+        email: currentUser ? currentUser.email : "",
+        nickname: null,
+        nicknameSupported: false,
+        product: null,
+        payment: null
+    };
+
+    document.getElementById("twLogo").src = game.logo || "images/nexshop-icon.svg";
+    document.getElementById("twLogo").alt = game.kategori;
+    document.getElementById("twGameName").textContent = game.kategori;
+    document.getElementById("twGameDesc").textContent = `Topup ${game.kategori} resmi & instan, diproses otomatis 24 jam.`;
+    document.getElementById("twBanner").style.backgroundImage = game.logo ? `url(${game.logo})` : "none";
+
+    document.getElementById("twUserId").value = "";
+    document.getElementById("twServerId").value = "";
+    document.getElementById("twEmail").value = twState.email;
+    document.getElementById("twServerWrap").classList.toggle("hidden", !twState.needsServerId);
+    document.getElementById("twAccountResult").className = "tw-account-result hidden";
+    document.getElementById("twAccountResult").innerHTML = "";
+    document.getElementById("twStep1Error").textContent = "";
+
+    renderTopupProductGrid();
+    renderTopupPaymentGrid();
+    goToTwStep(1);
+
+    document.getElementById("topup").classList.add("hidden");
+    document.getElementById("topupDetail").classList.remove("hidden");
+    window.scrollTo({ top: document.getElementById("topupDetail").offsetTop - 90, behavior: "smooth" });
 }
 
-document.getElementById("topupForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    if (!activeTopupProduct) return;
+function closeGameDetail() {
+    document.getElementById("topupDetail").classList.add("hidden");
+    document.getElementById("topup").classList.remove("hidden");
+    document.getElementById("topup").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+document.getElementById("twBackBtn").addEventListener("click", closeGameDetail);
 
-    const tujuan = document.getElementById("tpTujuan").value.trim();
-    const server_id = document.getElementById("tpServerId").value.trim();
-    const recipient_email = document.getElementById("tpEmail").value.trim();
-    const errorEl = document.getElementById("tpError");
-    const submitBtn = document.getElementById("tpSubmitBtn");
-    const token = localStorage.getItem("nexshop_token");
+const TW_STEP_LABELS = { 1: "Lanjut", 2: "Lanjut", 3: "Lanjut", 4: "Bayar Sekarang" };
 
+function goToTwStep(step) {
+    twState.step = step;
+    document.querySelectorAll(".tw-panel").forEach(p => {
+        p.classList.toggle("hidden", Number(p.dataset.panel) !== step);
+    });
+    document.querySelectorAll(".tw-step-dot").forEach(dot => {
+        const s = Number(dot.dataset.step);
+        dot.classList.toggle("active", s === step);
+        dot.classList.toggle("done", s < step);
+    });
+    document.getElementById("twPrevBtn").classList.toggle("hidden", step === 1);
+    const nextBtn = document.getElementById("twNextBtn");
+    nextBtn.disabled = false;
+    nextBtn.textContent = TW_STEP_LABELS[step];
+    if (step === 4) renderTwSummary();
+}
+
+document.getElementById("twPrevBtn").addEventListener("click", () => {
+    if (twState.step > 1) goToTwStep(twState.step - 1);
+});
+
+document.getElementById("twNextBtn").addEventListener("click", async () => {
+    if (twState.step === 1) {
+        const userId = document.getElementById("twUserId").value.trim();
+        const serverId = document.getElementById("twServerId").value.trim();
+        const email = document.getElementById("twEmail").value.trim();
+        const errorEl = document.getElementById("twStep1Error");
+        errorEl.textContent = "";
+
+        if (!userId) { errorEl.textContent = "User ID wajib diisi"; return; }
+        if (twState.needsServerId && !serverId) { errorEl.textContent = "Server ID wajib diisi untuk game ini"; return; }
+        if (!email || !email.includes("@")) { errorEl.textContent = "Email wajib diisi dengan format yang benar"; return; }
+
+        twState.userId = userId;
+        twState.serverId = serverId;
+        twState.email = email;
+        goToTwStep(2);
+        return;
+    }
+    if (twState.step === 2) {
+        if (!twState.product) { toast("Pilih nominal dulu ya", "error"); return; }
+        goToTwStep(3);
+        return;
+    }
+    if (twState.step === 3) {
+        if (!twState.payment) { toast("Pilih metode pembayaran dulu ya", "error"); return; }
+        goToTwStep(4);
+        return;
+    }
+    if (twState.step === 4) {
+        await submitTopupOrder();
+    }
+});
+
+/* ---- Step 1: Cek Akun (ApiGames, kalau didukung) ---- */
+document.getElementById("twCheckBtn").addEventListener("click", async () => {
+    const userId = document.getElementById("twUserId").value.trim();
+    const serverId = document.getElementById("twServerId").value.trim();
+    const resultEl = document.getElementById("twAccountResult");
+    const errorEl = document.getElementById("twStep1Error");
     errorEl.textContent = "";
-    submitBtn.disabled = true;
-    submitBtn.textContent = "Memproses...";
+
+    if (!userId) { errorEl.textContent = "Masukkan User ID dulu sebelum cek akun"; return; }
+    if (twState.needsServerId && !serverId) { errorEl.textContent = "Masukkan Server ID dulu sebelum cek akun"; return; }
+
+    const btn = document.getElementById("twCheckBtn");
+    btn.disabled = true;
+    btn.textContent = "Mengecek...";
 
     try {
+        const res = await fetch(`${API_BASE}/topup/check-nickname`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ kategori: twState.kategori, tujuan: userId, serverId: serverId || undefined })
+        });
+        const data = await res.json();
+        resultEl.classList.remove("hidden");
+
+        if (data.supported) {
+            twState.nicknameSupported = true;
+            if (data.is_valid) {
+                twState.nickname = data.username || "";
+                resultEl.className = "tw-account-result valid";
+                resultEl.innerHTML = `<span class="tw-check-icon">✓</span> Akun ditemukan: <strong>${escapeHtml(data.username || "-")}</strong>`;
+            } else {
+                twState.nickname = null;
+                resultEl.className = "tw-account-result invalid";
+                resultEl.innerHTML = `⚠️ User ID${twState.needsServerId ? "/Server ID" : ""} tidak ditemukan. Periksa kembali sebelum melanjutkan.`;
+            }
+        } else {
+            twState.nicknameSupported = false;
+            twState.nickname = null;
+            resultEl.className = "tw-account-result warning";
+            resultEl.innerHTML = `⚠️ Cek otomatis belum tersedia untuk game ini. Pastikan User ID${twState.needsServerId ? "/Server ID" : ""} sudah benar sebelum lanjut.`;
+        }
+    } catch (err) {
+        resultEl.classList.remove("hidden");
+        resultEl.className = "tw-account-result warning";
+        resultEl.innerHTML = `⚠️ Gagal menghubungi server cek akun. Pastikan data yang kamu masukkan sudah benar.`;
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "🔍 Cek Akun";
+    }
+});
+
+/* ---- Step 2: Pilih Nominal (hanya produk milik game ini) ---- */
+function renderTopupProductGrid() {
+    const grid = document.getElementById("twProductGrid");
+    if (!twState.products.length) {
+        grid.innerHTML = `<div class="topup-empty">Belum ada produk untuk game ini.</div>`;
+        return;
+    }
+
+    grid.innerHTML = twState.products.map(p => `
+        <div class="tw-product-card ${twState.product && twState.product.kode_produk === p.kode_produk ? "selected" : ""}" data-kode="${p.kode_produk}">
+            ${p.item_icon ? `<img class="tw-product-icon" src="${p.item_icon}" alt="${escapeHtml(p.nama)}" loading="lazy">` : `<span class="diamond-icon">◆</span>`}
+            <h5>${escapeHtml(p.nama)}</h5>
+            <div class="tw-product-price">${rupiah(p.harga_jual)}</div>
+            <span class="tw-product-check">✓</span>
+        </div>
+    `).join("");
+
+    grid.querySelectorAll(".tw-product-card").forEach(card => {
+        card.addEventListener("click", () => {
+            twState.product = twState.products.find(x => x.kode_produk === card.dataset.kode);
+            renderTopupProductGrid();
+        });
+    });
+}
+
+/* ---- Step 3: Pilih Metode Pembayaran ---- */
+function renderTopupPaymentGrid() {
+    const grid = document.getElementById("twPaymentGrid");
+    grid.innerHTML = TW_PAYMENT_METHODS.map(m => `
+        <div class="tw-payment-card ${twState.payment === m.id ? "selected" : ""}" data-id="${m.id}">
+            <span class="tw-payment-icon">${m.icon}</span>
+            <div>
+                <h5>${m.label}</h5>
+                <p>${m.desc}</p>
+            </div>
+            <span class="tw-payment-check">✓</span>
+        </div>
+    `).join("");
+
+    grid.querySelectorAll(".tw-payment-card").forEach(card => {
+        card.addEventListener("click", () => {
+            twState.payment = card.dataset.id;
+            renderTopupPaymentGrid();
+        });
+    });
+}
+
+/* ---- Step 4: Ringkasan Pesanan ---- */
+function renderTwSummary() {
+    const el = document.getElementById("twSummary");
+    const p = twState.product;
+    const paymentLabel = (TW_PAYMENT_METHODS.find(m => m.id === twState.payment) || {}).label || "-";
+
+    el.innerHTML = `
+        <div class="tw-summary-row"><span>Game</span><strong>${escapeHtml(twState.kategori)}</strong></div>
+        ${twState.nicknameSupported && twState.nickname ? `<div class="tw-summary-row"><span>Nickname</span><strong>${escapeHtml(twState.nickname)}</strong></div>` : ""}
+        <div class="tw-summary-row"><span>User ID</span><strong>${escapeHtml(twState.userId)}${twState.serverId ? " (" + escapeHtml(twState.serverId) + ")" : ""}</strong></div>
+        <div class="tw-summary-row"><span>Produk</span><strong>${escapeHtml(p ? p.nama : "-")}</strong></div>
+        <div class="tw-summary-row"><span>Harga</span><strong>${rupiah(p ? p.harga_jual : 0)}</strong></div>
+        <div class="tw-summary-row"><span>Metode Pembayaran</span><strong>${escapeHtml(paymentLabel)}</strong></div>
+    `;
+    document.getElementById("twConfirmCheck").checked = false;
+    document.getElementById("twStep4Error").textContent = "";
+}
+
+// Submit — kontrak API PERSIS sama seperti implementasi lama (kode_produk,
+// tujuan, server_id, recipient_email ke POST /api/topup), jadi backend,
+// iPaymu, dan webhook TIDAK perlu diubah sama sekali.
+async function submitTopupOrder() {
+    const errorEl = document.getElementById("twStep4Error");
+    const btn = document.getElementById("twNextBtn");
+    const checkEl = document.getElementById("twConfirmCheck");
+
+    if (!checkEl.checked) {
+        errorEl.textContent = "Centang dulu konfirmasi kalau seluruh data sudah benar";
+        return;
+    }
+    errorEl.textContent = "";
+    btn.disabled = true;
+    btn.textContent = "Memproses...";
+
+    try {
+        const token = localStorage.getItem("nexshop_token");
         const headers = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
@@ -1019,27 +1247,25 @@ document.getElementById("topupForm").addEventListener("submit", async (e) => {
             method: "POST",
             headers,
             body: JSON.stringify({
-                kode_produk: activeTopupProduct.kode_produk,
-                tujuan,
-                server_id: server_id || undefined,
-                recipient_email
+                kode_produk: twState.product.kode_produk,
+                tujuan: twState.userId,
+                server_id: twState.serverId || undefined,
+                recipient_email: twState.email
             })
         });
         const data = await res.json();
 
         if (!res.ok) {
             errorEl.textContent = data.message || "Gagal membuat pesanan topup";
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Bayar Sekarang";
+            btn.disabled = false;
+            btn.textContent = "Bayar Sekarang";
             return;
         }
 
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Bayar Sekarang";
-        closeOverlay("topupOverlay");
-
         if (!data.paymentUrl) {
             toast("URL pembayaran tidak ditemukan dari server.", "error");
+            btn.disabled = false;
+            btn.textContent = "Bayar Sekarang";
             return;
         }
 
@@ -1047,10 +1273,10 @@ document.getElementById("topupForm").addEventListener("submit", async (e) => {
         window.location.href = data.paymentUrl;
     } catch (err) {
         errorEl.textContent = "Gagal terhubung ke server.";
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Bayar Sekarang";
+        btn.disabled = false;
+        btn.textContent = "Bayar Sekarang";
     }
-});
+}
 
 /* ---------- Show/hide password ---------- */
 document.querySelectorAll(".toggle-password").forEach(btn => {

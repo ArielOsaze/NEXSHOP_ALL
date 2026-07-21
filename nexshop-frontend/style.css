@@ -276,47 +276,181 @@ header{ position:sticky; top:0; z-index:100; }
     max-width:1240px; margin:0 auto; padding:20px 24px 90px; position:relative; z-index:1;
 }
 .topup-heading .eyebrow-cyan{ color:var(--cyan); }
-
-.topup-category-filter{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-bottom:32px; }
-.topup-category-filter .category-btn.active{
-    background:linear-gradient(135deg,var(--cyan),var(--cyan-2)); box-shadow:var(--glow-cyan);
-}
-
-.topup-grid{
-    display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:18px;
-}
-.topup-empty{
-    grid-column:1/-1; text-align:center; color:var(--text-dim); padding:40px 0; font-size:14px;
-}
-.topup-card{
-    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius-sm);
-    padding:18px; text-align:center; cursor:pointer; position:relative;
-    transition:transform .2s, border-color .2s, box-shadow .2s;
-}
-.topup-card:hover{ transform:translateY(-4px); border-color:var(--cyan); box-shadow:var(--glow-cyan); }
-.topup-card .diamond-icon{
-    font-size:26px; color:var(--cyan); display:block; margin-bottom:10px;
-    filter:drop-shadow(0 0 8px rgba(34,211,238,.6));
-}
-.topup-card .topup-item-icon{
-    width:44px; height:44px; object-fit:contain; display:block; margin:0 auto 10px;
-    filter:drop-shadow(0 0 8px rgba(34,211,238,.4));
-}
 .category-btn-logo{
     width:18px; height:18px; object-fit:contain; border-radius:4px; vertical-align:-4px; margin-right:6px;
 }
-.topup-modal-head #tpIcon img{
-    width:36px; height:36px; object-fit:contain; border-radius:8px;
+.diamond-icon{ font-size:26px; color:var(--cyan); filter:drop-shadow(0 0 8px rgba(34,211,238,.6)); }
+.topup-empty{
+    grid-column:1/-1; text-align:center; color:var(--text-dim); padding:40px 0; font-size:14px;
+}
+
+/* ---- Step 1: game grid (glassmorphism cards, hover animation) ---- */
+.topup-game-grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:18px;
+}
+.topup-game-card{
+    background:rgba(26,32,56,.55); backdrop-filter:blur(14px); -webkit-backdrop-filter:blur(14px);
+    border:1px solid var(--line); border-radius:18px; padding:22px 16px; text-align:center;
+    cursor:pointer; position:relative; overflow:hidden;
+    transition:transform .28s cubic-bezier(.2,.8,.2,1), border-color .28s, box-shadow .28s;
+}
+.topup-game-card::before{
+    content:""; position:absolute; inset:0; opacity:0; z-index:0;
+    background:linear-gradient(160deg,rgba(139,92,246,.16),rgba(34,211,238,.10) 60%,transparent);
+    transition:opacity .28s;
+}
+.topup-game-card:hover, .topup-game-card:focus-visible{
+    transform:translateY(-8px) scale(1.02); border-color:var(--cyan);
+    box-shadow:0 18px 40px rgba(0,0,0,.35), var(--glow-cyan); outline:none;
+}
+.topup-game-card:hover::before{ opacity:1; }
+.tgc-logo{
+    width:64px; height:64px; margin:0 auto 14px; border-radius:16px; overflow:hidden;
+    background:var(--bg-panel-2); display:flex; align-items:center; justify-content:center;
+    position:relative; z-index:1; box-shadow:inset 0 0 0 1px rgba(255,255,255,.04);
+}
+.tgc-logo img{ width:100%; height:100%; object-fit:cover; }
+.topup-game-card h5{ position:relative; z-index:1; font-size:14.5px; font-weight:700; margin-bottom:6px; color:var(--text); }
+.tgc-count{
+    position:relative; z-index:1; display:inline-block; font-size:11px; color:var(--text-dim);
+    font-family:'Space Grotesk',sans-serif; letter-spacing:.03em;
+}
+
+/* skeleton loading state */
+.skel-block{ background:linear-gradient(90deg,var(--bg-panel-2) 25%,var(--bg-panel-3) 37%,var(--bg-panel-2) 63%); background-size:400% 100%; animation:skel-shine 1.4s ease infinite; }
+.skel-line{ height:9px; border-radius:6px; margin:8px auto 0; background:linear-gradient(90deg,var(--bg-panel-2) 25%,var(--bg-panel-3) 37%,var(--bg-panel-2) 63%); background-size:400% 100%; animation:skel-shine 1.4s ease infinite; }
+.topup-game-card.skeleton{ cursor:default; pointer-events:none; }
+.topup-game-card.skeleton .tgc-logo{ width:64px; height:64px; margin:0 auto 14px; }
+@keyframes skel-shine{ 0%{ background-position:100% 0; } 100%{ background-position:-100% 0; } }
+
+/* ---- Halaman Detail Game (bukan modal) ---- */
+.topup-detail{
+    max-width:900px; margin:0 auto; padding:20px 24px 100px; position:relative; z-index:1;
+    animation:tw-fade-in .35s ease;
+}
+@keyframes tw-fade-in{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:translateY(0); } }
+.tw-back{
+    font-size:13px; font-weight:600; color:var(--text-muted); margin-bottom:20px; transition:.2s;
+}
+.tw-back:hover{ color:var(--cyan); }
+
+.tw-banner{
+    position:relative; border-radius:20px; overflow:hidden; padding:32px 28px; margin-bottom:28px;
+    background:linear-gradient(135deg,var(--bg-panel-3),var(--bg-panel)); border:1px solid var(--line);
+    background-size:cover; background-position:center;
+}
+.tw-banner-overlay{
+    position:absolute; inset:0; background:linear-gradient(100deg,rgba(8,11,20,.92) 35%,rgba(8,11,20,.55));
+}
+.tw-banner-content{ position:relative; z-index:1; display:flex; align-items:center; gap:20px; }
+.tw-logo{
+    width:76px; height:76px; border-radius:18px; object-fit:cover; background:var(--bg-panel-2);
+    box-shadow:0 10px 30px rgba(0,0,0,.4), 0 0 0 1px rgba(255,255,255,.06);
+}
+.tw-banner-content h2{ font-size:clamp(20px,3vw,28px); margin-bottom:6px; }
+.tw-banner-content p{ color:var(--text-muted); font-size:13.5px; max-width:480px; }
+
+/* stepper */
+.tw-stepper{ display:flex; align-items:center; justify-content:center; gap:6px; margin-bottom:34px; }
+.tw-step-dot{
+    display:flex; flex-direction:column; align-items:center; gap:8px; font-size:11.5px;
+    color:var(--text-dim); font-weight:600; text-transform:uppercase; letter-spacing:.04em;
+}
+.tw-dot-num{
+    width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text-muted); font-size:13px;
+    font-family:'Space Grotesk',sans-serif; font-weight:700; transition:.25s;
+}
+.tw-step-dot.active .tw-dot-num{
+    background:linear-gradient(135deg,var(--violet),var(--cyan)); border-color:transparent; color:#fff;
+    box-shadow:var(--glow-cyan);
+}
+.tw-step-dot.active{ color:var(--text); }
+.tw-step-dot.done .tw-dot-num{ background:rgba(34,211,238,.16); border-color:var(--cyan); color:var(--cyan); }
+.tw-step-dot.done{ color:var(--text-muted); }
+.tw-step-line{ width:36px; height:2px; background:var(--line); margin-bottom:20px; }
+
+/* panels (glass card elevation) */
+.tw-panels{
+    background:rgba(18,23,41,.6); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border:1px solid var(--line); border-radius:20px; padding:28px 26px; margin-bottom:22px;
+    box-shadow:0 20px 50px rgba(0,0,0,.3);
+}
+.tw-panel h4{ font-size:18px; margin-bottom:18px; }
+.tw-panel-sub{ color:var(--text-muted); font-size:13px; margin-bottom:20px; margin-top:-10px; }
+.tw-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px; }
+.tw-form-grid label:last-child:nth-child(odd){ grid-column:1/-1; }
+
+.tw-account-result{
+    margin-top:16px; padding:13px 16px; border-radius:12px; font-size:13.5px; font-weight:600;
+    display:flex; align-items:center; gap:8px; animation:tw-fade-in .25s ease;
+}
+.tw-account-result.valid{ background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.4); color:var(--success); }
+.tw-account-result.invalid{ background:rgba(240,71,92,.12); border:1px solid rgba(240,71,92,.4); color:var(--danger); }
+.tw-account-result.warning{ background:rgba(245,166,35,.12); border:1px solid rgba(245,166,35,.4); color:var(--warning); }
+.tw-check-icon{ font-weight:900; }
+
+/* Step 2 — nominal grid */
+.tw-product-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; }
+.tw-product-card{
+    position:relative; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:14px;
+    padding:18px 14px; text-align:center; cursor:pointer;
+    transition:transform .2s, border-color .2s, box-shadow .2s, background .2s;
+}
+.tw-product-card:hover{ transform:translateY(-4px); border-color:var(--violet); box-shadow:var(--glow-violet); }
+.tw-product-card.selected{
+    border-color:var(--cyan); background:rgba(34,211,238,.08); box-shadow:var(--glow-cyan);
+}
+.tw-product-icon{
+    width:38px; height:38px; object-fit:contain; display:block; margin:0 auto 10px;
     filter:drop-shadow(0 0 8px rgba(34,211,238,.4));
 }
-.topup-card h5{ font-size:14px; font-weight:600; margin-bottom:6px; color:var(--text); }
-.topup-card .topup-price{
-    font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--cyan); font-size:14px;
+.tw-product-card h5{ font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text); min-height:32px; }
+.tw-product-price{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--cyan); font-size:13.5px; }
+.tw-product-check{
+    position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%;
+    background:var(--cyan); color:#04141a; font-size:11px; font-weight:900;
+    display:flex; align-items:center; justify-content:center; opacity:0; transform:scale(.5); transition:.2s;
 }
-.topup-card .topup-cat-tag{
-    position:absolute; top:10px; right:10px; font-size:10px; color:var(--text-dim);
-    text-transform:uppercase; letter-spacing:.05em;
+.tw-product-card.selected .tw-product-check{ opacity:1; transform:scale(1); }
+
+/* Step 3 — payment method cards */
+.tw-payment-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; }
+.tw-payment-card{
+    position:relative; display:flex; align-items:center; gap:14px; background:var(--bg-panel-2);
+    border:1px solid var(--line); border-radius:14px; padding:16px; cursor:pointer;
+    transition:transform .2s, border-color .2s, box-shadow .2s, background .2s;
 }
+.tw-payment-card:hover{ transform:translateY(-3px); border-color:var(--violet); box-shadow:var(--glow-violet); }
+.tw-payment-card.selected{ border-color:var(--cyan); background:rgba(34,211,238,.08); box-shadow:var(--glow-cyan); }
+.tw-payment-icon{ font-size:26px; flex-shrink:0; }
+.tw-payment-card h5{ font-size:14px; margin-bottom:2px; }
+.tw-payment-card p{ font-size:12px; color:var(--text-muted); }
+.tw-payment-check{
+    position:absolute; top:10px; right:10px; width:20px; height:20px; border-radius:50%;
+    background:var(--cyan); color:#04141a; font-size:11px; font-weight:900;
+    display:flex; align-items:center; justify-content:center; opacity:0; transform:scale(.5); transition:.2s;
+}
+.tw-payment-card.selected .tw-payment-check{ opacity:1; transform:scale(1); }
+
+/* Step 4 — order summary */
+.tw-summary{ display:flex; flex-direction:column; gap:0; margin-bottom:18px; }
+.tw-summary-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0;
+    border-bottom:1px solid var(--line); font-size:13.5px;
+}
+.tw-summary-row:last-child{ border-bottom:none; }
+.tw-summary-row span{ color:var(--text-muted); }
+.tw-summary-row strong{ color:var(--text); text-align:right; }
+.tw-confirm-check{
+    flex-direction:row !important; align-items:center; gap:10px !important; font-size:13px !important;
+    color:var(--text-muted) !important; font-weight:500 !important; cursor:pointer;
+}
+.tw-confirm-check input{ width:17px; height:17px; accent-color:var(--cyan); cursor:pointer; }
+
+/* nav (back / lanjut) */
+.tw-nav{ display:flex; align-items:center; justify-content:flex-end; gap:12px; }
+.tw-next{ width:auto; min-width:160px; margin-top:0; padding:13px 32px; }
 
 /* ================= FOOTER ================= */
 .site-footer{
@@ -403,6 +537,20 @@ header{ position:sticky; top:0; z-index:100; }
 .topup-modal-head h3{ font-size:17px; margin-bottom:2px; }
 .tp-price{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--cyan); font-size:15px; }
 .btn-cyan{ background:linear-gradient(135deg,var(--cyan),var(--cyan-2)) !important; box-shadow:var(--glow-cyan) !important; }
+
+.btn-secondary{
+    padding:12px 20px; border-radius:100px; font-weight:700; font-size:13.5px;
+    background:rgba(34,211,238,.12); color:var(--cyan); border:1px solid rgba(34,211,238,.4);
+    transition:.2s; align-self:flex-start;
+}
+.btn-secondary:hover{ background:var(--cyan); color:#04141a; }
+.btn-secondary:disabled{ opacity:.6; cursor:not-allowed; }
+
+.btn-ghost{
+    padding:12px 24px; border-radius:100px; font-weight:700; font-size:14px;
+    background:transparent; color:var(--text-muted); border:1px solid var(--line); transition:.2s;
+}
+.btn-ghost:hover{ color:var(--text); border-color:var(--violet); }
 
 /* generic form styling shared by auth / checkout / topup / product modal */
 label{ display:flex; flex-direction:column; gap:6px; font-size:13px; color:var(--text-muted); font-weight:600; }
@@ -552,6 +700,25 @@ input::placeholder{ color:var(--text-dim); }
     .menu-account-btn{ background:none; box-shadow:none; color:var(--violet); }
     .menu-toggle{ display:flex; }
     .account-dropdown{ right:16px; left:16px; width:auto; }
+
+    .topup-game-grid{ grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:12px; }
+    .topup-game-card{ padding:16px 10px; }
+    .tgc-logo{ width:52px; height:52px; }
+
+    .tw-banner{ padding:22px 18px; }
+    .tw-banner-content{ flex-direction:column; text-align:center; gap:12px; }
+    .tw-logo{ width:60px; height:60px; }
+    .tw-stepper{ gap:2px; }
+    .tw-step-line{ width:16px; }
+    .tw-step-dot{ font-size:9.5px; }
+    .tw-dot-num{ width:28px; height:28px; }
+    .tw-panels{ padding:20px 16px; }
+    .tw-form-grid{ grid-template-columns:1fr; }
+    .tw-form-grid label:last-child:nth-child(odd){ grid-column:auto; }
+    .tw-product-grid{ grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); }
+    .tw-payment-grid{ grid-template-columns:1fr; }
+    .tw-nav{ flex-direction:column-reverse; }
+    .tw-nav .btn-ghost, .tw-next{ width:100%; }
 }
 @media(prefers-reduced-motion:reduce){
     *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }

@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260721">
+<link rel="stylesheet" href="style.css?v=20260722">
 </head>
 <body>
 
@@ -73,13 +73,87 @@
     <div class="section-heading topup-heading">
         <span class="eyebrow eyebrow-cyan">Instan &amp; Otomatis</span>
         <h3>Topup Diamond &amp; Voucher Game</h3>
-        <p>Masukkan ID game kamu, bayar, diamond langsung masuk — tanpa ribet, prosesnya otomatis 24 jam.</p>
+        <p>Pilih game kamu, masukkan ID, bayar — diamond/voucher langsung masuk otomatis 24 jam.</p>
     </div>
 
-    <div class="topup-category-filter" id="topupCategoryFilter"></div>
+    <div class="topup-game-grid" id="topupGameGrid"></div>
+</section>
 
-    <div class="topup-grid" id="topupGrid">
-        <div class="topup-empty" id="topupEmpty">Belum ada produk topup tersedia saat ini.</div>
+<!-- Topup Detail (halaman penuh, bukan modal) -->
+<section class="topup-detail hidden" id="topupDetail">
+    <div class="topup-detail-inner">
+        <button type="button" class="tw-back" id="twBackBtn">&larr; Kembali ke daftar game</button>
+
+        <div class="tw-banner" id="twBanner">
+            <div class="tw-banner-overlay"></div>
+            <div class="tw-banner-content">
+                <img class="tw-logo" id="twLogo" src="" alt="">
+                <div>
+                    <h2 id="twGameName"></h2>
+                    <p id="twGameDesc"></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="tw-stepper" id="twStepper">
+            <div class="tw-step-dot active" data-step="1"><span class="tw-dot-num">1</span>Akun</div>
+            <div class="tw-step-line"></div>
+            <div class="tw-step-dot" data-step="2"><span class="tw-dot-num">2</span>Nominal</div>
+            <div class="tw-step-line"></div>
+            <div class="tw-step-dot" data-step="3"><span class="tw-dot-num">3</span>Pembayaran</div>
+            <div class="tw-step-line"></div>
+            <div class="tw-step-dot" data-step="4"><span class="tw-dot-num">4</span>Ringkasan</div>
+        </div>
+
+        <div class="tw-panels">
+            <!-- STEP 1 — Akun -->
+            <div class="tw-panel" data-panel="1">
+                <h4>Masukkan Data Akun</h4>
+                <div class="tw-form-grid">
+                    <label>User ID
+                        <input type="text" id="twUserId" placeholder="Masukkan User ID kamu">
+                    </label>
+                    <label id="twServerWrap" class="hidden">Server ID
+                        <input type="text" id="twServerId" placeholder="Masukkan Server ID">
+                    </label>
+                    <label>Email (buat kirim bukti transaksi)
+                        <input type="email" id="twEmail" placeholder="kamu@email.com">
+                    </label>
+                </div>
+                <button type="button" class="btn-secondary" id="twCheckBtn">🔍 Cek Akun</button>
+                <div class="tw-account-result hidden" id="twAccountResult"></div>
+                <p class="auth-error" id="twStep1Error"></p>
+            </div>
+
+            <!-- STEP 2 — Nominal -->
+            <div class="tw-panel hidden" data-panel="2">
+                <h4>Pilih Nominal</h4>
+                <div class="tw-product-grid" id="twProductGrid"></div>
+            </div>
+
+            <!-- STEP 3 — Pembayaran -->
+            <div class="tw-panel hidden" data-panel="3">
+                <h4>Pilih Metode Pembayaran</h4>
+                <p class="tw-panel-sub">Seluruh transaksi diproses aman lewat payment gateway resmi iPaymu. Pilih kanal favorit kamu — kamu tetap bisa berpindah metode di halaman pembayaran iPaymu.</p>
+                <div class="tw-payment-grid" id="twPaymentGrid"></div>
+            </div>
+
+            <!-- STEP 4 — Ringkasan -->
+            <div class="tw-panel hidden" data-panel="4">
+                <h4>Ringkasan Pesanan</h4>
+                <div class="tw-summary" id="twSummary"></div>
+                <label class="tw-confirm-check">
+                    <input type="checkbox" id="twConfirmCheck">
+                    Saya memastikan seluruh data sudah benar.
+                </label>
+                <p class="auth-error" id="twStep4Error"></p>
+            </div>
+        </div>
+
+        <div class="tw-nav">
+            <button type="button" class="btn-ghost hidden" id="twPrevBtn">Kembali</button>
+            <button type="button" class="btn-primary btn-cyan tw-next" id="twNextBtn">Lanjut</button>
+        </div>
     </div>
 </section>
 
@@ -203,35 +277,6 @@
                 <button class="btn-primary pm-add" id="pmAddBtn">Tambah ke Keranjang</button>
             </div>
         </div>
-    </div>
-</div>
-
-<!-- Topup Product Modal -->
-<div class="overlay" id="topupOverlay">
-    <div class="modal topup-modal" role="dialog" aria-modal="true" aria-labelledby="tpTitle">
-        <button class="modal-close" data-close="topupOverlay" aria-label="Tutup">✕</button>
-        <form class="topup-modal-body" id="topupForm">
-            <div class="topup-modal-head">
-                <span class="diamond-icon" id="tpIcon">◆</span>
-                <div>
-                    <h3 id="tpTitle"></h3>
-                    <div class="tp-price" id="tpPrice"></div>
-                </div>
-            </div>
-
-            <label>Player ID / User ID
-                <input type="text" id="tpTujuan" required placeholder="Masukkan Player ID kamu">
-            </label>
-            <label id="tpServerWrap" class="hidden">Server ID
-                <input type="text" id="tpServerId" placeholder="Masukkan Server ID">
-            </label>
-            <label>Email (buat kirim bukti transaksi)
-                <input type="email" id="tpEmail" required placeholder="kamu@email.com">
-            </label>
-
-            <p class="auth-error" id="tpError"></p>
-            <button type="submit" class="btn-primary btn-cyan" id="tpSubmitBtn">Bayar Sekarang</button>
-        </form>
     </div>
 </div>
 
@@ -376,6 +421,6 @@
   backend langsung kirim balik `paymentUrl` (halaman pembayaran iPaymu)
   dan browser di-redirect ke sana lewat window.location.href. Lihat script.js.
 -->
-<script src="script.js?v=20260721"></script>
+<script src="script.js?v=20260722"></script>
 </body>
 </html>
