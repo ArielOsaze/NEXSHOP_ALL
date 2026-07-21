@@ -8,11 +8,12 @@ const optionalAuthMiddleware = require("../middleware/optionalAuthMiddleware");
 router.post("/", optionalAuthMiddleware, orderController.create);
 
 router.get("/my", authMiddleware, orderController.getMyOrders);
+router.get("/status/:id", orderController.getPublicStatus); // publik — buat halaman kembali dari pembayaran
 router.get("/", authMiddleware, orderController.getAllOrders); // baru: buat admin dashboard
 
-// Webhook dari server Midtrans — SENGAJA tanpa authMiddleware, karena yang
-// memanggil endpoint ini adalah server Midtrans, bukan user yang login.
-// Keasliannya diverifikasi otomatis di dalam orderController.handleNotification.
+// Webhook dari server iPaymu — SENGAJA tanpa authMiddleware, karena yang
+// memanggil endpoint ini adalah server iPaymu, bukan user yang login.
+// Keasliannya diverifikasi ulang server-to-server di dalam orderController.handleNotification.
 router.post("/notification", orderController.handleNotification);
 
 module.exports = router;

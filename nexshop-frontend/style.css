@@ -99,6 +99,14 @@ header{ position:sticky; top:0; z-index:100; }
     transition:width .25s;
 }
 .menu a:hover::after{ width:100%; }
+.menu-link-btn{
+    font-size:14px; font-weight:600; color:var(--text-muted);
+    transition:color .2s; position:relative; background:none; border:none; cursor:pointer;
+    font-family:inherit;
+}
+.menu-link-btn:hover{ color:var(--text); }
+
+.footer-address{ font-size:13px; color:var(--text-muted); margin:-8px 0 16px; }
 
 .menu-account-btn{
     padding:9px 20px; border-radius:100px;
@@ -290,6 +298,17 @@ header{ position:sticky; top:0; z-index:100; }
     font-size:26px; color:var(--cyan); display:block; margin-bottom:10px;
     filter:drop-shadow(0 0 8px rgba(34,211,238,.6));
 }
+.topup-card .topup-item-icon{
+    width:44px; height:44px; object-fit:contain; display:block; margin:0 auto 10px;
+    filter:drop-shadow(0 0 8px rgba(34,211,238,.4));
+}
+.category-btn-logo{
+    width:18px; height:18px; object-fit:contain; border-radius:4px; vertical-align:-4px; margin-right:6px;
+}
+.topup-modal-head #tpIcon img{
+    width:36px; height:36px; object-fit:contain; border-radius:8px;
+    filter:drop-shadow(0 0 8px rgba(34,211,238,.4));
+}
 .topup-card h5{ font-size:14px; font-weight:600; margin-bottom:6px; color:var(--text); }
 .topup-card .topup-price{
     font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--cyan); font-size:14px;
@@ -345,6 +364,17 @@ header{ position:sticky; top:0; z-index:100; }
 .policy-panel h3{ margin-bottom:16px; }
 .policy-list{ padding-left:20px; color:var(--text-muted); font-size:13.5px; }
 .policy-list li{ margin-bottom:12px; }
+.contact-list{ padding-left:0; list-style:none; }
+.contact-list li{ display:flex; gap:8px; align-items:flex-start; }
+.contact-list a{ color:var(--cyan); }
+.faq-list{ display:flex; flex-direction:column; gap:10px; max-height:60vh; overflow-y:auto; }
+.faq-item{ border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--bg-panel-2); }
+.faq-item summary{ padding:14px 16px; cursor:pointer; font-weight:600; font-size:14px; color:var(--text); list-style:none; }
+.faq-item summary::-webkit-details-marker{ display:none; }
+.faq-item summary::before{ content:"+"; color:var(--violet); margin-right:10px; font-weight:700; }
+.faq-item[open] summary::before{ content:"−"; }
+.faq-item p{ padding:0 16px 14px; color:var(--text-muted); font-size:13.5px; margin:0; }
+.faq-empty{ color:var(--text-muted); font-size:13.5px; }
 
 /* product modal */
 .product-modal{ max-width:600px; }
@@ -518,7 +548,7 @@ input::placeholder{ color:var(--text-dim); }
         max-height:0; overflow:hidden; transition:max-height .3s;
     }
     .menu.active{ max-height:260px; }
-    .menu a, .menu-account-btn{ padding:16px 24px; border-radius:0; text-align:left; }
+    .menu a, .menu-link-btn, .menu-account-btn{ padding:16px 24px; border-radius:0; text-align:left; }
     .menu-account-btn{ background:none; box-shadow:none; color:var(--violet); }
     .menu-toggle{ display:flex; }
     .account-dropdown{ right:16px; left:16px; width:auto; }

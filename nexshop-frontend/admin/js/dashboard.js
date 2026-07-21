@@ -3,7 +3,7 @@
 // ================================
 
 const token = localStorage.getItem("token");
-const API_BASE = "/api";
+const API_BASE = "https://nexshop-backend-production.up.railway.app/api";
 
 if (!token) {
     window.location.href = "login.html";
@@ -727,6 +727,7 @@ document.querySelectorAll("#settingsTabs [data-settings-tab]").forEach(btn => {
         const tab = btn.dataset.settingsTab;
         document.getElementById("settingsTabProfile").classList.toggle("d-none", tab !== "profile");
         document.getElementById("settingsTabStore").classList.toggle("d-none", tab !== "store");
+        document.getElementById("settingsTabContent").classList.toggle("d-none", tab !== "content");
         document.getElementById("settingsTabApiKeys").classList.toggle("d-none", tab !== "apikeys");
     });
 });
@@ -751,18 +752,24 @@ async function loadSettings() {
             document.getElementById("storeName").value = store.store_name || "";
             document.getElementById("storeTagline").value = store.tagline || "";
             document.getElementById("storeWhatsapp").value = store.contact_whatsapp || "";
+            document.getElementById("storePhone").value = store.contact_phone || "";
             document.getElementById("storeEmail").value = store.contact_email || "";
+            document.getElementById("storeAddress").value = store.address || "";
             if (store.logo_url) {
                 document.getElementById("storeLogoPreview").src = store.logo_url;
                 document.getElementById("storeLogoPreview").classList.remove("d-none");
             }
+
+            renderFaqEditor(Array.isArray(store.faq) ? store.faq : []);
+            document.getElementById("termsContentInput").value = store.terms_content || "";
+            document.getElementById("refundContentInput").value = store.refund_content || "";
         }
 
         if (keysRes.ok) {
             const keys = await keysRes.json();
-            document.getElementById("midtransServerKey").value = keys.midtrans_server_key || "";
-            document.getElementById("midtransClientKey").value = keys.midtrans_client_key || "";
-            document.getElementById("midtransIsProduction").checked = !!keys.midtrans_is_production;
+            document.getElementById("ipaymuVa").value = keys.ipaymu_va || "";
+            document.getElementById("ipaymuApiKey").value = keys.ipaymu_api_key || "";
+            document.getElementById("ipaymuIsProduction").checked = !!keys.ipaymu_is_production;
             document.getElementById("tvMemberCode").value = keys.tokovoucher_member_code || "";
             document.getElementById("tvSecret").value = keys.tokovoucher_secret || "";
         }
@@ -770,6 +777,71 @@ async function loadSettings() {
         if (err.message === "unauthorized") return;
         console.error(err);
         showToast("Gagal memuat pengaturan", true);
+    }
+}
+
+// ================================
+// FAQ Editor (dinamis, disimpan sebagai JSON array di store_settings.faq)
+// ================================
+let faqRows = [];
+
+function renderFaqEditor(faq) {
+    faqRows = faq.map(f => ({ q: f.q || "", a: f.a || "" }));
+    if (faqRows.length === 0) faqRows.push({ q: "", a: "" });
+    drawFaqRows();
+}
+
+function drawFaqRows() {
+    const wrap = document.getElementById("faqEditorList");
+    wrap.innerHTML = faqRows.map((f, i) => `
+        <div class="border rounded p-2 d-flex flex-column gap-2">
+            <div class="d-flex gap-2 align-items-start">
+                <div class="flex-grow-1">
+                    <input class="form-control form-control-sm mb-2" placeholder="Pertanyaan" value="${escapeHtml(f.q)}" oninput="faqRows[${i}].q=this.value">
+                    <textarea class="form-control form-control-sm" rows="2" placeholder="Jawaban" oninput="faqRows[${i}].a=this.value">${escapeHtml(f.a)}</textarea>
+                </div>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFaqRow(${i})"><i class="bi bi-trash"></i></button>
+            </div>
+        </div>
+    `).join("");
+}
+
+function addFaqRow() {
+    faqRows.push({ q: "", a: "" });
+    drawFaqRows();
+}
+
+function removeFaqRow(i) {
+    faqRows.splice(i, 1);
+    if (faqRows.length === 0) faqRows.push({ q: "", a: "" });
+    drawFaqRows();
+}
+
+async function saveContentSettings() {
+    const errorEl = document.getElementById("contentError");
+    errorEl.textContent = "";
+
+    const faq = faqRows.filter(f => f.q.trim() && f.a.trim()).map(f => ({ q: f.q.trim(), a: f.a.trim() }));
+
+    const payload = {
+        faq,
+        terms_content: document.getElementById("termsContentInput").value,
+        refund_content: document.getElementById("refundContentInput").value
+    };
+
+    try {
+        const res = await apiFetch("/settings/store", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menyimpan konten");
+
+        showToast("FAQ / Syarat & Ketentuan / Refund berhasil disimpan");
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        errorEl.textContent = err.message;
     }
 }
 
@@ -833,7 +905,9 @@ async function saveStoreSettings() {
             store_name: document.getElementById("storeName").value.trim(),
             tagline: document.getElementById("storeTagline").value.trim(),
             contact_whatsapp: document.getElementById("storeWhatsapp").value.trim(),
-            contact_email: document.getElementById("storeEmail").value.trim()
+            contact_phone: document.getElementById("storePhone").value.trim(),
+            contact_email: document.getElementById("storeEmail").value.trim(),
+            address: document.getElementById("storeAddress").value.trim()
         };
         if (logoUrl) payload.logo_url = logoUrl;
 
@@ -857,9 +931,9 @@ async function saveApiKeys() {
     errorEl.textContent = "";
 
     const payload = {
-        midtrans_server_key: document.getElementById("midtransServerKey").value.trim(),
-        midtrans_client_key: document.getElementById("midtransClientKey").value.trim(),
-        midtrans_is_production: document.getElementById("midtransIsProduction").checked,
+        ipaymu_va: document.getElementById("ipaymuVa").value.trim(),
+        ipaymu_api_key: document.getElementById("ipaymuApiKey").value.trim(),
+        ipaymu_is_production: document.getElementById("ipaymuIsProduction").checked,
         tokovoucher_member_code: document.getElementById("tvMemberCode").value.trim(),
         tokovoucher_secret: document.getElementById("tvSecret").value.trim()
     };
@@ -950,12 +1024,13 @@ async function loadTopupProducts() {
 function renderTopupProducts() {
     const tbody = document.getElementById("topupProducts");
     if (!topupProducts.length) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">Belum ada produk. Sync dulu dari TokoVoucher di atas.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">Belum ada produk. Sync dulu dari TokoVoucher di atas.</td></tr>`;
         return;
     }
 
     tbody.innerHTML = topupProducts.map(p => `
         <tr>
+            <td>${p.item_icon ? `<img src="${p.item_icon}" alt="" style="width:32px;height:32px;object-fit:contain;">` : `<span class="text-muted">◆</span>`}</td>
             <td><code>${escapeHtml(p.kode_produk)}</code></td>
             <td>${escapeHtml(p.nama)}</td>
             <td>${escapeHtml(p.kategori || "-")}</td>
@@ -983,7 +1058,30 @@ function editTopupProduct(id) {
     document.getElementById("tpEditButuhServerId").checked = !!p.butuh_server_id;
     document.getElementById("tpEditIsActive").checked = !!p.is_active;
 
+    const iconInput = document.getElementById("tpEditIconInput");
+    if (iconInput) iconInput.value = "";
+    const iconPreview = document.getElementById("tpEditIconPreview");
+    if (iconPreview) {
+        if (p.item_icon) {
+            iconPreview.src = p.item_icon;
+            iconPreview.classList.remove("d-none");
+        } else {
+            iconPreview.classList.add("d-none");
+        }
+    }
+
     topupProductModal.show();
+}
+
+const tpEditIconInput = document.getElementById("tpEditIconInput");
+if (tpEditIconInput) {
+    tpEditIconInput.addEventListener("change", () => {
+        const file = tpEditIconInput.files[0];
+        if (!file) return;
+        const preview = document.getElementById("tpEditIconPreview");
+        preview.src = URL.createObjectURL(file);
+        preview.classList.remove("d-none");
+    });
 }
 
 async function saveTopupProduct() {
@@ -998,6 +1096,16 @@ async function saveTopupProduct() {
     };
 
     try {
+        const iconFile = document.getElementById("tpEditIconInput")?.files[0];
+        if (iconFile) {
+            const formData = new FormData();
+            formData.append("image", iconFile);
+            const uploadRes = await apiFetch("/upload?type=logo", { method: "POST", body: formData });
+            const uploadData = await uploadRes.json().catch(() => ({}));
+            if (!uploadRes.ok) throw new Error(uploadData.message || "Upload icon gagal");
+            payload.item_icon = uploadData.url;
+        }
+
         const res = await apiFetch(`/topup/admin/products/${editingTopupProductId}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -1009,6 +1117,64 @@ async function saveTopupProduct() {
         topupProductModal.hide();
         loadTopupProducts();
         showToast("Produk topup berhasil disimpan");
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
+async function deleteAllTopupProducts() {
+    const kategori = prompt(
+        "Ketik nama kategori/game kalau cuma mau hapus produk kategori itu saja.\n" +
+        "Kosongkan lalu klik OK kalau mau hapus SEMUA produk topup (tidak bisa dibatalkan)."
+    );
+    if (kategori === null) return; // klik Cancel
+
+    const confirmMsg = kategori.trim()
+        ? `Yakin hapus SEMUA produk topup di kategori "${kategori.trim()}"? Tindakan ini tidak bisa dibatalkan.`
+        : `Yakin hapus SEMUA produk topup (semua game/kategori)? Tindakan ini tidak bisa dibatalkan.`;
+    if (!confirm(confirmMsg)) return;
+
+    try {
+        const qs = kategori.trim() ? `?kategori=${encodeURIComponent(kategori.trim())}` : "";
+        const res = await apiFetch(`/topup/admin/products${qs}`, { method: "DELETE" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menghapus semua produk");
+
+        showToast(data.message || "Produk berhasil dihapus");
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
+async function saveCategoryLogo() {
+    const kategori = document.getElementById("catLogoKategori").value.trim();
+    const file = document.getElementById("catLogoFile").files[0];
+
+    if (!kategori) return showToast("Isi nama kategori/game dulu", true);
+    if (!file) return showToast("Pilih file logo dulu", true);
+
+    try {
+        const formData = new FormData();
+        formData.append("image", file);
+        const uploadRes = await apiFetch("/upload?type=logo", { method: "POST", body: formData });
+        const uploadData = await uploadRes.json().catch(() => ({}));
+        if (!uploadRes.ok) throw new Error(uploadData.message || "Upload logo gagal");
+
+        const res = await apiFetch("/topup/admin/category-logo", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ kategori, operator_logo: uploadData.url })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menyimpan logo game");
+
+        showToast(data.message || "Logo game berhasil disimpan");
+        document.getElementById("catLogoKategori").value = "";
+        document.getElementById("catLogoFile").value = "";
+        loadTopupProducts();
     } catch (err) {
         if (err.message === "unauthorized") return;
         showToast(err.message, true);

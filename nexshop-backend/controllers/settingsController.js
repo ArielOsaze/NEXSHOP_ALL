@@ -41,7 +41,7 @@ exports.updateStoreSettingsAdmin = async (req, res) => {
 };
 
 // ===========================================================
-// API KEYS — Midtrans + TokoVoucher (admin only, key sensitif di-mask)
+// API KEYS — iPaymu + TokoVoucher (admin only, key sensitif di-mask)
 // ===========================================================
 function mask(value) {
     if (!value) return "";
@@ -56,9 +56,9 @@ exports.getApiKeysAdmin = async (req, res) => {
     try {
         const keys = await getApiKeys({ fresh: true });
         res.json({
-            midtrans_server_key: mask(keys.midtrans_server_key),
-            midtrans_client_key: keys.midtrans_client_key, // client key memang publik, gak perlu di-mask
-            midtrans_is_production: keys.midtrans_is_production,
+            ipaymu_va: keys.ipaymu_va, // VA bukan rahasia, gak perlu di-mask
+            ipaymu_api_key: mask(keys.ipaymu_api_key),
+            ipaymu_is_production: keys.ipaymu_is_production,
             tokovoucher_member_code: keys.tokovoucher_member_code,
             tokovoucher_secret: mask(keys.tokovoucher_secret)
         });

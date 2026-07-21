@@ -1,7 +1,10 @@
 const supabase = require("../config/db");
 const tokovoucher = require("../config/tokovoucher");
-const { getSnapClient } = require("../config/midtrans");
+const { createRedirectPayment, checkTransactionStatus } = require("../config/ipaymu");
 const { notify } = require("../config/notify");
+
+const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
+const BACKEND_URL = (process.env.BACKEND_URL || "").replace(/\/$/, "");
 
 function rupiahLog(n) {
     return "Rp" + Number(n).toLocaleString("id-ID");
@@ -128,7 +131,7 @@ exports.updateProduct = async (req, res) => {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { id } = req.params;
-    const { harga_jual, is_active, butuh_server_id, sort_order, nama, kategori, operator_logo } = req.body;
+    const { harga_jual, is_active, butuh_server_id, sort_order, nama, kategori, operator_logo, item_icon } = req.body;
 
     const payload = { updated_at: new Date().toISOString() };
     if (harga_jual !== undefined) payload.harga_jual = harga_jual;
@@ -138,6 +141,7 @@ exports.updateProduct = async (req, res) => {
     if (nama !== undefined) payload.nama = nama;
     if (kategori !== undefined) payload.kategori = kategori;
     if (operator_logo !== undefined) payload.operator_logo = operator_logo;
+    if (item_icon !== undefined) payload.item_icon = item_icon;
 
     try {
         const { data, error } = await supabase
@@ -150,6 +154,30 @@ exports.updateProduct = async (req, res) => {
         if (!data.length) return res.status(404).json({ message: "Produk tidak ditemukan" });
 
         res.json({ message: "Produk berhasil diperbarui", data: data[0] });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ADMIN — set logo game (operator_logo) buat SEMUA produk dalam satu kategori
+// sekaligus, jadi admin gak perlu edit logo satu-satu per denominasi diamond.
+exports.updateCategoryLogo = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const { kategori, operator_logo } = req.body;
+    if (!kategori || !operator_logo) {
+        return res.status(400).json({ message: "kategori dan operator_logo wajib diisi" });
+    }
+    try {
+        const { error } = await supabase
+            .from("topup_products")
+            .update({ operator_logo, updated_at: new Date().toISOString() })
+            .eq("kategori", kategori);
+
+        if (error) return res.status(500).json({ message: "Gagal update logo game" });
+        notify("product", `🖼️ ${req.user.email} mengubah logo game "${kategori}"`);
+        res.json({ message: `Logo game "${kategori}" berhasil diperbarui` });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }
@@ -169,8 +197,33 @@ exports.deleteProduct = async (req, res) => {
     }
 };
 
+// ADMIN — hapus SEMUA produk topup sekaligus (biar gak perlu klik hapus satu-satu).
+// Opsional: kirim ?kategori=Mobile Legends buat cuma hapus produk di kategori/game itu saja.
+exports.deleteAllProducts = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const { kategori } = req.query;
+    try {
+        let query = supabase.from("topup_products").delete();
+        query = kategori ? query.eq("kategori", kategori) : query.not("id", "is", null); // .not(...) trik supaya delete tanpa filter tetap valid di Supabase
+
+        const { error, count } = await query.select("id", { count: "exact" });
+        if (error) {
+            console.log(error);
+            return res.status(500).json({ message: "Gagal menghapus semua produk" });
+        }
+
+        notify("product", `🗑️ ${req.user.email} menghapus SEMUA produk topup${kategori ? ` kategori "${kategori}"` : ""}`);
+        res.json({ message: kategori ? `Semua produk kategori "${kategori}" berhasil dihapus` : "Semua produk topup berhasil dihapus" });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 // ===========================================================
-// CHECKOUT — bikin order topup + transaksi Midtrans (guest ATAU login,
+// CHECKOUT — bikin order topup + transaksi iPaymu (guest ATAU login,
 // sama seperti checkout produk biasa)
 // ===========================================================
 exports.create = async (req, res) => {
@@ -216,41 +269,57 @@ exports.create = async (req, res) => {
             return res.status(500).json({ message: "Gagal membuat pesanan topup" });
         }
 
-        let transaction;
+        let payment;
         try {
-            const snap = await getSnapClient();
-            transaction = await snap.createTransaction({
-                transaction_details: {
-                    order_id: orderId,
-                    gross_amount: product.harga_jual
-                },
-                item_details: [{
+            payment = await createRedirectPayment({
+                referenceId: orderId,
+                itemDetails: [{
                     id: product.kode_produk,
-                    name: product.nama.slice(0, 50),
+                    name: product.nama.slice(0, 80),
                     price: product.harga_jual,
                     quantity: 1
                 }],
-                customer_details: {
-                    email: recipient_email || "guest@nexshop.my.id"
-                }
+                buyerEmail: recipient_email || undefined,
+                returnUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=success`,
+                cancelUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=cancel`,
+                notifyUrl: `${BACKEND_URL}/api/topup/notification`
             });
-        } catch (midtransErr) {
-            console.log(midtransErr);
+        } catch (ipaymuErr) {
+            console.log(ipaymuErr.ipaymuResponse || ipaymuErr.message);
             await supabase.from("topup_orders").update({ status: "failed" }).eq("id", orderId);
             return res.status(500).json({ message: "Gagal membuat transaksi pembayaran" });
         }
 
-        await supabase.from("topup_orders").update({ snap_token: transaction.token }).eq("id", orderId);
+        await supabase.from("topup_orders").update({ ipaymu_session_id: payment.sessionId, payment_url: payment.paymentUrl }).eq("id", orderId);
 
         notify("topup", `💎 Pesanan topup baru ${orderId}: ${product.nama} ke ${tujuan} senilai ${rupiahLog(product.harga_jual)}`);
 
         res.status(201).json({
             message: "Pesanan topup berhasil dibuat",
             orderId,
-            snap_token: transaction.token
+            paymentUrl: payment.paymentUrl
         });
     } catch (err) {
         console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ===========================================================
+// PUBLIK — cek status ringkas 1 order topup (dipakai halaman "kembali dari
+// pembayaran" setelah redirect iPaymu; guest checkout gak punya token login).
+// ===========================================================
+exports.getPublicStatus = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from("topup_orders")
+            .select("id, status, harga, nama_produk, tujuan")
+            .eq("id", req.params.id)
+            .maybeSingle();
+
+        if (error || !data) return res.status(404).json({ message: "Order tidak ditemukan" });
+        res.json(data);
+    } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }
 };
@@ -288,7 +357,7 @@ exports.getAllOrders = async (req, res) => {
     }
 };
 
-// Fulfill: dipanggil setelah pembayaran Midtrans "paid" — eksekusi transaksi
+// Fulfill: dipanggil setelah pembayaran iPaymu "paid" — eksekusi transaksi
 // nyata ke TokoVoucher supaya diamond benar-benar terkirim
 async function fulfillOrder(order) {
     try {
@@ -322,18 +391,19 @@ async function fulfillOrder(order) {
 }
 
 // ===========================================================
-// WEBHOOK — notifikasi Midtrans (payment). SENGAJA tanpa authMiddleware,
-// yang memanggil adalah server Midtrans, keasliannya diverifikasi via
-// snap.transaction.notification().
+// WEBHOOK — notifikasi pembayaran iPaymu. SENGAJA tanpa authMiddleware,
+// yang memanggil adalah server iPaymu; keasliannya diverifikasi dengan
+// mengecek ULANG status transaksi langsung ke server iPaymu (server-to-server).
 // ===========================================================
-exports.handleMidtransNotification = async (req, res) => {
+exports.handleIpaymuNotification = async (req, res) => {
     try {
-        const snap = await getSnapClient();
-        const notification = await snap.transaction.notification(req.body);
+        const body = req.body || {};
+        const orderId = body.reference_id || body.referenceId;
+        const trxId = body.trx_id || body.trxId;
 
-        const orderId = notification.order_id;
-        const transactionStatus = notification.transaction_status;
-        const fraudStatus = notification.fraud_status;
+        if (!orderId) {
+            return res.status(400).json({ message: "reference_id tidak ada di body notifikasi" });
+        }
 
         const { data: order } = await supabase
             .from("topup_orders")
@@ -345,24 +415,31 @@ exports.handleMidtransNotification = async (req, res) => {
             return res.status(404).json({ message: "Order topup tidak ditemukan" });
         }
 
+        let ipaymuStatus = String(body.status || "").toLowerCase();
+        if (trxId) {
+            try {
+                const trx = await checkTransactionStatus(trxId);
+                ipaymuStatus = String(trx.Status || trx.status || ipaymuStatus).toLowerCase();
+            } catch (verifyErr) {
+                console.log("Gagal verifikasi status ke iPaymu, pakai status dari body webhook:", verifyErr.message);
+            }
+        }
+
         let status = order.status;
         let shouldFulfill = false;
 
-        if (transactionStatus === "capture") {
-            status = fraudStatus === "accept" ? "paid" : "challenge";
-            shouldFulfill = fraudStatus === "accept";
-        } else if (transactionStatus === "settlement") {
+        if (["berhasil", "success", "1", "paid", "settlement"].includes(ipaymuStatus)) {
             status = "paid";
             shouldFulfill = true;
-        } else if (transactionStatus === "pending") {
+        } else if (["pending", "0"].includes(ipaymuStatus)) {
             status = "pending";
-        } else if (["deny", "cancel", "expire", "failure"].includes(transactionStatus)) {
+        } else if (["gagal", "expired", "cancel", "cancelled", "-1", "failed", "expire"].includes(ipaymuStatus)) {
             status = "failed";
         }
 
         await supabase.from("topup_orders").update({
             status,
-            payment_status: transactionStatus,
+            payment_status: ipaymuStatus,
             updated_at: new Date().toISOString()
         }).eq("id", orderId);
 

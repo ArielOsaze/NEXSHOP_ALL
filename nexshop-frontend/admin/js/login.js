@@ -1,4 +1,4 @@
-const API_BASE = "/api";
+const API_BASE = "https://nexshop-backend-production.up.railway.app/api";
 
 // Already logged in? Skip straight to dashboard.
 if (localStorage.getItem("token")) {

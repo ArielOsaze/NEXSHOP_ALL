@@ -176,20 +176,37 @@
             </div>
         </div>
 
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <label class="form-label">Set Logo Game (berlaku untuk SEMUA produk di kategori/game yang sama sekaligus)</label>
+                <div class="d-flex gap-2 flex-wrap">
+                    <input id="catLogoKategori" class="form-control" placeholder="Nama kategori/game, mis. Mobile Legends" style="max-width:260px;">
+                    <input type="file" id="catLogoFile" class="form-control" accept="image/*" style="max-width:260px;">
+                    <button class="btn btn-outline-primary" onclick="saveCategoryLogo()">
+                        <i class="bi bi-image"></i> Simpan Logo Game
+                    </button>
+                </div>
+                <p class="text-muted small mt-2 mb-0">Logo ini tampil di filter kategori &amp; modal checkout topup di halaman toko.</p>
+            </div>
+        </div>
+
         <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h5 class="mb-0">Daftar Produk Topup</h5>
-                <button onclick="loadTopupProducts()" class="btn btn-primary btn-sm"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                <div class="d-flex gap-2">
+                    <button onclick="loadTopupProducts()" class="btn btn-primary btn-sm"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                    <button onclick="deleteAllTopupProducts()" class="btn btn-danger btn-sm"><i class="bi bi-trash3"></i> Hapus Semua</button>
+                </div>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                     <tr>
-                        <th>Kode</th><th>Nama</th><th>Kategori</th><th>Harga Modal</th><th>Harga Jual</th><th>Server ID?</th><th>Status</th><th>Aksi</th>
+                        <th>Icon</th><th>Kode</th><th>Nama</th><th>Kategori</th><th>Harga Modal</th><th>Harga Jual</th><th>Server ID?</th><th>Status</th><th>Aksi</th>
                     </tr>
                     </thead>
                     <tbody id="topupProducts">
-                        <tr><td colspan="8" class="text-center text-muted py-4">Klik "Refresh" untuk memuat data.</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted py-4">Klik "Refresh" untuk memuat data.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -299,6 +316,7 @@
     <ul class="nav nav-tabs mb-3" id="settingsTabs">
         <li class="nav-item"><button class="nav-link active" data-settings-tab="profile">Profil Admin</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="store">Pengaturan Toko</button></li>
+        <li class="nav-item"><button class="nav-link" data-settings-tab="content">FAQ / Syarat / Refund</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="apikeys">API Keys</button></li>
     </ul>
 
@@ -351,8 +369,17 @@
                     <input id="storeWhatsapp" class="form-control" placeholder="6287792634063">
                 </div>
                 <div class="col-12">
+                    <label class="form-label">Nomor Telepon (tampil di footer/Kontak)</label>
+                    <input id="storePhone" class="form-control" placeholder="0877-9263-4063">
+                </div>
+                <div class="col-12">
                     <label class="form-label">Email Kontak</label>
                     <input id="storeEmail" type="email" class="form-control" placeholder="nexshop.my.id@gmail.com">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Alamat Usaha <span class="text-danger">*</span></label>
+                    <textarea id="storeAddress" rows="2" class="form-control" style="resize:vertical;" placeholder="Jl. Siroto, Villa P4A, Pudakpayung, Banyumanik, Semarang"></textarea>
+                    <div class="form-text text-warning">⚠️ Alamat ini WAJIB sama persis dengan alamat usaha yang kamu daftarkan di iPaymu. Alamat ini otomatis tampil di footer & halaman Kontak.</div>
                 </div>
                 <div class="col-12">
                     <label class="form-label">Logo Toko</label>
@@ -369,24 +396,56 @@
         </div>
     </div>
 
+    <!-- Konten: FAQ / Syarat & Ketentuan / Refund -->
+    <div id="settingsTabContent" class="card shadow-sm d-none">
+        <div class="card-body">
+            <h6 class="text-uppercase text-muted small">FAQ (Pertanyaan yang Sering Diajukan)</h6>
+            <div id="faqEditorList" class="d-flex flex-column gap-2 mb-2"></div>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-4" onclick="addFaqRow()">
+                <i class="bi bi-plus-circle"></i> Tambah Pertanyaan
+            </button>
+
+            <hr>
+            <div class="row g-3">
+                <div class="col-12">
+                    <label class="form-label">Syarat &amp; Ketentuan <span class="text-muted small">(satu poin per baris)</span></label>
+                    <textarea id="termsContentInput" rows="8" class="form-control" style="resize:vertical;"></textarea>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Kebijakan Refund <span class="text-muted small">(satu poin per baris)</span></label>
+                    <textarea id="refundContentInput" rows="8" class="form-control" style="resize:vertical;"></textarea>
+                </div>
+                <p class="text-danger small mb-0" id="contentError"></p>
+                <div class="col-12">
+                    <button type="button" class="btn btn-success" onclick="saveContentSettings()">
+                        <i class="bi bi-floppy"></i> Simpan FAQ / Syarat / Refund
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- API Keys -->
     <div id="settingsTabApiKeys" class="card shadow-sm d-none">
         <div class="card-body">
             <form id="apiKeysForm" class="row g-3" style="max-width:600px;">
-                <div class="col-12"><h6 class="text-uppercase text-muted small mb-0">Midtrans</h6></div>
+                <div class="col-12"><h6 class="text-uppercase text-muted small mb-0">iPaymu</h6></div>
                 <div class="col-12">
-                    <label class="form-label">Server Key</label>
-                    <input id="midtransServerKey" class="form-control" placeholder="SB-Mid-server-...">
+                    <label class="form-label">VA (Virtual Account) iPaymu</label>
+                    <input id="ipaymuVa" class="form-control" placeholder="1179xxxxxx">
                 </div>
                 <div class="col-12">
-                    <label class="form-label">Client Key</label>
-                    <input id="midtransClientKey" class="form-control" placeholder="SB-Mid-client-...">
+                    <label class="form-label">API Key</label>
+                    <input id="ipaymuApiKey" class="form-control" placeholder="API Key dari dashboard iPaymu">
                 </div>
                 <div class="col-12">
                     <div class="form-check form-switch">
-                        <input class="form-check-input" type="checkbox" id="midtransIsProduction">
-                        <label class="form-check-label" for="midtransIsProduction">Mode Production (live, bukan sandbox)</label>
+                        <input class="form-check-input" type="checkbox" id="ipaymuIsProduction">
+                        <label class="form-check-label" for="ipaymuIsProduction">Mode Production (live, bukan sandbox)</label>
                     </div>
+                </div>
+                <div class="col-12">
+                    <div class="form-text">Dapatkan VA &amp; API Key di <a href="https://my.ipaymu.com" target="_blank" rel="noopener">my.ipaymu.com</a> (production) atau <a href="https://sandbox.ipaymu.com" target="_blank" rel="noopener">sandbox.ipaymu.com</a> (testing) → menu Integrasi.</div>
                 </div>
 
                 <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">TokoVoucher</h6></div>
@@ -512,6 +571,11 @@
             <div class="col-12">
                 <label class="form-label">Harga Jual</label>
                 <input id="tpEditHargaJual" type="number" min="0" class="form-control">
+            </div>
+            <div class="col-12">
+                <label class="form-label">Icon Diamond (khusus item ini)</label>
+                <input type="file" id="tpEditIconInput" class="form-control" accept="image/*">
+                <img id="tpEditIconPreview" src="" class="img-thumbnail mt-2 d-none" style="max-height:70px;">
             </div>
             <div class="col-12">
                 <div class="form-check form-switch">

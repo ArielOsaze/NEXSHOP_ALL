@@ -7,7 +7,7 @@
 let PRODUCTS = [];
 let selectedCategory = "Semua";
 
-const API_BASE = "/api";
+const API_BASE = "https://nexshop-backend-production.up.railway.app/api";
 
 const rupiah = (n) => "Rp" + n.toLocaleString("id-ID");
 
@@ -632,8 +632,8 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
     submitBtn.textContent = "Memproses...";
 
     try {
-        // Backend creates the order AND the Midtrans transaction (server-side,
-        // using the Midtrans Server Key), then returns a snap_token here.
+        // Backend membuat order DAN transaksi iPaymu (server-side, pakai VA/API
+        // Key iPaymu), lalu mengembalikan paymentUrl (halaman bayar iPaymu) di sini.
         // Total dihitung ulang & divalidasi lagi di backend — nilai di sini cuma buat tampilan.
         const headers = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -644,7 +644,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
             body: JSON.stringify({
                 recipient_name,
                 recipient_email,
-                payment_method: "midtrans",
+                payment_method: "ipaymu",
                 items: cart,
                 total,
                 promo_code: appliedPromo ? appliedPromo.code : undefined
@@ -659,30 +659,21 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
             return;
         }
 
-        if (!data.snap_token) {
-            toast("Snap token tidak ditemukan dari server.", "error");
+        if (!data.paymentUrl) {
+            toast("URL pembayaran tidak ditemukan dari server.", "error");
             submitBtn.disabled = false;
             submitBtn.textContent = "Bayar Sekarang";
             return;
         }
 
-        submitBtn.disabled = false;
-        submitBtn.textContent = "Bayar Sekarang";
+        // Pesanan sudah tercatat "pending" di server & bakal diupdate otomatis
+        // lewat webhook iPaymu begitu lunas — cart dikosongkan sebelum redirect
+        // supaya gak nyangkut kalau user gak balik lagi ke tab ini.
+        cart = [];
+        saveCart();
+        updateCartCount();
 
-        window.snap.pay(data.snap_token, {
-            onSuccess: function () {
-                showCheckoutSuccess(recipient_name, total, "berhasil", data.orderId);
-            },
-            onPending: function () {
-                showCheckoutSuccess(recipient_name, total, "menunggu pembayaran", data.orderId);
-            },
-            onError: function () {
-                toast("Pembayaran gagal. Silakan coba lagi.", "error");
-            },
-            onClose: function () {
-                toast("Kamu menutup jendela pembayaran sebelum selesai. Pesanan belum dibayar.");
-            }
-        });
+        window.location.href = data.paymentUrl;
     } catch (err) {
         toast("Gagal terhubung ke server.", "error");
         submitBtn.disabled = false;
@@ -707,13 +698,15 @@ function showCheckoutSuccess(recipient_name, total, statusText, orderId) {
     updateCartCount();
 }
 
-/* ---------- Terms & Refund Policy modal ---------- */
+/* ---------- FAQ / Terms / Refund / Kontak modal ---------- */
 function openPolicy(tab) {
     document.querySelectorAll(".policy-tab").forEach(t => {
         t.classList.toggle("active", t.dataset.policyTab === tab);
     });
+    document.getElementById("policyFaq").classList.toggle("hidden", tab !== "faq");
     document.getElementById("policyTerms").classList.toggle("hidden", tab !== "terms");
     document.getElementById("policyRefund").classList.toggle("hidden", tab !== "refund");
+    document.getElementById("policyContact").classList.toggle("hidden", tab !== "contact");
     openOverlay("policyOverlay");
 }
 
@@ -728,7 +721,7 @@ menuToggle.addEventListener("click", () => {
     const isOpen = navMenu.classList.toggle("active");
     menuToggle.setAttribute("aria-expanded", isOpen);
 });
-navMenu.querySelectorAll("a").forEach(link => {
+navMenu.querySelectorAll("a, .menu-link-btn").forEach(link => {
     link.addEventListener("click", () => navMenu.classList.remove("active"));
 });
 
@@ -848,16 +841,64 @@ async function loadStoreSettings() {
         if (s.contact_whatsapp) {
             const waLink = document.getElementById("footerWaLink");
             waLink.href = `https://wa.me/${s.contact_whatsapp.replace(/\D/g, "")}`;
-            waLink.textContent = `📱 WhatsApp Admin: ${s.contact_whatsapp}`;
+            waLink.textContent = `📱 WhatsApp/Telepon: ${s.contact_phone || s.contact_whatsapp}`;
+            const contactWa = document.getElementById("contactWaLink");
+            if (contactWa) {
+                contactWa.href = waLink.href;
+                contactWa.textContent = s.contact_phone || s.contact_whatsapp;
+            }
         }
         if (s.contact_email) {
             const emailLink = document.getElementById("footerEmailLink");
             emailLink.href = `mailto:${s.contact_email}`;
             emailLink.textContent = `✉️ ${s.contact_email}`;
+            const contactEmail = document.getElementById("contactEmailLink");
+            if (contactEmail) {
+                contactEmail.href = emailLink.href;
+                contactEmail.textContent = s.contact_email;
+            }
+        }
+        if (s.address) {
+            document.getElementById("footerAddress").textContent = `📍 ${s.address}`;
+            const contactAddress = document.getElementById("contactAddress");
+            if (contactAddress) contactAddress.textContent = s.address;
+        }
+        if (Array.isArray(s.faq) && s.faq.length > 0) {
+            renderFaqList(s.faq);
+        }
+        if (s.terms_content) {
+            document.getElementById("termsContent").innerHTML = formatPolicyText(s.terms_content);
+        }
+        if (s.refund_content) {
+            document.getElementById("refundContent").innerHTML = formatPolicyText(s.refund_content);
         }
     } catch (err) {
         // diem aja, biarin brand default kalau API gagal
     }
+}
+
+function renderFaqList(faq) {
+    const list = document.getElementById("faqList");
+    if (!list) return;
+    if (!faq.length) {
+        list.innerHTML = `<p class="faq-empty">Belum ada FAQ.</p>`;
+        return;
+    }
+    list.innerHTML = faq.map(item => `
+        <details class="faq-item">
+            <summary>${escapeHtml(item.q || "")}</summary>
+            <p>${escapeHtml(item.a || "")}</p>
+        </details>
+    `).join("");
+}
+
+// Konten Syarat & Ketentuan / Refund dari admin disimpan sebagai teks polos
+// (satu poin per baris) — di sini diubah jadi list <li>, sederhana & aman
+// dari HTML injection karena tetap di-escape.
+function formatPolicyText(text) {
+    const lines = text.split("\n").map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return "";
+    return `<ol class="policy-list">${lines.map(l => `<li>${escapeHtml(l)}</li>`).join("")}</ol>`;
 }
 
 /* ---------- Topup Diamond ---------- */
@@ -886,9 +927,13 @@ function renderTopupCategories() {
         return;
     }
 
-    filter.innerHTML = categories.map(cat => `
-        <button class="category-btn ${cat === selectedTopupCategory ? "active" : ""}" data-cat="${cat}">${cat}</button>
-    `).join("");
+    filter.innerHTML = categories.map(cat => {
+        const logo = cat !== "Semua" ? (TOPUP_PRODUCTS.find(p => p.kategori === cat && p.operator_logo) || {}).operator_logo : null;
+        return `
+        <button class="category-btn ${cat === selectedTopupCategory ? "active" : ""}" data-cat="${cat}">
+            ${logo ? `<img class="category-btn-logo" src="${logo}" alt="">` : ""}${escapeHtml(cat)}
+        </button>`;
+    }).join("");
 
     filter.querySelectorAll(".category-btn").forEach(btn => {
         btn.onclick = () => {
@@ -913,7 +958,9 @@ function renderTopupGrid() {
     grid.innerHTML = data.map(p => `
         <div class="topup-card" data-kode="${p.kode_produk}">
             ${p.kategori ? `<span class="topup-cat-tag">${escapeHtml(p.kategori)}</span>` : ""}
-            <span class="diamond-icon">◆</span>
+            ${p.item_icon
+                ? `<img class="topup-item-icon" src="${p.item_icon}" alt="${escapeHtml(p.nama)}" loading="lazy">`
+                : `<span class="diamond-icon">◆</span>`}
             <h5>${escapeHtml(p.nama)}</h5>
             <div class="topup-price">${rupiah(p.harga_jual)}</div>
         </div>
@@ -931,6 +978,14 @@ function openTopupModal(kodeProduk) {
 
     document.getElementById("tpTitle").textContent = p.nama;
     document.getElementById("tpPrice").textContent = rupiah(p.harga_jual);
+    const iconEl = document.getElementById("tpIcon");
+    if (iconEl) {
+        if (p.operator_logo) {
+            iconEl.innerHTML = `<img src="${p.operator_logo}" alt="${escapeHtml(p.kategori || p.nama)}">`;
+        } else {
+            iconEl.innerHTML = `<span class="diamond-icon">◆</span>`;
+        }
+    }
     document.getElementById("tpTujuan").value = "";
     document.getElementById("tpServerId").value = "";
     document.getElementById("tpEmail").value = currentUser ? currentUser.email : "";
@@ -983,20 +1038,13 @@ document.getElementById("topupForm").addEventListener("submit", async (e) => {
         submitBtn.textContent = "Bayar Sekarang";
         closeOverlay("topupOverlay");
 
-        window.snap.pay(data.snap_token, {
-            onSuccess: function () {
-                toast(`Pembayaran berhasil! Diamond akan segera diproses ke ID ${tujuan}.`, "success");
-            },
-            onPending: function () {
-                toast("Menunggu pembayaran kamu. Diamond akan diproses otomatis setelah lunas.");
-            },
-            onError: function () {
-                toast("Pembayaran gagal. Silakan coba lagi.", "error");
-            },
-            onClose: function () {
-                toast("Kamu menutup jendela pembayaran sebelum selesai.");
-            }
-        });
+        if (!data.paymentUrl) {
+            toast("URL pembayaran tidak ditemukan dari server.", "error");
+            return;
+        }
+
+        toast(`Pesanan dibuat! Kamu akan diarahkan ke halaman pembayaran. Catat Order ID: ${data.orderId}`);
+        window.location.href = data.paymentUrl;
     } catch (err) {
         errorEl.textContent = "Gagal terhubung ke server.";
         submitBtn.disabled = false;
@@ -1015,10 +1063,48 @@ document.querySelectorAll(".toggle-password").forEach(btn => {
     });
 });
 
+/* ---------- Halaman kembali dari pembayaran iPaymu (returnUrl) ---------- */
+async function checkPaymentReturn() {
+    const hash = window.location.hash || "";
+    if (!hash.startsWith("#/payment-status")) return;
+
+    const query = new URLSearchParams(hash.split("?")[1] || "");
+    const orderId = query.get("order");
+    if (!orderId) return;
+
+    const isTopup = orderId.startsWith("TP");
+    const endpoint = isTopup ? `${API_BASE}/topup/public-status/${orderId}` : `${API_BASE}/orders/status/${orderId}`;
+
+    try {
+        const res = await fetch(endpoint);
+        const data = await res.json();
+        if (!res.ok) {
+            toast(`Order ${orderId}: status belum bisa dicek. Simpan Order ID ini untuk cek manual ke admin.`);
+            return;
+        }
+
+        if (data.status === "paid" || data.status === "sukses") {
+            toast(`Pembayaran ${orderId} berhasil! ${isTopup ? "Diamond akan segera diproses." : "Pesanan sedang diproses."}`, "success");
+        } else if (data.status === "pending" || data.status === "processing") {
+            toast(`Order ${orderId} sedang menunggu konfirmasi pembayaran. Status akan otomatis update begitu lunas.`);
+        } else if (data.status === "failed" || data.status === "gagal") {
+            toast(`Pembayaran ${orderId} tidak berhasil/dibatalkan. Silakan coba checkout ulang.`, "error");
+        } else {
+            toast(`Order ${orderId}: status "${data.status}".`);
+        }
+    } catch (err) {
+        toast(`Order ${orderId} sudah dibuat — catat Order ID ini untuk cek status ke admin.`);
+    }
+
+    // bersihkan hash biar gak dicek ulang kalau user reload halaman
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+}
+
 /* ---------- Init ---------- */
 loadStoreSettings();
 loadProducts();
 loadPromo();
 loadTopupProducts();
 updateCartCount();
+checkPaymentReturn();
 refreshAccountUI();

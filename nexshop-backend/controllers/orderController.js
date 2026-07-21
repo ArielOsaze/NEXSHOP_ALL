@@ -1,7 +1,12 @@
 const supabase = require("../config/db");
-const { getSnapClient } = require("../config/midtrans");
+const { createRedirectPayment, checkTransactionStatus } = require("../config/ipaymu");
 const { validatePromoCode, incrementUsage } = require("./promoCodeController");
 const { notify } = require("../config/notify");
+
+// URL frontend/backend dipakai buat returnUrl/cancelUrl/notifyUrl iPaymu.
+// Isi FRONTEND_URL dan BACKEND_URL di .env (lihat .env.example).
+const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
+const BACKEND_URL = (process.env.BACKEND_URL || "").replace(/\/$/, "");
 
 function rupiahLog(n) {
     return "Rp" + Number(n).toLocaleString("id-ID");
@@ -19,7 +24,7 @@ exports.create = async (req, res) => {
     try {
         // Ambil harga produk langsung dari database kita sendiri — JANGAN percaya
         // `total`/harga yang dikirim dari frontend, karena itu bisa dimanipulasi
-        // di browser. Ini juga wajib secara teknis: Midtrans akan menolak
+        // di browser.
         // transaksi kalau gross_amount tidak sama dengan total item_details.
         const ids = items.map((i) => i.id);
         const { data: products, error: prodErr } = await supabase
@@ -40,7 +45,7 @@ exports.create = async (req, res) => {
                 if (!item.qty || item.qty <= 0) throw new Error(`Jumlah produk tidak valid`);
                 return {
                     id: String(p.id),
-                    name: p.name.slice(0, 50), // Midtrans membatasi max 50 karakter
+                    name: p.name.slice(0, 80),
                     price: p.price,
                     quantity: item.qty
                 };
@@ -69,20 +74,20 @@ exports.create = async (req, res) => {
 
         const total = Math.max(subtotal - discountAmount, 0);
 
-        // Midtrans menolak transaksi kalau gross_amount gak sama persis dengan
-        // total item_details — kalau ada diskon, kita kirim sebagai "item"
-        // negatif tersendiri supaya jumlahnya tetap pas.
-        const midtransItems = [...item_details];
+        // iPaymu menjumlahkan price*qty dari array product/price/qty sebagai
+        // total tagihan — kalau ada diskon, kirim sebagai "item" negatif
+        // tersendiri supaya total pas.
+        const ipaymuItems = [...item_details];
         if (discountAmount > 0) {
-            midtransItems.push({
+            ipaymuItems.push({
                 id: "DISCOUNT",
-                name: `Diskon (${appliedPromoCode})`.slice(0, 50),
+                name: `Diskon (${appliedPromoCode})`.slice(0, 80),
                 price: -discountAmount,
                 quantity: 1
             });
         }
 
-        // Simpan order dulu dengan status pending, sebelum minta snap_token ke Midtrans
+        // Simpan order dulu dengan status pending, sebelum minta payment URL ke iPaymu
         const { error: insertErr } = await supabase
             .from("orders")
             .insert([{
@@ -90,7 +95,7 @@ exports.create = async (req, res) => {
                 user_id: userId,
                 recipient_name,
                 recipient_email,
-                payment_method: "midtrans",
+                payment_method: "ipaymu",
                 items,
                 subtotal,
                 discount_amount: discountAmount,
@@ -104,32 +109,30 @@ exports.create = async (req, res) => {
             return res.status(500).json({ message: "Gagal membuat pesanan" });
         }
 
-        // Buat transaksi Midtrans, dapetin snap_token buat dibuka di frontend
-        let transaction;
+        // Buat transaksi iPaymu (Redirect Payment), dapetin URL halaman bayar
+        let payment;
         try {
-            const snap = await getSnapClient();
-            transaction = await snap.createTransaction({
-                transaction_details: {
-                    order_id: orderId,
-                    gross_amount: total
-                },
-                item_details: midtransItems,
-                customer_details: {
-                    first_name: recipient_name,
-                    email: recipient_email
-                }
+            payment = await createRedirectPayment({
+                referenceId: orderId,
+                itemDetails: ipaymuItems,
+                buyerName: recipient_name,
+                buyerEmail: recipient_email,
+                returnUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=success`,
+                cancelUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=cancel`,
+                notifyUrl: `${BACKEND_URL}/api/orders/notification`
             });
-        } catch (midtransErr) {
-            console.log(midtransErr);
+        } catch (ipaymuErr) {
+            console.log(ipaymuErr.ipaymuResponse || ipaymuErr.message);
             // order sudah kepalang tercatat, tandai gagal biar gak nggantung di "pending"
             await supabase.from("orders").update({ status: "failed" }).eq("id", orderId);
             return res.status(500).json({ message: "Gagal membuat transaksi pembayaran" });
         }
 
-        // simpan snap_token, berguna kalau mau di-generate ulang / dicek nanti
+        // simpan session id, berguna buat referensi/cek status manual nanti
         await supabase
+
             .from("orders")
-            .update({ snap_token: transaction.token })
+            .update({ ipaymu_session_id: payment.sessionId, payment_url: payment.paymentUrl })
             .eq("id", orderId);
 
         notify("order", `🛒 Pesanan baru ${orderId} dari ${recipient_name} senilai ${rupiahLog(total)}`);
@@ -137,10 +140,30 @@ exports.create = async (req, res) => {
         res.status(201).json({
             message: "Pesanan berhasil dibuat",
             orderId,
-            snap_token: transaction.token
+            paymentUrl: payment.paymentUrl
         });
     } catch (err) {
         console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ===========================
+// PUBLIK — cek status ringkas 1 order (dipakai halaman "kembali dari
+// pembayaran" setelah redirect dari iPaymu; guest checkout gak punya token
+// login jadi gak bisa pakai /my). Sengaja cuma return field non-sensitif.
+// ===========================
+exports.getPublicStatus = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from("orders")
+            .select("id, status, total, recipient_name")
+            .eq("id", req.params.id)
+            .maybeSingle();
+
+        if (error || !data) return res.status(404).json({ message: "Order tidak ditemukan" });
+        res.json(data);
+    } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }
 };
@@ -204,24 +227,30 @@ exports.getAllOrders = async (req, res) => {
 };
 
 // ===========================
-// WEBHOOK NOTIFIKASI MIDTRANS
-// Dipanggil langsung oleh server Midtrans (bukan dari frontend) tiap kali
+// WEBHOOK NOTIFIKASI IPAYMU
+// Dipanggil langsung oleh server iPaymu (bukan dari frontend) tiap kali
 // status pembayaran berubah. Ini SUMBER KEBENARAN status order — jangan
 // pernah update status order cuma berdasarkan callback di frontend, karena
-// itu bisa dipalsukan oleh user. `snap.transaction.notification()` otomatis
-// memverifikasi keasliannya ke server Midtrans.
+// itu bisa dipalsukan oleh user.
 //
-// Daftarkan URL endpoint ini (https://domain-kamu/api/orders/notification)
-// di Midtrans Dashboard > Settings > Configuration > Payment Notification URL
+// iPaymu mengirim body berisi antara lain trx_id, status, reference_id, sid.
+// Supaya gak asal percaya isi body webhook (bisa saja dipalsukan siapapun
+// yang tahu URL notify-nya), kita cek ULANG statusnya langsung ke server
+// iPaymu pakai trx_id sebelum update database (server-to-server, pakai
+// signature ApiKey — jadi gak bisa dipalsukan).
+//
+// Daftarkan URL endpoint ini (https://domain-backend-kamu/api/orders/notification)
+// di iPaymu Dashboard > Integrasi > Notify URL / API URL
 // ===========================
 exports.handleNotification = async (req, res) => {
     try {
-        const snap = await getSnapClient();
-        const notification = await snap.transaction.notification(req.body);
+        const body = req.body || {};
+        const orderId = body.reference_id || body.referenceId;
+        const trxId = body.trx_id || body.trxId;
 
-        const orderId = notification.order_id;
-        const transactionStatus = notification.transaction_status;
-        const fraudStatus = notification.fraud_status;
+        if (!orderId) {
+            return res.status(400).json({ message: "reference_id tidak ada di body notifikasi" });
+        }
 
         const { data: existingOrder } = await supabase
             .from("orders")
@@ -229,22 +258,34 @@ exports.handleNotification = async (req, res) => {
             .eq("id", orderId)
             .maybeSingle();
 
-        let status = "pending";
+        if (!existingOrder) {
+            return res.status(404).json({ message: "Order tidak ditemukan" });
+        }
 
-        if (transactionStatus === "capture") {
-            status = fraudStatus === "accept" ? "paid" : "challenge";
-        } else if (transactionStatus === "settlement") {
+        // Verifikasi ulang ke server iPaymu — jangan percaya status dari body webhook begitu saja
+        let ipaymuStatus = String(body.status || "").toLowerCase();
+        if (trxId) {
+            try {
+                const trx = await checkTransactionStatus(trxId);
+                ipaymuStatus = String(trx.Status || trx.status || ipaymuStatus).toLowerCase();
+            } catch (verifyErr) {
+                console.log("Gagal verifikasi status ke iPaymu, pakai status dari body webhook:", verifyErr.message);
+            }
+        }
+
+        let status = "pending";
+        if (["berhasil", "success", "1", "paid", "settlement"].includes(ipaymuStatus)) {
             status = "paid";
-        } else if (transactionStatus === "pending") {
+        } else if (["pending", "0"].includes(ipaymuStatus)) {
             status = "pending";
-        } else if (["deny", "cancel", "expire", "failure"].includes(transactionStatus)) {
+        } else if (["gagal", "expired", "cancel", "cancelled", "-1", "failed", "expire"].includes(ipaymuStatus)) {
             status = "failed";
         }
 
         const updatePayload = {
             status,
-            payment_type: notification.payment_type,
-            transaction_id: notification.transaction_id
+            payment_type: body.via || body.channel || "ipaymu",
+            transaction_id: trxId || null
         };
         if (status === "paid") {
             updatePayload.paid_at = new Date().toISOString();
@@ -261,11 +302,11 @@ exports.handleNotification = async (req, res) => {
         }
 
         // catat pemakaian kode promo cuma sekali, pas transisi PERTAMA KALI ke "paid"
-        if (status === "paid" && existingOrder && existingOrder.status !== "paid" && existingOrder.promo_code) {
+        if (status === "paid" && existingOrder.status !== "paid" && existingOrder.promo_code) {
             await incrementUsage(existingOrder.promo_code);
         }
 
-        // Midtrans expect balasan 200 OK sederhana
+        // iPaymu expect balasan 200 OK sederhana
         res.status(200).json({ message: "OK" });
     } catch (err) {
         console.log(err);

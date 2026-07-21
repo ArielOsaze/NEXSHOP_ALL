@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta name="description" content="NexShop - Marketplace Game Digital, Topup Diamond, Voucher Game, Akun Game Murah.">
-<meta name="keywords" content="topup ml, ff, game murah, akun game, nexshop">
-<meta property="og:title" content="NexShop">
-<meta property="og:description" content="Marketplace Digital Gaming">
-<meta property="og:image" content="/images/logo.png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NexShop — Digital Gaming Marketplace</title>
@@ -36,6 +31,8 @@
             <a href="#top">Home</a>
             <a href="#games">Katalog</a>
             <a href="#topup">Topup Diamond</a>
+            <button type="button" class="menu-link-btn" data-policy-tab="faq">FAQ</button>
+            <button type="button" class="menu-link-btn" data-policy-tab="contact">Kontak</button>
             <button class="menu-account-btn" id="accountBtn">Login</button>
         </div>
 
@@ -92,64 +89,86 @@
     <div class="footer-brand" id="footerBrand">Nex<span>Shop</span></div>
     <p>Marketplace gaming digital terpercaya. Transaksi aman, proses cepat.</p>
 
+    <p class="footer-address" id="footerAddress">📍 Jl. Siroto, Villa P4A, Pudakpayung, Banyumanik, Semarang</p>
+
     <div class="footer-contact">
         <a href="https://wa.me/6287792634063" id="footerWaLink" target="_blank" rel="noopener">
-            📱 WhatsApp Admin: 0877-9263-4063
+            📱 WhatsApp/Telepon: 0877-9263-4063
         </a>
-        <a href="mailto:custservice@nexshop.cloud" id="footerEmailLink">
-            ✉️ custservice@nexshop.cloud
+        <a href="mailto:nexshop.my.id@gmail.com" id="footerEmailLink">
+            ✉️ nexshop.my.id@gmail.com
         </a>
-        <a href="https://www.instagram.com/nexshop_id?igsh=MXZtbXVrcDBzMzVkOA=="
-   id="footerInstagramLink"
-   target="_blank"
-   rel="noopener">
-    📷 Instagram: @nexshop_id
-</a>
     </div>
 
     <div class="footer-links">
+        <button type="button" class="footer-link-btn" data-policy-tab="faq">FAQ</button>
+        <span class="footer-link-sep">·</span>
         <button type="button" class="footer-link-btn" data-policy-tab="terms">Syarat &amp; Ketentuan</button>
         <span class="footer-link-sep">·</span>
         <button type="button" class="footer-link-btn" data-policy-tab="refund">Kebijakan Refund</button>
+        <span class="footer-link-sep">·</span>
+        <button type="button" class="footer-link-btn" data-policy-tab="contact">Kontak</button>
     </div>
 
     <p class="footer-copy">© 2026 NexShop. All rights reserved.</p>
 </footer>
 
-<!-- Terms & Refund Policy Modal -->
+<!-- FAQ / Terms / Refund / Kontak Modal -->
 <div class="overlay" id="policyOverlay">
     <div class="modal policy-modal" role="dialog" aria-modal="true" aria-labelledby="policyTitle">
         <button class="modal-close" data-close="policyOverlay" aria-label="Tutup">✕</button>
         <div class="policy-tabs">
-            <button class="policy-tab active" data-policy-tab="terms">Syarat &amp; Ketentuan</button>
+            <button class="policy-tab active" data-policy-tab="faq">FAQ</button>
+            <button class="policy-tab" data-policy-tab="terms">Syarat &amp; Ketentuan</button>
             <button class="policy-tab" data-policy-tab="refund">Kebijakan Refund</button>
+            <button class="policy-tab" data-policy-tab="contact">Kontak</button>
         </div>
 
-        <div class="policy-panel" id="policyTerms">
-            <h3 id="policyTitle">Syarat &amp; Ketentuan</h3>
-            <ol class="policy-list">
-                <li>Dengan melakukan pemesanan di NexShop, kamu dianggap telah membaca dan menyetujui seluruh syarat &amp; ketentuan ini.</li>
-                <li>Seluruh transaksi diproses melalui payment gateway resmi <strong>Ipaymu</strong> (QRIS, Virtual Account/Transfer Bank, E-Wallet, dan Kartu Kredit/Debit). NexShop tidak menerima pembayaran manual di luar sistem.</li>
-                <li>Pastikan data akun/email yang kamu daftarkan sudah benar. Pesanan akan diproses dan dikirim ke email yang terdaftar setelah pembayaran terverifikasi oleh Ipaymu.</li>
-                <li>Waktu proses pesanan umumnya beberapa menit hingga maksimal 24 jam pada jam kerja, tergantung ketersediaan stok.</li>
-                <li>Produk yang dijual berupa akun/akses/kode digital maupun topup diamond/voucher game. Dilarang keras memperjualbelikan kembali, membagikan, atau mengubah kredensial akun tanpa izin — pelanggaran membatalkan garansi.</li>
-                <li>Untuk produk Topup Diamond, pastikan ID/Server tujuan yang dimasukkan sudah benar. NexShop tidak bertanggung jawab atas kesalahan input ID dari pembeli.</li>
-                <li>NexShop berhak menolak atau membatalkan pesanan yang terindikasi penyalahgunaan, transaksi mencurigakan, atau melanggar kebijakan ini.</li>
-                <li>NexShop dapat memperbarui syarat &amp; ketentuan ini sewaktu-waktu; perubahan berlaku sejak dipublikasikan di halaman ini.</li>
-                <li>Untuk pertanyaan seputar transaksi, hubungi admin melalui WhatsApp atau email yang tercantum di footer.</li>
-            </ol>
+        <div class="policy-panel" id="policyFaq">
+            <h3 id="policyTitle">Pertanyaan yang Sering Diajukan (FAQ)</h3>
+            <div class="faq-list" id="faqList">
+                <!-- diisi otomatis oleh JS dari /api/settings/store, dikelola admin -->
+            </div>
+        </div>
+
+        <div class="policy-panel hidden" id="policyTerms">
+            <h3>Syarat &amp; Ketentuan</h3>
+            <div class="policy-content" id="termsContent">
+                <ol class="policy-list">
+                    <li>Dengan melakukan pemesanan di NexShop, kamu dianggap telah membaca dan menyetujui seluruh syarat &amp; ketentuan ini.</li>
+                    <li>Seluruh transaksi diproses melalui payment gateway resmi <strong>iPaymu</strong> (QRIS, Virtual Account/Transfer Bank, E-Wallet, dan Kartu Kredit/Debit). NexShop tidak menerima pembayaran manual di luar sistem.</li>
+                    <li>Pastikan data akun/email yang kamu daftarkan sudah benar. Pesanan akan diproses dan dikirim ke email yang terdaftar setelah pembayaran terverifikasi oleh iPaymu.</li>
+                    <li>Waktu proses pesanan umumnya beberapa menit hingga maksimal 24 jam pada jam kerja, tergantung ketersediaan stok.</li>
+                    <li>Produk yang dijual berupa akun/akses/kode digital maupun topup diamond/voucher game. Dilarang keras memperjualbelikan kembali, membagikan, atau mengubah kredensial akun tanpa izin — pelanggaran membatalkan garansi.</li>
+                    <li>Untuk produk Topup Diamond, pastikan ID/Server tujuan yang dimasukkan sudah benar. NexShop tidak bertanggung jawab atas kesalahan input ID dari pembeli.</li>
+                    <li>NexShop berhak menolak atau membatalkan pesanan yang terindikasi penyalahgunaan, transaksi mencurigakan, atau melanggar kebijakan ini.</li>
+                    <li>NexShop dapat memperbarui syarat &amp; ketentuan ini sewaktu-waktu; perubahan berlaku sejak dipublikasikan di halaman ini.</li>
+                    <li>Untuk pertanyaan seputar transaksi, hubungi admin melalui WhatsApp atau email yang tercantum di halaman Kontak.</li>
+                </ol>
+            </div>
         </div>
 
         <div class="policy-panel hidden" id="policyRefund">
             <h3>Kebijakan Refund</h3>
-            <ol class="policy-list">
-                <li>Refund/pengembalian dana dapat diajukan apabila: pembayaran berhasil terpotong namun pesanan tidak diproses, produk yang diterima tidak sesuai deskripsi, atau akun/kode yang diberikan tidak valid/tidak bisa digunakan.</li>
-                <li>Pengajuan refund wajib disertai bukti pembayaran (order ID / bukti transaksi dari Ipaymu) dan dilaporkan ke admin maksimal <strong>1x24 jam</strong> setelah pesanan diterima.</li>
-                <li>Refund <strong>tidak berlaku</strong> apabila akun/kode sudah digunakan, kredensial (email/password) sudah diubah oleh pembeli, atau ID/Server tujuan topup yang dimasukkan salah dari sisi pembeli.</li>
-                <li>Refund <strong>tidak berlaku</strong> untuk kesalahan input data dari pembeli (misalnya email tujuan atau ID game salah) setelah pesanan berhasil diproses.</li>
-                <li>Dana yang disetujui untuk direfund akan dikembalikan ke metode pembayaran asal melalui sistem Ipaymu, dengan estimasi proses 3–14 hari kerja tergantung kebijakan bank/e-wallet/penyedia pembayaran terkait.</li>
-                <li>Untuk mengajukan refund atau komplain, hubungi admin melalui WhatsApp <a href="https://wa.me/6287792634063" target="_blank" rel="noopener">0877-9263-4063</a> atau email <a href="mailto:custservice@nexshop.cloud">custservice@nexshop.cloud</a> dengan menyertakan Order ID.</li>
-            </ol>
+            <div class="policy-content" id="refundContent">
+                <ol class="policy-list">
+                    <li>Refund/pengembalian dana dapat diajukan apabila: pembayaran berhasil terpotong namun pesanan tidak diproses, produk yang diterima tidak sesuai deskripsi, atau akun/kode yang diberikan tidak valid/tidak bisa digunakan.</li>
+                    <li>Pengajuan refund wajib disertai bukti pembayaran (order ID / bukti transaksi iPaymu) dan dilaporkan ke admin maksimal <strong>1x24 jam</strong> setelah pesanan diterima.</li>
+                    <li>Refund <strong>tidak berlaku</strong> apabila akun/kode sudah digunakan, kredensial (email/password) sudah diubah oleh pembeli, atau ID/Server tujuan topup yang dimasukkan salah dari sisi pembeli.</li>
+                    <li>Refund <strong>tidak berlaku</strong> untuk kesalahan input data dari pembeli (misalnya email tujuan atau ID game salah) setelah pesanan berhasil diproses.</li>
+                    <li>Dana yang disetujui untuk direfund akan dikembalikan ke metode pembayaran asal melalui sistem iPaymu, dengan estimasi proses 3–14 hari kerja tergantung kebijakan bank/e-wallet/penyedia pembayaran terkait.</li>
+                    <li>Untuk mengajukan refund atau komplain, hubungi admin melalui kontak yang tercantum di halaman Kontak dengan menyertakan Order ID.</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="policy-panel hidden" id="policyContact">
+            <h3>Kontak Kami</h3>
+            <ul class="policy-list contact-list">
+                <li>📍 Alamat: <span id="contactAddress">Jl. Siroto, Villa P4A, Pudakpayung, Banyumanik, Semarang</span></li>
+                <li>📱 Telepon / WhatsApp: <a href="https://wa.me/6287792634063" id="contactWaLink" target="_blank" rel="noopener">0877-9263-4063</a></li>
+                <li>✉️ Email: <a href="mailto:nexshop.my.id@gmail.com" id="contactEmailLink">nexshop.my.id@gmail.com</a></li>
+            </ul>
         </div>
     </div>
 </div>
@@ -193,7 +212,7 @@
         <button class="modal-close" data-close="topupOverlay" aria-label="Tutup">✕</button>
         <form class="topup-modal-body" id="topupForm">
             <div class="topup-modal-head">
-                <span class="diamond-icon">◆</span>
+                <span class="diamond-icon" id="tpIcon">◆</span>
                 <div>
                     <h3 id="tpTitle"></h3>
                     <div class="tp-price" id="tpPrice"></div>
@@ -328,8 +347,8 @@
                     </p>
                 </div>
                 <div class="checkout-payment-note">
-                    <strong>💳 Pembayaran via Ipaymu</strong>
-                    <p>Setelah klik "Bayar Sekarang", kamu akan memilih metode pembayaran (QRIS, Virtual Account/Transfer Bank, E-Wallet, atau Kartu Kredit/Debit) langsung di halaman pembayaran Ipaymu yang aman.</p>
+                    <strong>💳 Pembayaran via iPaymu</strong>
+                    <p>Setelah klik "Bayar Sekarang", kamu akan diarahkan ke halaman pembayaran iPaymu yang aman untuk memilih metode pembayaran (QRIS, Virtual Account/Transfer Bank, E-Wallet, atau Kartu Kredit/Debit).</p>
                 </div>
                 <div class="promo-code-row">
                     <input type="text" id="promoCodeInput" placeholder="Punya kode promo?">
@@ -353,9 +372,10 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <!--
-  
+  iPaymu Redirect Payment gak butuh script client-side seperti Snap.js —
+  backend langsung kirim balik `paymentUrl` (halaman pembayaran iPaymu)
+  dan browser di-redirect ke sana lewat window.location.href. Lihat script.js.
 -->
 <script src="script.js"></script>
 </body>
 </html>
-

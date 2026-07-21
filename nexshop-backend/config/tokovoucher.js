@@ -62,7 +62,7 @@ async function getFullCatalog() {
     return data;
 }
 
-// Eksekusi transaksi topup (dipanggil setelah pembayaran Midtrans berhasil)
+// Eksekusi transaksi topup (dipanggil setelah pembayaran iPaymu berhasil)
 async function createTransaction({ refId, kodeProduk, tujuan, serverId }) {
     const { memberCode, secret } = await getCreds();
     const params = {

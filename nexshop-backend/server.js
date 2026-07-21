@@ -27,10 +27,8 @@ const app = express();
 app.use(cors({
     origin: [
         "http://127.0.0.1:5500",
-        "http://localhost:5500"
-        // catatan: frontend & backend sekarang satu server (VPS), jadi request via "/api"
-        // sudah same-origin dan tidak perlu whitelist CORS terpisah.
-        // Baris di atas dibiarkan untuk keperluan dev lokal (live-server dsb).
+        "http://localhost:5500",
+        "https://nexshopid.netlify.app"
     ],
     credentials: true
 }));
@@ -84,10 +82,9 @@ app.get("/", (req, res) => {
 // =========================
 // Start Server
 // =========================
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(3000, () => {
     console.log("=================================");
     console.log("🚀 NexShop Backend Running");
-    console.log(`🌐 http://localhost:${PORT}`);
+    console.log("🌐 http://localhost:3000");
     console.log("=================================");
 });

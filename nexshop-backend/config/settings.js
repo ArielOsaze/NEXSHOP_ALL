@@ -8,7 +8,7 @@ let apiKeysCache = { data: null, ts: 0 };
 let storeSettingsCache = { data: null, ts: 0 };
 
 // ===========================
-// API KEYS (Midtrans + TokoVoucher)
+// API KEYS (iPaymu + TokoVoucher)
 // ===========================
 async function getApiKeys({ fresh = false } = {}) {
     const now = Date.now();
@@ -28,11 +28,11 @@ async function getApiKeys({ fresh = false } = {}) {
 
     // fallback ke .env kalau baris DB kosong / kolom tertentu belum diisi admin
     const merged = {
-        midtrans_server_key: (data && data.midtrans_server_key) || process.env.MIDTRANS_SERVER_KEY || "",
-        midtrans_client_key: (data && data.midtrans_client_key) || process.env.MIDTRANS_CLIENT_KEY || "",
-        midtrans_is_production: data && data.midtrans_is_production !== null
-            ? data.midtrans_is_production
-            : (process.env.MIDTRANS_IS_PRODUCTION === "true"),
+        ipaymu_va: (data && data.ipaymu_va) || process.env.IPAYMU_VA || "",
+        ipaymu_api_key: (data && data.ipaymu_api_key) || process.env.IPAYMU_API_KEY || "",
+        ipaymu_is_production: data && data.ipaymu_is_production !== null
+            ? data.ipaymu_is_production
+            : (process.env.IPAYMU_IS_PRODUCTION === "true"),
         tokovoucher_member_code: (data && data.tokovoucher_member_code) || process.env.TOKOVOUCHER_MEMBER_CODE || "",
         tokovoucher_secret: (data && data.tokovoucher_secret) || process.env.TOKOVOUCHER_SECRET || ""
     };
@@ -43,9 +43,9 @@ async function getApiKeys({ fresh = false } = {}) {
 
 async function updateApiKeys(payload) {
     const allowed = [
-        "midtrans_server_key",
-        "midtrans_client_key",
-        "midtrans_is_production",
+        "ipaymu_va",
+        "ipaymu_api_key",
+        "ipaymu_is_production",
         "tokovoucher_member_code",
         "tokovoucher_secret"
     ];
@@ -94,7 +94,12 @@ async function getStoreSettings({ fresh = false } = {}) {
         tagline: "Play More. Pay Less.",
         contact_whatsapp: "",
         contact_email: "",
-        logo_url: ""
+        contact_phone: "",
+        address: "",
+        logo_url: "",
+        faq: [],
+        terms_content: "",
+        refund_content: ""
     };
 
     storeSettingsCache = { data: merged, ts: now };
@@ -102,7 +107,10 @@ async function getStoreSettings({ fresh = false } = {}) {
 }
 
 async function updateStoreSettings(payload) {
-    const allowed = ["store_name", "tagline", "contact_whatsapp", "contact_email", "logo_url"];
+    const allowed = [
+        "store_name", "tagline", "contact_whatsapp", "contact_email", "contact_phone",
+        "address", "logo_url", "faq", "terms_content", "refund_content"
+    ];
     const updatePayload = { updated_at: new Date().toISOString() };
     for (const key of allowed) {
         if (payload[key] !== undefined) {
