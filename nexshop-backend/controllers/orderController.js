@@ -122,7 +122,7 @@ exports.create = async (req, res) => {
                 notifyUrl: `${BACKEND_URL}/api/orders/notification`
             });
         } catch (ipaymuErr) {
-            console.log(ipaymuErr.ipaymuResponse || ipaymuErr.message);
+            console.log("iPaymu error:", ipaymuErr.ipaymuResponse || ipaymuErr.message);
             // order sudah kepalang tercatat, tandai gagal biar gak nggantung di "pending"
             await supabase.from("orders").update({ status: "failed" }).eq("id", orderId);
             return res.status(500).json({ message: "Gagal membuat transaksi pembayaran" });

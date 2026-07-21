@@ -50,16 +50,28 @@ async function request(path, body) {
     const { va, apiKey, isProduction } = await getCreds();
     const signature = buildSignature({ method: "POST", va, apiKey, body });
 
-    const res = await axios.post(`${baseUrl(isProduction)}${path}`, body, {
-        headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            va,
-            signature,
-            timestamp: buildTimestamp()
-        }
-    });
-    return res.data;
+    try {
+        const res = await axios.post(`${baseUrl(isProduction)}${path}`, body, {
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+                va,
+                signature,
+                timestamp: buildTimestamp()
+            }
+        });
+        return res.data;
+    } catch (axiosErr) {
+        // axios langsung throw kalau HTTP status-nya 4xx/5xx, SEBELUM sempat kita
+        // baca body-nya — padahal body itu (data.Message) yang isinya alasan asli
+        // kenapa iPaymu nolak request (mis. "returnUrl tidak valid", "va tidak
+        // ditemukan", dst). Di sini kita bungkus ulang biar alasan aslinya kebawa.
+        const responseData = axiosErr.response && axiosErr.response.data;
+        const err = new Error((responseData && responseData.Message) || axiosErr.message);
+        err.ipaymuResponse = responseData || null;
+        err.httpStatus = axiosErr.response && axiosErr.response.status;
+        throw err;
+    }
 }
 
 // Bikin transaksi Redirect Payment. `itemDetails` = [{ name, price, quantity }]

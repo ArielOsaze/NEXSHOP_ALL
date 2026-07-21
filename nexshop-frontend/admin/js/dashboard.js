@@ -3,7 +3,7 @@
 // ================================
 
 const token = localStorage.getItem("token");
-const API_BASE = "https://nexshop-backend-production.up.railway.app/api";
+const API_BASE = "const API_BASE = "https://nexshop.cloud/api";";
 
 if (!token) {
     window.location.href = "login.html";

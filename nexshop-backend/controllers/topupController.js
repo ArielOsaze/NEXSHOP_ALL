@@ -285,7 +285,7 @@ exports.create = async (req, res) => {
                 notifyUrl: `${BACKEND_URL}/api/topup/notification`
             });
         } catch (ipaymuErr) {
-            console.log(ipaymuErr.ipaymuResponse || ipaymuErr.message);
+            console.log("iPaymu error:", ipaymuErr.ipaymuResponse || ipaymuErr.message);
             await supabase.from("topup_orders").update({ status: "failed" }).eq("id", orderId);
             return res.status(500).json({ message: "Gagal membuat transaksi pembayaran" });
         }
