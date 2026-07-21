@@ -1,4 +1,4 @@
-const API_BASE = "const API_BASE = "https://nexshop.cloud/api";";
+const API_BASE = "/api";
 
 // Already logged in? Skip straight to dashboard.
 if (localStorage.getItem("token")) {
