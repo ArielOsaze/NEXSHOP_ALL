@@ -34,7 +34,9 @@ async function getApiKeys({ fresh = false } = {}) {
             ? data.ipaymu_is_production
             : (process.env.IPAYMU_IS_PRODUCTION === "true"),
         tokovoucher_member_code: (data && data.tokovoucher_member_code) || process.env.TOKOVOUCHER_MEMBER_CODE || "",
-        tokovoucher_secret: (data && data.tokovoucher_secret) || process.env.TOKOVOUCHER_SECRET || ""
+        tokovoucher_secret: (data && data.tokovoucher_secret) || process.env.TOKOVOUCHER_SECRET || "",
+        apigames_merchant_id: (data && data.apigames_merchant_id) || process.env.APIGAMES_MERCHANT_ID || "",
+        apigames_secret_key: (data && data.apigames_secret_key) || process.env.APIGAMES_SECRET_KEY || ""
     };
 
     apiKeysCache = { data: merged, ts: now };
@@ -47,7 +49,9 @@ async function updateApiKeys(payload) {
         "ipaymu_api_key",
         "ipaymu_is_production",
         "tokovoucher_member_code",
-        "tokovoucher_secret"
+        "tokovoucher_secret",
+        "apigames_merchant_id",
+        "apigames_secret_key"
     ];
     const updatePayload = { updated_at: new Date().toISOString() };
     for (const key of allowed) {

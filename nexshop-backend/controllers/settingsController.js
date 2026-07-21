@@ -60,7 +60,9 @@ exports.getApiKeysAdmin = async (req, res) => {
             ipaymu_api_key: mask(keys.ipaymu_api_key),
             ipaymu_is_production: keys.ipaymu_is_production,
             tokovoucher_member_code: keys.tokovoucher_member_code,
-            tokovoucher_secret: mask(keys.tokovoucher_secret)
+            tokovoucher_secret: mask(keys.tokovoucher_secret),
+            apigames_merchant_id: keys.apigames_merchant_id,
+            apigames_secret_key: mask(keys.apigames_secret_key)
         });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });

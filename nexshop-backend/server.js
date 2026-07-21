@@ -26,9 +26,10 @@ const app = express();
 // =========================
 app.use(cors({
     origin: [
+        "https://nexshop.cloud",
+        "https://www.nexshop.cloud",
         "http://127.0.0.1:5500",
-        "http://localhost:5500",
-        "https://nexshopid.netlify.app"
+        "http://localhost:5500"
     ],
     credentials: true
 }));

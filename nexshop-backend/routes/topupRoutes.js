@@ -6,6 +6,7 @@ const optionalAuthMiddleware = require("../middleware/optionalAuthMiddleware");
 
 // Publik
 router.get("/products", topupController.getProducts);
+router.post("/check-nickname", topupController.checkNicknameHandler); // publik — cek akun sebelum checkout
 
 // Checkout — boleh guest atau login, sama seperti /api/orders
 router.post("/", optionalAuthMiddleware, topupController.create);
@@ -17,7 +18,9 @@ router.get("/public-status/:id", topupController.getPublicStatus); // publik —
 // Admin
 router.get("/admin/products", authMiddleware, topupController.getAllProductsAdmin);
 router.get("/admin/sync", authMiddleware, topupController.syncProducts);
+router.put("/admin/products/bulk-status", authMiddleware, topupController.bulkUpdateStatus); // aktif/nonaktif massal
 router.put("/admin/products/:id", authMiddleware, topupController.updateProduct);
+router.delete("/admin/products/bulk", authMiddleware, topupController.bulkDeleteProducts); // hapus produk terpilih (checkbox)
 router.delete("/admin/products/:id", authMiddleware, topupController.deleteProduct);
 router.delete("/admin/products", authMiddleware, topupController.deleteAllProducts); // hapus semua (opsional ?kategori=...)
 router.put("/admin/category-logo", authMiddleware, topupController.updateCategoryLogo); // set logo game utk 1 kategori sekaligus

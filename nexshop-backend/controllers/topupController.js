@@ -1,6 +1,7 @@
 const supabase = require("../config/db");
 const tokovoucher = require("../config/tokovoucher");
 const { createRedirectPayment, checkTransactionStatus } = require("../config/ipaymu");
+const { checkNickname } = require("../config/apigames");
 const { notify } = require("../config/notify");
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
@@ -13,6 +14,35 @@ function rupiahLog(n) {
 // ===========================================================
 // PUBLIK — daftar produk topup yang aktif, buat halaman toko
 // ===========================================================
+// ===========================================================
+// PUBLIK — cek nickname akun game (dipakai frontend sebelum checkout, biar
+// customer bisa konfirmasi "ini benar akun saya" sebelum bayar). Cuma
+// didukung buat game tertentu (lihat SUPPORTED_GAMES di config/apigames.js)
+// dan cuma aktif kalau admin sudah isi ApiGames Merchant ID/Secret di
+// Settings > API Keys. Kalau gak didukung/gak dikonfigurasi, return
+// { supported: false } — frontend fallback ke peringatan manual, TIDAK
+// nge-block checkout.
+// ===========================================================
+exports.checkNicknameHandler = async (req, res) => {
+    const { kategori, tujuan, serverId } = req.body;
+    if (!tujuan) {
+        return res.status(400).json({ message: "tujuan (Player ID) wajib diisi" });
+    }
+
+    try {
+        const result = await checkNickname({ kategori, tujuan, serverId });
+        if (result === null) {
+            return res.json({ supported: false });
+        }
+        res.json({ supported: true, is_valid: result.is_valid, username: result.username });
+    } catch (err) {
+        console.log("Cek nickname gagal:", err.message);
+        // gagal manggil API pihak ketiga BUKAN alasan buat block checkout — anggap
+        // aja gak didukung, frontend fallback ke peringatan manual
+        res.json({ supported: false });
+    }
+};
+
 exports.getProducts = async (req, res) => {
     try {
         const { data, error } = await supabase
@@ -178,6 +208,49 @@ exports.updateCategoryLogo = async (req, res) => {
         if (error) return res.status(500).json({ message: "Gagal update logo game" });
         notify("product", `🖼️ ${req.user.email} mengubah logo game "${kategori}"`);
         res.json({ message: `Logo game "${kategori}" berhasil diperbarui` });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ADMIN — aktifkan/nonaktifkan banyak produk sekaligus (checkbox massal di
+// dashboard), jadi gak perlu buka modal edit satu-satu.
+exports.bulkUpdateStatus = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const { ids, is_active } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "ids wajib diisi (array)" });
+    }
+    try {
+        const { error } = await supabase
+            .from("topup_products")
+            .update({ is_active: !!is_active, updated_at: new Date().toISOString() })
+            .in("id", ids);
+
+        if (error) return res.status(500).json({ message: "Gagal update status produk" });
+        notify("product", `${is_active ? "✅" : "🚫"} ${req.user.email} ${is_active ? "mengaktifkan" : "menonaktifkan"} ${ids.length} produk topup sekaligus`);
+        res.json({ message: `${ids.length} produk berhasil ${is_active ? "diaktifkan" : "dinonaktifkan"}` });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ADMIN — hapus banyak produk sekaligus berdasarkan pilihan checkbox (beda
+// dari deleteAllProducts yang hapus SEMUA/per-kategori)
+exports.bulkDeleteProducts = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "ids wajib diisi (array)" });
+    }
+    try {
+        const { error } = await supabase.from("topup_products").delete().in("id", ids);
+        if (error) return res.status(500).json({ message: "Gagal menghapus produk terpilih" });
+        res.json({ message: `${ids.length} produk berhasil dihapus` });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }
