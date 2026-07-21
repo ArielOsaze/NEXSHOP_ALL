@@ -772,6 +772,8 @@ async function loadSettings() {
             document.getElementById("ipaymuIsProduction").checked = !!keys.ipaymu_is_production;
             document.getElementById("tvMemberCode").value = keys.tokovoucher_member_code || "";
             document.getElementById("tvSecret").value = keys.tokovoucher_secret || "";
+            document.getElementById("agMerchantId").value = keys.apigames_merchant_id || "";
+            document.getElementById("agSecretKey").value = keys.apigames_secret_key || "";
         }
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -935,7 +937,9 @@ async function saveApiKeys() {
         ipaymu_api_key: document.getElementById("ipaymuApiKey").value.trim(),
         ipaymu_is_production: document.getElementById("ipaymuIsProduction").checked,
         tokovoucher_member_code: document.getElementById("tvMemberCode").value.trim(),
-        tokovoucher_secret: document.getElementById("tvSecret").value.trim()
+        tokovoucher_secret: document.getElementById("tvSecret").value.trim(),
+        apigames_merchant_id: document.getElementById("agMerchantId").value.trim(),
+        apigames_secret_key: document.getElementById("agSecretKey").value.trim()
     };
 
     try {
