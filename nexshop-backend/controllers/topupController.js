@@ -237,6 +237,35 @@ exports.bulkUpdateStatus = async (req, res) => {
     }
 };
 
+// ADMIN — set item_icon (ikon per denominasi, kolom "Icon" di tabel) buat
+// banyak produk sekaligus berdasarkan pilihan checkbox massal, biar admin
+// gak perlu buka modal edit satu-satu tiap produk. Beda dari
+// updateCategoryLogo yang isi operator_logo (logo game, dipakai di toko).
+exports.bulkUpdateIcon = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const { ids, item_icon } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "ids wajib diisi (array)" });
+    }
+    if (!item_icon) {
+        return res.status(400).json({ message: "item_icon wajib diisi" });
+    }
+    try {
+        const { error } = await supabase
+            .from("topup_products")
+            .update({ item_icon, updated_at: new Date().toISOString() })
+            .in("id", ids);
+
+        if (error) return res.status(500).json({ message: "Gagal update icon produk" });
+        notify("product", `🖼️ ${req.user.email} mengubah icon ${ids.length} produk topup sekaligus`);
+        res.json({ message: `Icon berhasil diterapkan ke ${ids.length} produk` });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 // ADMIN — hapus banyak produk sekaligus berdasarkan pilihan checkbox (beda
 // dari deleteAllProducts yang hapus SEMUA/per-kategori)
 exports.bulkDeleteProducts = async (req, res) => {

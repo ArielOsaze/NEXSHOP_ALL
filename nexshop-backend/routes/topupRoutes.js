@@ -19,6 +19,7 @@ router.get("/public-status/:id", topupController.getPublicStatus); // publik —
 router.get("/admin/products", authMiddleware, topupController.getAllProductsAdmin);
 router.get("/admin/sync", authMiddleware, topupController.syncProducts);
 router.put("/admin/products/bulk-status", authMiddleware, topupController.bulkUpdateStatus); // aktif/nonaktif massal
+router.put("/admin/products/bulk-icon", authMiddleware, topupController.bulkUpdateIcon); // set icon massal (produk terpilih)
 router.put("/admin/products/:id", authMiddleware, topupController.updateProduct);
 router.delete("/admin/products/bulk", authMiddleware, topupController.bulkDeleteProducts); // hapus produk terpilih (checkbox)
 router.delete("/admin/products/:id", authMiddleware, topupController.deleteProduct);

@@ -288,7 +288,7 @@
                 </div>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-2 border-bottom bg-body-tertiary" id="topupBulkBar">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-2 border-bottom topup-bulk-bar" id="topupBulkBar">
                 <div class="form-check mb-0">
                     <input class="form-check-input" type="checkbox" id="topupSelectAll">
                     <label class="form-check-label small" for="topupSelectAll">Pilih semua yang tampil</label>
@@ -297,6 +297,8 @@
                     <span class="text-muted small" id="topupSelectedCount">0 dipilih</span>
                     <button class="btn btn-outline-success btn-sm" onclick="bulkSetTopupStatus(true)"><i class="bi bi-check2-circle"></i> Aktifkan</button>
                     <button class="btn btn-outline-secondary btn-sm" onclick="bulkSetTopupStatus(false)"><i class="bi bi-slash-circle"></i> Nonaktifkan</button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="document.getElementById('topupBulkIconInput').click()"><i class="bi bi-image"></i> Set Icon</button>
+                    <input type="file" id="topupBulkIconInput" accept="image/*" class="d-none">
                     <button class="btn btn-outline-danger btn-sm" onclick="bulkDeleteTopupSelected()"><i class="bi bi-trash3"></i> Hapus Terpilih</button>
                 </div>
             </div>

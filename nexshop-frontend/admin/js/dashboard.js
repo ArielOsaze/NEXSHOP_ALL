@@ -1237,6 +1237,39 @@ document.getElementById("topupSelectAll").addEventListener("change", (e) => {
     renderTopupProducts();
 });
 
+document.getElementById("topupBulkIconInput").addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    e.target.value = ""; // reset biar bisa pilih file yang sama lagi lain kali
+    if (!file) return;
+
+    if (topupSelectedIds.size === 0) {
+        return showToast("Pilih minimal 1 produk dulu (atau centang \"Pilih semua yang tampil\" per kategori)", true);
+    }
+    if (!confirm(`Pasang icon ini ke ${topupSelectedIds.size} produk terpilih?`)) return;
+
+    try {
+        const formData = new FormData();
+        formData.append("image", file);
+        const uploadRes = await apiFetch("/upload?type=logo", { method: "POST", body: formData });
+        const uploadData = await uploadRes.json().catch(() => ({}));
+        if (!uploadRes.ok) throw new Error(uploadData.message || "Upload icon gagal");
+
+        const res = await apiFetch("/topup/admin/products/bulk-icon", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: [...topupSelectedIds], item_icon: uploadData.url })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menerapkan icon");
+
+        showToast(data.message || "Icon berhasil diterapkan");
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+});
+
 async function bulkSetTopupStatus(isActive) {
     if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
     if (!confirm(`${isActive ? "Aktifkan" : "Nonaktifkan"} ${topupSelectedIds.size} produk terpilih?`)) return;
