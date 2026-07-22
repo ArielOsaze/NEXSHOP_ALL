@@ -5,21 +5,26 @@ const cors = require("cors");
 
 dotenv.config();
 
-const db = require("./config/db");
+require("./config/db");
 
 const authRoutes = require("./routes/authRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const productRoutes = require("./routes/productRoutes");
-const userRoutes = require("./routes/userRoutes"); // baru
-const promoRoutes = require("./routes/promoRoutes"); // baru
+const userRoutes = require("./routes/userRoutes");
+const promoRoutes = require("./routes/promoRoutes");
 const authMiddleware = require("./middleware/authMiddleware");
 const uploadRoutes = require("./routes/uploadRoutes");
-const topupRoutes = require("./routes/topupRoutes"); // baru: topup diamond (TokoVoucher)
-const settingsRoutes = require("./routes/settingsRoutes"); // baru: settings & api keys
-const promoCodeRoutes = require("./routes/promoCodeRoutes"); // baru: kode promo / redeem code
-const notificationRoutes = require("./routes/notificationRoutes"); // baru: notifikasi admin
+const topupRoutes = require("./routes/topupRoutes");
+const settingsRoutes = require("./routes/settingsRoutes");
+const promoCodeRoutes = require("./routes/promoCodeRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 
 const app = express();
+
+// =========================
+// Config
+// =========================
+const PORT = process.env.PORT || 3000;
 
 // =========================
 // Middleware
@@ -37,22 +42,22 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Folder public (HTML, CSS, JS)
+// Static Folder
 app.use(express.static(path.join(__dirname, "public")));
 
 // =========================
-// Routes API
+// API Routes
 // =========================
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/upload", uploadRoutes);
-app.use("/api/users", userRoutes); // baru
-app.use("/api/promo", promoRoutes); // baru
-app.use("/api/topup", topupRoutes); // baru: topup diamond (TokoVoucher)
-app.use("/api/settings", settingsRoutes); // baru: settings & api keys
-app.use("/api/promo-codes", promoCodeRoutes); // baru: kode promo / redeem code
-app.use("/api/notifications", notificationRoutes); // baru: notifikasi admin
+app.use("/api/users", userRoutes);
+app.use("/api/promo", promoRoutes);
+app.use("/api/topup", topupRoutes);
+app.use("/api/settings", settingsRoutes);
+app.use("/api/promo-codes", promoCodeRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // =========================
 // Test API
@@ -81,11 +86,35 @@ app.get("/", (req, res) => {
 });
 
 // =========================
+// 404 Handler
+// =========================
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: "Endpoint tidak ditemukan"
+    });
+});
+
+// =========================
+// Global Error Handler
+// =========================
+app.use((err, req, res, next) => {
+    console.error("❌ Server Error:", err);
+
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || "Internal Server Error"
+    });
+});
+
+// =========================
 // Start Server
 // =========================
-app.listen(3000, () => {
+app.listen(PORT, () => {
     console.log("=================================");
     console.log("🚀 NexShop Backend Running");
-    console.log("🌐 http://localhost:3000");
+    console.log(`🌐 URL          : http://localhost:${PORT}`);
+    console.log(`📦 Environment  : ${process.env.NODE_ENV || "development"}`);
+    console.log(`🗄️ Database     : Supabase`);
     console.log("=================================");
 });
