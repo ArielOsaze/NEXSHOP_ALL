@@ -21,6 +21,7 @@ router.get("/admin/sync", authMiddleware, topupController.syncProducts);
 router.put("/admin/products/bulk-status", authMiddleware, topupController.bulkUpdateStatus); // aktif/nonaktif massal
 router.put("/admin/products/bulk-icon", authMiddleware, topupController.bulkUpdateIcon); // set icon massal (produk terpilih)
 router.put("/admin/products/bulk-kategori", authMiddleware, topupController.bulkUpdateKategori); // pindah kategori massal (produk terpilih)
+router.put("/admin/products/apply-auto-split", authMiddleware, topupController.applyAutoSplitKategori); // terapkan auto-split WDP/Twilight ke produk lama sekaligus
 router.put("/admin/products/:id", authMiddleware, topupController.updateProduct);
 router.delete("/admin/products/bulk", authMiddleware, topupController.bulkDeleteProducts); // hapus produk terpilih (checkbox)
 router.delete("/admin/products/:id", authMiddleware, topupController.deleteProduct);

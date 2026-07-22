@@ -223,6 +223,54 @@ exports.updateProduct = async (req, res) => {
     }
 };
 
+// ADMIN — terapkan retroaktif AUTO_SPLIT_SUBKATEGORI (lihat resolveKategori
+// di atas) ke produk yang UDAH ADA di database. Auto-split pas sync cuma
+// kepake buat produk baru (kategori produk lama sengaja dilindungi biar gak
+// ketimpa edit manual admin) — tombol ini buat "migrasi" satu kali produk
+// lama yang belum kepisah, tanpa perlu pilih satu-satu manual.
+exports.applyAutoSplitKategori = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    try {
+        const { data: products, error: fetchErr } = await supabase
+            .from("topup_products")
+            .select("id, nama, kategori");
+        if (fetchErr) return res.status(500).json({ message: "Gagal mengambil daftar produk" });
+
+        // kelompokkan id per kategori tujuan biar update-nya sekaligus per grup, bukan satu-satu
+        const groups = new Map(); // kategoriBaru -> [id, ...]
+        for (const p of products || []) {
+            const target = resolveKategori(p.nama, p.kategori);
+            if (target && target !== p.kategori) {
+                if (!groups.has(target)) groups.set(target, []);
+                groups.get(target).push(p.id);
+            }
+        }
+
+        if (groups.size === 0) {
+            return res.json({ message: "Semua produk sudah sesuai, gak ada yang perlu dipindah", total_moved: 0, groups: [] });
+        }
+
+        let totalMoved = 0;
+        const summary = [];
+        for (const [kategoriBaru, ids] of groups.entries()) {
+            const { error } = await supabase
+                .from("topup_products")
+                .update({ kategori: kategoriBaru, updated_at: new Date().toISOString() })
+                .in("id", ids);
+            if (error) return res.status(500).json({ message: `Gagal memindahkan ke kategori "${kategoriBaru}"` });
+            totalMoved += ids.length;
+            summary.push({ kategori: kategoriBaru, count: ids.length });
+        }
+
+        notify("product", `📂 ${req.user.email} menerapkan auto-split ke ${totalMoved} produk lama (WDP/Twilight Pass, dst)`);
+        res.json({ message: `${totalMoved} produk berhasil dipindahkan ke kategori terpisah`, total_moved: totalMoved, groups: summary });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 // ADMIN — set logo game (operator_logo) buat SEMUA produk dalam satu kategori
 // sekaligus, jadi admin gak perlu edit logo satu-satu per denominasi diamond.
 exports.updateCategoryLogo = async (req, res) => {
