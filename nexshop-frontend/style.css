@@ -417,6 +417,7 @@ header{ position:sticky; top:0; z-index:100; }
     box-shadow:0 20px 50px rgba(0,0,0,.3);
 }
 .tw-panel h4{ font-size:18px; margin-bottom:18px; }
+.tw-nominal-heading{ margin-top:28px; padding-top:24px; border-top:1px solid var(--line); }
 .tw-panel-sub{ color:var(--text-muted); font-size:13px; margin-bottom:20px; margin-top:-10px; }
 .tw-form-grid{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:18px; }
 .tw-form-grid label:last-child:nth-child(odd){ grid-column:1/-1; }

@@ -1050,7 +1050,7 @@ function closeGameDetail() {
 }
 document.getElementById("twBackBtn").addEventListener("click", closeGameDetail);
 
-const TW_STEP_LABELS = { 1: "Lanjut", 2: "Lanjut", 3: "Lanjut", 4: "Bayar Sekarang" };
+const TW_STEP_LABELS = { 1: "Lanjut", 2: "Lanjut", 3: "Bayar Sekarang" };
 
 function goToTwStep(step) {
     twState.step = step;
@@ -1066,7 +1066,7 @@ function goToTwStep(step) {
     const nextBtn = document.getElementById("twNextBtn");
     nextBtn.disabled = false;
     nextBtn.textContent = TW_STEP_LABELS[step];
-    if (step === 4) renderTwSummary();
+    if (step === 3) renderTwSummary();
 }
 
 document.getElementById("twPrevBtn").addEventListener("click", () => {
@@ -1084,6 +1084,7 @@ document.getElementById("twNextBtn").addEventListener("click", async () => {
         if (!userId) { errorEl.textContent = "User ID wajib diisi"; return; }
         if (twState.needsServerId && !serverId) { errorEl.textContent = "Server ID wajib diisi untuk game ini"; return; }
         if (!email || !email.includes("@")) { errorEl.textContent = "Email wajib diisi dengan format yang benar"; return; }
+        if (!twState.product) { errorEl.textContent = "Pilih nominal top up dulu ya"; return; }
 
         twState.userId = userId;
         twState.serverId = serverId;
@@ -1092,16 +1093,11 @@ document.getElementById("twNextBtn").addEventListener("click", async () => {
         return;
     }
     if (twState.step === 2) {
-        if (!twState.product) { toast("Pilih nominal dulu ya", "error"); return; }
+        if (!twState.payment) { toast("Pilih metode pembayaran dulu ya", "error"); return; }
         goToTwStep(3);
         return;
     }
     if (twState.step === 3) {
-        if (!twState.payment) { toast("Pilih metode pembayaran dulu ya", "error"); return; }
-        goToTwStep(4);
-        return;
-    }
-    if (twState.step === 4) {
         await submitTopupOrder();
     }
 });

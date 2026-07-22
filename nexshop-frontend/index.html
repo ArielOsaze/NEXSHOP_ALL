@@ -121,17 +121,16 @@
         </div>
 
         <div class="tw-stepper" id="twStepper">
-            <div class="tw-step-dot active" data-step="1"><span class="tw-dot-num">1</span>Akun</div>
+            <div class="tw-step-dot active" data-step="1"><span class="tw-dot-num">1</span>Akun &amp; Nominal</div>
             <div class="tw-step-line"></div>
-            <div class="tw-step-dot" data-step="2"><span class="tw-dot-num">2</span>Nominal</div>
+            <div class="tw-step-dot" data-step="2"><span class="tw-dot-num">2</span>Pembayaran</div>
             <div class="tw-step-line"></div>
-            <div class="tw-step-dot" data-step="3"><span class="tw-dot-num">3</span>Pembayaran</div>
-            <div class="tw-step-line"></div>
-            <div class="tw-step-dot" data-step="4"><span class="tw-dot-num">4</span>Ringkasan</div>
+            <div class="tw-step-dot" data-step="3"><span class="tw-dot-num">3</span>Ringkasan</div>
         </div>
 
         <div class="tw-panels">
-            <!-- STEP 1 — Akun -->
+            <!-- STEP 1 — Akun & Nominal digabung, biar diamond langsung bisa dipilih
+                 begitu User ID/Server ID diisi — gak perlu klik "Lanjut" dulu. -->
             <div class="tw-panel" data-panel="1">
                 <h4>Masukkan Data Akun</h4>
                 <div class="tw-form-grid">
@@ -148,23 +147,20 @@
                 <button type="button" class="btn-secondary" id="twCheckBtn">🔍 Cek Akun</button>
                 <div class="tw-account-result hidden" id="twAccountResult"></div>
                 <p class="auth-error" id="twStep1Error"></p>
-            </div>
 
-            <!-- STEP 2 — Nominal -->
-            <div class="tw-panel hidden" data-panel="2">
-                <h4>Pilih Nominal</h4>
+                <h4 class="tw-nominal-heading">Pilih Nominal</h4>
                 <div class="tw-product-grid" id="twProductGrid"></div>
             </div>
 
-            <!-- STEP 3 — Pembayaran -->
-            <div class="tw-panel hidden" data-panel="3">
+            <!-- STEP 2 — Pembayaran -->
+            <div class="tw-panel hidden" data-panel="2">
                 <h4>Pilih Metode Pembayaran</h4>
                 <p class="tw-panel-sub">Seluruh transaksi diproses aman lewat payment gateway resmi iPaymu. Pilih kanal favorit kamu — kamu tetap bisa berpindah metode di halaman pembayaran iPaymu.</p>
                 <div class="tw-payment-grid" id="twPaymentGrid"></div>
             </div>
 
-            <!-- STEP 4 — Ringkasan -->
-            <div class="tw-panel hidden" data-panel="4">
+            <!-- STEP 3 — Ringkasan -->
+            <div class="tw-panel hidden" data-panel="3">
                 <h4>Ringkasan Pesanan</h4>
                 <div class="tw-summary" id="twSummary"></div>
                 <label class="tw-confirm-check">
