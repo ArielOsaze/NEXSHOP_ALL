@@ -1269,14 +1269,45 @@ async function submitTopupOrder() {
             return;
         }
 
-        toast(`Pesanan dibuat! Kamu akan diarahkan ke halaman pembayaran. Catat Order ID: ${data.orderId}`);
-        window.location.href = data.paymentUrl;
+        btn.disabled = false;
+        btn.textContent = "Bayar Sekarang";
+        openOrderConfirm(data);
     } catch (err) {
         errorEl.textContent = "Gagal terhubung ke server.";
         btn.disabled = false;
         btn.textContent = "Bayar Sekarang";
     }
 }
+
+// Ringkasan pesanan final (Order ID asli dari server) sebelum lari ke iPaymu —
+// murni langkah konfirmasi tambahan di frontend, tidak mengubah kontrak API.
+function openOrderConfirm(orderData) {
+    const p = twState.product;
+    const paymentLabel = (TW_PAYMENT_METHODS.find(m => m.id === twState.payment) || {}).label || "-";
+
+    const iconEl = document.getElementById("twOrderConfirmIcon");
+    if (p && p.item_icon) {
+        iconEl.outerHTML = `<img class="tw-confirm-icon" id="twOrderConfirmIcon" src="${p.item_icon}" alt="${escapeHtml(p.nama)}">`;
+    } else {
+        iconEl.outerHTML = `<span class="diamond-icon" id="twOrderConfirmIcon">◆</span>`;
+    }
+
+    document.getElementById("twOrderConfirmProduct").textContent = p ? p.nama : "-";
+    document.getElementById("twOrderConfirmGame").textContent = twState.kategori;
+
+    document.getElementById("twOrderConfirmSummary").innerHTML = `
+        <div class="tw-summary-row"><span>ID Transaksi</span><strong>${escapeHtml(String(orderData.orderId))}</strong></div>
+        <div class="tw-summary-row"><span>User ID</span><strong>${escapeHtml(twState.userId)}${twState.serverId ? " (" + escapeHtml(twState.serverId) + ")" : ""}</strong></div>
+        <div class="tw-summary-row"><span>Metode Pembayaran</span><strong>${escapeHtml(paymentLabel)}</strong></div>
+        <div class="tw-summary-row"><span>Total</span><strong>${rupiah(p ? p.harga_jual : 0)}</strong></div>
+    `;
+
+    const proceedBtn = document.getElementById("twOrderConfirmProceed");
+    proceedBtn.onclick = () => { window.location.href = orderData.paymentUrl; };
+
+    openOverlay("twOrderConfirmOverlay");
+}
+document.getElementById("twOrderConfirmClose").addEventListener("click", () => closeOverlay("twOrderConfirmOverlay"));
 
 /* ---------- Show/hide password ---------- */
 document.querySelectorAll(".toggle-password").forEach(btn => {

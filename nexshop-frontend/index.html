@@ -157,6 +157,28 @@
     </div>
 </section>
 
+<!-- Konfirmasi Pesanan (muncul setelah order dibuat, sebelum lari ke iPaymu) -->
+<div class="overlay" id="twOrderConfirmOverlay">
+    <div class="modal tw-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="twOrderConfirmTitle">
+        <button class="modal-close" id="twOrderConfirmClose" aria-label="Tutup">✕</button>
+        <h3 id="twOrderConfirmTitle">Ringkasan Pesanan</h3>
+
+        <div class="tw-confirm-product">
+            <span class="diamond-icon" id="twOrderConfirmIcon">◆</span>
+            <div>
+                <h4 id="twOrderConfirmProduct"></h4>
+                <span id="twOrderConfirmGame"></span>
+            </div>
+        </div>
+
+        <div class="tw-summary" id="twOrderConfirmSummary"></div>
+
+        <p class="tw-confirm-note">Kamu akan diarahkan ke halaman pembayaran iPaymu untuk menyelesaikan transaksi ini.</p>
+
+        <button type="button" class="btn-primary btn-cyan" id="twOrderConfirmProceed">Lanjutkan ke Pembayaran</button>
+    </div>
+</div>
+
 </main>
 
 <footer class="site-footer">
