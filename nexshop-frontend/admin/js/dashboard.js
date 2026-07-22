@@ -1165,6 +1165,11 @@ function renderTopupKategoriControls() {
             </button></li>
         `).join("") + `<li><hr class="dropdown-divider"></li><li><button class="dropdown-item text-danger fw-semibold" onclick="deleteAllTopupProductsConfirmed()"><i class="bi bi-exclamation-triangle me-1"></i>Hapus SEMUA kategori</button></li>`
         : `<li class="text-muted small px-2">Belum ada kategori</li>`;
+
+    // Datalist buat tombol "Pindah Kategori" massal — admin bisa pilih kategori
+    // yang udah ada atau ketik nama baru buat bikin kategori/kartu game baru.
+    const datalist = document.getElementById("topupKategoriDatalist");
+    if (datalist) datalist.innerHTML = kategoris.map(k => `<option value="${escapeHtml(k)}">`).join("");
 }
 
 document.getElementById("topupKategoriFilter").addEventListener("change", (e) => {
@@ -1285,6 +1290,32 @@ async function bulkSetTopupStatus(isActive) {
 
         showToast(data.message || "Status produk berhasil diubah");
         topupSelectedIds.clear();
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
+async function bulkMoveTopupKategori() {
+    if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
+    const input = document.getElementById("topupBulkKategoriInput");
+    const kategori = input.value.trim();
+    if (!kategori) return showToast("Isi/pilih nama kategori tujuan dulu", true);
+    if (!confirm(`Pindahkan ${topupSelectedIds.size} produk terpilih ke kategori "${kategori}"?`)) return;
+
+    try {
+        const res = await apiFetch("/topup/admin/products/bulk-kategori", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: [...topupSelectedIds], kategori })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal memindahkan kategori");
+
+        showToast(data.message || "Produk berhasil dipindahkan ke kategori baru");
+        topupSelectedIds.clear();
+        input.value = "";
         loadTopupProducts();
     } catch (err) {
         if (err.message === "unauthorized") return;

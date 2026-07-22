@@ -112,3 +112,31 @@ exports.getOverview = async (req, res) => {
         res.status(500).json({ message: "Server Error" });
     }
 };
+
+// PUBLIK — ringkasan ringan buat trust bar di halaman utama toko (jumlah
+// transaksi sukses, jumlah game/kategori aktif, dst). SENGAJA cuma hitungan
+// (count), TIDAK ada omzet/revenue — data itu tetap rahasia admin lewat
+// /overview di atas.
+exports.getPublicOverview = async (req, res) => {
+    try {
+        const [regularPaidRes, topupPaidRes, activeKategoriRes] = await Promise.all([
+            supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", SUCCESS_ORDER_STATUS),
+            supabase.from("topup_orders").select("id", { count: "exact", head: true }).eq("status", SUCCESS_TOPUP_STATUS),
+            supabase.from("topup_products").select("kategori").eq("is_active", true)
+        ]);
+
+        if (regularPaidRes.error || topupPaidRes.error || activeKategoriRes.error) {
+            return res.status(500).json({ message: "Gagal mengambil statistik publik" });
+        }
+
+        const totalGame = new Set((activeKategoriRes.data || []).map((p) => p.kategori || "Lainnya")).size;
+
+        res.json({
+            total_transaksi_sukses: (regularPaidRes.count || 0) + (topupPaidRes.count || 0),
+            total_game: totalGame
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};

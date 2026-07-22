@@ -60,6 +60,7 @@ app.use("/api/settings", settingsRoutes);
 app.use("/api/promo-codes", promoCodeRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin/stats", statsRoutes);
+app.use("/api/stats", statsRoutes); // sama router — /api/stats/public dibuka publik, /api/stats/overview tetap butuh admin
 
 // =========================
 // Test API

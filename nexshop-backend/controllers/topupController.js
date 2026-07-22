@@ -71,6 +71,30 @@ exports.getProducts = async (req, res) => {
 // dalam keadaan is_active = false, admin yang aktifkan manual
 // dan atur harga jualnya di dashboard.
 // ===========================================================
+// Sub-katalog yang mau dipisah otomatis dari kategori utamanya (mis. "Mobile
+// Legends") jadi kartu toko sendiri, karena beda sifat dari topup diamond
+// biasa (durasi/berlangganan, bukan sekali beli). Cocokkan dari nama produk;
+// tambah pattern baru di sini kalau ada sub-katalog lain yang perlu dipisah.
+const AUTO_SPLIT_SUBKATEGORI = [
+    { match: /weekly\s*diamond\s*pass|\bwdp\b/i, label: "Weekly Diamond Pass" },
+    { match: /twilight\s*pass/i, label: "Twilight Pass" }
+];
+
+// Tentukan kategori akhir sebuah produk: kalau namanya cocok salah satu
+// pattern di atas, pisah jadi "<kategori asal> - <label>" (mis. "Mobile
+// Legends - Twilight Pass") supaya tampil sebagai kartu game sendiri di
+// toko, terpisah dari topup diamond biasa.
+function resolveKategori(namaProduk, kategoriAsal) {
+    const nama = namaProduk || "";
+    const found = AUTO_SPLIT_SUBKATEGORI.find((s) => s.match.test(nama));
+    if (!found) return kategoriAsal;
+    // hindari dobel label kalau kategoriAsal dari TokoVoucher udah mengandung labelnya sendiri
+    if (kategoriAsal && kategoriAsal.toLowerCase().includes(found.label.toLowerCase())) {
+        return kategoriAsal;
+    }
+    return kategoriAsal ? `${kategoriAsal} - ${found.label}` : found.label;
+}
+
 exports.syncProducts = async (req, res) => {
     if (req.user.role !== "admin") {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
@@ -90,21 +114,26 @@ exports.syncProducts = async (req, res) => {
             });
         }
 
-        const rows = result.data.map((p) => ({
-            kode_produk: p.code,
-            nama: p.nama_produk,
-            kategori: p.operator_produk || p.category_name,
-            deskripsi: p.deskripsi,
-            harga_beli: p.price,
-            // hanya set harga_jual saat produk BARU pertama kali masuk;
-            // upsert di bawah pakai ignoreDuplicates:false jadi kita perlu
-            // ambil produk existing dulu supaya harga_jual admin gak ketimpa
-        }));
+        const rows = result.data.map((p) => {
+            const kategoriAsal = p.operator_produk || p.category_name;
+            return {
+                kode_produk: p.code,
+                nama: p.nama_produk,
+                // Weekly Diamond Pass & Twilight Pass otomatis kepisah ke kategori
+                // sendiri (lihat resolveKategori), gak nyampur sama diamond biasa.
+                kategori: resolveKategori(p.nama_produk, kategoriAsal),
+                deskripsi: p.deskripsi,
+                harga_beli: p.price,
+                // hanya set harga_jual saat produk BARU pertama kali masuk;
+                // upsert di bawah pakai ignoreDuplicates:false jadi kita perlu
+                // ambil produk existing dulu supaya harga_jual admin gak ketimpa
+            };
+        });
 
         const kodeList = rows.map((r) => r.kode_produk);
         const { data: existing } = await supabase
             .from("topup_products")
-            .select("kode_produk, harga_jual, is_active")
+            .select("kode_produk, harga_jual, is_active, kategori")
             .in("kode_produk", kodeList);
 
         const existingMap = new Map((existing || []).map((e) => [e.kode_produk, e]));
@@ -115,6 +144,11 @@ exports.syncProducts = async (req, res) => {
                 ...r,
                 harga_jual: prev ? prev.harga_jual : r.harga_beli, // default = harga modal, admin naikkan nanti
                 is_active: prev ? prev.is_active : false,
+                // produk yg udah ada: pertahankan kategori yang berlaku sekarang (baik
+                // dari auto-split maupun dipindah manual admin) — kategori hasil
+                // resolveKategori cuma dipakai buat produk BARU, biar sync ulang gak
+                // nimpa balik kategori yang udah diatur admin
+                kategori: prev ? prev.kategori : r.kategori,
                 updated_at: new Date().toISOString()
             };
         });
@@ -261,6 +295,35 @@ exports.bulkUpdateIcon = async (req, res) => {
         if (error) return res.status(500).json({ message: "Gagal update icon produk" });
         notify("product", `🖼️ ${req.user.email} mengubah icon ${ids.length} produk topup sekaligus`);
         res.json({ message: `Icon berhasil diterapkan ke ${ids.length} produk` });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ADMIN — pindahkan produk terpilih (checkbox massal) ke kategori lain
+// sekaligus. Dipakai buat misahin manual produk kayak Weekly Diamond Pass /
+// Twilight Pass dari kategori diamond biasa kalau auto-detect pas sync
+// (lihat resolveKategori) gak nangkep nama produknya.
+exports.bulkUpdateKategori = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const { ids, kategori } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "ids wajib diisi (array)" });
+    }
+    if (!kategori || !kategori.trim()) {
+        return res.status(400).json({ message: "kategori tujuan wajib diisi" });
+    }
+    try {
+        const { error } = await supabase
+            .from("topup_products")
+            .update({ kategori: kategori.trim(), updated_at: new Date().toISOString() })
+            .in("id", ids);
+
+        if (error) return res.status(500).json({ message: "Gagal memindahkan kategori produk" });
+        notify("product", `📂 ${req.user.email} memindahkan ${ids.length} produk topup ke kategori "${kategori.trim()}"`);
+        res.json({ message: `${ids.length} produk berhasil dipindahkan ke kategori "${kategori.trim()}"` });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }

@@ -1357,11 +1357,44 @@ async function checkPaymentReturn() {
     history.replaceState(null, "", window.location.pathname + window.location.search);
 }
 
+/* ---------- Trust bar (stat publik + badge kepercayaan) ---------- */
+function animateTrustCounter(el, target) {
+    const duration = 900;
+    const start = performance.now();
+    function tick(now) {
+        const progress = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3); // ease-out
+        el.textContent = Math.round(target * eased).toLocaleString("id-ID");
+        if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+}
+
+async function loadTrustStats() {
+    const ordersEl = document.getElementById("trustTotalOrders");
+    const gamesEl = document.getElementById("trustTotalGames");
+    if (!ordersEl || !gamesEl) return;
+
+    try {
+        const res = await fetch(`${API_BASE}/stats/public`);
+        if (!res.ok) throw new Error("Gagal memuat statistik");
+        const data = await res.json();
+
+        animateTrustCounter(ordersEl, Number(data.total_transaksi_sukses || 0));
+        animateTrustCounter(gamesEl, Number(data.total_game || 0));
+    } catch (err) {
+        // trust bar bukan fitur krusial — kalau gagal, biarin tampil "-" aja, gak ganggu belanja
+        ordersEl.textContent = "-";
+        gamesEl.textContent = "-";
+    }
+}
+
 /* ---------- Init ---------- */
 loadStoreSettings();
 loadProducts();
 loadPromo();
 loadTopupProducts();
+loadTrustStats();
 updateCartCount();
 checkPaymentReturn();
 refreshAccountUI();

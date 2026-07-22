@@ -299,6 +299,11 @@
                     <button class="btn btn-outline-secondary btn-sm" onclick="bulkSetTopupStatus(false)"><i class="bi bi-slash-circle"></i> Nonaktifkan</button>
                     <button class="btn btn-outline-primary btn-sm" onclick="document.getElementById('topupBulkIconInput').click()"><i class="bi bi-image"></i> Set Icon</button>
                     <input type="file" id="topupBulkIconInput" accept="image/*" class="d-none">
+                    <div class="input-group input-group-sm" style="width:auto;">
+                        <input type="text" id="topupBulkKategoriInput" class="form-control" placeholder="Nama kategori tujuan" style="max-width:180px;" list="topupKategoriDatalist">
+                        <button class="btn btn-outline-info" onclick="bulkMoveTopupKategori()"><i class="bi bi-folder-symlink"></i> Pindah Kategori</button>
+                    </div>
+                    <datalist id="topupKategoriDatalist"></datalist>
                     <button class="btn btn-outline-danger btn-sm" onclick="bulkDeleteTopupSelected()"><i class="bi bi-trash3"></i> Hapus Terpilih</button>
                 </div>
             </div>

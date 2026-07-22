@@ -200,6 +200,46 @@ header{ position:sticky; top:0; z-index:100; }
     clip-path:polygon(0 40%, 100% 100%, 0 100%);
 }
 
+/* Trust bar — stat singkat + badge kepercayaan, tampil di antara hero &
+   katalog biar area itu gak kosong dan langsung nunjukin toko udah "hidup". */
+.trust-bar{
+    max-width:1180px; margin:-28px auto 0; padding:0 20px 8px; position:relative; z-index:2;
+}
+.trust-stats{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:0;
+    background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:0 12px 32px rgba(0,0,0,.35);
+    overflow:hidden;
+}
+.trust-stat{
+    flex:1 1 160px; text-align:center; padding:18px 16px;
+    border-right:1px solid var(--line);
+}
+.trust-stat:last-child{ border-right:none; }
+.trust-stat-value{
+    display:block; font-family:'Space Grotesk',sans-serif; font-weight:700;
+    font-size:24px; background:linear-gradient(90deg,var(--cyan),var(--violet));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.trust-stat-label{ display:block; font-size:12px; color:var(--text-muted); margin-top:4px; }
+
+.trust-badges{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:10px 14px;
+    margin-top:14px;
+}
+.trust-badge{
+    display:flex; align-items:center; gap:6px;
+    background:var(--bg-panel-2); border:1px solid var(--line); border-radius:999px;
+    padding:7px 14px; font-size:12.5px; color:var(--text-muted); font-weight:600;
+}
+.trust-badge-icon{ font-size:14px; line-height:1; }
+
+@media (max-width:640px){
+    .trust-bar{ margin-top:-18px; }
+    .trust-stat{ flex:1 1 100%; border-right:none; border-bottom:1px solid var(--line); }
+    .trust-stat:last-child{ border-bottom:none; }
+}
+
 .section-heading{ text-align:center; max-width:640px; margin:0 auto 36px; padding:0 20px; }
 .eyebrow{
     display:inline-block; font-family:'Space Grotesk',sans-serif; font-size:12px; font-weight:600;
