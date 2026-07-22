@@ -82,6 +82,25 @@ async function apiFetch(path, options = {}) {
 }
 
 // ================================
+// Mobile sidebar (off-canvas)
+// ================================
+const sidebarEl = document.getElementById("sidebar");
+const mobileBackdrop = document.getElementById("mobileBackdrop");
+
+function openMobileSidebar() {
+    sidebarEl.classList.add("mobile-open");
+    mobileBackdrop.classList.add("active");
+}
+function closeMobileSidebar() {
+    sidebarEl.classList.remove("mobile-open");
+    mobileBackdrop.classList.remove("active");
+}
+
+document.getElementById("mobileMenuToggle").addEventListener("click", openMobileSidebar);
+document.getElementById("sidebarCloseBtn").addEventListener("click", closeMobileSidebar);
+mobileBackdrop.addEventListener("click", closeMobileSidebar);
+
+// ================================
 // View switching (sidebar)
 // ================================
 
@@ -90,6 +109,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         e.preventDefault();
         document.querySelectorAll("#sidebarNav .nav-link").forEach(l => l.classList.remove("active"));
         link.classList.add("active");
+        closeMobileSidebar();
 
         const view = link.dataset.view;
         document.querySelectorAll(".view-section").forEach(sec => sec.classList.add("d-none"));
