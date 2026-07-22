@@ -1112,6 +1112,7 @@ async function loadTopupProducts() {
         topupProducts = await res.json();
         topupProductsLoaded = true;
         renderTopupKategoriControls();
+        renderKategoriToggleList();
         renderTopupProducts();
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -1170,6 +1171,72 @@ function renderTopupKategoriControls() {
     // yang udah ada atau ketik nama baru buat bikin kategori/kartu game baru.
     const datalist = document.getElementById("topupKategoriDatalist");
     if (datalist) datalist.innerHTML = kategoris.map(k => `<option value="${escapeHtml(k)}">`).join("");
+}
+
+// "Kelola Kategori" — satu toggle per kategori/game. Sebuah kategori dianggap
+// AKTIF kalau minimal 1 produk di dalamnya aktif (sama persis logika yang
+// nentuin kartu game itu tampil atau enggak di halaman toko). Nyalain/matiin
+// toggle-nya bakal nyalain/matiin SEMUA produk di kategori itu sekaligus.
+function renderKategoriToggleList() {
+    const container = document.getElementById("kategoriToggleList");
+    if (!container) return;
+
+    const map = new Map(); // kategori -> { total, active }
+    topupProducts.forEach(p => {
+        const k = p.kategori || "Lainnya";
+        if (!map.has(k)) map.set(k, { total: 0, active: 0 });
+        const entry = map.get(k);
+        entry.total += 1;
+        if (p.is_active) entry.active += 1;
+    });
+
+    const kategoris = [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+    if (!kategoris.length) {
+        container.innerHTML = `<p class="text-muted small mb-0">Sync produk dulu buat lihat daftar kategori</p>`;
+        return;
+    }
+
+    container.innerHTML = kategoris.map(([kategori, info]) => {
+        const isActive = info.active > 0;
+        const safeId = `katToggle-${kategori.replace(/[^a-zA-Z0-9]/g, "_")}`;
+        return `
+            <div class="d-flex justify-content-between align-items-center border rounded px-3 py-2" style="border-color:var(--bs-border-color);">
+                <div>
+                    <div class="fw-semibold">${escapeHtml(kategori)}</div>
+                    <div class="text-muted small">${info.total} produk • ${info.active} aktif</div>
+                </div>
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" role="switch" id="${safeId}" ${isActive ? "checked" : ""} data-kategori="${escapeHtml(kategori)}">
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    container.querySelectorAll("input[data-kategori]").forEach(input => {
+        input.addEventListener("change", () => toggleKategoriActive(input.dataset.kategori, input.checked, input));
+    });
+}
+
+async function toggleKategoriActive(kategori, isActive, inputEl) {
+    if (inputEl) inputEl.disabled = true;
+    try {
+        const res = await apiFetch("/topup/admin/products/kategori-status", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ kategori, is_active: isActive })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal mengubah status kategori");
+
+        showToast(data.message || "Status kategori berhasil diubah");
+        loadTopupProducts();
+    } catch (err) {
+        if (inputEl) inputEl.checked = !isActive; // balikin toggle kalau gagal
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    } finally {
+        if (inputEl) inputEl.disabled = false;
+    }
 }
 
 document.getElementById("topupKategoriFilter").addEventListener("change", (e) => {

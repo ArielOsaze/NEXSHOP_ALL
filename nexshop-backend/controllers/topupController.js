@@ -192,6 +192,32 @@ exports.updateProduct = async (req, res) => {
     }
 };
 
+// ADMIN — nyala/matiin SATU KATEGORI/GAME sekaligus (semua produk di
+// dalamnya), dipakai buat toggle "Kelola Kategori" di dashboard — biar admin
+// gak perlu filter+select-all+bulk-status manual tiap mau sembunyiin
+// satu game dari toko.
+exports.setKategoriActive = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const { kategori, is_active } = req.body;
+    if (!kategori) {
+        return res.status(400).json({ message: "kategori wajib diisi" });
+    }
+    try {
+        const { error } = await supabase
+            .from("topup_products")
+            .update({ is_active: !!is_active, updated_at: new Date().toISOString() })
+            .eq("kategori", kategori);
+
+        if (error) return res.status(500).json({ message: "Gagal mengubah status kategori" });
+        notify("product", `${is_active ? "✅" : "🚫"} ${req.user.email} ${is_active ? "mengaktifkan" : "menonaktifkan"} kategori "${kategori}" (semua produk)`);
+        res.json({ message: `Kategori "${kategori}" berhasil ${is_active ? "diaktifkan" : "dinonaktifkan"}` });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 // ADMIN — set logo game (operator_logo) buat SEMUA produk dalam satu kategori
 // sekaligus, jadi admin gak perlu edit logo satu-satu per denominasi diamond.
 exports.updateCategoryLogo = async (req, res) => {
