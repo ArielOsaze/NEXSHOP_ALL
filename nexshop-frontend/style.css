@@ -432,7 +432,13 @@ header{ position:sticky; top:0; z-index:100; }
 .tw-check-icon{ font-weight:900; }
 
 /* Step 2 — nominal grid */
-.tw-product-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; }
+.tw-product-grid{ display:flex; flex-direction:column; gap:22px; }
+.tw-product-group-heading{
+    font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
+    color:var(--cyan); margin:0 0 10px; padding-left:2px; display:flex; align-items:center; gap:8px;
+}
+.tw-product-group-heading::before{ content:"◆"; font-size:11px; color:var(--violet); }
+.tw-product-group-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:14px; }
 .tw-product-card{
     position:relative; background:var(--bg-panel-2); border:1px solid var(--line); border-radius:14px;
     padding:18px 14px; text-align:center; cursor:pointer;
@@ -774,7 +780,7 @@ input::placeholder{ color:var(--text-dim); }
     .tw-panels{ padding:20px 16px; }
     .tw-form-grid{ grid-template-columns:1fr; }
     .tw-form-grid label:last-child:nth-child(odd){ grid-column:auto; }
-    .tw-product-grid{ grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); }
+    .tw-product-group-grid{ grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); }
     .tw-payment-grid{ grid-template-columns:1fr; }
     .tw-nav{ flex-direction:column-reverse; }
     .tw-nav .btn-ghost, .tw-next{ width:100%; }

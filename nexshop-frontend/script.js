@@ -1154,6 +1154,35 @@ document.getElementById("twCheckBtn").addEventListener("click", async () => {
 });
 
 /* ---- Step 2: Pilih Nominal (hanya produk milik game ini) ---- */
+// Deteksi sub-grup dari nama produk, buat pengelompokan visual DI DALAM satu
+// halaman game (bukan kategori/kartu game terpisah) — WDP & Twilight Pass
+// ditaruh sebagai section sendiri di atas, baru produk diamond biasa di bawah.
+const TW_PRODUCT_GROUPS = [
+    { key: "wdp", label: "Weekly Diamond Pass", match: /weekly\s*diamond\s*pass|\bwdp\b/i },
+    { key: "twilight", label: "Twilight Pass", match: /twilight\s*pass/i },
+    { key: "regular", label: "Diamond", match: null } // fallback, semua yang gak cocok pattern di atas
+];
+
+function groupTwProducts(products) {
+    const buckets = { wdp: [], twilight: [], regular: [] };
+    products.forEach((p) => {
+        const found = TW_PRODUCT_GROUPS.find((g) => g.match && g.match.test(p.nama || ""));
+        buckets[found ? found.key : "regular"].push(p);
+    });
+    return buckets;
+}
+
+function renderTwProductCard(p) {
+    return `
+        <div class="tw-product-card ${twState.product && twState.product.kode_produk === p.kode_produk ? "selected" : ""}" data-kode="${p.kode_produk}">
+            ${p.item_icon ? `<img class="tw-product-icon" src="${p.item_icon}" alt="${escapeHtml(p.nama)}" loading="lazy">` : `<span class="diamond-icon">◆</span>`}
+            <h5>${escapeHtml(p.nama)}</h5>
+            <div class="tw-product-price">${rupiah(p.harga_jual)}</div>
+            <span class="tw-product-check">✓</span>
+        </div>
+    `;
+}
+
 function renderTopupProductGrid() {
     const grid = document.getElementById("twProductGrid");
     if (!twState.products.length) {
@@ -1161,14 +1190,17 @@ function renderTopupProductGrid() {
         return;
     }
 
-    grid.innerHTML = twState.products.map(p => `
-        <div class="tw-product-card ${twState.product && twState.product.kode_produk === p.kode_produk ? "selected" : ""}" data-kode="${p.kode_produk}">
-            ${p.item_icon ? `<img class="tw-product-icon" src="${p.item_icon}" alt="${escapeHtml(p.nama)}" loading="lazy">` : `<span class="diamond-icon">◆</span>`}
-            <h5>${escapeHtml(p.nama)}</h5>
-            <div class="tw-product-price">${rupiah(p.harga_jual)}</div>
-            <span class="tw-product-check">✓</span>
-        </div>
-    `).join("");
+    const buckets = groupTwProducts(twState.products);
+    // section cuma muncul kalau isinya lebih dari 1 grup (mis. game tanpa WDP/Twilight
+    // tetap tampil rata sebagai satu grid polos, gak perlu header "Diamond" sendirian)
+    const activeGroupCount = TW_PRODUCT_GROUPS.filter((g) => buckets[g.key].length > 0).length;
+
+    grid.innerHTML = TW_PRODUCT_GROUPS.map((g) => {
+        const items = buckets[g.key];
+        if (!items.length) return "";
+        const heading = activeGroupCount > 1 ? `<h5 class="tw-product-group-heading">${g.label}</h5>` : "";
+        return `<div class="tw-product-group">${heading}<div class="tw-product-group-grid">${items.map(renderTwProductCard).join("")}</div></div>`;
+    }).join("");
 
     grid.querySelectorAll(".tw-product-card").forEach(card => {
         card.addEventListener("click", () => {

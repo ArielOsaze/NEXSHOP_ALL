@@ -1297,22 +1297,6 @@ async function bulkSetTopupStatus(isActive) {
     }
 }
 
-async function applyAutoSplitKategori() {
-    if (!confirm('Cari semua produk lama yang namanya mengandung "Weekly Diamond Pass" / "Twilight Pass" lalu pindahkan ke kategori terpisah?')) return;
-
-    try {
-        const res = await apiFetch("/topup/admin/products/apply-auto-split", { method: "PUT" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal menerapkan auto-split");
-
-        showToast(data.message || "Berhasil diterapkan");
-        loadTopupProducts();
-    } catch (err) {
-        if (err.message === "unauthorized") return;
-        showToast(err.message, true);
-    }
-}
-
 async function bulkMoveTopupKategori() {
     if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
     const input = document.getElementById("topupBulkKategoriInput");
