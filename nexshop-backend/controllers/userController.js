@@ -88,3 +88,92 @@ exports.updateUser = async (req, res) => {
         res.status(500).json({ message: "Server Error" });
     }
 };
+
+// ===========================
+// RIWAYAT & STATISTIK BELANJA 1 PELANGGAN (admin only) — gabungan order
+// produk biasa + topup diamond, buat lihat customer value per orang.
+// ===========================
+exports.getUserDetail = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+
+    const { id } = req.params;
+
+    try {
+        const { data: user, error: userErr } = await supabase
+            .from("users")
+            .select("id, fullname, email, role, is_blacklisted, created_at")
+            .eq("id", id)
+            .maybeSingle();
+
+        if (userErr) {
+            console.log(userErr);
+            return res.status(500).json({ message: "Database Error" });
+        }
+        if (!user) {
+            return res.status(404).json({ message: "User tidak ditemukan" });
+        }
+
+        const [ordersRes, topupRes] = await Promise.all([
+            supabase.from("orders")
+                .select("id, total, status, items, created_at")
+                .eq("user_id", id)
+                .order("created_at", { ascending: false }),
+            supabase.from("topup_orders")
+                .select("id, harga, status, kode_produk, nama_produk, tujuan, created_at")
+                .eq("user_id", id)
+                .order("created_at", { ascending: false })
+        ]);
+
+        if (ordersRes.error || topupRes.error) {
+            return res.status(500).json({ message: "Gagal mengambil riwayat order" });
+        }
+
+        const regularHistory = (ordersRes.data || []).map(o => ({
+            type: "regular",
+            id: o.id,
+            title: (o.items || []).map(i => i.name).filter(Boolean).join(", ") || "Order",
+            amount: Number(o.total || 0),
+            status: o.status || "pending",
+            created_at: o.created_at
+        }));
+
+        const topupHistory = (topupRes.data || []).map(t => ({
+            type: "topup",
+            id: t.id,
+            title: t.nama_produk || t.kode_produk,
+            amount: Number(t.harga || 0),
+            status: t.status || "pending",
+            created_at: t.created_at
+        }));
+
+        const history = [...regularHistory, ...topupHistory]
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        const paidHistory = history.filter(h => h.status === "paid" || h.status === "sukses");
+        const totalSpent = paidHistory.reduce((s, h) => s + h.amount, 0);
+
+        res.json({
+            user: {
+                id: user.id,
+                name: user.fullname,
+                email: user.email,
+                role: user.role || "user",
+                is_blacklisted: user.is_blacklisted || false,
+                created_at: user.created_at
+            },
+            stats: {
+                total_orders: history.length,
+                total_paid_orders: paidHistory.length,
+                total_spent: totalSpent,
+                avg_order_value: paidHistory.length ? Math.round(totalSpent / paidHistory.length) : 0,
+                last_order_at: history.length ? history[0].created_at : null
+            },
+            history
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};

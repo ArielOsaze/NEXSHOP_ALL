@@ -17,6 +17,7 @@ let usersLoaded = false;
 let promoLoaded = false;
 let settingsLoaded = false;
 let topupProductsLoaded = false;
+let statsLoaded = false;
 let topupOrdersLoaded = false;
 let promoCodesLoaded = false;
 let promoCodes = [];
@@ -100,6 +101,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
         if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
         if (view === "settings" && !settingsLoaded) loadSettings();
+        if (view === "stats" && !statsLoaded) loadStats();
     });
 });
 
@@ -470,6 +472,9 @@ async function loadUsers() {
                                     <i class="bi ${u.is_blacklisted ? "bi-unlock" : "bi-slash-circle"}"></i>
                                     ${u.is_blacklisted ? "Buka Blokir" : "Blokir"}
                                 </button>
+                                <button class="btn btn-sm btn-outline-info" onclick="openUserDetail(${Number(u.id)})">
+                                    <i class="bi bi-clock-history"></i> Riwayat
+                                </button>
                             </td>
                         </tr>
                     `).join("")}
@@ -486,6 +491,74 @@ async function loadUsers() {
                 <small>Endpoint <code>GET /users</code> belum tersedia di API kamu.</small>
             </div>
         `;
+    }
+}
+
+async function openUserDetail(id) {
+    const modalEl = document.getElementById("userDetailModal");
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    const body = document.getElementById("userDetailBody");
+    body.innerHTML = `<div class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</div>`;
+    modal.show();
+
+    try {
+        const res = await apiFetch(`/users/${id}/detail`);
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.message || "Gagal memuat riwayat pelanggan");
+        }
+        const { user, stats, history } = await res.json();
+        const rupiah = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
+        const statusColors = { paid: "success", sukses: "success", pending: "warning", processing: "info", failed: "danger", gagal: "danger" };
+
+        body.innerHTML = `
+            <div class="mb-3">
+                <h5 class="mb-0">${escapeHtml(user.name || "-")}</h5>
+                <span class="text-muted small">${escapeHtml(user.email || "-")} · Bergabung ${user.created_at ? new Date(user.created_at).toLocaleDateString("id-ID") : "-"}</span>
+            </div>
+
+            <div class="row g-2 mb-4">
+                <div class="col-4">
+                    <div class="border rounded p-2 text-center">
+                        <small class="text-muted d-block">Total Belanja</small>
+                        <strong>${rupiah(stats.total_spent)}</strong>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="border rounded p-2 text-center">
+                        <small class="text-muted d-block">Order Sukses / Semua</small>
+                        <strong>${stats.total_paid_orders} / ${stats.total_orders}</strong>
+                    </div>
+                </div>
+                <div class="col-4">
+                    <div class="border rounded p-2 text-center">
+                        <small class="text-muted d-block">Rata-rata / Order</small>
+                        <strong>${rupiah(stats.avg_order_value)}</strong>
+                    </div>
+                </div>
+            </div>
+
+            <h6>Riwayat Transaksi</h6>
+            <div class="table-responsive" style="max-height:340px;">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead><tr><th>Tanggal</th><th>Tipe</th><th>Item</th><th>Nominal</th><th>Status</th></tr></thead>
+                    <tbody>
+                        ${history.length ? history.map(h => `
+                            <tr>
+                                <td class="text-nowrap">${new Date(h.created_at).toLocaleString("id-ID")}</td>
+                                <td>${h.type === "topup" ? `<span class="badge bg-info">Topup</span>` : `<span class="badge bg-primary">Produk</span>`}</td>
+                                <td>${escapeHtml(h.title)}</td>
+                                <td>${rupiah(h.amount)}</td>
+                                <td><span class="badge bg-${statusColors[h.status] || "secondary"}">${escapeHtml(h.status)}</span></td>
+                            </tr>
+                        `).join("") : `<tr><td colspan="5" class="text-center text-muted py-3">Belum ada transaksi.</td></tr>`}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        body.innerHTML = `<div class="text-center text-danger py-5">${escapeHtml(err.message)}</div>`;
     }
 }
 
@@ -1018,6 +1091,7 @@ async function loadTopupProducts() {
 
         topupProducts = await res.json();
         topupProductsLoaded = true;
+        renderTopupKategoriControls();
         renderTopupProducts();
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -1025,15 +1099,84 @@ async function loadTopupProducts() {
     }
 }
 
+// State buat filter kategori & seleksi checkbox produk topup
+let topupKategoriFilter = "";
+let topupSelectedIds = new Set();
+
+function getFilteredTopupProducts() {
+    return topupKategoriFilter
+        ? topupProducts.filter(p => (p.kategori || "Lainnya") === topupKategoriFilter)
+        : topupProducts;
+}
+
+// Kelompokkan per kategori, produk AKTIF ditaruh paling atas di tiap kategori
+// (biar admin gampang lihat mana yang lagi tayang di toko), lalu urut harga.
+function groupTopupProductsByKategori(list) {
+    const map = new Map();
+    list.forEach(p => {
+        const key = p.kategori || "Lainnya";
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(p);
+    });
+    [...map.values()].forEach(arr => {
+        arr.sort((a, b) => {
+            if (!!a.is_active !== !!b.is_active) return a.is_active ? -1 : 1;
+            return Number(a.harga_jual) - Number(b.harga_jual);
+        });
+    });
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+}
+
+function renderTopupKategoriControls() {
+    const kategoris = [...new Set(topupProducts.map(p => p.kategori || "Lainnya"))].sort();
+
+    const filterEl = document.getElementById("topupKategoriFilter");
+    const current = filterEl.value;
+    filterEl.innerHTML = `<option value="">Semua Kategori</option>` +
+        kategoris.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
+    filterEl.value = kategoris.includes(current) ? current : "";
+    topupKategoriFilter = filterEl.value;
+
+    const menu = document.getElementById("deleteByKategoriMenu");
+    menu.innerHTML = kategoris.length
+        ? kategoris.map(k => `
+            <li><button class="dropdown-item text-danger" onclick="deleteTopupKategori('${k.replace(/'/g, "\\'")}')">
+                <i class="bi bi-trash3 me-1"></i>${escapeHtml(k)}
+            </button></li>
+        `).join("") + `<li><hr class="dropdown-divider"></li><li><button class="dropdown-item text-danger fw-semibold" onclick="deleteAllTopupProductsConfirmed()"><i class="bi bi-exclamation-triangle me-1"></i>Hapus SEMUA kategori</button></li>`
+        : `<li class="text-muted small px-2">Belum ada kategori</li>`;
+}
+
+document.getElementById("topupKategoriFilter").addEventListener("change", (e) => {
+    topupKategoriFilter = e.target.value;
+    renderTopupProducts();
+});
+
 function renderTopupProducts() {
     const tbody = document.getElementById("topupProducts");
-    if (!topupProducts.length) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">Belum ada produk. Sync dulu dari TokoVoucher di atas.</td></tr>`;
+    const list = getFilteredTopupProducts();
+
+    // buang seleksi yang produknya udah gak kelihatan lagi (filter/refresh)
+    const visibleIds = new Set(list.map(p => p.id));
+    topupSelectedIds.forEach(id => { if (!visibleIds.has(id)) topupSelectedIds.delete(id); });
+
+    if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-4">${topupProducts.length ? "Gak ada produk di kategori ini." : "Belum ada produk. Sync dulu dari TokoVoucher di atas."}</td></tr>`;
+        updateTopupSelectedCount();
         return;
     }
 
-    tbody.innerHTML = topupProducts.map(p => `
+    const groups = groupTopupProductsByKategori(list);
+    tbody.innerHTML = groups.map(([kategori, products]) => `
+        <tr class="table-secondary">
+            <td colspan="10" class="fw-semibold">
+                <i class="bi bi-controller me-1"></i>${escapeHtml(kategori)}
+                <span class="text-muted fw-normal small ms-1">(${products.length} produk)</span>
+            </td>
+        </tr>
+        ${products.map(p => `
         <tr>
+            <td><input type="checkbox" class="form-check-input topup-row-check" data-id="${Number(p.id)}" ${topupSelectedIds.has(p.id) ? "checked" : ""}></td>
             <td>${p.item_icon ? `<img src="${p.item_icon}" alt="" style="width:32px;height:32px;object-fit:contain;">` : `<span class="text-muted">◆</span>`}</td>
             <td><code>${escapeHtml(p.kode_produk)}</code></td>
             <td>${escapeHtml(p.nama)}</td>
@@ -1047,7 +1190,107 @@ function renderTopupProducts() {
                 <button class="btn btn-danger btn-sm" onclick="deleteTopupProduct(${Number(p.id)})"><i class="bi bi-trash"></i></button>
             </td>
         </tr>
+        `).join("")}
     `).join("");
+
+    tbody.querySelectorAll(".topup-row-check").forEach(cb => {
+        cb.addEventListener("change", () => {
+            const id = Number(cb.dataset.id);
+            if (cb.checked) topupSelectedIds.add(id); else topupSelectedIds.delete(id);
+            updateTopupSelectedCount();
+        });
+    });
+
+    updateTopupSelectedCount();
+}
+
+function updateTopupSelectedCount() {
+    document.getElementById("topupSelectedCount").textContent = `${topupSelectedIds.size} dipilih`;
+    const list = getFilteredTopupProducts();
+    document.getElementById("topupSelectAll").checked = list.length > 0 && topupSelectedIds.size === list.length;
+}
+
+document.getElementById("topupSelectAll").addEventListener("change", (e) => {
+    const list = getFilteredTopupProducts();
+    if (e.target.checked) list.forEach(p => topupSelectedIds.add(p.id));
+    else topupSelectedIds.clear();
+    renderTopupProducts();
+});
+
+async function bulkSetTopupStatus(isActive) {
+    if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
+    if (!confirm(`${isActive ? "Aktifkan" : "Nonaktifkan"} ${topupSelectedIds.size} produk terpilih?`)) return;
+
+    try {
+        const res = await apiFetch("/topup/admin/products/bulk-status", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: [...topupSelectedIds], is_active: isActive })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal update status produk");
+
+        showToast(data.message || "Status produk berhasil diubah");
+        topupSelectedIds.clear();
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
+async function bulkDeleteTopupSelected() {
+    if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
+    if (!confirm(`Yakin hapus ${topupSelectedIds.size} produk terpilih? Tindakan ini tidak bisa dibatalkan.`)) return;
+
+    try {
+        const res = await apiFetch("/topup/admin/products/bulk", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: [...topupSelectedIds] })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menghapus produk terpilih");
+
+        showToast(data.message || "Produk terpilih berhasil dihapus");
+        topupSelectedIds.clear();
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
+async function deleteTopupKategori(kategori) {
+    if (!confirm(`Yakin hapus SEMUA produk kategori "${kategori}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+    try {
+        const res = await apiFetch(`/topup/admin/products?kategori=${encodeURIComponent(kategori)}`, { method: "DELETE" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menghapus kategori");
+
+        showToast(data.message || `Kategori "${kategori}" berhasil dihapus`);
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
+async function deleteAllTopupProductsConfirmed() {
+    if (!confirm("Yakin hapus SEMUA produk topup (semua game/kategori)? Tindakan ini tidak bisa dibatalkan.")) return;
+    if (!confirm("Sekali lagi — ini akan menghapus SELURUH produk topup tanpa terkecuali. Lanjutkan?")) return;
+
+    try {
+        const res = await apiFetch("/topup/admin/products", { method: "DELETE" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menghapus semua produk");
+
+        showToast(data.message || "Semua produk topup berhasil dihapus");
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
 }
 
 function editTopupProduct(id) {
@@ -1121,32 +1364,6 @@ async function saveTopupProduct() {
         topupProductModal.hide();
         loadTopupProducts();
         showToast("Produk topup berhasil disimpan");
-    } catch (err) {
-        if (err.message === "unauthorized") return;
-        showToast(err.message, true);
-    }
-}
-
-async function deleteAllTopupProducts() {
-    const kategori = prompt(
-        "Ketik nama kategori/game kalau cuma mau hapus produk kategori itu saja.\n" +
-        "Kosongkan lalu klik OK kalau mau hapus SEMUA produk topup (tidak bisa dibatalkan)."
-    );
-    if (kategori === null) return; // klik Cancel
-
-    const confirmMsg = kategori.trim()
-        ? `Yakin hapus SEMUA produk topup di kategori "${kategori.trim()}"? Tindakan ini tidak bisa dibatalkan.`
-        : `Yakin hapus SEMUA produk topup (semua game/kategori)? Tindakan ini tidak bisa dibatalkan.`;
-    if (!confirm(confirmMsg)) return;
-
-    try {
-        const qs = kategori.trim() ? `?kategori=${encodeURIComponent(kategori.trim())}` : "";
-        const res = await apiFetch(`/topup/admin/products${qs}`, { method: "DELETE" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal menghapus semua produk");
-
-        showToast(data.message || "Produk berhasil dihapus");
-        loadTopupProducts();
     } catch (err) {
         if (err.message === "unauthorized") return;
         showToast(err.message, true);
@@ -1566,3 +1783,91 @@ resetIdleTimer();
 
 // ================================
 loadProducts();
+
+// ================================
+// Statistik Penjualan
+// ================================
+let statRevenueChartInstance = null;
+
+async function loadStats() {
+    document.getElementById("statTopProducts").innerHTML = `<tr><td colspan="3" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>`;
+    document.getElementById("statTopTopupCategories").innerHTML = `<tr><td colspan="3" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>`;
+
+    try {
+        const res = await apiFetch("/admin/stats/overview");
+        if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.message || "Gagal memuat statistik");
+        }
+        const stats = await res.json();
+        statsLoaded = true;
+        renderStats(stats);
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
+function renderStats(stats) {
+    const rupiah = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
+
+    document.getElementById("statTotalRevenue").textContent = rupiah(stats.total_revenue);
+    document.getElementById("statRevenueRegular").textContent = rupiah(stats.revenue_regular);
+    document.getElementById("statRevenueTopup").textContent = rupiah(stats.revenue_topup);
+    document.getElementById("statOrderCount").textContent = `${stats.total_paid_orders} / ${stats.total_orders}`;
+
+    // top produk biasa
+    const topProductsEl = document.getElementById("statTopProducts");
+    topProductsEl.innerHTML = stats.top_products.length
+        ? stats.top_products.map(p => `
+            <tr><td>${escapeHtml(p.name)}</td><td>${p.qty}</td><td>${rupiah(p.revenue)}</td></tr>
+        `).join("")
+        : `<tr><td colspan="3" class="text-center text-muted py-3">Belum ada penjualan produk biasa.</td></tr>`;
+
+    // top kategori topup
+    const topKategoriEl = document.getElementById("statTopTopupCategories");
+    topKategoriEl.innerHTML = stats.top_topup_categories.length
+        ? stats.top_topup_categories.map(k => `
+            <tr><td>${escapeHtml(k.kategori)}</td><td>${k.count}</td><td>${rupiah(k.revenue)}</td></tr>
+        `).join("")
+        : `<tr><td colspan="3" class="text-center text-muted py-3">Belum ada penjualan topup.</td></tr>`;
+
+    // status breakdown badges
+    const statusColors = { paid: "success", sukses: "success", pending: "warning", processing: "info", failed: "danger", gagal: "danger" };
+    const statusEl = document.getElementById("statStatusBreakdown");
+    const entries = Object.entries(stats.status_breakdown || {});
+    statusEl.innerHTML = entries.length
+        ? entries.map(([status, count]) => `
+            <span class="badge bg-${statusColors[status] || "secondary"} fs-6 fw-normal px-3 py-2">${escapeHtml(status)}: ${count}</span>
+        `).join("")
+        : `<span class="text-muted small">Belum ada data order.</span>`;
+
+    // chart tren omzet 30 hari
+    const ctx = document.getElementById("statRevenueChart");
+    const labels = stats.revenue_by_day.map(d => d.date.slice(5)); // MM-DD
+    const data = stats.revenue_by_day.map(d => d.revenue);
+
+    if (statRevenueChartInstance) statRevenueChartInstance.destroy();
+    statRevenueChartInstance = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels,
+            datasets: [{
+                label: "Omzet",
+                data,
+                borderColor: "#22d3ee",
+                backgroundColor: "rgba(34,211,238,.15)",
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { ticks: { callback: (v) => "Rp " + Number(v).toLocaleString("id-ID") } }
+            }
+        }
+    });
+}

@@ -18,6 +18,7 @@ const topupRoutes = require("./routes/topupRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
 const promoCodeRoutes = require("./routes/promoCodeRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const statsRoutes = require("./routes/statsRoutes");
 
 const app = express();
 
@@ -58,6 +59,7 @@ app.use("/api/topup", topupRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/promo-codes", promoCodeRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/admin/stats", statsRoutes);
 
 // =========================
 // Test API
