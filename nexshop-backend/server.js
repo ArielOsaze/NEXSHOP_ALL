@@ -43,6 +43,16 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Jaga-jaga: kalau ada request PUT/POST yang body-nya kosong/gak ke-parse
+// (mis. Content-Type gak ke-set, atau body literally kosong), req.body bisa
+// jadi undefined. Beberapa controller langsung destructure req.body tanpa
+// cek dulu — tanpa ini, itu bikin server 500 crash mentah-mentah
+// ("Cannot destructure property '...' of 'req.body' as it is undefined").
+app.use((req, res, next) => {
+    if (!req.body) req.body = {};
+    next();
+});
+
 // Static Folder
 app.use(express.static(path.join(__dirname, "public")));
 
