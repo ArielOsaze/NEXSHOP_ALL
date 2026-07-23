@@ -723,6 +723,7 @@ function editPromoSlide(id) {
     document.getElementById("promoDesc").value = slide.description || "";
     document.getElementById("promoCtaText").value = slide.cta_text || "";
     document.getElementById("promoCtaLink").value = slide.cta_link || "";
+    document.getElementById("promoFullImage").checked = !!slide.full_image;
     if (slide.image_url) {
         promoImagePreview.src = slide.image_url;
         promoImagePreview.classList.remove("d-none");
@@ -759,6 +760,7 @@ async function savePromo() {
     formData.append("cta_text", document.getElementById("promoCtaText").value.trim());
     formData.append("cta_link", document.getElementById("promoCtaLink").value.trim());
     formData.append("is_active", document.getElementById("promoIsActive").checked);
+    formData.append("full_image", document.getElementById("promoFullImage").checked);
 
     const file = promoImageInput.files[0];
     if (file) {

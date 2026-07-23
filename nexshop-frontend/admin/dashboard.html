@@ -650,6 +650,13 @@
     <div class="modal-body">
         <form id="promoForm">
             <div class="row g-3">
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="promoFullImage">
+                        <label class="form-check-label" for="promoFullImage">Gambar Full (tulisan udah ada di dalam gambarnya)</label>
+                    </div>
+                    <div class="form-text">Aktifkan buat banner yang teksnya udah didesain nempel di gambar — Badge/Judul/Deskripsi/Tombol di bawah ini gak akan ditampilkan menimpa gambar, dan gambar ditampilkan utuh tanpa dipotong (gak di-crop/zoom).</div>
+                </div>
                 <div class="col-md-6">
                     <label class="form-label">Tipe</label>
                     <select id="promoType" class="form-control">
@@ -669,6 +676,7 @@
                 <div class="col-12">
                     <label class="form-label">Judul</label>
                     <input id="promoTitle" class="form-control" required placeholder="Stok Terbatas, Harga Bersahabat">
+                    <div class="form-text">Tetap wajib diisi walau "Gambar Full" aktif — dipakai sebagai label internal di dashboard, bukan ditampilkan di toko.</div>
                 </div>
                 <div class="col-12">
                     <label class="form-label">Deskripsi</label>
@@ -681,6 +689,7 @@
                 <div class="col-md-6">
                     <label class="form-label">Link Tombol</label>
                     <input id="promoCtaLink" class="form-control" placeholder="#games">
+                    <div class="form-text">Kalau "Gambar Full" aktif, link ini bikin seluruh gambar bisa diklik (teks tombol diabaikan).</div>
                 </div>
                 <div class="col-12">
                     <label class="form-label">Gambar Banner</label>

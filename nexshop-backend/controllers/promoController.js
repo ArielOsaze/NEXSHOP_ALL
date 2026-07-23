@@ -72,7 +72,7 @@ exports.createSlide = async (req, res) => {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
-    const { type, badge_text, title, description, cta_text, cta_link, is_active, sort_order } = req.body;
+    const { type, badge_text, title, description, cta_text, cta_link, is_active, sort_order, full_image } = req.body;
     let { image_url } = req.body;
 
     if (!title) {
@@ -90,6 +90,7 @@ exports.createSlide = async (req, res) => {
             .insert([{
                 type: type || "promo",
                 badge_text, title, description, cta_text, cta_link, image_url,
+                full_image: full_image === "true" || full_image === true,
                 is_active: is_active !== undefined ? is_active === "true" || is_active === true : true,
                 sort_order: sort_order ? Number(sort_order) : 0
             }])
@@ -114,7 +115,7 @@ exports.updateSlide = async (req, res) => {
     }
 
     const { id } = req.params;
-    const { type, badge_text, title, description, cta_text, cta_link, is_active, sort_order } = req.body;
+    const { type, badge_text, title, description, cta_text, cta_link, is_active, sort_order, full_image } = req.body;
     let { image_url } = req.body;
 
     try {
@@ -124,6 +125,7 @@ exports.updateSlide = async (req, res) => {
 
         const payload = { type, badge_text, title, description, cta_text, cta_link };
         if (image_url !== undefined) payload.image_url = image_url;
+        if (full_image !== undefined) payload.full_image = full_image === "true" || full_image === true;
         if (is_active !== undefined) payload.is_active = is_active === "true" || is_active === true;
         if (sort_order !== undefined) payload.sort_order = Number(sort_order);
 

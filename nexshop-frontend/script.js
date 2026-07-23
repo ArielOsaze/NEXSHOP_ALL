@@ -760,13 +760,15 @@ function renderHeroSlides() {
     const dotsWrap = document.getElementById("heroDots");
 
     track.innerHTML = heroSlides.map(s => `
-        <div class="hero-slide" style="${s.image_url ? `background-image:url('${s.image_url}')` : ""}">
+        <div class="hero-slide${s.full_image ? " full-image" : ""}" style="${s.image_url ? `background-image:url('${s.image_url}')` : ""}">
+            ${s.full_image ? (s.cta_link ? `<a href="${s.cta_link}" class="hero-slide-link" aria-label="${escapeHtml(s.title || "Promo")}"></a>` : "") : `
             <div class="hero-text">
                 ${s.badge_text ? `<span class="hero-badge">${escapeHtml(s.badge_text)}</span>` : ""}
                 <h2>${escapeHtml(s.title || "")}</h2>
                 ${s.description ? `<p>${escapeHtml(s.description)}</p>` : ""}
                 ${s.cta_text ? `<a href="${s.cta_link || "#"}" class="hero-cta">${escapeHtml(s.cta_text)}</a>` : ""}
             </div>
+            `}
         </div>
     `).join("");
 

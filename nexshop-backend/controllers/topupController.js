@@ -3,6 +3,7 @@ const tokovoucher = require("../config/tokovoucher");
 const { createRedirectPayment, checkTransactionStatus } = require("../config/ipaymu");
 const { checkNickname } = require("../config/apigames");
 const { notify } = require("../config/notify");
+const { sendTopupInvoiceEmail } = require("../config/mailer");
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
 const BACKEND_URL = (process.env.BACKEND_URL || "").replace(/\/$/, "");
@@ -583,14 +584,33 @@ async function fulfillOrder(order) {
         });
 
         const statusMap = { sukses: "sukses", pending: "processing", gagal: "gagal" };
+        const finalStatus = statusMap[result.status] || "processing";
         await supabase.from("topup_orders").update({
-            status: statusMap[result.status] || "processing",
+            status: finalStatus,
             tv_ref_id: result.ref_id || order.id,
             tv_trx_id: result.trx_id || null,
             tv_sn: result.sn || null,
             tv_message: result.message || null,
             updated_at: new Date().toISOString()
         }).eq("id", order.id);
+
+        // fulfillOrder cuma dipanggil sekali per order (dijaga idempotency di
+        // caller lewat cek !order.tv_trx_id), jadi kalau langsung sukses di
+        // sini, ini pasti transisi PERTAMA kali ke "sukses" — aman kirim invoice
+        if (finalStatus === "sukses" && order.recipient_email) {
+            try {
+                await sendTopupInvoiceEmail(order.recipient_email, {
+                    orderId: order.id,
+                    namaProduk: order.nama_produk,
+                    tujuan: order.tujuan,
+                    serverId: order.server_id,
+                    harga: order.harga,
+                    serialNumber: result.sn || null
+                });
+            } catch (mailErr) {
+                console.log("Gagal kirim invoice topup email:", mailErr.response?.data || mailErr.message);
+            }
+        }
     } catch (err) {
         // Sesuai catatan TokoVoucher: HTTP error / timeout HARUS dianggap PENDING,
         // bukan gagal — jangan tandai gagal di sini, biarkan admin/webhook/polling
@@ -688,8 +708,15 @@ exports.handleTokoVoucherWebhook = async (req, res) => {
 
         const statusMap = { sukses: "sukses", gagal: "gagal", pending: "processing" };
 
+        const { data: existingOrder } = await supabase
+            .from("topup_orders")
+            .select("status, recipient_email, nama_produk, tujuan, server_id, harga")
+            .eq("id", refId)
+            .maybeSingle();
+
+        const finalStatus = statusMap[body.status] || "processing";
         const { error } = await supabase.from("topup_orders").update({
-            status: statusMap[body.status] || "processing",
+            status: finalStatus,
             tv_trx_id: body.trx_id || null,
             tv_sn: body.sn || null,
             tv_message: body.message || null,
@@ -699,6 +726,23 @@ exports.handleTokoVoucherWebhook = async (req, res) => {
         if (error) {
             console.log(error);
             return res.status(500).json({ message: "Gagal update status" });
+        }
+
+        // kirim invoice cuma pas transisi PERTAMA KALI ke "sukses" (bukan yang
+        // udah pernah sukses sebelumnya — webhook TokoVoucher bisa aja retry)
+        if (finalStatus === "sukses" && existingOrder && existingOrder.status !== "sukses" && existingOrder.recipient_email) {
+            try {
+                await sendTopupInvoiceEmail(existingOrder.recipient_email, {
+                    orderId: refId,
+                    namaProduk: existingOrder.nama_produk,
+                    tujuan: existingOrder.tujuan,
+                    serverId: existingOrder.server_id,
+                    harga: existingOrder.harga,
+                    serialNumber: body.sn || null
+                });
+            } catch (mailErr) {
+                console.log("Gagal kirim invoice topup email:", mailErr.response?.data || mailErr.message);
+            }
         }
 
         res.status(200).json({ message: "OK" });
@@ -718,13 +762,29 @@ exports.checkStatus = async (req, res) => {
         const result = await tokovoucher.checkStatus(id);
 
         const statusMap = { sukses: "sukses", gagal: "gagal", pending: "processing" };
+        const finalStatus = statusMap[result.status] || order.status;
         await supabase.from("topup_orders").update({
-            status: statusMap[result.status] || order.status,
+            status: finalStatus,
             tv_trx_id: result.trx_id || order.tv_trx_id,
             tv_sn: result.sn || order.tv_sn,
             tv_message: result.message || order.tv_message,
             updated_at: new Date().toISOString()
         }).eq("id", id);
+
+        if (finalStatus === "sukses" && order.status !== "sukses" && order.recipient_email) {
+            try {
+                await sendTopupInvoiceEmail(order.recipient_email, {
+                    orderId: order.id,
+                    namaProduk: order.nama_produk,
+                    tujuan: order.tujuan,
+                    serverId: order.server_id,
+                    harga: order.harga,
+                    serialNumber: result.sn || order.tv_sn || null
+                });
+            } catch (mailErr) {
+                console.log("Gagal kirim invoice topup email:", mailErr.response?.data || mailErr.message);
+            }
+        }
 
         res.json(result);
     } catch (err) {

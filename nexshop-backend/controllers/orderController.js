@@ -2,6 +2,7 @@ const supabase = require("../config/db");
 const { createRedirectPayment, checkTransactionStatus } = require("../config/ipaymu");
 const { validatePromoCode, incrementUsage } = require("./promoCodeController");
 const { notify } = require("../config/notify");
+const { sendOrderInvoiceEmail } = require("../config/mailer");
 
 // URL frontend/backend dipakai buat returnUrl/cancelUrl/notifyUrl iPaymu.
 // Isi FRONTEND_URL dan BACKEND_URL di .env (lihat .env.example).
@@ -254,7 +255,7 @@ exports.handleNotification = async (req, res) => {
 
         const { data: existingOrder } = await supabase
             .from("orders")
-            .select("status, promo_code")
+            .select("status, promo_code, recipient_name, recipient_email, items, subtotal, discount_amount, total")
             .eq("id", orderId)
             .maybeSingle();
 
@@ -304,6 +305,35 @@ exports.handleNotification = async (req, res) => {
         // catat pemakaian kode promo cuma sekali, pas transisi PERTAMA KALI ke "paid"
         if (status === "paid" && existingOrder.status !== "paid" && existingOrder.promo_code) {
             await incrementUsage(existingOrder.promo_code);
+        }
+
+        // kirim invoice email cuma sekali, pas transisi PERTAMA KALI ke "paid" —
+        // gagal kirim email JANGAN sampai gagalin response ke iPaymu (bukan fatal)
+        if (status === "paid" && existingOrder.status !== "paid" && existingOrder.recipient_email) {
+            try {
+                const rawItems = Array.isArray(existingOrder.items) ? existingOrder.items : [];
+                const { data: products } = await supabase
+                    .from("products")
+                    .select("id, name, price")
+                    .in("id", rawItems.map((i) => i.id));
+
+                const items = rawItems.map((i) => {
+                    const p = (products || []).find((x) => String(x.id) === String(i.id));
+                    return { name: p ? p.name : "Produk", price: p ? p.price : 0, quantity: i.qty || 1 };
+                });
+
+                await sendOrderInvoiceEmail(existingOrder.recipient_email, {
+                    orderId,
+                    recipientName: existingOrder.recipient_name,
+                    items,
+                    subtotal: existingOrder.subtotal,
+                    discountAmount: existingOrder.discount_amount,
+                    promoCode: existingOrder.promo_code,
+                    total: existingOrder.total
+                });
+            } catch (mailErr) {
+                console.log("Gagal kirim invoice email:", mailErr.response?.data || mailErr.message);
+            }
         }
 
         // iPaymu expect balasan 200 OK sederhana
