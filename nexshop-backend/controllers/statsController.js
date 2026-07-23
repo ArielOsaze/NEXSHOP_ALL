@@ -1,4 +1,5 @@
 const supabase = require("../config/db");
+const { getStoreSettings } = require("../config/settings");
 
 // Status yang dianggap "sukses/terbayar" di masing-masing tabel — dipakai
 // buat hitung omzet asli (bukan sekadar jumlah order yang dibuat).
@@ -131,9 +132,16 @@ exports.getPublicOverview = async (req, res) => {
 
         const totalGame = new Set((activeKategoriRes.data || []).map((p) => p.kategori || "Lainnya")).size;
 
+        // admin bisa nambahin "boost" manual di Settings (mis. pas baru buka toko biar
+        // gak nampilin 0) — angka final tetap terus naik seiring transaksi asli masuk,
+        // bukan angka statis yang harus diupdate manual tiap saat.
+        const settings = await getStoreSettings();
+        const ordersOffset = Number(settings.trust_bar_orders_offset) || 0;
+        const gamesOffset = Number(settings.trust_bar_games_offset) || 0;
+
         res.json({
-            total_transaksi_sukses: (regularPaidRes.count || 0) + (topupPaidRes.count || 0),
-            total_game: totalGame
+            total_transaksi_sukses: (regularPaidRes.count || 0) + (topupPaidRes.count || 0) + ordersOffset,
+            total_game: totalGame + gamesOffset
         });
     } catch (err) {
         console.log(err);

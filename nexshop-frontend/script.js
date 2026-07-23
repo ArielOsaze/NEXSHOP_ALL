@@ -204,18 +204,28 @@ function openProductModal(id) {
     document.getElementById("pmSold").textContent = `· ${p.sold} terjual`;
   document.getElementById("pmDesc").textContent = p.description;
     document.getElementById("pmPrice").innerHTML = priceBlockHtml(p, "lg");
-    document.getElementById("pmQtyValue").textContent = pendingQty;
+    document.getElementById("pmQtyValue").value = pendingQty;
 
     openOverlay("productOverlay");
 }
 
 document.getElementById("pmQtyMinus").addEventListener("click", () => {
     pendingQty = Math.max(1, pendingQty - 1);
-    document.getElementById("pmQtyValue").textContent = pendingQty;
+    document.getElementById("pmQtyValue").value = pendingQty;
 });
 document.getElementById("pmQtyPlus").addEventListener("click", () => {
     pendingQty = Math.min(99, pendingQty + 1);
-    document.getElementById("pmQtyValue").textContent = pendingQty;
+    document.getElementById("pmQtyValue").value = pendingQty;
+});
+document.getElementById("pmQtyValue").addEventListener("input", (e) => {
+    // biarin ngetik bebas dulu (termasuk kosong sementara), baru divalidasi pas selesai (blur/change)
+    const n = parseInt(e.target.value, 10);
+    if (!isNaN(n)) pendingQty = Math.min(99, Math.max(1, n));
+});
+document.getElementById("pmQtyValue").addEventListener("blur", (e) => {
+    // kalau dikosongin/isi bukan angka valid, balikin ke 1
+    if (!e.target.value || isNaN(parseInt(e.target.value, 10))) pendingQty = 1;
+    e.target.value = pendingQty;
 });
 document.getElementById("pmAddBtn").addEventListener("click", () => {
     addToCart(activeProductId, pendingQty);
@@ -841,7 +851,8 @@ async function loadStoreSettings() {
         if (s.contact_whatsapp) {
             const waLink = document.getElementById("footerWaLink");
             waLink.href = `https://wa.me/${s.contact_whatsapp.replace(/\D/g, "")}`;
-            waLink.textContent = `📱 WhatsApp/Telepon: ${s.contact_phone || s.contact_whatsapp}`;
+            const waLabel = document.getElementById("footerWaLabel");
+            if (waLabel) waLabel.textContent = `WhatsApp/Telepon: ${s.contact_phone || s.contact_whatsapp}`;
             const contactWa = document.getElementById("contactWaLink");
             if (contactWa) {
                 contactWa.href = waLink.href;
@@ -851,7 +862,8 @@ async function loadStoreSettings() {
         if (s.contact_email) {
             const emailLink = document.getElementById("footerEmailLink");
             emailLink.href = `mailto:${s.contact_email}`;
-            emailLink.textContent = `✉️ ${s.contact_email}`;
+            const emailLabel = document.getElementById("footerEmailLabel");
+            if (emailLabel) emailLabel.textContent = s.contact_email;
             const contactEmail = document.getElementById("contactEmailLink");
             if (contactEmail) {
                 contactEmail.href = emailLink.href;
@@ -863,6 +875,9 @@ async function loadStoreSettings() {
             const contactAddress = document.getElementById("contactAddress");
             if (contactAddress) contactAddress.textContent = s.address;
         }
+        // toggle trust bar sesuai Settings admin (default tampil kalau belum pernah diatur)
+        const trustBar = document.getElementById("trustBar");
+        if (trustBar) trustBar.classList.toggle("hidden", s.trust_bar_enabled === false);
         if (Array.isArray(s.faq) && s.faq.length > 0) {
             renderFaqList(s.faq);
         }

@@ -266,6 +266,61 @@ exports.bulkUpdateStatus = async (req, res) => {
     }
 };
 
+// ADMIN — hitung ulang harga_jual OTOMATIS dari harga_beli (modal) buat
+// banyak produk sekaligus, pakai markup persen atau nominal rupiah + opsi
+// pembulatan. Ini yang bikin admin gak perlu buka modal edit satu-satu tiap
+// produk cuma buat naikin harga jual dari harga modalnya.
+exports.bulkMarkupPrice = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const { ids, type, value, rounding } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "ids wajib diisi (array)" });
+    }
+    if (type !== "percent" && type !== "nominal") {
+        return res.status(400).json({ message: "type harus 'percent' atau 'nominal'" });
+    }
+    const markupValue = Number(value);
+    if (isNaN(markupValue) || markupValue < 0) {
+        return res.status(400).json({ message: "value markup gak valid" });
+    }
+    const round = Number(rounding) || 0; // 0 = gak dibulatkan
+
+    try {
+        const { data: products, error: fetchErr } = await supabase
+            .from("topup_products")
+            .select("id, harga_beli")
+            .in("id", ids);
+        if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
+
+        const rows = (products || []).map((p) => {
+            const modal = Number(p.harga_beli) || 0;
+            let jual = type === "percent" ? modal * (1 + markupValue / 100) : modal + markupValue;
+            if (round > 0) jual = Math.ceil(jual / round) * round;
+            return { id: p.id, harga_jual: Math.round(jual) };
+        });
+
+        // update satu-satu per baris (paralel) — LEBIH AMAN daripada upsert partial-column,
+        // yang berisiko kena constraint NOT NULL kolom lain (kode_produk, nama, dst) yang gak disertakan
+        const results = await Promise.all(
+            rows.map((r) =>
+                supabase
+                    .from("topup_products")
+                    .update({ harga_jual: r.harga_jual, updated_at: new Date().toISOString() })
+                    .eq("id", r.id)
+            )
+        );
+        const failed = results.find((r) => r.error);
+        if (failed) return res.status(500).json({ message: "Gagal update harga jual" });
+
+        notify("product", `💰 ${req.user.email} menerapkan markup ${type === "percent" ? `${markupValue}%` : `Rp${markupValue}`} ke ${rows.length} produk topup`);
+        res.json({ message: `Harga jual ${rows.length} produk berhasil dihitung ulang dari harga modal` });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 // ADMIN — set item_icon (ikon per denominasi, kolom "Icon" di tabel) buat
 // banyak produk sekaligus berdasarkan pilihan checkbox massal, biar admin
 // gak perlu buka modal edit satu-satu tiap produk. Beda dari

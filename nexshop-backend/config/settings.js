@@ -103,7 +103,10 @@ async function getStoreSettings({ fresh = false } = {}) {
         logo_url: "",
         faq: [],
         terms_content: "",
-        refund_content: ""
+        refund_content: "",
+        trust_bar_enabled: true,
+        trust_bar_orders_offset: 0,
+        trust_bar_games_offset: 0
     };
 
     storeSettingsCache = { data: merged, ts: now };
@@ -113,7 +116,8 @@ async function getStoreSettings({ fresh = false } = {}) {
 async function updateStoreSettings(payload) {
     const allowed = [
         "store_name", "tagline", "contact_whatsapp", "contact_email", "contact_phone",
-        "address", "logo_url", "faq", "terms_content", "refund_content"
+        "address", "logo_url", "faq", "terms_content", "refund_content", "trust_bar_enabled",
+        "trust_bar_orders_offset", "trust_bar_games_offset"
     ];
     const updatePayload = { updated_at: new Date().toISOString() };
     for (const key of allowed) {

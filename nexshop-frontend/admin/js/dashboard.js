@@ -848,6 +848,9 @@ async function loadSettings() {
             document.getElementById("storePhone").value = store.contact_phone || "";
             document.getElementById("storeEmail").value = store.contact_email || "";
             document.getElementById("storeAddress").value = store.address || "";
+            document.getElementById("storeTrustBar").checked = store.trust_bar_enabled !== false;
+            document.getElementById("storeTrustOrdersOffset").value = store.trust_bar_orders_offset || 0;
+            document.getElementById("storeTrustGamesOffset").value = store.trust_bar_games_offset || 0;
             if (store.logo_url) {
                 document.getElementById("storeLogoPreview").src = store.logo_url;
                 document.getElementById("storeLogoPreview").classList.remove("d-none");
@@ -1002,7 +1005,10 @@ async function saveStoreSettings() {
             contact_whatsapp: document.getElementById("storeWhatsapp").value.trim(),
             contact_phone: document.getElementById("storePhone").value.trim(),
             contact_email: document.getElementById("storeEmail").value.trim(),
-            address: document.getElementById("storeAddress").value.trim()
+            address: document.getElementById("storeAddress").value.trim(),
+            trust_bar_enabled: document.getElementById("storeTrustBar").checked,
+            trust_bar_orders_offset: parseInt(document.getElementById("storeTrustOrdersOffset").value, 10) || 0,
+            trust_bar_games_offset: parseInt(document.getElementById("storeTrustGamesOffset").value, 10) || 0
         };
         if (logoUrl) payload.logo_url = logoUrl;
 
@@ -1253,7 +1259,7 @@ function renderTopupProducts() {
     topupSelectedIds.forEach(id => { if (!visibleIds.has(id)) topupSelectedIds.delete(id); });
 
     if (!list.length) {
-        tbody.innerHTML = `<tr><td colspan="10" class="text-center text-muted py-4">${topupProducts.length ? "Gak ada produk di kategori ini." : "Belum ada produk. Sync dulu dari TokoVoucher di atas."}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-4">${topupProducts.length ? "Gak ada produk di kategori ini." : "Belum ada produk. Sync dulu dari TokoVoucher di atas."}</td></tr>`;
         updateTopupSelectedCount();
         return;
     }
@@ -1261,20 +1267,30 @@ function renderTopupProducts() {
     const groups = groupTopupProductsByKategori(list);
     tbody.innerHTML = groups.map(([kategori, products]) => `
         <tr class="table-secondary">
-            <td colspan="10" class="fw-semibold">
+            <td colspan="11" class="fw-semibold">
                 <i class="bi bi-controller me-1"></i>${escapeHtml(kategori)}
                 <span class="text-muted fw-normal small ms-1">(${products.length} produk)</span>
             </td>
         </tr>
-        ${products.map(p => `
+        ${products.map(p => {
+            const modal = Number(p.harga_beli) || 0;
+            const jual = Number(p.harga_jual) || 0;
+            const untung = jual - modal;
+            const persen = modal > 0 ? (untung / modal) * 100 : 0;
+            const untungClass = untung > 0 ? "text-success" : (untung < 0 ? "text-danger" : "text-muted");
+            return `
         <tr>
             <td><input type="checkbox" class="form-check-input topup-row-check" data-id="${Number(p.id)}" ${topupSelectedIds.has(p.id) ? "checked" : ""}></td>
             <td>${p.item_icon ? `<img src="${p.item_icon}" alt="" style="width:32px;height:32px;object-fit:contain;">` : `<span class="text-muted">◆</span>`}</td>
             <td><code>${escapeHtml(p.kode_produk)}</code></td>
             <td>${escapeHtml(p.nama)}</td>
             <td>${escapeHtml(p.kategori || "-")}</td>
-            <td>Rp ${Number(p.harga_beli).toLocaleString("id-ID")}</td>
-            <td>Rp ${Number(p.harga_jual).toLocaleString("id-ID")}</td>
+            <td>Rp ${modal.toLocaleString("id-ID")}</td>
+            <td>Rp ${jual.toLocaleString("id-ID")}</td>
+            <td class="${untungClass} fw-semibold">
+                Rp ${untung.toLocaleString("id-ID")}
+                <div class="small fw-normal">${modal > 0 ? persen.toFixed(1) + "%" : "-"}</div>
+            </td>
             <td>${p.butuh_server_id ? `<span class="badge bg-info">Ya</span>` : "-"}</td>
             <td>${p.is_active ? `<span class="badge bg-success">Aktif</span>` : `<span class="badge bg-secondary">Nonaktif</span>`}</td>
             <td>
@@ -1282,7 +1298,8 @@ function renderTopupProducts() {
                 <button class="btn btn-danger btn-sm" onclick="deleteTopupProduct(${Number(p.id)})"><i class="bi bi-trash"></i></button>
             </td>
         </tr>
-        `).join("")}
+        `;
+        }).join("")}
     `).join("");
 
     tbody.querySelectorAll(".topup-row-check").forEach(cb => {
@@ -1383,6 +1400,38 @@ async function bulkMoveTopupKategori() {
         showToast(data.message || "Produk berhasil dipindahkan ke kategori baru");
         topupSelectedIds.clear();
         input.value = "";
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
+async function bulkMarkupTopupPrice() {
+    if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
+
+    const type = document.getElementById("topupBulkMarkupType").value;
+    const valueInput = document.getElementById("topupBulkMarkupValue");
+    const value = parseFloat(valueInput.value);
+    const rounding = document.getElementById("topupBulkMarkupRound").value;
+
+    if (isNaN(value) || value < 0) return showToast("Isi angka markup dulu ya", true);
+
+    const label = type === "percent" ? `${value}%` : `Rp${value.toLocaleString("id-ID")}`;
+    if (!confirm(`Hitung ulang harga jual ${topupSelectedIds.size} produk terpilih = harga modal + markup ${label}?`)) return;
+
+    try {
+        const res = await apiFetch("/topup/admin/products/bulk-markup", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: [...topupSelectedIds], type, value, rounding })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menerapkan markup");
+
+        showToast(data.message || "Harga jual berhasil diperbarui");
+        topupSelectedIds.clear();
+        valueInput.value = "";
         loadTopupProducts();
     } catch (err) {
         if (err.message === "unauthorized") return;

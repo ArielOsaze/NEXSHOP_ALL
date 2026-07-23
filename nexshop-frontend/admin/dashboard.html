@@ -314,6 +314,20 @@
                         <button class="btn btn-outline-info" onclick="bulkMoveTopupKategori()"><i class="bi bi-folder-symlink"></i> Pindah Kategori</button>
                     </div>
                     <datalist id="topupKategoriDatalist"></datalist>
+                    <div class="input-group input-group-sm" style="width:auto;">
+                        <select id="topupBulkMarkupType" class="form-select" style="max-width:64px;">
+                            <option value="percent">%</option>
+                            <option value="nominal">Rp</option>
+                        </select>
+                        <input type="number" id="topupBulkMarkupValue" class="form-control" placeholder="cth 20" min="0" style="max-width:90px;">
+                        <select id="topupBulkMarkupRound" class="form-select" style="max-width:130px;">
+                            <option value="0">Gak dibulatkan</option>
+                            <option value="100">Bulat ke 100</option>
+                            <option value="500">Bulat ke 500</option>
+                            <option value="1000" selected>Bulat ke 1000</option>
+                        </select>
+                        <button class="btn btn-outline-warning" onclick="bulkMarkupTopupPrice()"><i class="bi bi-graph-up-arrow"></i> Terapkan Markup</button>
+                    </div>
                     <button class="btn btn-outline-danger btn-sm" onclick="bulkDeleteTopupSelected()"><i class="bi bi-trash3"></i> Hapus Terpilih</button>
                 </div>
             </div>
@@ -322,11 +336,11 @@
                 <table class="table table-hover align-middle mb-0">
                     <thead>
                     <tr>
-                        <th style="width:36px;"></th><th>Icon</th><th>Kode</th><th>Nama</th><th>Kategori</th><th>Harga Modal</th><th>Harga Jual</th><th>Server ID?</th><th>Status</th><th>Aksi</th>
+                        <th style="width:36px;"></th><th>Icon</th><th>Kode</th><th>Nama</th><th>Kategori</th><th>Harga Modal</th><th>Harga Jual</th><th>Untung</th><th>Server ID?</th><th>Status</th><th>Aksi</th>
                     </tr>
                     </thead>
                     <tbody id="topupProducts">
-                        <tr><td colspan="10" class="text-center text-muted py-4">Klik "Refresh" untuk memuat data.</td></tr>
+                        <tr><td colspan="11" class="text-center text-muted py-4">Klik "Refresh" untuk memuat data.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -505,6 +519,23 @@
                     <label class="form-label">Logo Toko</label>
                     <input type="file" id="storeLogoInput" class="form-control" accept="image/*">
                     <img id="storeLogoPreview" src="" class="img-thumbnail mt-3 d-none" style="max-height:100px;">
+                </div>
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="storeTrustBar" checked>
+                        <label class="form-check-label" for="storeTrustBar">Tampilkan Trust Bar di halaman utama</label>
+                    </div>
+                    <div class="form-text">Bar statistik (Transaksi Sukses, Game Didukung, dll) yang tampil di bawah hero banner.</div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Boost "Transaksi Sukses"</label>
+                    <input type="number" id="storeTrustOrdersOffset" class="form-control" placeholder="0" min="0">
+                    <div class="form-text">Ditambahkan ke jumlah transaksi sukses asli — angka tetap terus naik seiring transaksi beneran masuk.</div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Boost "Game & Voucher Didukung"</label>
+                    <input type="number" id="storeTrustGamesOffset" class="form-control" placeholder="0" min="0">
+                    <div class="form-text">Ditambahkan ke jumlah kategori game aktif asli.</div>
                 </div>
                 <p class="text-danger small mb-0" id="storeError"></p>
                 <div class="col-12">
