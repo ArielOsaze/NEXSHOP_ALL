@@ -528,6 +528,22 @@ header{ position:sticky; top:0; z-index:100; }
 .footer-contact{ display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-bottom:20px; }
 .footer-contact a{ font-size:13px; color:var(--text-muted); transition:.2s; }
 .footer-contact a:hover{ color:var(--cyan); }
+
+/* Badge ikon brand (WA/Email/IG) — pengganti emoji, pakai SVG asli + warna resmi */
+.footer-social-link{ display:inline-flex; align-items:center; gap:9px; }
+.footer-social-icon{
+    width:26px; height:26px; border-radius:50%; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center;
+}
+.footer-social-icon svg{ width:14px; height:14px; fill:#fff; }
+.footer-social-icon--wa{ background:#25D366; }
+.footer-social-icon--mail{ background:linear-gradient(135deg,var(--cyan),var(--violet)); }
+.footer-social-icon--ig{ background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285AEB 90%); }
+.footer-social-icon--pin{ background:var(--bg-panel-3); }
+
+.contact-list-item{ display:flex; align-items:center; gap:10px; }
+.contact-list-item .footer-social-icon{ width:24px; height:24px; }
+.contact-list-item .footer-social-icon svg{ width:13px; height:13px; }
 .footer-links{ font-size:13px; color:var(--text-dim); margin-bottom:20px; }
 .footer-link-btn{ color:var(--text-muted); text-decoration:underline; text-underline-offset:3px; }
 .footer-link-btn:hover{ color:var(--text); }
