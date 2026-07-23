@@ -24,8 +24,8 @@ function handleUploadError(err, req, res, next) {
 
 router.get("/", promoController.getSlides);                          // publik, buat carousel di toko
 router.get("/all", authMiddleware, promoController.getAllSlidesAdmin); // admin, termasuk yg nonaktif
-router.post("/", authMiddleware, upload.single("image"), handleUploadError, promoController.createSlide);
-router.put("/:id", authMiddleware, upload.single("image"), handleUploadError, promoController.updateSlide);
+router.post("/", authMiddleware, upload.fields([{ name: "image", maxCount: 1 }, { name: "mobile_image", maxCount: 1 }]), handleUploadError, promoController.createSlide);
+router.put("/:id", authMiddleware, upload.fields([{ name: "image", maxCount: 1 }, { name: "mobile_image", maxCount: 1 }]), handleUploadError, promoController.updateSlide);
 router.delete("/:id", authMiddleware, promoController.deleteSlide);
 
 module.exports = router;

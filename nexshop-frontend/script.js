@@ -515,24 +515,9 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
     toast("Kamu berhasil keluar.");
 });
 
-document.getElementById("myOrdersBtn").addEventListener("click", async () => {
+document.getElementById("myOrdersBtn").addEventListener("click", () => {
     accountDropdown.classList.remove("active");
-    const token = localStorage.getItem("nexshop_token");
-
-    try {
-        const res = await fetch(`${API_BASE}/orders/my`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        const orders = await res.json();
-
-        if (!res.ok || orders.length === 0) {
-            toast("Belum ada pesanan.");
-        } else {
-            toast(`Kamu punya ${orders.length} pesanan tercatat.`);
-        }
-    } catch (err) {
-        toast("Gagal mengambil data pesanan.", "error");
-    }
+    openTrackModal("mine");
 });
 
 /* ---------- Checkout ---------- */
@@ -724,6 +709,173 @@ document.querySelectorAll("[data-policy-tab]").forEach(btn => {
     btn.addEventListener("click", () => openPolicy(btn.dataset.policyTab));
 });
 
+/* ---------- Cek Transaksi (tab publik, cek status via Order ID) ---------- */
+const STATUS_LABEL = {
+    paid: "Dibayar — Diproses", sukses: "Sukses", processing: "Diproses",
+    pending: "Menunggu Pembayaran", failed: "Gagal", gagal: "Gagal", cancel: "Dibatalkan"
+};
+const STATUS_CLASS = {
+    paid: "success", sukses: "success", processing: "info",
+    pending: "warning", failed: "danger", gagal: "danger", cancel: "danger"
+};
+
+function renderTrackResult(data) {
+    const label = STATUS_LABEL[data.status] || data.status;
+    const cls = STATUS_CLASS[data.status] || "info";
+    const tanggal = data.created_at ? new Date(data.created_at).toLocaleString("id-ID") : "-";
+
+    let itemsHtml = "";
+    if (data.type === "order") {
+        itemsHtml = (data.items || []).map(i =>
+            `<div class="row"><span>${escapeHtml(i.name)}${i.quantity > 1 ? ` ×${i.quantity}` : ""}</span></div>`
+        ).join("");
+        if (data.discount_amount > 0) {
+            itemsHtml += `<div class="row discount"><span>Diskon${data.promo_code ? ` (${escapeHtml(data.promo_code)})` : ""}</span><span>-${rupiah(data.discount_amount)}</span></div>`;
+        }
+    } else {
+        itemsHtml = `
+            <div class="row"><span>Produk</span><span>${escapeHtml(data.nama_produk || "-")}</span></div>
+            <div class="row"><span>User ID</span><span>${escapeHtml(String(data.tujuan || "-"))}${data.server_id ? " (" + escapeHtml(String(data.server_id)) + ")" : ""}</span></div>
+            ${data.serial_number ? `<div class="row"><span>Kode/SN</span><span>${escapeHtml(data.serial_number)}</span></div>` : ""}
+        `;
+    }
+
+    document.getElementById("trackResult").innerHTML = `
+        <div class="track-status-badge ${cls}">${escapeHtml(label)}</div>
+        <div class="row"><span>Order ID</span><span>${escapeHtml(data.id)}</span></div>
+        <div class="row"><span>Tanggal</span><span>${tanggal}</span></div>
+        ${itemsHtml}
+        <div class="row total"><span>Total</span><span>${rupiah(data.total || 0)}</span></div>
+    `;
+    document.getElementById("trackResult").classList.remove("hidden");
+}
+
+document.getElementById("trackForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById("trackError");
+    const resultEl = document.getElementById("trackResult");
+    const btn = document.getElementById("trackSubmitBtn");
+    const orderId = document.getElementById("trackOrderId").value.trim();
+
+    errorEl.textContent = "";
+    resultEl.classList.add("hidden");
+    if (!orderId) return;
+
+    const isTopup = orderId.toUpperCase().startsWith("TP");
+    const endpoint = isTopup ? `${API_BASE}/topup/track/${encodeURIComponent(orderId)}` : `${API_BASE}/orders/track/${encodeURIComponent(orderId)}`;
+
+    btn.disabled = true;
+    btn.textContent = "Mengecek...";
+    try {
+        const res = await fetch(endpoint);
+        const data = await res.json();
+        if (!res.ok) {
+            errorEl.textContent = data.message || "Transaksi tidak ditemukan. Periksa kembali Order ID kamu.";
+            return;
+        }
+        renderTrackResult(data);
+    } catch (err) {
+        errorEl.textContent = "Gagal menghubungi server. Coba lagi sebentar.";
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Cek Transaksi";
+    }
+});
+
+function openTrackModal(tab) {
+    document.getElementById("trackForm").reset();
+    document.getElementById("trackError").textContent = "";
+    document.getElementById("trackResult").classList.add("hidden");
+    switchTrackTab(tab || "byid");
+    openOverlay("trackOverlay");
+}
+document.getElementById("trackOrderBtn").addEventListener("click", () => openTrackModal("byid"));
+document.getElementById("trackOrderBtnFooter").addEventListener("click", () => openTrackModal("byid"));
+
+function switchTrackTab(tab) {
+    document.querySelectorAll("[data-track-tab]").forEach(t => {
+        t.classList.toggle("active", t.dataset.trackTab === tab);
+    });
+    document.querySelectorAll("[data-track-panel]").forEach(p => {
+        p.classList.toggle("hidden", p.dataset.trackPanel !== tab);
+    });
+    if (tab === "mine") loadMyTransactions();
+}
+document.querySelectorAll("[data-track-tab]").forEach(btn => {
+    btn.addEventListener("click", () => switchTrackTab(btn.dataset.trackTab));
+});
+
+async function loadMyTransactions() {
+    const body = document.getElementById("trackMineBody");
+
+    if (!currentUser) {
+        body.innerHTML = `
+            <p class="otp-info">Login dulu buat lihat riwayat transaksi kamu.</p>
+            <button type="button" class="btn-primary" id="trackMineLoginBtn">Login / Daftar</button>
+        `;
+        document.getElementById("trackMineLoginBtn").addEventListener("click", () => {
+            closeOverlay("trackOverlay");
+            openOverlay("authOverlay");
+        });
+        return;
+    }
+
+    body.innerHTML = `<p class="otp-info">Memuat riwayat transaksi...</p>`;
+    const token = localStorage.getItem("nexshop_token");
+
+    try {
+        const [ordersRes, topupRes] = await Promise.all([
+            fetch(`${API_BASE}/orders/my`, { headers: { "Authorization": `Bearer ${token}` } }),
+            fetch(`${API_BASE}/topup/my`, { headers: { "Authorization": `Bearer ${token}` } })
+        ]);
+        const orders = ordersRes.ok ? await ordersRes.json() : [];
+        const topups = topupRes.ok ? await topupRes.json() : [];
+
+        const merged = [
+            ...(Array.isArray(orders) ? orders : []).map(o => ({
+                id: o.id, type: "order", status: o.status, total: o.total, created_at: o.created_at
+            })),
+            ...(Array.isArray(topups) ? topups : []).map(t => ({
+                id: t.id, type: "topup", status: t.status, total: t.harga,
+                label: t.nama_produk, created_at: t.created_at
+            }))
+        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        if (merged.length === 0) {
+            body.innerHTML = `<p class="otp-info">Belum ada transaksi tercatat.</p>`;
+            return;
+        }
+
+        body.innerHTML = `<div class="track-mine-list">${merged.map(t => {
+            const label = STATUS_LABEL[t.status] || t.status;
+            const cls = STATUS_CLASS[t.status] || "info";
+            const tanggal = t.created_at ? new Date(t.created_at).toLocaleDateString("id-ID") : "-";
+            return `
+                <button type="button" class="track-mine-item" data-order-id="${escapeHtml(t.id)}">
+                    <div>
+                        <div class="track-mine-id">${escapeHtml(t.id)}</div>
+                        <div class="track-mine-sub">${escapeHtml(t.label || (t.type === "topup" ? "Topup" : "Pesanan Produk"))} · ${tanggal}</div>
+                    </div>
+                    <div class="track-mine-right">
+                        <span class="track-status-badge ${cls}">${escapeHtml(label)}</span>
+                        <span class="track-mine-total">${rupiah(t.total || 0)}</span>
+                    </div>
+                </button>
+            `;
+        }).join("")}</div>`;
+
+        body.querySelectorAll(".track-mine-item").forEach(item => {
+            item.addEventListener("click", () => {
+                document.getElementById("trackOrderId").value = item.dataset.orderId;
+                switchTrackTab("byid");
+                document.getElementById("trackForm").requestSubmit();
+            });
+        });
+    } catch (err) {
+        body.innerHTML = `<p class="auth-error">Gagal memuat riwayat transaksi. Coba lagi sebentar.</p>`;
+    }
+}
+
 /* ---------- Mobile menu ---------- */
 const menuToggle = document.getElementById("menuToggle");
 const navMenu = document.getElementById("navMenu");
@@ -755,12 +907,19 @@ async function loadPromo() {
     }
 }
 
+const heroMobileQuery = window.matchMedia("(max-width: 860px)");
+
+function heroImageFor(slide) {
+    if (heroMobileQuery.matches && slide.mobile_image_url) return slide.mobile_image_url;
+    return slide.image_url;
+}
+
 function renderHeroSlides() {
     const track = document.getElementById("heroTrack");
     const dotsWrap = document.getElementById("heroDots");
 
     track.innerHTML = heroSlides.map(s => `
-        <div class="hero-slide${s.full_image ? " full-image" : ""}" style="${s.image_url ? `background-image:url('${s.image_url}')` : ""}">
+        <div class="hero-slide${s.full_image ? " full-image" : ""}" style="${heroImageFor(s) ? `background-image:url('${heroImageFor(s)}')` : ""}">
             ${s.full_image ? (s.cta_link ? `<a href="${s.cta_link}" class="hero-slide-link" aria-label="${escapeHtml(s.title || "Promo")}"></a>` : "") : `
             <div class="hero-text">
                 ${s.badge_text ? `<span class="hero-badge">${escapeHtml(s.badge_text)}</span>` : ""}
@@ -812,6 +971,13 @@ function startHeroAutoplay() {
     clearInterval(heroTimer);
     heroTimer = setInterval(() => goToHeroSlide(heroIndex + 1), 5000);
 }
+
+// Kalau device diputar (atau browser di-resize) sampe lewatin breakpoint
+// mobile/desktop, render ulang biar gambar banner-nya ikut ganti ke versi
+// yang sesuai (mobile_image_url vs image_url).
+heroMobileQuery.addEventListener("change", () => {
+    if (heroSlides.length) renderHeroSlides();
+});
 
 function resetHeroAutoplay() {
     clearInterval(heroTimer);

@@ -692,10 +692,16 @@
                     <div class="form-text">Kalau "Gambar Full" aktif, link ini bikin seluruh gambar bisa diklik (teks tombol diabaikan).</div>
                 </div>
                 <div class="col-12">
-                    <label class="form-label">Gambar Banner</label>
+                    <label class="form-label">Gambar Banner (Desktop)</label>
                     <input type="file" id="promoImageInput" class="form-control" accept="image/*">
                     <img id="promoImagePreview" src="" class="img-thumbnail mt-3 d-none" style="max-height:160px;">
-                    <div class="form-text">Upload langsung dari sini — tidak perlu URL manual lagi.</div>
+                    <div class="form-text">Upload langsung dari sini — tidak perlu URL manual lagi. Disarankan rasio lebar, mis. 1600x600.</div>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Gambar Banner (Mobile) <span class="text-muted">— opsional</span></label>
+                    <input type="file" id="promoMobileImageInput" class="form-control" accept="image/*">
+                    <img id="promoMobileImagePreview" src="" class="img-thumbnail mt-3 d-none" style="max-height:160px;">
+                    <div class="form-text">Disarankan rasio 16:9. Kalau kosong, HP bakal pakai gambar Desktop di atas (bisa kepotong kalau rasionya beda jauh).</div>
                 </div>
                 <div class="col-12">
                     <div class="form-check form-switch">

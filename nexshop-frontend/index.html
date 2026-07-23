@@ -34,6 +34,7 @@
             <a href="#top">Home</a>
             <a href="#games">Katalog</a>
             <a href="#topup">Topup Diamond</a>
+            <button type="button" class="menu-link-btn" id="trackOrderBtn">Cek Transaksi</button>
             <button type="button" class="menu-link-btn" data-policy-tab="faq">FAQ</button>
             <button type="button" class="menu-link-btn" data-policy-tab="contact">Kontak</button>
             <button class="menu-account-btn" id="accountBtn">Login</button>
@@ -232,6 +233,8 @@
     </div>
 
     <div class="footer-links">
+        <button type="button" class="footer-link-btn" id="trackOrderBtnFooter">Cek Transaksi</button>
+        <span class="footer-link-sep">·</span>
         <button type="button" class="footer-link-btn" data-policy-tab="faq">FAQ</button>
         <span class="footer-link-sep">·</span>
         <button type="button" class="footer-link-btn" data-policy-tab="terms">Syarat &amp; Ketentuan</button>
@@ -431,6 +434,33 @@
             <button type="submit" class="btn-primary">Verifikasi</button>
             <button type="button" class="otp-resend" id="otpResendBtn">Kirim ulang kode</button>
         </form>
+    </div>
+</div>
+
+<!-- Cek Transaksi Modal -->
+<div class="overlay" id="trackOverlay">
+    <div class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="trackTitle">
+        <button class="modal-close" data-close="trackOverlay" aria-label="Tutup">✕</button>
+        <div class="auth-tabs">
+            <button class="auth-tab active" data-track-tab="byid">Cek by Order ID</button>
+            <button class="auth-tab" data-track-tab="mine">Riwayat Saya</button>
+        </div>
+
+        <form id="trackForm" class="auth-form" data-track-panel="byid">
+            <h3 id="trackTitle">Cek Status Transaksi</h3>
+            <p class="otp-info">Masukkan Order ID kamu (contoh: <strong>TP1234567890</strong> untuk topup, atau ID pesanan produk biasa).</p>
+            <label>Order ID
+                <input type="text" id="trackOrderId" required placeholder="Masukkan Order ID">
+            </label>
+            <p class="auth-error" id="trackError"></p>
+            <button type="submit" class="btn-primary" id="trackSubmitBtn">Cek Transaksi</button>
+        </form>
+        <div class="track-result hidden" id="trackResult"></div>
+
+        <div class="auth-form hidden" data-track-panel="mine">
+            <h3>Riwayat Transaksi Saya</h3>
+            <div id="trackMineBody"></div>
+        </div>
     </div>
 </div>
 

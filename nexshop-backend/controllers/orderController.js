@@ -158,13 +158,61 @@ exports.getPublicStatus = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from("orders")
-            .select("id, status, total, recipient_name")
+            .select("id, status, total, recipient_name, payment_type, created_at, paid_at")
             .eq("id", req.params.id)
             .maybeSingle();
 
         if (error || !data) return res.status(404).json({ message: "Order tidak ditemukan" });
         res.json(data);
     } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// Cek transaksi via ID — dipakai tab "Cek Transaksi" di web utama.
+// Sengaja publik (tanpa authMiddleware) supaya guest checkout juga bisa cek,
+// tapi field yang dibalikin dibatasi (gak expose recipient_email dst) biar
+// orang lain yang cuma nebak-nebak Order ID gak bisa lihat data sensitif.
+exports.getPublicDetail = async (req, res) => {
+    try {
+        const { data: order, error } = await supabase
+            .from("orders")
+            .select("id, status, total, subtotal, discount_amount, promo_code, recipient_name, payment_type, items, created_at, paid_at")
+            .eq("id", req.params.id)
+            .maybeSingle();
+
+        if (error || !order) return res.status(404).json({ message: "Transaksi tidak ditemukan" });
+
+        const rawItems = Array.isArray(order.items) ? order.items : [];
+        let items = rawItems.map((i) => ({ name: "Produk", quantity: i.qty || 1 }));
+
+        if (rawItems.length) {
+            const { data: products } = await supabase
+                .from("products")
+                .select("id, name")
+                .in("id", rawItems.map((i) => i.id));
+            items = rawItems.map((i) => {
+                const p = (products || []).find((x) => String(x.id) === String(i.id));
+                return { name: p ? p.name : "Produk", quantity: i.qty || 1 };
+            });
+        }
+
+        res.json({
+            id: order.id,
+            type: "order",
+            status: order.status,
+            recipient_name: order.recipient_name,
+            payment_type: order.payment_type,
+            items,
+            subtotal: order.subtotal,
+            discount_amount: order.discount_amount,
+            promo_code: order.promo_code,
+            total: order.total,
+            created_at: order.created_at,
+            paid_at: order.paid_at
+        });
+    } catch (err) {
+        console.log(err);
         res.status(500).json({ message: "Server Error" });
     }
 };

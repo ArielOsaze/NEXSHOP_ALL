@@ -6,10 +6,12 @@ if (!process.env.BREVO_API_KEY || !process.env.EMAIL_USER) {
 }
 
 // Kenapa pakai Brevo HTTP API, bukan nodemailer/SMTP langsung ke Gmail:
-// Railway (plan Hobby) memblokir koneksi SMTP keluar (port 25/465/587) untuk
-// mencegah penyalahgunaan spam, jadi nodemailer -> smtp.gmail.com akan selalu
-// ETIMEDOUT di sana meski kredensialnya benar. HTTP API jalan di port 443
-// (sama seperti request web biasa) sehingga tidak kena blokir itu.
+// Awalnya karena Railway (plan Hobby) memblokir koneksi SMTP keluar (port
+// 25/465/587). Sekarang sudah pindah ke VPS (Rumahweb) yang portnya biasanya
+// gak diblokir, JADI SMTP langsung sebenarnya bisa juga dipakai — tapi HTTP
+// API tetap dipertahankan karena jalan di port 443 (sama kayak request web
+// biasa), gak tergantung provider VPS/firewall/ISP block port SMTP, dan gak
+// perlu ubah kode ini pas pindah-pindah hosting lagi ke depannya.
 async function sendOtpEmail(to, otp) {
     await axios.post(
         "https://api.brevo.com/v3/smtp/email",

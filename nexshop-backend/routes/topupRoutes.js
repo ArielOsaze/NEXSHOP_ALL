@@ -14,6 +14,7 @@ router.post("/", optionalAuthMiddleware, topupController.create);
 // User
 router.get("/my", authMiddleware, topupController.getMyOrders);
 router.get("/public-status/:id", topupController.getPublicStatus); // publik — buat halaman kembali dari pembayaran
+router.get("/track/:id", topupController.getPublicDetail); // publik — buat tab "Cek Transaksi"
 
 // Admin
 router.get("/admin/products", authMiddleware, topupController.getAllProductsAdmin);

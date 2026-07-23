@@ -539,6 +539,40 @@ exports.getPublicStatus = async (req, res) => {
     }
 };
 
+// Cek transaksi via ID — dipakai tab "Cek Transaksi" di web utama.
+// Publik (tanpa authMiddleware) supaya guest checkout juga bisa cek, tapi
+// gak balikin recipient_email/kode voucher penuh biar orang lain yang cuma
+// nebak-nebak Order ID gak bisa lihat data sensitif punya orang lain.
+exports.getPublicDetail = async (req, res) => {
+    try {
+        const { data: order, error } = await supabase
+            .from("topup_orders")
+            .select("id, status, harga, nama_produk, tujuan, server_id, payment_method, tv_sn, created_at, updated_at")
+            .eq("id", req.params.id)
+            .maybeSingle();
+
+        if (error || !order) return res.status(404).json({ message: "Transaksi tidak ditemukan" });
+
+        res.json({
+            id: order.id,
+            type: "topup",
+            status: order.status,
+            nama_produk: order.nama_produk,
+            tujuan: order.tujuan,
+            server_id: order.server_id,
+            payment_method: order.payment_method,
+            // SN cuma ditampilin kalau statusnya udah sukses
+            serial_number: order.status === "sukses" ? order.tv_sn : null,
+            total: order.harga,
+            created_at: order.created_at,
+            updated_at: order.updated_at
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 exports.getMyOrders = async (req, res) => {
     try {
         const { data, error } = await supabase

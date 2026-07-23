@@ -770,6 +770,38 @@ input::placeholder{ color:var(--text-dim); }
 .checkout-summary .row.total{ font-weight:700; color:var(--text); border-top:1px solid var(--line); margin-top:6px; padding-top:10px; }
 .promo-code-row{ display:flex; gap:8px; }
 .promo-code-row input{ flex:1; }
+
+/* ---------- Cek Transaksi (track order) ---------- */
+.track-result{
+    background:var(--bg-panel-2); border:1px solid var(--line); border-radius:var(--radius-sm);
+    padding:14px; font-size:13.5px; margin-top:18px;
+}
+.track-result .row{ display:flex; justify-content:space-between; padding:4px 0; color:var(--text-muted); gap:12px; }
+.track-result .row span:last-child{ color:var(--text); text-align:right; }
+.track-result .row.discount{ color:var(--success); }
+.track-result .row.discount span:last-child{ color:var(--success); }
+.track-result .row.total{ font-weight:700; color:var(--text); border-top:1px solid var(--line); margin-top:6px; padding-top:10px; }
+.track-result .row.total span:last-child{ color:var(--violet); }
+.track-status-badge{
+    display:inline-block; padding:5px 12px; border-radius:999px; font-size:12.5px;
+    font-weight:700; margin-bottom:12px;
+}
+.track-status-badge.success{ background:rgba(34,197,94,.15); color:var(--success); }
+.track-status-badge.warning{ background:rgba(245,166,35,.15); color:var(--warning); }
+.track-status-badge.danger{ background:rgba(240,71,92,.15); color:var(--danger); }
+.track-status-badge.info{ background:rgba(34,211,238,.15); color:var(--cyan); }
+
+.track-mine-list{ display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; }
+.track-mine-item{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background:var(--bg-panel-2); border:1px solid var(--line); border-radius:var(--radius-sm);
+    padding:12px 14px; text-align:left; width:100%; transition:.2s;
+}
+.track-mine-item:hover{ border-color:var(--violet); }
+.track-mine-id{ font-weight:700; font-size:13.5px; color:var(--text); }
+.track-mine-sub{ font-size:12px; color:var(--text-muted); margin-top:2px; }
+.track-mine-right{ display:flex; flex-direction:column; align-items:flex-end; gap:4px; }
+.track-mine-total{ font-size:12.5px; font-weight:600; color:var(--text-muted); }
 .promo-code-row button{
     padding:0 18px; border-radius:var(--radius-sm); background:var(--bg-panel-3);
     color:var(--text); font-weight:700; font-size:13px; white-space:nowrap; transition:.2s;
@@ -800,7 +832,7 @@ input::placeholder{ color:var(--text-dim); }
 
 /* ================= RESPONSIVE ================= */
 @media(max-width:860px){
-    .hero-carousel{ height:min(85vw,400px); min-height:260px; }
+    .hero-carousel{ height:auto; aspect-ratio:16/9; min-height:0; }
     .hero-text{ padding:0 20px; max-width:100%; }
     .hero-text p{ max-width:100%; }
     .hero-arrow{

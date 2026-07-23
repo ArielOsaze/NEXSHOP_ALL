@@ -32,6 +32,7 @@ const promoModalEl = document.getElementById("promoModal");
 const promoModal = new bootstrap.Modal(promoModalEl);
 let editingPromoId = null;
 let currentPromoImage = "";
+let currentPromoMobileImage = "";
 
 const topupProductModalEl = document.getElementById("topupProductModal");
 const topupProductModal = new bootstrap.Modal(topupProductModalEl);
@@ -687,6 +688,8 @@ function renderPromoSlides() {
 
 const promoImageInput = document.getElementById("promoImageInput");
 const promoImagePreview = document.getElementById("promoImagePreview");
+const promoMobileImageInput = document.getElementById("promoMobileImageInput");
+const promoMobileImagePreview = document.getElementById("promoMobileImagePreview");
 
 if (promoImageInput) {
     promoImageInput.addEventListener("change", () => {
@@ -697,12 +700,24 @@ if (promoImageInput) {
     });
 }
 
+if (promoMobileImageInput) {
+    promoMobileImageInput.addEventListener("change", () => {
+        const file = promoMobileImageInput.files[0];
+        if (!file) return;
+        promoMobileImagePreview.src = URL.createObjectURL(file);
+        promoMobileImagePreview.classList.remove("d-none");
+    });
+}
+
 function openPromoModal() {
     editingPromoId = null;
     currentPromoImage = "";
+    currentPromoMobileImage = "";
     document.getElementById("promoForm").reset();
     promoImagePreview.src = "";
     promoImagePreview.classList.add("d-none");
+    promoMobileImagePreview.src = "";
+    promoMobileImagePreview.classList.add("d-none");
     document.getElementById("promoIsActive").checked = true;
     document.getElementById("promoModalTitle").innerHTML = '<i class="bi bi-megaphone me-2"></i>Tambah Slide';
     document.getElementById("promoError").textContent = "";
@@ -715,6 +730,7 @@ function editPromoSlide(id) {
 
     editingPromoId = id;
     currentPromoImage = slide.image_url || "";
+    currentPromoMobileImage = slide.mobile_image_url || "";
     document.getElementById("promoModalTitle").innerHTML = '<i class="bi bi-megaphone me-2"></i>Edit Slide';
     document.getElementById("promoType").value = slide.type || "promo";
     document.getElementById("promoSortOrder").value = slide.sort_order ?? 0;
@@ -730,6 +746,13 @@ function editPromoSlide(id) {
     } else {
         promoImagePreview.src = "";
         promoImagePreview.classList.add("d-none");
+    }
+    if (slide.mobile_image_url) {
+        promoMobileImagePreview.src = slide.mobile_image_url;
+        promoMobileImagePreview.classList.remove("d-none");
+    } else {
+        promoMobileImagePreview.src = "";
+        promoMobileImagePreview.classList.add("d-none");
     }
     document.getElementById("promoIsActive").checked = !!slide.is_active;
     document.getElementById("promoError").textContent = "";
@@ -767,6 +790,13 @@ async function savePromo() {
         formData.append("image", file);
     } else if (currentPromoImage) {
         formData.append("image_url", currentPromoImage);
+    }
+
+    const mobileFile = promoMobileImageInput.files[0];
+    if (mobileFile) {
+        formData.append("mobile_image", mobileFile);
+    } else if (currentPromoMobileImage) {
+        formData.append("mobile_image_url", currentPromoMobileImage);
     }
 
     try {

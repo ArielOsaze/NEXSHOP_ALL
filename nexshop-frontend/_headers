@@ -1,2 +1,15 @@
-/*
-  Content-Security-Policy: script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://app.sandbox.midtrans.com https://app.midtrans.com https://snap-assets.sandbox.midtrans.com https://snap-assets.midtrans.com https://api.sandbox.midtrans.com https://api.midtrans.com https://pay.google.com https://gwk.gopayapi.com https://www.googletagmanager.com https://o.alicdn.com https://g.alicdn.com; frame-src 'self' https://app.sandbox.midtrans.com https://app.midtrans.com https://pay.google.com;
+# CATATAN: file ini format khusus Netlify (_headers) — nginx di VPS TIDAK
+# baca file ini sama sekali, jadi selama ini kalau kamu masih nyimpen file
+# ini di VPS, CSP di baris bawah GAK PERNAH aktif (dead config).
+#
+# CSP-nya sendiri juga sudah basi: masih nyebut domain Midtrans, padahal
+# proyek ini sudah pindah ke iPaymu (dan iPaymu cuma redirect halaman penuh,
+# gak ada script/iframe yang perlu di-whitelist). Sekarang gak ada script
+# eksternal yang dimuat sama sekali di index.html selain script.js sendiri.
+#
+# Equivalent-nya buat nginx sudah saya taruh di nginx-nexshop.conf (kalau
+# mau aktifin CSP). File ini aman dihapus kalau memang sudah gak balik ke
+# Netlify lagi.
+#
+# /*
+#   Content-Security-Policy: script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://app.sandbox.midtrans.com https://app.midtrans.com https://snap-assets.sandbox.midtrans.com https://snap-assets.midtrans.com https://api.sandbox.midtrans.com https://api.midtrans.com https://pay.google.com https://gwk.gopayapi.com https://www.googletagmanager.com https://o.alicdn.com https://g.alicdn.com; frame-src 'self' https://app.sandbox.midtrans.com https://app.midtrans.com https://pay.google.com;

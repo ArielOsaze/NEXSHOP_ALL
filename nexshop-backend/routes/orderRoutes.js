@@ -9,6 +9,7 @@ router.post("/", optionalAuthMiddleware, orderController.create);
 
 router.get("/my", authMiddleware, orderController.getMyOrders);
 router.get("/status/:id", orderController.getPublicStatus); // publik — buat halaman kembali dari pembayaran
+router.get("/track/:id", orderController.getPublicDetail); // publik — buat tab "Cek Transaksi"
 router.get("/", authMiddleware, orderController.getAllOrders); // baru: buat admin dashboard
 
 // Webhook dari server iPaymu — SENGAJA tanpa authMiddleware, karena yang
