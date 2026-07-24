@@ -4,6 +4,7 @@ const { createRedirectPayment, checkTransactionStatus } = require("../config/ipa
 const { checkNickname } = require("../config/apigames");
 const { notify } = require("../config/notify");
 const { sendTopupInvoiceEmail } = require("../config/mailer");
+const { sendTelegramNotification } = require("../config/telegram");
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
 const BACKEND_URL = (process.env.BACKEND_URL || "").replace(/\/$/, "");
@@ -645,6 +646,11 @@ async function fulfillOrder(order) {
                 console.log("Gagal kirim invoice topup email:", mailErr.response?.data || mailErr.message);
             }
         }
+        if (finalStatus === "sukses") {
+            sendTelegramNotification(
+                `💎 <b>Pembelian Topup Baru</b>\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
+            );
+        }
     } catch (err) {
         // Sesuai catatan TokoVoucher: HTTP error / timeout HARUS dianggap PENDING,
         // bukan gagal — jangan tandai gagal di sini, biarkan admin/webhook/polling
@@ -778,6 +784,11 @@ exports.handleTokoVoucherWebhook = async (req, res) => {
                 console.log("Gagal kirim invoice topup email:", mailErr.response?.data || mailErr.message);
             }
         }
+        if (finalStatus === "sukses" && existingOrder && existingOrder.status !== "sukses") {
+            sendTelegramNotification(
+                `💎 <b>Pembelian Topup Baru</b>\nOrder ID: ${refId}\nProduk: ${existingOrder.nama_produk}\nTujuan: ${existingOrder.tujuan}${existingOrder.server_id ? ` (${existingOrder.server_id})` : ""}\nTotal: ${rupiahLog(existingOrder.harga)}`
+            );
+        }
 
         res.status(200).json({ message: "OK" });
     } catch (err) {
@@ -818,6 +829,11 @@ exports.checkStatus = async (req, res) => {
             } catch (mailErr) {
                 console.log("Gagal kirim invoice topup email:", mailErr.response?.data || mailErr.message);
             }
+        }
+        if (finalStatus === "sukses" && order.status !== "sukses") {
+            sendTelegramNotification(
+                `💎 <b>Pembelian Topup Baru</b>\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
+            );
         }
 
         res.json(result);

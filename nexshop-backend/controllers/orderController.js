@@ -3,6 +3,7 @@ const { createRedirectPayment, checkTransactionStatus } = require("../config/ipa
 const { validatePromoCode, incrementUsage } = require("./promoCodeController");
 const { notify } = require("../config/notify");
 const { sendOrderInvoiceEmail } = require("../config/mailer");
+const { sendTelegramNotification } = require("../config/telegram");
 
 // URL frontend/backend dipakai buat returnUrl/cancelUrl/notifyUrl iPaymu.
 // Isi FRONTEND_URL dan BACKEND_URL di .env (lihat .env.example).
@@ -382,6 +383,13 @@ exports.handleNotification = async (req, res) => {
             } catch (mailErr) {
                 console.log("Gagal kirim invoice email:", mailErr.response?.data || mailErr.message);
             }
+        }
+
+        // kirim notif Telegram cuma sekali, pas transisi PERTAMA KALI ke "paid"
+        if (status === "paid" && existingOrder.status !== "paid") {
+            sendTelegramNotification(
+                `🛒 <b>Pembelian Baru</b>\nOrder ID: ${orderId}\nNama: ${existingOrder.recipient_name || "-"}\nTotal: ${rupiahLog(existingOrder.total)}`
+            );
         }
 
         // iPaymu expect balasan 200 OK sederhana
