@@ -621,7 +621,7 @@ header{ position:sticky; top:0; z-index:100; }
 }
 .product-modal-info h3{ font-size:20px; margin-bottom:8px; }
 .pm-rating{ font-size:13px; color:var(--text-muted); margin-bottom:12px; }
-.pm-desc{ color:var(--text-muted); font-size:14px; margin-bottom:16px; }
+.pm-desc{ color:var(--text-muted); font-size:14px; margin-bottom:16px; white-space:pre-line; }
 .pm-price{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:24px; color:var(--text); margin-bottom:18px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .pm-qty{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; font-size:14px; color:var(--text-muted); }
 .qty-control{ display:flex; align-items:center; gap:14px; background:var(--bg-panel-2); border-radius:100px; padding:6px 16px; }
