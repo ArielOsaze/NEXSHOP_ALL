@@ -81,9 +81,9 @@ header{ position:sticky; top:0; z-index:100; }
 .brand{ display:flex; align-items:center; gap:12px; position:relative; }
 .brand .logo{ width:38px; height:38px; border-radius:9px; filter:drop-shadow(var(--glow-violet)); flex-shrink:0; }
 
-.brand-text{ position:relative; }
+.brand-text{ position:relative; overflow:hidden; }
 .flag-overlay{
-    position:absolute; inset:-30% -10%; width:auto; height:auto;
+    position:absolute; inset:0; width:100%; height:100%;
     opacity:.22; z-index:2; pointer-events:none; mix-blend-mode:normal;
 }
 .brand-text h1, .brand-text .tagline{ position:relative; z-index:1; }
