@@ -217,7 +217,7 @@ header{ position:sticky; top:0; z-index:100; }
 /* Trust bar — stat singkat + badge kepercayaan, tampil di antara hero &
    katalog biar area itu gak kosong dan langsung nunjukin toko udah "hidup". */
 .trust-bar{
-    max-width:1180px; margin:-28px auto 0; padding:0 20px 8px; position:relative; z-index:2;
+    max-width:1180px; margin:12px auto 0; padding:0 20px 8px; position:relative; z-index:2;
 }
 .trust-stats{
     display:flex; flex-wrap:wrap; justify-content:center; gap:0;
@@ -249,13 +249,13 @@ header{ position:sticky; top:0; z-index:100; }
 .trust-badge-icon{ font-size:14px; line-height:1; }
 
 @media (max-width:640px){
-    .trust-bar{ margin-top:-18px; }
-    .trust-stat{ flex:1 1 33.33%; padding:12px 6px; }
-    .trust-stat-value{ font-size:17px; }
-    .trust-stat-label{ font-size:9.5px; line-height:1.25; }
-    .trust-badges{ gap:8px; margin-top:10px; }
-    .trust-badge{ padding:5px 10px; font-size:10.5px; }
-    .trust-badge-icon{ font-size:12px; }
+    .trust-bar{ margin-top:8px; padding:0 12px 8px; }
+    .trust-stat{ flex:1 1 33.33%; padding:8px 4px; }
+    .trust-stat-value{ font-size:14px; }
+    .trust-stat-label{ font-size:8.5px; line-height:1.2; }
+    .trust-badges{ gap:6px; margin-top:8px; }
+    .trust-badge{ padding:4px 9px; font-size:9.5px; }
+    .trust-badge-icon{ font-size:11px; }
 }
 
 .section-heading{ text-align:center; max-width:640px; margin:0 auto 36px; padding:0 20px; }
