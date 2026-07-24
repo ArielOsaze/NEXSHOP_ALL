@@ -78,32 +78,15 @@ header{ position:sticky; top:0; z-index:100; }
     backdrop-filter:blur(14px);
     border-bottom:1px solid var(--line);
 }
-.brand{ display:flex; align-items:center; gap:12px; }
-.brand .logo{ width:38px; height:38px; border-radius:9px; filter:drop-shadow(var(--glow-violet)); }
+.brand{ display:flex; align-items:center; gap:12px; position:relative; }
+.brand .logo{ width:38px; height:38px; border-radius:9px; filter:drop-shadow(var(--glow-violet)); flex-shrink:0; }
 
-/* === Edisi HUT RI ke-81 (17 Agustus) — cincin merah-putih berputar + logo
-   pulsing di sekitar logo. Efek sementara, gampang dicopot setelah lewat
-   tanggalnya: hapus blok .logo-wrap ini + balikin <img class="logo"> polos
-   di index.html (tanpa div.logo-wrap pembungkus). === */
-.logo-wrap{ position:relative; width:38px; height:38px; flex-shrink:0; }
-.logo-wrap::before{
-    content:""; position:absolute; inset:-3px; border-radius:12px; z-index:0;
-    background:conic-gradient(from 0deg, #E70011 0deg 90deg, #fff 90deg 180deg, #E70011 180deg 270deg, #fff 270deg 360deg);
-    animation:nx-flag-spin 3s linear infinite;
+.brand-text{ position:relative; }
+.flag-overlay{
+    position:absolute; inset:-30% -10%; width:auto; height:auto;
+    opacity:.22; z-index:2; pointer-events:none; mix-blend-mode:normal;
 }
-.logo-wrap .logo{
-    position:relative; z-index:1; display:block; margin:0;
-    width:38px; height:38px; border-radius:9px;
-    animation:nx-flag-pulse 2s ease-in-out infinite;
-}
-@keyframes nx-flag-spin{ to{ transform:rotate(360deg); } }
-@keyframes nx-flag-pulse{
-    0%,100%{ filter:drop-shadow(0 0 7px rgba(231,0,17,.75)); }
-    50%{ filter:drop-shadow(0 0 7px rgba(255,255,255,.85)); }
-}
-@media (prefers-reduced-motion:reduce){
-    .logo-wrap::before, .logo-wrap .logo{ animation:none; }
-}
+.brand-text h1, .brand-text .tagline{ position:relative; z-index:1; }
 
 .brand h1{
     font-size:20px; line-height:1; color:var(--text);
