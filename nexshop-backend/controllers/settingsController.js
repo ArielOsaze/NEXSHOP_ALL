@@ -62,7 +62,10 @@ exports.getApiKeysAdmin = async (req, res) => {
             tokovoucher_member_code: keys.tokovoucher_member_code,
             tokovoucher_secret: mask(keys.tokovoucher_secret),
             apigames_merchant_id: keys.apigames_merchant_id,
-            apigames_secret_key: mask(keys.apigames_secret_key)
+            apigames_secret_key: mask(keys.apigames_secret_key),
+            brevo_api_key: mask(keys.brevo_api_key),
+            brevo_sender_email: keys.brevo_sender_email, // bukan rahasia, gak perlu di-mask
+            brevo_sender_name: keys.brevo_sender_name
         });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });

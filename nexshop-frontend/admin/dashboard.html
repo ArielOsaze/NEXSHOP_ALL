@@ -420,6 +420,20 @@
         <h2>Users</h2>
         <p class="text-muted mb-0">Daftar pengguna terdaftar</p>
     </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="mb-0">Kode OTP Aktif</h6>
+                <small class="text-muted">Akun yang belum verifikasi email &amp; masih punya kode OTP berlaku. Antisipasi kalau email OTP gagal terkirim (mis. Brevo belum/salah diatur).</small>
+            </div>
+            <button onclick="loadPendingOtp()" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+        </div>
+        <div class="card-body p-0" id="otpPendingContainer">
+            <p class="text-muted text-center py-4 mb-0">Klik "Refresh" untuk memuat data.</p>
+        </div>
+    </div>
+
     <div class="card shadow-sm">
         <div class="card-body" id="usersContainer"></div>
     </div>
@@ -666,6 +680,23 @@
                 </div>
                 <div class="col-12">
                     <div class="form-text">Opsional — kalau diisi, customer bisa "Cek Akun" (nickname) otomatis sebelum topup Mobile Legends &amp; Free Fire. Kalau dikosongkan, fitur ini nonaktif dan customer tetap bisa checkout seperti biasa (tanpa cek otomatis). Dapatkan Merchant ID &amp; Secret Key di <a href="https://apigames.id" target="_blank" rel="noopener">apigames.id</a> → menu Pengaturan.</div>
+                </div>
+
+                <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">Brevo (Email OTP &amp; Invoice)</h6></div>
+                <div class="col-12">
+                    <label class="form-label">API Key</label>
+                    <input id="brevoApiKey" class="form-control" placeholder="API Key dari dashboard Brevo">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Sender Email</label>
+                    <input id="brevoSenderEmail" type="email" class="form-control" placeholder="noreply@nexshop.cloud">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Sender Name</label>
+                    <input id="brevoSenderName" class="form-control" placeholder="NexShop">
+                </div>
+                <div class="col-12">
+                    <div class="form-text">Dipakai buat kirim email kode OTP registrasi &amp; invoice pesanan/topup. Ambil API Key di <a href="https://app.brevo.com/settings/keys/api" target="_blank" rel="noopener">app.brevo.com</a> → SMTP &amp; API. <strong>Sender Email harus sudah diverifikasi/authenticated</strong> di Brevo (menu Senders &amp; IP), kalau belum, email gagal terkirim walau API Key benar. Kalau email OTP tetap gagal, cek juga menu <strong>Users → OTP Aktif</strong> buat lihat/kirim ulang kode secara manual.</div>
                 </div>
 
                 <p class="text-muted small mb-0">Key yang sudah tersimpan ditampilkan tersamar (••••). Isi ulang field hanya kalau mau menggantinya.</p>

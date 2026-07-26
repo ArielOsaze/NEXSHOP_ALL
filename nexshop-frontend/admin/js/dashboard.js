@@ -117,7 +117,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         document.getElementById(`view-${view}`).classList.remove("d-none");
 
         if (view === "orders" && !ordersLoaded) loadOrders();
-        if (view === "users" && !usersLoaded) loadUsers();
+        if (view === "users" && !usersLoaded) { loadUsers(); loadPendingOtp(); }
         if (view === "promo" && !promoLoaded) loadPromo();
         if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
         if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
@@ -496,6 +496,9 @@ async function loadUsers() {
                                 <button class="btn btn-sm btn-outline-info" onclick="openUserDetail(${Number(u.id)})">
                                     <i class="bi bi-clock-history"></i> Riwayat
                                 </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${Number(u.id)}, '${escapeHtml(u.email || "").replace(/'/g, "\\'")}')">
+                                    <i class="bi bi-trash"></i> Hapus
+                                </button>
                             </td>
                         </tr>
                     `).join("")}
@@ -619,6 +622,95 @@ async function toggleUserBlacklist(id, newValue) {
 
         showToast(newValue ? "Akun berhasil diblokir" : "Blokir berhasil dibuka");
         loadUsers();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        console.error(err);
+        showToast(err.message, true);
+    }
+}
+
+async function deleteUser(id, email) {
+    if (!confirm(`Hapus akun "${email}"? Ini akan menghapus akun beserta SELURUH riwayat pesanan & topup-nya. Tindakan ini tidak bisa dibatalkan.`)) return;
+    if (!confirm(`Sekali lagi — yakin hapus permanen akun "${email}"?`)) return;
+
+    try {
+        const res = await apiFetch(`/users/${id}`, { method: "DELETE" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menghapus user");
+
+        showToast("User berhasil dihapus");
+        loadUsers();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        console.error(err);
+        showToast(err.message, true);
+    }
+}
+
+// ================================
+// OTP Aktif (antisipasi email OTP gagal terkirim)
+// ================================
+
+async function loadPendingOtp() {
+    const container = document.getElementById("otpPendingContainer");
+    container.innerHTML = `<div class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</div>`;
+
+    try {
+        const res = await apiFetch("/users/otp");
+        if (!res.ok) throw new Error("not-available");
+
+        const list = await res.json();
+
+        if (!list.length) {
+            container.innerHTML = `<p class="text-muted text-center py-4 mb-0">Tidak ada akun dengan OTP aktif saat ini.</p>`;
+            return;
+        }
+
+        container.innerHTML = `
+            <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th>Nama</th><th>Email</th><th>Kode OTP</th><th>Berlaku Sampai</th><th>Status</th><th>Aksi</th></tr></thead>
+                <tbody>
+                    ${list.map(u => `
+                        <tr>
+                            <td>${escapeHtml(u.name || "-")}</td>
+                            <td>${escapeHtml(u.email || "-")}</td>
+                            <td><code class="fs-6">${escapeHtml(u.otp_code || "-")}</code></td>
+                            <td>${u.otp_expires_at ? new Date(u.otp_expires_at).toLocaleString("id-ID") : "-"}</td>
+                            <td>
+                                ${u.is_expired
+                                    ? `<span class="badge bg-secondary">Kedaluwarsa</span>`
+                                    : `<span class="badge bg-success">Berlaku</span>`}
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" onclick="adminResendOtp(${Number(u.id)})">
+                                    <i class="bi bi-envelope-arrow-up"></i> Kirim Ulang
+                                </button>
+                            </td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+            </div>
+        `;
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        container.innerHTML = `<p class="text-muted text-center py-4 mb-0">Gagal memuat daftar OTP aktif.</p>`;
+    }
+}
+
+async function adminResendOtp(id) {
+    try {
+        const res = await apiFetch(`/users/${id}/resend-otp`, { method: "POST" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal mengirim ulang OTP");
+
+        if (data.emailSent === false) {
+            showToast(`${data.message} Kode: ${data.otp_code || "-"}`, true);
+        } else {
+            showToast(data.message || "Kode OTP baru berhasil dikirim");
+        }
+        loadPendingOtp();
     } catch (err) {
         if (err.message === "unauthorized") return;
         console.error(err);
@@ -902,6 +994,9 @@ async function loadSettings() {
             document.getElementById("tvSecret").value = keys.tokovoucher_secret || "";
             document.getElementById("agMerchantId").value = keys.apigames_merchant_id || "";
             document.getElementById("agSecretKey").value = keys.apigames_secret_key || "";
+            document.getElementById("brevoApiKey").value = keys.brevo_api_key || "";
+            document.getElementById("brevoSenderEmail").value = keys.brevo_sender_email || "";
+            document.getElementById("brevoSenderName").value = keys.brevo_sender_name || "";
         }
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -1070,7 +1165,10 @@ async function saveApiKeys() {
         tokovoucher_member_code: document.getElementById("tvMemberCode").value.trim(),
         tokovoucher_secret: document.getElementById("tvSecret").value.trim(),
         apigames_merchant_id: document.getElementById("agMerchantId").value.trim(),
-        apigames_secret_key: document.getElementById("agSecretKey").value.trim()
+        apigames_secret_key: document.getElementById("agSecretKey").value.trim(),
+        brevo_api_key: document.getElementById("brevoApiKey").value.trim(),
+        brevo_sender_email: document.getElementById("brevoSenderEmail").value.trim(),
+        brevo_sender_name: document.getElementById("brevoSenderName").value.trim()
     };
 
     try {

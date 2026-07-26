@@ -1,4 +1,7 @@
 const supabase = require("../config/db");
+const { sendOtpEmail } = require("../config/mailer");
+const { notify } = require("../config/notify");
+const { generateOtp, OTP_EXPIRY_MINUTES } = require("./authController");
 
 // ===========================
 // GET SEMUA USER (untuk admin dashboard)
@@ -172,6 +175,172 @@ exports.getUserDetail = async (req, res) => {
             },
             history
         });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ===========================================================
+// OTP AKTIF (admin only) — antisipasi kalau email OTP gagal terkirim
+// (misal Brevo API key salah/belum diisi). Admin bisa lihat kode OTP
+// yang lagi berlaku buat suatu akun dan kasih tau manual ke user, atau
+// klik "Kirim Ulang" buat generate + kirim kode baru dari sini.
+// ===========================================================
+exports.getPendingOtp = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from("users")
+            .select("id, fullname, email, otp_code, otp_expires_at, email_verified")
+            .eq("email_verified", false)
+            .not("otp_code", "is", null)
+            .order("otp_expires_at", { ascending: false });
+
+        if (error) {
+            console.log(error);
+            return res.status(500).json({ message: "Database Error" });
+        }
+
+        const now = new Date();
+        const list = (data || []).map(u => ({
+            id: u.id,
+            name: u.fullname,
+            email: u.email,
+            otp_code: u.otp_code,
+            otp_expires_at: u.otp_expires_at,
+            is_expired: !u.otp_expires_at || new Date(u.otp_expires_at) < now
+        }));
+
+        res.json(list);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// Admin generate + kirim ulang kode OTP baru buat 1 user tertentu — dipakai
+// pas email OTP asli gagal terkirim (misal Brevo key belum/salah diisi) dan
+// user gak bisa minta kirim ulang sendiri (mis. dari CS/WhatsApp).
+exports.adminResendOtp = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+
+    const { id } = req.params;
+
+    try {
+        const { data: user, error } = await supabase
+            .from("users")
+            .select("id, email, email_verified")
+            .eq("id", id)
+            .maybeSingle();
+
+        if (error) {
+            console.log(error);
+            return res.status(500).json({ message: "Database Error" });
+        }
+        if (!user) {
+            return res.status(404).json({ message: "User tidak ditemukan" });
+        }
+        if (user.email_verified) {
+            return res.status(400).json({ message: "Akun ini sudah terverifikasi, gak perlu OTP lagi" });
+        }
+
+        const otp = generateOtp();
+        const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
+
+        const { error: updateErr } = await supabase
+            .from("users")
+            .update({ otp_code: otp, otp_expires_at: otpExpiresAt })
+            .eq("id", user.id);
+
+        if (updateErr) {
+            console.log(updateErr);
+            return res.status(500).json({ message: "Gagal membuat kode OTP baru" });
+        }
+
+        try {
+            await sendOtpEmail(user.email, otp);
+        } catch (mailErr) {
+            console.log("Admin resend OTP - gagal kirim email:", mailErr.message);
+            // OTP tetap tersimpan di DB, jadi admin masih bisa lihat/kasih tau manual
+            return res.json({
+                message: "Kode OTP baru dibuat, tapi email gagal terkirim. Kode bisa dilihat di tabel di bawah.",
+                otp_code: otp,
+                emailSent: false
+            });
+        }
+
+        res.json({ message: `Kode OTP baru berhasil dikirim ke ${user.email}`, emailSent: true });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ===========================================================
+// HAPUS USER (admin only) — hapus akun beserta seluruh riwayat pesanan
+// (order produk biasa + topup diamond). Ini PERMANEN, gak bisa di-undo.
+// ===========================================================
+exports.deleteUser = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+
+    const { id } = req.params;
+
+    if (String(req.user.id) === String(id)) {
+        return res.status(400).json({ message: "Gak bisa menghapus akun sendiri" });
+    }
+
+    try {
+        const { data: user, error: findErr } = await supabase
+            .from("users")
+            .select("id, email, role")
+            .eq("id", id)
+            .maybeSingle();
+
+        if (findErr) {
+            console.log(findErr);
+            return res.status(500).json({ message: "Database Error" });
+        }
+        if (!user) {
+            return res.status(404).json({ message: "User tidak ditemukan" });
+        }
+
+        // hapus riwayat dulu (order produk biasa + topup diamond) baru
+        // akunnya sendiri, supaya gak ada data nyangkut nunjuk ke user_id
+        // yang udah gak ada
+        const [ordersDel, topupDel] = await Promise.all([
+            supabase.from("orders").delete().eq("user_id", id),
+            supabase.from("topup_orders").delete().eq("user_id", id)
+        ]);
+
+        if (ordersDel.error) {
+            console.log(ordersDel.error);
+            return res.status(500).json({ message: "Gagal menghapus riwayat order user" });
+        }
+        if (topupDel.error) {
+            console.log(topupDel.error);
+            return res.status(500).json({ message: "Gagal menghapus riwayat topup user" });
+        }
+
+        const { error: userDelErr } = await supabase
+            .from("users")
+            .delete()
+            .eq("id", id);
+
+        if (userDelErr) {
+            console.log(userDelErr);
+            return res.status(500).json({ message: "Gagal menghapus akun user" });
+        }
+
+        notify("users", `🗑️ ${req.user.email} menghapus akun user ${user.email} beserta seluruh riwayat pesanannya`);
+        res.json({ message: "User beserta riwayat pesanannya berhasil dihapus" });
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error" });

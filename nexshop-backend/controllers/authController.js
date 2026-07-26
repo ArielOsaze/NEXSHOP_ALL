@@ -33,6 +33,12 @@ function generateOtp() {
     return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+// di-export biar bisa dipakai userController buat fitur admin "Kirim Ulang OTP"
+// (kirim OTP baru ke user tertentu langsung dari admin dashboard, tanpa perlu
+// user login/minta sendiri)
+exports.generateOtp = generateOtp;
+exports.OTP_EXPIRY_MINUTES = OTP_EXPIRY_MINUTES;
+
 // REGISTER
 exports.register = async (req, res) => {
     const { fullname, email, password } = req.body;
@@ -80,17 +86,21 @@ exports.register = async (req, res) => {
         try {
             await sendOtpEmail(email, otp);
         } catch (mailErr) {
-            console.log("Gagal kirim email OTP:", mailErr);
-            // akun tetap dibuat, user bisa minta kirim ulang lewat /resend-otp
+            console.log("Gagal kirim email OTP:", mailErr.message);
+            // akun tetap dibuat, kode OTP tersimpan di DB (admin bisa lihat
+            // lewat menu Users > OTP Aktif kalau emailnya gak sampai), dan
+            // user bisa minta kirim ulang lewat /resend-otp
             return res.status(201).json({
-                message: "Register berhasil, tapi gagal mengirim email OTP. Silakan minta kirim ulang.",
-                email
+                message: "Register berhasil, tapi gagal mengirim email OTP. Silakan minta kirim ulang atau hubungi admin.",
+                email,
+                emailSent: false
             });
         }
 
         res.status(201).json({
             message: "Register berhasil. Cek email kamu untuk kode verifikasi.",
-            email
+            email,
+            emailSent: true
         });
     } catch (error) {
         console.log(error);
@@ -192,9 +202,19 @@ exports.resendOtp = async (req, res) => {
             return res.status(500).json({ message: "Gagal membuat kode baru" });
         }
 
-        await sendOtpEmail(email, otp);
+        try {
+            await sendOtpEmail(email, otp);
+        } catch (mailErr) {
+            console.log("Gagal kirim ulang email OTP:", mailErr.message);
+            // kode OTP tetap dibuat & tersimpan di DB (bisa dilihat admin lewat
+            // menu Users > OTP Aktif kalau emailnya gak sampai)
+            return res.json({
+                message: "Kode OTP baru sudah dibuat, tapi email gagal terkirim. Hubungi admin/CS untuk minta kode OTP kamu.",
+                emailSent: false
+            });
+        }
 
-        res.json({ message: "Kode OTP baru sudah dikirim ke email kamu." });
+        res.json({ message: "Kode OTP baru sudah dikirim ke email kamu.", emailSent: true });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server Error" });
