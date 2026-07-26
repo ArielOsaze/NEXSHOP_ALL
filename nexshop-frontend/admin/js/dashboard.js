@@ -1572,6 +1572,40 @@ async function bulkAutoMarkupTopupPrice() {
     }
 }
 
+// Aktivasi cerdas: dari produk terpilih, cuma varian termurah per nominal
+// diamond yang sama/mirip yang diaktifin; kalau kategorinya udah punya
+// histori order sukses, nominal yang gak pernah laku ikut dinonaktifin.
+async function bulkSmartActivateTopup() {
+    if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
+
+    const capInput = prompt(
+        "Batas maksimal nominal aktif per kategori (opsional)\nKosongin kalau gak mau dibatasi, sistem cuma bakal nonaktifin nominal yang gak pernah laku (kalau udah ada histori order):",
+        ""
+    );
+    if (capInput === null) return; // batal
+    const cap = capInput.trim() === "" ? null : Number(capInput.trim());
+    if (cap !== null && (isNaN(cap) || cap <= 0)) return showToast("Batas harus angka positif", true);
+
+    if (!confirm(`Jalankan aktivasi cerdas ke ${topupSelectedIds.size} produk terpilih? (bisa di-undo)`)) return;
+
+    try {
+        const res = await apiFetch("/topup/admin/products/smart-activate", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: [...topupSelectedIds], maxAktifPerKategori: cap })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menjalankan aktivasi cerdas");
+
+        showToast(data.message || "Aktivasi cerdas selesai");
+        topupSelectedIds.clear();
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
 async function bulkDeleteTopupSelected() {
     if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
     if (!confirm(`Yakin hapus ${topupSelectedIds.size} produk terpilih? (bisa di-undo lewat tombol Undo kalau salah pencet)`)) return;

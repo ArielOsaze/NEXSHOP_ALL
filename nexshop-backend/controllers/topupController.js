@@ -51,6 +51,177 @@ function hitungMarkupWajar(hargaBeli) {
 }
 
 // ===========================================================
+// AKTIVASI CERDAS — bantu admin milih produk mana yang perlu aktif dari
+// katalog hasil sync (yang sering ada BANYAK varian buat nominal diamond
+// yang sama/mirip dari supplier berbeda, plus nominal yang jarang dibeli).
+//
+// Alur:
+// 1) Ambil "jumlah diamond" dari nama produk (nama_produk dari TokoVoucher,
+//    formatnya beda-beda tiap game -- produk yang gak kebaca polanya
+//    (paket/membership dll) DILEWATIN, gak disentuh sama sekali).
+// 2) Kelompokin produk per kategori berdasarkan jumlah diamond yang SAMA
+//    ATAU MIRIP (toleransi %, biar "86" & "85" gara-gara event bonus tetap
+//    dianggap 1 tier).
+// 3) Dalam 1 kelompok, cuma produk dengan HARGA MODAL PALING MURAH yang
+//    diaktifkan -- sisanya (varian sama tapi lebih mahal) dinonaktifkan.
+// 4) Kalau kategori itu SUDAH PERNAH ada histori order sukses: kelompok
+//    yang gak pernah kejual sama sekali ikut dinonaktifkan juga (asumsi:
+//    nominal itu emang jarang diminati). Kalau BELUM ada histori order
+//    sama sekali (produk baru), langkah ini dilewatin -- gak ada data buat
+//    nolak kelompok mana pun, jadi semua kelompok tetap dapet 1 produk aktif
+//    (hasil langkah 3).
+// ===========================================================
+
+// Ambil angka nominal diamond dari nama produk, mis. "86 Diamonds" -> 86,
+// "1.412 Diamond (706+706)" -> 1412. Return null kalau polanya gak ketemu.
+function extractDiamondAmount(nama) {
+    if (!nama) return null;
+    const match = String(nama).match(/([\d.,]+)\s*(diamonds?|dm)\b/i);
+    if (!match) return null;
+    const digitsOnly = match[1].replace(/[.,]/g, "");
+    const n = parseInt(digitsOnly, 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+// Kelompokin angka-angka yang berdekatan (selisih relatif <= tolerance)
+// jadi satu cluster "sama/mirip". Dipakai per kategori.
+function clusterAmounts(amounts, tolerance = 0.08) {
+    const sorted = [...new Set(amounts)].sort((a, b) => a - b);
+    const clusters = [];
+    for (const amt of sorted) {
+        const last = clusters[clusters.length - 1];
+        if (last && (amt - last.rep) / last.rep <= tolerance) {
+            last.values.push(amt);
+        } else {
+            clusters.push({ rep: amt, values: [amt] });
+        }
+    }
+    return clusters;
+}
+
+exports.smartActivateProducts = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const { ids, maxAktifPerKategori } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "ids wajib diisi (array)" });
+    }
+    const cap = Number(maxAktifPerKategori) > 0 ? Number(maxAktifPerKategori) : null;
+
+    try {
+        const { data: products, error: fetchErr } = await supabase
+            .from("topup_products")
+            .select("id, kode_produk, nama, kategori, harga_beli, is_active")
+            .in("id", ids);
+        if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
+
+        const parsed = (products || []).map((p) => ({ ...p, diamond: extractDiamondAmount(p.nama) }));
+        const skipped = parsed.filter((p) => p.diamond === null);
+        const groupable = parsed.filter((p) => p.diamond !== null);
+
+        // histori order sukses buat produk-produk ini, dipakai buat nentuin
+        // kelompok mana yang "beneran laku" per kategori
+        const kodeList = groupable.map((p) => p.kode_produk);
+        const { data: orderRows } = kodeList.length
+            ? await supabase.from("topup_orders").select("kode_produk").eq("status", "sukses").in("kode_produk", kodeList)
+            : { data: [] };
+        const salesCount = {};
+        (orderRows || []).forEach((o) => {
+            salesCount[o.kode_produk] = (salesCount[o.kode_produk] || 0) + 1;
+        });
+
+        const byKategori = {};
+        groupable.forEach((p) => {
+            const k = p.kategori || "(tanpa kategori)";
+            if (!byKategori[k]) byKategori[k] = [];
+            byKategori[k].push(p);
+        });
+
+        const activateIds = [];
+        const deactivateIds = [];
+        let filterPopularitasDipakai = false;
+
+        for (const kategori of Object.keys(byKategori)) {
+            const items = byKategori[kategori];
+            const clusters = clusterAmounts(items.map((p) => p.diamond));
+            const groupsOfCluster = clusters.map((c) => ({
+                ...c,
+                items: items.filter((p) => c.values.includes(p.diamond))
+            }));
+
+            let scored = groupsOfCluster.map((g) => {
+                const winner = [...g.items].sort((a, b) => Number(a.harga_beli) - Number(b.harga_beli))[0];
+                const totalSales = g.items.reduce((sum, p) => sum + (salesCount[p.kode_produk] || 0), 0);
+                return { ...g, winner, totalSales };
+            });
+
+            const kategoriPunyaHistori = scored.some((g) => g.totalSales > 0);
+            if (kategoriPunyaHistori) {
+                filterPopularitasDipakai = true;
+                scored = scored.filter((g) => g.totalSales > 0);
+            }
+            if (cap) {
+                scored = scored.sort((a, b) => b.totalSales - a.totalSales).slice(0, cap);
+            }
+
+            const winnerIds = new Set(scored.map((g) => g.winner.id));
+            items.forEach((p) => {
+                if (winnerIds.has(p.id)) activateIds.push(p.id);
+                else deactivateIds.push(p.id);
+            });
+        }
+
+        const beforeRows = [];
+        const afterRows = [];
+        const idsToUpdate = [];
+        [...activateIds.map((id) => [id, true]), ...deactivateIds.map((id) => [id, false])].forEach(([id, target]) => {
+            const prev = parsed.find((p) => p.id === id);
+            if (prev && !!prev.is_active !== target) {
+                beforeRows.push({ id, is_active: !!prev.is_active });
+                afterRows.push({ id, is_active: target });
+                idsToUpdate.push({ id, is_active: target });
+            }
+        });
+
+        if (idsToUpdate.length > 0) {
+            const results = await Promise.all(
+                idsToUpdate.map((r) =>
+                    supabase.from("topup_products").update({ is_active: r.is_active, updated_at: new Date().toISOString() }).eq("id", r.id)
+                )
+            );
+            const failed = results.find((r) => r.error);
+            if (failed) return res.status(500).json({ message: "Gagal update status produk" });
+
+            await logAction({
+                action: "smart_activate",
+                label: `Aktivasi cerdas: ${idsToUpdate.filter((r) => r.is_active).length} aktif, ${idsToUpdate.filter((r) => !r.is_active).length} nonaktif`,
+                ids: idsToUpdate.map((r) => r.id),
+                beforeRows,
+                afterRows,
+                adminEmail: req.user.email
+            });
+        }
+
+        notify(
+            "product",
+            `🧠 ${req.user.email} menjalankan aktivasi cerdas: ${activateIds.length} aktif, ${deactivateIds.length} nonaktif dari ${groupable.length} produk (${skipped.length} dilewatin krn nama produk gak kebaca nominalnya)`
+        );
+        res.json({
+            message: `Aktivasi cerdas selesai: ${activateIds.length} produk diaktifkan, ${deactivateIds.length} dinonaktifkan${
+                skipped.length ? `, ${skipped.length} dilewatin (nominal diamond gak kebaca dari namanya)` : ""
+            }${filterPopularitasDipakai ? "" : " — belum ada histori order sukses, jadi filter popularitas belum diterapkan"}`,
+            activated: activateIds.length,
+            deactivated: deactivateIds.length,
+            skipped: skipped.length,
+            popularityFilterApplied: filterPopularitasDipakai
+        });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ===========================================================
 // UNDO/REDO — riwayat aksi bulk di produk topup (tabel
 // product_action_history, lihat migrations-07-product-action-history.sql).
 // Model stack standar: entri 'active' = riwayat masa lalu, entri 'undone' =
