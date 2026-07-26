@@ -300,43 +300,77 @@
                 </div>
             </div>
 
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-2 border-bottom topup-bulk-bar" id="topupBulkBar">
-                <div class="form-check mb-0">
-                    <input class="form-check-input" type="checkbox" id="topupSelectAll">
-                    <label class="form-check-label small" for="topupSelectAll">Pilih semua yang tampil</label>
-                </div>
-                <div class="d-flex gap-2 align-items-center">
+            <div class="border-bottom topup-bulk-bar" id="topupBulkBar">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 pt-2">
+                    <div class="form-check mb-0">
+                        <input class="form-check-input" type="checkbox" id="topupSelectAll">
+                        <label class="form-check-label small" for="topupSelectAll">Pilih semua yang tampil</label>
+                    </div>
                     <span class="text-muted small" id="topupSelectedCount">0 dipilih</span>
-                    <button class="btn btn-outline-success btn-sm" onclick="bulkSetTopupStatus(true)"><i class="bi bi-check2-circle"></i> Aktifkan</button>
-                    <button class="btn btn-outline-secondary btn-sm" onclick="bulkSetTopupStatus(false)"><i class="bi bi-slash-circle"></i> Nonaktifkan</button>
-                    <button class="btn btn-outline-primary btn-sm" onclick="document.getElementById('topupBulkIconInput').click()"><i class="bi bi-image"></i> Set Icon</button>
-                    <input type="file" id="topupBulkIconInput" accept="image/*" class="d-none">
-                    <div class="input-group input-group-sm" style="width:auto;">
-                        <button class="btn btn-outline-info" onclick="bulkSetTopupButuhServerId(true)" title="Tandai produk terpilih butuh Server ID"><i class="bi bi-person-badge"></i> Butuh Server ID</button>
-                        <button class="btn btn-outline-secondary" onclick="bulkSetTopupButuhServerId(false)" title="Matikan Server ID buat produk terpilih"><i class="bi bi-person-x"></i> Gak Butuh</button>
+                </div>
+
+                <div class="d-flex flex-wrap align-items-end gap-4 px-3 pb-3 pt-2">
+                    <div>
+                        <div class="text-muted small mb-1">Status</div>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-success" onclick="bulkSetTopupStatus(true)"><i class="bi bi-check2-circle"></i> Aktifkan</button>
+                            <button class="btn btn-outline-secondary" onclick="bulkSetTopupStatus(false)"><i class="bi bi-slash-circle"></i> Nonaktifkan</button>
+                        </div>
                     </div>
-                    <div class="input-group input-group-sm" style="width:auto;">
-                        <input type="text" id="topupBulkKategoriInput" class="form-control" placeholder="Nama kategori tujuan" style="max-width:180px;" list="topupKategoriDatalist">
-                        <button class="btn btn-outline-info" onclick="bulkMoveTopupKategori()"><i class="bi bi-folder-symlink"></i> Pindah Kategori</button>
+
+                    <div>
+                        <div class="text-muted small mb-1">Server ID</div>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-info" onclick="bulkSetTopupButuhServerId(true)" title="Tandai produk terpilih butuh Server ID"><i class="bi bi-person-badge"></i> Butuh</button>
+                            <button class="btn btn-outline-secondary" onclick="bulkSetTopupButuhServerId(false)" title="Matikan Server ID buat produk terpilih"><i class="bi bi-person-x"></i> Gak Butuh</button>
+                        </div>
                     </div>
-                    <datalist id="topupKategoriDatalist"></datalist>
-                    <div class="input-group input-group-sm" style="width:auto;">
-                        <select id="topupBulkMarkupType" class="form-select" style="max-width:64px;">
-                            <option value="percent">%</option>
-                            <option value="nominal">Rp</option>
-                        </select>
-                        <input type="number" id="topupBulkMarkupValue" class="form-control" placeholder="cth 20" min="0" style="max-width:90px;">
-                        <select id="topupBulkMarkupRound" class="form-select" style="max-width:130px;">
-                            <option value="0">Gak dibulatkan</option>
-                            <option value="100">Bulat ke 100</option>
-                            <option value="500">Bulat ke 500</option>
-                            <option value="1000" selected>Bulat ke 1000</option>
-                        </select>
-                        <button class="btn btn-outline-warning" onclick="bulkMarkupTopupPrice()"><i class="bi bi-graph-up-arrow"></i> Terapkan Markup</button>
-                        <button class="btn btn-outline-success" onclick="bulkAutoMarkupTopupPrice()" title="Hitung harga jual otomatis berdasarkan besaran harga modal masing-masing produk, gak perlu isi persen manual"><i class="bi bi-robot"></i> Markup Otomatis</button>
-                        <button class="btn btn-outline-info" onclick="bulkSmartActivateTopup()" title="Aktifin cuma varian termurah per nominal diamond yang sama/mirip, sisanya dinonaktifin. Kalau udah ada histori order, nominal yang gak pernah laku ikut dinonaktifin."><i class="bi bi-magic"></i> Aktivasi Cerdas</button>
+
+                    <div>
+                        <div class="text-muted small mb-1">Icon</div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="document.getElementById('topupBulkIconInput').click()"><i class="bi bi-image"></i> Set Icon</button>
+                        <input type="file" id="topupBulkIconInput" accept="image/*" class="d-none">
                     </div>
-                    <button class="btn btn-outline-danger btn-sm" onclick="bulkDeleteTopupSelected()"><i class="bi bi-trash3"></i> Hapus Terpilih</button>
+
+                    <div>
+                        <div class="text-muted small mb-1">Kategori</div>
+                        <div class="input-group input-group-sm">
+                            <input type="text" id="topupBulkKategoriInput" class="form-control" placeholder="Kategori tujuan" style="max-width:150px;" list="topupKategoriDatalist">
+                            <button class="btn btn-outline-info" onclick="bulkMoveTopupKategori()"><i class="bi bi-folder-symlink"></i> Pindah</button>
+                        </div>
+                        <datalist id="topupKategoriDatalist"></datalist>
+                    </div>
+
+                    <div>
+                        <div class="text-muted small mb-1">Markup harga (manual)</div>
+                        <div class="input-group input-group-sm">
+                            <select id="topupBulkMarkupType" class="form-select" style="max-width:60px;">
+                                <option value="percent">%</option>
+                                <option value="nominal">Rp</option>
+                            </select>
+                            <input type="number" id="topupBulkMarkupValue" class="form-control" placeholder="cth 20" min="0" style="max-width:75px;">
+                            <select id="topupBulkMarkupRound" class="form-select" style="max-width:120px;">
+                                <option value="0">Gak dibulatkan</option>
+                                <option value="100">Bulat ke 100</option>
+                                <option value="500">Bulat ke 500</option>
+                                <option value="1000" selected>Bulat ke 1000</option>
+                            </select>
+                            <button class="btn btn-outline-warning" onclick="bulkMarkupTopupPrice()"><i class="bi bi-graph-up-arrow"></i> Terapkan</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-muted small mb-1">Otomatis</div>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-success" onclick="bulkAutoMarkupTopupPrice()" title="Hitung harga jual otomatis berdasarkan besaran harga modal masing-masing produk, gak perlu isi persen manual"><i class="bi bi-robot"></i> Markup Otomatis</button>
+                            <button class="btn btn-outline-info" onclick="bulkSmartActivateTopup()" title="Aktifin cuma varian termurah per nominal/tier yang sama/mirip, sisanya dinonaktifin. Kalau udah ada histori order, yang gak pernah laku ikut dinonaktifin."><i class="bi bi-magic"></i> Aktivasi Cerdas</button>
+                        </div>
+                    </div>
+
+                    <div class="ms-auto">
+                        <div class="text-muted small mb-1">&nbsp;</div>
+                        <button class="btn btn-outline-danger btn-sm" onclick="bulkDeleteTopupSelected()"><i class="bi bi-trash3"></i> Hapus Terpilih</button>
+                    </div>
                 </div>
             </div>
 
