@@ -85,7 +85,11 @@ function extractDiamondAmount(nama) {
 
 // Kelompokin angka-angka yang berdekatan (selisih relatif <= tolerance)
 // jadi satu cluster "sama/mirip". Dipakai per kategori.
-function clusterAmounts(amounts, tolerance = 0.08) {
+// Toleransi 4% -- dari hasil riset ke Codashop/UniPin, variasi nominal dari
+// supplier yang berbeda buat "nominal yang sama" biasanya cuma beda 1-3%
+// (mis. 513/514/516, atau 568/569/570). 8% ternyata kadang masih misahin
+// nominal yang secara bisnis harusnya dianggap 1 tier yang sama.
+function clusterAmounts(amounts, tolerance = 0.04) {
     const sorted = [...new Set(amounts)].sort((a, b) => a - b);
     const clusters = [];
     for (const amt of sorted) {
@@ -99,6 +103,37 @@ function clusterAmounts(amounts, tolerance = 0.08) {
     return clusters;
 }
 
+// Default batas nominal aktif per kategori KALAU admin gak isi manual.
+// Dari riset ke Codashop/UniPin: platform besar emang nyediain puluhan
+// nominal, TAPI itu baru masuk akal kalau ada data order buat milihnya.
+// Tanpa histori sama sekali, lebih aman mulai dari jumlah yang moderat
+// (bukan "semua nominal langsung aktif") biar daftar produk gak
+// kebanjiran varian yang belum tentu laku.
+const DEFAULT_MAX_AKTIF_PER_KATEGORI = 12;
+
+// Dipakai KHUSUS pas kategori itu belum ada histori order sukses sama
+// sekali, jadi gak ada cara buat tau nominal mana yang beneran diminati.
+// Alih-alih ambil N cluster pertama yang ketemu (urutan sembarang) atau
+// malah semuanya, kita ambil sebaran LOG dari yang termurah ke termahal --
+// makin padat di nominal kecil, makin jarang di nominal besar. Ini niru
+// pola asli yang kelihatan di katalog Codashop ID: nominal kecil (3-100an
+// Diamond) jauh lebih banyak variannya dibanding nominal besar (>2000
+// Diamond cuma ada beberapa opsi) -- karena nominal kecil emang yang paling
+// sering dipakai buat top up harian.
+function pilihSebaranLog(clustersAsc, cap) {
+    if (clustersAsc.length <= cap) return clustersAsc;
+    if (cap <= 1) return [clustersAsc[0]];
+    const lastIndex = clustersAsc.length - 1;
+    const picked = new Set();
+    for (let i = 0; i < cap; i++) {
+        // pangkat 1.6 -> indeks kepilih numpuk di awal (nominal kecil),
+        // meregang ke ujung (nominal gede) biar tetap ada opsi buat "sultan"
+        const t = Math.pow(i / (cap - 1), 1.6);
+        picked.add(Math.round(t * lastIndex));
+    }
+    return [...picked].sort((a, b) => a - b).map((idx) => clustersAsc[idx]);
+}
+
 exports.smartActivateProducts = async (req, res) => {
     if (req.user.role !== "admin") {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
@@ -107,7 +142,7 @@ exports.smartActivateProducts = async (req, res) => {
     if (!Array.isArray(ids) || ids.length === 0) {
         return res.status(400).json({ message: "ids wajib diisi (array)" });
     }
-    const cap = Number(maxAktifPerKategori) > 0 ? Number(maxAktifPerKategori) : null;
+    const cap = Number(maxAktifPerKategori) > 0 ? Number(maxAktifPerKategori) : DEFAULT_MAX_AKTIF_PER_KATEGORI;
 
     try {
         const { data: products, error: fetchErr } = await supabase
@@ -159,10 +194,14 @@ exports.smartActivateProducts = async (req, res) => {
             const kategoriPunyaHistori = scored.some((g) => g.totalSales > 0);
             if (kategoriPunyaHistori) {
                 filterPopularitasDipakai = true;
-                scored = scored.filter((g) => g.totalSales > 0);
-            }
-            if (cap) {
-                scored = scored.sort((a, b) => b.totalSales - a.totalSales).slice(0, cap);
+                scored = scored.filter((g) => g.totalSales > 0).sort((a, b) => b.totalSales - a.totalSales).slice(0, cap);
+            } else {
+                // belum ada data order sama sekali -> jangan asal ambil N pertama,
+                // sebar berdasarkan nominal (lihat catatan di pilihSebaranLog)
+                scored = pilihSebaranLog(
+                    [...scored].sort((a, b) => a.rep - b.rep),
+                    cap
+                );
             }
 
             const winnerIds = new Set(scored.map((g) => g.winner.id));
