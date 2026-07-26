@@ -105,7 +105,7 @@ exports.getMe = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from("users")
-            .select("id, fullname, email, role, created_at")
+            .select("id, fullname, email, role")
             .eq("id", req.user.id)
             .maybeSingle();
 

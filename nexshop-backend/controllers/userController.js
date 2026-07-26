@@ -105,10 +105,10 @@ exports.getUserDetail = async (req, res) => {
 
     try {
         const { data: user, error: userErr } = await supabase
-            .from("users")
-            .select("id, fullname, email, role, is_blacklisted, created_at")
-            .eq("id", id)
-            .maybeSingle();
+  .from("users")
+  .select("id, fullname, email, role, is_blacklisted")
+  .eq("id", id)
+  .maybeSingle();
 
         if (userErr) {
             console.log(userErr);
