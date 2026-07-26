@@ -83,6 +83,22 @@ function extractDiamondAmount(nama) {
     return Number.isFinite(n) && n > 0 ? n : null;
 }
 
+// Produk tipe "Pass" (mis. Weekly Diamond Pass / WDP, Twilight Pass) gak
+// punya jumlah diamond di namanya, jadi extractDiamondAmount bakal balikin
+// null buat ini. Padahal di lapangan ini yang PALING banyak varian
+// duplikatnya (macem-macem penamaan dari supplier beda: "Weekly Diamond
+// Pass", "1x Weekly Diamond Pass", "Weekly Diamond Pass 1x", "Weekly
+// Diamond Pass (Misi Topup +100)" -- semuanya tier yang SAMA cuma modal
+// beda). Return tier-nya (1 = sekali/default, 2 = "2x", dst), atau null
+// kalau namanya emang bukan produk pass sama sekali.
+function extractPassTier(nama) {
+    const s = String(nama || "");
+    if (!/diamond/i.test(s) || !/pass/i.test(s)) return null;
+    const m = s.match(/(\d+)\s*x\b/i); // tangkep "1x", "2x", "2X" dst
+    const tier = m ? parseInt(m[1], 10) : 1; // gak ada penanda "Nx" -> anggap tier 1 (default)
+    return Number.isFinite(tier) && tier > 0 ? tier : null;
+}
+
 // Kelompokin angka-angka yang berdekatan (selisih relatif <= tolerance)
 // jadi satu cluster "sama/mirip". Dipakai per kategori.
 // Toleransi 4% -- dari hasil riset ke Codashop/UniPin, variasi nominal dari
@@ -151,9 +167,15 @@ exports.smartActivateProducts = async (req, res) => {
             .in("id", ids);
         if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
 
-        const parsed = (products || []).map((p) => ({ ...p, diamond: extractDiamondAmount(p.nama) }));
-        const skipped = parsed.filter((p) => p.diamond === null);
-        const groupable = parsed.filter((p) => p.diamond !== null);
+        const parsed = (products || []).map((p) => {
+            const diamond = extractDiamondAmount(p.nama);
+            if (diamond !== null) return { ...p, groupType: "diamond", groupValue: diamond };
+            const passTier = extractPassTier(p.nama);
+            if (passTier !== null) return { ...p, groupType: "pass", groupValue: passTier };
+            return { ...p, groupType: null, groupValue: null };
+        });
+        const skipped = parsed.filter((p) => p.groupType === null);
+        const groupable = parsed.filter((p) => p.groupType !== null);
 
         // histori order sukses buat produk-produk ini, dipakai buat nentuin
         // kelompok mana yang "beneran laku" per kategori
@@ -179,11 +201,25 @@ exports.smartActivateProducts = async (req, res) => {
 
         for (const kategori of Object.keys(byKategori)) {
             const items = byKategori[kategori];
-            const clusters = clusterAmounts(items.map((p) => p.diamond));
-            const groupsOfCluster = clusters.map((c) => ({
+
+            // nominal diamond -> di-cluster pakai toleransi % (varian supplier
+            // beda-beda dikit dianggap 1 tier). Tier pass ("1x"/"2x" dst) ->
+            // exact match aja, gak perlu toleransi krn nilainya diskrit kecil.
+            const diamondItems = items.filter((p) => p.groupType === "diamond");
+            const passItems = items.filter((p) => p.groupType === "pass");
+
+            const diamondClusters = clusterAmounts(diamondItems.map((p) => p.groupValue)).map((c) => ({
                 ...c,
-                items: items.filter((p) => c.values.includes(p.diamond))
+                items: diamondItems.filter((p) => c.values.includes(p.groupValue))
             }));
+            const passTierValues = [...new Set(passItems.map((p) => p.groupValue))];
+            const passClusters = passTierValues.map((tier) => ({
+                rep: tier,
+                values: [tier],
+                items: passItems.filter((p) => p.groupValue === tier)
+            }));
+
+            const groupsOfCluster = [...diamondClusters, ...passClusters];
 
             let scored = groupsOfCluster.map((g) => {
                 const winner = [...g.items].sort((a, b) => Number(a.harga_beli) - Number(b.harga_beli))[0];
