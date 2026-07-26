@@ -33,20 +33,51 @@ function bulatkanKeAtas(nilai, round) {
 // gede persennya dikecilin biar harga jual tetap kompetitif/gak aneh.
 // Urutan HARUS dari `max` terkecil ke terbesar. Angka % & batasnya bebas
 // disesuaikan sama strategi margin toko.
+//
+// RISET HARGA KOMPETITOR (Samudrashop + reseller sejenis, per-diamond):
+//   nominal kecil (3-10 dm)     -> ± Rp300-350/diamond
+//   nominal menengah (50-300)   -> ± Rp260-280/diamond
+//   nominal gede (600-900+)     -> ± Rp260-265/diamond
+//   nominal SUPER gede (5000+)  -> ± Rp218-250/diamond
+// Insight-nya: harga per-diamond kompetitor cuma turun LANDAI (~30% dari
+// kecil ke gede), BUKAN jatuh drastis. Makanya tier % di bawah dibikin
+// lebih landai (lebih banyak step) drpd cuma 5 tier lompat jauh kayak
+// sebelumnya (20% -> 5% langsung).
+//
+// TAPI itu belum cukup -- skema % doang tetep bakal ngebubungin markup di
+// modal yang BENERAN gede (topup jutaan rupiah), krn 2.5% dari modal
+// Rp3.000.000 itu masih Rp75.000 sendiri, padahal gap harga riil di pasar
+// buat nominal segede itu gak segitu. Makanya ditambahin MARKUP_CAP_ABSOLUT
+// -- jafi markup jual = MANA YANG LEBIH KECIL antara (persen tier x modal)
+// vs (modal + batas rupiah tetap). Ini niru pola nyata reseller besar:
+// margin absolut mereka gak nambah linear sama gedenya modal.
+//
+// CATATAN: angka-angka di bawah based on harga JUAL kompetitor (belum
+// tentu sama persis modal TokoVoucher kamu) -- anggap starting point,
+// sesuaikan lagi kalau ternyata masih kemahalan/kemurahan dibanding modal
+// riil kamu.
 // ===========================================================
 const MARKUP_TIERS = [
     { max: 5000, percent: 20 },
     { max: 15000, percent: 15 },
     { max: 50000, percent: 10 },
     { max: 150000, percent: 7 },
-    { max: Infinity, percent: 5 }
+    { max: 500000, percent: 5 },
+    { max: 1500000, percent: 3.5 },
+    { max: Infinity, percent: 2.5 }
 ];
+// Batas atas ABSOLUT (rupiah) buat markup, KHUSUS dipakai kalau hasil
+// persen-nya lebih gede dari ini -- supaya modal yang beneran gede (topup
+// jutaan) gak ditambahin untung yang ngebubung ikut-ikutan gede. null =
+// gak ada batas (skema % doang, perilaku lama).
+const MARKUP_CAP_ABSOLUT = 75000;
 const AUTO_MARKUP_ROUND = 0; // 0 = harga jual gak dibulatkan ke kelipatan apa pun, cuma dibulatkan ke rupiah terdekat
 
 function hitungMarkupWajar(hargaBeli) {
     const modal = Number(hargaBeli) || 0;
     const tier = MARKUP_TIERS.find((t) => modal <= t.max) || MARKUP_TIERS[MARKUP_TIERS.length - 1];
-    const jual = modal * (1 + tier.percent / 100);
+    const jualPersen = modal * (1 + tier.percent / 100);
+    const jual = MARKUP_CAP_ABSOLUT !== null ? Math.min(jualPersen, modal + MARKUP_CAP_ABSOLUT) : jualPersen;
     return bulatkanKeAtas(jual, AUTO_MARKUP_ROUND);
 }
 
