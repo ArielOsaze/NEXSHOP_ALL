@@ -83,20 +83,56 @@ function extractDiamondAmount(nama) {
     return Number.isFinite(n) && n > 0 ? n : null;
 }
 
-// Produk tipe "Pass" (mis. Weekly Diamond Pass / WDP, Twilight Pass) gak
-// punya jumlah diamond di namanya, jadi extractDiamondAmount bakal balikin
-// null buat ini. Padahal di lapangan ini yang PALING banyak varian
-// duplikatnya (macem-macem penamaan dari supplier beda: "Weekly Diamond
-// Pass", "1x Weekly Diamond Pass", "Weekly Diamond Pass 1x", "Weekly
-// Diamond Pass (Misi Topup +100)" -- semuanya tier yang SAMA cuma modal
-// beda). Return tier-nya (1 = sekali/default, 2 = "2x", dst), atau null
-// kalau namanya emang bukan produk pass sama sekali.
-function extractPassTier(nama) {
-    const s = String(nama || "");
-    if (!/diamond/i.test(s) || !/pass/i.test(s)) return null;
-    const m = s.match(/(\d+)\s*x\b/i); // tangkep "1x", "2x", "2X" dst
-    const tier = m ? parseInt(m[1], 10) : 1; // gak ada penanda "Nx" -> anggap tier 1 (default)
-    return Number.isFinite(tier) && tier > 0 ? tier : null;
+// -----------------------------------------------------------
+// Produk "spesial" (bukan diamond angka) yang PALING SERING bikin duplikat
+// kacau kalau deteksinya cuma 1 regex ketat yang nyaratin BEBERAPA kata
+// muncul BARENGAN di nama. Di lapangan, penamaan dari tiap supplier beda-
+// beda dan sering kepotong salah satu katanya -- misalnya "2X Weekly
+// Diamond" (TANPA kata "Pass" sama sekali) tetep produk WDP tier 2, cuma
+// nama dari supplier itu emang gak nyebut "Pass". Kalau syaratnya "harus
+// ada kata diamond DAN pass", produk kayak gini gagal kebaca -> ke-skip
+// -> status aktifnya dibiarin apa adanya SELAMANYA -> nongol nyampur di
+// listing padahal harusnya di-dedupe.
+//
+// Makanya di sini dipakai KAMUS keyword per tipe (mirip cara reseller
+// besar spt Codashop/UniPin nge-fix-in nama tier per game, bukan nebak
+// dari teks bebas), dicek satu-satu. Setiap tipe dicek TERPISAH dari tipe
+// lain di kategori yang sama (lihat pemakaiannya di smartActivateProducts)
+// supaya WDP gak pernah nyampur ke cluster nominal diamond, dan Elite
+// Pass/Membership gak pernah ikut ke cluster WDP.
+//
+// PENTING: urutan array WAJIB dari paling spesifik -- dicek satu-satu,
+// berhenti di match pertama. Kalau nanti ketemu nama produk spesial baru
+// yang belum kebaca (keliatan dari jumlah "skipped" di response), tinggal
+// tambahin 1 baris kamus baru di sini -- gak perlu ubah logic lain.
+const SPECIAL_TYPE_KEYWORDS = [
+    { type: "weekly_pass", test: /\bwdp\b/i },
+    { type: "weekly_pass", test: /weekly[^a-z]*diamond|diamond[^a-z]*weekly/i },
+    { type: "twilight_pass", test: /twilight/i },
+    { type: "starlight_membership", test: /starlight/i },
+    { type: "growth_fund", test: /growth\s*fund/i },
+    { type: "elite_pass", test: /\belite\b/i },
+    { type: "membership", test: /membership|\bmember\b/i }
+];
+
+// Ambil tier "Nx" dari nama produk spesial (1 = default kalau gak ada
+// penanda "Nx"). Beda sama versi lama: TIDAK mensyaratkan kata "pass" ada
+// di nama, jadi "2X Weekly Diamond" tetep kebaca tier 2.
+function extractSpecialTier(nama) {
+    const m = String(nama || "").match(/(\d+)\s*x\b/i);
+    const tier = m ? parseInt(m[1], 10) : 1;
+    return Number.isFinite(tier) && tier > 0 ? tier : 1;
+}
+
+// Klasifikasi utama satu produk: coba diamond (angka) dulu, lalu coba
+// kamus tipe spesial, baru kalau beneran gak ketemu apa-apa -> null
+// (produk baru yang kamusnya belum ada -- perlu ditambahin manual).
+function classifyProduct(nama) {
+    const diamond = extractDiamondAmount(nama);
+    if (diamond !== null) return { groupType: "diamond", groupValue: diamond };
+    const special = SPECIAL_TYPE_KEYWORDS.find((k) => k.test.test(String(nama || "")));
+    if (special) return { groupType: special.type, groupValue: extractSpecialTier(nama) };
+    return { groupType: null, groupValue: null };
 }
 
 // Kelompokin angka-angka yang berdekatan (selisih relatif <= tolerance)
@@ -167,13 +203,7 @@ exports.smartActivateProducts = async (req, res) => {
             .in("id", ids);
         if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
 
-        const parsed = (products || []).map((p) => {
-            const diamond = extractDiamondAmount(p.nama);
-            if (diamond !== null) return { ...p, groupType: "diamond", groupValue: diamond };
-            const passTier = extractPassTier(p.nama);
-            if (passTier !== null) return { ...p, groupType: "pass", groupValue: passTier };
-            return { ...p, groupType: null, groupValue: null };
-        });
+        const parsed = (products || []).map((p) => ({ ...p, ...classifyProduct(p.nama) }));
         const skipped = parsed.filter((p) => p.groupType === null);
         const groupable = parsed.filter((p) => p.groupType !== null);
 
@@ -202,24 +232,37 @@ exports.smartActivateProducts = async (req, res) => {
         for (const kategori of Object.keys(byKategori)) {
             const items = byKategori[kategori];
 
-            // nominal diamond -> di-cluster pakai toleransi % (varian supplier
-            // beda-beda dikit dianggap 1 tier). Tier pass ("1x"/"2x" dst) ->
-            // exact match aja, gak perlu toleransi krn nilainya diskrit kecil.
-            const diamondItems = items.filter((p) => p.groupType === "diamond");
-            const passItems = items.filter((p) => p.groupType === "pass");
+            // Pisah dulu per TYPE (diamond, weekly_pass, twilight_pass,
+            // elite_pass, membership, dst) SEBELUM di-cluster. Ini krusial --
+            // kalau langsung di-cluster bareng tanpa pisah type dulu, produk
+            // beda jenis yang kebetulan nilai "tier"-nya sama (mis. diamond
+            // amount 1 vs WDP tier 1) bisa nyampur jadi 1 grup. Nominal
+            // diamond -> di-cluster pakai toleransi % (varian supplier beda-
+            // beda dikit dianggap 1 tier). Tipe spesial (WDP/Twilight/dst) ->
+            // exact match tier, gak perlu toleransi krn nilainya diskrit kecil.
+            const byType = {};
+            items.forEach((p) => {
+                if (!byType[p.groupType]) byType[p.groupType] = [];
+                byType[p.groupType].push(p);
+            });
 
-            const diamondClusters = clusterAmounts(diamondItems.map((p) => p.groupValue)).map((c) => ({
-                ...c,
-                items: diamondItems.filter((p) => c.values.includes(p.groupValue))
-            }));
-            const passTierValues = [...new Set(passItems.map((p) => p.groupValue))];
-            const passClusters = passTierValues.map((tier) => ({
-                rep: tier,
-                values: [tier],
-                items: passItems.filter((p) => p.groupValue === tier)
-            }));
-
-            const groupsOfCluster = [...diamondClusters, ...passClusters];
+            const groupsOfCluster = [];
+            Object.entries(byType).forEach(([type, typeItems]) => {
+                if (type === "diamond") {
+                    clusterAmounts(typeItems.map((p) => p.groupValue)).forEach((c) => {
+                        groupsOfCluster.push({ ...c, type, items: typeItems.filter((p) => c.values.includes(p.groupValue)) });
+                    });
+                } else {
+                    [...new Set(typeItems.map((p) => p.groupValue))].forEach((tier) => {
+                        groupsOfCluster.push({
+                            rep: tier,
+                            values: [tier],
+                            type,
+                            items: typeItems.filter((p) => p.groupValue === tier)
+                        });
+                    });
+                }
+            });
 
             let scored = groupsOfCluster.map((g) => {
                 const winner = [...g.items].sort((a, b) => Number(a.harga_beli) - Number(b.harga_beli))[0];
