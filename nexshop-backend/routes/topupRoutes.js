@@ -20,8 +20,10 @@ router.get("/track/:id", topupController.getPublicDetail); // publik — buat ta
 router.get("/admin/products", authMiddleware, topupController.getAllProductsAdmin);
 router.get("/admin/sync", authMiddleware, topupController.syncProducts);
 router.put("/admin/products/bulk-status", authMiddleware, topupController.bulkUpdateStatus); // aktif/nonaktif massal
+router.put("/admin/products/bulk-server-id", authMiddleware, topupController.bulkUpdateButuhServerId); // toggle "butuh server id" massal
 router.put("/admin/products/bulk-icon", authMiddleware, topupController.bulkUpdateIcon); // set icon massal (produk terpilih)
 router.put("/admin/products/bulk-markup", authMiddleware, topupController.bulkMarkupPrice); // hitung ulang harga jual dari harga modal (markup %/nominal)
+router.put("/admin/products/auto-markup", authMiddleware, topupController.autoMarkupPrice); // markup otomatis "wajar" (persen dari tabel MARKUP_TIERS, gak perlu input manual)
 router.put("/admin/products/bulk-kategori", authMiddleware, topupController.bulkUpdateKategori); // pindah kategori massal (produk terpilih)
 router.put("/admin/products/kategori-status", authMiddleware, topupController.setKategoriActive); // toggle satu kategori/game sekaligus
 router.put("/admin/products/:id", authMiddleware, topupController.updateProduct);

@@ -14,6 +14,43 @@ function rupiahLog(n) {
 }
 
 // ===========================================================
+// Bulatkan ke ATAS ke kelipatan `round` terdekat. Pakai epsilon kecil
+// sebelum Math.ceil supaya noise floating-point JS (mis. 5000*1.2 yang
+// harusnya persis 6000 tapi kekomputasi 6000.000000000001) gak bikin
+// harga kebulet naik satu kelipatan penuh secara gak sengaja.
+// ===========================================================
+function bulatkanKeAtas(nilai, round) {
+    if (!round || round <= 0) return Math.round(nilai);
+    const EPS = 1e-6;
+    return Math.ceil(nilai / round - EPS) * round;
+}
+
+// ===========================================================
+// Tabel markup "wajar" berdasarkan besaran harga modal — dipakai buat
+// auto-markup (tombol "Markup Otomatis" di dashboard, dan default harga
+// produk BARU pas sync). Logikanya: modal kecil (misal diamond receh)
+// untungnya tipis kalau persennya kecil, jadi persennya digedein; modal
+// gede persennya dikecilin biar harga jual tetap kompetitif/gak aneh.
+// Urutan HARUS dari `max` terkecil ke terbesar. Angka % & batasnya bebas
+// disesuaikan sama strategi margin toko.
+// ===========================================================
+const MARKUP_TIERS = [
+    { max: 5000, percent: 20 },
+    { max: 15000, percent: 15 },
+    { max: 50000, percent: 10 },
+    { max: 150000, percent: 7 },
+    { max: Infinity, percent: 5 }
+];
+const AUTO_MARKUP_ROUND = 0; // 0 = harga jual gak dibulatkan ke kelipatan apa pun, cuma dibulatkan ke rupiah terdekat
+
+function hitungMarkupWajar(hargaBeli) {
+    const modal = Number(hargaBeli) || 0;
+    const tier = MARKUP_TIERS.find((t) => modal <= t.max) || MARKUP_TIERS[MARKUP_TIERS.length - 1];
+    const jual = modal * (1 + tier.percent / 100);
+    return bulatkanKeAtas(jual, AUTO_MARKUP_ROUND);
+}
+
+// ===========================================================
 // PUBLIK — daftar produk topup yang aktif, buat halaman toko
 // ===========================================================
 // ===========================================================
@@ -70,8 +107,10 @@ exports.getProducts = async (req, res) => {
 // ===========================================================
 // ADMIN — sync katalog dari TokoVoucher berdasarkan kode/prefix
 // (mis. "ML" buat semua produk Mobile Legends). Produk baru masuk
-// dalam keadaan is_active = false, admin yang aktifkan manual
-// dan atur harga jualnya di dashboard.
+// dalam keadaan is_active = false dan harga_jual udah dihitungin
+// otomatis pakai MARKUP_TIERS (lihat hitungMarkupWajar di atas), admin
+// tinggal cek/aktifkan di dashboard — bisa juga disesuaikan lagi lewat
+// tombol "Markup Otomatis" atau "Terapkan Markup" manual kalau perlu.
 // ===========================================================
 exports.syncProducts = async (req, res) => {
     if (req.user.role !== "admin") {
@@ -115,7 +154,7 @@ exports.syncProducts = async (req, res) => {
             const prev = existingMap.get(r.kode_produk);
             return {
                 ...r,
-                harga_jual: prev ? prev.harga_jual : r.harga_beli, // default = harga modal, admin naikkan nanti
+                harga_jual: prev ? prev.harga_jual : hitungMarkupWajar(r.harga_beli), // produk baru -> langsung dikasih markup wajar, admin tinggal sesuaikan kalau perlu
                 is_active: prev ? prev.is_active : false,
                 // produk yg udah ada: pertahankan kategori yang udah diatur admin
                 // (misal habis dipindah manual), sync ulang gak nimpa balik
@@ -268,6 +307,34 @@ exports.bulkUpdateStatus = async (req, res) => {
     }
 };
 
+// ADMIN — set/lepas toggle "butuh server id" buat banyak produk sekaligus
+// (checkbox massal di dashboard), misalnya abis sync produk Mobile Legends
+// baru yang semuanya perlu Zone ID, gak perlu buka edit satu-satu.
+exports.bulkUpdateButuhServerId = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const { ids, butuh_server_id } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "ids wajib diisi (array)" });
+    }
+    try {
+        const { error } = await supabase
+            .from("topup_products")
+            .update({ butuh_server_id: !!butuh_server_id, updated_at: new Date().toISOString() })
+            .in("id", ids);
+
+        if (error) return res.status(500).json({ message: "Gagal update produk" });
+        notify(
+            "product",
+            `${butuh_server_id ? "🆔" : "🚫"} ${req.user.email} ${butuh_server_id ? "mengaktifkan" : "mematikan"} "Butuh Server ID" utk ${ids.length} produk topup sekaligus`
+        );
+        res.json({ message: `${ids.length} produk berhasil ${butuh_server_id ? "ditandai butuh" : "ditandai gak butuh"} Server ID` });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 // ADMIN — hitung ulang harga_jual OTOMATIS dari harga_beli (modal) buat
 // banyak produk sekaligus, pakai markup persen atau nominal rupiah + opsi
 // pembulatan. Ini yang bikin admin gak perlu buka modal edit satu-satu tiap
@@ -298,9 +365,8 @@ exports.bulkMarkupPrice = async (req, res) => {
 
         const rows = (products || []).map((p) => {
             const modal = Number(p.harga_beli) || 0;
-            let jual = type === "percent" ? modal * (1 + markupValue / 100) : modal + markupValue;
-            if (round > 0) jual = Math.ceil(jual / round) * round;
-            return { id: p.id, harga_jual: Math.round(jual) };
+            const jual = type === "percent" ? modal * (1 + markupValue / 100) : modal + markupValue;
+            return { id: p.id, harga_jual: bulatkanKeAtas(jual, round) };
         });
 
         // update satu-satu per baris (paralel) — LEBIH AMAN daripada upsert partial-column,
@@ -318,6 +384,51 @@ exports.bulkMarkupPrice = async (req, res) => {
 
         notify("product", `💰 ${req.user.email} menerapkan markup ${type === "percent" ? `${markupValue}%` : `Rp${markupValue}`} ke ${rows.length} produk topup`);
         res.json({ message: `Harga jual ${rows.length} produk berhasil dihitung ulang dari harga modal` });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ADMIN — sama kayak bulkMarkupPrice, tapi persennya GAK diinput manual:
+// dihitung sendiri dari MARKUP_TIERS berdasarkan besaran harga modal
+// masing-masing produk (jadi produk terpilih bisa punya harga_beli
+// beda-beda dan tetap dapet markup yang "wajar" buat rentangnya masing-
+// masing). Cocok dipakai abis sync produk baru (misal semua item diamond
+// satu game) biar harganya langsung disesuaikan tanpa itung manual.
+exports.autoMarkupPrice = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: "ids wajib diisi (array)" });
+    }
+
+    try {
+        const { data: products, error: fetchErr } = await supabase
+            .from("topup_products")
+            .select("id, harga_beli")
+            .in("id", ids);
+        if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
+
+        const rows = (products || []).map((p) => ({
+            id: p.id,
+            harga_jual: hitungMarkupWajar(p.harga_beli)
+        }));
+
+        const results = await Promise.all(
+            rows.map((r) =>
+                supabase
+                    .from("topup_products")
+                    .update({ harga_jual: r.harga_jual, updated_at: new Date().toISOString() })
+                    .eq("id", r.id)
+            )
+        );
+        const failed = results.find((r) => r.error);
+        if (failed) return res.status(500).json({ message: "Gagal update harga jual" });
+
+        notify("product", `🤖 ${req.user.email} menerapkan markup otomatis (wajar) ke ${rows.length} produk topup`);
+        res.json({ message: `Harga jual ${rows.length} produk berhasil dihitung otomatis dari harga modal` });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }

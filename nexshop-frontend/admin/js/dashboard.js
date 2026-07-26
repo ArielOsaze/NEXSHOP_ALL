@@ -1413,6 +1413,30 @@ async function bulkSetTopupStatus(isActive) {
     }
 }
 
+// Toggle "butuh server id" massal buat produk terpilih (mis. abis sync
+// produk Mobile Legends baru yang semuanya perlu Zone ID)
+async function bulkSetTopupButuhServerId(butuhServerId) {
+    if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
+    if (!confirm(`${butuhServerId ? "Aktifkan" : "Matikan"} "Butuh Server ID" utk ${topupSelectedIds.size} produk terpilih?`)) return;
+
+    try {
+        const res = await apiFetch("/topup/admin/products/bulk-server-id", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: [...topupSelectedIds], butuh_server_id: butuhServerId })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal update produk");
+
+        showToast(data.message || "Produk berhasil diperbarui");
+        topupSelectedIds.clear();
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
 async function bulkMoveTopupKategori() {
     if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
     const input = document.getElementById("topupBulkKategoriInput");
@@ -1464,6 +1488,32 @@ async function bulkMarkupTopupPrice() {
         showToast(data.message || "Harga jual berhasil diperbarui");
         topupSelectedIds.clear();
         valueInput.value = "";
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
+// Sama kayak bulkMarkupTopupPrice, tapi gak perlu isi tipe/nilai/pembulatan —
+// backend yang hitung sendiri persen wajarnya berdasarkan besaran harga
+// modal tiap produk (lihat MARKUP_TIERS di topupController.js)
+async function bulkAutoMarkupTopupPrice() {
+    if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
+
+    if (!confirm(`Hitung otomatis harga jual ${topupSelectedIds.size} produk terpilih berdasarkan harga modal masing-masing?`)) return;
+
+    try {
+        const res = await apiFetch("/topup/admin/products/auto-markup", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ids: [...topupSelectedIds] })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menerapkan markup otomatis");
+
+        showToast(data.message || "Harga jual berhasil dihitung otomatis");
+        topupSelectedIds.clear();
         loadTopupProducts();
     } catch (err) {
         if (err.message === "unauthorized") return;
