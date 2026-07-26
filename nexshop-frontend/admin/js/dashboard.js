@@ -1209,14 +1209,29 @@ async function redoTopupAction() {
     }
 }
 
-// State buat filter kategori & seleksi checkbox produk topup
+// State buat filter kategori & pencarian nama & seleksi checkbox produk topup
 let topupKategoriFilter = "";
+let topupSearchQuery = "";
 let topupSelectedIds = new Set();
 
 function getFilteredTopupProducts() {
-    return topupKategoriFilter
+    let list = topupKategoriFilter
         ? topupProducts.filter(p => (p.kategori || "Lainnya") === topupKategoriFilter)
         : topupProducts;
+    if (topupSearchQuery) {
+        const q = topupSearchQuery.toLowerCase();
+        list = list.filter(p => String(p.nama || "").toLowerCase().includes(q));
+    }
+    return list;
+}
+
+// Bungkus bagian nama produk yang cocok sama kata pencarian pake <mark>,
+// biar admin gampang lihat kenapa produk itu nongol pas ngetik "weekly".
+function highlightSearchMatch(nama) {
+    const safe = escapeHtml(nama || "");
+    if (!topupSearchQuery) return safe;
+    const q = topupSearchQuery.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // escape regex meta char dari input user
+    return safe.replace(new RegExp(`(${q})`, "ig"), "<mark>$1</mark>");
 }
 
 // Kelompokkan per kategori, produk AKTIF ditaruh paling atas di tiap kategori
@@ -1333,6 +1348,11 @@ document.getElementById("topupKategoriFilter").addEventListener("change", (e) =>
     renderTopupProducts();
 });
 
+document.getElementById("topupSearchInput").addEventListener("input", (e) => {
+    topupSearchQuery = e.target.value.trim();
+    renderTopupProducts();
+});
+
 function renderTopupProducts() {
     const tbody = document.getElementById("topupProducts");
     const list = getFilteredTopupProducts();
@@ -1342,7 +1362,12 @@ function renderTopupProducts() {
     topupSelectedIds.forEach(id => { if (!visibleIds.has(id)) topupSelectedIds.delete(id); });
 
     if (!list.length) {
-        tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-4">${topupProducts.length ? "Gak ada produk di kategori ini." : "Belum ada produk. Sync dulu dari TokoVoucher di atas."}</td></tr>`;
+        const emptyMsg = !topupProducts.length
+            ? "Belum ada produk. Sync dulu dari TokoVoucher di atas."
+            : topupSearchQuery
+                ? `Gak ada produk dengan nama mengandung "${escapeHtml(topupSearchQuery)}".`
+                : "Gak ada produk di kategori ini.";
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-4">${emptyMsg}</td></tr>`;
         updateTopupSelectedCount();
         return;
     }
@@ -1366,7 +1391,7 @@ function renderTopupProducts() {
             <td><input type="checkbox" class="form-check-input topup-row-check" data-id="${Number(p.id)}" ${topupSelectedIds.has(p.id) ? "checked" : ""}></td>
             <td>${p.item_icon ? `<img src="${p.item_icon}" alt="" style="width:32px;height:32px;object-fit:contain;">` : `<span class="text-muted">◆</span>`}</td>
             <td><code>${escapeHtml(p.kode_produk)}</code></td>
-            <td>${escapeHtml(p.nama)}</td>
+            <td>${highlightSearchMatch(p.nama)}</td>
             <td>${escapeHtml(p.kategori || "-")}</td>
             <td>Rp ${modal.toLocaleString("id-ID")}</td>
             <td>Rp ${jual.toLocaleString("id-ID")}</td>
