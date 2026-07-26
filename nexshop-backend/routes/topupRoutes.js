@@ -28,6 +28,9 @@ router.put("/admin/products/bulk-kategori", authMiddleware, topupController.bulk
 router.put("/admin/products/kategori-status", authMiddleware, topupController.setKategoriActive); // toggle satu kategori/game sekaligus
 router.put("/admin/products/:id", authMiddleware, topupController.updateProduct);
 router.delete("/admin/products/bulk", authMiddleware, topupController.bulkDeleteProducts); // hapus produk terpilih (checkbox)
+router.post("/admin/products/undo", authMiddleware, topupController.undoLastAction); // undo aksi bulk paling baru
+router.post("/admin/products/redo", authMiddleware, topupController.redoLastAction); // redo aksi yang paling terakhir di-undo
+router.get("/admin/products/history-status", authMiddleware, topupController.getActionHistoryStatus); // status tombol undo/redo
 router.delete("/admin/products/:id", authMiddleware, topupController.deleteProduct);
 router.delete("/admin/products", authMiddleware, topupController.deleteAllProducts); // hapus semua (opsional ?kategori=...)
 router.put("/admin/category-logo", authMiddleware, topupController.updateCategoryLogo); // set logo game utk 1 kategori sekaligus

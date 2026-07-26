@@ -1152,9 +1152,60 @@ async function loadTopupProducts() {
         renderTopupKategoriControls();
         renderKategoriToggleList();
         renderTopupProducts();
+        refreshTopupUndoRedoButtons();
     } catch (err) {
         if (err.message === "unauthorized") return;
         tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">${escapeHtml(err.message)}</td></tr>`;
+    }
+}
+
+// Cek ke backend aksi apa yang bisa di-undo/redo saat ini, terus
+// enable/disable + kasih tooltip di tombol Undo/Redo sesuai itu.
+async function refreshTopupUndoRedoButtons() {
+    const undoBtn = document.getElementById("topupUndoBtn");
+    const redoBtn = document.getElementById("topupRedoBtn");
+    if (!undoBtn || !redoBtn) return;
+
+    try {
+        const res = await apiFetch("/topup/admin/products/history-status");
+        if (!res.ok) return;
+        const data = await res.json();
+
+        undoBtn.disabled = !data.canUndo;
+        undoBtn.title = data.canUndo ? `Undo: ${data.undoLabel}` : "Gak ada aksi buat di-undo";
+
+        redoBtn.disabled = !data.canRedo;
+        redoBtn.title = data.canRedo ? `Redo: ${data.redoLabel}` : "Gak ada aksi buat di-redo";
+    } catch (err) {
+        // gak fatal, biarin tombol apa adanya kalau gagal cek status
+    }
+}
+
+async function undoTopupAction() {
+    try {
+        const res = await apiFetch("/topup/admin/products/undo", { method: "POST" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal undo");
+
+        showToast(data.message || "Berhasil di-undo");
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
+async function redoTopupAction() {
+    try {
+        const res = await apiFetch("/topup/admin/products/redo", { method: "POST" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal redo");
+
+        showToast(data.message || "Berhasil di-redo");
+        loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
     }
 }
 
@@ -1523,7 +1574,7 @@ async function bulkAutoMarkupTopupPrice() {
 
 async function bulkDeleteTopupSelected() {
     if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
-    if (!confirm(`Yakin hapus ${topupSelectedIds.size} produk terpilih? Tindakan ini tidak bisa dibatalkan.`)) return;
+    if (!confirm(`Yakin hapus ${topupSelectedIds.size} produk terpilih? (bisa di-undo lewat tombol Undo kalau salah pencet)`)) return;
 
     try {
         const res = await apiFetch("/topup/admin/products/bulk", {

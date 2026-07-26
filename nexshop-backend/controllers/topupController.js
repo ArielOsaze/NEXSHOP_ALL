@@ -51,6 +51,86 @@ function hitungMarkupWajar(hargaBeli) {
 }
 
 // ===========================================================
+// UNDO/REDO — riwayat aksi bulk di produk topup (tabel
+// product_action_history, lihat migrations-07-product-action-history.sql).
+// Model stack standar: entri 'active' = riwayat masa lalu, entri 'undone' =
+// riwayat yang udah di-undo (jadi "masa depan" buat redo). Undo ambil entri
+// active PALING BARU; redo ambil entri undone PALING LAMA (yaitu yang
+// posisinya paling deket sama batas active/undone).
+// ===========================================================
+const HISTORY_LIMIT = 50; // biar tabel riwayat gak numpuk tanpa batas
+
+async function logAction({ action, label, ids, beforeRows, afterRows, adminEmail }) {
+    // Aksi baru (bukan hasil undo/redo) -> buang dulu entri 'undone' yang
+    // masih nyantol -- itu representasi cabang "masa depan" yang jadi gak
+    // valid lagi begitu ada aksi baru (sama kayak Ctrl+Z lalu ngetik hal baru).
+    await supabase.from("product_action_history").delete().eq("status", "undone");
+
+    await supabase.from("product_action_history").insert({
+        action,
+        label,
+        product_ids: ids,
+        before_rows: beforeRows,
+        after_rows: afterRows,
+        status: "active",
+        admin_email: adminEmail || null
+    });
+
+    const { data: rows } = await supabase
+        .from("product_action_history")
+        .select("id")
+        .order("created_at", { ascending: false });
+    if (rows && rows.length > HISTORY_LIMIT) {
+        const staleIds = rows.slice(HISTORY_LIMIT).map((r) => r.id);
+        await supabase.from("product_action_history").delete().in("id", staleIds);
+    }
+}
+
+// Terapkan snapshot { id, ...kolom } ke masing-masing baris produk —
+// dipakai bareng buat undo (before_rows) maupun redo (after_rows) semua
+// aksi SELAIN 'delete' (yang butuh insert/delete penuh, ditangani terpisah
+// di undoLastAction/redoLastAction).
+async function applyRowSnapshot(rows) {
+    const results = await Promise.all(
+        (rows || []).map((r) => {
+            const { id, ...cols } = r;
+            return supabase
+                .from("topup_products")
+                .update({ ...cols, updated_at: new Date().toISOString() })
+                .eq("id", id);
+        })
+    );
+    const failed = results.find((r) => r.error);
+    if (failed) throw new Error("Gagal menerapkan perubahan ke produk");
+}
+
+// Helper generik buat bulk-update yang cuma ganti SATU kolom ke nilai yang
+// SAMA buat semua produk terpilih (status aktif, butuh_server_id, kategori,
+// item_icon) — otomatis nyimpen snapshot before/after ke riwayat undo/redo.
+async function bulkUpdateSimpleField({ ids, column, newValue, action, label, adminEmail }) {
+    const { data: before, error: fetchErr } = await supabase
+        .from("topup_products")
+        .select(`id, ${column}`)
+        .in("id", ids);
+    if (fetchErr) throw new Error("Gagal mengambil data produk");
+
+    const { error: updateErr } = await supabase
+        .from("topup_products")
+        .update({ [column]: newValue, updated_at: new Date().toISOString() })
+        .in("id", ids);
+    if (updateErr) throw new Error("Gagal update produk");
+
+    await logAction({
+        action,
+        label,
+        ids,
+        beforeRows: (before || []).map((p) => ({ id: p.id, [column]: p[column] })),
+        afterRows: (before || []).map((p) => ({ id: p.id, [column]: newValue })),
+        adminEmail
+    });
+}
+
+// ===========================================================
 // PUBLIK — daftar produk topup yang aktif, buat halaman toko
 // ===========================================================
 // ===========================================================
@@ -294,16 +374,18 @@ exports.bulkUpdateStatus = async (req, res) => {
         return res.status(400).json({ message: "ids wajib diisi (array)" });
     }
     try {
-        const { error } = await supabase
-            .from("topup_products")
-            .update({ is_active: !!is_active, updated_at: new Date().toISOString() })
-            .in("id", ids);
-
-        if (error) return res.status(500).json({ message: "Gagal update status produk" });
+        await bulkUpdateSimpleField({
+            ids,
+            column: "is_active",
+            newValue: !!is_active,
+            action: "status",
+            label: `${is_active ? "Aktifkan" : "Nonaktifkan"} ${ids.length} produk`,
+            adminEmail: req.user.email
+        });
         notify("product", `${is_active ? "✅" : "🚫"} ${req.user.email} ${is_active ? "mengaktifkan" : "menonaktifkan"} ${ids.length} produk topup sekaligus`);
         res.json({ message: `${ids.length} produk berhasil ${is_active ? "diaktifkan" : "dinonaktifkan"}` });
     } catch (err) {
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({ message: err.message || "Server Error" });
     }
 };
 
@@ -319,19 +401,21 @@ exports.bulkUpdateButuhServerId = async (req, res) => {
         return res.status(400).json({ message: "ids wajib diisi (array)" });
     }
     try {
-        const { error } = await supabase
-            .from("topup_products")
-            .update({ butuh_server_id: !!butuh_server_id, updated_at: new Date().toISOString() })
-            .in("id", ids);
-
-        if (error) return res.status(500).json({ message: "Gagal update produk" });
+        await bulkUpdateSimpleField({
+            ids,
+            column: "butuh_server_id",
+            newValue: !!butuh_server_id,
+            action: "server_id",
+            label: `${butuh_server_id ? "Aktifkan" : "Matikan"} Butuh Server ID utk ${ids.length} produk`,
+            adminEmail: req.user.email
+        });
         notify(
             "product",
             `${butuh_server_id ? "🆔" : "🚫"} ${req.user.email} ${butuh_server_id ? "mengaktifkan" : "mematikan"} "Butuh Server ID" utk ${ids.length} produk topup sekaligus`
         );
         res.json({ message: `${ids.length} produk berhasil ${butuh_server_id ? "ditandai butuh" : "ditandai gak butuh"} Server ID` });
     } catch (err) {
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({ message: err.message || "Server Error" });
     }
 };
 
@@ -359,7 +443,7 @@ exports.bulkMarkupPrice = async (req, res) => {
     try {
         const { data: products, error: fetchErr } = await supabase
             .from("topup_products")
-            .select("id, harga_beli")
+            .select("id, harga_beli, harga_jual")
             .in("id", ids);
         if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
 
@@ -382,7 +466,17 @@ exports.bulkMarkupPrice = async (req, res) => {
         const failed = results.find((r) => r.error);
         if (failed) return res.status(500).json({ message: "Gagal update harga jual" });
 
-        notify("product", `💰 ${req.user.email} menerapkan markup ${type === "percent" ? `${markupValue}%` : `Rp${markupValue}`} ke ${rows.length} produk topup`);
+        const markupLabel = type === "percent" ? `${markupValue}%` : `Rp${markupValue}`;
+        await logAction({
+            action: "markup",
+            label: `Markup ${markupLabel} ke ${rows.length} produk`,
+            ids,
+            beforeRows: (products || []).map((p) => ({ id: p.id, harga_jual: p.harga_jual })),
+            afterRows: rows,
+            adminEmail: req.user.email
+        });
+
+        notify("product", `💰 ${req.user.email} menerapkan markup ${markupLabel} ke ${rows.length} produk topup`);
         res.json({ message: `Harga jual ${rows.length} produk berhasil dihitung ulang dari harga modal` });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
@@ -407,7 +501,7 @@ exports.autoMarkupPrice = async (req, res) => {
     try {
         const { data: products, error: fetchErr } = await supabase
             .from("topup_products")
-            .select("id, harga_beli")
+            .select("id, harga_beli, harga_jual")
             .in("id", ids);
         if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
 
@@ -426,6 +520,15 @@ exports.autoMarkupPrice = async (req, res) => {
         );
         const failed = results.find((r) => r.error);
         if (failed) return res.status(500).json({ message: "Gagal update harga jual" });
+
+        await logAction({
+            action: "auto_markup",
+            label: `Markup otomatis (wajar) ke ${rows.length} produk`,
+            ids,
+            beforeRows: (products || []).map((p) => ({ id: p.id, harga_jual: p.harga_jual })),
+            afterRows: rows,
+            adminEmail: req.user.email
+        });
 
         notify("product", `🤖 ${req.user.email} menerapkan markup otomatis (wajar) ke ${rows.length} produk topup`);
         res.json({ message: `Harga jual ${rows.length} produk berhasil dihitung otomatis dari harga modal` });
@@ -450,16 +553,18 @@ exports.bulkUpdateIcon = async (req, res) => {
         return res.status(400).json({ message: "item_icon wajib diisi" });
     }
     try {
-        const { error } = await supabase
-            .from("topup_products")
-            .update({ item_icon, updated_at: new Date().toISOString() })
-            .in("id", ids);
-
-        if (error) return res.status(500).json({ message: "Gagal update icon produk" });
+        await bulkUpdateSimpleField({
+            ids,
+            column: "item_icon",
+            newValue: item_icon,
+            action: "icon",
+            label: `Ganti icon ${ids.length} produk`,
+            adminEmail: req.user.email
+        });
         notify("product", `🖼️ ${req.user.email} mengubah icon ${ids.length} produk topup sekaligus`);
         res.json({ message: `Icon berhasil diterapkan ke ${ids.length} produk` });
     } catch (err) {
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({ message: err.message || "Server Error" });
     }
 };
 
@@ -478,16 +583,19 @@ exports.bulkUpdateKategori = async (req, res) => {
         return res.status(400).json({ message: "kategori tujuan wajib diisi" });
     }
     try {
-        const { error } = await supabase
-            .from("topup_products")
-            .update({ kategori: kategori.trim(), updated_at: new Date().toISOString() })
-            .in("id", ids);
-
-        if (error) return res.status(500).json({ message: "Gagal memindahkan kategori produk" });
-        notify("product", `📂 ${req.user.email} memindahkan ${ids.length} produk topup ke kategori "${kategori.trim()}"`);
-        res.json({ message: `${ids.length} produk berhasil dipindahkan ke kategori "${kategori.trim()}"` });
+        const targetKategori = kategori.trim();
+        await bulkUpdateSimpleField({
+            ids,
+            column: "kategori",
+            newValue: targetKategori,
+            action: "kategori",
+            label: `Pindahkan ${ids.length} produk ke kategori "${targetKategori}"`,
+            adminEmail: req.user.email
+        });
+        notify("product", `📂 ${req.user.email} memindahkan ${ids.length} produk topup ke kategori "${targetKategori}"`);
+        res.json({ message: `${ids.length} produk berhasil dipindahkan ke kategori "${targetKategori}"` });
     } catch (err) {
-        res.status(500).json({ message: "Server Error" });
+        res.status(500).json({ message: err.message || "Server Error" });
     }
 };
 
@@ -502,9 +610,114 @@ exports.bulkDeleteProducts = async (req, res) => {
         return res.status(400).json({ message: "ids wajib diisi (array)" });
     }
     try {
+        const { data: before, error: fetchErr } = await supabase.from("topup_products").select("*").in("id", ids);
+        if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
+
         const { error } = await supabase.from("topup_products").delete().in("id", ids);
         if (error) return res.status(500).json({ message: "Gagal menghapus produk terpilih" });
+
+        await logAction({
+            action: "delete",
+            label: `Hapus ${ids.length} produk`,
+            ids,
+            beforeRows: before || [],
+            afterRows: null,
+            adminEmail: req.user.email
+        });
+
         res.json({ message: `${ids.length} produk berhasil dihapus` });
+    } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ADMIN — undo aksi bulk PALING BARU (markup, status, server id, kategori,
+// icon, atau hapus) yang belum di-undo. Lihat catatan model stack di atas
+// deklarasi logAction().
+exports.undoLastAction = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    try {
+        const { data: entries, error } = await supabase
+            .from("product_action_history")
+            .select("*")
+            .eq("status", "active")
+            .order("created_at", { ascending: false })
+            .limit(1);
+        if (error) return res.status(500).json({ message: "Gagal mengambil riwayat aksi" });
+        if (!entries || entries.length === 0) {
+            return res.status(400).json({ message: "Gak ada aksi buat di-undo" });
+        }
+
+        const entry = entries[0];
+        if (entry.action === "delete") {
+            if (entry.before_rows && entry.before_rows.length > 0) {
+                const { error: insErr } = await supabase.from("topup_products").insert(entry.before_rows);
+                if (insErr) return res.status(500).json({ message: "Gagal mengembalikan produk yang dihapus" });
+            }
+        } else {
+            await applyRowSnapshot(entry.before_rows);
+        }
+
+        await supabase.from("product_action_history").update({ status: "undone" }).eq("id", entry.id);
+        notify("product", `↩️ ${req.user.email} meng-undo aksi: ${entry.label}`);
+        res.json({ message: `Berhasil di-undo: ${entry.label}`, label: entry.label });
+    } catch (err) {
+        res.status(500).json({ message: err.message || "Server Error" });
+    }
+};
+
+// ADMIN — redo aksi yang paling terakhir di-undo (kebalikan dari undoLastAction)
+exports.redoLastAction = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    try {
+        const { data: entries, error } = await supabase
+            .from("product_action_history")
+            .select("*")
+            .eq("status", "undone")
+            .order("created_at", { ascending: true })
+            .limit(1);
+        if (error) return res.status(500).json({ message: "Gagal mengambil riwayat aksi" });
+        if (!entries || entries.length === 0) {
+            return res.status(400).json({ message: "Gak ada aksi buat di-redo" });
+        }
+
+        const entry = entries[0];
+        if (entry.action === "delete") {
+            const { error: delErr } = await supabase.from("topup_products").delete().in("id", entry.product_ids);
+            if (delErr) return res.status(500).json({ message: "Gagal menghapus ulang produk" });
+        } else {
+            await applyRowSnapshot(entry.after_rows);
+        }
+
+        await supabase.from("product_action_history").update({ status: "active" }).eq("id", entry.id);
+        notify("product", `↪️ ${req.user.email} meng-redo aksi: ${entry.label}`);
+        res.json({ message: `Berhasil di-redo: ${entry.label}`, label: entry.label });
+    } catch (err) {
+        res.status(500).json({ message: err.message || "Server Error" });
+    }
+};
+
+// ADMIN — status ringkas buat tombol Undo/Redo di dashboard (enable/disable
+// + label tooltip "aksi apa yang bakal di-undo/redo")
+exports.getActionHistoryStatus = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    try {
+        const [lastActive, lastUndone] = await Promise.all([
+            supabase.from("product_action_history").select("label").eq("status", "active").order("created_at", { ascending: false }).limit(1),
+            supabase.from("product_action_history").select("label").eq("status", "undone").order("created_at", { ascending: true }).limit(1)
+        ]);
+        res.json({
+            canUndo: !!(lastActive.data && lastActive.data.length),
+            undoLabel: lastActive.data?.[0]?.label || null,
+            canRedo: !!(lastUndone.data && lastUndone.data.length),
+            redoLabel: lastUndone.data?.[0]?.label || null
+        });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }

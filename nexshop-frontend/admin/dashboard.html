@@ -287,6 +287,8 @@
                         <option value="">Semua Kategori</option>
                     </select>
                     <button onclick="loadTopupProducts()" class="btn btn-primary btn-sm"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                    <button id="topupUndoBtn" onclick="undoTopupAction()" class="btn btn-outline-dark btn-sm" disabled title="Gak ada aksi buat di-undo"><i class="bi bi-arrow-counterclockwise"></i> Undo</button>
+                    <button id="topupRedoBtn" onclick="redoTopupAction()" class="btn btn-outline-dark btn-sm" disabled title="Gak ada aksi buat di-redo"><i class="bi bi-arrow-90deg-right"></i> Redo</button>
                     <div class="dropdown">
                         <button class="btn btn-danger btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="bi bi-trash3"></i> Hapus per Kategori
