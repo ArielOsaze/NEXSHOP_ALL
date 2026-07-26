@@ -112,26 +112,66 @@ const SPECIAL_TYPE_KEYWORDS = [
     { type: "starlight_membership", test: /starlight/i },
     { type: "growth_fund", test: /growth\s*fund/i },
     { type: "elite_pass", test: /\belite\b/i },
-    { type: "membership", test: /membership|\bmember\b/i }
+    { type: "membership", test: /membership|\bmember\b/i },
+    // "M Cash"/"MCash"/"M-Cash" -- nama alternatif buat produk sejenis
+    // diamond dari sebagian supplier. WAJIB dicek sebelum pola angka+Diamond
+    // biasa, krn nama produk M Cash sering tetep nyebut angka diamond-nya
+    // juga (mis. "10 Diamond (M Cash)") -- kalau gak dicek duluan, dia bakal
+    // ketangkep pola diamond biasa dan nyampur sama produk Diamond asli.
+    { type: "mcash", test: /\bm[\s-]?cash\b/i }
 ];
 
-// Ambil tier "Nx" dari nama produk spesial (1 = default kalau gak ada
-// penanda "Nx"). Beda sama versi lama: TIDAK mensyaratkan kata "pass" ada
-// di nama, jadi "2X Weekly Diamond" tetep kebaca tier 2.
+// Tipe yang punya NOMINAL ANGKA beneran (kayak Diamond -- 10, 50, 100, dst),
+// BUKAN cuma "tier" langganan (1x/2x). M Cash termasuk sini krn nominalnya
+// bervariasi kayak Diamond -- kalau disamain jadi "tier 1" semua, "10 M
+// Cash" bakal ketuker sama "100 M Cash" dan salah satunya kematiin padahal
+// keduanya nominal beda yang harus tetap aktif masing-masing. Tipe di luar
+// set ini (weekly_pass, twilight_pass, dst) dianggap tier-based ("Nx").
+const AMOUNT_BASED_TYPES = new Set(["diamond", "mcash"]);
+
+// Ambil tier "Nx" dari nama produk pass/membership (1 = default kalau gak
+// ada penanda "Nx"). Beda sama versi lama: TIDAK mensyaratkan kata "pass"
+// ada di nama, jadi "2X Weekly Diamond" tetep kebaca tier 2.
 function extractSpecialTier(nama) {
     const m = String(nama || "").match(/(\d+)\s*x\b/i);
     const tier = m ? parseInt(m[1], 10) : 1;
     return Number.isFinite(tier) && tier > 0 ? tier : 1;
 }
 
-// Klasifikasi utama satu produk: coba diamond (angka) dulu, lalu coba
-// kamus tipe spesial, baru kalau beneran gak ketemu apa-apa -> null
-// (produk baru yang kamusnya belum ada -- perlu ditambahin manual).
+// Ambil nominal angka dari nama produk M Cash, mis. "10 M Cash" -> 10,
+// "M Cash 50" -> 50, "10 Diamond M Cash" -> 10 (ambil angka yang paling
+// deket sama kata "M Cash"-nya, bukan angka lain yang mungkin nyasar di
+// nama). Return null kalau beneran gak ketemu angka sama sekali.
+function extractMcashAmount(nama) {
+    const s = String(nama || "");
+    const before = s.match(/([\d.,]+)\s*m[\s-]?cash/i);
+    const after = before ? null : s.match(/m[\s-]?cash\D{0,10}?([\d.,]+)/i);
+    const match = before || after;
+    if (!match) return null;
+    const n = parseInt(match[1].replace(/[.,]/g, ""), 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+// Klasifikasi utama satu produk. URUTAN INI PENTING: kamus tipe spesial
+// dicek DULUAN, baru fallback ke pola angka+Diamond biasa -- BUKAN
+// sebaliknya. Alasannya: banyak produk spesial (Weekly Pass, M Cash, dll)
+// namanya TETEP nyebut angka diamond di dalamnya (mis. "172 Diamond
+// (Weekly)", "10 Diamond M Cash"). Kalau pola angka+Diamond dicek duluan,
+// produk-produk ini keburu ketangkep sebagai "diamond" biasa dan nyampur
+// ke cluster nominal Diamond asli -- padahal secara bisnis mereka SKU yang
+// beda (harga modal, ketersediaan, atau jalur top up beda) dan gak boleh
+// ikut dibandingin/di-dedupe bareng nominal Diamond biasa.
 function classifyProduct(nama) {
+    const special = SPECIAL_TYPE_KEYWORDS.find((k) => k.test.test(String(nama || "")));
+    if (special) {
+        const value = AMOUNT_BASED_TYPES.has(special.type) ? extractMcashAmount(nama) : extractSpecialTier(nama);
+        // Amount-based (mcash) yang gagal ketemu angkanya -> anggap gak
+        // kebaca (null) drpd asal nge-grup jadi 1 padahal nominalnya beda-beda
+        if (value === null) return { groupType: null, groupValue: null };
+        return { groupType: special.type, groupValue: value };
+    }
     const diamond = extractDiamondAmount(nama);
     if (diamond !== null) return { groupType: "diamond", groupValue: diamond };
-    const special = SPECIAL_TYPE_KEYWORDS.find((k) => k.test.test(String(nama || "")));
-    if (special) return { groupType: special.type, groupValue: extractSpecialTier(nama) };
     return { groupType: null, groupValue: null };
 }
 
@@ -248,7 +288,7 @@ exports.smartActivateProducts = async (req, res) => {
 
             const groupsOfCluster = [];
             Object.entries(byType).forEach(([type, typeItems]) => {
-                if (type === "diamond") {
+                if (AMOUNT_BASED_TYPES.has(type)) {
                     clusterAmounts(typeItems.map((p) => p.groupValue)).forEach((c) => {
                         groupsOfCluster.push({ ...c, type, items: typeItems.filter((p) => c.values.includes(p.groupValue)) });
                     });
