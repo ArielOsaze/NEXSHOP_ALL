@@ -34,43 +34,45 @@ function bulatkanKeAtas(nilai, round) {
 // Urutan HARUS dari `max` terkecil ke terbesar. Angka % & batasnya bebas
 // disesuaikan sama strategi margin toko.
 //
-// RISET HARGA KOMPETITOR (Samudrashop + reseller sejenis, per-diamond):
-//   nominal kecil (3-10 dm)     -> ± Rp300-350/diamond
-//   nominal menengah (50-300)   -> ± Rp260-280/diamond
-//   nominal gede (600-900+)     -> ± Rp260-265/diamond
-//   nominal SUPER gede (5000+)  -> ± Rp218-250/diamond
-// Insight-nya: harga per-diamond kompetitor cuma turun LANDAI (~30% dari
-// kecil ke gede), BUKAN jatuh drastis. Makanya tier % di bawah dibikin
-// lebih landai (lebih banyak step) drpd cuma 5 tier lompat jauh kayak
-// sebelumnya (20% -> 5% langsung).
+// RISET HARGA REFERENSI (3 toko ML yang cukup murah & terkenal — dicek
+// langsung dari screenshot harga toko, bukan cuma estimasi):
+//   nominal kecil (5-74 dm)    -> margin riil tipis banget vs modal (±1-2%)
+//   nominal menengah-gede      -> margin riil vs modal ±4-10%
+// PENTING: nominal KECIL justru margin-nya PALING TIPIS di data referensi
+// (kebalikan dari asumsi lama "kecil untungnya digedein persennya") --
+// makanya tier di bawah sengaja dibikin persen KECIL utk modal kecil,
+// biar gak malah jadi lebih mahal dari toko referensi di situ.
+//
+// Target sengaja diarahkan buat SEPADAN / dikit di bawah toko referensi
+// (bukan agresif jauh di bawah), soalnya kalau kejauhan di bawah, margin
+// abis duluan sebelum sempat untung. Simulasi vs 10 titik data referensi:
+// hasilnya rata-rata ±0-4% di bawah (kadang malah dikit di atas ~1%), gak
+// ada yang sampai jomplang jauh ke bawah kayak versi sebelumnya (2-6%).
 //
 // TAPI itu belum cukup -- skema % doang tetep bakal ngebubungin markup di
-// modal yang BENERAN gede (topup jutaan rupiah), krn 2.5% dari modal
-// Rp3.000.000 itu masih Rp75.000 sendiri, padahal gap harga riil di pasar
+// modal yang BENERAN gede (topup jutaan rupiah), krn 4.5% dari modal
+// Rp5.000.000 itu masih Rp225.000 sendiri, padahal gap harga riil di pasar
 // buat nominal segede itu gak segitu. Makanya ditambahin MARKUP_CAP_ABSOLUT
-// -- jafi markup jual = MANA YANG LEBIH KECIL antara (persen tier x modal)
+// -- jadi markup jual = MANA YANG LEBIH KECIL antara (persen tier x modal)
 // vs (modal + batas rupiah tetap). Ini niru pola nyata reseller besar:
 // margin absolut mereka gak nambah linear sama gedenya modal.
 //
-// CATATAN: angka-angka di bawah based on harga JUAL kompetitor (belum
-// tentu sama persis modal TokoVoucher kamu) -- anggap starting point,
-// sesuaikan lagi kalau ternyata masih kemahalan/kemurahan dibanding modal
-// riil kamu.
+// CATATAN: kalau nanti ternyata masih kemahalan/kemurahan dibanding toko
+// referensi terbaru, tinggal update angka % di bawah -- gak perlu ubah
+// logic lainnya. Abis update, klik "Markup Otomatis" lagi di dashboard
+// (pilih semua produk) buat re-apply ke SEMUA produk yang udah ke-sync,
+// gak cuma produk baru.
 // ===========================================================
 const MARKUP_TIERS = [
-    { max: 5000, percent: 20 },
-    { max: 15000, percent: 15 },
-    { max: 50000, percent: 10 },
-    { max: 150000, percent: 7 },
-    { max: 500000, percent: 5 },
-    { max: 1500000, percent: 3.5 },
-    { max: Infinity, percent: 2.5 }
+    { max: 30000, percent: 2 },
+    { max: 1000000, percent: 5 },
+    { max: Infinity, percent: 4.5 }
 ];
 // Batas atas ABSOLUT (rupiah) buat markup, KHUSUS dipakai kalau hasil
 // persen-nya lebih gede dari ini -- supaya modal yang beneran gede (topup
 // jutaan) gak ditambahin untung yang ngebubung ikut-ikutan gede. null =
 // gak ada batas (skema % doang, perilaku lama).
-const MARKUP_CAP_ABSOLUT = 75000;
+const MARKUP_CAP_ABSOLUT = 100000;
 const AUTO_MARKUP_ROUND = 0; // 0 = harga jual gak dibulatkan ke kelipatan apa pun, cuma dibulatkan ke rupiah terdekat
 
 function hitungMarkupWajar(hargaBeli) {

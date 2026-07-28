@@ -832,7 +832,7 @@ input::placeholder{ color:var(--text-dim); }
         flex-direction:column; align-items:stretch; gap:0;
         max-height:0; overflow:hidden; transition:max-height .3s;
     }
-    .menu.active{ max-height:260px; }
+    .menu.active{ max-height:min(520px, calc(100vh - 66px)); overflow-y:auto; }
     .menu a, .menu-link-btn, .menu-account-btn{ padding:16px 24px; border-radius:0; text-align:left; }
     .menu-account-btn{ background:none; box-shadow:none; color:var(--violet); }
     .menu-toggle{ display:flex; }
