@@ -1,10 +1,15 @@
 const supabase = require("../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { sendOtpEmail } = require("../config/mailer");
+const crypto = require("crypto");
+const { sendOtpEmail, sendPasswordResetEmail } = require("../config/mailer");
 const { notify } = require("../config/notify");
 
 const OTP_EXPIRY_MINUTES = 10;
+const RESET_TOKEN_EXPIRY_MINUTES = 30;
+// dipakai buat bikin link reset password (lihat .env.example) -- sama kayak
+// FRONTEND_URL di orderController.js/topupController.js
+const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
 
 // Deteksi spam login sederhana (in-memory, per instance server) — bukan
 // pengganti rate limiter beneran, tapi cukup buat kasih tau admin kalau ada
@@ -283,6 +288,122 @@ exports.login = async (req, res) => {
         });
     } catch (error) {
         console.log(error);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// LUPA PASSWORD — minta link reset dikirim ke email
+exports.forgotPassword = async (req, res) => {
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: "Email wajib diisi" });
+    }
+
+    // Responsnya SENGAJA sama persis baik email-nya terdaftar atau enggak --
+    // kalau beda (mis. "email gak ditemukan" vs "link sudah dikirim"), itu
+    // jadi celah buat orang nebak-nebak email mana yang punya akun NexShop.
+    const genericResponse = {
+        message: "Kalau email ini terdaftar, link reset password sudah dikirim. Cek inbox/folder spam kamu."
+    };
+
+    try {
+        const { data: user, error } = await supabase
+            .from("users")
+            .select("id, email")
+            .eq("email", email.toLowerCase().trim())
+            .maybeSingle();
+
+        if (error) {
+            console.log(error);
+            return res.status(500).json({ message: "Database Error" });
+        }
+
+        if (!user) {
+            return res.json(genericResponse);
+        }
+
+        // token acak PANJANG (bukan 6 digit kayak OTP) -- reset password itu
+        // sensitif, jadi HARUS gak bisa ditebak/di-brute-force dalam waktu wajar
+        const token = crypto.randomBytes(32).toString("hex");
+        const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000).toISOString();
+
+        const { error: updateErr } = await supabase
+            .from("users")
+            .update({ reset_password_token: token, reset_password_expires_at: expiresAt })
+            .eq("id", user.id);
+
+        if (updateErr) {
+            console.log(updateErr);
+            return res.status(500).json({ message: "Gagal membuat token reset" });
+        }
+
+        const resetLink = `${FRONTEND_URL}/#/reset-password?token=${token}`;
+
+        try {
+            await sendPasswordResetEmail(user.email, resetLink);
+        } catch (mailErr) {
+            // gagal kirim tetap dicatat ke admin_notifications (dari dalam
+            // mailer.js) -- tapi ke USER tetap kasih respons generic yang
+            // sama, jangan bocorin detail error internal
+            console.log("Gagal kirim email reset password:", mailErr.message);
+        }
+
+        res.json(genericResponse);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// RESET PASSWORD — submit password baru pakai token dari email
+exports.resetPassword = async (req, res) => {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+        return res.status(400).json({ message: "Token dan password baru wajib diisi" });
+    }
+    if (newPassword.length < 4) {
+        return res.status(400).json({ message: "Password minimal 4 karakter" });
+    }
+
+    try {
+        const { data: user, error } = await supabase
+            .from("users")
+            .select("id, reset_password_token, reset_password_expires_at")
+            .eq("reset_password_token", token)
+            .maybeSingle();
+
+        if (error) {
+            console.log(error);
+            return res.status(500).json({ message: "Database Error" });
+        }
+
+        if (!user || !user.reset_password_expires_at || new Date(user.reset_password_expires_at) < new Date()) {
+            return res.status(400).json({
+                message: "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta link baru."
+            });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        const { error: updateErr } = await supabase
+            .from("users")
+            .update({
+                password: hashedPassword,
+                reset_password_token: null,
+                reset_password_expires_at: null
+            })
+            .eq("id", user.id);
+
+        if (updateErr) {
+            console.log(updateErr);
+            return res.status(500).json({ message: "Gagal update password" });
+        }
+
+        notify("users", `🔑 Password akun (id ${user.id}) berhasil direset lewat email`);
+        res.json({ message: "Password berhasil diganti. Silakan login dengan password baru kamu." });
+    } catch (err) {
+        console.log(err);
         res.status(500).json({ message: "Server Error" });
     }
 };

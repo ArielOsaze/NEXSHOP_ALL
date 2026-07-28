@@ -22,6 +22,16 @@ const statsRoutes = require("./routes/statsRoutes");
 
 const app = express();
 
+// Backend ini jalan di belakang Nginx (reverse proxy) yang nge-set header
+// X-Forwarded-For dengan IP asli client (lihat nginx-nexshop.conf). Tanpa
+// baris ini, Express nganggep SEMUA request datengnya dari Nginx sendiri
+// (127.0.0.1) -- itu bikin rate limiter di bawah salah sasaran (nge-batesin
+// SEMUA orang bareng-bareng kayak 1 IP tunggal), dan express-rate-limit
+// versi baru malah bakal nolak request sama sekali (validation error) kalau
+// dia liat ada X-Forwarded-For tapi trust proxy belum di-set. "1" artinya:
+// percaya IP dari PERSIS 1 lapis proxy di depan app ini (si Nginx itu).
+app.set("trust proxy", 1);
+
 // =========================
 // Config
 // =========================

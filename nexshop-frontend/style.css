@@ -695,6 +695,8 @@ input::placeholder{ color:var(--text-dim); }
 .auth-form h3{ font-size:19px; margin-bottom:4px; }
 .otp-info{ font-size:13px; color:var(--text-muted); margin-bottom:4px; }
 .otp-resend{ font-size:12.5px; color:var(--violet); text-decoration:underline; text-underline-offset:3px; align-self:center; }
+.forgot-password-link{ align-self:flex-end; margin-top:-6px; }
+.auth-success{ color:var(--success); font-size:12.5px; min-height:14px; }
 
 /* account dropdown */
 .account-dropdown{
@@ -773,6 +775,8 @@ input::placeholder{ color:var(--text-dim); }
 .track-status-badge.warning{ background:rgba(245,166,35,.15); color:var(--warning); }
 .track-status-badge.danger{ background:rgba(240,71,92,.15); color:var(--danger); }
 .track-status-badge.info{ background:rgba(34,211,238,.15); color:var(--cyan); }
+.track-wa-cta{ margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
+.track-wa-btn{ display:block; text-align:center; text-decoration:none; }
 
 .track-mine-list{ display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; }
 .track-mine-item{

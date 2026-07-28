@@ -411,6 +411,7 @@
                     <button type="button" class="toggle-password" data-target="loginPassword" aria-label="Tampilkan password">👁</button>
                 </div>
             </label>
+            <button type="button" class="otp-resend forgot-password-link" id="forgotPasswordLink">Lupa password?</button>
             <p class="auth-error" id="loginError"></p>
             <button type="submit" class="btn-primary">Masuk</button>
         </form>
@@ -443,6 +444,38 @@
             <p class="auth-error" id="otpError"></p>
             <button type="submit" class="btn-primary">Verifikasi</button>
             <button type="button" class="otp-resend" id="otpResendBtn">Kirim ulang kode</button>
+        </form>
+
+        <form id="forgotPasswordForm" class="auth-form hidden">
+            <h3>Lupa Password</h3>
+            <p class="otp-info">Masukkan email akun kamu. Kalau terdaftar, link reset password akan dikirim ke email itu.</p>
+            <label>Email
+                <input type="email" id="forgotPasswordEmail" required placeholder="kamu@email.com">
+            </label>
+            <p class="auth-error" id="forgotPasswordError"></p>
+            <p class="auth-success hidden" id="forgotPasswordSuccess"></p>
+            <button type="submit" class="btn-primary" id="forgotPasswordSubmitBtn">Kirim Link Reset</button>
+            <button type="button" class="otp-resend" id="backToLoginFromForgotBtn">Kembali ke Login</button>
+        </form>
+
+        <form id="resetPasswordForm" class="auth-form hidden">
+            <h3>Buat Password Baru</h3>
+            <input type="hidden" id="resetPasswordToken">
+            <label>Password Baru
+                <div class="password-field">
+                    <input type="password" id="resetPasswordNew" required minlength="4" placeholder="Minimal 4 karakter">
+                    <button type="button" class="toggle-password" data-target="resetPasswordNew" aria-label="Tampilkan password">👁</button>
+                </div>
+            </label>
+            <label>Ulangi Password Baru
+                <div class="password-field">
+                    <input type="password" id="resetPasswordConfirm" required minlength="4" placeholder="Ketik ulang password">
+                    <button type="button" class="toggle-password" data-target="resetPasswordConfirm" aria-label="Tampilkan password">👁</button>
+                </div>
+            </label>
+            <p class="auth-error" id="resetPasswordError"></p>
+            <p class="auth-success hidden" id="resetPasswordSuccess"></p>
+            <button type="submit" class="btn-primary" id="resetPasswordSubmitBtn">Ganti Password</button>
         </form>
     </div>
 </div>

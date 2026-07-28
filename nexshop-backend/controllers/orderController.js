@@ -57,7 +57,12 @@ exports.create = async (req, res) => {
         }
 
         const subtotal = item_details.reduce((sum, i) => sum + i.price * i.quantity, 0);
-        const orderId = "NX" + Date.now();
+        // Sengaja ditambahin akhiran acak (bukan cuma timestamp) -- soalnya
+        // "Cek Transaksi" itu endpoint publik (gak perlu login) yang balikin
+        // nama pembeli + total + status kalau ID-nya ketebak. Kalau ID cuma
+        // "NX"+timestamp, orang lain bisa coba-coba beberapa nilai
+        // milidetik di sekitar waktu yang mereka tahu buat nemu ID asli.
+        const orderId = "NX" + Date.now() + Math.random().toString(36).slice(2, 6).toUpperCase();
 
         // Validasi ulang kode promo DI SERVER — jangan pernah percaya angka
         // diskon yang dikirim dari frontend, itu bisa dimanipulasi di browser.
@@ -66,7 +71,7 @@ exports.create = async (req, res) => {
         let appliedPromoCode = null;
 
         if (promo_code) {
-            const promoResult = await validatePromoCode(promo_code, subtotal);
+            const promoResult = await validatePromoCode(promo_code, subtotal, recipient_email);
             if (!promoResult.valid) {
                 return res.status(400).json({ message: promoResult.message });
             }
@@ -353,7 +358,7 @@ exports.handleNotification = async (req, res) => {
 
         // catat pemakaian kode promo cuma sekali, pas transisi PERTAMA KALI ke "paid"
         if (status === "paid" && existingOrder.status !== "paid" && existingOrder.promo_code) {
-            await incrementUsage(existingOrder.promo_code);
+            await incrementUsage(existingOrder.promo_code, existingOrder.recipient_email, orderId);
         }
 
         // kirim invoice email cuma sekali, pas transisi PERTAMA KALI ke "paid" —

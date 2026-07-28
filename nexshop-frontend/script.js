@@ -6,6 +6,7 @@
 
 let PRODUCTS = [];
 let selectedCategory = "Semua";
+let cachedStoreSettings = null; // diisi loadStoreSettings(), dipakai buat WA CTA di renderTrackResult
 
 const API_BASE = "https://nexshop.cloud/api";
 
@@ -360,7 +361,144 @@ document.querySelectorAll(".auth-tab").forEach(tab => {
         document.getElementById("loginForm").classList.toggle("hidden", !isLogin);
         document.getElementById("registerForm").classList.toggle("hidden", isLogin);
         document.getElementById("otpForm").classList.add("hidden");
+        document.getElementById("forgotPasswordForm").classList.add("hidden");
+        document.getElementById("resetPasswordForm").classList.add("hidden");
     });
+});
+
+/* ---------- Lupa Password ---------- */
+function showForgotPasswordForm() {
+    document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
+    document.getElementById("loginForm").classList.add("hidden");
+    document.getElementById("registerForm").classList.add("hidden");
+    document.getElementById("otpForm").classList.add("hidden");
+    document.getElementById("resetPasswordForm").classList.add("hidden");
+    document.getElementById("forgotPasswordForm").classList.remove("hidden");
+    document.getElementById("forgotPasswordError").textContent = "";
+    document.getElementById("forgotPasswordSuccess").classList.add("hidden");
+    document.getElementById("forgotPasswordEmail").value = document.getElementById("loginEmail").value || "";
+}
+
+document.getElementById("forgotPasswordLink").addEventListener("click", showForgotPasswordForm);
+
+document.getElementById("backToLoginFromForgotBtn").addEventListener("click", () => {
+    document.getElementById("forgotPasswordForm").classList.add("hidden");
+    document.querySelector('[data-tab="login"]').classList.add("active");
+    document.getElementById("loginForm").classList.remove("hidden");
+});
+
+document.getElementById("forgotPasswordForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("forgotPasswordEmail").value.trim().toLowerCase();
+    const errorEl = document.getElementById("forgotPasswordError");
+    const successEl = document.getElementById("forgotPasswordSuccess");
+    const btn = document.getElementById("forgotPasswordSubmitBtn");
+
+    errorEl.textContent = "";
+    successEl.classList.add("hidden");
+    btn.disabled = true;
+    btn.textContent = "Mengirim...";
+
+    try {
+        const res = await fetch(`${API_BASE}/auth/forgot-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            errorEl.textContent = data.message || "Gagal mengirim link reset.";
+            return;
+        }
+
+        successEl.textContent = data.message;
+        successEl.classList.remove("hidden");
+        e.target.querySelector("input").value = "";
+    } catch (err) {
+        errorEl.textContent = "Gagal terhubung ke server.";
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Kirim Link Reset";
+    }
+});
+
+/* ---------- Reset Password (dibuka via link di email, #/reset-password?token=...) ---------- */
+function showResetPasswordForm(token) {
+    document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
+    document.getElementById("loginForm").classList.add("hidden");
+    document.getElementById("registerForm").classList.add("hidden");
+    document.getElementById("otpForm").classList.add("hidden");
+    document.getElementById("forgotPasswordForm").classList.add("hidden");
+    document.getElementById("resetPasswordForm").classList.remove("hidden");
+    document.getElementById("resetPasswordToken").value = token;
+    document.getElementById("resetPasswordError").textContent = "";
+    document.getElementById("resetPasswordSuccess").classList.add("hidden");
+    openOverlay("authOverlay");
+}
+
+function checkResetPasswordLink() {
+    const hash = window.location.hash || "";
+    if (!hash.startsWith("#/reset-password")) return;
+
+    const query = new URLSearchParams(hash.split("?")[1] || "");
+    const token = query.get("token");
+    if (!token) return;
+
+    showResetPasswordForm(token);
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+}
+
+document.getElementById("resetPasswordForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const token = document.getElementById("resetPasswordToken").value;
+    const newPassword = document.getElementById("resetPasswordNew").value;
+    const confirmPassword = document.getElementById("resetPasswordConfirm").value;
+    const errorEl = document.getElementById("resetPasswordError");
+    const successEl = document.getElementById("resetPasswordSuccess");
+    const btn = document.getElementById("resetPasswordSubmitBtn");
+
+    errorEl.textContent = "";
+    successEl.classList.add("hidden");
+
+    if (newPassword !== confirmPassword) {
+        errorEl.textContent = "Password baru gak sama dengan ulangannya.";
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Menyimpan...";
+
+    try {
+        const res = await fetch(`${API_BASE}/auth/reset-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ token, newPassword })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            errorEl.textContent = data.message || "Gagal mengganti password.";
+            return;
+        }
+
+        successEl.textContent = data.message;
+        successEl.classList.remove("hidden");
+        e.target.reset();
+
+        // otomatis balik ke tab login abis 2 detik, biar user bisa langsung
+        // pakai password barunya
+        setTimeout(() => {
+            document.getElementById("resetPasswordForm").classList.add("hidden");
+            document.querySelector('[data-tab="login"]').classList.add("active");
+            document.getElementById("loginForm").classList.remove("hidden");
+        }, 2000);
+    } catch (err) {
+        errorEl.textContent = "Gagal terhubung ke server.";
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Ganti Password";
+    }
 });
 
 document.getElementById("registerForm").addEventListener("submit", async (e) => {
@@ -583,10 +721,14 @@ document.getElementById("applyPromoBtn").addEventListener("click", async () => {
     }
 
     try {
+        // kirim email juga kalau udah keisi (di form checkout atau dari akun
+        // yang login) -- biar preview batas "1x per user" ke-cek dari awal,
+        // bukan cuma pas submit order beneran
+        const emailForPromo = document.getElementById("checkoutEmail").value.trim() || (currentUser ? currentUser.email : "");
         const res = await fetch(`${API_BASE}/promo-codes/validate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code, subtotal: cartSubtotal() })
+            body: JSON.stringify({ code, subtotal: cartSubtotal(), email: emailForPromo || undefined })
         });
         const data = await res.json();
 
@@ -740,12 +882,31 @@ function renderTrackResult(data) {
         `;
     }
 
+    // Produk "biasa" (game key/Xbox Game Pass/bundle) dikirim MANUAL via WA
+    // (beda dari topup diamond yang otomatis lewat TokoVoucher) — begitu
+    // statusnya "paid", kasih tombol WA langsung dengan No. Transaksi
+    // ter-prefill, biar pembeli gampang follow up tanpa nyari-nyari kontak.
+    let waCta = "";
+    const isPaid = data.status === "paid" || data.status === "sukses";
+    if (data.type === "order" && isPaid && cachedStoreSettings && cachedStoreSettings.contact_whatsapp) {
+        const waDigits = cachedStoreSettings.contact_whatsapp.replace(/\D/g, "");
+        const prefill = `Halo admin, saya sudah bayar pesanan dengan No. Transaksi ${data.id}. Email yang saya pakai saat checkout: (isi email kamu di sini). Mohon diproses ya 🙏`;
+        const waHref = `https://wa.me/${waDigits}?text=${encodeURIComponent(prefill)}`;
+        waCta = `
+            <div class="track-wa-cta">
+                <p class="otp-info">🎮 Kode/produk untuk pesanan ini dikirim manual oleh admin. Chat WhatsApp admin di bawah, sertakan <strong>No. Transaksi ${escapeHtml(data.id)}</strong> dan email yang kamu pakai saat checkout, ya.</p>
+                <a href="${waHref}" target="_blank" rel="noopener" class="btn-primary track-wa-btn">💬 Chat Admin via WhatsApp</a>
+            </div>
+        `;
+    }
+
     document.getElementById("trackResult").innerHTML = `
         <div class="track-status-badge ${cls}">${escapeHtml(label)}</div>
         <div class="row"><span>Order ID</span><span>${escapeHtml(data.id)}</span></div>
         <div class="row"><span>Tanggal</span><span>${tanggal}</span></div>
         ${itemsHtml}
         <div class="row total"><span>Total</span><span>${rupiah(data.total || 0)}</span></div>
+        ${waCta}
     `;
     document.getElementById("trackResult").classList.remove("hidden");
 }
@@ -999,6 +1160,7 @@ async function loadStoreSettings() {
         const res = await fetch(`${API_BASE}/settings/store`);
         if (!res.ok) return;
         const s = await res.json();
+        cachedStoreSettings = s;
 
         if (s.store_name) {
             document.title = `${s.store_name} — Digital Gaming Marketplace`;
@@ -1532,6 +1694,16 @@ document.querySelectorAll(".toggle-password").forEach(btn => {
 });
 
 /* ---------- Halaman kembali dari pembayaran iPaymu (returnUrl) ---------- */
+function openTrackModalWithResult(data) {
+    // buka modal "Cek Transaksi" tapi langsung tampilin hasilnya, gak perlu
+    // user ngetik ulang Order ID yang baru aja mereka bayar
+    switchTrackTab("byid");
+    document.getElementById("trackError").textContent = "";
+    document.getElementById("trackForm").classList.add("hidden");
+    renderTrackResult(data);
+    openOverlay("trackOverlay");
+}
+
 async function checkPaymentReturn() {
     const hash = window.location.hash || "";
     if (!hash.startsWith("#/payment-status")) return;
@@ -1540,8 +1712,13 @@ async function checkPaymentReturn() {
     const orderId = query.get("order");
     if (!orderId) return;
 
-    const isTopup = orderId.startsWith("TP");
-    const endpoint = isTopup ? `${API_BASE}/topup/public-status/${orderId}` : `${API_BASE}/orders/status/${orderId}`;
+    const isTopup = orderId.toUpperCase().startsWith("TP");
+    // pakai endpoint /track/ (detail lengkap, sama kayak "Cek Transaksi") biar
+    // bisa langsung dirender pakai renderTrackResult() yang udah ada,
+    // termasuk tombol WA buat pesanan produk yang statusnya "paid"
+    const endpoint = isTopup
+        ? `${API_BASE}/topup/track/${encodeURIComponent(orderId)}`
+        : `${API_BASE}/orders/track/${encodeURIComponent(orderId)}`;
 
     try {
         const res = await fetch(endpoint);
@@ -1551,15 +1728,17 @@ async function checkPaymentReturn() {
             return;
         }
 
-        if (data.status === "paid" || data.status === "sukses") {
-            toast(`Pembayaran ${orderId} berhasil! ${isTopup ? "Diamond akan segera diproses." : "Pesanan sedang diproses."}`, "success");
-        } else if (data.status === "pending" || data.status === "processing") {
-            toast(`Order ${orderId} sedang menunggu konfirmasi pembayaran. Status akan otomatis update begitu lunas.`);
-        } else if (data.status === "failed" || data.status === "gagal") {
-            toast(`Pembayaran ${orderId} tidak berhasil/dibatalkan. Silakan coba checkout ulang.`, "error");
-        } else {
-            toast(`Order ${orderId}: status "${data.status}".`);
+        // jaga-jaga: loadStoreSettings() (buat contact_whatsapp) jalan bareng
+        // fungsi ini pas page load, jadi bisa aja belum selesai duluan —
+        // pastiin dulu biar tombol WA gak ketinggalan render
+        if (!cachedStoreSettings) {
+            try {
+                const settingsRes = await fetch(`${API_BASE}/settings/store`);
+                if (settingsRes.ok) cachedStoreSettings = await settingsRes.json();
+            } catch (e) { /* gak fatal, CTA WA cuma gak muncul kalau ini gagal */ }
         }
+
+        openTrackModalWithResult(data);
     } catch (err) {
         toast(`Order ${orderId} sudah dibuat — catat Order ID ini untuk cek status ke admin.`);
     }
@@ -1608,4 +1787,5 @@ loadTopupProducts();
 loadTrustStats();
 updateCartCount();
 checkPaymentReturn();
+checkResetPasswordLink();
 refreshAccountUI();

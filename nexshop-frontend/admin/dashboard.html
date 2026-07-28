@@ -908,8 +908,13 @@
                 <input id="pcMinPurchase" type="number" min="0" class="form-control" placeholder="0">
             </div>
             <div class="col-md-6">
-                <label class="form-label">Batas Pemakaian <span class="text-muted">(opsional)</span></label>
+                <label class="form-label">Batas Pemakaian <span class="text-muted">(opsional, total semua user)</span></label>
                 <input id="pcMaxUses" type="number" min="1" class="form-control" placeholder="Tanpa batas">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">Batas Pemakaian per User <span class="text-muted">(opsional)</span></label>
+                <input id="pcMaxUsesPerUser" type="number" min="1" class="form-control" placeholder="Tanpa batas">
+                <div class="form-text">Contoh: isi <strong>1</strong> buat kode "khusus pembeli baru" biar 1 email cuma bisa pakai sekali.</div>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Kedaluwarsa <span class="text-muted">(opsional)</span></label>

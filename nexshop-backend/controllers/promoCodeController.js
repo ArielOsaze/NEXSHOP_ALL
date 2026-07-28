@@ -16,7 +16,11 @@ function computeDiscount(promo, subtotal) {
 }
 
 // Dipakai internal (checkout) DAN publik (tombol "Terapkan" di halaman toko)
-async function validatePromoCode(code, subtotal) {
+// `email` opsional -- dari tombol "Terapkan" di form checkout, emailnya bisa
+// aja belum diisi user pas itu (baru preview). Pengecekan yang BENERAN
+// menentukan tetap di orderController pas create order, saat itu
+// recipient_email pasti udah ada (field wajib).
+async function validatePromoCode(code, subtotal, email = null) {
     if (!code) return { valid: false, message: "Kode promo wajib diisi" };
 
     const { data: promo, error } = await supabase
@@ -43,6 +47,17 @@ async function validatePromoCode(code, subtotal) {
             message: `Minimal belanja ${rupiahServer(promo.min_purchase)} untuk pakai kode ini`
         };
     }
+    if (promo.max_uses_per_user && email) {
+        const { count } = await supabase
+            .from("promo_redemptions")
+            .select("id", { count: "exact", head: true })
+            .eq("promo_code_id", promo.id)
+            .eq("email", email.toLowerCase().trim());
+
+        if ((count || 0) >= promo.max_uses_per_user) {
+            return { valid: false, message: "Kamu sudah pernah pakai kode promo ini sebelumnya" };
+        }
+    }
 
     const discount = computeDiscount(promo, subtotal);
     return { valid: true, promo, discount };
@@ -56,13 +71,13 @@ function rupiahServer(n) {
 // PUBLIK — validasi kode dari halaman toko (dipanggil pas klik "Terapkan")
 // ===========================================================
 exports.validate = async (req, res) => {
-    const { code, subtotal } = req.body;
+    const { code, subtotal, email } = req.body;
 
     if (!subtotal || subtotal <= 0) {
         return res.status(400).json({ valid: false, message: "Subtotal tidak valid" });
     }
 
-    const result = await validatePromoCode(code, Number(subtotal));
+    const result = await validatePromoCode(code, Number(subtotal), email);
     if (!result.valid) {
         return res.status(400).json(result);
     }
@@ -102,7 +117,7 @@ exports.create = async (req, res) => {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
-    const { code, description, discount_type, discount_value, max_discount, min_purchase, max_uses, is_active, expires_at } = req.body;
+    const { code, description, discount_type, discount_value, max_discount, min_purchase, max_uses, max_uses_per_user, is_active, expires_at } = req.body;
 
     if (!code || !discount_value) {
         return res.status(400).json({ message: "Kode dan nilai diskon wajib diisi" });
@@ -122,6 +137,7 @@ exports.create = async (req, res) => {
                 max_discount: max_discount ? Number(max_discount) : null,
                 min_purchase: Number(min_purchase || 0),
                 max_uses: max_uses ? Number(max_uses) : null,
+                max_uses_per_user: max_uses_per_user ? Number(max_uses_per_user) : null,
                 is_active: is_active !== undefined ? !!is_active : true,
                 expires_at: expires_at || null
             }])
@@ -149,7 +165,7 @@ exports.update = async (req, res) => {
     }
 
     const { id } = req.params;
-    const { description, discount_type, discount_value, max_discount, min_purchase, max_uses, is_active, expires_at } = req.body;
+    const { description, discount_type, discount_value, max_discount, min_purchase, max_uses, max_uses_per_user, is_active, expires_at } = req.body;
 
     const payload = { updated_at: new Date().toISOString() };
     if (description !== undefined) payload.description = description;
@@ -158,6 +174,7 @@ exports.update = async (req, res) => {
     if (max_discount !== undefined) payload.max_discount = max_discount ? Number(max_discount) : null;
     if (min_purchase !== undefined) payload.min_purchase = Number(min_purchase);
     if (max_uses !== undefined) payload.max_uses = max_uses ? Number(max_uses) : null;
+    if (max_uses_per_user !== undefined) payload.max_uses_per_user = max_uses_per_user ? Number(max_uses_per_user) : null;
     if (is_active !== undefined) payload.is_active = !!is_active;
     if (expires_at !== undefined) payload.expires_at = expires_at || null;
 
@@ -198,21 +215,45 @@ exports.remove = async (req, res) => {
 exports.validatePromoCode = validatePromoCode;
 
 // dipakai orderController buat naikkan pemakaian setelah pembayaran sukses,
-// idempotent-safe karena dipanggil cuma sekali per transisi ke "paid"
-exports.incrementUsage = async (code) => {
+// idempotent-safe karena dipanggil cuma sekali per transisi ke "paid".
+// Pakai fungsi database "increment_promo_usage" (lihat migrations-09) yang
+// atomic pakai row lock -- FIX buat race condition sebelumnya (dua transaksi
+// lunas hampir bersamaan bisa lolos dari max_uses karena baca+tulisnya gak
+// atomic). email & orderId dicatat ke promo_redemptions buat penegakan
+// max_uses_per_user.
+exports.incrementUsage = async (code, email = null, orderId = null) => {
     if (!code) return;
     try {
         const { data: promo } = await supabase
             .from("promo_codes")
-            .select("id, used_count")
+            .select("id")
             .eq("code", code.toUpperCase().trim())
             .maybeSingle();
 
-        if (promo) {
-            await supabase
-                .from("promo_codes")
-                .update({ used_count: (promo.used_count || 0) + 1 })
-                .eq("id", promo.id);
+        if (!promo) return;
+
+        const { data: result, error: rpcErr } = await supabase
+            .rpc("increment_promo_usage", { p_promo_id: promo.id })
+            .maybeSingle();
+
+        if (rpcErr) {
+            console.log("Gagal increment usage kode promo (RPC):", rpcErr.message);
+            return;
+        }
+        if (!result || !result.success) {
+            // batas pemakaian udah kesentuh duluan sama transaksi lain yang
+            // barengan -- order tetap "paid" (uangnya udah masuk), cuma
+            // gak nambah hitungan lagi. Dicatat biar admin tau ada gap
+            // antara stok kode promo vs jumlah order yang klaim pakai kode ini.
+            console.log(`⚠️ Kode promo "${code}" gagal nambah used_count (kemungkinan udah kena limit barengan transaksi lain)`);
+            return;
+        }
+
+        if (email && orderId) {
+            const { error: logErr } = await supabase
+                .from("promo_redemptions")
+                .insert([{ promo_code_id: promo.id, email: email.toLowerCase().trim(), order_id: orderId }]);
+            if (logErr) console.log("Gagal catat promo_redemptions:", logErr.message);
         }
     } catch (err) {
         console.log("Gagal increment usage kode promo:", err.message);

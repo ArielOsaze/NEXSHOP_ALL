@@ -1998,6 +1998,7 @@ function editPromoCode(id) {
     document.getElementById("pcMaxDiscount").value = pc.max_discount || "";
     document.getElementById("pcMinPurchase").value = pc.min_purchase || "";
     document.getElementById("pcMaxUses").value = pc.max_uses || "";
+    document.getElementById("pcMaxUsesPerUser").value = pc.max_uses_per_user || "";
     document.getElementById("pcExpiresAt").value = pc.expires_at ? pc.expires_at.slice(0, 10) : "";
     document.getElementById("pcIsActive").checked = !!pc.is_active;
     document.getElementById("promoCodeError").textContent = "";
@@ -2028,6 +2029,7 @@ async function savePromoCode() {
         max_discount: document.getElementById("pcMaxDiscount").value || null,
         min_purchase: document.getElementById("pcMinPurchase").value || 0,
         max_uses: document.getElementById("pcMaxUses").value || null,
+        max_uses_per_user: document.getElementById("pcMaxUsesPerUser").value || null,
         is_active: document.getElementById("pcIsActive").checked,
         expires_at: document.getElementById("pcExpiresAt").value || null
     };

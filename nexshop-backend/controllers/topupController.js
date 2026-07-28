@@ -1152,7 +1152,10 @@ exports.create = async (req, res) => {
             return res.status(400).json({ message: "Server ID wajib diisi untuk produk ini" });
         }
 
-        const orderId = "TP" + Date.now();
+        // Sama kayak alasan di orderController.js -- tambahin akhiran acak
+        // biar ID gak ketebak cuma dari timestamp doang (endpoint "Cek
+        // Transaksi" publik, gak perlu login).
+        const orderId = "TP" + Date.now() + Math.random().toString(36).slice(2, 6).toUpperCase();
 
         const { error: insertErr } = await supabase.from("topup_orders").insert([{
             id: orderId,

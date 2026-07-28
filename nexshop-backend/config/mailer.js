@@ -1,6 +1,6 @@
 const axios = require("axios");
 require("dotenv").config();
-const { getApiKeys } = require("./settings");
+const { getApiKeys, getStoreSettings } = require("./settings");
 const { notify } = require("./notify");
 
 // Kenapa pakai Brevo HTTP API, bukan nodemailer/SMTP langsung ke Gmail:
@@ -96,6 +96,26 @@ async function sendOrderInvoiceEmail(to, { orderId, recipientName, items, subtot
         </tr>
     ` : "";
 
+    // Produk "biasa" (game key/Xbox Game Pass/bundle) DIKIRIM MANUAL via WA
+    // -- beda dari topup diamond yang otomatis lewat TokoVoucher. Jadi email
+    // invoice ini WAJIB kasih tau customer cara follow up, soalnya tanpa ini
+    // mereka gak ada cara tau kudu ngapain abis bayar.
+    const store = await getStoreSettings();
+    const waDigits = (store.contact_whatsapp || "").replace(/\D/g, "");
+    const waCta = waDigits ? `
+        <div style="margin-top:20px; padding:16px; background:#f2f1f8; border-radius:8px;">
+            <p style="margin:0 0 12px; font-size:14px;">
+                🎮 <strong>Kode/produk pesanan ini dikirim manual oleh tim kami.</strong>
+                Chat WhatsApp admin di bawah ini, sertakan <strong>No. Pesanan ${orderId}</strong>
+                dan email ini (${to}) ya, biar cepat diproses.
+            </p>
+            <a href="https://wa.me/${waDigits}?text=${encodeURIComponent(`Halo admin, saya sudah bayar pesanan No. Transaksi ${orderId} dengan email ${to}. Mohon diproses ya 🙏`)}"
+               style="display:inline-block; padding:10px 20px; background:#25D366; color:#fff; text-decoration:none; border-radius:100px; font-weight:bold; font-size:14px;">
+                💬 Chat Admin via WhatsApp
+            </a>
+        </div>
+    ` : "";
+
     try {
         await axios.post(
             "https://api.brevo.com/v3/smtp/email",
@@ -116,9 +136,10 @@ async function sendOrderInvoiceEmail(to, { orderId, recipientName, items, subtot
                                 <td style="padding:12px 0 0; text-align:right; font-weight:bold; color:#7C3AED;">${rupiah(total)}</td>
                             </tr>
                         </table>
+                        ${waCta}
                         <p style="color:#666; font-size:13px; margin-top:24px;">
-                            Pesanan kamu lagi diproses tim NexShop. Kalau ada pertanyaan, balas email ini
-                            atau hubungi CS kami. Simpan email ini sebagai bukti pembayaran ya.
+                            Kalau ada pertanyaan lain, balas email ini atau hubungi CS kami.
+                            Simpan email ini sebagai bukti pembayaran ya.
                         </p>
                     </div>
                 `
@@ -190,4 +211,51 @@ async function sendTopupInvoiceEmail(to, { orderId, namaProduk, tujuan, serverId
     }
 }
 
-module.exports = { sendOtpEmail, sendOrderInvoiceEmail, sendTopupInvoiceEmail };
+// Email buat fitur "Lupa Password" -- link-nya bawa token acak (BUKAN kode
+// OTP 6 digit), berlaku singkat, dan cuma bisa dipakai SEKALI (token
+// dihapus dari DB begitu password berhasil diganti -- lihat resetPassword
+// di authController.js).
+async function sendPasswordResetEmail(to, resetLink) {
+    const { apiKey, senderEmail, senderName } = await getBrevoConfig();
+    try {
+        await axios.post(
+            "https://api.brevo.com/v3/smtp/email",
+            {
+                sender: { name: senderName, email: senderEmail },
+                to: [{ email: to }],
+                subject: "Reset Password NexShop",
+                htmlContent: `
+                    <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
+                        <h2 style="color:#7C3AED;">NexShop</h2>
+                        <p>Ada permintaan buat reset password akun kamu. Klik tombol di bawah buat bikin password baru:</p>
+                        <a href="${resetLink}" style="display:inline-block; margin:16px 0; padding:13px 28px; background:linear-gradient(135deg,#8B5CF6,#7C3AED); color:#fff; text-decoration:none; border-radius:100px; font-weight:bold; font-size:14px;">
+                            Reset Password
+                        </a>
+                        <p style="color:#666; font-size:13px;">
+                            Link ini cuma berlaku 30 menit dan cuma bisa dipakai sekali. Kalau kamu
+                            gak merasa minta reset password, abaikan aja email ini — password kamu
+                            tetap aman dan gak berubah.
+                        </p>
+                        <p style="color:#999; font-size:12px; word-break:break-all;">
+                            Kalau tombolnya gak bisa diklik, copy-paste link ini ke browser:<br>${resetLink}
+                        </p>
+                    </div>
+                `
+            },
+            {
+                headers: {
+                    "api-key": apiKey,
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                }
+            }
+        );
+    } catch (err) {
+        const detail = err.response?.data?.message || err.response?.data || err.message;
+        console.log("❌ Brevo gagal kirim email reset password:", detail);
+        notify("email", `❌ Gagal kirim email reset password ke ${to}: ${typeof detail === "string" ? detail : JSON.stringify(detail)}`);
+        throw err;
+    }
+}
+
+module.exports = { sendOtpEmail, sendOrderInvoiceEmail, sendTopupInvoiceEmail, sendPasswordResetEmail };
