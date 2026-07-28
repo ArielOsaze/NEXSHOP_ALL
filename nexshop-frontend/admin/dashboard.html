@@ -512,6 +512,7 @@
         <li class="nav-item"><button class="nav-link" data-settings-tab="store">Pengaturan Toko</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="content">FAQ / Syarat / Refund</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="apikeys">API Keys</button></li>
+        <li class="nav-item"><button class="nav-link" data-settings-tab="security">Keamanan</button></li>
     </ul>
 
     <!-- Profil Admin -->
@@ -704,6 +705,34 @@
                 <div class="col-12">
                     <button type="button" class="btn btn-success" onclick="saveApiKeys()">
                         <i class="bi bi-floppy"></i> Simpan API Keys
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Keamanan -->
+    <div id="settingsTabSecurity" class="card shadow-sm d-none">
+        <div class="card-body">
+            <h6 class="text-uppercase text-muted small">Buka Blokir Login</h6>
+            <p class="text-muted small">
+                Endpoint login dibatasi maksimal 10x percobaan gagal per 15 menit per alamat IP,
+                buat cegah brute-force password. Kalau ada customer/admin yang kena blokir ini
+                (muncul pesan "Terlalu banyak percobaan login") dan gak mau nunggu, minta IP
+                mereka (juga otomatis tercatat di <strong>Notifikasi</strong> tiap kali ada yang
+                kena blokir), tempel di bawah, lalu klik Buka Blokir — mereka bisa langsung
+                coba login lagi.
+            </p>
+            <form id="unlockLoginForm" class="row g-3" style="max-width:480px;" onsubmit="return false;">
+                <div class="col-12">
+                    <label class="form-label">Alamat IP</label>
+                    <input id="unlockLoginIp" class="form-control" placeholder="contoh: 103.10.xx.xx">
+                </div>
+                <p class="text-danger small mb-0" id="unlockLoginError"></p>
+                <p class="text-success small mb-0" id="unlockLoginSuccess"></p>
+                <div class="col-12">
+                    <button type="button" class="btn btn-success" onclick="unlockLoginIp()">
+                        <i class="bi bi-unlock"></i> Buka Blokir
                     </button>
                 </div>
             </form>

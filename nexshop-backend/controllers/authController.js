@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendOtpEmail, sendPasswordResetEmail } = require("../config/mailer");
 const { notify } = require("../config/notify");
+const { resetLoginLimiter } = require("../middleware/rateLimiter");
 
 const OTP_EXPIRY_MINUTES = 10;
 const RESET_TOKEN_EXPIRY_MINUTES = 30;
@@ -289,6 +290,31 @@ exports.login = async (req, res) => {
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ADMIN — buka blokir loginLimiter untuk 1 IP. Dipakai kalau ada user yang
+// kena "Terlalu banyak percobaan login" (10x gagal / 15 menit) dan gak mau
+// nunggu — user kasih tau IP-nya ke admin (lewat WA/chat, IP-nya juga otomatis
+// kecatat di Notifikasi tiap kali blokir ini kena), admin tempel di Dashboard
+// > Settings > Keamanan, klik "Buka Blokir".
+exports.unlockLoginIp = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+
+    const ip = (req.body.ip || "").trim();
+    if (!ip) {
+        return res.status(400).json({ message: "IP wajib diisi" });
+    }
+
+    try {
+        await resetLoginLimiter(ip);
+        notify("security", `🔓 ${req.user.email} membuka blokir login untuk IP ${ip}`);
+        res.json({ message: `Blokir login untuk IP ${ip} berhasil dibuka. User bisa langsung coba login lagi.` });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: "Gagal membuka blokir" });
     }
 };
 

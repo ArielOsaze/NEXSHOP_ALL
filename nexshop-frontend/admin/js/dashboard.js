@@ -946,8 +946,44 @@ document.querySelectorAll("#settingsTabs [data-settings-tab]").forEach(btn => {
         document.getElementById("settingsTabStore").classList.toggle("d-none", tab !== "store");
         document.getElementById("settingsTabContent").classList.toggle("d-none", tab !== "content");
         document.getElementById("settingsTabApiKeys").classList.toggle("d-none", tab !== "apikeys");
+        document.getElementById("settingsTabSecurity").classList.toggle("d-none", tab !== "security");
     });
 });
+
+// Admin — buka blokir rate-limit login untuk 1 IP (tab Settings > Keamanan)
+async function unlockLoginIp() {
+    const errorEl = document.getElementById("unlockLoginError");
+    const successEl = document.getElementById("unlockLoginSuccess");
+    errorEl.textContent = "";
+    successEl.textContent = "";
+
+    const ip = document.getElementById("unlockLoginIp").value.trim();
+    if (!ip) {
+        errorEl.textContent = "IP wajib diisi";
+        return;
+    }
+
+    try {
+        const res = await apiFetch("/auth/admin/unlock-login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ ip })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            errorEl.textContent = data.message || "Gagal membuka blokir";
+            return;
+        }
+
+        successEl.textContent = data.message;
+        showToast(data.message);
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        console.error(err);
+        errorEl.textContent = "Terjadi kesalahan, coba lagi.";
+    }
+}
 
 async function loadSettings() {
     settingsLoaded = true;
