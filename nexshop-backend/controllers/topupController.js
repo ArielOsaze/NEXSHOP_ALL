@@ -1378,31 +1378,43 @@ exports.handleIpaymuNotification = async (req, res) => {
             return res.status(404).json({ message: "Order topup tidak ditemukan" });
         }
 
-        let ipaymuStatus = String(body.status || "").toLowerCase();
+        // Verifikasi ulang ke server iPaymu — JANGAN PERNAH percaya status dari
+        // body webhook begitu saja (endpoint ini publik; kalau dipercaya
+        // mentah-mentah, siapapun yang tahu URL-nya bisa klaim "berhasil" dan
+        // dapat diamond gratis tanpa bayar). Kalau verifikasi ke iPaymu gagal
+        // (trx_id gak ada / gak valid / iPaymu error), order TIDAK diubah
+        // statusnya dan TIDAK di-fulfill — dicatat ke notifikasi admin buat
+        // dicek manual. iPaymu otomatis retry webhook kalau gagal.
+        let verifiedStatus = null;
         if (trxId) {
             try {
                 const trx = await checkTransactionStatus(trxId);
-                ipaymuStatus = String(trx.Status || trx.status || ipaymuStatus).toLowerCase();
+                verifiedStatus = String(trx.Status || trx.status || "").toLowerCase();
             } catch (verifyErr) {
-                console.log("Gagal verifikasi status ke iPaymu, pakai status dari body webhook:", verifyErr.message);
+                console.log("Gagal verifikasi status ke iPaymu:", verifyErr.message);
             }
+        }
+
+        if (verifiedStatus === null) {
+            notify("security", `⚠️ Notifikasi pembayaran topup ${orderId} gak bisa diverifikasi ke iPaymu (trx_id: ${trxId || "-"}). Status order TIDAK diubah, cek manual di dashboard iPaymu.`);
+            return res.status(200).json({ message: "Diterima, menunggu verifikasi" });
         }
 
         let status = order.status;
         let shouldFulfill = false;
 
-        if (["berhasil", "success", "1", "paid", "settlement"].includes(ipaymuStatus)) {
+        if (["berhasil", "success", "1", "paid", "settlement"].includes(verifiedStatus)) {
             status = "paid";
             shouldFulfill = true;
-        } else if (["pending", "0"].includes(ipaymuStatus)) {
+        } else if (["pending", "0"].includes(verifiedStatus)) {
             status = "pending";
-        } else if (["gagal", "expired", "cancel", "cancelled", "-1", "failed", "expire"].includes(ipaymuStatus)) {
+        } else if (["gagal", "expired", "cancel", "cancelled", "-1", "failed", "expire"].includes(verifiedStatus)) {
             status = "failed";
         }
 
         await supabase.from("topup_orders").update({
             status,
-            payment_status: ipaymuStatus,
+            payment_status: verifiedStatus,
             updated_at: new Date().toISOString()
         }).eq("id", orderId);
 

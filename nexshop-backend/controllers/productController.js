@@ -9,6 +9,7 @@ exports.getProducts = async (req, res) => {
     const { data, error } = await supabase
       .from("products")
       .select("*")
+      .order("sort_order", { ascending: true })
       .order("id", { ascending: true });
 
     if (error) {
@@ -56,6 +57,9 @@ exports.getProductById = async (req, res) => {
 // TAMBAH PRODUK
 // ===========================
 exports.createProduct = async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+  }
   try {
    const {
   name,
@@ -68,6 +72,7 @@ exports.createProduct = async (req, res) => {
   category,
   strike_price,
   is_flash_sale,
+  sort_order,
 } = req.body;
 
 console.log(req.body);
@@ -76,6 +81,17 @@ console.log(req.body);
       return res.status(400).json({
         message: "Nama dan harga wajib diisi",
       });
+    }
+
+    let finalSortOrder = sort_order;
+    if (finalSortOrder === undefined || finalSortOrder === null || finalSortOrder === "") {
+      const { data: maxRow } = await supabase
+        .from("products")
+        .select("sort_order")
+        .order("sort_order", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      finalSortOrder = (maxRow && maxRow.sort_order != null ? maxRow.sort_order : 0) + 1;
     }
 
     const { data, error } = await supabase
@@ -92,6 +108,7 @@ console.log(req.body);
           category,
           strike_price: strike_price || null,
           is_flash_sale: !!is_flash_sale,
+          sort_order: finalSortOrder,
         },
       ])
       .select();
@@ -119,6 +136,9 @@ console.log(req.body);
 // UPDATE PRODUK
 // ===========================
 exports.updateProduct = async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+  }
   try {
     const { id } = req.params;
 
@@ -133,6 +153,7 @@ exports.updateProduct = async (req, res) => {
       category,
       strike_price,
       is_flash_sale,
+      sort_order,
     } = req.body;
 
     const { data, error } = await supabase
@@ -148,6 +169,7 @@ exports.updateProduct = async (req, res) => {
         category,
         strike_price: strike_price || null,
         is_flash_sale: !!is_flash_sale,
+        ...(sort_order === undefined || sort_order === null || sort_order === "" ? {} : { sort_order }),
       })
       .eq("id", id)
       .select();
@@ -181,6 +203,9 @@ exports.updateProduct = async (req, res) => {
 // HAPUS PRODUK
 // ===========================
 exports.deleteProduct = async (req, res) => {
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+  }
   try {
     const { id } = req.params;
 

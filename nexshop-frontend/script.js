@@ -728,7 +728,7 @@ document.getElementById("applyPromoBtn").addEventListener("click", async () => {
         const res = await fetch(`${API_BASE}/promo-codes/validate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code, subtotal: cartSubtotal(), email: emailForPromo || undefined })
+            body: JSON.stringify({ code, cart: cart.map(i => ({ id: i.id, qty: i.qty })), email: emailForPromo || undefined })
         });
         const data = await res.json();
 

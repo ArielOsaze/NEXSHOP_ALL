@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendOtpEmail, sendPasswordResetEmail } = require("../config/mailer");
 const { notify } = require("../config/notify");
-const { resetLoginLimiter } = require("../middleware/rateLimiter");
+const { resetLoginLimiter, getBlockedLoginIps } = require("../middleware/rateLimiter");
 
 const OTP_EXPIRY_MINUTES = 10;
 const RESET_TOKEN_EXPIRY_MINUTES = 30;
@@ -291,6 +291,15 @@ exports.login = async (req, res) => {
         console.log(error);
         res.status(500).json({ message: "Server Error" });
     }
+};
+
+// ADMIN — daftar IP yang lagi diblokir loginLimiter sekarang, biar admin
+// tinggal klik "Buka Blokir" tanpa perlu cari-cari IP-nya sendiri.
+exports.listBlockedIps = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    res.json(getBlockedLoginIps());
 };
 
 // ADMIN — buka blokir loginLimiter untuk 1 IP. Dipakai kalau ada user yang

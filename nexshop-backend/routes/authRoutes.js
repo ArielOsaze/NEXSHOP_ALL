@@ -13,6 +13,7 @@ router.post("/forgot-password", forgotPasswordLimiter, authController.forgotPass
 router.post("/reset-password", authController.resetPassword);
 
 // Admin — buka blokir rate-limit login untuk 1 IP (lihat authController.unlockLoginIp)
+router.get("/admin/blocked-ips", authMiddleware, authController.listBlockedIps);
 router.post("/admin/unlock-login", authMiddleware, authController.unlockLoginIp);
 
 module.exports = router;

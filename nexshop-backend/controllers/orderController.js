@@ -71,7 +71,7 @@ exports.create = async (req, res) => {
         let appliedPromoCode = null;
 
         if (promo_code) {
-            const promoResult = await validatePromoCode(promo_code, subtotal, recipient_email);
+            const promoResult = await validatePromoCode(promo_code, item_details, recipient_email);
             if (!promoResult.valid) {
                 return res.status(400).json({ message: promoResult.message });
             }
@@ -252,6 +252,9 @@ exports.getMyOrders = async (req, res) => {
 // frontend lagi.
 // ===========================
 exports.getAllOrders = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
     try {
         const { data, error } = await supabase
             .from("orders")
@@ -317,23 +320,34 @@ exports.handleNotification = async (req, res) => {
             return res.status(404).json({ message: "Order tidak ditemukan" });
         }
 
-        // Verifikasi ulang ke server iPaymu — jangan percaya status dari body webhook begitu saja
-        let ipaymuStatus = String(body.status || "").toLowerCase();
+        // Verifikasi ulang ke server iPaymu — JANGAN PERNAH percaya status dari
+        // body webhook begitu saja (endpoint ini publik, siapapun yang tahu
+        // URL-nya bisa kirim POST palsu klaim "berhasil" tanpa bayar beneran).
+        // Kalau verifikasi ke iPaymu gagal (trx_id gak ada / gak valid / iPaymu
+        // error), order TIDAK diubah statusnya sama sekali — dicatat ke
+        // notifikasi admin buat dicek manual. iPaymu otomatis retry webhook
+        // kalau gagal, jadi ini gak bikin order asli ketinggalan status.
+        let verifiedStatus = null;
         if (trxId) {
             try {
                 const trx = await checkTransactionStatus(trxId);
-                ipaymuStatus = String(trx.Status || trx.status || ipaymuStatus).toLowerCase();
+                verifiedStatus = String(trx.Status || trx.status || "").toLowerCase();
             } catch (verifyErr) {
-                console.log("Gagal verifikasi status ke iPaymu, pakai status dari body webhook:", verifyErr.message);
+                console.log("Gagal verifikasi status ke iPaymu:", verifyErr.message);
             }
         }
 
+        if (verifiedStatus === null) {
+            notify("security", `⚠️ Notifikasi pembayaran order ${orderId} gak bisa diverifikasi ke iPaymu (trx_id: ${trxId || "-"}). Status order TIDAK diubah, cek manual di dashboard iPaymu.`);
+            return res.status(200).json({ message: "Diterima, menunggu verifikasi" });
+        }
+
         let status = "pending";
-        if (["berhasil", "success", "1", "paid", "settlement"].includes(ipaymuStatus)) {
+        if (["berhasil", "success", "1", "paid", "settlement"].includes(verifiedStatus)) {
             status = "paid";
-        } else if (["pending", "0"].includes(ipaymuStatus)) {
+        } else if (["pending", "0"].includes(verifiedStatus)) {
             status = "pending";
-        } else if (["gagal", "expired", "cancel", "cancelled", "-1", "failed", "expire"].includes(ipaymuStatus)) {
+        } else if (["gagal", "expired", "cancel", "cancelled", "-1", "failed", "expire"].includes(verifiedStatus)) {
             status = "failed";
         }
 

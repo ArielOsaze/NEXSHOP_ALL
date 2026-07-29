@@ -15,13 +15,37 @@ function computeDiscount(promo, subtotal) {
     return Math.min(discount, subtotal);
 }
 
+// Kalau promo.applicable_product_ids diisi (bukan null/kosong), kode ini
+// cuma berlaku buat produk-produk itu — jumlahin cuma harga*qty dari item
+// keranjang yang id-nya ada di daftar itu. Kalau kosong/null, artinya
+// berlaku buat semua produk (perilaku lama, eligibleSubtotal = subtotal).
+function computeEligibleSubtotal(promo, cartItems) {
+    const restrictedIds = Array.isArray(promo.applicable_product_ids) ? promo.applicable_product_ids : null;
+    if (!restrictedIds || restrictedIds.length === 0) {
+        return cartItems.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity), 0);
+    }
+    const idSet = new Set(restrictedIds.map(String));
+    return cartItems
+        .filter((i) => idSet.has(String(i.id)))
+        .reduce((sum, i) => sum + Number(i.price) * Number(i.quantity), 0);
+}
+
 // Dipakai internal (checkout) DAN publik (tombol "Terapkan" di halaman toko)
 // `email` opsional -- dari tombol "Terapkan" di form checkout, emailnya bisa
 // aja belum diisi user pas itu (baru preview). Pengecekan yang BENERAN
 // menentukan tetap di orderController pas create order, saat itu
 // recipient_email pasti udah ada (field wajib).
-async function validatePromoCode(code, subtotal, email = null) {
+//
+// `cartItems` = array item keranjang yang HARGANYA sudah diambil dari
+// database sendiri (bukan dari body request client) -- bentuknya
+// [{ id, price, quantity }, ...]. Dipakai buat: (1) hitung subtotal beneran,
+// (2) kalau kode promo dibatasi ke produk tertentu, hitung eligibleSubtotal
+// (cuma dari produk yang eligible) yang jadi dasar perhitungan diskon.
+async function validatePromoCode(code, cartItems, email = null) {
     if (!code) return { valid: false, message: "Kode promo wajib diisi" };
+    if (!Array.isArray(cartItems) || cartItems.length === 0) {
+        return { valid: false, message: "Keranjang kosong" };
+    }
 
     const { data: promo, error } = await supabase
         .from("promo_codes")
@@ -41,10 +65,21 @@ async function validatePromoCode(code, subtotal, email = null) {
     if (promo.max_uses !== null && promo.used_count >= promo.max_uses) {
         return { valid: false, message: "Kode promo sudah mencapai batas pemakaian" };
     }
-    if (subtotal < Number(promo.min_purchase || 0)) {
+
+    const subtotal = cartItems.reduce((sum, i) => sum + Number(i.price) * Number(i.quantity), 0);
+    const eligibleSubtotal = computeEligibleSubtotal(promo, cartItems);
+
+    const isRestricted = Array.isArray(promo.applicable_product_ids) && promo.applicable_product_ids.length > 0;
+    if (isRestricted && eligibleSubtotal <= 0) {
+        return { valid: false, message: "Kode promo ini cuma berlaku buat produk tertentu yang gak ada di keranjang kamu" };
+    }
+
+    if (eligibleSubtotal < Number(promo.min_purchase || 0)) {
         return {
             valid: false,
-            message: `Minimal belanja ${rupiahServer(promo.min_purchase)} untuk pakai kode ini`
+            message: isRestricted
+                ? `Minimal belanja ${rupiahServer(promo.min_purchase)} dari produk yang eligible untuk pakai kode ini`
+                : `Minimal belanja ${rupiahServer(promo.min_purchase)} untuk pakai kode ini`
         };
     }
     if (promo.max_uses_per_user && email) {
@@ -59,8 +94,8 @@ async function validatePromoCode(code, subtotal, email = null) {
         }
     }
 
-    const discount = computeDiscount(promo, subtotal);
-    return { valid: true, promo, discount };
+    const discount = computeDiscount(promo, eligibleSubtotal);
+    return { valid: true, promo, discount, subtotal, eligibleSubtotal };
 }
 
 function rupiahServer(n) {
@@ -68,28 +103,52 @@ function rupiahServer(n) {
 }
 
 // ===========================================================
-// PUBLIK — validasi kode dari halaman toko (dipanggil pas klik "Terapkan")
+// PUBLIK — validasi kode dari halaman toko (dipanggil pas klik "Terapkan").
+// Ambil harga produk dari database sendiri (bukan percaya subtotal yang
+// dikirim client) -- konsisten sama cara orderController.create() kerja,
+// dan wajib biar bisa nentuin eligibleSubtotal buat kode promo yang
+// dibatasi ke produk tertentu.
 // ===========================================================
 exports.validate = async (req, res) => {
-    const { code, subtotal, email } = req.body;
+    const { code, cart, email } = req.body;
 
-    if (!subtotal || subtotal <= 0) {
-        return res.status(400).json({ valid: false, message: "Subtotal tidak valid" });
+    if (!Array.isArray(cart) || cart.length === 0) {
+        return res.status(400).json({ valid: false, message: "Keranjang kosong" });
     }
 
-    const result = await validatePromoCode(code, Number(subtotal), email);
-    if (!result.valid) {
-        return res.status(400).json(result);
-    }
+    try {
+        const ids = cart.map((i) => i.id);
+        const { data: dbProducts, error: prodErr } = await supabase
+            .from("products")
+            .select("id, price")
+            .in("id", ids);
 
-    res.json({
-        valid: true,
-        code: result.promo.code,
-        discount: result.discount,
-        discount_type: result.promo.discount_type,
-        discount_value: result.promo.discount_value,
-        description: result.promo.description
-    });
+        if (prodErr) {
+            return res.status(500).json({ valid: false, message: "Gagal mengambil data produk" });
+        }
+
+        const cartItems = cart.map((i) => {
+            const p = dbProducts.find((x) => String(x.id) === String(i.id));
+            return { id: i.id, price: p ? p.price : 0, quantity: Number(i.qty) || 0 };
+        });
+
+        const result = await validatePromoCode(code, cartItems, email);
+        if (!result.valid) {
+            return res.status(400).json(result);
+        }
+
+        res.json({
+            valid: true,
+            code: result.promo.code,
+            discount: result.discount,
+            discount_type: result.promo.discount_type,
+            discount_value: result.promo.discount_value,
+            description: result.promo.description
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ valid: false, message: "Server Error" });
+    }
 };
 
 // ===========================================================
@@ -117,7 +176,7 @@ exports.create = async (req, res) => {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
-    const { code, description, discount_type, discount_value, max_discount, min_purchase, max_uses, max_uses_per_user, is_active, expires_at } = req.body;
+    const { code, description, discount_type, discount_value, max_discount, min_purchase, max_uses, max_uses_per_user, is_active, expires_at, applicable_product_ids } = req.body;
 
     if (!code || !discount_value) {
         return res.status(400).json({ message: "Kode dan nilai diskon wajib diisi" });
@@ -125,6 +184,11 @@ exports.create = async (req, res) => {
     if (!["percent", "fixed"].includes(discount_type)) {
         return res.status(400).json({ message: "Tipe diskon tidak valid" });
     }
+
+    // null / [] = berlaku semua produk. Kalau diisi, pastikan array angka bersih.
+    const cleanProductIds = Array.isArray(applicable_product_ids) && applicable_product_ids.length > 0
+        ? applicable_product_ids.map((id) => Number(id)).filter((id) => !Number.isNaN(id))
+        : null;
 
     try {
         const { data, error } = await supabase
@@ -139,7 +203,8 @@ exports.create = async (req, res) => {
                 max_uses: max_uses ? Number(max_uses) : null,
                 max_uses_per_user: max_uses_per_user ? Number(max_uses_per_user) : null,
                 is_active: is_active !== undefined ? !!is_active : true,
-                expires_at: expires_at || null
+                expires_at: expires_at || null,
+                applicable_product_ids: cleanProductIds
             }])
             .select();
 
@@ -165,7 +230,7 @@ exports.update = async (req, res) => {
     }
 
     const { id } = req.params;
-    const { description, discount_type, discount_value, max_discount, min_purchase, max_uses, max_uses_per_user, is_active, expires_at } = req.body;
+    const { description, discount_type, discount_value, max_discount, min_purchase, max_uses, max_uses_per_user, is_active, expires_at, applicable_product_ids } = req.body;
 
     const payload = { updated_at: new Date().toISOString() };
     if (description !== undefined) payload.description = description;
@@ -177,6 +242,11 @@ exports.update = async (req, res) => {
     if (max_uses_per_user !== undefined) payload.max_uses_per_user = max_uses_per_user ? Number(max_uses_per_user) : null;
     if (is_active !== undefined) payload.is_active = !!is_active;
     if (expires_at !== undefined) payload.expires_at = expires_at || null;
+    if (applicable_product_ids !== undefined) {
+        payload.applicable_product_ids = Array.isArray(applicable_product_ids) && applicable_product_ids.length > 0
+            ? applicable_product_ids.map((pid) => Number(pid)).filter((pid) => !Number.isNaN(pid))
+            : null;
+    }
 
     try {
         const { data, error } = await supabase

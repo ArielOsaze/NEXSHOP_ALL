@@ -164,7 +164,7 @@ function renderProducts(data) {
 
     tbody.innerHTML = data.map((product, idx) => `
         <tr>
-            <td>${idx + 1}<div class="text-muted small">#${escapeHtml(product.id)}</div></td>
+            <td>${idx + 1}<div class="text-muted small">#${escapeHtml(product.id)} · urutan: ${escapeHtml(product.sort_order ?? "-")}</div></td>
             <td>
                 ${product.image
                     ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" style="width:70px;height:70px;object-fit:cover;border-radius:10px;">`
@@ -297,6 +297,7 @@ function editProduct(id) {
     document.getElementById("category").value = product.category || "";
     document.getElementById("rating").value = product.rating || "";
     document.getElementById("sold").value = product.sold || "";
+    document.getElementById("sortOrder").value = product.sort_order ?? "";
     document.getElementById("description").value = product.description || "";
 
     if (product.image) {
@@ -365,6 +366,7 @@ async function saveProduct() {
             category: document.getElementById("category").value.trim(),
             rating: Number(document.getElementById("rating").value || 0),
             sold: Number(document.getElementById("sold").value || 0),
+            sort_order: document.getElementById("sortOrder").value === "" ? null : Number(document.getElementById("sortOrder").value),
             image: imageUrl,
             description: document.getElementById("description").value
         };
@@ -947,17 +949,63 @@ document.querySelectorAll("#settingsTabs [data-settings-tab]").forEach(btn => {
         document.getElementById("settingsTabContent").classList.toggle("d-none", tab !== "content");
         document.getElementById("settingsTabApiKeys").classList.toggle("d-none", tab !== "apikeys");
         document.getElementById("settingsTabSecurity").classList.toggle("d-none", tab !== "security");
+        if (tab === "security") loadBlockedIps();
     });
 });
 
-// Admin — buka blokir rate-limit login untuk 1 IP (tab Settings > Keamanan)
-async function unlockLoginIp() {
+// Admin — daftar IP yang lagi diblokir (tab Settings > Keamanan), biar admin
+// tinggal klik tombol, gak perlu cari-cari IP manual.
+async function loadBlockedIps() {
+    const container = document.getElementById("blockedIpsList");
+    container.innerHTML = `<div class="text-muted text-center py-3 small"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</div>`;
+
+    try {
+        const res = await apiFetch("/auth/admin/blocked-ips");
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Gagal memuat daftar IP");
+
+        if (!data.length) {
+            container.innerHTML = `<div class="text-muted text-center py-3 small">Gak ada IP yang lagi diblokir saat ini.</div>`;
+            return;
+        }
+
+        container.innerHTML = data.map(item => `
+            <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2" style="border-color:var(--line)!important;">
+                <div>
+                    <strong>${escapeHtml(item.ip)}</strong>
+                    <div class="text-muted small">Kena blokir ${timeAgo(item.blockedAt)}</div>
+                </div>
+                <button class="btn btn-success btn-sm" onclick="unlockLoginIp('${escapeHtml(item.ip)}')">
+                    <i class="bi bi-unlock"></i> Buka Blokir
+                </button>
+            </div>
+        `).join("");
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        console.error(err);
+        container.innerHTML = `<div class="text-danger text-center py-3 small">${escapeHtml(err.message)}</div>`;
+    }
+}
+
+function timeAgo(timestamp) {
+    const diffMin = Math.max(0, Math.round((Date.now() - timestamp) / 60000));
+    if (diffMin < 1) return "barusan";
+    if (diffMin === 1) return "1 menit lalu";
+    return `${diffMin} menit lalu`;
+}
+
+// Admin — buka blokir rate-limit login untuk 1 IP (tab Settings > Keamanan).
+// Dipanggil baik dari tombol di daftar (dikasih `ip` langsung), atau dari
+// form manual di bawahnya (ip diambil dari input kalau parameter kosong).
+async function unlockLoginIp(ip) {
     const errorEl = document.getElementById("unlockLoginError");
     const successEl = document.getElementById("unlockLoginSuccess");
     errorEl.textContent = "";
     successEl.textContent = "";
 
-    const ip = document.getElementById("unlockLoginIp").value.trim();
+    if (typeof ip !== "string" || !ip) {
+        ip = document.getElementById("unlockLoginIp").value.trim();
+    }
     if (!ip) {
         errorEl.textContent = "IP wajib diisi";
         return;
@@ -978,6 +1026,8 @@ async function unlockLoginIp() {
 
         successEl.textContent = data.message;
         showToast(data.message);
+        document.getElementById("unlockLoginIp").value = "";
+        loadBlockedIps();
     } catch (err) {
         if (err.message === "unauthorized") return;
         console.error(err);
@@ -2010,11 +2060,29 @@ async function recheckTopupStatus(id) {
 // Kode Promo (Redeem Code)
 // ================================
 
+function renderPcProductList(selectedIds) {
+    const selected = new Set((selectedIds || []).map(String));
+    const listEl = document.getElementById("pcProductList");
+    if (!products.length) {
+        listEl.innerHTML = `<div class="text-muted">Belum ada produk. Tambah produk dulu di menu Produk.</div>`;
+        return;
+    }
+    listEl.innerHTML = products.map(p => `
+        <div class="form-check">
+            <input class="form-check-input pc-product-checkbox" type="checkbox" value="${Number(p.id)}" id="pcProduct${Number(p.id)}" ${selected.has(String(p.id)) ? "checked" : ""}>
+            <label class="form-check-label" for="pcProduct${Number(p.id)}">${escapeHtml(p.name)}</label>
+        </div>
+    `).join("");
+}
+
 function openPromoCodeModal() {
     editingPromoCodeId = null;
     document.getElementById("promoCodeForm").reset();
     document.getElementById("pcIsActive").checked = true;
     document.getElementById("pcCode").disabled = false;
+    document.getElementById("pcScope").value = "all";
+    document.getElementById("pcProductPicker").classList.add("d-none");
+    renderPcProductList([]);
     document.getElementById("promoCodeModalTitle").innerHTML = '<i class="bi bi-ticket-perforated me-2"></i>Buat Kode Promo';
     document.getElementById("promoCodeError").textContent = "";
     promoCodeModal.show();
@@ -2037,6 +2105,12 @@ function editPromoCode(id) {
     document.getElementById("pcMaxUsesPerUser").value = pc.max_uses_per_user || "";
     document.getElementById("pcExpiresAt").value = pc.expires_at ? pc.expires_at.slice(0, 10) : "";
     document.getElementById("pcIsActive").checked = !!pc.is_active;
+
+    const hasRestriction = Array.isArray(pc.applicable_product_ids) && pc.applicable_product_ids.length > 0;
+    document.getElementById("pcScope").value = hasRestriction ? "specific" : "all";
+    document.getElementById("pcProductPicker").classList.toggle("d-none", !hasRestriction);
+    renderPcProductList(hasRestriction ? pc.applicable_product_ids : []);
+
     document.getElementById("promoCodeError").textContent = "";
     promoCodeModal.show();
 }
@@ -2057,6 +2131,16 @@ async function savePromoCode() {
         return;
     }
 
+    const scope = document.getElementById("pcScope").value;
+    let applicable_product_ids = null;
+    if (scope === "specific") {
+        applicable_product_ids = Array.from(document.querySelectorAll(".pc-product-checkbox:checked")).map(cb => Number(cb.value));
+        if (!applicable_product_ids.length) {
+            errorEl.textContent = "Pilih minimal 1 produk, atau ganti ke \"Semua Produk\"";
+            return;
+        }
+    }
+
     const payload = {
         code,
         description: document.getElementById("pcDescription").value.trim(),
@@ -2067,7 +2151,8 @@ async function savePromoCode() {
         max_uses: document.getElementById("pcMaxUses").value || null,
         max_uses_per_user: document.getElementById("pcMaxUsesPerUser").value || null,
         is_active: document.getElementById("pcIsActive").checked,
-        expires_at: document.getElementById("pcExpiresAt").value || null
+        expires_at: document.getElementById("pcExpiresAt").value || null,
+        applicable_product_ids
     };
 
     try {
@@ -2152,10 +2237,14 @@ function renderPromoCodes() {
         const usageLabel = `${pc.used_count || 0}${pc.max_uses ? ` / ${pc.max_uses}` : ""}`;
         const expiresLabel = pc.expires_at ? new Date(pc.expires_at).toLocaleDateString("id-ID") : "Tanpa batas";
         const expired = pc.expires_at && new Date(pc.expires_at) < new Date();
+        const hasRestriction = Array.isArray(pc.applicable_product_ids) && pc.applicable_product_ids.length > 0;
+        const scopeLabel = hasRestriction
+            ? `<div class="text-muted small"><i class="bi bi-tag"></i> Khusus ${pc.applicable_product_ids.length} produk</div>`
+            : `<div class="text-muted small"><i class="bi bi-tags"></i> Semua produk</div>`;
 
         return `
         <tr>
-            <td><code>${escapeHtml(pc.code)}</code>${pc.description ? `<div class="text-muted small">${escapeHtml(pc.description)}</div>` : ""}</td>
+            <td><code>${escapeHtml(pc.code)}</code>${pc.description ? `<div class="text-muted small">${escapeHtml(pc.description)}</div>` : ""}${scopeLabel}</td>
             <td>${discountLabel}</td>
             <td>Rp ${Number(pc.min_purchase || 0).toLocaleString("id-ID")}</td>
             <td>${usageLabel}</td>
