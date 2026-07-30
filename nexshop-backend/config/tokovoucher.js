@@ -63,15 +63,27 @@ async function getFullCatalog() {
 }
 
 // Eksekusi transaksi topup (dipanggil setelah pembayaran iPaymu berhasil)
+//
+// PENTING: tujuan & server_id dikirim sebagai parameter TERPISAH ke TokoVoucher
+// (sesuai dokumentasi resmi mereka: .../transaksi?...&tujuan=[tujuan]&server_id=[server_id]).
+// Sebelumnya kode ini malah menggabungkan manual jadi "tujuan|server_id" dalam satu
+// string -- itu yang bikin error "bad user id ... strconv.ParseInt: parsing
+// \"60034816|\": invalid syntax" pas checkout Diamond ML: user_id yang sampai ke
+// backend TokoVoucher ikutan kebawa karakter "|" nya, jadi gagal di-parse sebagai
+// angka murni. Kirim terpisah = server_id-nya diproses TokoVoucher sendiri, tujuan
+// tetap bersih cuma angka player id.
 async function createTransaction({ refId, kodeProduk, tujuan, serverId }) {
     const { memberCode, secret } = await getCreds();
     const params = {
         ref_id: refId,
         produk: kodeProduk,
-        tujuan: serverId ? `${tujuan}|${serverId}` : tujuan,
+        tujuan,
         member_code: memberCode,
         secret
     };
+    if (serverId) {
+        params.server_id = serverId;
+    }
     const { data } = await axios.get(`${BASE_URL}/v1/transaksi`, { params });
     return data;
 }
