@@ -86,6 +86,36 @@ function hitungMarkupWajar(hargaBeli) {
 }
 
 // ===========================================================
+// FILTER REGION — NexShop cuma jualan buat pasar Indonesia, tapi katalog
+// TokoVoucher juga nyampur produk topup buat NEGARA LAIN dalam satu hasil
+// pencarian yang sama (kategorinya "<Nama Negara> Topup", misal "Malaysia
+// Topup", "Vietnam Topup", "Singapore Topup", "Philippines Topup",
+// "Thailand Topup" -- BEDA sama "Topup Game" yang emang kategori game
+// Indonesia, cuma kebetulan namanya mirip). Produk-produk luar negeri ini
+// HARUS di-skip dari sync sama sekali -- gak boleh ikut kesimpen ke DB,
+// apalagi ikut kena smart filter / aktivasi cerdas / markup manual /
+// markup otomatis.
+// ===========================================================
+const FOREIGN_REGION_KATEGORI = new Set([
+    "malaysia topup",
+    "vietnam topup",
+    "singapore topup",
+    "philippines topup",
+    "thailand topup"
+]);
+
+function isForeignRegion(kategori) {
+    const k = String(kategori || "").trim().toLowerCase();
+    if (!k) return false;
+    if (FOREIGN_REGION_KATEGORI.has(k)) return true;
+    // Jaga-jaga kalau TokoVoucher nambahin negara baru lagi ke depannya:
+    // pola kategorinya konsisten "<Nama Negara> Topup" (kata "Topup" di
+    // AKHIR). "Topup Game" sengaja DIKECUALIIN krn urutan katanya kebalik
+    // (kata "Topup" di DEPAN) dan itu emang kategori Indonesia.
+    return /\btopup$/i.test(k) && k !== "topup game";
+}
+
+// ===========================================================
 // AKTIVASI CERDAS — bantu admin milih produk mana yang perlu aktif dari
 // katalog hasil sync (yang sering ada BANYAK varian buat nominal diamond
 // yang sama/mirip dari supplier berbeda, plus nominal yang jarang dibeli).
@@ -272,13 +302,19 @@ exports.smartActivateProducts = async (req, res) => {
     const cap = Number(maxAktifPerKategori) > 0 ? Number(maxAktifPerKategori) : DEFAULT_MAX_AKTIF_PER_KATEGORI;
 
     try {
-        const { data: products, error: fetchErr } = await supabase
+        const { data: productsRaw, error: fetchErr } = await supabase
             .from("topup_products")
             .select("id, kode_produk, nama, kategori, harga_beli, is_active")
             .in("id", ids);
         if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
 
-        const parsed = (products || []).map((p) => ({ ...p, ...classifyProduct(p.nama) }));
+        // Aktivasi cerdas cuma buat produk region Indonesia -- kalaupun ada
+        // produk region luar yang kebetulan udah kesimpen dari sync lama
+        // (sebelum filter region ini ada), di sini dia dilewatin sama sekali.
+        const products = (productsRaw || []).filter((p) => !isForeignRegion(p.kategori));
+        const skippedForeignRegion = (productsRaw || []).length - products.length;
+
+        const parsed = products.map((p) => ({ ...p, ...classifyProduct(p.nama) }));
         const skipped = parsed.filter((p) => p.groupType === null);
         const groupable = parsed.filter((p) => p.groupType !== null);
 
@@ -403,10 +439,13 @@ exports.smartActivateProducts = async (req, res) => {
         res.json({
             message: `Aktivasi cerdas selesai: ${activateIds.length} produk diaktifkan, ${deactivateIds.length} dinonaktifkan${
                 skipped.length ? `, ${skipped.length} dilewatin (nominal diamond gak kebaca dari namanya)` : ""
-            }${filterPopularitasDipakai ? "" : " — belum ada histori order sukses, jadi filter popularitas belum diterapkan"}`,
+            }${skippedForeignRegion ? `, ${skippedForeignRegion} dilewatin (region luar Indonesia)` : ""}${
+                filterPopularitasDipakai ? "" : " — belum ada histori order sukses, jadi filter popularitas belum diterapkan"
+            }`,
             activated: activateIds.length,
             deactivated: deactivateIds.length,
             skipped: skipped.length,
+            skippedForeignRegion,
             popularityFilterApplied: filterPopularitasDipakai
         });
     } catch (err) {
@@ -575,7 +614,14 @@ exports.syncProducts = async (req, res) => {
             });
         }
 
-        const rows = result.data.map((p) => ({
+        // Buang produk region luar Indonesia (lihat isForeignRegion) SEBELUM
+        // dipetakan -- jadi produk kayak "RM 5" (Malaysia) atau "VND 10"
+        // (Vietnam) gak pernah ikut disimpen ke DB, gak ke-hitung markup, dan
+        // otomatis gak pernah nongol di smart filter / aktivasi cerdas.
+        const indoData = result.data.filter((p) => !isForeignRegion(p.operator_produk || p.category_name));
+        const skippedForeignCount = result.data.length - indoData.length;
+
+        const rows = indoData.map((p) => ({
             kode_produk: p.code,
             nama: p.nama_produk,
             kategori: p.operator_produk || p.category_name,
@@ -585,6 +631,15 @@ exports.syncProducts = async (req, res) => {
             // upsert di bawah pakai ignoreDuplicates:false jadi kita perlu
             // ambil produk existing dulu supaya harga_jual admin gak ketimpa
         }));
+
+        if (rows.length === 0) {
+            return res.json({
+                message: skippedForeignCount
+                    ? `Semua ${skippedForeignCount} produk hasil pencarian "${kode}" adalah region luar Indonesia, gak ada yang disinkronkan`
+                    : `Gak ada produk ditemukan buat kode "${kode}"`,
+                data: []
+            });
+        }
 
         const kodeList = rows.map((r) => r.kode_produk);
         const { data: existing } = await supabase
@@ -617,7 +672,12 @@ exports.syncProducts = async (req, res) => {
             return res.status(500).json({ message: "Gagal menyimpan produk" });
         }
 
-        res.json({ message: `${data.length} produk berhasil disinkronkan`, data });
+        res.json({
+            message: `${data.length} produk berhasil disinkronkan${
+                skippedForeignCount ? ` (${skippedForeignCount} produk region luar Indonesia dilewatin)` : ""
+            }`,
+            data
+        });
     } catch (err) {
         console.log(err.response?.data || err.message);
         res.status(500).json({ message: "Gagal terhubung ke TokoVoucher" });
@@ -805,13 +865,17 @@ exports.bulkMarkupPrice = async (req, res) => {
     const round = Number(rounding) || 0; // 0 = gak dibulatkan
 
     try {
-        const { data: products, error: fetchErr } = await supabase
+        const { data: productsRaw, error: fetchErr } = await supabase
             .from("topup_products")
-            .select("id, harga_beli, harga_jual")
+            .select("id, harga_beli, harga_jual, kategori")
             .in("id", ids);
         if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
 
-        const rows = (products || []).map((p) => {
+        // Markup manual cuma buat produk region Indonesia
+        const products = (productsRaw || []).filter((p) => !isForeignRegion(p.kategori));
+        const skippedForeignRegion = (productsRaw || []).length - products.length;
+
+        const rows = products.map((p) => {
             const modal = Number(p.harga_beli) || 0;
             const jual = type === "percent" ? modal * (1 + markupValue / 100) : modal + markupValue;
             return { id: p.id, harga_jual: bulatkanKeAtas(jual, round) };
@@ -834,14 +898,18 @@ exports.bulkMarkupPrice = async (req, res) => {
         await logAction({
             action: "markup",
             label: `Markup ${markupLabel} ke ${rows.length} produk`,
-            ids,
-            beforeRows: (products || []).map((p) => ({ id: p.id, harga_jual: p.harga_jual })),
+            ids: rows.map((r) => r.id),
+            beforeRows: products.map((p) => ({ id: p.id, harga_jual: p.harga_jual })),
             afterRows: rows,
             adminEmail: req.user.email
         });
 
         notify("product", `💰 ${req.user.email} menerapkan markup ${markupLabel} ke ${rows.length} produk topup`);
-        res.json({ message: `Harga jual ${rows.length} produk berhasil dihitung ulang dari harga modal` });
+        res.json({
+            message: `Harga jual ${rows.length} produk berhasil dihitung ulang dari harga modal${
+                skippedForeignRegion ? ` (${skippedForeignRegion} produk region luar Indonesia dilewatin)` : ""
+            }`
+        });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }
@@ -863,13 +931,17 @@ exports.autoMarkupPrice = async (req, res) => {
     }
 
     try {
-        const { data: products, error: fetchErr } = await supabase
+        const { data: productsRaw, error: fetchErr } = await supabase
             .from("topup_products")
-            .select("id, harga_beli, harga_jual")
+            .select("id, harga_beli, harga_jual, kategori")
             .in("id", ids);
         if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
 
-        const rows = (products || []).map((p) => ({
+        // Markup otomatis cuma buat produk region Indonesia
+        const products = (productsRaw || []).filter((p) => !isForeignRegion(p.kategori));
+        const skippedForeignRegion = (productsRaw || []).length - products.length;
+
+        const rows = products.map((p) => ({
             id: p.id,
             harga_jual: hitungMarkupWajar(p.harga_beli)
         }));
@@ -888,14 +960,18 @@ exports.autoMarkupPrice = async (req, res) => {
         await logAction({
             action: "auto_markup",
             label: `Markup otomatis (wajar) ke ${rows.length} produk`,
-            ids,
-            beforeRows: (products || []).map((p) => ({ id: p.id, harga_jual: p.harga_jual })),
+            ids: rows.map((r) => r.id),
+            beforeRows: products.map((p) => ({ id: p.id, harga_jual: p.harga_jual })),
             afterRows: rows,
             adminEmail: req.user.email
         });
 
         notify("product", `🤖 ${req.user.email} menerapkan markup otomatis (wajar) ke ${rows.length} produk topup`);
-        res.json({ message: `Harga jual ${rows.length} produk berhasil dihitung otomatis dari harga modal` });
+        res.json({
+            message: `Harga jual ${rows.length} produk berhasil dihitung otomatis dari harga modal${
+                skippedForeignRegion ? ` (${skippedForeignRegion} produk region luar Indonesia dilewatin)` : ""
+            }`
+        });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }
