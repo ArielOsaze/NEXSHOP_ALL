@@ -1515,6 +1515,48 @@ exports.handleIpaymuNotification = async (req, res) => {
 // sempat PENDING lalu statusnya berubah di sisi mereka). Divalidasi via
 // header X-TokoVoucher-Authorization, BUKAN authMiddleware biasa.
 // ===========================================================
+// Terapkan hasil status dari TokoVoucher (baik dari webhook, cek status
+// manual di admin, maupun poller otomatis) ke SATU order topup: update DB,
+// kirim invoice + notif Telegram HANYA pas transisi PERTAMA KALI ke "sukses"
+// (biar gak dobel kalau TokoVoucher retry webhook atau poller ngecek ulang).
+// `result` bentuknya sama persis baik dari payload webhook maupun response
+// checkStatus() -- field: status, message, sn, trx_id.
+async function reconcileTopupOrder(order, result) {
+    const statusMap = { sukses: "sukses", gagal: "gagal", pending: "processing" };
+    const finalStatus = statusMap[result.status] || "processing";
+    const wasNotYetSukses = order.status !== "sukses";
+
+    await supabase.from("topup_orders").update({
+        status: finalStatus,
+        tv_trx_id: result.trx_id || order.tv_trx_id || null,
+        tv_sn: result.sn || order.tv_sn || null,
+        tv_message: result.message || order.tv_message || null,
+        updated_at: new Date().toISOString()
+    }).eq("id", order.id);
+
+    if (finalStatus === "sukses" && wasNotYetSukses && order.recipient_email) {
+        try {
+            await sendTopupInvoiceEmail(order.recipient_email, {
+                orderId: order.id,
+                namaProduk: order.nama_produk,
+                tujuan: order.tujuan,
+                serverId: order.server_id,
+                harga: order.harga,
+                serialNumber: result.sn || order.tv_sn || null
+            });
+        } catch (mailErr) {
+            console.log("Gagal kirim invoice topup email:", mailErr.response?.data || mailErr.message);
+        }
+    }
+    if (finalStatus === "sukses" && wasNotYetSukses) {
+        sendTelegramNotification(
+            `💎 <b>Pembelian Topup Baru</b>\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
+        );
+    }
+
+    return finalStatus;
+}
+
 exports.handleTokoVoucherWebhook = async (req, res) => {
     try {
         const body = req.body;
@@ -1526,50 +1568,19 @@ exports.handleTokoVoucherWebhook = async (req, res) => {
             return res.status(401).json({ message: "Signature tidak valid" });
         }
 
-        const statusMap = { sukses: "sukses", gagal: "gagal", pending: "processing" };
-
         const { data: existingOrder } = await supabase
             .from("topup_orders")
-            .select("status, recipient_email, nama_produk, tujuan, server_id, harga")
+            .select("id, status, recipient_email, nama_produk, tujuan, server_id, harga, tv_trx_id, tv_sn, tv_message")
             .eq("id", refId)
             .maybeSingle();
 
-        const finalStatus = statusMap[body.status] || "processing";
-        const { error } = await supabase.from("topup_orders").update({
-            status: finalStatus,
-            tv_trx_id: body.trx_id || null,
-            tv_sn: body.sn || null,
-            tv_message: body.message || null,
-            updated_at: new Date().toISOString()
-        }).eq("id", refId);
-
-        if (error) {
-            console.log(error);
-            return res.status(500).json({ message: "Gagal update status" });
+        if (!existingOrder) {
+            // order gak ketemu (ref_id aneh / order lama yg udah dihapus) --
+            // tetep balikin 200 biar TokoVoucher gak retry-retry terus.
+            return res.status(200).json({ message: "OK (order tidak ditemukan, diabaikan)" });
         }
 
-        // kirim invoice cuma pas transisi PERTAMA KALI ke "sukses" (bukan yang
-        // udah pernah sukses sebelumnya — webhook TokoVoucher bisa aja retry)
-        if (finalStatus === "sukses" && existingOrder && existingOrder.status !== "sukses" && existingOrder.recipient_email) {
-            try {
-                await sendTopupInvoiceEmail(existingOrder.recipient_email, {
-                    orderId: refId,
-                    namaProduk: existingOrder.nama_produk,
-                    tujuan: existingOrder.tujuan,
-                    serverId: existingOrder.server_id,
-                    harga: existingOrder.harga,
-                    serialNumber: body.sn || null
-                });
-            } catch (mailErr) {
-                console.log("Gagal kirim invoice topup email:", mailErr.response?.data || mailErr.message);
-            }
-        }
-        if (finalStatus === "sukses" && existingOrder && existingOrder.status !== "sukses") {
-            sendTelegramNotification(
-                `💎 <b>Pembelian Topup Baru</b>\nOrder ID: ${refId}\nProduk: ${existingOrder.nama_produk}\nTujuan: ${existingOrder.tujuan}${existingOrder.server_id ? ` (${existingOrder.server_id})` : ""}\nTotal: ${rupiahLog(existingOrder.harga)}`
-            );
-        }
-
+        await reconcileTopupOrder(existingOrder, body);
         res.status(200).json({ message: "OK" });
     } catch (err) {
         console.log(err);
@@ -1585,41 +1596,62 @@ exports.checkStatus = async (req, res) => {
         if (!order) return res.status(404).json({ message: "Order tidak ditemukan" });
 
         const result = await tokovoucher.checkStatus(id);
-
-        const statusMap = { sukses: "sukses", gagal: "gagal", pending: "processing" };
-        const finalStatus = statusMap[result.status] || order.status;
-        await supabase.from("topup_orders").update({
-            status: finalStatus,
-            tv_trx_id: result.trx_id || order.tv_trx_id,
-            tv_sn: result.sn || order.tv_sn,
-            tv_message: result.message || order.tv_message,
-            updated_at: new Date().toISOString()
-        }).eq("id", id);
-
-        if (finalStatus === "sukses" && order.status !== "sukses" && order.recipient_email) {
-            try {
-                await sendTopupInvoiceEmail(order.recipient_email, {
-                    orderId: order.id,
-                    namaProduk: order.nama_produk,
-                    tujuan: order.tujuan,
-                    serverId: order.server_id,
-                    harga: order.harga,
-                    serialNumber: result.sn || order.tv_sn || null
-                });
-            } catch (mailErr) {
-                console.log("Gagal kirim invoice topup email:", mailErr.response?.data || mailErr.message);
-            }
-        }
-        if (finalStatus === "sukses" && order.status !== "sukses") {
-            sendTelegramNotification(
-                `💎 <b>Pembelian Topup Baru</b>\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
-            );
-        }
+        await reconcileTopupOrder(order, result);
 
         res.json(result);
     } catch (err) {
         console.log(err.response?.data || err.message);
         res.status(500).json({ message: "Gagal cek status ke TokoVoucher" });
+    }
+};
+
+// ===========================================================
+// FALLBACK OTOMATIS -- dipanggil berkala oleh jobs/topupStatusPoller.js.
+// TokoVoucher nyaranin polling tiap ~10 menit sebagai cadangan kalau-kalau
+// webhook mereka gak sempet nyampe (server down bentar, whitelist kespotong
+// sementara, dll) -- soalnya sebelum ini order bisa nyangkut di "processing"
+// selama-lamanya kalau gak ada admin yang manual klik "Cek Status".
+//
+// Cuma nyentuh order yang statusnya "processing" (= udah kekirim ke
+// TokoVoucher, lagi nunggu report final -- order "pending"/belum-bayar
+// gak ikut dicek), DAN udah lewat dari STUCK_AFTER_MINUTES sejak terakhir
+// diupdate (biar gak ganggu order yg emang masih baru diproses TokoVoucher),
+// DAN dibuat gak lebih dari MAX_AGE_HOURS yang lalu (order yg beneran
+// ilang/dibiarin lama gak perlu terus dicek tiap 10 menit selamanya).
+const STUCK_AFTER_MINUTES = 5;
+const MAX_AGE_HOURS = 48;
+
+exports.pollStuckOrders = async () => {
+    const stuckBefore = new Date(Date.now() - STUCK_AFTER_MINUTES * 60 * 1000).toISOString();
+    const oldestAllowed = new Date(Date.now() - MAX_AGE_HOURS * 60 * 60 * 1000).toISOString();
+
+    const { data: stuckOrders, error } = await supabase
+        .from("topup_orders")
+        .select("*")
+        .eq("status", "processing") // "pending" = belum bayar sama sekali, belum pernah dikirim ke TokoVoucher -- gak perlu (dan gak bisa) dicek
+        .lt("updated_at", stuckBefore)
+        .gt("created_at", oldestAllowed)
+        .limit(50); // jaga-jaga biar sekali jalan gak nembak ratusan request ke TokoVoucher
+
+    if (error) {
+        console.log("[topup-poller] gagal ambil order yang nyangkut:", error);
+        return;
+    }
+    if (!stuckOrders || !stuckOrders.length) return;
+
+    console.log(`[topup-poller] ngecek ulang ${stuckOrders.length} order topup yang nyangkut...`);
+
+    for (const order of stuckOrders) {
+        try {
+            const result = await tokovoucher.checkStatus(order.id);
+            const finalStatus = await reconcileTopupOrder(order, result);
+            console.log(`[topup-poller] ${order.id}: ${order.status} -> ${finalStatus}`);
+        } catch (err) {
+            // biarin aja, dicoba lagi di siklus poll berikutnya
+            console.log(`[topup-poller] gagal cek status ${order.id}:`, err.response?.data || err.message);
+        }
+        // jeda kecil antar request biar gak keburu-buru mukul rate limit TokoVoucher
+        await new Promise((r) => setTimeout(r, 800));
     }
 };
 

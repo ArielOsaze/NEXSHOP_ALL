@@ -19,6 +19,7 @@ const settingsRoutes = require("./routes/settingsRoutes");
 const promoCodeRoutes = require("./routes/promoCodeRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
+const { startTopupStatusPoller } = require("./jobs/topupStatusPoller");
 
 const app = express();
 
@@ -140,4 +141,6 @@ app.listen(PORT, () => {
     console.log(`📦 Environment  : ${process.env.NODE_ENV || "development"}`);
     console.log(`🗄️ Database     : Supabase`);
     console.log("=================================");
+
+    startTopupStatusPoller();
 });
