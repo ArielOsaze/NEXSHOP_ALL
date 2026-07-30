@@ -256,14 +256,19 @@
     <div id="topupTabProducts">
         <div class="card shadow-sm mb-3">
             <div class="card-body">
-                <label class="form-label">Sync produk dari TokoVoucher (masukkan kode/prefix, mis. <code>ML</code>, <code>FF</code>, <code>PUBG</code>)</label>
-                <div class="d-flex gap-2">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                    <label class="form-label mb-0">Sync produk dari TokoVoucher (masukkan kode/prefix, mis. <code>ML</code>, <code>FF</code>, <code>PUBG</code>)</label>
+                    <span class="badge bg-success-subtle text-success border border-success-subtle" title="Produk region luar Indonesia (Malaysia, Vietnam, Singapore, Philippines, Thailand, dll) otomatis dilewatin — gak ikut kesimpen, gak kena smart filter/aktivasi cerdas/markup.">
+                        <i class="bi bi-flag"></i> Filter Region: Indonesia saja
+                    </span>
+                </div>
+                <div class="d-flex gap-2 mt-2">
                     <input id="tvSyncKode" class="form-control" placeholder="Contoh: ML atau FF5" style="max-width:280px;">
                     <button class="btn btn-primary" onclick="syncTopupProducts()">
                         <i class="bi bi-arrow-repeat"></i> Sync Produk
                     </button>
                 </div>
-                <p class="text-muted small mt-2 mb-0">Produk baru masuk dalam keadaan <strong>nonaktif</strong> — atur harga jual lalu aktifkan supaya tampil di toko.</p>
+                <p class="text-muted small mt-2 mb-0">Produk baru masuk dalam keadaan <strong>nonaktif</strong> — atur harga jual lalu aktifkan supaya tampil di toko. Produk region luar Indonesia otomatis dilewatin saat sync.</p>
             </div>
         </div>
 

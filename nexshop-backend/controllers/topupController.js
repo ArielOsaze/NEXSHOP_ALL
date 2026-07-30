@@ -580,7 +580,12 @@ exports.getProducts = async (req, res) => {
             return res.status(500).json({ message: "Database Error" });
         }
 
-        res.json(data || []);
+        // Jaga-jaga (defense in depth): walaupun sync sekarang udah nolak produk
+        // region luar Indonesia dari awal, baris LAMA yang kesimpen sebelum filter
+        // ini ada masih mungkin nyangkut di DB. Disaring lagi di sini biar toko
+        // publik gak PERNAH nampilin produk region luar Indonesia.
+        const indoOnly = (data || []).filter((p) => !isForeignRegion(p.kategori));
+        res.json(indoOnly);
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error" });
@@ -697,7 +702,13 @@ exports.getAllProductsAdmin = async (req, res) => {
             .order("harga_jual", { ascending: true });
 
         if (error) return res.status(500).json({ message: "Database Error" });
-        res.json(data || []);
+
+        // Sama kayak getProducts: buang produk region luar Indonesia yang
+        // mungkin masih nyangkut di DB dari sync lama (sebelum filter region
+        // ada). Dashboard admin jadi cuma pernah nampilin produk region Indo,
+        // gak perlu dropdown "pilih region" krn cuma ada 1 region yang diizinin.
+        const indoOnly = (data || []).filter((p) => !isForeignRegion(p.kategori));
+        res.json(indoOnly);
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }
