@@ -185,9 +185,12 @@ exports.create = async (req, res) => {
         return res.status(400).json({ message: "Tipe diskon tidak valid" });
     }
 
-    // null / [] = berlaku semua produk. Kalau diisi, pastikan array angka bersih.
+    // null / [] = berlaku semua produk. Kalau diisi, bersihin jadi array string
+    // trimmed & unik -- SENGAJA gak dipaksa jadi Number lagi, karena produk
+    // topup diamond pakai kode_produk yang formatnya string/alfanumerik
+    // (mis. "ML86"), bukan cuma id angka kayak produk biasa.
     const cleanProductIds = Array.isArray(applicable_product_ids) && applicable_product_ids.length > 0
-        ? applicable_product_ids.map((id) => Number(id)).filter((id) => !Number.isNaN(id))
+        ? [...new Set(applicable_product_ids.map((id) => String(id).trim()).filter(Boolean))]
         : null;
 
     try {
@@ -244,7 +247,7 @@ exports.update = async (req, res) => {
     if (expires_at !== undefined) payload.expires_at = expires_at || null;
     if (applicable_product_ids !== undefined) {
         payload.applicable_product_ids = Array.isArray(applicable_product_ids) && applicable_product_ids.length > 0
-            ? applicable_product_ids.map((pid) => Number(pid)).filter((pid) => !Number.isNaN(pid))
+            ? [...new Set(applicable_product_ids.map((pid) => String(pid).trim()).filter(Boolean))]
             : null;
     }
 

@@ -1,6 +1,7 @@
 const supabase = require("../config/db");
 const { createRedirectPayment, checkTransactionStatus } = require("../config/ipaymu");
 const { validatePromoCode, incrementUsage } = require("./promoCodeController");
+const { buildDiscountedIpaymuItems } = require("../utils/promoDiscountSplit");
 const { notify } = require("../config/notify");
 const { sendOrderInvoiceEmail } = require("../config/mailer");
 const { sendTelegramNotification } = require("../config/telegram");
@@ -82,17 +83,11 @@ exports.create = async (req, res) => {
         const total = Math.max(subtotal - discountAmount, 0);
 
         // iPaymu menjumlahkan price*qty dari array product/price/qty sebagai
-        // total tagihan — kalau ada diskon, kirim sebagai "item" negatif
-        // tersendiri supaya total pas.
-        const ipaymuItems = [...item_details];
-        if (discountAmount > 0) {
-            ipaymuItems.push({
-                id: "DISCOUNT",
-                name: `Diskon (${appliedPromoCode})`.slice(0, 80),
-                price: -discountAmount,
-                quantity: 1
-            });
-        }
+        // total tagihan. Diskon TIDAK dikirim sebagai item harga negatif
+        // (pernah bikin returnUrl macet, gak balik ke web) — disebar
+        // proporsional ke tiap item supaya semua harga tetap >= 0 tapi
+        // totalnya tetap sama persis dengan subtotal - diskon.
+        const ipaymuItems = buildDiscountedIpaymuItems(item_details, discountAmount);
 
         // Simpan order dulu dengan status pending, sebelum minta payment URL ke iPaymu
         const { error: insertErr } = await supabase

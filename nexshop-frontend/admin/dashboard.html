@@ -983,10 +983,14 @@
                     <option value="all">Semua Produk</option>
                     <option value="specific">Produk Tertentu</option>
                 </select>
-                <div id="pcProductPicker" class="d-none mt-2 border rounded p-2" style="max-height:220px; overflow-y:auto; border-color:var(--line)!important;">
-                    <div id="pcProductList" class="small"></div>
+                <div id="pcProductPicker" class="d-none mt-2">
+                    <div class="border rounded p-2" style="max-height:220px; overflow-y:auto; border-color:var(--line)!important;">
+                        <div id="pcProductList" class="small"></div>
+                    </div>
+                    <label class="form-label small mt-2 mb-1">Atau tempel ID/kode produk manual <span class="text-muted">(paling gampang buat produk topup diamond — tinggal copy kode_produk-nya)</span></label>
+                    <textarea id="pcManualIds" class="form-control form-control-sm" rows="2" placeholder="Contoh: ML86, ML140, FF100 (pisah pakai koma atau baris baru)"></textarea>
                 </div>
-                <div class="form-text">Pilih "Produk Tertentu" biar kode ini cuma bisa dipakai (dan diskonnya cuma dihitung) buat produk yang dicentang — bukan seluruh keranjang.</div>
+                <div class="form-text">Pilih "Produk Tertentu" biar kode ini cuma bisa dipakai (dan diskonnya cuma dihitung) buat produk yang dicentang / ditempel ID-nya — bukan seluruh keranjang.</div>
             </div>
             <p class="text-danger small mb-0" id="promoCodeError"></p>
         </form>

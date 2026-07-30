@@ -5,6 +5,8 @@ const { checkNickname } = require("../config/apigames");
 const { notify } = require("../config/notify");
 const { sendTopupInvoiceEmail } = require("../config/mailer");
 const { sendTelegramNotification } = require("../config/telegram");
+const { validatePromoCode, incrementUsage } = require("./promoCodeController");
+const { buildDiscountedIpaymuItems } = require("../utils/promoDiscountSplit");
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
 const BACKEND_URL = (process.env.BACKEND_URL || "").replace(/\/$/, "");
@@ -1129,7 +1131,7 @@ exports.deleteAllProducts = async (req, res) => {
 // sama seperti checkout produk biasa)
 // ===========================================================
 exports.create = async (req, res) => {
-    const { kode_produk, tujuan, server_id, recipient_email } = req.body;
+    const { kode_produk, tujuan, server_id, recipient_email, promo_code } = req.body;
     const userId = req.user ? req.user.id : null;
 
     if (!kode_produk || !tujuan) {
@@ -1152,6 +1154,25 @@ exports.create = async (req, res) => {
             return res.status(400).json({ message: "Server ID wajib diisi untuk produk ini" });
         }
 
+        // Cart topup selalu 1 item (id = kode_produk, biar bisa dipakai admin
+        // buat batasi kode promo ke produk topup tertentu lewat kode_produk-nya
+        // -- sama seperti checkout produk biasa, JANGAN pernah percaya nominal
+        // diskon dari frontend, validasi ulang di server pakai harga dari DB.
+        const cartItems = [{ id: product.kode_produk, price: product.harga_jual, quantity: 1 }];
+        let discountAmount = 0;
+        let appliedPromoCode = null;
+
+        if (promo_code) {
+            const promoResult = await validatePromoCode(promo_code, cartItems, recipient_email);
+            if (!promoResult.valid) {
+                return res.status(400).json({ message: promoResult.message });
+            }
+            discountAmount = promoResult.discount;
+            appliedPromoCode = promoResult.promo.code;
+        }
+
+        const total = Math.max(product.harga_jual - discountAmount, 0);
+
         // Sama kayak alasan di orderController.js -- tambahin akhiran acak
         // biar ID gak ketebak cuma dari timestamp doang (endpoint "Cek
         // Transaksi" publik, gak perlu login).
@@ -1165,7 +1186,10 @@ exports.create = async (req, res) => {
             tujuan,
             server_id: server_id || null,
             recipient_email: recipient_email || null,
-            harga: product.harga_jual,
+            harga: total,
+            subtotal: product.harga_jual,
+            promo_code: appliedPromoCode,
+            discount_amount: discountAmount,
             status: "pending"
         }]);
 
@@ -1174,16 +1198,19 @@ exports.create = async (req, res) => {
             return res.status(500).json({ message: "Gagal membuat pesanan topup" });
         }
 
+        // Diskon (kalau ada) disebar ke item ini sendiri -- BUKAN dikirim
+        // sebagai baris harga negatif ke iPaymu (itu yang diduga bikin
+        // returnUrl gak balik normal ke web pas ada kode promo dipakai).
+        const ipaymuItems = buildDiscountedIpaymuItems(
+            [{ id: product.kode_produk, name: product.nama, price: product.harga_jual, quantity: 1 }],
+            discountAmount
+        );
+
         let payment;
         try {
             payment = await createRedirectPayment({
                 referenceId: orderId,
-                itemDetails: [{
-                    id: product.kode_produk,
-                    name: product.nama.slice(0, 80),
-                    price: product.harga_jual,
-                    quantity: 1
-                }],
+                itemDetails: ipaymuItems,
                 buyerEmail: recipient_email || undefined,
                 returnUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=success`,
                 cancelUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=cancel`,
@@ -1197,7 +1224,7 @@ exports.create = async (req, res) => {
 
         await supabase.from("topup_orders").update({ ipaymu_session_id: payment.sessionId, payment_url: payment.paymentUrl }).eq("id", orderId);
 
-        notify("topup", `💎 Pesanan topup baru ${orderId}: ${product.nama} ke ${tujuan} senilai ${rupiahLog(product.harga_jual)}`);
+        notify("topup", `💎 Pesanan topup baru ${orderId}: ${product.nama} ke ${tujuan} senilai ${rupiahLog(total)}${appliedPromoCode ? ` (promo ${appliedPromoCode})` : ""}`);
 
         res.status(201).json({
             message: "Pesanan topup berhasil dibuat",
@@ -1207,6 +1234,50 @@ exports.create = async (req, res) => {
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ===========================================================
+// PUBLIK — validasi kode promo dari halaman topup diamond (tombol
+// "Terapkan"), mirror dari promoCodeController.validate tapi ambil harga
+// dari tabel topup_products (bukan products biasa).
+// ===========================================================
+exports.validatePromo = async (req, res) => {
+    const { code, kode_produk, email } = req.body;
+
+    if (!kode_produk) {
+        return res.status(400).json({ valid: false, message: "Produk belum dipilih" });
+    }
+
+    try {
+        const { data: product, error: prodErr } = await supabase
+            .from("topup_products")
+            .select("kode_produk, harga_jual")
+            .eq("kode_produk", kode_produk)
+            .eq("is_active", true)
+            .maybeSingle();
+
+        if (prodErr || !product) {
+            return res.status(404).json({ valid: false, message: "Produk topup tidak ditemukan" });
+        }
+
+        const cartItems = [{ id: product.kode_produk, price: product.harga_jual, quantity: 1 }];
+        const result = await validatePromoCode(code, cartItems, email);
+        if (!result.valid) {
+            return res.status(400).json(result);
+        }
+
+        res.json({
+            valid: true,
+            code: result.promo.code,
+            discount: result.discount,
+            discount_type: result.promo.discount_type,
+            discount_value: result.promo.discount_value,
+            description: result.promo.description
+        });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ valid: false, message: "Server Error" });
     }
 };
 
@@ -1237,7 +1308,7 @@ exports.getPublicDetail = async (req, res) => {
     try {
         const { data: order, error } = await supabase
             .from("topup_orders")
-            .select("id, status, harga, nama_produk, tujuan, server_id, payment_method, tv_sn, created_at, updated_at")
+            .select("id, status, harga, subtotal, discount_amount, promo_code, nama_produk, tujuan, server_id, payment_method, tv_sn, created_at, updated_at")
             .eq("id", req.params.id)
             .maybeSingle();
 
@@ -1253,6 +1324,9 @@ exports.getPublicDetail = async (req, res) => {
             payment_method: order.payment_method,
             // SN cuma ditampilin kalau statusnya udah sukses
             serial_number: order.status === "sukses" ? order.tv_sn : null,
+            subtotal: order.subtotal || order.harga,
+            discount_amount: order.discount_amount || 0,
+            promo_code: order.promo_code || null,
             total: order.harga,
             created_at: order.created_at,
             updated_at: order.updated_at
@@ -1417,6 +1491,11 @@ exports.handleIpaymuNotification = async (req, res) => {
             payment_status: verifiedStatus,
             updated_at: new Date().toISOString()
         }).eq("id", orderId);
+
+        // catat pemakaian kode promo cuma sekali, pas transisi PERTAMA KALI ke "paid"
+        if (status === "paid" && order.status !== "paid" && order.promo_code) {
+            await incrementUsage(order.promo_code, order.recipient_email, orderId);
+        }
 
         // baru eksekusi topup ke TokoVoucher KALAU pembayaran baru saja lunas
         // dan belum pernah diproses sebelumnya (idempotency check via tv_trx_id)

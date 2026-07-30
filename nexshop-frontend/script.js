@@ -880,6 +880,10 @@ function renderTrackResult(data) {
             <div class="row"><span>User ID</span><span>${escapeHtml(String(data.tujuan || "-"))}${data.server_id ? " (" + escapeHtml(String(data.server_id)) + ")" : ""}</span></div>
             ${data.serial_number ? `<div class="row"><span>Kode/SN</span><span>${escapeHtml(data.serial_number)}</span></div>` : ""}
         `;
+        if (data.discount_amount > 0) {
+            itemsHtml += `<div class="row"><span>Harga Awal</span><span>${rupiah(data.subtotal || 0)}</span></div>`;
+            itemsHtml += `<div class="row discount"><span>Diskon${data.promo_code ? ` (${escapeHtml(data.promo_code)})` : ""}</span><span>-${rupiah(data.discount_amount)}</span></div>`;
+        }
     }
 
     // Produk "biasa" (game key/Xbox Game Pass/bundle) dikirim MANUAL via WA
@@ -1278,7 +1282,8 @@ let twState = {
     nickname: null,
     nicknameSupported: false,
     product: null,
-    payment: null
+    payment: null,
+    promo: null // { code, discount } -- diisi kalau kode promo berhasil diterapkan di step Ringkasan
 };
 
 async function loadTopupProducts() {
@@ -1362,7 +1367,8 @@ function openGameDetail(kategori) {
         nickname: null,
         nicknameSupported: false,
         product: null,
-        payment: null
+        payment: null,
+        promo: null
     };
 
     document.getElementById("twLogo").src = game.logo || "images/nexshop-icon.svg";
@@ -1411,7 +1417,13 @@ function goToTwStep(step) {
     const nextBtn = document.getElementById("twNextBtn");
     nextBtn.disabled = false;
     nextBtn.textContent = TW_STEP_LABELS[step];
-    if (step === 3) renderTwSummary();
+    if (step === 3) {
+        twState.promo = null;
+        document.getElementById("twPromoCodeInput").value = "";
+        document.getElementById("twPromoCodeMsg").textContent = "";
+        document.getElementById("twPromoCodeMsg").className = "promo-code-msg";
+        renderTwSummary();
+    }
 }
 
 document.getElementById("twPrevBtn").addEventListener("click", () => {
@@ -1577,19 +1589,65 @@ function renderTopupPaymentGrid() {
     });
 }
 
+document.getElementById("twApplyPromoBtn").addEventListener("click", async () => {
+    const code = document.getElementById("twPromoCodeInput").value.trim();
+    const msgEl = document.getElementById("twPromoCodeMsg");
+
+    if (!code) {
+        msgEl.textContent = "Masukkan kode promo dulu";
+        msgEl.className = "promo-code-msg error";
+        return;
+    }
+    if (!twState.product) {
+        msgEl.textContent = "Produk belum dipilih";
+        msgEl.className = "promo-code-msg error";
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/topup/validate-promo`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ code, kode_produk: twState.product.kode_produk, email: twState.email || undefined })
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.valid) {
+            twState.promo = null;
+            msgEl.textContent = data.message || "Kode promo tidak valid";
+            msgEl.className = "promo-code-msg error";
+            renderTwSummary();
+            return;
+        }
+
+        twState.promo = { code: data.code, discount: data.discount };
+        msgEl.textContent = `Kode "${data.code}" berhasil diterapkan! Hemat ${rupiah(data.discount)}`;
+        msgEl.className = "promo-code-msg success";
+        renderTwSummary();
+    } catch (err) {
+        msgEl.textContent = "Gagal menghubungi server";
+        msgEl.className = "promo-code-msg error";
+    }
+});
+
 /* ---- Step 4: Ringkasan Pesanan ---- */
 function renderTwSummary() {
     const el = document.getElementById("twSummary");
     const p = twState.product;
     const paymentLabel = (TW_PAYMENT_METHODS.find(m => m.id === twState.payment) || {}).label || "-";
+    const subtotal = p ? p.harga_jual : 0;
+    const discount = twState.promo ? twState.promo.discount : 0;
+    const total = Math.max(subtotal - discount, 0);
 
     el.innerHTML = `
         <div class="tw-summary-row"><span>Game</span><strong>${escapeHtml(twState.kategori)}</strong></div>
         ${twState.nicknameSupported && twState.nickname ? `<div class="tw-summary-row"><span>Nickname</span><strong>${escapeHtml(twState.nickname)}</strong></div>` : ""}
         <div class="tw-summary-row"><span>User ID</span><strong>${escapeHtml(twState.userId)}${twState.serverId ? " (" + escapeHtml(twState.serverId) + ")" : ""}</strong></div>
         <div class="tw-summary-row"><span>Produk</span><strong>${escapeHtml(p ? p.nama : "-")}</strong></div>
-        <div class="tw-summary-row"><span>Harga</span><strong>${rupiah(p ? p.harga_jual : 0)}</strong></div>
+        <div class="tw-summary-row"><span>Harga</span><strong>${rupiah(subtotal)}</strong></div>
+        ${twState.promo ? `<div class="tw-summary-row"><span>Diskon (${escapeHtml(twState.promo.code)})</span><strong>-${rupiah(discount)}</strong></div>` : ""}
         <div class="tw-summary-row"><span>Metode Pembayaran</span><strong>${escapeHtml(paymentLabel)}</strong></div>
+        <div class="tw-summary-row"><span>Total Bayar</span><strong>${rupiah(total)}</strong></div>
     `;
     document.getElementById("twConfirmCheck").checked = false;
     document.getElementById("twStep4Error").textContent = "";
@@ -1623,7 +1681,8 @@ async function submitTopupOrder() {
                 kode_produk: twState.product.kode_produk,
                 tujuan: twState.userId,
                 server_id: twState.serverId || undefined,
-                recipient_email: twState.email
+                recipient_email: twState.email,
+                promo_code: twState.promo ? twState.promo.code : undefined
             })
         });
         const data = await res.json();
@@ -1668,11 +1727,16 @@ function openOrderConfirm(orderData) {
     document.getElementById("twOrderConfirmProduct").textContent = p ? p.nama : "-";
     document.getElementById("twOrderConfirmGame").textContent = twState.kategori;
 
+    const subtotal = p ? p.harga_jual : 0;
+    const discount = twState.promo ? twState.promo.discount : 0;
+    const total = Math.max(subtotal - discount, 0);
+
     document.getElementById("twOrderConfirmSummary").innerHTML = `
         <div class="tw-summary-row"><span>ID Transaksi</span><strong>${escapeHtml(String(orderData.orderId))}</strong></div>
         <div class="tw-summary-row"><span>User ID</span><strong>${escapeHtml(twState.userId)}${twState.serverId ? " (" + escapeHtml(twState.serverId) + ")" : ""}</strong></div>
         <div class="tw-summary-row"><span>Metode Pembayaran</span><strong>${escapeHtml(paymentLabel)}</strong></div>
-        <div class="tw-summary-row"><span>Total</span><strong>${rupiah(p ? p.harga_jual : 0)}</strong></div>
+        ${twState.promo ? `<div class="tw-summary-row"><span>Diskon (${escapeHtml(twState.promo.code)})</span><strong>-${rupiah(discount)}</strong></div>` : ""}
+        <div class="tw-summary-row"><span>Total</span><strong>${rupiah(total)}</strong></div>
     `;
 
     const proceedBtn = document.getElementById("twOrderConfirmProceed");

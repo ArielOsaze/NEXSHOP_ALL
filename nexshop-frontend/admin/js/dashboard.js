@@ -2060,35 +2060,66 @@ async function recheckTopupStatus(id) {
 // Kode Promo (Redeem Code)
 // ================================
 
+// Produk topup diamond dimuat lazy (biasanya baru ke-load pas admin buka tab
+// Topup) -- picker kode promo butuh daftar ini juga, jadi pastiin ke-load
+// duluan tanpa numpang di UI tabel Topup (beda dari loadTopupProducts()).
+async function ensureTopupProductsForPromo() {
+    if (topupProducts.length) return;
+    try {
+        const res = await apiFetch("/topup/admin/products");
+        if (res.ok) {
+            topupProducts = await res.json();
+            topupProductsLoaded = true;
+        }
+    } catch (e) { /* silent -- picker tetap bisa jalan cuma buat produk biasa */ }
+}
+
 function renderPcProductList(selectedIds) {
     const selected = new Set((selectedIds || []).map(String));
     const listEl = document.getElementById("pcProductList");
-    if (!products.length) {
-        listEl.innerHTML = `<div class="text-muted">Belum ada produk. Tambah produk dulu di menu Produk.</div>`;
-        return;
-    }
-    listEl.innerHTML = products.map(p => `
+
+    const regularHtml = products.map(p => `
         <div class="form-check">
-            <input class="form-check-input pc-product-checkbox" type="checkbox" value="${Number(p.id)}" id="pcProduct${Number(p.id)}" ${selected.has(String(p.id)) ? "checked" : ""}>
-            <label class="form-check-label" for="pcProduct${Number(p.id)}">${escapeHtml(p.name)}</label>
+            <input class="form-check-input pc-product-checkbox" type="checkbox" value="${p.id}" id="pcProductReg${p.id}" ${selected.has(String(p.id)) ? "checked" : ""}>
+            <label class="form-check-label" for="pcProductReg${p.id}">${escapeHtml(p.name)}</label>
         </div>
     `).join("");
+
+    const topupHtml = topupProducts.length ? `
+        <div class="text-muted small mt-2 mb-1 border-top pt-2"><i class="bi bi-gem"></i> Produk Topup Diamond</div>
+        ${topupProducts.map(p => `
+            <div class="form-check">
+                <input class="form-check-input pc-product-checkbox" type="checkbox" value="${escapeHtml(p.kode_produk)}" id="pcProductTp${escapeHtml(p.kode_produk)}" ${selected.has(String(p.kode_produk)) ? "checked" : ""}>
+                <label class="form-check-label" for="pcProductTp${escapeHtml(p.kode_produk)}">💎 ${escapeHtml(p.nama)} <span class="text-muted">(${escapeHtml(p.kode_produk)})</span></label>
+            </div>
+        `).join("")}
+    ` : "";
+
+    listEl.innerHTML = (regularHtml + topupHtml) || `<div class="text-muted">Belum ada produk. Tambah produk dulu di menu Produk / Topup.</div>`;
+
+    // ID yang udah dipilih tapi gak ketemu checkbox-nya (kode produk topup
+    // yang belum sempet ke-load, atau ID yang emang mau ditempel manual)
+    // ditaruh ke textarea, biar gak ilang pas modal dibuka lagi.
+    const knownIds = new Set([...products.map(p => String(p.id)), ...topupProducts.map(p => String(p.kode_produk))]);
+    const orphanIds = [...selected].filter((id) => !knownIds.has(id));
+    document.getElementById("pcManualIds").value = orphanIds.join(", ");
 }
 
-function openPromoCodeModal() {
+async function openPromoCodeModal() {
     editingPromoCodeId = null;
     document.getElementById("promoCodeForm").reset();
     document.getElementById("pcIsActive").checked = true;
     document.getElementById("pcCode").disabled = false;
     document.getElementById("pcScope").value = "all";
     document.getElementById("pcProductPicker").classList.add("d-none");
+    await ensureTopupProductsForPromo();
     renderPcProductList([]);
     document.getElementById("promoCodeModalTitle").innerHTML = '<i class="bi bi-ticket-perforated me-2"></i>Buat Kode Promo';
     document.getElementById("promoCodeError").textContent = "";
     promoCodeModal.show();
 }
 
-function editPromoCode(id) {
+async function editPromoCode(id) {
     const pc = promoCodes.find(p => p.id === id);
     if (!pc) return;
 
@@ -2109,6 +2140,7 @@ function editPromoCode(id) {
     const hasRestriction = Array.isArray(pc.applicable_product_ids) && pc.applicable_product_ids.length > 0;
     document.getElementById("pcScope").value = hasRestriction ? "specific" : "all";
     document.getElementById("pcProductPicker").classList.toggle("d-none", !hasRestriction);
+    await ensureTopupProductsForPromo();
     renderPcProductList(hasRestriction ? pc.applicable_product_ids : []);
 
     document.getElementById("promoCodeError").textContent = "";
@@ -2134,9 +2166,12 @@ async function savePromoCode() {
     const scope = document.getElementById("pcScope").value;
     let applicable_product_ids = null;
     if (scope === "specific") {
-        applicable_product_ids = Array.from(document.querySelectorAll(".pc-product-checkbox:checked")).map(cb => Number(cb.value));
+        const checkedIds = Array.from(document.querySelectorAll(".pc-product-checkbox:checked")).map(cb => cb.value);
+        const manualIds = (document.getElementById("pcManualIds").value || "")
+            .split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+        applicable_product_ids = [...new Set([...checkedIds, ...manualIds])];
         if (!applicable_product_ids.length) {
-            errorEl.textContent = "Pilih minimal 1 produk, atau ganti ke \"Semua Produk\"";
+            errorEl.textContent = "Pilih atau tempel minimal 1 ID/kode produk, atau ganti ke \"Semua Produk\"";
             return;
         }
     }
