@@ -116,6 +116,41 @@ function isForeignRegion(kategori) {
 }
 
 // ===========================================================
+// FILTER REGION LEWAT KODE PRODUK -- sebagian game (MLBB, Valorant, dst)
+// nyimpen SEMUA region jadi 1 kategori yang sama ("Topup Game"), region-nya
+// cuma kebedain lewat SUFFIX di kode_produk (mis. "MLBB1163" = Indonesia,
+// "MLBBPH1163" = Philippines, "MLBBGLO..." = Global). isForeignRegion() di
+// atas gak bisa nangkep ini krn kategorinya sama persis kayak produk Indo.
+//
+// PENTING: JANGAN filter pakai cek substring "PH" doang di kode_produk --
+// banyak kode produk LAIN yang kebetulan ngandung "PH" tapi BUKAN produk
+// Philippines, misal "KPHAGO5" (Hago) atau "DAPH35GB3H" (paket data Axis).
+// Makanya di sini kita whitelist per PREFIX GAME yang emang udah kekonfirmasi
+// punya varian region, baru dicek suffix-nya pas abis prefix itu.
+// ===========================================================
+const FOREIGN_REGION_CODE_PATTERNS = [
+    // MLBB (Mobile Legends): base "MLBB1163"/"KPMLBB1163" = Indonesia.
+    // "MLBBPH...", "MLBBPHK...", "MLBBGLO...", "MLBBND...", "MLBBBR..." = luar.
+    /^(KP)?MLBB(PHK|PH|GLO|ND|BR)\d*[A-Z0-9]*$/i,
+    // Valorant: base "VALO1000" = Indonesia. "VALOPH...", "VALOMY...",
+    // "VALOTH...", "VALOSG..." = luar.
+    /^VALO(PH|MY|TH|SG)\d+$/i
+];
+
+function isForeignRegionCode(kodeProduk) {
+    const kode = String(kodeProduk || "").trim();
+    if (!kode) return false;
+    return FOREIGN_REGION_CODE_PATTERNS.some((re) => re.test(kode));
+}
+
+// Gabungan: true kalau produk luar Indonesia baik lewat kategori MAUPUN
+// lewat kode_produk. Pakai ini (bukan isForeignRegion doang) di semua
+// tempat yang nge-filter produk region luar.
+function isForeignProduct(kategori, kodeProduk) {
+    return isForeignRegion(kategori) || isForeignRegionCode(kodeProduk);
+}
+
+// ===========================================================
 // AKTIVASI CERDAS — bantu admin milih produk mana yang perlu aktif dari
 // katalog hasil sync (yang sering ada BANYAK varian buat nominal diamond
 // yang sama/mirip dari supplier berbeda, plus nominal yang jarang dibeli).
@@ -311,7 +346,7 @@ exports.smartActivateProducts = async (req, res) => {
         // Aktivasi cerdas cuma buat produk region Indonesia -- kalaupun ada
         // produk region luar yang kebetulan udah kesimpen dari sync lama
         // (sebelum filter region ini ada), di sini dia dilewatin sama sekali.
-        const products = (productsRaw || []).filter((p) => !isForeignRegion(p.kategori));
+        const products = (productsRaw || []).filter((p) => !isForeignProduct(p.kategori, p.kode_produk));
         const skippedForeignRegion = (productsRaw || []).length - products.length;
 
         const parsed = products.map((p) => ({ ...p, ...classifyProduct(p.nama) }));
@@ -584,7 +619,7 @@ exports.getProducts = async (req, res) => {
         // region luar Indonesia dari awal, baris LAMA yang kesimpen sebelum filter
         // ini ada masih mungkin nyangkut di DB. Disaring lagi di sini biar toko
         // publik gak PERNAH nampilin produk region luar Indonesia.
-        const indoOnly = (data || []).filter((p) => !isForeignRegion(p.kategori));
+        const indoOnly = (data || []).filter((p) => !isForeignProduct(p.kategori, p.kode_produk));
         res.json(indoOnly);
     } catch (err) {
         console.log(err);
@@ -623,7 +658,7 @@ exports.syncProducts = async (req, res) => {
         // dipetakan -- jadi produk kayak "RM 5" (Malaysia) atau "VND 10"
         // (Vietnam) gak pernah ikut disimpen ke DB, gak ke-hitung markup, dan
         // otomatis gak pernah nongol di smart filter / aktivasi cerdas.
-        const indoData = result.data.filter((p) => !isForeignRegion(p.operator_produk || p.category_name));
+        const indoData = result.data.filter((p) => !isForeignProduct(p.operator_produk || p.category_name, p.code));
         const skippedForeignCount = result.data.length - indoData.length;
 
         const rows = indoData.map((p) => ({
@@ -707,7 +742,7 @@ exports.getAllProductsAdmin = async (req, res) => {
         // mungkin masih nyangkut di DB dari sync lama (sebelum filter region
         // ada). Dashboard admin jadi cuma pernah nampilin produk region Indo,
         // gak perlu dropdown "pilih region" krn cuma ada 1 region yang diizinin.
-        const indoOnly = (data || []).filter((p) => !isForeignRegion(p.kategori));
+        const indoOnly = (data || []).filter((p) => !isForeignProduct(p.kategori, p.kode_produk));
         res.json(indoOnly);
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
@@ -883,7 +918,7 @@ exports.bulkMarkupPrice = async (req, res) => {
         if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
 
         // Markup manual cuma buat produk region Indonesia
-        const products = (productsRaw || []).filter((p) => !isForeignRegion(p.kategori));
+        const products = (productsRaw || []).filter((p) => !isForeignProduct(p.kategori, p.kode_produk));
         const skippedForeignRegion = (productsRaw || []).length - products.length;
 
         const rows = products.map((p) => {
@@ -949,7 +984,7 @@ exports.autoMarkupPrice = async (req, res) => {
         if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
 
         // Markup otomatis cuma buat produk region Indonesia
-        const products = (productsRaw || []).filter((p) => !isForeignRegion(p.kategori));
+        const products = (productsRaw || []).filter((p) => !isForeignProduct(p.kategori, p.kode_produk));
         const skippedForeignRegion = (productsRaw || []).length - products.length;
 
         const rows = products.map((p) => ({
