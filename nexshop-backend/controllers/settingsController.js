@@ -1,5 +1,6 @@
 const supabase = require("../config/db");
 const bcrypt = require("bcrypt");
+const axios = require("axios");
 const { notify } = require("../config/notify");
 const {
     getStoreSettings,
@@ -97,6 +98,73 @@ exports.updateApiKeysAdmin = async (req, res) => {
         notify("settings", `🔑 ${req.user.email} mengubah API Keys`);
         res.json({ message: "API keys berhasil disimpan" });
     } catch (err) {
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// Admin only — kirim pesan test ke WA Gateway (waapi.fyas.my.id) langsung dari
+// dashboard, buat mastiin URL/Key/Nomor tujuan bener sebelum dipakai beneran
+// buat notifikasi order/topup. Beda sama sendWhatsAppNotification() di
+// config/whatsapp.js: yang itu sengaja silent-fail (gak boleh ganggu proses
+// order), yang ini justru harus melaporkan hasil sukses/gagal apa adanya
+// biar gampang di-debug dari admin dashboard.
+exports.testWhatsAppAdmin = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+
+    try {
+        // pakai config tersimpan sbg default, tapi admin boleh override nomor
+        // & pesan dari form test — gak perlu save dulu buat coba-coba
+        const keys = await getApiKeys({ fresh: true });
+        const waapi_url = (req.body.waapi_url || keys.waapi_url || "").trim();
+        const waapi_key = (req.body.waapi_key || keys.waapi_key || "").trim();
+        const number = (req.body.number || keys.waapi_target_number || "").trim();
+        const message = (req.body.message || "").trim() || "Test notifikasi WhatsApp dari NexShop Admin Dashboard ✅";
+
+        if (!waapi_url || !waapi_key) {
+            return res.status(400).json({ message: "URL Gateway & API Key WA belum diisi. Isi dulu di form API Keys (atau simpan dulu) sebelum test." });
+        }
+        if (!number) {
+            return res.status(400).json({ message: "Nomor tujuan belum diisi." });
+        }
+
+        const started = Date.now();
+        try {
+            const waRes = await axios.post(
+                `${waapi_url.replace(/\/$/, "")}/api/whatsapp/send-message`,
+                { number, message },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-API-Key": waapi_key
+                    },
+                    timeout: 15000
+                }
+            );
+
+            return res.json({
+                success: true,
+                message: `Pesan test berhasil dikirim ke ${number} (${Date.now() - started}ms)`,
+                gateway_status: waRes.status,
+                gateway_response: waRes.data
+            });
+        } catch (waErr) {
+            // gagal panggil gateway-nya (bukan gagal server kita) — tetap 200
+            // biar frontend bisa nampilin detail errornya, bukan cuma "Server Error"
+            return res.status(200).json({
+                success: false,
+                message: waErr.response
+                    ? `Gateway WA menolak request (HTTP ${waErr.response.status})`
+                    : (waErr.code === "ECONNABORTED"
+                        ? "Timeout — gateway WA gak merespon dalam 15 detik."
+                        : `Gagal menghubungi gateway WA: ${waErr.message}`),
+                gateway_status: waErr.response?.status || null,
+                gateway_response: waErr.response?.data || null
+            });
+        }
+    } catch (err) {
+        console.log("testWhatsAppAdmin error:", err);
         res.status(500).json({ message: "Server Error" });
     }
 };

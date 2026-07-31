@@ -10,6 +10,7 @@ router.get("/store", settingsController.getStoreSettingsPublic);
 router.put("/store", authMiddleware, settingsController.updateStoreSettingsAdmin);
 router.get("/api-keys", authMiddleware, settingsController.getApiKeysAdmin);
 router.put("/api-keys", authMiddleware, settingsController.updateApiKeysAdmin);
+router.post("/test-whatsapp", authMiddleware, settingsController.testWhatsAppAdmin);
 
 // Profil admin yang sedang login
 router.get("/me", authMiddleware, settingsController.getMe);

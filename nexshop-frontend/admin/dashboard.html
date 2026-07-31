@@ -734,6 +734,30 @@
                     <div class="form-text">Dipakai buat kirim notifikasi WhatsApp tiap ada pembelian sukses. Buka <a href="https://waapi.fyas.my.id/dashboard" target="_blank" rel="noopener">waapi.fyas.my.id/dashboard</a> buat generate API Key, lalu isi Nomor Tujuan dengan nomor WA yang mau menerima notifikasi (pakai kode negara, tanpa tanda + atau spasi, mis. 62812xxxxxxxx).</div>
                 </div>
 
+                <div class="col-12 mt-2">
+                    <div class="border rounded p-3 bg-light">
+                        <h6 class="mb-2"><i class="bi bi-send-check me-1"></i>Test Kirim WhatsApp</h6>
+                        <p class="text-muted small mb-3">Kirim pesan percobaan langsung ke gateway WA buat mastiin URL/Key/Nomor di atas sudah bener. Kalau field di atas masih kosong, klik <strong>Simpan API Keys</strong> dulu, baru test.</p>
+                        <div class="row g-2">
+                            <div class="col-12 col-md-5">
+                                <label class="form-label small">Nomor Tujuan Test</label>
+                                <input id="waapiTestNumber" class="form-control form-control-sm" placeholder="62812xxxxxxxx (kosongkan = pakai Nomor Tujuan di atas)">
+                            </div>
+                            <div class="col-12 col-md-7">
+                                <label class="form-label small">Pesan Test</label>
+                                <input id="waapiTestMessage" class="form-control form-control-sm" placeholder="Test notifikasi WhatsApp dari NexShop Admin Dashboard ✅">
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-primary btn-sm mt-3" id="waapiTestBtn" onclick="testWhatsApp()">
+                            <i class="bi bi-whatsapp"></i> Kirim Test
+                        </button>
+                        <div id="waapiTestResult" class="mt-3 d-none">
+                            <div id="waapiTestAlert" class="alert small mb-2"></div>
+                            <pre id="waapiTestRaw" class="small bg-dark text-light p-2 rounded d-none" style="max-height:200px; overflow:auto; white-space:pre-wrap;"></pre>
+                        </div>
+                    </div>
+                </div>
+
                 <p class="text-muted small mb-0">Key yang sudah tersimpan ditampilkan tersamar (••••). Isi ulang field hanya kalau mau menggantinya.</p>
                 <p class="text-danger small mb-0" id="apiKeysError"></p>
                 <div class="col-12">

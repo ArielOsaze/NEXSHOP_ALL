@@ -1280,6 +1280,59 @@ async function saveApiKeys() {
     }
 }
 
+// Admin — test kirim WhatsApp langsung dari tab API Keys, gak perlu nunggu
+// ada order/topup beneran cuma buat mastiin gateway-nya nyambung.
+async function testWhatsApp() {
+    const btn = document.getElementById("waapiTestBtn");
+    const resultWrap = document.getElementById("waapiTestResult");
+    const alertEl = document.getElementById("waapiTestAlert");
+    const rawEl = document.getElementById("waapiTestRaw");
+
+    const payload = {
+        number: document.getElementById("waapiTestNumber").value.trim(),
+        message: document.getElementById("waapiTestMessage").value.trim()
+    };
+
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Mengirim...`;
+    resultWrap.classList.add("d-none");
+
+    try {
+        const res = await apiFetch("/settings/test-whatsapp", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+
+        const ok = res.ok && data.success !== false;
+        resultWrap.classList.remove("d-none");
+        alertEl.classList.remove("alert-success", "alert-danger");
+        alertEl.classList.add(ok ? "alert-success" : "alert-danger");
+        alertEl.textContent = data.message || (ok ? "Berhasil." : "Gagal mengirim pesan test.");
+
+        if (data.gateway_response) {
+            rawEl.classList.remove("d-none");
+            rawEl.textContent = typeof data.gateway_response === "string"
+                ? data.gateway_response
+                : JSON.stringify(data.gateway_response, null, 2);
+        } else {
+            rawEl.classList.add("d-none");
+            rawEl.textContent = "";
+        }
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        resultWrap.classList.remove("d-none");
+        alertEl.classList.remove("alert-success");
+        alertEl.classList.add("alert-danger");
+        alertEl.textContent = "Gagal menghubungi server: " + err.message;
+        rawEl.classList.add("d-none");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-whatsapp"></i> Kirim Test`;
+    }
+}
+
 // ================================
 // Topup Diamond (TokoVoucher)
 // ================================
