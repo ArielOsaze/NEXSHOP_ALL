@@ -5,6 +5,7 @@ const { checkNickname } = require("../config/apigames");
 const { notify } = require("../config/notify");
 const { sendTopupInvoiceEmail } = require("../config/mailer");
 const { sendTelegramNotification } = require("../config/telegram");
+const { sendWhatsAppNotification } = require("../config/whatsapp");
 const { validatePromoCode, incrementUsage } = require("./promoCodeController");
 const { buildDiscountedIpaymuItems } = require("../utils/promoDiscountSplit");
 
@@ -1535,6 +1536,9 @@ async function fulfillOrder(order) {
             sendTelegramNotification(
                 `💎 <b>Pembelian Topup Baru</b>\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
             );
+            sendWhatsAppNotification(
+                `💎 *Pembelian Topup Baru*\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
+            );
         }
     } catch (err) {
         // Sesuai catatan TokoVoucher: HTTP error / timeout HARUS dianggap PENDING,
@@ -1673,6 +1677,9 @@ async function reconcileTopupOrder(order, result) {
     if (finalStatus === "sukses" && wasNotYetSukses) {
         sendTelegramNotification(
             `💎 <b>Pembelian Topup Baru</b>\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
+        );
+        sendWhatsAppNotification(
+            `💎 *Pembelian Topup Baru*\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
         );
     }
 

@@ -5,6 +5,7 @@ const { buildDiscountedIpaymuItems } = require("../utils/promoDiscountSplit");
 const { notify } = require("../config/notify");
 const { sendOrderInvoiceEmail } = require("../config/mailer");
 const { sendTelegramNotification } = require("../config/telegram");
+const { sendWhatsAppNotification } = require("../config/whatsapp");
 
 // URL frontend/backend dipakai buat returnUrl/cancelUrl/notifyUrl iPaymu.
 // Isi FRONTEND_URL dan BACKEND_URL di .env (lihat .env.example).
@@ -399,10 +400,13 @@ exports.handleNotification = async (req, res) => {
             }
         }
 
-        // kirim notif Telegram cuma sekali, pas transisi PERTAMA KALI ke "paid"
+        // kirim notif Telegram & WhatsApp cuma sekali, pas transisi PERTAMA KALI ke "paid"
         if (status === "paid" && existingOrder.status !== "paid") {
             sendTelegramNotification(
                 `🛒 <b>Pembelian Baru</b>\nOrder ID: ${orderId}\nNama: ${existingOrder.recipient_name || "-"}\nTotal: ${rupiahLog(existingOrder.total)}`
+            );
+            sendWhatsAppNotification(
+                `🛒 *Pembelian Baru*\nOrder ID: ${orderId}\nNama: ${existingOrder.recipient_name || "-"}\nTotal: ${rupiahLog(existingOrder.total)}`
             );
         }
 
