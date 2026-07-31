@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "optimize:existing-images": "node scripts/migrate-images-to-webp.js"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +23,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "npm": "^12.0.1",
+    "sharp": "^0.35.3",
     "start": "^5.1.0"
   },
   "devDependencies": {

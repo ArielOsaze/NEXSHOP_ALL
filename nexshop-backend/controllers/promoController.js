@@ -1,18 +1,23 @@
 const supabase = require("../config/db");
 const { notify } = require("../config/notify");
+const { createWebpFileName, optimizeImageToWebp } = require("../utils/imageOptimizer");
 
 const PROMO_BUCKET = "promo";
 
 // Upload buffer file (dari multer memoryStorage) ke Supabase Storage,
 // balikin public URL-nya. Dipakai saat admin upload gambar banner langsung
 // dari dashboard (bukan nempel URL manual lagi).
-async function uploadBannerFile(file) {
-    const ext = file.originalname.split(".").pop();
-    const fileName = Date.now() + "-" + Math.random().toString(36).substring(2, 8) + "." + ext;
+async function uploadBannerFile(file, preset = "promo") {
+    const optimizedImage = await optimizeImageToWebp(file.buffer, preset);
+    const fileName = createWebpFileName();
 
     const { error } = await supabase.storage
         .from(PROMO_BUCKET)
-        .upload(fileName, file.buffer, { contentType: file.mimetype, upsert: false });
+        .upload(fileName, optimizedImage.buffer, {
+            contentType: optimizedImage.contentType,
+            cacheControl: "31536000",
+            upsert: false
+        });
 
     if (error) throw error;
 
@@ -83,10 +88,10 @@ exports.createSlide = async (req, res) => {
         // kalau admin upload file gambar, itu diprioritaskan dibanding image_url manual
         const files = req.files || {};
         if (files.image && files.image[0]) {
-            image_url = await uploadBannerFile(files.image[0]);
+            image_url = await uploadBannerFile(files.image[0], "promo");
         }
         if (files.mobile_image && files.mobile_image[0]) {
-            mobile_image_url = await uploadBannerFile(files.mobile_image[0]);
+            mobile_image_url = await uploadBannerFile(files.mobile_image[0], "promoMobile");
         }
 
         const { data, error } = await supabase
@@ -125,10 +130,10 @@ exports.updateSlide = async (req, res) => {
     try {
         const files = req.files || {};
         if (files.image && files.image[0]) {
-            image_url = await uploadBannerFile(files.image[0]);
+            image_url = await uploadBannerFile(files.image[0], "promo");
         }
         if (files.mobile_image && files.mobile_image[0]) {
-            mobile_image_url = await uploadBannerFile(files.mobile_image[0]);
+            mobile_image_url = await uploadBannerFile(files.mobile_image[0], "promoMobile");
         }
 
         const payload = { type, badge_text, title, description, cta_text, cta_link };

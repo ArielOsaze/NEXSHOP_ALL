@@ -155,7 +155,7 @@ setTimeout(() => {
 
         <div class="card" data-id="${p.id}">
             <div class="card-img">
-                <img src="${p.image}" alt="${p.name}">
+                <img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async">
                 <span class="badge">${p.badge}</span>
                 ${isFlashSaleActive(p) ? `<span class="flash-ribbon">🔥 -${discountPercent(p)}%</span>` : ""}
             </div>
@@ -271,7 +271,7 @@ function renderCart() {
         const p = PRODUCTS.find(x => x.id === item.id);
         return `
             <div class="cart-item" data-id="${p.id}">
-                <img src="${p.image}" alt="${p.name}">
+                <img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async">
                 <div class="cart-item-info">
                     <h5>${p.name}</h5>
                     <div class="cart-item-price">${rupiah(p.price * item.qty)}</div>

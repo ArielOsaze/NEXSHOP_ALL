@@ -1,4 +1,5 @@
 const supabase = require("../config/db");
+const { createWebpFileName, optimizeImageToWebp } = require("../utils/imageOptimizer");
 
 // Bucket Supabase Storage per jenis upload. Pastikan ketiga bucket ini sudah
 // dibuat di Supabase Storage (public) sebelum dipakai: "products", "promo", "logos".
@@ -27,13 +28,15 @@ async function uploadImage(req, res) {
         const type = req.query.type || "product";
         const bucket = BUCKETS[type] || BUCKETS.product;
 
-        const ext = req.file.originalname.split(".").pop();
-        const fileName = Date.now() + "-" + Math.random().toString(36).substring(2, 8) + "." + ext;
+        const preset = type === "logo" ? "logo" : type === "promo" ? "promo" : "product";
+        const optimizedImage = await optimizeImageToWebp(req.file.buffer, preset);
+        const fileName = createWebpFileName();
 
         const { error } = await supabase.storage
             .from(bucket)
-            .upload(fileName, req.file.buffer, {
-                contentType: req.file.mimetype,
+            .upload(fileName, optimizedImage.buffer, {
+                contentType: optimizedImage.contentType,
+                cacheControl: "31536000",
                 upsert: false
             });
 
@@ -41,7 +44,12 @@ async function uploadImage(req, res) {
 
         const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
 
-        res.json({ url: data.publicUrl });
+        res.json({
+            url: data.publicUrl,
+            mimeType: optimizedImage.contentType,
+            originalBytes: optimizedImage.originalBytes,
+            optimizedBytes: optimizedImage.optimizedBytes
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: err.message });
