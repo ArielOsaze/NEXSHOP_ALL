@@ -9,6 +9,33 @@ let selectedCategory = "Semua";
 let cachedStoreSettings = null; // diisi loadStoreSettings(), dipakai buat WA CTA di renderTrackResult
 
 const API_BASE = "https://nexshop.cloud/api";
+const THEME_STORAGE_KEY = "nexshop_theme";
+
+function applyTheme(theme, persist = false) {
+    const isLight = theme === "light";
+    document.documentElement.dataset.theme = isLight ? "light" : "dark";
+
+    const toggle = document.getElementById("themeToggle");
+    if (toggle) {
+        const icon = toggle.querySelector(".theme-toggle-icon");
+        const label = toggle.querySelector(".theme-toggle-label");
+        toggle.setAttribute("aria-pressed", String(isLight));
+        toggle.setAttribute("aria-label", isLight ? "Aktifkan mode gelap" : "Aktifkan mode terang");
+        toggle.title = isLight ? "Aktifkan mode gelap" : "Aktifkan mode terang";
+        if (icon) icon.textContent = isLight ? "☀" : "☾";
+        if (label) label.textContent = isLight ? "Mode terang" : "Mode gelap";
+    }
+
+    if (persist) localStorage.setItem(THEME_STORAGE_KEY, isLight ? "light" : "dark");
+}
+
+const themeToggle = document.getElementById("themeToggle");
+if (themeToggle) {
+    applyTheme(document.documentElement.dataset.theme);
+    themeToggle.addEventListener("click", () => {
+        applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light", true);
+    });
+}
 
 const rupiah = (n) => "Rp" + n.toLocaleString("id-ID");
 

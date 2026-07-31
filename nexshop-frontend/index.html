@@ -7,7 +7,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20260727">
+<script>
+    (() => {
+        try {
+            document.documentElement.dataset.theme = localStorage.getItem("nexshop_theme") === "light" ? "light" : "dark";
+        } catch {
+            document.documentElement.dataset.theme = "dark";
+        }
+    })();
+</script>
+<link rel="stylesheet" href="style.css?v=20260801">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
@@ -47,6 +56,10 @@
             <button type="button" class="menu-link-btn" id="trackOrderBtn">Cek Transaksi</button>
             <button type="button" class="menu-link-btn" data-policy-tab="faq">FAQ</button>
             <button type="button" class="menu-link-btn" data-policy-tab="contact">Kontak</button>
+            <button type="button" class="theme-toggle" id="themeToggle" aria-label="Ganti tema" aria-pressed="false">
+                <span class="theme-toggle-icon" aria-hidden="true">☾</span>
+                <span class="theme-toggle-label">Mode gelap</span>
+            </button>
             <button class="menu-account-btn" id="accountBtn">Login</button>
         </div>
 
@@ -577,6 +590,6 @@
   backend langsung kirim balik `paymentUrl` (halaman pembayaran iPaymu)
   dan browser di-redirect ke sana lewat window.location.href. Lihat script.js.
 -->
-<script src="script.js?v=20260727"></script>
+<script src="script.js?v=20260801"></script>
 </body>
 </html>
