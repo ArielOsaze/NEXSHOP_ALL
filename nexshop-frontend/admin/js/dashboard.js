@@ -1083,6 +1083,9 @@ async function loadSettings() {
             document.getElementById("brevoApiKey").value = keys.brevo_api_key || "";
             document.getElementById("brevoSenderEmail").value = keys.brevo_sender_email || "";
             document.getElementById("brevoSenderName").value = keys.brevo_sender_name || "";
+            document.getElementById("waapiUrl").value = keys.waapi_url || "";
+            document.getElementById("waapiKey").value = keys.waapi_key || "";
+            document.getElementById("waapiTargetNumber").value = keys.waapi_target_number || "";
         }
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -1254,7 +1257,10 @@ async function saveApiKeys() {
         apigames_secret_key: document.getElementById("agSecretKey").value.trim(),
         brevo_api_key: document.getElementById("brevoApiKey").value.trim(),
         brevo_sender_email: document.getElementById("brevoSenderEmail").value.trim(),
-        brevo_sender_name: document.getElementById("brevoSenderName").value.trim()
+        brevo_sender_name: document.getElementById("brevoSenderName").value.trim(),
+        waapi_url: document.getElementById("waapiUrl").value.trim(),
+        waapi_key: document.getElementById("waapiKey").value.trim(),
+        waapi_target_number: document.getElementById("waapiTargetNumber").value.trim()
     };
 
     try {

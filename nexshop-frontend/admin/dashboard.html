@@ -717,6 +717,23 @@
                     <div class="form-text">Dipakai buat kirim email kode OTP registrasi &amp; invoice pesanan/topup. Ambil API Key di <a href="https://app.brevo.com/settings/keys/api" target="_blank" rel="noopener">app.brevo.com</a> → SMTP &amp; API. <strong>Sender Email harus sudah diverifikasi/authenticated</strong> di Brevo (menu Senders &amp; IP), kalau belum, email gagal terkirim walau API Key benar. Kalau email OTP tetap gagal, cek juga menu <strong>Users → OTP Aktif</strong> buat lihat/kirim ulang kode secara manual.</div>
                 </div>
 
+                <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">WA Gateway (Notifikasi WhatsApp)</h6></div>
+                <div class="col-12">
+                    <label class="form-label">URL Gateway</label>
+                    <input id="waapiUrl" class="form-control" placeholder="https://waapi.fyas.my.id">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">API Key</label>
+                    <input id="waapiKey" class="form-control" placeholder="API Key dari waapi.fyas.my.id">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Nomor Tujuan Notifikasi</label>
+                    <input id="waapiTargetNumber" class="form-control" placeholder="62812xxxxxxxx">
+                </div>
+                <div class="col-12">
+                    <div class="form-text">Dipakai buat kirim notifikasi WhatsApp tiap ada pembelian sukses. Buka <a href="https://waapi.fyas.my.id/dashboard" target="_blank" rel="noopener">waapi.fyas.my.id/dashboard</a> buat generate API Key, lalu isi Nomor Tujuan dengan nomor WA yang mau menerima notifikasi (pakai kode negara, tanpa tanda + atau spasi, mis. 62812xxxxxxxx).</div>
+                </div>
+
                 <p class="text-muted small mb-0">Key yang sudah tersimpan ditampilkan tersamar (••••). Isi ulang field hanya kalau mau menggantinya.</p>
                 <p class="text-danger small mb-0" id="apiKeysError"></p>
                 <div class="col-12">

@@ -41,7 +41,13 @@ async function getApiKeys({ fresh = false } = {}) {
         // belum pernah isi dari dashboard sama sekali
         brevo_api_key: (data && data.brevo_api_key) || process.env.BREVO_API_KEY || "",
         brevo_sender_email: (data && data.brevo_sender_email) || process.env.EMAIL_USER || "",
-        brevo_sender_name: (data && data.brevo_sender_name) || process.env.BREVO_SENDER_NAME || "NexShop"
+        brevo_sender_name: (data && data.brevo_sender_name) || process.env.BREVO_SENDER_NAME || "NexShop",
+        // WA Gateway (waapi.fyas.my.id) — kirim notif WhatsApp tiap ada
+        // pembelian sukses, dst. Fallback ke .env kalau admin belum pernah
+        // isi dari dashboard sama sekali
+        waapi_url: (data && data.waapi_url) || process.env.WAAPI_URL || "",
+        waapi_key: (data && data.waapi_key) || process.env.WAAPI_KEY || "",
+        waapi_target_number: (data && data.waapi_target_number) || process.env.WAAPI_TARGET_NUMBER || ""
     };
 
     apiKeysCache = { data: merged, ts: now };
@@ -59,7 +65,10 @@ async function updateApiKeys(payload) {
         "apigames_secret_key",
         "brevo_api_key",
         "brevo_sender_email",
-        "brevo_sender_name"
+        "brevo_sender_name",
+        "waapi_url",
+        "waapi_key",
+        "waapi_target_number"
     ];
     const updatePayload = { updated_at: new Date().toISOString() };
     for (const key of allowed) {

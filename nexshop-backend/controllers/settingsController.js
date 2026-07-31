@@ -65,7 +65,10 @@ exports.getApiKeysAdmin = async (req, res) => {
             apigames_secret_key: mask(keys.apigames_secret_key),
             brevo_api_key: mask(keys.brevo_api_key),
             brevo_sender_email: keys.brevo_sender_email, // bukan rahasia, gak perlu di-mask
-            brevo_sender_name: keys.brevo_sender_name
+            brevo_sender_name: keys.brevo_sender_name,
+            waapi_url: keys.waapi_url, // URL gateway bukan rahasia, gak perlu di-mask
+            waapi_key: mask(keys.waapi_key),
+            waapi_target_number: keys.waapi_target_number
         });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
