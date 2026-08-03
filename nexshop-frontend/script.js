@@ -21,18 +21,25 @@ const PAYMENT_METHODS = [
 const ambientAssets = [...document.querySelectorAll(".ambient-asset")];
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 let ambientScrollFrame = null;
+let ambientScrollTarget = window.scrollY || 0;
+let ambientScrollPosition = ambientScrollTarget;
 
 function updateAmbientAssetParallax() {
     ambientScrollFrame = null;
-    const scrollY = window.scrollY || 0;
-    ambientAssets.forEach((asset, index) => {
+    ambientScrollPosition += (ambientScrollTarget - ambientScrollPosition) * 0.08;
+    ambientAssets.forEach(asset => {
         const depth = Number(asset.dataset.depth || 0.08);
-        asset.style.transform = `translate3d(0, ${Math.round(scrollY * depth * -0.18)}px, 0)`;
+        asset.style.transform = `translate3d(0, ${ambientScrollPosition * depth * -0.18}px, 0)`;
     });
+
+    if (Math.abs(ambientScrollTarget - ambientScrollPosition) > 0.5) {
+        ambientScrollFrame = requestAnimationFrame(updateAmbientAssetParallax);
+    }
 }
 
 if (ambientAssets.length && !reduceMotion) {
     window.addEventListener("scroll", () => {
+        ambientScrollTarget = window.scrollY || 0;
         if (ambientScrollFrame === null) ambientScrollFrame = requestAnimationFrame(updateAmbientAssetParallax);
     }, { passive: true });
     updateAmbientAssetParallax();
