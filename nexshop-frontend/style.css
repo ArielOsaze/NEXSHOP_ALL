@@ -162,8 +162,8 @@ img{ max-width:100%; display:block; }
 .ambient-asset--bolt{ color:var(--text-cyan); font-size:40px; }
 @keyframes ambient-rain{
     0%{ opacity:0; transform:translate3d(0,-18vh,0); }
-    12%{ opacity:.9; }
-    82%{ opacity:.9; }
+    8%{ opacity:.9; }
+    90%{ opacity:.9; }
     100%{ opacity:0; transform:translate3d(var(--rain-drift,18px),115vh,0); }
 }
 
