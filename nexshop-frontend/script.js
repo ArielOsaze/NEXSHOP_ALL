@@ -1271,6 +1271,52 @@ document.getElementById("heroNext").addEventListener("click", () => {
 });
 
 /* ---------- Store settings (nama toko, logo, kontak) ---------- */
+function parseContactEmails(value) {
+    return (String(value || "")
+        .match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi) || [])
+        .map(email => email.trim())
+        .filter(email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+        .filter((email, index, emails) => emails.indexOf(email) === index)
+        .slice(0, 2);
+}
+
+function updateContactEmailLinks(value) {
+    const emails = parseContactEmails(value);
+    const targets = [
+        {
+            footerLink: document.getElementById("footerEmailLink"),
+            footerLabel: document.getElementById("footerEmailLabel"),
+            contactItem: document.getElementById("contactEmailItem"),
+            contactLink: document.getElementById("contactEmailLink")
+        },
+        {
+            footerLink: document.getElementById("footerEmailLinkSecondary"),
+            footerLabel: document.getElementById("footerEmailLabelSecondary"),
+            contactItem: document.getElementById("contactEmailItemSecondary"),
+            contactLink: document.getElementById("contactEmailLinkSecondary")
+        }
+    ];
+
+    targets.forEach((target, index) => {
+        const email = emails[index];
+        if (!email) {
+            target.footerLink?.classList.toggle("hidden", index !== 0);
+            target.contactItem?.classList.toggle("hidden", index !== 0);
+            return;
+        }
+
+        const mailto = `mailto:${email}`;
+        target.footerLink?.classList.remove("hidden");
+        target.contactItem?.classList.remove("hidden");
+        if (target.footerLink) target.footerLink.href = mailto;
+        if (target.footerLabel) target.footerLabel.textContent = email;
+        if (target.contactLink) {
+            target.contactLink.href = mailto;
+            target.contactLink.textContent = email;
+        }
+    });
+}
+
 async function loadStoreSettings() {
     try {
         const res = await fetch(`${API_BASE}/settings/store`);
@@ -1305,17 +1351,7 @@ async function loadStoreSettings() {
                 contactWa.textContent = s.contact_phone || s.contact_whatsapp;
             }
         }
-        if (s.contact_email) {
-            const emailLink = document.getElementById("footerEmailLink");
-            emailLink.href = `mailto:${s.contact_email}`;
-            const emailLabel = document.getElementById("footerEmailLabel");
-            if (emailLabel) emailLabel.textContent = s.contact_email;
-            const contactEmail = document.getElementById("contactEmailLink");
-            if (contactEmail) {
-                contactEmail.href = emailLink.href;
-                contactEmail.textContent = s.contact_email;
-            }
-        }
+        if (s.contact_email) updateContactEmailLinks(s.contact_email);
         if (s.address) {
             const footerAddress = document.getElementById("footerAddress");
             footerAddress.replaceChildren();

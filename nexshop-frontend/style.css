@@ -669,9 +669,17 @@ header{ position:sticky; top:0; z-index:100; }
 .footer-brand{ font-family:'Sora',sans-serif; font-weight:700; font-size:24px; margin-bottom:10px; }
 .footer-brand span{ color:var(--text-violet); }
 .site-footer > p{ color:var(--text-muted); font-size:13px; margin-bottom:20px; }
-.footer-contact{ display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-bottom:20px; }
-.footer-contact a{ font-size:13px; color:var(--text-muted); transition:.2s; }
-.footer-contact a:hover{ color:var(--text-cyan); }
+.footer-contact{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));
+    width:min(100%,920px); margin:0 auto 20px; gap:10px;
+}
+.footer-contact a{
+    min-width:0; display:flex; justify-content:flex-start; padding:10px 12px;
+    border:1px solid var(--line); border-radius:12px; background:var(--bg-panel);
+    font-size:13px; color:var(--text-muted); text-align:left;
+    transition:transform .2s, border-color .2s, background .2s, color .2s;
+}
+.footer-contact a:hover{ color:var(--text-cyan); border-color:var(--text-cyan); background:var(--bg-panel-2); transform:translateY(-2px); }
 
 /* Icon kontak brand yang konsisten dengan Font Awesome di seluruh UI. */
 .footer-social-link{ display:inline-flex; align-items:center; gap:9px; }
@@ -691,10 +699,12 @@ header{ position:sticky; top:0; z-index:100; }
 .footer-social-icon--mail{ background:linear-gradient(135deg,var(--cyan),var(--violet)); }
 .footer-social-icon--ig{ background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285AEB 90%); }
 .footer-social-icon--pin{ background:linear-gradient(135deg,var(--violet),var(--violet-2)); }
+.footer-social-label{ min-width:0; overflow-wrap:anywhere; }
 
-.contact-list-item{ display:flex; align-items:center; gap:10px; }
+.contact-list-item{ display:flex; align-items:flex-start; gap:10px; }
 .contact-list-item .footer-social-icon{ width:24px; height:24px; }
 .contact-list-item .footer-social-icon::before{ font-size:13px; }
+.contact-list-item a{ min-width:0; overflow-wrap:anywhere; }
 .footer-links{ font-size:13px; color:var(--text-dim); margin-bottom:20px; }
 .footer-link-btn{ color:var(--text-muted); text-decoration:underline; text-underline-offset:3px; }
 .footer-link-btn:hover{ color:var(--text); }
@@ -1020,6 +1030,15 @@ input::placeholder{ color:var(--text-dim); }
     .checkout-payment-grid{ grid-template-columns:1fr; }
     .tw-nav{ flex-direction:column-reverse; }
     .tw-nav .btn-ghost, .tw-next{ width:100%; }
+}
+@media(max-width:640px){
+    .site-footer{ padding:44px 16px 24px; }
+    .footer-contact{ grid-template-columns:1fr; gap:8px; }
+    .footer-contact a{ width:100%; font-size:12px; }
+    .footer-social-icon{ width:30px; height:30px; }
+    .footer-social-label{ line-height:1.35; }
+    .footer-links{ line-height:2; }
+    .footer-link-sep{ margin:0 4px; }
 }
 @media(prefers-reduced-motion:reduce){
     *{ animation-duration:.01ms !important; transition-duration:.01ms !important; }
