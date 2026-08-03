@@ -57,30 +57,30 @@
 
 :root[data-theme="light"]{
     color-scheme:light;
-    --bg-void:#F7F5FC;
-    --bg-void-2:#EEEAF8;
-    --bg-panel:#FFFFFF;
-    --bg-panel-2:#F5F1FC;
-    --bg-panel-3:#EAE4F7;
-    --line:#DCD4ED;
+    --bg-void:#F4F0FC;
+    --bg-void-2:#EAE2F8;
+    --bg-panel:#FCFAFF;
+    --bg-panel-2:#F1EAFE;
+    --bg-panel-3:#E4D9F5;
+    --line:#D7C9EC;
 
-    --text:#211A33;
-    --text-muted:#665D78;
-    --text-dim:#8B819E;
+    --text:#251B3B;
+    --text-muted:#655A7A;
+    --text-dim:#897E9E;
 
     --glow-violet:0 0 24px rgba(109,40,217,.20);
     --glow-cyan:0 0 24px rgba(14,165,196,.18);
-    --nav-bg:rgba(247,245,252,.88);
-    --ambient-violet:rgba(124,58,237,.18);
-    --ambient-cyan:rgba(14,165,196,.13);
-    --ambient-magenta:rgba(190,24,93,.08);
-    --grid-line:rgba(109,40,217,.11);
-    --loader-bg:rgba(247,245,252,.96);
-    --surface-highlight:rgba(255,255,255,.72);
-    --section-glow:rgba(124,58,237,.08);
+    --nav-bg:rgba(244,240,252,.9);
+    --ambient-violet:rgba(124,58,237,.22);
+    --ambient-cyan:rgba(14,165,196,.12);
+    --ambient-magenta:rgba(190,24,93,.07);
+    --grid-line:rgba(109,40,217,.14);
+    --loader-bg:rgba(244,240,252,.97);
+    --surface-highlight:rgba(255,255,255,.78);
+    --section-glow:rgba(124,58,237,.11);
 
-    --glass-topup:rgba(255,255,255,.78);
-    --glass-detail:rgba(255,255,255,.88);
+    --glass-topup:rgba(255,255,255,.72);
+    --glass-detail:rgba(255,255,255,.84);
     --overlay-bg:rgba(28,19,48,.48);
     --soft-border:rgba(65,42,105,.12);
     --text-violet:#6D28D9;
