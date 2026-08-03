@@ -146,11 +146,12 @@ img{ max-width:100%; display:block; }
     position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;
 }
 .ambient-asset{
-    position:absolute; display:block; opacity:.1; will-change:transform;
+    position:absolute; top:0; display:block; opacity:.1; will-change:transform;
     filter:drop-shadow(0 8px 18px rgba(0,0,0,.12));
 }
 .ambient-asset-glyph{
-    display:block; will-change:transform; animation:ambient-float 18s ease-in-out infinite;
+    display:block; will-change:transform, opacity;
+    animation:ambient-rain var(--rain-duration,22s) linear var(--rain-delay,0s) infinite;
 }
 .ambient-asset--gem{ color:var(--text-violet); font-size:52px; }
 .ambient-asset--xbox{ color:#55C443; font-size:48px; }
@@ -159,17 +160,11 @@ img{ max-width:100%; display:block; }
 .ambient-asset--ticket{ color:var(--text-violet); font-size:36px; }
 .ambient-asset--gift{ color:var(--text-magenta); font-size:42px; }
 .ambient-asset--bolt{ color:var(--text-cyan); font-size:40px; }
-.ambient-asset--xbox .ambient-asset-glyph{ animation-delay:-3.2s; }
-.ambient-asset--gamepad .ambient-asset-glyph{ animation-delay:-6.4s; }
-.ambient-asset--coins .ambient-asset-glyph{ animation-delay:-9.6s; }
-.ambient-asset--ticket .ambient-asset-glyph{ animation-delay:-12.8s; }
-.ambient-asset--gift .ambient-asset-glyph{ animation-delay:-15.2s; }
-.ambient-asset--bolt .ambient-asset-glyph{ animation-delay:-5.4s; }
-@keyframes ambient-float{
-    0%,100%{ transform:translate3d(0,2px,0); }
-    25%{ transform:translate3d(12px,-7px,0); }
-    50%{ transform:translate3d(-5px,-18px,0); }
-    75%{ transform:translate3d(-14px,-6px,0); }
+@keyframes ambient-rain{
+    0%{ opacity:0; transform:translate3d(0,-18vh,0); }
+    12%{ opacity:.9; }
+    82%{ opacity:.9; }
+    100%{ opacity:0; transform:translate3d(var(--rain-drift,18px),115vh,0); }
 }
 
 /* ================= GLOBAL LOADING ================= */

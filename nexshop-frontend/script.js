@@ -18,33 +18,6 @@ const PAYMENT_METHODS = [
     { id: "card", label: "Kartu Kredit/Debit", desc: "Visa dan Mastercard", icon: "fa-credit-card" }
 ];
 
-const ambientAssets = [...document.querySelectorAll(".ambient-asset")];
-const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-let ambientScrollFrame = null;
-let ambientScrollTarget = window.scrollY || 0;
-let ambientScrollPosition = ambientScrollTarget;
-
-function updateAmbientAssetParallax() {
-    ambientScrollFrame = null;
-    ambientScrollPosition += (ambientScrollTarget - ambientScrollPosition) * 0.08;
-    ambientAssets.forEach(asset => {
-        const depth = Number(asset.dataset.depth || 0.08);
-        asset.style.transform = `translate3d(0, ${ambientScrollPosition * depth * -0.18}px, 0)`;
-    });
-
-    if (Math.abs(ambientScrollTarget - ambientScrollPosition) > 0.5) {
-        ambientScrollFrame = requestAnimationFrame(updateAmbientAssetParallax);
-    }
-}
-
-if (ambientAssets.length && !reduceMotion) {
-    window.addEventListener("scroll", () => {
-        ambientScrollTarget = window.scrollY || 0;
-        if (ambientScrollFrame === null) ambientScrollFrame = requestAnimationFrame(updateAmbientAssetParallax);
-    }, { passive: true });
-    updateAmbientAssetParallax();
-}
-
 const appLoader = document.getElementById("appLoader");
 const appLoaderMessage = document.getElementById("appLoaderMessage");
 let activeRequests = 0;
