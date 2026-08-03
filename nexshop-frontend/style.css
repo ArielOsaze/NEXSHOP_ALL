@@ -142,6 +142,30 @@ img{ max-width:100%; display:block; }
              mask-image:linear-gradient(180deg,black 0%,black 42%,transparent 90%);
 }
 
+.ambient-assets{
+    position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none;
+}
+.ambient-asset{
+    position:absolute; display:block; opacity:.12; will-change:transform;
+    filter:drop-shadow(0 8px 18px rgba(0,0,0,.12));
+}
+.ambient-asset-glyph{
+    display:block; animation:ambient-float 7s ease-in-out infinite;
+}
+.ambient-asset--gem{ color:var(--text-violet); font-size:40px; }
+.ambient-asset--xbox{ color:#55C443; font-size:38px; }
+.ambient-asset--gamepad{ color:var(--text-cyan); font-size:34px; }
+.ambient-asset--playstation{ color:#3B82F6; font-size:38px; }
+.ambient-asset--trophy{ color:var(--text-magenta); font-size:28px; }
+.ambient-asset--xbox .ambient-asset-glyph{ animation-delay:-1.8s; }
+.ambient-asset--gamepad .ambient-asset-glyph{ animation-delay:-3.1s; }
+.ambient-asset--playstation .ambient-asset-glyph{ animation-delay:-4.6s; }
+.ambient-asset--trophy .ambient-asset-glyph{ animation-delay:-2.4s; }
+@keyframes ambient-float{
+    0%,100%{ transform:translate3d(0,-7px,0) rotate(-4deg); }
+    50%{ transform:translate3d(0,8px,0) rotate(4deg); }
+}
+
 /* ================= GLOBAL LOADING ================= */
 .app-loader{
     position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center;
@@ -429,11 +453,11 @@ header{ position:sticky; top:0; z-index:100; }
 }
 .card{
     background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
-    overflow:hidden; cursor:pointer; position:relative; outline:2px solid transparent; outline-offset:3px;
-    transition:transform .25s, border-color .25s, box-shadow .25s, outline-color .25s;
+    overflow:hidden; cursor:pointer; position:relative;
+    transition:transform .25s, border-color .25s, box-shadow .25s;
 }
-.card:hover{ transform:translateY(-4px); border-color:var(--violet); outline-color:rgba(139,92,246,.32); box-shadow:0 14px 30px rgba(0,0,0,.18); }
-.card:focus-visible{ border-color:var(--cyan); outline-color:var(--cyan); box-shadow:0 12px 26px rgba(0,0,0,.18); }
+.card:hover{ transform:translateY(-4px); border-color:var(--violet); box-shadow:0 14px 30px rgba(0,0,0,.18), 0 0 18px rgba(139,92,246,.18); }
+.card:focus-visible{ border-color:var(--cyan); outline:2px solid var(--cyan); outline-offset:-2px; box-shadow:0 12px 26px rgba(0,0,0,.18); }
 .card-img{ position:relative; aspect-ratio:4/3; background:var(--bg-panel-2); overflow:hidden; }
 .card-img::after{
     content:""; position:absolute; inset:0; background:linear-gradient(180deg,transparent 58%,rgba(8,11,20,.34)); pointer-events:none;
@@ -494,15 +518,15 @@ header{ position:sticky; top:0; z-index:100; }
 .topup-game-card{
     background:var(--bg-panel);
     border:1px solid var(--line); border-radius:18px; padding:22px 16px; text-align:center;
-    cursor:pointer; position:relative; overflow:hidden; outline:2px solid transparent; outline-offset:3px;
-    transition:transform .28s cubic-bezier(.2,.8,.2,1), border-color .28s, box-shadow .28s, outline-color .25s;
+    cursor:pointer; position:relative; overflow:hidden;
+    transition:transform .28s cubic-bezier(.2,.8,.2,1), border-color .28s, box-shadow .28s;
 }
 .topup-game-card:hover{
     transform:translateY(-4px); border-color:var(--cyan);
-    outline-color:rgba(34,211,238,.35); box-shadow:0 14px 30px rgba(0,0,0,.18);
+    box-shadow:0 14px 30px rgba(0,0,0,.18), 0 0 18px rgba(34,211,238,.18);
 }
 .topup-game-card:focus-visible{
-    border-color:var(--cyan); outline-color:var(--cyan); box-shadow:0 12px 26px rgba(0,0,0,.18);
+    border-color:var(--cyan); outline:2px solid var(--cyan); outline-offset:-2px; box-shadow:0 12px 26px rgba(0,0,0,.18);
 }
 .tgc-logo{
     width:64px; height:64px; margin:0 auto 14px; border-radius:16px; overflow:hidden;
@@ -1057,6 +1081,10 @@ input::placeholder{ color:var(--text-dim); }
     body{ background-attachment:scroll; }
     .site-footer{ padding:44px 16px 24px; }
     .grid-overlay{ opacity:.14; background-size:26px 26px; }
+    .ambient-asset{ opacity:.08; }
+    .ambient-asset--gem, .ambient-asset--xbox, .ambient-asset--playstation{ font-size:28px; }
+    .ambient-asset--gamepad{ font-size:24px; }
+    .ambient-asset--trophy{ font-size:21px; }
     .footer-contact{ grid-template-columns:repeat(2,minmax(0,1fr)); max-width:380px; gap:4px 8px; }
     .footer-contact a{ min-height:68px; font-size:11.5px; padding:7px 4px; }
     .footer-social-icon{ width:30px; height:30px; }

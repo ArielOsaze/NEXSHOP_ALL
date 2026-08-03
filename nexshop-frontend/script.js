@@ -18,6 +18,27 @@ const PAYMENT_METHODS = [
     { id: "card", label: "Kartu Kredit/Debit", desc: "Visa dan Mastercard", icon: "fa-credit-card" }
 ];
 
+const ambientAssets = [...document.querySelectorAll(".ambient-asset")];
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+let ambientScrollFrame = null;
+
+function updateAmbientAssetParallax() {
+    ambientScrollFrame = null;
+    const scrollY = window.scrollY || 0;
+    ambientAssets.forEach((asset, index) => {
+        const depth = Number(asset.dataset.depth || 0.08);
+        const drift = Math.sin(scrollY * 0.004 + index) * 4;
+        asset.style.transform = `translate3d(0, ${Math.round(scrollY * depth * -0.08 + drift)}px, 0)`;
+    });
+}
+
+if (ambientAssets.length && !reduceMotion) {
+    window.addEventListener("scroll", () => {
+        if (ambientScrollFrame === null) ambientScrollFrame = requestAnimationFrame(updateAmbientAssetParallax);
+    }, { passive: true });
+    updateAmbientAssetParallax();
+}
+
 const appLoader = document.getElementById("appLoader");
 const appLoaderMessage = document.getElementById("appLoaderMessage");
 let activeRequests = 0;
