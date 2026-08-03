@@ -724,23 +724,25 @@ header{ position:sticky; top:0; z-index:100; }
 .footer-brand span{ color:var(--text-violet); }
 .site-footer > p{ color:var(--text-muted); font-size:13px; margin-bottom:20px; }
 .footer-contact{
-    display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));
-    width:min(100%,920px); margin:0 auto 20px; gap:10px;
+    display:flex; align-items:center; justify-content:center; flex-wrap:wrap;
+    width:min(100%,920px); margin:0 auto 20px; gap:8px 22px;
 }
 .footer-contact a{
-    min-width:0; display:flex; justify-content:flex-start; padding:10px 12px;
-    border:1px solid var(--line); border-radius:12px; background:var(--bg-panel);
+    min-width:0; display:inline-flex; justify-content:center; padding:7px 4px;
+    border:0; border-radius:8px; background:transparent;
     font-size:13px; color:var(--text-muted); text-align:left;
-    transition:transform .2s, border-color .2s, background .2s, color .2s;
+    transition:color .2s, transform .2s;
 }
-.footer-contact a:hover{ color:var(--text-cyan); border-color:var(--text-cyan); background:var(--bg-panel-2); transform:translateY(-2px); }
+.footer-contact a:hover{ color:var(--text-cyan); border-color:transparent; background:transparent; transform:translateY(-2px); }
 
 /* Icon kontak brand yang konsisten dengan Font Awesome di seluruh UI. */
 .footer-social-link{ display:inline-flex; align-items:center; gap:9px; }
 .footer-social-icon{
     width:26px; height:26px; border-radius:50%; flex-shrink:0;
     display:inline-flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 12px rgba(0,0,0,.18); transition:filter .2s, box-shadow .2s;
 }
+.footer-social-link:hover .footer-social-icon{ filter:brightness(1.12); box-shadow:0 6px 16px rgba(0,0,0,.26); }
 .footer-social-icon svg{ display:none; }
 .footer-social-icon::before{
     font-family:"Font Awesome 6 Free"; font-weight:900; font-size:14px; line-height:1; color:#fff;
@@ -1087,9 +1089,9 @@ input::placeholder{ color:var(--text-dim); }
 }
 @media(max-width:640px){
     .site-footer{ padding:44px 16px 24px; }
-    .footer-contact{ grid-template-columns:1fr; gap:8px; }
-    .footer-contact a{ width:100%; font-size:12px; }
-    .footer-social-icon{ width:30px; height:30px; }
+    .footer-contact{ flex-direction:column; align-items:stretch; max-width:340px; gap:2px; }
+    .footer-contact a{ width:100%; justify-content:flex-start; font-size:12px; padding:7px 0; }
+    .footer-social-icon{ width:28px; height:28px; }
     .footer-social-label{ line-height:1.35; }
     .footer-links{ line-height:2; }
     .footer-link-sep{ margin:0 4px; }
