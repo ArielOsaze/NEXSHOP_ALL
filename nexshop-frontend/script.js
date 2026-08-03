@@ -1282,6 +1282,8 @@ function parseContactEmails(value) {
 
 function updateContactEmailLinks(value) {
     const emails = parseContactEmails(value);
+    const footerContact = document.querySelector(".footer-contact");
+    footerContact?.classList.toggle("has-secondary-email", emails.length > 1);
     const targets = [
         {
             footerLink: document.getElementById("footerEmailLink"),
@@ -1344,7 +1346,7 @@ async function loadStoreSettings() {
             const waLink = document.getElementById("footerWaLink");
             waLink.href = `https://wa.me/${s.contact_whatsapp.replace(/\D/g, "")}`;
             const waLabel = document.getElementById("footerWaLabel");
-            if (waLabel) waLabel.textContent = `WhatsApp/Telepon: ${s.contact_phone || s.contact_whatsapp}`;
+            if (waLabel) waLabel.textContent = s.contact_phone || s.contact_whatsapp;
             const contactWa = document.getElementById("contactWaLink");
             if (contactWa) {
                 contactWa.href = waLink.href;
