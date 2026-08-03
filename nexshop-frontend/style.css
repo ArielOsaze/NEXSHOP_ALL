@@ -147,10 +147,10 @@ img{ max-width:100%; display:block; }
 }
 .ambient-asset{
     position:absolute; top:0; display:block; opacity:.1; will-change:transform;
-    filter:drop-shadow(0 8px 18px rgba(0,0,0,.12));
+    filter:none;
 }
 .ambient-asset-glyph{
-    display:block; will-change:transform, opacity;
+    display:block; will-change:transform, opacity; backface-visibility:hidden;
     animation:ambient-rain var(--rain-duration,22s) linear var(--rain-delay,0s) infinite;
 }
 .ambient-asset--gem{ color:var(--text-violet); font-size:52px; }
