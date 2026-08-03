@@ -150,20 +150,23 @@ img{ max-width:100%; display:block; }
     filter:drop-shadow(0 8px 18px rgba(0,0,0,.12));
 }
 .ambient-asset-glyph{
-    display:block; animation:ambient-float 7s ease-in-out infinite;
+    display:block; animation:ambient-float 14s cubic-bezier(.45,0,.55,1) infinite;
 }
-.ambient-asset--gem{ color:var(--text-violet); font-size:40px; }
-.ambient-asset--xbox{ color:#55C443; font-size:38px; }
-.ambient-asset--gamepad{ color:var(--text-cyan); font-size:34px; }
-.ambient-asset--playstation{ color:#3B82F6; font-size:38px; }
-.ambient-asset--trophy{ color:var(--text-magenta); font-size:28px; }
-.ambient-asset--xbox .ambient-asset-glyph{ animation-delay:-1.8s; }
-.ambient-asset--gamepad .ambient-asset-glyph{ animation-delay:-3.1s; }
-.ambient-asset--playstation .ambient-asset-glyph{ animation-delay:-4.6s; }
-.ambient-asset--trophy .ambient-asset-glyph{ animation-delay:-2.4s; }
+.ambient-asset--gem{ color:var(--text-violet); font-size:52px; }
+.ambient-asset--xbox{ color:#55C443; font-size:48px; }
+.ambient-asset--gamepad{ color:var(--text-cyan); font-size:44px; }
+.ambient-asset--trophy{ color:var(--text-magenta); font-size:38px; }
+.ambient-asset--bolt{ color:var(--text-cyan); font-size:42px; }
+.ambient-asset--xbox .ambient-asset-glyph{ animation-delay:-2.8s; }
+.ambient-asset--gamepad .ambient-asset-glyph{ animation-delay:-5.2s; }
+.ambient-asset--trophy .ambient-asset-glyph{ animation-delay:-7.6s; }
+.ambient-asset--bolt .ambient-asset-glyph{ animation-delay:-10.4s; }
 @keyframes ambient-float{
-    0%,100%{ transform:translate3d(0,-7px,0) rotate(-4deg); }
-    50%{ transform:translate3d(0,8px,0) rotate(4deg); }
+    0%{ transform:translate3d(0,4px,0) rotate(-8deg); }
+    25%{ transform:translate3d(18px,-18px,0) rotate(1deg); }
+    50%{ transform:translate3d(-8px,-36px,0) rotate(8deg); }
+    75%{ transform:translate3d(-22px,-12px,0) rotate(2deg); }
+    100%{ transform:translate3d(0,4px,0) rotate(-8deg); }
 }
 
 /* ================= GLOBAL LOADING ================= */
@@ -1082,9 +1085,10 @@ input::placeholder{ color:var(--text-dim); }
     .site-footer{ padding:44px 16px 24px; }
     .grid-overlay{ opacity:.14; background-size:26px 26px; }
     .ambient-asset{ opacity:.08; }
-    .ambient-asset--gem, .ambient-asset--xbox, .ambient-asset--playstation{ font-size:28px; }
+    .ambient-asset--gem, .ambient-asset--xbox{ font-size:34px; }
     .ambient-asset--gamepad{ font-size:24px; }
     .ambient-asset--trophy{ font-size:21px; }
+    .ambient-asset--bolt{ font-size:26px; }
     .footer-contact{ grid-template-columns:repeat(2,minmax(0,1fr)); max-width:380px; gap:4px 8px; }
     .footer-contact a{ min-height:68px; font-size:11.5px; padding:7px 4px; }
     .footer-social-icon{ width:30px; height:30px; }

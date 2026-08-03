@@ -27,8 +27,7 @@ function updateAmbientAssetParallax() {
     const scrollY = window.scrollY || 0;
     ambientAssets.forEach((asset, index) => {
         const depth = Number(asset.dataset.depth || 0.08);
-        const drift = Math.sin(scrollY * 0.004 + index) * 4;
-        asset.style.transform = `translate3d(0, ${Math.round(scrollY * depth * -0.08 + drift)}px, 0)`;
+        asset.style.transform = `translate3d(0, ${Math.round(scrollY * depth * -0.18)}px, 0)`;
     });
 }
 
