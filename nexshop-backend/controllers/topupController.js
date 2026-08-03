@@ -2,12 +2,6 @@ const supabase = require("../config/db");
 const tokovoucher = require("../config/tokovoucher");
 const { createRedirectPayment, checkTransactionStatus } = require("../config/ipaymu");
 
-const IPAYMU_PAYMENT_METHODS = Object.freeze({
-    qris: "qris",
-    va: "va",
-    banktransfer: "banktransfer",
-    card: "cc"
-});
 const { checkNickname } = require("../config/apigames");
 const { notify } = require("../config/notify");
 const { sendTopupInvoiceEmail } = require("../config/mailer");
@@ -15,6 +9,13 @@ const { sendTelegramNotification } = require("../config/telegram");
 const { sendWhatsAppNotification } = require("../config/whatsapp");
 const { validatePromoCode, incrementUsage } = require("./promoCodeController");
 const { buildDiscountedIpaymuItems } = require("../utils/promoDiscountSplit");
+
+const IPAYMU_PAYMENT_METHODS = Object.freeze({
+    qris: "qris",
+    va: "va",
+    banktransfer: "banktransfer",
+    card: "cc"
+});
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
 const BACKEND_URL = (process.env.BACKEND_URL || "").replace(/\/$/, "");
@@ -1268,9 +1269,10 @@ exports.create = async (req, res) => {
         return res.status(400).json({ message: "Produk dan tujuan (Player ID) wajib diisi" });
     }
 
-    const ipaymuPaymentMethod = IPAYMU_PAYMENT_METHODS[String(payment_method || "").trim().toLowerCase()];
+    const normalizedPaymentMethod = String(payment_method || "").trim().toLowerCase();
+    const ipaymuPaymentMethod = IPAYMU_PAYMENT_METHODS[normalizedPaymentMethod];
     if (!ipaymuPaymentMethod) {
-        return res.status(400).json({ message: "Metode pembayaran wajib dipilih" });
+        return res.status(400).json({ message: "Pilih metode pembayaran terlebih dahulu" });
     }
 
     try {
@@ -1325,7 +1327,7 @@ exports.create = async (req, res) => {
             subtotal: product.harga_jual,
             promo_code: appliedPromoCode,
             discount_amount: discountAmount,
-            payment_method: String(payment_method).trim().toLowerCase(),
+            payment_method: normalizedPaymentMethod,
             status: "pending"
         }]);
 

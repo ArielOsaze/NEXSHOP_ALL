@@ -7,6 +7,13 @@ const { sendOrderInvoiceEmail } = require("../config/mailer");
 const { sendTelegramNotification } = require("../config/telegram");
 const { sendWhatsAppNotification } = require("../config/whatsapp");
 
+const IPAYMU_PAYMENT_METHODS = Object.freeze({
+    qris: "qris",
+    va: "va",
+    banktransfer: "banktransfer",
+    card: "cc"
+});
+
 // URL frontend/backend dipakai buat returnUrl/cancelUrl/notifyUrl iPaymu.
 // Isi FRONTEND_URL dan BACKEND_URL di .env (lihat .env.example).
 const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
@@ -17,12 +24,18 @@ function rupiahLog(n) {
 }
 
 exports.create = async (req, res) => {
-    const { recipient_name, recipient_email, items } = req.body;
+    const { recipient_name, recipient_email, items, payment_method } = req.body;
     // req.user bisa null (guest checkout) berkat optionalAuthMiddleware
     const userId = req.user ? req.user.id : null;
 
     if (!recipient_name || !recipient_email || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ message: "Data pesanan tidak lengkap" });
+    }
+
+    const normalizedPaymentMethod = String(payment_method || "").trim().toLowerCase();
+    const ipaymuPaymentMethod = IPAYMU_PAYMENT_METHODS[normalizedPaymentMethod];
+    if (!ipaymuPaymentMethod) {
+        return res.status(400).json({ message: "Pilih metode pembayaran terlebih dahulu" });
     }
 
     try {
@@ -98,7 +111,7 @@ exports.create = async (req, res) => {
                 user_id: userId,
                 recipient_name,
                 recipient_email,
-                payment_method: "ipaymu",
+                payment_method: normalizedPaymentMethod,
                 items,
                 subtotal,
                 discount_amount: discountAmount,
@@ -122,7 +135,8 @@ exports.create = async (req, res) => {
                 buyerEmail: recipient_email,
                 returnUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=success`,
                 cancelUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=cancel`,
-                notifyUrl: `${BACKEND_URL}/api/orders/notification`
+                notifyUrl: `${BACKEND_URL}/api/orders/notification`,
+                paymentMethod: ipaymuPaymentMethod
             });
         } catch (ipaymuErr) {
             console.log("iPaymu error:", ipaymuErr.ipaymuResponse || ipaymuErr.message);

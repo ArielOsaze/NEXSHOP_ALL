@@ -11,6 +11,13 @@ let cachedStoreSettings = null; // diisi loadStoreSettings(), dipakai buat WA CT
 const API_BASE = "https://nexshop.cloud/api";
 const THEME_STORAGE_KEY = "nexshop_theme";
 
+const PAYMENT_METHODS = [
+    { id: "qris", label: "QRIS", desc: "Scan dengan m-banking atau e-wallet", icon: "fa-qrcode" },
+    { id: "va", label: "Virtual Account", desc: "BCA, BRI, Mandiri, dan bank lain", icon: "fa-building-columns" },
+    { id: "banktransfer", label: "Transfer Bank", desc: "Transfer langsung dari rekening bank", icon: "fa-money-bill-transfer" },
+    { id: "card", label: "Kartu Kredit/Debit", desc: "Visa dan Mastercard", icon: "fa-credit-card" }
+];
+
 function applyTheme(theme, persist = false) {
     const isLight = theme === "light";
     document.documentElement.dataset.theme = isLight ? "light" : "dark";
@@ -687,6 +694,30 @@ document.getElementById("myOrdersBtn").addEventListener("click", () => {
 
 /* ---------- Checkout ---------- */
 let appliedPromo = null; // { code, discount }
+let selectedPaymentMethod = null;
+
+function renderCheckoutPaymentMethods() {
+    const grid = document.getElementById("checkoutPaymentGrid");
+    if (!grid) return;
+
+    grid.innerHTML = PAYMENT_METHODS.map((method) => `
+        <button type="button" class="checkout-payment-card ${selectedPaymentMethod === method.id ? "selected" : ""}" data-payment-method="${method.id}">
+            <span class="checkout-payment-icon checkout-payment-icon--${method.id}" aria-hidden="true"><i class="fa-solid ${method.icon}"></i></span>
+            <span class="checkout-payment-copy">
+                <strong>${method.label}</strong>
+                <small>${method.desc}</small>
+            </span>
+            <span class="checkout-payment-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+        </button>
+    `).join("");
+
+    grid.querySelectorAll("[data-payment-method]").forEach((card) => {
+        card.addEventListener("click", () => {
+            selectedPaymentMethod = card.dataset.paymentMethod;
+            renderCheckoutPaymentMethods();
+        });
+    });
+}
 
 function cartSubtotal() {
     return cart.reduce((sum, item) => {
@@ -716,6 +747,7 @@ document.getElementById("checkoutBtn").addEventListener("click", () => {
     closeOverlay("cartOverlay");
 
     appliedPromo = null;
+    selectedPaymentMethod = null;
     document.getElementById("promoCodeInput").value = "";
     document.getElementById("promoCodeMsg").textContent = "";
     document.getElementById("promoCodeMsg").className = "promo-code-msg";
@@ -731,6 +763,7 @@ document.getElementById("checkoutBtn").addEventListener("click", () => {
     }
 
     renderCheckoutSummary();
+    renderCheckoutPaymentMethods();
 
     document.getElementById("checkoutStep").classList.remove("hidden");
     document.getElementById("checkoutSuccess").classList.add("hidden");
@@ -789,6 +822,11 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
     const token = localStorage.getItem("nexshop_token");
     const submitBtn = e.target.querySelector('button[type="submit"]');
 
+    if (!selectedPaymentMethod) {
+        toast("Pilih metode pembayaran dulu ya.", "error");
+        return;
+    }
+
     const subtotal = cartSubtotal();
     const total = appliedPromo ? Math.max(subtotal - appliedPromo.discount, 0) : subtotal;
 
@@ -808,7 +846,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
             body: JSON.stringify({
                 recipient_name,
                 recipient_email,
-                payment_method: "ipaymu",
+                payment_method: selectedPaymentMethod,
                 items: cart,
                 total,
                 promo_code: appliedPromo ? appliedPromo.code : undefined
@@ -888,10 +926,11 @@ const STATUS_CLASS = {
     pending: "warning", failed: "danger", gagal: "danger", cancel: "danger"
 };
 
-function renderTrackResult(data) {
+function renderTrackResult(data, options = {}) {
     const label = STATUS_LABEL[data.status] || data.status;
     const cls = STATUS_CLASS[data.status] || "info";
     const tanggal = data.created_at ? new Date(data.created_at).toLocaleString("id-ID") : "-";
+    const fromPaymentReturn = options.fromPaymentReturn === true;
 
     let itemsHtml = "";
     if (data.type === "order") {
@@ -919,13 +958,14 @@ function renderTrackResult(data) {
     // ter-prefill, biar pembeli gampang follow up tanpa nyari-nyari kontak.
     let waCta = "";
     const isPaid = data.status === "paid" || data.status === "sukses";
-    if (data.type === "order" && isPaid && cachedStoreSettings && cachedStoreSettings.contact_whatsapp) {
-        const waDigits = cachedStoreSettings.contact_whatsapp.replace(/\D/g, "");
-        const prefill = `Halo admin, saya sudah bayar pesanan dengan No. Transaksi ${data.id}. Email yang saya pakai saat checkout: (isi email kamu di sini). Mohon diproses ya 🙏`;
+    const configuredWhatsApp = cachedStoreSettings?.contact_whatsapp || document.getElementById("footerWaLink")?.href || "";
+    if (data.type === "order" && isPaid && configuredWhatsApp) {
+        const waDigits = configuredWhatsApp.replace(/\D/g, "");
+        const prefill = `Halo admin, saya sudah bayar pesanan dengan No. Transaksi ${data.id}. Saya akan melampirkan bukti pembayaran iPaymu di chat ini. Mohon diproses ya 🙏`;
         const waHref = `https://wa.me/${waDigits}?text=${encodeURIComponent(prefill)}`;
         waCta = `
             <div class="track-wa-cta">
-                <p class="otp-info">🎮 Kode/produk untuk pesanan ini dikirim manual oleh admin. Chat WhatsApp admin di bawah, sertakan <strong>No. Transaksi ${escapeHtml(data.id)}</strong> dan email yang kamu pakai saat checkout, ya.</p>
+                <p class="otp-info">🎮 Pembayaran sudah terverifikasi. Produk game ini diproses manual oleh admin. ${fromPaymentReturn ? "Klik tombol di bawah lalu lampirkan screenshot/bukti pembayaran iPaymu di chat." : `Sertakan <strong>No. Transaksi ${escapeHtml(data.id)}</strong> saat chat admin.`}</p>
                 <a href="${waHref}" target="_blank" rel="noopener" class="btn-primary track-wa-btn"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Chat Admin via WhatsApp</a>
             </div>
         `;
@@ -1282,24 +1322,15 @@ function formatPolicyText(text) {
     return `<ol class="policy-list">${lines.map(l => `<li>${escapeHtml(l)}</li>`).join("")}</ol>`;
 }
 
-/* ---------- Topup Diamond: Game Grid -> 4-Step Detail Wizard ---------- */
+/* ---------- Topup Diamond: Game Grid -> 3-Step Detail Wizard ---------- */
 // Alur baru: (1) grid game -> (2) halaman detail game (bukan modal) dengan
-// step Akun -> Nominal -> Pembayaran -> Ringkasan. Semua data (produk, logo
+// step Akun & Nominal -> Pembayaran -> Ringkasan. Semua data (produk, logo
 // game, kategori) tetap dari /api/topup/products (admin dashboard), TIDAK
 // ada yang di-hardcode. Endpoint & kontrak API tidak berubah sama sekali
 // dari implementasi lama (check-nickname, create order) supaya checkout,
 // iPaymu, dan backend tetap jalan seperti sebelumnya.
 let TOPUP_PRODUCTS = [];
 let TOPUP_GAMES = [];
-
-// Metode di sini dikirim ke backend dan diteruskan sebagai paymentMethod ke
-// iPaymu supaya halaman gateway langsung membuka kanal yang dipilih user.
-const TW_PAYMENT_METHODS = [
-    { id: "qris", label: "QRIS", desc: "Scan sekali, bisa pakai e-wallet/m-banking apa saja", icon: "fa-qrcode" },
-    { id: "va", label: "Virtual Account", desc: "Transfer via BCA, BRI, Mandiri, dan bank lain", icon: "fa-building-columns" },
-    { id: "banktransfer", label: "Transfer Bank", desc: "BCA, BRI, Mandiri, dan bank lainnya", icon: "fa-money-bill-transfer" },
-    { id: "card", label: "Kartu Kredit/Debit", desc: "Visa & Mastercard", icon: "fa-credit-card" }
-];
 
 let twState = {
     kategori: null,
@@ -1480,7 +1511,10 @@ document.getElementById("twNextBtn").addEventListener("click", async () => {
         return;
     }
     if (twState.step === 2) {
-        if (!twState.payment) { toast("Pilih metode pembayaran dulu ya", "error"); return; }
+        if (!twState.payment) {
+            toast("Pilih metode pembayaran dulu ya.", "error");
+            return;
+        }
         goToTwStep(3);
         return;
     }
@@ -1597,28 +1631,30 @@ function renderTopupProductGrid() {
     });
 }
 
-/* ---- Step 3: Pilih Metode Pembayaran ---- */
 function renderTopupPaymentGrid() {
     const grid = document.getElementById("twPaymentGrid");
-    grid.innerHTML = TW_PAYMENT_METHODS.map(m => `
-        <div class="tw-payment-card ${twState.payment === m.id ? "selected" : ""}" data-id="${m.id}">
-            <span class="tw-payment-icon" aria-hidden="true"><i class="fa-solid ${m.icon}"></i></span>
-            <div>
-                <h5>${m.label}</h5>
-                <p>${m.desc}</p>
-            </div>
-            <span class="tw-payment-check"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
-        </div>
+    if (!grid) return;
+
+    grid.innerHTML = PAYMENT_METHODS.map((method) => `
+        <button type="button" class="tw-payment-card ${twState.payment === method.id ? "selected" : ""}" data-payment-method="${method.id}">
+            <span class="tw-payment-icon tw-payment-icon--${method.id}" aria-hidden="true"><i class="fa-solid ${method.icon}"></i></span>
+            <span>
+                <h5>${method.label}</h5>
+                <p>${method.desc}</p>
+            </span>
+            <span class="tw-payment-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
+        </button>
     `).join("");
 
-    grid.querySelectorAll(".tw-payment-card").forEach(card => {
+    grid.querySelectorAll("[data-payment-method]").forEach((card) => {
         card.addEventListener("click", () => {
-            twState.payment = card.dataset.id;
+            twState.payment = card.dataset.paymentMethod;
             renderTopupPaymentGrid();
         });
     });
 }
 
+/* ---- Promo top-up ---- */
 document.getElementById("twApplyPromoBtn").addEventListener("click", async () => {
     const code = document.getElementById("twPromoCodeInput").value.trim();
     const msgEl = document.getElementById("twPromoCodeMsg");
@@ -1660,11 +1696,11 @@ document.getElementById("twApplyPromoBtn").addEventListener("click", async () =>
     }
 });
 
-/* ---- Step 4: Ringkasan Pesanan ---- */
+/* ---- Ringkasan Pesanan ---- */
 function renderTwSummary() {
     const el = document.getElementById("twSummary");
     const p = twState.product;
-    const paymentLabel = (TW_PAYMENT_METHODS.find(m => m.id === twState.payment) || {}).label || "-";
+    const paymentLabel = (PAYMENT_METHODS.find((method) => method.id === twState.payment) || {}).label || "-";
     const subtotal = p ? p.harga_jual : 0;
     const discount = twState.promo ? twState.promo.discount : 0;
     const total = Math.max(subtotal - discount, 0);
@@ -1680,13 +1716,12 @@ function renderTwSummary() {
         <div class="tw-summary-row"><span>Total Bayar</span><strong>${rupiah(total)}</strong></div>
     `;
     document.getElementById("twConfirmCheck").checked = false;
-    document.getElementById("twStep4Error").textContent = "";
+    document.getElementById("twStep3Error").textContent = "";
 }
 
-// Submit topup: metode pembayaran ikut dikirim agar iPaymu tidak meminta user
-// memilih ulang kanal pembayaran.
+// Submit topup lalu buka iPaymu dengan kanal yang sudah dipilih user di web.
 async function submitTopupOrder() {
-    const errorEl = document.getElementById("twStep4Error");
+    const errorEl = document.getElementById("twStep3Error");
     const btn = document.getElementById("twNextBtn");
     const checkEl = document.getElementById("twConfirmCheck");
 
@@ -1731,50 +1766,13 @@ async function submitTopupOrder() {
             return;
         }
 
-        btn.disabled = false;
-        btn.textContent = "Bayar Sekarang";
-        openOrderConfirm(data);
+        window.location.href = data.paymentUrl;
     } catch (err) {
         errorEl.textContent = "Gagal terhubung ke server.";
         btn.disabled = false;
         btn.textContent = "Bayar Sekarang";
     }
 }
-
-// Ringkasan pesanan final (Order ID asli dari server) sebelum lari ke iPaymu —
-// murni langkah konfirmasi tambahan di frontend, tidak mengubah kontrak API.
-function openOrderConfirm(orderData) {
-    const p = twState.product;
-    const paymentLabel = (TW_PAYMENT_METHODS.find(m => m.id === twState.payment) || {}).label || "-";
-
-    const iconEl = document.getElementById("twOrderConfirmIcon");
-    if (p && p.item_icon) {
-        iconEl.outerHTML = `<img class="tw-confirm-icon" id="twOrderConfirmIcon" src="${p.item_icon}" alt="${escapeHtml(p.nama)}">`;
-    } else {
-        iconEl.outerHTML = `<span class="diamond-icon" id="twOrderConfirmIcon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>`;
-    }
-
-    document.getElementById("twOrderConfirmProduct").textContent = p ? p.nama : "-";
-    document.getElementById("twOrderConfirmGame").textContent = twState.kategori;
-
-    const subtotal = p ? p.harga_jual : 0;
-    const discount = twState.promo ? twState.promo.discount : 0;
-    const total = Math.max(subtotal - discount, 0);
-
-    document.getElementById("twOrderConfirmSummary").innerHTML = `
-        <div class="tw-summary-row"><span>ID Transaksi</span><strong>${escapeHtml(String(orderData.orderId))}</strong></div>
-        <div class="tw-summary-row"><span>User ID</span><strong>${escapeHtml(twState.userId)}${twState.serverId ? " (" + escapeHtml(twState.serverId) + ")" : ""}</strong></div>
-        <div class="tw-summary-row"><span>Metode Pembayaran</span><strong>${escapeHtml(paymentLabel)}</strong></div>
-        ${twState.promo ? `<div class="tw-summary-row"><span>Diskon (${escapeHtml(twState.promo.code)})</span><strong>-${rupiah(discount)}</strong></div>` : ""}
-        <div class="tw-summary-row"><span>Total</span><strong>${rupiah(total)}</strong></div>
-    `;
-
-    const proceedBtn = document.getElementById("twOrderConfirmProceed");
-    proceedBtn.onclick = () => { window.location.href = orderData.paymentUrl; };
-
-    openOverlay("twOrderConfirmOverlay");
-}
-document.getElementById("twOrderConfirmClose").addEventListener("click", () => closeOverlay("twOrderConfirmOverlay"));
 
 /* ---------- Show/hide password ---------- */
 document.querySelectorAll(".toggle-password").forEach(btn => {
@@ -1790,13 +1788,13 @@ document.querySelectorAll(".toggle-password").forEach(btn => {
 });
 
 /* ---------- Halaman kembali dari pembayaran iPaymu (returnUrl) ---------- */
-function openTrackModalWithResult(data) {
+function openTrackModalWithResult(data, options = {}) {
     // buka modal "Cek Transaksi" tapi langsung tampilin hasilnya, gak perlu
     // user ngetik ulang Order ID yang baru aja mereka bayar
     switchTrackTab("byid");
     document.getElementById("trackError").textContent = "";
     document.getElementById("trackForm").classList.add("hidden");
-    renderTrackResult(data);
+    renderTrackResult(data, options);
     openOverlay("trackOverlay");
 }
 
@@ -1817,11 +1815,19 @@ async function checkPaymentReturn() {
         : `${API_BASE}/orders/track/${encodeURIComponent(orderId)}`;
 
     try {
-        const res = await fetch(endpoint);
-        const data = await res.json();
-        if (!res.ok) {
-            toast(`Order ${orderId}: status belum bisa dicek. Simpan Order ID ini untuk cek manual ke admin.`);
-            return;
+        const shouldWaitForWebhook = query.get("status") === "success";
+        const maxAttempts = shouldWaitForWebhook ? 6 : 1;
+        let data = null;
+
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            const res = await fetch(endpoint);
+            data = await res.json();
+            if (!res.ok) {
+                toast(`Order ${orderId}: status belum bisa dicek. Simpan Order ID ini untuk cek manual ke admin.`);
+                return;
+            }
+            if (data.status !== "pending" || attempt === maxAttempts - 1) break;
+            await new Promise((resolve) => setTimeout(resolve, 1200));
         }
 
         // jaga-jaga: loadStoreSettings() (buat contact_whatsapp) jalan bareng
@@ -1834,7 +1840,7 @@ async function checkPaymentReturn() {
             } catch (e) { /* gak fatal, CTA WA cuma gak muncul kalau ini gagal */ }
         }
 
-        openTrackModalWithResult(data);
+        openTrackModalWithResult(data, { fromPaymentReturn: true });
     } catch (err) {
         toast(`Order ${orderId} sudah dibuat — catat Order ID ini untuk cek status ke admin.`);
     }

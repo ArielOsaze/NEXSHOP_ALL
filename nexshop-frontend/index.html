@@ -9,8 +9,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-<script src="theme-init.js?v=20260803"></script>
-<link rel="stylesheet" href="style.css?v=20260803">
+<script src="theme-init.js?v=20260803-payments"></script>
+<link rel="stylesheet" href="style.css?v=20260803-payments">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
@@ -172,10 +172,10 @@
                 <div class="tw-product-grid" id="twProductGrid"></div>
             </div>
 
-            <!-- STEP 2 — Pembayaran -->
+            <!-- STEP 2 — Pilih metode pembayaran -->
             <div class="tw-panel hidden" data-panel="2">
                 <h4>Pilih Metode Pembayaran</h4>
-                <p class="tw-panel-sub">Seluruh transaksi diproses aman lewat payment gateway resmi iPaymu. Metode yang kamu pilih dikirim langsung ke halaman pembayaran iPaymu.</p>
+                <p class="tw-panel-sub">Pilih metode di NexShop. Setelah itu kamu akan diarahkan ke halaman pembayaran iPaymu sesuai pilihanmu.</p>
                 <div class="tw-payment-grid" id="twPaymentGrid"></div>
             </div>
 
@@ -192,7 +192,7 @@
                     <input type="checkbox" id="twConfirmCheck">
                     Saya memastikan seluruh data sudah benar.
                 </label>
-                <p class="auth-error" id="twStep4Error"></p>
+                <p class="auth-error" id="twStep3Error"></p>
             </div>
         </div>
 
@@ -202,28 +202,6 @@
         </div>
     </div>
 </section>
-
-<!-- Konfirmasi Pesanan (muncul setelah order dibuat, sebelum lari ke iPaymu) -->
-<div class="overlay" id="twOrderConfirmOverlay">
-    <div class="modal tw-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="twOrderConfirmTitle">
-        <button class="modal-close" id="twOrderConfirmClose" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-        <h3 id="twOrderConfirmTitle">Ringkasan Pesanan</h3>
-
-        <div class="tw-confirm-product">
-            <span class="diamond-icon" id="twOrderConfirmIcon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>
-            <div>
-                <h4 id="twOrderConfirmProduct"></h4>
-                <span id="twOrderConfirmGame"></span>
-            </div>
-        </div>
-
-        <div class="tw-summary" id="twOrderConfirmSummary"></div>
-
-        <p class="tw-confirm-note">Kamu akan diarahkan ke halaman pembayaran iPaymu untuk menyelesaikan transaksi ini.</p>
-
-        <button type="button" class="btn-primary btn-cyan" id="twOrderConfirmProceed">Lanjutkan ke Pembayaran</button>
-    </div>
-</div>
 
 </main>
 
@@ -556,8 +534,9 @@
                 </div>
                 <div class="checkout-payment-note">
                     <strong><i class="fa-solid fa-credit-card" aria-hidden="true"></i> Pembayaran via iPaymu</strong>
-                    <p>Setelah klik "Bayar Sekarang", kamu akan diarahkan ke halaman pembayaran iPaymu yang aman untuk memilih metode pembayaran (QRIS, Virtual Account/Transfer Bank, E-Wallet, atau Kartu Kredit/Debit).</p>
+                    <p>Pilih metode pembayaran di bawah. Setelah itu kamu akan diarahkan ke iPaymu sesuai pilihanmu.</p>
                 </div>
+                <div class="checkout-payment-grid" id="checkoutPaymentGrid" aria-label="Pilih metode pembayaran"></div>
                 <div class="promo-code-row">
                     <input type="text" id="promoCodeInput" placeholder="Punya kode promo?">
                     <button type="button" id="applyPromoBtn">Terapkan</button>
@@ -584,6 +563,6 @@
   backend langsung kirim balik `paymentUrl` (halaman pembayaran iPaymu)
   dan browser di-redirect ke sana lewat window.location.href. Lihat script.js.
 -->
-<script src="script.js?v=20260803"></script>
+<script src="script.js?v=20260803-payments"></script>
 </body>
 </html>
