@@ -429,10 +429,11 @@ header{ position:sticky; top:0; z-index:100; }
 }
 .card{
     background:var(--bg-panel); border:1px solid var(--line); border-radius:var(--radius);
-    overflow:hidden; cursor:pointer; position:relative;
-    transition:transform .25s, border-color .25s, box-shadow .25s;
+    overflow:hidden; cursor:pointer; position:relative; outline:2px solid transparent; outline-offset:3px;
+    transition:transform .25s, border-color .25s, box-shadow .25s, outline-color .25s;
 }
-.card:hover{ transform:translateY(-4px); border-color:var(--violet); box-shadow:0 14px 30px rgba(0,0,0,.18); }
+.card:hover{ transform:translateY(-4px); border-color:var(--violet); outline-color:rgba(139,92,246,.32); box-shadow:0 14px 30px rgba(0,0,0,.18); }
+.card:focus-visible{ border-color:var(--cyan); outline-color:var(--cyan); box-shadow:0 12px 26px rgba(0,0,0,.18); }
 .card-img{ position:relative; aspect-ratio:4/3; background:var(--bg-panel-2); overflow:hidden; }
 .card-img::after{
     content:""; position:absolute; inset:0; background:linear-gradient(180deg,transparent 58%,rgba(8,11,20,.34)); pointer-events:none;
@@ -493,17 +494,16 @@ header{ position:sticky; top:0; z-index:100; }
 .topup-game-card{
     background:var(--bg-panel);
     border:1px solid var(--line); border-radius:18px; padding:22px 16px; text-align:center;
-    cursor:pointer; position:relative; overflow:hidden;
-    transition:transform .28s cubic-bezier(.2,.8,.2,1), border-color .28s, box-shadow .28s;
+    cursor:pointer; position:relative; overflow:hidden; outline:2px solid transparent; outline-offset:3px;
+    transition:transform .28s cubic-bezier(.2,.8,.2,1), border-color .28s, box-shadow .28s, outline-color .25s;
 }
-.topup-game-card::before{
-    display:none;
-}
-.topup-game-card:hover, .topup-game-card:focus-visible{
+.topup-game-card:hover{
     transform:translateY(-4px); border-color:var(--cyan);
-    box-shadow:0 14px 30px rgba(0,0,0,.18); outline:2px solid transparent; outline-offset:3px;
+    outline-color:rgba(34,211,238,.35); box-shadow:0 14px 30px rgba(0,0,0,.18);
 }
-.topup-game-card:focus-visible{ outline-color:var(--cyan); }
+.topup-game-card:focus-visible{
+    border-color:var(--cyan); outline-color:var(--cyan); box-shadow:0 12px 26px rgba(0,0,0,.18);
+}
 .tgc-logo{
     width:64px; height:64px; margin:0 auto 14px; border-radius:16px; overflow:hidden;
     background:var(--bg-panel-2); display:flex; align-items:center; justify-content:center;
