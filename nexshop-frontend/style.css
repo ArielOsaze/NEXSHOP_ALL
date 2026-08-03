@@ -156,10 +156,12 @@ img{ max-width:100%; display:block; }
 .ambient-asset--gem{ color:var(--text-violet); font-size:52px; }
 .ambient-asset--xbox{ color:#55C443; font-size:48px; }
 .ambient-asset--gamepad{ color:var(--text-cyan); font-size:44px; }
+.ambient-asset--key{ color:var(--text-violet); font-size:38px; }
 .ambient-asset--coins{ color:var(--text-warning); font-size:40px; }
 .ambient-asset--ticket{ color:var(--text-violet); font-size:36px; }
 .ambient-asset--gift{ color:var(--text-magenta); font-size:42px; }
 .ambient-asset--bolt{ color:var(--text-cyan); font-size:40px; }
+.ambient-asset--dice{ color:var(--text-magenta); font-size:38px; }
 @keyframes ambient-rain{
     0%{ opacity:0; transform:translate3d(0,-18vh,0); }
     8%{ opacity:.9; }
@@ -1085,6 +1087,7 @@ input::placeholder{ color:var(--text-dim); }
     .ambient-asset{ opacity:.08; }
     .ambient-asset--gem, .ambient-asset--xbox{ font-size:34px; }
     .ambient-asset--gamepad{ font-size:24px; }
+    .ambient-asset--key, .ambient-asset--dice{ font-size:25px; }
     .ambient-asset--coins, .ambient-asset--gift{ font-size:28px; }
     .ambient-asset--ticket{ font-size:24px; }
     .ambient-asset--bolt{ font-size:26px; }
@@ -1097,5 +1100,15 @@ input::placeholder{ color:var(--text-dim); }
 }
 @media(prefers-reduced-motion:reduce){
     *{ animation:none !important; transition-duration:.01ms !important; }
-    .ambient-assets{ display:none; }
+    .ambient-assets{ display:block; }
+    .ambient-asset-glyph{ opacity:.9; }
+    .ambient-asset--gem{ top:18vh !important; }
+    .ambient-asset--xbox{ top:32vh !important; }
+    .ambient-asset--gamepad{ top:54vh !important; }
+    .ambient-asset--key{ top:76vh !important; }
+    .ambient-asset--coins{ top:67vh !important; }
+    .ambient-asset--ticket{ top:84vh !important; }
+    .ambient-asset--gift{ top:43vh !important; }
+    .ambient-asset--bolt{ top:10vh !important; }
+    .ambient-asset--dice{ top:21vh !important; }
 }
