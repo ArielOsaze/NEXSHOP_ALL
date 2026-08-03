@@ -22,7 +22,7 @@ function applyTheme(theme, persist = false) {
         toggle.setAttribute("aria-pressed", String(isLight));
         toggle.setAttribute("aria-label", isLight ? "Aktifkan mode gelap" : "Aktifkan mode terang");
         toggle.title = isLight ? "Aktifkan mode gelap" : "Aktifkan mode terang";
-        if (icon) icon.textContent = isLight ? "☀" : "☾";
+        if (icon) icon.innerHTML = `<i class="fa-solid ${isLight ? "fa-sun" : "fa-moon"}" aria-hidden="true"></i>`;
         if (label) label.textContent = isLight ? "Mode terang" : "Mode gelap";
     }
 
@@ -184,7 +184,7 @@ setTimeout(() => {
             <div class="card-img">
                 <img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async">
                 <span class="badge">${p.badge}</span>
-                ${isFlashSaleActive(p) ? `<span class="flash-ribbon">🔥 -${discountPercent(p)}%</span>` : ""}
+                        ${isFlashSaleActive(p) ? `<span class="flash-ribbon"><i class="fa-solid fa-fire" aria-hidden="true"></i> -${discountPercent(p)}%</span>` : ""}
             </div>
             <div class="card-body">
                 <h4>${p.name}</h4>
@@ -926,7 +926,7 @@ function renderTrackResult(data) {
         waCta = `
             <div class="track-wa-cta">
                 <p class="otp-info">🎮 Kode/produk untuk pesanan ini dikirim manual oleh admin. Chat WhatsApp admin di bawah, sertakan <strong>No. Transaksi ${escapeHtml(data.id)}</strong> dan email yang kamu pakai saat checkout, ya.</p>
-                <a href="${waHref}" target="_blank" rel="noopener" class="btn-primary track-wa-btn">💬 Chat Admin via WhatsApp</a>
+                <a href="${waHref}" target="_blank" rel="noopener" class="btn-primary track-wa-btn"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Chat Admin via WhatsApp</a>
             </div>
         `;
     }
@@ -1232,7 +1232,12 @@ async function loadStoreSettings() {
             }
         }
         if (s.address) {
-            document.getElementById("footerAddress").textContent = `📍 ${s.address}`;
+            const footerAddress = document.getElementById("footerAddress");
+            footerAddress.replaceChildren();
+            const addressIcon = document.createElement("i");
+            addressIcon.className = "fa-solid fa-location-dot";
+            addressIcon.setAttribute("aria-hidden", "true");
+            footerAddress.append(addressIcon, document.createTextNode(` ${s.address}`));
             const contactAddress = document.getElementById("contactAddress");
             if (contactAddress) contactAddress.textContent = s.address;
         }
@@ -1287,15 +1292,13 @@ function formatPolicyText(text) {
 let TOPUP_PRODUCTS = [];
 let TOPUP_GAMES = [];
 
-// Kanal pembayaran ini murni lapisan UX/preferensi tampilan — backend cuma
-// punya 1 gateway (iPaymu) yang di dalam halamannya sendiri sudah
-// menyediakan semua kanal ini, jadi tidak ada payload baru yang dikirim ke
-// server hanya karena user memilih salah satu kartu di Step 3.
+// Metode di sini dikirim ke backend dan diteruskan sebagai paymentMethod ke
+// iPaymu supaya halaman gateway langsung membuka kanal yang dipilih user.
 const TW_PAYMENT_METHODS = [
-    { id: "qris", label: "QRIS", desc: "Scan sekali, bisa pakai e-wallet/m-banking apa saja", icon: "🔳" },
-    { id: "va", label: "Virtual Account", desc: "Transfer via BCA, BRI, Mandiri, dan bank lain", icon: "🏦" },
-    { id: "ewallet", label: "E-Wallet", desc: "OVO, DANA, ShopeePay, LinkAja", icon: "📱" },
-    { id: "card", label: "Kartu Kredit/Debit", desc: "Visa & Mastercard", icon: "💳" }
+    { id: "qris", label: "QRIS", desc: "Scan sekali, bisa pakai e-wallet/m-banking apa saja", icon: "fa-qrcode" },
+    { id: "va", label: "Virtual Account", desc: "Transfer via BCA, BRI, Mandiri, dan bank lain", icon: "fa-building-columns" },
+    { id: "banktransfer", label: "Transfer Bank", desc: "BCA, BRI, Mandiri, dan bank lainnya", icon: "fa-money-bill-transfer" },
+    { id: "card", label: "Kartu Kredit/Debit", desc: "Visa & Mastercard", icon: "fa-credit-card" }
 ];
 
 let twState = {
@@ -1362,7 +1365,7 @@ function renderTopupGameGrid() {
     grid.innerHTML = TOPUP_GAMES.map(g => `
         <div class="topup-game-card" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
             <div class="tgc-logo">
-                ${g.logo ? `<img src="${g.logo}" alt="${escapeHtml(g.kategori)}" loading="lazy">` : `<span class="diamond-icon">◆</span>`}
+                ${g.logo ? `<img src="${g.logo}" alt="${escapeHtml(g.kategori)}" loading="lazy">` : `<span class="diamond-icon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>`}
             </div>
             <h5>${escapeHtml(g.kategori)}</h5>
             <span class="tgc-count">${g.products.length} produk</span>
@@ -1515,22 +1518,22 @@ document.getElementById("twCheckBtn").addEventListener("click", async () => {
             if (data.is_valid) {
                 twState.nickname = data.username || "";
                 resultEl.className = "tw-account-result valid";
-                resultEl.innerHTML = `<span class="tw-check-icon">✓</span> Akun ditemukan: <strong>${escapeHtml(data.username || "-")}</strong>`;
+                resultEl.innerHTML = `<span class="tw-check-icon"><i class="fa-solid fa-check" aria-hidden="true"></i></span> Akun ditemukan: <strong>${escapeHtml(data.username || "-")}</strong>`;
             } else {
                 twState.nickname = null;
                 resultEl.className = "tw-account-result invalid";
-                resultEl.innerHTML = `⚠️ User ID${twState.needsServerId ? "/Server ID" : ""} tidak ditemukan. Periksa kembali sebelum melanjutkan.`;
+                resultEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> User ID${twState.needsServerId ? "/Server ID" : ""} tidak ditemukan. Periksa kembali sebelum melanjutkan.`;
             }
         } else {
             twState.nicknameSupported = false;
             twState.nickname = null;
             resultEl.className = "tw-account-result warning";
-            resultEl.innerHTML = `⚠️ Cek otomatis belum tersedia untuk game ini. Pastikan User ID${twState.needsServerId ? "/Server ID" : ""} sudah benar sebelum lanjut.`;
+            resultEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Cek otomatis belum tersedia untuk game ini. Pastikan User ID${twState.needsServerId ? "/Server ID" : ""} sudah benar sebelum lanjut.`;
         }
     } catch (err) {
         resultEl.classList.remove("hidden");
         resultEl.className = "tw-account-result warning";
-        resultEl.innerHTML = `⚠️ Gagal menghubungi server cek akun. Pastikan data yang kamu masukkan sudah benar.`;
+        resultEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Gagal menghubungi server cek akun. Pastikan data yang kamu masukkan sudah benar.`;
     } finally {
         btn.disabled = false;
         btn.textContent = "🔍 Cek Akun";
@@ -1559,10 +1562,10 @@ function groupTwProducts(products) {
 function renderTwProductCard(p) {
     return `
         <div class="tw-product-card ${twState.product && twState.product.kode_produk === p.kode_produk ? "selected" : ""}" data-kode="${p.kode_produk}">
-            ${p.item_icon ? `<img class="tw-product-icon" src="${p.item_icon}" alt="${escapeHtml(p.nama)}" loading="lazy">` : `<span class="diamond-icon">◆</span>`}
+            ${p.item_icon ? `<img class="tw-product-icon" src="${p.item_icon}" alt="${escapeHtml(p.nama)}" loading="lazy">` : `<span class="diamond-icon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>`}
             <h5>${escapeHtml(p.nama)}</h5>
             <div class="tw-product-price">${rupiah(p.harga_jual)}</div>
-            <span class="tw-product-check">✓</span>
+            <span class="tw-product-check"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
         </div>
     `;
 }
@@ -1599,12 +1602,12 @@ function renderTopupPaymentGrid() {
     const grid = document.getElementById("twPaymentGrid");
     grid.innerHTML = TW_PAYMENT_METHODS.map(m => `
         <div class="tw-payment-card ${twState.payment === m.id ? "selected" : ""}" data-id="${m.id}">
-            <span class="tw-payment-icon">${m.icon}</span>
+            <span class="tw-payment-icon" aria-hidden="true"><i class="fa-solid ${m.icon}"></i></span>
             <div>
                 <h5>${m.label}</h5>
                 <p>${m.desc}</p>
             </div>
-            <span class="tw-payment-check">✓</span>
+            <span class="tw-payment-check"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
         </div>
     `).join("");
 
@@ -1680,9 +1683,8 @@ function renderTwSummary() {
     document.getElementById("twStep4Error").textContent = "";
 }
 
-// Submit — kontrak API PERSIS sama seperti implementasi lama (kode_produk,
-// tujuan, server_id, recipient_email ke POST /api/topup), jadi backend,
-// iPaymu, dan webhook TIDAK perlu diubah sama sekali.
+// Submit topup: metode pembayaran ikut dikirim agar iPaymu tidak meminta user
+// memilih ulang kanal pembayaran.
 async function submitTopupOrder() {
     const errorEl = document.getElementById("twStep4Error");
     const btn = document.getElementById("twNextBtn");
@@ -1709,7 +1711,8 @@ async function submitTopupOrder() {
                 tujuan: twState.userId,
                 server_id: twState.serverId || undefined,
                 recipient_email: twState.email,
-                promo_code: twState.promo ? twState.promo.code : undefined
+                promo_code: twState.promo ? twState.promo.code : undefined,
+                payment_method: twState.payment
             })
         });
         const data = await res.json();
@@ -1748,7 +1751,7 @@ function openOrderConfirm(orderData) {
     if (p && p.item_icon) {
         iconEl.outerHTML = `<img class="tw-confirm-icon" id="twOrderConfirmIcon" src="${p.item_icon}" alt="${escapeHtml(p.nama)}">`;
     } else {
-        iconEl.outerHTML = `<span class="diamond-icon" id="twOrderConfirmIcon">◆</span>`;
+        iconEl.outerHTML = `<span class="diamond-icon" id="twOrderConfirmIcon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>`;
     }
 
     document.getElementById("twOrderConfirmProduct").textContent = p ? p.nama : "-";
@@ -1780,7 +1783,9 @@ document.querySelectorAll(".toggle-password").forEach(btn => {
         const showing = input.type === "text";
         input.type = showing ? "password" : "text";
         btn.classList.toggle("showing", !showing);
-        btn.textContent = showing ? "👁" : "🙈";
+        const icon = btn.querySelector("i");
+        if (icon) icon.className = `fa-solid ${showing ? "fa-eye" : "fa-eye-slash"}`;
+        btn.setAttribute("aria-label", showing ? "Tampilkan password" : "Sembunyikan password");
     });
 });
 

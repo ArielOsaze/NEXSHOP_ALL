@@ -104,12 +104,12 @@
     </g>
 
     <!-- headline -->
-    <text x="96" y="270" font-family="'Rajdhani',sans-serif" font-weight="700" font-size="96" fill="#FFFFFF" letter-spacing="1">FLASH SALE</text>
-    <text x="96" y="270" font-family="'Rajdhani',sans-serif" font-weight="700" font-size="96" fill="url(#violetCyan)" letter-spacing="1" opacity="0.9" transform="translate(0,0)">FLASH SALE</text>
+    <text x="96" y="270" font-family="'Sora',sans-serif" font-weight="700" font-size="96" fill="#FFFFFF" letter-spacing="1">FLASH SALE</text>
+    <text x="96" y="270" font-family="'Sora',sans-serif" font-weight="700" font-size="96" fill="url(#violetCyan)" letter-spacing="1" opacity="0.9" transform="translate(0,0)">FLASH SALE</text>
 
     <!-- subheadline -->
     <text x="98" y="320" font-family="'Inter',sans-serif" font-size="22" fill="#C7CCE2">Diskon hingga <tspan font-weight="700" fill="#22D3EE">50%</tspan> untuk semua item game favorit kamu</text>
-    <text x="98" y="352" font-family="'Inter',sans-serif" font-size="22" fill="#C7CCE2">Top up diamond &amp; voucher game — proses otomatis, aman lewat Midtrans.</text>
+    <text x="98" y="352" font-family="'Inter',sans-serif" font-size="22" fill="#C7CCE2">Top up diamond &amp; voucher game — proses otomatis, aman lewat iPaymu.</text>
 
     <!-- CTA pill -->
     <g transform="translate(98,400)">
@@ -124,6 +124,6 @@
     </g>
 
     <!-- brand mark, bottom corner -->
-    <text x="96" y="540" font-family="'Rajdhani',sans-serif" font-weight="700" font-size="24" fill="#5C6489">Nex<tspan fill="#8B5CF6">Shop</tspan></text>
+    <text x="96" y="540" font-family="'Sora',sans-serif" font-weight="700" font-size="24" fill="#5C6489">Nex<tspan fill="#8B5CF6">Shop</tspan></text>
   </g>
 </svg>

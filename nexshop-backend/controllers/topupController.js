@@ -1,6 +1,13 @@
 const supabase = require("../config/db");
 const tokovoucher = require("../config/tokovoucher");
 const { createRedirectPayment, checkTransactionStatus } = require("../config/ipaymu");
+
+const IPAYMU_PAYMENT_METHODS = Object.freeze({
+    qris: "qris",
+    va: "va",
+    banktransfer: "banktransfer",
+    card: "cc"
+});
 const { checkNickname } = require("../config/apigames");
 const { notify } = require("../config/notify");
 const { sendTopupInvoiceEmail } = require("../config/mailer");
@@ -1254,11 +1261,16 @@ exports.deleteAllProducts = async (req, res) => {
 // sama seperti checkout produk biasa)
 // ===========================================================
 exports.create = async (req, res) => {
-    const { kode_produk, tujuan, server_id, recipient_email, promo_code } = req.body;
+    const { kode_produk, tujuan, server_id, recipient_email, promo_code, payment_method } = req.body;
     const userId = req.user ? req.user.id : null;
 
     if (!kode_produk || !tujuan) {
         return res.status(400).json({ message: "Produk dan tujuan (Player ID) wajib diisi" });
+    }
+
+    const ipaymuPaymentMethod = IPAYMU_PAYMENT_METHODS[String(payment_method || "").trim().toLowerCase()];
+    if (!ipaymuPaymentMethod) {
+        return res.status(400).json({ message: "Metode pembayaran wajib dipilih" });
     }
 
     try {
@@ -1313,6 +1325,7 @@ exports.create = async (req, res) => {
             subtotal: product.harga_jual,
             promo_code: appliedPromoCode,
             discount_amount: discountAmount,
+            payment_method: String(payment_method).trim().toLowerCase(),
             status: "pending"
         }]);
 
@@ -1337,7 +1350,8 @@ exports.create = async (req, res) => {
                 buyerEmail: recipient_email || undefined,
                 returnUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=success`,
                 cancelUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=cancel`,
-                notifyUrl: `${BACKEND_URL}/api/topup/notification`
+                notifyUrl: `${BACKEND_URL}/api/topup/notification`,
+                paymentMethod: ipaymuPaymentMethod
             });
         } catch (ipaymuErr) {
             console.log("iPaymu error:", ipaymuErr.ipaymuResponse || ipaymuErr.message);

@@ -44,7 +44,7 @@
   <circle cx="250" cy="470" r="280" fill="url(#glowCyan3)"/>
 
   <!-- faint giant "81" (81st anniversary), background numeral -->
-  <text x="1120" y="430" font-family="'Rajdhani',sans-serif" font-weight="700" font-size="360" fill="#FFFFFF" fill-opacity="0.05" text-anchor="middle">81</text>
+  <text x="1120" y="430" font-family="'Sora',sans-serif" font-weight="700" font-size="360" fill="#FFFFFF" fill-opacity="0.05" text-anchor="middle">81</text>
 
   <!-- bunting flags (umbul-umbul), top edge -->
   <g opacity="0.85">

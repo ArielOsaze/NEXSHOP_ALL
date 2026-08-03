@@ -75,8 +75,6 @@ exports.createProduct = async (req, res) => {
   sort_order,
 } = req.body;
 
-console.log(req.body);
-
     if (!name || !price) {
       return res.status(400).json({
         message: "Nama dan harga wajib diisi",

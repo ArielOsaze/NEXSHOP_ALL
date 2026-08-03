@@ -2,6 +2,7 @@ const path = require("path");
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const rateLimit = require("express-rate-limit");
 
 dotenv.config();
 
@@ -38,9 +39,27 @@ app.set("trust proxy", 1);
 // =========================
 const PORT = process.env.PORT || 3000;
 
+if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
+    throw new Error("JWT_SECRET wajib diatur di environment production");
+}
+
 // =========================
 // Middleware
 // =========================
+app.disable("x-powered-by");
+
+app.use((req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+    if (process.env.NODE_ENV === "production") {
+        res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    }
+    next();
+});
+
 app.use(cors({
     origin: [
         "https://nexshop.cloud",
@@ -51,8 +70,18 @@ app.use(cors({
     credentials: true
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "100kb" }));
+app.use(express.urlencoded({ extended: false, limit: "100kb" }));
+
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak permintaan. Coba lagi beberapa menit." },
+    skip: (req) => req.path.includes("/notification") || req.path.includes("tokovoucher-webhook")
+});
+app.use("/api", apiLimiter);
 
 // Jaga-jaga: kalau ada request PUT/POST yang body-nya kosong/gak ke-parse
 // (mis. Content-Type gak ke-set, atau body literally kosong), req.body bisa
@@ -83,14 +112,10 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin/stats", statsRoutes);
 app.use("/api/stats", statsRoutes); // sama router — /api/stats/public dibuka publik, /api/stats/overview tetap butuh admin
 
-// =========================
-// Test API
-// =========================
-app.post("/tes", (req, res) => {
-    res.json({
-        status: "OK"
-    });
-});
+// Endpoint diagnostik hanya tersedia saat development.
+if (process.env.NODE_ENV !== "production") {
+    app.post("/tes", (req, res) => res.json({ status: "OK" }));
+}
 
 // =========================
 // Protected Route
@@ -106,7 +131,7 @@ app.get("/profile", authMiddleware, (req, res) => {
 // Home
 // =========================
 app.get("/", (req, res) => {
-    res.send("Backend NexShop Berjalan 🚀");
+    res.send("Backend NexShop Berjalan");
 });
 
 // =========================
@@ -125,9 +150,10 @@ app.use((req, res) => {
 app.use((err, req, res, next) => {
     console.error("❌ Server Error:", err);
 
-    res.status(err.status || 500).json({
+    const status = Number(err.status) >= 400 && Number(err.status) < 600 ? Number(err.status) : 500;
+    res.status(status).json({
         success: false,
-        message: err.message || "Internal Server Error"
+        message: process.env.NODE_ENV === "production" ? "Terjadi kesalahan pada server" : (err.message || "Internal Server Error")
     });
 });
 

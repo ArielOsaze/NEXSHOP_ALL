@@ -3,11 +3,10 @@ const axios = require("axios");
 const { getApiKeys } = require("./settings");
 
 // ===========================================================
-// iPaymu API v2 (Redirect Payment) — menggantikan Midtrans Snap.
+// iPaymu API v2 (Redirect Payment).
 // Dokumentasi: https://docs.ipaymu.com/
 //
-// Beda alur dari Midtrans: gak ada snap_token/popup JS. iPaymu Redirect
-// Payment mengembalikan `Url` (halaman pembayaran iPaymu) yang harus
+// iPaymu Redirect Payment mengembalikan `Url` (halaman pembayaran iPaymu) yang harus
 // dibuka lewat redirect biasa (window.location.href) di frontend. Setelah
 // pembayaran, iPaymu redirect balik ke returnUrl/cancelUrl, DAN kirim
 // webhook server-to-server ke notifyUrl (ini yang jadi sumber kebenaran
@@ -76,7 +75,7 @@ async function request(path, body) {
 
 // Bikin transaksi Redirect Payment. `itemDetails` = [{ name, price, quantity }]
 // Return { sessionId, paymentUrl } atau throw error kalau gagal.
-async function createRedirectPayment({ referenceId, itemDetails, buyerName, buyerEmail, buyerPhone, returnUrl, notifyUrl, cancelUrl }) {
+async function createRedirectPayment({ referenceId, itemDetails, buyerName, buyerEmail, buyerPhone, returnUrl, notifyUrl, cancelUrl, paymentMethod, paymentChannel }) {
     const body = {
         product: itemDetails.map((i) => i.name),
         qty: itemDetails.map((i) => i.quantity),
@@ -88,7 +87,9 @@ async function createRedirectPayment({ referenceId, itemDetails, buyerName, buye
         referenceId,
         buyerName: buyerName || "Guest",
         buyerEmail: buyerEmail || undefined,
-        buyerPhone: buyerPhone || undefined
+        buyerPhone: buyerPhone || undefined,
+        ...(paymentMethod ? { paymentMethod } : {}),
+        ...(paymentChannel ? { paymentChannel } : {})
     };
 
     const data = await request("/payment", body);

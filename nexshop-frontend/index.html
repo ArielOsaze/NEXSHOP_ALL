@@ -6,17 +6,11 @@
 <title>NexShop — Digital Gaming Marketplace</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script>
-    (() => {
-        try {
-            document.documentElement.dataset.theme = localStorage.getItem("nexshop_theme") === "light" ? "light" : "dark";
-        } catch {
-            document.documentElement.dataset.theme = "dark";
-        }
-    })();
-</script>
-<link rel="stylesheet" href="style.css?v=20260801">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<script src="theme-init.js?v=20260803"></script>
+<link rel="stylesheet" href="style.css?v=20260803">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
@@ -57,14 +51,14 @@
             <button type="button" class="menu-link-btn" data-policy-tab="faq">FAQ</button>
             <button type="button" class="menu-link-btn" data-policy-tab="contact">Kontak</button>
             <button type="button" class="theme-toggle" id="themeToggle" aria-label="Ganti tema" aria-pressed="false">
-                <span class="theme-toggle-icon" aria-hidden="true">☾</span>
+                <span class="theme-toggle-icon" aria-hidden="true"><i class="fa-solid fa-moon"></i></span>
                 <span class="theme-toggle-label">Mode gelap</span>
             </button>
             <button class="menu-account-btn" id="accountBtn">Login</button>
         </div>
 
         <button class="cart-btn" id="cartBtn" aria-label="Buka keranjang">
-            🛒 <span class="cart-count" id="cartCount">0</span>
+            <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> <span class="cart-count" id="cartCount">0</span>
         </button>
     </nav>
 </header>
@@ -94,10 +88,10 @@
         </div>
     </div>
     <div class="trust-badges">
-        <div class="trust-badge"><span class="trust-badge-icon">⚡</span><span>Proses Instan</span></div>
-        <div class="trust-badge"><span class="trust-badge-icon">🔒</span><span>Pembayaran Aman</span></div>
-        <div class="trust-badge"><span class="trust-badge-icon">💬</span><span>CS Responsif</span></div>
-        <div class="trust-badge"><span class="trust-badge-icon">↩️</span><span>Garansi Full Refund</span></div>
+        <div class="trust-badge"><span class="trust-badge-icon" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span><span>Proses Instan</span></div>
+        <div class="trust-badge"><span class="trust-badge-icon" aria-hidden="true"><i class="fa-solid fa-lock"></i></span><span>Pembayaran Aman</span></div>
+        <div class="trust-badge"><span class="trust-badge-icon" aria-hidden="true"><i class="fa-solid fa-comments"></i></span><span>CS Responsif</span></div>
+        <div class="trust-badge"><span class="trust-badge-icon" aria-hidden="true"><i class="fa-solid fa-rotate-left"></i></span><span>Garansi Full Refund</span></div>
     </div>
 </section>
 
@@ -181,7 +175,7 @@
             <!-- STEP 2 — Pembayaran -->
             <div class="tw-panel hidden" data-panel="2">
                 <h4>Pilih Metode Pembayaran</h4>
-                <p class="tw-panel-sub">Seluruh transaksi diproses aman lewat payment gateway resmi iPaymu. Pilih kanal favorit kamu — kamu tetap bisa berpindah metode di halaman pembayaran iPaymu.</p>
+                <p class="tw-panel-sub">Seluruh transaksi diproses aman lewat payment gateway resmi iPaymu. Metode yang kamu pilih dikirim langsung ke halaman pembayaran iPaymu.</p>
                 <div class="tw-payment-grid" id="twPaymentGrid"></div>
             </div>
 
@@ -212,11 +206,11 @@
 <!-- Konfirmasi Pesanan (muncul setelah order dibuat, sebelum lari ke iPaymu) -->
 <div class="overlay" id="twOrderConfirmOverlay">
     <div class="modal tw-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="twOrderConfirmTitle">
-        <button class="modal-close" id="twOrderConfirmClose" aria-label="Tutup">✕</button>
+        <button class="modal-close" id="twOrderConfirmClose" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         <h3 id="twOrderConfirmTitle">Ringkasan Pesanan</h3>
 
         <div class="tw-confirm-product">
-            <span class="diamond-icon" id="twOrderConfirmIcon">◆</span>
+            <span class="diamond-icon" id="twOrderConfirmIcon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>
             <div>
                 <h4 id="twOrderConfirmProduct"></h4>
                 <span id="twOrderConfirmGame"></span>
@@ -237,7 +231,7 @@
     <div class="footer-brand" id="footerBrand">Nex<span>Shop</span></div>
     <p>Marketplace gaming digital terpercaya. Transaksi aman, proses cepat.</p>
 
-    <p class="footer-address" id="footerAddress">📍 Jl. Siroto, Villa P4A, Pudakpayung, Banyumanik, Semarang</p>
+    <p class="footer-address" id="footerAddress"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Jl. Siroto, Villa P4A, Pudakpayung, Banyumanik, Semarang</p>
 
     <div class="footer-contact">
         <a class="footer-social-link" href="https://wa.me/6287792634063" id="footerWaLink" target="_blank" rel="noopener">
@@ -278,7 +272,7 @@
 <!-- FAQ / Terms / Refund / Kontak Modal -->
 <div class="overlay" id="policyOverlay">
     <div class="modal policy-modal" role="dialog" aria-modal="true" aria-labelledby="policyTitle">
-        <button class="modal-close" data-close="policyOverlay" aria-label="Tutup">✕</button>
+        <button class="modal-close" data-close="policyOverlay" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         <div class="policy-tabs">
             <button class="policy-tab active" data-policy-tab="faq">FAQ</button>
             <button class="policy-tab" data-policy-tab="terms">Syarat &amp; Ketentuan</button>
@@ -359,7 +353,7 @@
 <!-- Product Detail Modal -->
 <div class="overlay" id="productOverlay">
     <div class="modal product-modal" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
-        <button class="modal-close" data-close="productOverlay" aria-label="Tutup">✕</button>
+        <button class="modal-close" data-close="productOverlay" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         <div class="product-modal-body">
             <div class="product-modal-img">
                 <img id="pmImage" src="" alt="">
@@ -394,7 +388,7 @@
     <div class="drawer" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
         <div class="drawer-header">
             <h3 id="cartTitle">Keranjang</h3>
-            <button class="modal-close" data-close="cartOverlay" aria-label="Tutup">✕</button>
+            <button class="modal-close" data-close="cartOverlay" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         </div>
         <div class="drawer-body" id="cartItems">
             <!-- populated by JS -->
@@ -412,7 +406,7 @@
 <!-- Login / Register Modal -->
 <div class="overlay" id="authOverlay">
     <div class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="authTitle">
-        <button class="modal-close" data-close="authOverlay" aria-label="Tutup">✕</button>
+        <button class="modal-close" data-close="authOverlay" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         <div class="auth-tabs">
             <button class="auth-tab active" data-tab="login">Masuk</button>
             <button class="auth-tab" data-tab="register">Daftar</button>
@@ -426,7 +420,7 @@
             <label>Kata Sandi
                 <div class="password-field">
                     <input type="password" id="loginPassword" required minlength="4" placeholder="••••••••">
-                    <button type="button" class="toggle-password" data-target="loginPassword" aria-label="Tampilkan password">👁</button>
+                    <button type="button" class="toggle-password" data-target="loginPassword" aria-label="Tampilkan password"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
                 </div>
             </label>
             <button type="button" class="otp-resend forgot-password-link" id="forgotPasswordLink">Lupa password?</button>
@@ -445,7 +439,7 @@
             <label>Kata Sandi
                 <div class="password-field">
                     <input type="password" id="regPassword" required minlength="4" placeholder="Minimal 4 karakter">
-                    <button type="button" class="toggle-password" data-target="regPassword" aria-label="Tampilkan password">👁</button>
+                    <button type="button" class="toggle-password" data-target="regPassword" aria-label="Tampilkan password"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
                 </div>
             </label>
             <p class="auth-error" id="regError"></p>
@@ -482,13 +476,13 @@
             <label>Password Baru
                 <div class="password-field">
                     <input type="password" id="resetPasswordNew" required minlength="4" placeholder="Minimal 4 karakter">
-                    <button type="button" class="toggle-password" data-target="resetPasswordNew" aria-label="Tampilkan password">👁</button>
+                    <button type="button" class="toggle-password" data-target="resetPasswordNew" aria-label="Tampilkan password"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
                 </div>
             </label>
             <label>Ulangi Password Baru
                 <div class="password-field">
                     <input type="password" id="resetPasswordConfirm" required minlength="4" placeholder="Ketik ulang password">
-                    <button type="button" class="toggle-password" data-target="resetPasswordConfirm" aria-label="Tampilkan password">👁</button>
+                    <button type="button" class="toggle-password" data-target="resetPasswordConfirm" aria-label="Tampilkan password"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
                 </div>
             </label>
             <p class="auth-error" id="resetPasswordError"></p>
@@ -501,7 +495,7 @@
 <!-- Cek Transaksi Modal -->
 <div class="overlay" id="trackOverlay">
     <div class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="trackTitle">
-        <button class="modal-close" data-close="trackOverlay" aria-label="Tutup">✕</button>
+        <button class="modal-close" data-close="trackOverlay" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         <div class="auth-tabs">
             <button class="auth-tab active" data-track-tab="byid">Cek by Order ID</button>
             <button class="auth-tab" data-track-tab="mine">Riwayat Saya</button>
@@ -541,7 +535,7 @@
 <!-- Checkout Modal -->
 <div class="overlay" id="checkoutOverlay">
     <div class="modal checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkoutTitle">
-        <button class="modal-close" data-close="checkoutOverlay" aria-label="Tutup">✕</button>
+        <button class="modal-close" data-close="checkoutOverlay" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         <div id="checkoutStep">
             <h3 id="checkoutTitle">Selesaikan Pesanan</h3>
             <form id="checkoutForm">
@@ -552,7 +546,7 @@
                     <input type="email" id="checkoutEmail" required placeholder="kamu@email.com">
                 </label>
                 <div class="checkout-guest-note" id="checkoutGuestNote">
-                    <strong>👤 Belanja tanpa akun</strong>
+                    <strong><i class="fa-solid fa-user" aria-hidden="true"></i> Belanja tanpa akun</strong>
                     <p>
                         Kamu tetap bisa checkout tanpa daftar. Tapi tanpa akun, Order ID cuma
                         ditampilkan sekali di halaman ini setelah bayar — gak tersimpan di
@@ -561,7 +555,7 @@
                     </p>
                 </div>
                 <div class="checkout-payment-note">
-                    <strong>💳 Pembayaran via iPaymu</strong>
+                    <strong><i class="fa-solid fa-credit-card" aria-hidden="true"></i> Pembayaran via iPaymu</strong>
                     <p>Setelah klik "Bayar Sekarang", kamu akan diarahkan ke halaman pembayaran iPaymu yang aman untuk memilih metode pembayaran (QRIS, Virtual Account/Transfer Bank, E-Wallet, atau Kartu Kredit/Debit).</p>
                 </div>
                 <div class="promo-code-row">
@@ -574,7 +568,7 @@
             </form>
         </div>
         <div id="checkoutSuccess" class="hidden">
-            <div class="success-icon">✓</div>
+            <div class="success-icon"><i class="fa-solid fa-check" aria-hidden="true"></i></div>
             <h3>Pesanan Berhasil!</h3>
             <p id="checkoutSuccessMsg">Terima kasih, pesanan kamu sedang diproses.</p>
             <button class="btn-primary" data-close="checkoutOverlay">Selesai</button>
@@ -590,6 +584,6 @@
   backend langsung kirim balik `paymentUrl` (halaman pembayaran iPaymu)
   dan browser di-redirect ke sana lewat window.location.href. Lihat script.js.
 -->
-<script src="script.js?v=20260801"></script>
+<script src="script.js?v=20260803"></script>
 </body>
 </html>

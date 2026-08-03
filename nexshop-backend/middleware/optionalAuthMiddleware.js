@@ -13,7 +13,11 @@ module.exports = (req, res, next) => {
         return next();
     }
 
-    const token = authHeader.split(" ")[1];
+    const match = authHeader.match(/^Bearer\s+(.+)$/i);
+    if (!match) {
+        return res.status(401).json({ message: "Format token tidak valid" });
+    }
+    const token = match[1];
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
