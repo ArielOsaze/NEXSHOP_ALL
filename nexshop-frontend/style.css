@@ -101,6 +101,8 @@ body{
     background:var(--bg-void);
     background-image:
         radial-gradient(ellipse 90% 55% at 50% -12%,var(--ambient-violet),transparent 68%),
+        radial-gradient(ellipse 58% 38% at 100% 48%,var(--ambient-cyan),transparent 74%),
+        radial-gradient(ellipse 54% 34% at 0% 88%,var(--ambient-magenta),transparent 74%),
         linear-gradient(180deg,var(--bg-void) 0%,var(--bg-void-2) 52%,var(--bg-void) 100%);
     background-repeat:no-repeat;
     background-size:100% 100%;
@@ -133,7 +135,11 @@ img{ max-width:100%; display:block; }
 
 /* faint HUD grid backdrop across the whole page */
 .grid-overlay{
-    display:none;
+    position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.24;
+    background-image:radial-gradient(circle,var(--grid-line) 1px,transparent 1.4px);
+    background-size:32px 32px;
+    -webkit-mask-image:linear-gradient(180deg,black 0%,black 42%,transparent 90%);
+             mask-image:linear-gradient(180deg,black 0%,black 42%,transparent 90%);
 }
 
 /* ================= GLOBAL LOADING ================= */
@@ -326,15 +332,6 @@ header{ position:sticky; top:0; z-index:100; }
 .hero-dot{ width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,.3); transition:.2s; }
 .hero-dot.active{ background:var(--cyan); width:22px; border-radius:6px; }
 
-/* ================= SECTION HEADING / DIVIDERS ================= */
-.section-divider{
-    height:36px; position:relative;
-    background:linear-gradient(180deg,transparent,var(--section-glow),transparent);
-}
-.section-divider.reverse{
-    background:linear-gradient(180deg,transparent,var(--section-glow),transparent);
-}
-
 /* Trust bar — stat singkat + badge kepercayaan, tampil di antara hero &
    katalog biar area itu gak kosong dan langsung nunjukin toko udah "hidup". */
 .trust-bar{
@@ -388,9 +385,7 @@ header{ position:sticky; top:0; z-index:100; }
 
 .section-heading{ text-align:center; max-width:640px; margin:0 auto 36px; padding:0 20px; position:relative; }
 .section-heading::before{
-    content:"NEXSHOP / CURATED"; display:block; margin-bottom:10px;
-    color:var(--text-cyan); font-family:'Space Grotesk',sans-serif; font-size:10px; font-weight:700;
-    letter-spacing:.18em; opacity:.8;
+    display:none;
 }
 .eyebrow{
     display:inline-block; font-family:'Space Grotesk',sans-serif; font-size:12px; font-weight:600;
@@ -699,13 +694,14 @@ header{ position:sticky; top:0; z-index:100; }
 .footer-brand span{ color:var(--text-violet); }
 .site-footer > p{ color:var(--text-muted); font-size:13px; margin-bottom:20px; }
 .footer-contact{
-    display:flex; align-items:center; justify-content:center; flex-wrap:wrap;
-    width:min(100%,920px); margin:0 auto 20px; gap:8px 22px;
+    display:flex; align-items:stretch; justify-content:center; flex-wrap:wrap;
+    width:min(100%,780px); margin:0 auto 20px; gap:8px 12px;
 }
 .footer-contact a{
-    min-width:0; display:inline-flex; justify-content:center; padding:7px 4px;
+    flex:1 1 170px; max-width:210px; min-width:0; min-height:78px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; padding:8px 6px;
     border:0; border-radius:8px; background:transparent;
-    font-size:13px; color:var(--text-muted); text-align:left;
+    font-size:12.5px; color:var(--text-muted); text-align:center;
     transition:color .2s, transform .2s;
 }
 .footer-contact a:hover{ color:var(--text-cyan); border-color:transparent; background:transparent; transform:translateY(-2px); }
@@ -713,7 +709,7 @@ header{ position:sticky; top:0; z-index:100; }
 /* Icon kontak brand yang konsisten dengan Font Awesome di seluruh UI. */
 .footer-social-link{ display:inline-flex; align-items:center; gap:9px; }
 .footer-social-icon{
-    width:26px; height:26px; border-radius:50%; flex-shrink:0;
+    width:34px; height:34px; border-radius:50%; flex-shrink:0;
     display:inline-flex; align-items:center; justify-content:center;
     box-shadow:0 4px 12px rgba(0,0,0,.18); transition:filter .2s, box-shadow .2s;
 }
@@ -730,7 +726,7 @@ header{ position:sticky; top:0; z-index:100; }
 .footer-social-icon--mail{ background:linear-gradient(135deg,var(--cyan),var(--violet)); }
 .footer-social-icon--ig{ background:radial-gradient(circle at 30% 107%,#fdf497 0%,#fdf497 5%,#fd5949 45%,#d6249f 60%,#285AEB 90%); }
 .footer-social-icon--pin{ background:linear-gradient(135deg,var(--violet),var(--violet-2)); }
-.footer-social-label{ min-width:0; overflow-wrap:anywhere; }
+.footer-social-label{ display:block; width:100%; min-width:0; overflow-wrap:anywhere; line-height:1.3; text-align:center; }
 
 .contact-list-item{ display:flex; align-items:flex-start; gap:10px; }
 .contact-list-item .footer-social-icon{ width:24px; height:24px; }
@@ -1065,10 +1061,9 @@ input::placeholder{ color:var(--text-dim); }
 @media(max-width:640px){
     body{ background-attachment:scroll; }
     .site-footer{ padding:44px 16px 24px; }
-    .footer-contact{ flex-direction:column; align-items:stretch; max-width:340px; gap:2px; }
-    .footer-contact a{ width:100%; justify-content:flex-start; font-size:12px; padding:7px 0; }
-    .footer-social-icon{ width:28px; height:28px; }
-    .footer-social-label{ line-height:1.35; }
+    .footer-contact{ max-width:380px; gap:4px 8px; }
+    .footer-contact a{ flex:0 0 calc(50% - 4px); max-width:none; min-height:74px; font-size:11.5px; padding:7px 4px; }
+    .footer-social-icon{ width:30px; height:30px; }
     .footer-links{ line-height:2; }
     .footer-link-sep{ margin:0 4px; }
 }
