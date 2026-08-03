@@ -153,18 +153,26 @@ img{ max-width:100%; display:block; }
     display:block; will-change:transform, opacity; backface-visibility:hidden;
     animation:ambient-rain var(--rain-duration,180s) linear var(--rain-delay,0s) infinite;
 }
-.ambient-asset--gem{ color:var(--text-violet); font-size:52px; }
-.ambient-asset--xbox{ color:#55C443; font-size:48px; }
-.ambient-asset--gamepad{ color:var(--text-cyan); font-size:44px; }
-.ambient-asset--key{ color:var(--text-violet); font-size:38px; }
-.ambient-asset--coins{ color:var(--text-warning); font-size:40px; }
-.ambient-asset--ticket{ color:var(--text-violet); font-size:36px; }
-.ambient-asset--gift{ color:var(--text-magenta); font-size:42px; }
-.ambient-asset--bolt{ color:var(--text-cyan); font-size:40px; }
-.ambient-asset--dice{ color:var(--text-magenta); font-size:38px; }
+.ambient-asset--gem{ color:var(--text-violet); font-size:52px; --rain-bounce-a:28px; --rain-bounce-b:-14px; --rain-bounce-c:34px; --rain-bounce-d:-8px; }
+.ambient-asset--xbox{ color:#55C443; font-size:48px; --rain-bounce-a:-24px; --rain-bounce-b:16px; --rain-bounce-c:-34px; --rain-bounce-d:12px; }
+.ambient-asset--gamepad{ color:var(--text-cyan); font-size:44px; --rain-bounce-a:18px; --rain-bounce-b:-26px; --rain-bounce-c:12px; --rain-bounce-d:-30px; }
+.ambient-asset--key{ color:var(--text-violet); font-size:38px; --rain-bounce-a:-18px; --rain-bounce-b:28px; --rain-bounce-c:-10px; --rain-bounce-d:24px; }
+.ambient-asset--coins{ color:var(--text-warning); font-size:40px; --rain-bounce-a:24px; --rain-bounce-b:-20px; --rain-bounce-c:30px; --rain-bounce-d:-16px; }
+.ambient-asset--ticket{ color:var(--text-violet); font-size:36px; --rain-bounce-a:-28px; --rain-bounce-b:12px; --rain-bounce-c:-18px; --rain-bounce-d:28px; }
+.ambient-asset--gift{ color:var(--text-magenta); font-size:42px; --rain-bounce-a:20px; --rain-bounce-b:-30px; --rain-bounce-c:16px; --rain-bounce-d:-24px; }
+.ambient-asset--bolt{ color:var(--text-cyan); font-size:40px; --rain-bounce-a:-16px; --rain-bounce-b:22px; --rain-bounce-c:-28px; --rain-bounce-d:14px; }
+.ambient-asset--dice{ color:var(--text-magenta); font-size:38px; --rain-bounce-a:30px; --rain-bounce-b:-10px; --rain-bounce-c:20px; --rain-bounce-d:-26px; }
+.ambient-asset--mobile{ color:var(--text-cyan); font-size:36px; --rain-bounce-a:-22px; --rain-bounce-b:18px; --rain-bounce-c:-30px; --rain-bounce-d:10px; }
+.ambient-asset--shield{ color:var(--text-success); font-size:38px; --rain-bounce-a:16px; --rain-bounce-b:-24px; --rain-bounce-c:28px; --rain-bounce-d:-18px; }
+.ambient-asset--crown{ color:var(--text-warning); font-size:40px; --rain-bounce-a:-26px; --rain-bounce-b:14px; --rain-bounce-c:-16px; --rain-bounce-d:26px; }
+.ambient-asset--box{ color:var(--text-violet); font-size:38px; --rain-bounce-a:22px; --rain-bounce-b:-18px; --rain-bounce-c:32px; --rain-bounce-d:-12px; }
 @keyframes ambient-rain{
     0%{ opacity:0; transform:translate3d(0,-18vh,0); }
     8%{ opacity:.9; }
+    18%{ opacity:.9; transform:translate3d(var(--rain-bounce-a,18px),20vh,0); }
+    38%{ opacity:.9; transform:translate3d(var(--rain-bounce-b,-14px),43vh,0); }
+    58%{ opacity:.9; transform:translate3d(var(--rain-bounce-c,22px),67vh,0); }
+    78%{ opacity:.9; transform:translate3d(var(--rain-bounce-d,-10px),90vh,0); }
     90%{ opacity:.9; }
     100%{ opacity:0; transform:translate3d(var(--rain-drift,18px),115vh,0); }
 }
@@ -1091,6 +1099,8 @@ input::placeholder{ color:var(--text-dim); }
     .ambient-asset--coins, .ambient-asset--gift{ font-size:28px; }
     .ambient-asset--ticket{ font-size:24px; }
     .ambient-asset--bolt{ font-size:26px; }
+    .ambient-asset--mobile, .ambient-asset--shield, .ambient-asset--box{ font-size:24px; }
+    .ambient-asset--crown{ font-size:26px; }
     .footer-contact{ grid-template-columns:repeat(2,minmax(0,1fr)); max-width:380px; gap:4px 8px; }
     .footer-contact a{ min-height:68px; font-size:11.5px; padding:7px 4px; }
     .footer-social-icon{ width:30px; height:30px; }
@@ -1111,4 +1121,13 @@ input::placeholder{ color:var(--text-dim); }
     .ambient-asset--gift{ top:43vh !important; }
     .ambient-asset--bolt{ top:10vh !important; }
     .ambient-asset--dice{ top:21vh !important; }
+    .ambient-asset--mobile{ top:64vh !important; }
+    .ambient-asset--shield{ top:29vh !important; }
+    .ambient-asset--crown{ top:12vh !important; }
+    .ambient-asset--box{ top:58vh !important; }
+}
+@media(min-width:641px) and (prefers-reduced-motion:reduce){
+    .ambient-asset-glyph{
+        animation:ambient-rain var(--rain-duration,180s) linear var(--rain-delay,0s) infinite !important;
+    }
 }
