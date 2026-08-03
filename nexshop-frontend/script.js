@@ -18,6 +18,51 @@ const PAYMENT_METHODS = [
     { id: "card", label: "Kartu Kredit/Debit", desc: "Visa dan Mastercard", icon: "fa-credit-card" }
 ];
 
+const appLoader = document.getElementById("appLoader");
+const appLoaderMessage = document.getElementById("appLoaderMessage");
+let activeRequests = 0;
+let initialLoading = true;
+let loaderShowTimer = null;
+
+function showAppLoader(message = "Memuat data NexShop...") {
+    if (!appLoader) return;
+    if (appLoaderMessage) appLoaderMessage.textContent = message;
+    appLoader.classList.add("is-visible");
+    appLoader.setAttribute("aria-busy", "true");
+}
+
+function hideAppLoader() {
+    if (!appLoader) return;
+    appLoader.classList.remove("is-visible");
+    appLoader.setAttribute("aria-busy", "false");
+}
+
+function beginAppRequest() {
+    activeRequests += 1;
+    if (initialLoading) return;
+    clearTimeout(loaderShowTimer);
+    loaderShowTimer = setTimeout(() => showAppLoader(), 160);
+}
+
+function endAppRequest() {
+    activeRequests = Math.max(0, activeRequests - 1);
+    if (activeRequests > 0 || initialLoading) return;
+    clearTimeout(loaderShowTimer);
+    hideAppLoader();
+}
+
+const nativeFetch = window.fetch.bind(window);
+window.fetch = (...args) => {
+    beginAppRequest();
+    return nativeFetch(...args).finally(endAppRequest);
+};
+
+function finishInitialLoading() {
+    initialLoading = false;
+    if (activeRequests === 0) hideAppLoader();
+    else showAppLoader("Menyiapkan data toko...");
+}
+
 function applyTheme(theme, persist = false) {
     const isLight = theme === "light";
     document.documentElement.dataset.theme = isLight ? "light" : "dark";
@@ -1882,12 +1927,21 @@ async function loadTrustStats() {
 }
 
 /* ---------- Init ---------- */
-loadStoreSettings();
-loadProducts();
-loadPromo();
-loadTopupProducts();
-loadTrustStats();
-updateCartCount();
-checkPaymentReturn();
-checkResetPasswordLink();
-refreshAccountUI();
+async function bootstrapApp() {
+    updateCartCount();
+    checkResetPasswordLink();
+    refreshAccountUI();
+
+    await Promise.allSettled([
+        loadStoreSettings(),
+        loadProducts(),
+        loadPromo(),
+        loadTopupProducts(),
+        loadTrustStats(),
+        checkPaymentReturn()
+    ]);
+
+    finishInitialLoading();
+}
+
+bootstrapApp();

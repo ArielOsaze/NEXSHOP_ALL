@@ -9,11 +9,27 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-<script src="theme-init.js?v=20260803-payments"></script>
-<link rel="stylesheet" href="style.css?v=20260803-payments">
+<script src="theme-init.js?v=20260803-ui"></script>
+<link rel="stylesheet" href="style.css?v=20260803-ui">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
+
+<div class="app-loader is-visible" id="appLoader" role="status" aria-live="polite" aria-busy="true">
+    <div class="app-loader-glow app-loader-glow--violet"></div>
+    <div class="app-loader-glow app-loader-glow--cyan"></div>
+    <div class="app-loader-card">
+        <div class="app-loader-logo-wrap">
+            <span class="app-loader-orbit app-loader-orbit--one"></span>
+            <span class="app-loader-orbit app-loader-orbit--two"></span>
+            <img class="app-loader-logo" src="images/nexshop-icon.svg" alt="NexShop">
+        </div>
+        <div class="app-loader-brand">Nex<span>Shop</span></div>
+        <p class="app-loader-message" id="appLoaderMessage">Menyiapkan pengalaman gaming kamu...</p>
+        <div class="app-loader-progress" aria-hidden="true"><span></span></div>
+        <div class="app-loader-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+    </div>
+</div>
 
 <div class="grid-overlay" aria-hidden="true"></div>
 
@@ -563,6 +579,6 @@
   backend langsung kirim balik `paymentUrl` (halaman pembayaran iPaymu)
   dan browser di-redirect ke sana lewat window.location.href. Lihat script.js.
 -->
-<script src="script.js?v=20260803-payments"></script>
+<script src="script.js?v=20260803-ui"></script>
 </body>
 </html>
