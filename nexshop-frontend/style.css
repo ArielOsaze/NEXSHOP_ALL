@@ -33,10 +33,10 @@
     --glow-violet:0 0 24px rgba(139,92,246,.35);
     --glow-cyan:0 0 24px rgba(34,211,238,.35);
     --nav-bg:rgba(8,11,20,.75);
-    --ambient-violet:rgba(139,92,246,.16);
-    --ambient-cyan:rgba(34,211,238,.11);
-    --ambient-magenta:rgba(240,57,154,.08);
-    --grid-line:rgba(139,92,246,.07);
+    --ambient-violet:rgba(139,92,246,.21);
+    --ambient-cyan:rgba(34,211,238,.15);
+    --ambient-magenta:rgba(240,57,154,.10);
+    --grid-line:rgba(139,92,246,.09);
     --loader-bg:rgba(6,8,18,.96);
     --surface-highlight:rgba(255,255,255,.045);
     --section-glow:rgba(139,92,246,.09);
@@ -71,10 +71,10 @@
     --glow-violet:0 0 24px rgba(109,40,217,.20);
     --glow-cyan:0 0 24px rgba(14,165,196,.18);
     --nav-bg:rgba(247,245,252,.88);
-    --ambient-violet:rgba(124,58,237,.12);
-    --ambient-cyan:rgba(14,165,196,.09);
-    --ambient-magenta:rgba(190,24,93,.06);
-    --grid-line:rgba(109,40,217,.09);
+    --ambient-violet:rgba(124,58,237,.18);
+    --ambient-cyan:rgba(14,165,196,.13);
+    --ambient-magenta:rgba(190,24,93,.08);
+    --grid-line:rgba(109,40,217,.11);
     --loader-bg:rgba(247,245,252,.96);
     --surface-highlight:rgba(255,255,255,.72);
     --section-glow:rgba(124,58,237,.08);
@@ -100,9 +100,11 @@ html{ scroll-behavior:smooth; }
 body{
     background:var(--bg-void);
     background-image:
-        radial-gradient(circle at 8% 8%,var(--ambient-violet),transparent 28%),
-        radial-gradient(circle at 92% 24%,var(--ambient-cyan),transparent 26%),
-        radial-gradient(circle at 52% 92%,var(--ambient-magenta),transparent 28%);
+        radial-gradient(ellipse at 16% 0%,var(--ambient-violet),transparent 34%),
+        radial-gradient(ellipse at 86% 18%,var(--ambient-cyan),transparent 32%),
+        radial-gradient(ellipse at 50% 100%,var(--ambient-magenta),transparent 38%);
+    background-repeat:no-repeat;
+    background-size:100% 100%;
     background-attachment:fixed;
     color:var(--text);
     font-family:'Inter',sans-serif;
@@ -115,18 +117,9 @@ body{
 html, body, *{ scrollbar-width:none; -ms-overflow-style:none; }
 html::-webkit-scrollbar, body::-webkit-scrollbar, *::-webkit-scrollbar{ width:0; height:0; display:none; }
 
-body::before, body::after{
-    content:""; position:fixed; pointer-events:none; z-index:0; border-radius:50%; filter:blur(70px);
-    opacity:.72; transition:background .35s ease, opacity .35s ease;
-}
-body::before{
-    width:420px; height:420px; top:18%; left:-220px;
-    background:var(--ambient-violet);
-}
-body::after{
-    width:360px; height:360px; right:-180px; bottom:10%;
-    background:var(--ambient-cyan);
-}
+/* Ambient cukup menyatu di background; blob fixed di sisi layar sengaja tidak
+   dipakai karena terlihat seperti panel/pembatas saat viewport mobile sempit. */
+body::before, body::after{ display:none; }
 
 h1,h2,h3,h4{
     font-family:'Sora',sans-serif;
@@ -431,10 +424,9 @@ header{ position:sticky; top:0; z-index:100; }
         radial-gradient(circle at 8% 18%,var(--section-glow),transparent 24%),
         radial-gradient(circle at 94% 76%,var(--ambient-cyan),transparent 20%);
 }
-.games::after, .topup-section::after{
-    content:""; position:absolute; top:18px; bottom:18px; left:50%; width:1px; z-index:-1;
-    background:linear-gradient(180deg,transparent,var(--grid-line),transparent); opacity:.7; pointer-events:none;
-}
+/* Jangan membuat garis vertikal di tengah section: pada mobile terbaca sebagai
+   pembatas layout, bukan dekorasi. */
+.games::after, .topup-section::after{ display:none; }
 .games{ max-width:1240px; margin:0 auto; padding:50px 24px 70px; position:relative; }
 
 .category-filter{
@@ -1088,6 +1080,7 @@ input::placeholder{ color:var(--text-dim); }
     .tw-nav .btn-ghost, .tw-next{ width:100%; }
 }
 @media(max-width:640px){
+    body{ background-attachment:scroll; }
     .site-footer{ padding:44px 16px 24px; }
     .footer-contact{ flex-direction:column; align-items:stretch; max-width:340px; gap:2px; }
     .footer-contact a{ width:100%; justify-content:flex-start; font-size:12px; padding:7px 0; }
