@@ -59,7 +59,13 @@ exports.create = async (req, res) => {
             item_details = items.map((item) => {
                 const p = products.find((x) => x.id === item.id);
                 if (!p) throw new Error(`Produk id ${item.id} tidak ditemukan`);
-                if (!item.qty || item.qty <= 0) throw new Error(`Jumlah produk tidak valid`);
+                // Wajib integer & dalam batas wajar -- sebelumnya cuma dicek
+                // `> 0`, jadi qty desimal (mis. 0.5) atau angka raksasa
+                // (mis. 999999999) bisa lolos dan bikin subtotal/total jadi
+                // aneh (desimal) atau berpotensi dipakai buat spam order.
+                if (!Number.isInteger(item.qty) || item.qty <= 0 || item.qty > 100) {
+                    throw new Error(`Jumlah produk tidak valid`);
+                }
                 return {
                     id: String(p.id),
                     name: p.name.slice(0, 80),

@@ -103,7 +103,18 @@ async function checkStatus(refId) {
 async function verifyWebhookSignature(headerSignature, refId) {
     const { memberCode, secret } = await getCreds();
     const expected = buildRefSignature(memberCode, secret, refId);
-    return headerSignature && expected === headerSignature;
+
+    // Pakai perbandingan timing-safe (bukan `===`) -- perbandingan string
+    // biasa berhenti di karakter pertama yang beda, jadi teorinya bisa
+    // dipakai buat nebak signature karakter-demi-karakter lewat selisih
+    // waktu respons (timing attack). timingSafeEqual butuh dua Buffer
+    // dengan PANJANG SAMA, makanya dicek dulu panjangnya sebelum dibanding
+    // (kalau panjangnya beda, otomatis dianggap tidak valid).
+    if (!headerSignature || typeof headerSignature !== "string") return false;
+    const expectedBuf = Buffer.from(expected, "utf8");
+    const receivedBuf = Buffer.from(headerSignature, "utf8");
+    if (expectedBuf.length !== receivedBuf.length) return false;
+    return crypto.timingSafeEqual(expectedBuf, receivedBuf);
 }
 
 module.exports = {
