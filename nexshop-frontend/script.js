@@ -139,7 +139,12 @@ function toast(message, type = "default") {
     const container = document.getElementById("toastContainer");
     const el = document.createElement("div");
     el.className = "toast" + (type !== "default" ? " " + type : "");
-    el.textContent = message;
+    const icon = type === "success" ? "fa-circle-check" : type === "error" ? "fa-circle-exclamation" : "fa-circle-info";
+    el.setAttribute("role", type === "error" ? "alert" : "status");
+    el.innerHTML = `
+        <span class="toast-icon" aria-hidden="true"><i class="fa-solid ${icon}"></i></span>
+        <span class="toast-message">${escapeHtml(String(message))}</span>
+    `;
     container.appendChild(el);
     setTimeout(() => el.remove(), 3000);
 }
@@ -240,14 +245,13 @@ setTimeout(() => {
             <div class="card-img">
                 <img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async">
                 <span class="badge">${p.badge}</span>
-                        ${isFlashSaleActive(p) ? `<span class="flash-ribbon"><i class="fa-solid fa-fire" aria-hidden="true"></i> -${discountPercent(p)}%</span>` : ""}
             </div>
             <div class="card-body">
                 <h4>${p.name}</h4>
                 <div class="card-rating"><span class="stars">${stars(p.rating)}</span> ${p.rating} · ${p.sold} terjual</div>
                 <div class="card-footer">
                     <div class="card-price-block">${priceBlockHtml(p, "sm")}</div>
-                     <button type="button" class="add-btn" data-id="${p.id}"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i> Beli</button>
+                     <button type="button" class="add-btn" data-id="${p.id}"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i> Keranjang</button>
                 </div>
             </div>
         </div>
