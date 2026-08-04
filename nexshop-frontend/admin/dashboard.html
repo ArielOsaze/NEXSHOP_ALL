@@ -70,6 +70,12 @@
             <h2>Dashboard</h2>
             <p class="text-muted mb-0">Selamat datang di Admin NexShop</p>
         </div>
+        <div class="dashboard-quick-actions">
+            <button class="btn btn-outline-light btn-sm" onclick="openProductModal()"><i class="bi bi-plus-circle me-1"></i> Tambah Produk</button>
+            <button class="btn btn-outline-light btn-sm" onclick="switchView('topup')"><i class="bi bi-gem me-1"></i> Topup Diamond</button>
+            <button class="btn btn-outline-light btn-sm" onclick="openPromoModal()"><i class="bi bi-megaphone me-1"></i> Buat Slide</button>
+            <button class="btn btn-outline-light btn-sm" onclick="openPromoCodeModal()"><i class="bi bi-ticket-perforated me-1"></i> Buat Kode Promo</button>
+        </div>
     </div>
 
     <div class="row g-3 mb-4">
@@ -80,17 +86,31 @@
             </div></div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="card shadow-sm accent-card accent-cyan"><div class="card-body">
+        <div class="col-lg-3">
+            <div class="card shadow-sm accent-card accent-cyan"><div class="card-body dashboard-metric-card">
+                <small>Produk Flash Sale</small>
+                <h2 id="totalFlashSale">0</h2>
+            </div></div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card shadow-sm accent-card accent-cyan"><div class="card-body dashboard-metric-card">
                 <small>Total Sold</small>
                 <h2 id="totalSold">0</h2>
             </div></div>
         </div>
 
-        <div class="col-lg-4">
-            <div class="card shadow-sm accent-card accent-magenta"><div class="card-body">
+        <div class="col-lg-3">
+            <div class="card shadow-sm accent-card accent-magenta"><div class="card-body dashboard-metric-card">
                 <small>Total Nilai</small>
                 <h2 id="totalHarga">Rp 0</h2>
+            </div></div>
+        </div>
+
+        <div class="col-lg-3">
+            <div class="card shadow-sm accent-card accent-violet"><div class="card-body dashboard-metric-card">
+                <small>Notifikasi Belum Dibaca</small>
+                <h2 id="dashboardUnreadNotif">0</h2>
             </div></div>
         </div>
     </div>
@@ -115,9 +135,17 @@
             <p class="text-muted mb-0">Kelola produk toko (non-diamond)</p>
         </div>
 
-        <div class="d-flex gap-2">
-            <input id="search" class="form-control" placeholder="Cari produk...">
-            <button class="btn btn-success text-nowrap" data-bs-toggle="modal" data-bs-target="#productModal">
+        <div class="d-flex gap-2 flex-wrap">
+            <input id="search" class="form-control" style="min-width:220px;" placeholder="Cari produk...">
+            <select id="productCategoryFilter" class="form-select" style="width:auto; min-width:160px;">
+                <option value="">Semua Kategori</option>
+            </select>
+            <select id="productFlashFilter" class="form-select" style="width:auto; min-width:170px;">
+                <option value="">Semua Status</option>
+                <option value="flash">Flash Sale</option>
+                <option value="normal">Biasa</option>
+            </select>
+            <button class="btn btn-success text-nowrap" onclick="openProductModal()">
                 <i class="bi bi-plus-circle"></i>
                 Tambah Produk
             </button>

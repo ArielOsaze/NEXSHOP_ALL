@@ -39,6 +39,9 @@ const topupProductModal = new bootstrap.Modal(topupProductModalEl);
 let editingTopupProductId = null;
 let topupProducts = [];
 let topupOrders = [];
+let productSearchQuery = "";
+let productCategoryFilterValue = "";
+let productFlashFilterValue = "";
 
 const promoCodeModalEl = document.getElementById("promoCodeModal");
 const promoCodeModal = new bootstrap.Modal(promoCodeModalEl);
@@ -126,6 +129,34 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
     });
 });
 
+function switchView(view) {
+    document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
+        link.classList.toggle("active", link.dataset.view === view);
+    });
+    document.querySelectorAll(".view-section").forEach(sec => sec.classList.add("d-none"));
+    const target = document.getElementById(`view-${view}`);
+    if (target) target.classList.remove("d-none");
+
+    if (view === "orders" && !ordersLoaded) loadOrders();
+    if (view === "users" && !usersLoaded) { loadUsers(); loadPendingOtp(); }
+    if (view === "promo" && !promoLoaded) loadPromo();
+    if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
+    if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
+    if (view === "settings" && !settingsLoaded) loadSettings();
+    if (view === "stats" && !statsLoaded) loadStats();
+}
+
+function openProductModal() {
+    const form = document.getElementById("productForm");
+    form.reset();
+    previewImage.src = "";
+    previewImage.classList.add("d-none");
+    editingId = null;
+    currentImage = "";
+    document.getElementById("modalTitle").innerHTML = '<i class="bi bi-box-seam me-2"></i>Tambah Produk';
+    productModal.show();
+}
+
 // ================================
 // Load Products
 // ================================
@@ -139,6 +170,7 @@ async function loadProducts() {
         if (!res.ok) throw new Error("Gagal mengambil data produk");
 
         products = await res.json();
+        renderProductFilters(products);
         renderProducts(products);
         updateStats(products);
 
@@ -154,15 +186,20 @@ async function loadProducts() {
 // Render Table
 // ================================
 
-function renderProducts(data) {
+function renderProducts() {
     const tbody = document.getElementById("products");
+    const filtered = getFilteredProducts();
 
-    if (!data.length) {
+    if (!products.length) {
         tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Belum ada produk.</td></tr>`;
         return;
     }
+    if (!filtered.length) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">Tidak ada produk yang cocok dengan filter pencarian.</td></tr>`;
+        return;
+    }
 
-    tbody.innerHTML = data.map((product, idx) => `
+    tbody.innerHTML = filtered.map((product, idx) => `
         <tr>
             <td>${idx + 1}<div class="text-muted small">#${escapeHtml(product.id)} · urutan: ${escapeHtml(product.sort_order ?? "-")}</div></td>
             <td>
@@ -193,33 +230,68 @@ function renderProducts(data) {
 function updateStats(data) {
     let totalHarga = 0;
     let totalSold = 0;
+    let totalFlashSale = 0;
 
     data.forEach(item => {
         totalHarga += Number(item.price || 0);
         totalSold += Number(item.sold || 0);
+        if (item.is_flash_sale) totalFlashSale += 1;
     });
 
     document.getElementById("totalProduk").innerText = data.length;
     document.getElementById("totalSold").innerText = totalSold;
     document.getElementById("totalHarga").innerText = "Rp " + totalHarga.toLocaleString("id-ID");
+    const flashEl = document.getElementById("totalFlashSale");
+    if (flashEl) flashEl.innerText = totalFlashSale;
 }
 
 // ================================
-// Search
+// Search & Filters
 // ================================
 
 const search = document.getElementById("search");
+const productCategoryFilter = document.getElementById("productCategoryFilter");
+const productFlashFilter = document.getElementById("productFlashFilter");
 
 if (search) {
-    search.addEventListener("keyup", () => {
-        const keyword = search.value.toLowerCase();
-        const filtered = products.filter(product =>
-            product.name.toLowerCase().includes(keyword) ||
-            (product.category || "").toLowerCase().includes(keyword) ||
-            (product.badge || "").toLowerCase().includes(keyword)
-        );
-        renderProducts(filtered);
+    search.addEventListener("input", () => {
+        productSearchQuery = search.value.trim().toLowerCase();
+        renderProducts(products);
     });
+}
+if (productCategoryFilter) {
+    productCategoryFilter.addEventListener("change", (e) => {
+        productCategoryFilterValue = e.target.value;
+        renderProducts(products);
+    });
+}
+if (productFlashFilter) {
+    productFlashFilter.addEventListener("change", (e) => {
+        productFlashFilterValue = e.target.value;
+        renderProducts(products);
+    });
+}
+
+function getFilteredProducts() {
+    return products.filter(product => {
+        const matchesKeyword = !productSearchQuery || [product.name, product.category, product.badge]
+            .map(v => String(v || "").toLowerCase()).some(text => text.includes(productSearchQuery));
+
+        const matchesCategory = !productCategoryFilterValue || (product.category || "") === productCategoryFilterValue;
+        const matchesFlash = !productFlashFilterValue || (
+            productFlashFilterValue === "flash" ? !!product.is_flash_sale : !product.is_flash_sale
+        );
+
+        return matchesKeyword && matchesCategory && matchesFlash;
+    });
+}
+
+function renderProductFilters(data) {
+    const categories = [...new Set(data.map(p => p.category).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+    if (!productCategoryFilter) return;
+    const selected = productCategoryFilter.value || "";
+    productCategoryFilter.innerHTML = `<option value="">Semua Kategori</option>` +
+        categories.map(cat => `<option value="${escapeHtml(cat)}" ${cat === selected ? "selected" : ""}>${escapeHtml(cat)}</option>`).join("");
 }
 
 // ================================
@@ -2403,6 +2475,10 @@ function renderNotifBell(unreadCount) {
         countEl.classList.remove("d-none");
     } else {
         countEl.classList.add("d-none");
+    }
+    const dashboardNotifEl = document.getElementById("dashboardUnreadNotif");
+    if (dashboardNotifEl) {
+        dashboardNotifEl.innerText = unreadCount;
     }
 }
 
