@@ -140,6 +140,15 @@
 
 <section class="hero-carousel" id="top">
     <div class="hero-track" id="heroTrack">
+        <!-- Default fallback slide (dipakai saat API promo kosong/gagal) -->
+        <div class="hero-slide" style="background-image:linear-gradient(120deg, rgba(14,18,36,0.6), rgba(6,8,18,0.2));">
+            <div class="hero-text">
+                <span class="hero-badge">Pilihan Editor</span>
+                <h2>Temukan game favorit dengan penawaran terbaik</h2>
+                <p>Dari diskon harian sampai topup instan — aman, cepat, dan terpercaya.</p>
+                <a href="#games" class="hero-cta">Belanja Sekarang</a>
+            </div>
+        </div>
         <!-- slide diisi otomatis oleh JS dari /api/promo -->
     </div>
     <button class="hero-arrow hero-arrow-left" id="heroPrev" aria-label="Sebelumnya">‹</button>
