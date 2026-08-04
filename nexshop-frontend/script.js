@@ -114,13 +114,23 @@ function priceBlockHtml(p, size = "sm") {
 }
 const stars = (rating) => "★".repeat(Math.round(rating)) + "☆".repeat(5 - Math.round(rating));
 
+function safeJSONParse(value, fallback) {
+    if (typeof value !== "string") return fallback;
+    try {
+        return JSON.parse(value);
+    } catch (err) {
+        console.warn("Failed to parse JSON from localStorage", err);
+        return fallback;
+    }
+}
+
 /* ---------- State (persisted) ---------- */
-let currentUser = JSON.parse(localStorage.getItem("nexshop_user") || "null");
+let currentUser = safeJSONParse(localStorage.getItem("nexshop_user"), null);
 
 // Cart disimpan per-akun (key beda tiap user_id), plus 1 key terpisah buat
 // guest (belum login). Jadi logout/ganti akun gak nyampur keranjang orang lain.
 const cartKey = () => currentUser ? `nexshop_cart_${currentUser.id}` : "nexshop_cart_guest";
-let cart = JSON.parse(localStorage.getItem(cartKey()) || "[]");
+let cart = safeJSONParse(localStorage.getItem(cartKey()), []);
 let activeProductId = null;
 let pendingQty = 1;
 let checkoutItems = null;
@@ -130,7 +140,7 @@ const saveCart = () => localStorage.setItem(cartKey(), JSON.stringify(cart));
 const saveUser = () => localStorage.setItem("nexshop_user", JSON.stringify(currentUser));
 
 function switchCartContext() {
-    cart = JSON.parse(localStorage.getItem(cartKey()) || "[]");
+    cart = safeJSONParse(localStorage.getItem(cartKey()), []);
     updateCartCount();
 }
 
@@ -176,22 +186,26 @@ document.addEventListener("keydown", (e) => {
 /* ---------- Render product catalog ---------- */
 
 async function loadProducts() {
-
     try {
-
         const res = await fetch(`${API_BASE}/products`);
+        if (!res.ok) {
+            console.error("Produk gagal dimuat:", res.status, res.statusText);
+            PRODUCTS = [];
+            renderCategories();
+            renderProducts();
+            return;
+        }
 
-     PRODUCTS = await res.json();
-
-    renderCategories();
-    renderProducts();
-
+        const data = await res.json();
+        PRODUCTS = Array.isArray(data) ? data : [];
+        renderCategories();
+        renderProducts();
     } catch (err) {
-
         console.error(err);
-
+        PRODUCTS = [];
+        renderCategories();
+        renderProducts();
     }
-
 }
 function renderCategories() {
 
