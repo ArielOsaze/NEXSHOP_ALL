@@ -251,7 +251,10 @@ setTimeout(() => {
                 <div class="card-rating"><span class="stars">${stars(p.rating)}</span> ${p.rating} · ${p.sold} terjual</div>
                 <div class="card-footer">
                     <div class="card-price-block">${priceBlockHtml(p, "sm")}</div>
-                     <button type="button" class="add-btn" data-id="${p.id}"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i> Keranjang</button>
+                    <div class="card-actions">
+                        <button type="button" class="buy-btn" data-id="${p.id}"><i class="fa-solid fa-bolt" aria-hidden="true"></i> Beli</button>
+                        <button type="button" class="add-btn" data-id="${p.id}"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i> Keranjang</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -259,7 +262,7 @@ setTimeout(() => {
 
     grid.querySelectorAll(".card").forEach(card => {
         card.addEventListener("click", (e) => {
-            if (e.target.closest(".add-btn")) return; // handled separately
+            if (e.target.closest(".add-btn, .buy-btn")) return; // handled separately
             openProductModal(Number(card.dataset.id));
         });
     });
@@ -268,6 +271,13 @@ setTimeout(() => {
         btn.addEventListener("click", (e) => {
             e.stopPropagation();
             addToCart(Number(btn.dataset.id), 1);
+        });
+    });
+
+    grid.querySelectorAll(".buy-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openCheckout([{ id: Number(btn.dataset.id), qty: 1 }], "direct");
         });
     });
 
