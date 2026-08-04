@@ -601,9 +601,10 @@ header{ position:sticky; top:0; z-index:100; }
 .price-now{ font-family:'Inter',sans-serif; font-weight:800; font-size:16px; line-height:1.2; letter-spacing:-.03em; color:var(--text); }
 .price-now.promo{
     display:inline-flex; align-items:center; justify-content:center;
-    padding:4px 10px; border-radius:10px;
-    background:transparent; color:var(--text);
-    border:1px solid rgba(255,255,255,.04);
+    padding:6px 12px; border-radius:12px;
+    background:linear-gradient(135deg, var(--violet), var(--cyan));
+    color:#fff; border:1px solid rgba(255,255,255,.12);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
 }
 .price-sale-row{ display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
 .price-now.lg{ font-size:24px; }
@@ -627,15 +628,15 @@ header{ position:sticky; top:0; z-index:100; }
 .buy-btn{
     position:relative; overflow:hidden;
     display:inline-flex; align-items:center; justify-content:center; gap:10px; width:100%; min-height:44px;
-    padding:0 16px; border-radius:12px; font-family:'Sora',sans-serif; font-size:13px; font-weight:700;
+    padding:0 16px; border-radius:14px; font-family:'Sora',sans-serif; font-size:13px; font-weight:700;
     letter-spacing:.04em; text-transform:none; white-space:nowrap;
-        background:linear-gradient(135deg, var(--violet), var(--cyan)); color:#fff; border:1px solid rgba(255,255,255,.12);
-        box-shadow:0 10px 30px rgba(34,211,238,.16);
-        transition:transform .12s, box-shadow .12s, background .2s, filter .12s;
-    }
-    .buy-btn::before{ content:''; position:absolute; inset:0; background:radial-gradient(circle at 35% 35%, rgba(255,255,255,.16), transparent 45%); opacity:0; transition:opacity .3s, transform .3s; }
-    .buy-btn:hover{ transform:translateY(-2px); box-shadow:0 14px 40px rgba(34,211,238,.22); }
-    .buy-btn:hover::before{ opacity:.35; }
+    background:linear-gradient(135deg, var(--violet), var(--cyan)); color:#fff; border:1px solid rgba(255,255,255,.15);
+    box-shadow:0 12px 32px rgba(34,211,238,.18);
+    transition:transform .12s, box-shadow .12s, filter .12s;
+}
+.buy-btn::before{ content:''; position:absolute; inset:0; background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.22), transparent 40%); opacity:0; transition:opacity .25s ease, transform .25s ease; }
+.buy-btn:hover{ transform:translateY(-2px); box-shadow:0 16px 44px rgba(34,211,238,.22); }
+.buy-btn:hover::before{ opacity:.25; }
 .topup-section{
     max-width:1240px; margin:0 auto; padding:20px 24px 90px; position:relative; z-index:1;
 }
