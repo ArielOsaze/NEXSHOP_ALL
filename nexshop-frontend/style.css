@@ -109,11 +109,22 @@ body{
     background-size:100% 100%;
     background-attachment:fixed;
     color:var(--text);
-    font-family:'Inter',sans-serif;
-    line-height:1.5;
+    font-family:'Inter', 'Sora', sans-serif;
+    line-height:1.55;
+    letter-spacing:0.01em;
+    text-rendering:optimizeLegibility;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
     overflow-x:hidden;
     position:relative;
     transition:background-color .25s ease, color .25s ease;
+}
+
+h1,h2,h3,h4{
+    font-family:'Sora',sans-serif;
+    font-weight:700;
+    letter-spacing:.02em;
+    line-height:1.15;
 }
 
 html, body, *{ scrollbar-width:none; -ms-overflow-style:none; }
@@ -1010,13 +1021,17 @@ input::placeholder{ color:var(--text-dim); }
 .track-result{
     background:var(--bg-panel-2); border:1px solid var(--line); border-radius:var(--radius-sm);
     padding:14px; font-size:13.5px; margin-top:18px;
+    min-height:0;
+    overflow-wrap:anywhere;
 }
-.track-result .row{ display:flex; justify-content:space-between; padding:4px 0; color:var(--text-muted); gap:12px; }
+.track-result .row{ display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; padding:4px 0; color:var(--text-muted); gap:12px; }
 .track-result .row span:last-child{ color:var(--text); text-align:right; }
 .track-result .row.discount{ color:var(--text-success); }
 .track-result .row.discount span:last-child{ color:var(--text-success); }
 .track-result .row.total{ font-weight:700; color:var(--text); border-top:1px solid var(--line); margin-top:6px; padding-top:10px; }
 .track-result .row.total span:last-child{ color:var(--text-violet); }
+.track-mine-list{ display:flex; flex-direction:column; gap:10px; max-height:360px; overflow-y:auto; min-height:0; }
+.track-mine-item{ min-height:72px; }
 .track-status-badge{
     display:inline-block; padding:5px 12px; border-radius:999px; font-size:12.5px;
     font-weight:700; margin-bottom:12px;
