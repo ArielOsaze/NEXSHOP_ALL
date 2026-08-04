@@ -264,7 +264,8 @@ setTimeout(() => {
                 <span class="badge">${p.badge}</span>
             </div>
             <div class="card-body">
-                <h4>${p.name}</h4>
+                ${p.category ? `<div class="card-category">${escapeHtml(p.category)}</div>` : ""}
+                <h4>${escapeHtml(p.name)}</h4>
                 <div class="card-rating"><span class="stars">${stars(p.rating)}</span> ${p.rating} · ${p.sold} terjual</div>
                 <div class="card-footer">
                     <div class="card-price-block">${priceBlockHtml(p, "sm")}</div>
