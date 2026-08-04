@@ -533,19 +533,31 @@ header{ position:sticky; top:0; z-index:100; }
     border-radius:16px; font-size:14px; font-weight:700;
     background:rgba(255,255,255,.06); color:var(--text);
     border:1px solid rgba(255,255,255,.12);
-    transition:background .2s, border-color .2s, color .2s, transform .2s;
+    transition:background .2s, border-color .2s, color .2s, transform .2s, box-shadow .2s;
 }
-.add-btn:hover{ background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.22); transform:translateY(-1px); }
+.add-btn:hover{ background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.22); transform:translateY(-1px); box-shadow:0 10px 20px rgba(0,0,0,.08); }
 .buy-btn{
-    display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:44px;
-    padding:0 14px; border-radius:14px; font-size:13px; font-weight:700; white-space:nowrap;
-    background:rgba(139,92,246,.12); color:var(--text);
-    border:1px solid rgba(139,92,246,.3); box-shadow:none;
-    transition:background .2s, border-color .2s, transform .2s;
+    position:relative; overflow:hidden;
+    display:inline-flex; align-items:center; justify-content:center; width:100%; min-height:45px;
+    padding:0 18px; border-radius:18px; font-family:'Sora',sans-serif; font-size:13px; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase; white-space:nowrap;
+    background:linear-gradient(135deg,rgba(79,70,229,.96),rgba(124,58,237,.95));
+    color:#fff; border:1px solid transparent;
+    box-shadow:0 16px 36px rgba(79,70,229,.18);
+    transition:transform .2s, box-shadow .2s, background .2s;
 }
-.buy-btn:hover{ background:rgba(139,92,246,.22); border-color:rgba(139,92,246,.5); transform:translateY(-1px); }
-.buy-btn i{ font-size:14px; }
-.buy-btn span{ font-size:13px; }
+.buy-btn::before{
+    content:'';
+    position:absolute; inset:0;
+    background:radial-gradient(circle at 30% 30%, rgba(255,255,255,.24), transparent 55%);
+    opacity:0;
+    transition:opacity .3s, transform .3s;
+    transform:scale(1);
+}
+.buy-btn:hover{ background:linear-gradient(135deg,rgba(99,102,241,.96),rgba(167,139,250,.96)); transform:translateY(-1px); box-shadow:0 20px 45px rgba(79,70,229,.26); }
+.buy-btn:hover::before{ opacity:1; transform:scale(1.05); }
+.buy-btn:active{ transform:translateY(0); }
+.buy-btn span{ font-size:13px; letter-spacing:.08em; }
 
 /* ================= TOPUP DIAMOND ================= */
 .topup-section{
