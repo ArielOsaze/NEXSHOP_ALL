@@ -1298,3 +1298,26 @@ input::placeholder{ color:var(--text-dim); }
         animation:ambient-rain var(--rain-duration,180s) linear var(--rain-delay,0s) infinite !important;
     }
 }
+
+/* Override: tone down oversized decorative and heading elements
+   Applied as overrides to avoid modifying many original rules directly. */
+.ambient-asset--gem{ font-size:36px !important; opacity:.12; }
+.ambient-asset--xbox{ font-size:34px !important; opacity:.12; }
+.ambient-asset--gamepad{ font-size:32px !important; opacity:.12; }
+.ambient-asset--key, .ambient-asset--dice{ font-size:28px !important; opacity:.12; }
+.ambient-asset--coins, .ambient-asset--gift, .ambient-asset--crown{ font-size:30px !important; opacity:.12; }
+.ambient-asset--ticket, .ambient-asset--mobile, .ambient-asset--shield, .ambient-asset--box{ font-size:28px !important; opacity:.12; }
+.ambient-asset--disc, .ambient-asset--star, .ambient-asset--cart, .ambient-asset--lock{ font-size:26px !important; opacity:.12; }
+
+/* Slightly smaller hero heading to reduce large visual footprint */
+.hero-text h2{ font-size:clamp(26px,3.6vw,44px) !important; }
+
+/* Reduce loader/brand sizes so they don't feel oversized */
+.app-loader-brand{ font-size:20px !important; }
+.footer-brand{ font-size:22px !important; }
+
+/* Reduce any remaining heavy image hover scale to none on touch devices */
+@media (hover: none), (pointer: coarse) {
+    .card-img img, .topup-game-card, .topup-game-card:hover{ transform:none !important; }
+}
+
