@@ -121,6 +121,8 @@ const cartKey = () => currentUser ? `nexshop_cart_${currentUser.id}` : "nexshop_
 let cart = JSON.parse(localStorage.getItem(cartKey()) || "[]");
 let activeProductId = null;
 let pendingQty = 1;
+let checkoutItems = null;
+let checkoutSource = "cart";
 
 const saveCart = () => localStorage.setItem(cartKey(), JSON.stringify(cart));
 const saveUser = () => localStorage.setItem("nexshop_user", JSON.stringify(currentUser));
@@ -310,6 +312,12 @@ document.getElementById("pmQtyValue").addEventListener("blur", (e) => {
 document.getElementById("pmAddBtn").addEventListener("click", () => {
     addToCart(activeProductId, pendingQty);
     closeOverlay("productOverlay");
+});
+document.getElementById("pmBuyNowBtn").addEventListener("click", () => {
+    const id = activeProductId;
+    const qty = pendingQty;
+    closeOverlay("productOverlay");
+    openCheckout([{ id, qty }], "direct");
 });
 
 /* ---------- Cart logic ---------- */
@@ -741,6 +749,10 @@ document.getElementById("myOrdersBtn").addEventListener("click", () => {
 let appliedPromo = null; // { code, discount }
 let selectedPaymentMethod = null;
 
+function getCheckoutItems() {
+    return checkoutItems || cart;
+}
+
 function renderCheckoutPaymentMethods() {
     const grid = document.getElementById("checkoutPaymentGrid");
     if (!grid) return;
@@ -764,16 +776,16 @@ function renderCheckoutPaymentMethods() {
     });
 }
 
-function cartSubtotal() {
-    return cart.reduce((sum, item) => {
+function cartSubtotal(items = getCheckoutItems()) {
+    return items.reduce((sum, item) => {
         const p = PRODUCTS.find(x => x.id === item.id);
-        return sum + p.price * item.qty;
+        return p ? sum + p.price * item.qty : sum;
     }, 0);
 }
 
 function renderCheckoutSummary() {
     const subtotal = cartSubtotal();
-    const itemCount = cart.reduce((sum, item) => sum + item.qty, 0);
+    const itemCount = getCheckoutItems().reduce((sum, item) => sum + item.qty, 0);
     const discount = appliedPromo ? appliedPromo.discount : 0;
     const total = Math.max(subtotal - discount, 0);
 
@@ -784,11 +796,15 @@ function renderCheckoutSummary() {
     `;
 }
 
-document.getElementById("checkoutBtn").addEventListener("click", () => {
-    if (cart.length === 0) {
+function openCheckout(items, source = "cart") {
+    const validItems = (items || []).filter(item => PRODUCTS.some(p => p.id === item.id) && item.qty > 0);
+    if (validItems.length === 0) {
         toast("Keranjang masih kosong.", "error");
         return;
     }
+
+    checkoutItems = validItems.map(item => ({ id: item.id, qty: item.qty }));
+    checkoutSource = source;
     closeOverlay("cartOverlay");
 
     appliedPromo = null;
@@ -813,6 +829,14 @@ document.getElementById("checkoutBtn").addEventListener("click", () => {
     document.getElementById("checkoutStep").classList.remove("hidden");
     document.getElementById("checkoutSuccess").classList.add("hidden");
     openOverlay("checkoutOverlay");
+}
+
+document.getElementById("checkoutBtn").addEventListener("click", () => {
+    if (cart.length === 0) {
+        toast("Keranjang masih kosong.", "error");
+        return;
+    }
+    openCheckout(cart, "cart");
 });
 
 document.getElementById("applyPromoBtn").addEventListener("click", async () => {
@@ -833,7 +857,7 @@ document.getElementById("applyPromoBtn").addEventListener("click", async () => {
         const res = await fetch(`${API_BASE}/promo-codes/validate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ code, cart: cart.map(i => ({ id: i.id, qty: i.qty })), email: emailForPromo || undefined })
+            body: JSON.stringify({ code, cart: getCheckoutItems().map(i => ({ id: i.id, qty: i.qty })), email: emailForPromo || undefined })
         });
         const data = await res.json();
 
@@ -872,7 +896,13 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
         return;
     }
 
-    const subtotal = cartSubtotal();
+    const items = getCheckoutItems();
+    if (!items.length) {
+        toast("Tidak ada produk untuk dibayar.", "error");
+        return;
+    }
+
+    const subtotal = cartSubtotal(items);
     const total = appliedPromo ? Math.max(subtotal - appliedPromo.discount, 0) : subtotal;
 
     submitBtn.disabled = true;
@@ -892,7 +922,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
                 recipient_name,
                 recipient_email,
                 payment_method: selectedPaymentMethod,
-                items: cart,
+                items,
                 total,
                 promo_code: appliedPromo ? appliedPromo.code : undefined
             })
@@ -914,11 +944,15 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
         }
 
         // Pesanan sudah tercatat "pending" di server & bakal diupdate otomatis
-        // lewat webhook iPaymu begitu lunas — cart dikosongkan sebelum redirect
-        // supaya gak nyangkut kalau user gak balik lagi ke tab ini.
-        cart = [];
-        saveCart();
-        updateCartCount();
+        // lewat webhook iPaymu begitu lunas. Checkout dari keranjang dikosongkan
+        // sebelum redirect, sedangkan "Beli Sekarang" membiarkan keranjang tetap utuh.
+        if (checkoutSource === "cart") {
+            cart = [];
+            saveCart();
+            updateCartCount();
+        }
+        checkoutItems = null;
+        checkoutSource = "cart";
 
         window.location.href = data.paymentUrl;
     } catch (err) {
@@ -940,9 +974,13 @@ function showCheckoutSuccess(recipient_name, total, statusText, orderId) {
     document.getElementById("checkoutSuccess").classList.remove("hidden");
     openOverlay("checkoutOverlay");
 
-    cart = [];
-    saveCart();
-    updateCartCount();
+    if (checkoutSource === "cart") {
+        cart = [];
+        saveCart();
+        updateCartCount();
+    }
+    checkoutItems = null;
+    checkoutSource = "cart";
 }
 
 /* ---------- FAQ / Terms / Refund / Kontak modal ---------- */
