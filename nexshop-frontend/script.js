@@ -266,8 +266,8 @@ setTimeout(() => {
                 <div class="card-footer">
                     <div class="card-price-block">${priceBlockHtml(p, "sm")}</div>
                     <div class="card-actions">
-                        <button type="button" class="buy-btn" data-id="${p.id}"><i class="fa-solid fa-bolt" aria-hidden="true"></i> Beli</button>
-                        <button type="button" class="add-btn" data-id="${p.id}"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i> Keranjang</button>
+                        <button type="button" class="add-btn" data-id="${p.id}" aria-label="Tambah ke Keranjang"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i></button>
+                        <button type="button" class="buy-btn" data-id="${p.id}"><i class="fa-solid fa-bolt" aria-hidden="true"></i><span>Beli</span></button>
                     </div>
                 </div>
             </div>

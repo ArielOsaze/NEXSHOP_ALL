@@ -500,14 +500,14 @@ header{ position:sticky; top:0; z-index:100; }
 }
 .card-body{ padding:16px; }
 .card-body h4{
-    font-family:'Inter',sans-serif; font-size:14.5px; line-height:1.35;
-    font-weight:600; letter-spacing:-.01em; margin-bottom:6px; color:var(--text);
+    font-family:'Sora',sans-serif; font-size:15px; line-height:1.3;
+    font-weight:700; letter-spacing:-.02em; margin-bottom:8px; color:var(--text);
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
 .card-rating{ font-size:12px; color:var(--text-muted); margin-bottom:12px; }
 .stars{ color:var(--text-warning); letter-spacing:1px; }
 .card-footer{ display:flex; flex-direction:column; gap:10px; }
-.card-actions{ display:grid; grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr); gap:8px; width:100%; }
+.card-actions{ display:grid; grid-template-columns:auto 1fr; gap:10px; width:100%; align-items:center; }
 .card-price{ font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--text); }
 .card-price-block{ display:flex; flex-direction:column; gap:3px; min-width:0; }
 .price-strike{
@@ -528,19 +528,24 @@ header{ position:sticky; top:0; z-index:100; }
 }
 .discount-chip i{ font-size:9px; }
 .add-btn{
-    display:inline-flex; align-items:center; justify-content:center; gap:6px; white-space:nowrap;
-    width:100%; padding:9px 8px; border-radius:100px; font-size:12px; font-weight:700;
-    background:rgba(139,92,246,.15); color:var(--text-violet); border:1px solid rgba(139,92,246,.4);
-    transition:.2s;
+    display:inline-flex; align-items:center; justify-content:center;
+    width:44px; min-width:44px; height:44px; padding:0;
+    border-radius:16px; font-size:14px; font-weight:700;
+    background:rgba(255,255,255,.06); color:var(--text);
+    border:1px solid rgba(255,255,255,.12);
+    transition:background .2s, border-color .2s, color .2s, transform .2s;
 }
-.add-btn:hover{ background:var(--violet); color:#fff; }
+.add-btn:hover{ background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.22); transform:translateY(-1px); }
 .buy-btn{
-    display:inline-flex; align-items:center; justify-content:center; gap:6px; width:100%;
-    padding:9px 8px; border-radius:100px; font-size:12px; font-weight:700; white-space:nowrap;
-    background:linear-gradient(135deg,var(--violet),var(--violet-2)); color:#fff;
-    box-shadow:0 6px 16px rgba(109,40,217,.22); transition:transform .2s, box-shadow .2s;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:44px;
+    padding:0 14px; border-radius:14px; font-size:13px; font-weight:700; white-space:nowrap;
+    background:rgba(139,92,246,.12); color:var(--text);
+    border:1px solid rgba(139,92,246,.3); box-shadow:none;
+    transition:background .2s, border-color .2s, transform .2s;
 }
-.buy-btn:hover{ transform:translateY(-1px); box-shadow:var(--glow-violet); }
+.buy-btn:hover{ background:rgba(139,92,246,.22); border-color:rgba(139,92,246,.5); transform:translateY(-1px); }
+.buy-btn i{ font-size:14px; }
+.buy-btn span{ font-size:13px; }
 
 /* ================= TOPUP DIAMOND ================= */
 .topup-section{
