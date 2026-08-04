@@ -254,12 +254,38 @@
     </div>
 </section>
 <section id="view-orders" class="view-section d-none">
-    <div class="mb-4">
-        <h2>Orders</h2>
-        <p class="text-muted mb-0">Daftar pesanan dari pelanggan</p>
+    <div class="mb-4 d-flex flex-column flex-md-row align-items-start justify-content-between gap-3">
+        <div>
+            <h2>Orders</h2>
+            <p class="text-muted mb-0">Daftar pesanan dari pelanggan</p>
+        </div>
+        <div class="text-muted small">Fitur filter dan ekspor CSV tersedia di sini.</div>
     </div>
     <div class="card shadow-sm">
-        <div class="card-body" id="ordersContainer"></div>
+        <div class="card-body">
+            <div class="orders-toolbar mb-3">
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <div class="order-search position-relative">
+                        <i class="bi bi-search order-search-icon"></i>
+                        <input id="orderSearchInput" class="form-control form-control-sm" placeholder="Cari pesanan / nama pelanggan / ID order">
+                    </div>
+                    <select id="orderStatusFilter" class="form-select form-select-sm" style="min-width:180px;">
+                        <option value="">Semua status</option>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="processing">Processing</option>
+                        <option value="sukses">Sukses</option>
+                        <option value="gagal">Gagal</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <button class="btn btn-outline-light btn-sm" id="orderExportBtn" type="button"><i class="bi bi-download"></i> Ekspor CSV</button>
+                    <span class="text-muted small order-count-text" id="ordersCountText">Memuat pesanan...</span>
+                </div>
+            </div>
+            <div id="ordersContainer"></div>
+        </div>
     </div>
 </section>
 

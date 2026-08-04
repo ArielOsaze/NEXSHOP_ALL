@@ -260,6 +260,7 @@ setTimeout(() => {
         <div class="card" data-id="${p.id}">
             <div class="card-img">
                 <img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async">
+                ${p.is_flash_sale ? '<span class="card-flag">FLASH SALE</span>' : ""}
                 <span class="badge">${p.badge}</span>
             </div>
             <div class="card-body">

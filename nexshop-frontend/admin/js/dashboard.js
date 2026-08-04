@@ -13,6 +13,9 @@ let products = [];
 let editingId = null;
 let currentImage = "";
 let ordersLoaded = false;
+let ordersData = [];
+let orderSearchQuery = "";
+let orderStatusFilterValue = "";
 let usersLoaded = false;
 let promoLoaded = false;
 let settingsLoaded = false;
@@ -272,6 +275,26 @@ if (productFlashFilter) {
     });
 }
 
+const orderSearchInput = document.getElementById("orderSearchInput");
+const orderStatusFilter = document.getElementById("orderStatusFilter");
+const orderExportBtn = document.getElementById("orderExportBtn");
+
+if (orderSearchInput) {
+    orderSearchInput.addEventListener("input", (e) => {
+        orderSearchQuery = e.target.value.trim().toLowerCase();
+        renderOrders();
+    });
+}
+if (orderStatusFilter) {
+    orderStatusFilter.addEventListener("change", (e) => {
+        orderStatusFilterValue = e.target.value.trim().toLowerCase();
+        renderOrders();
+    });
+}
+if (orderExportBtn) {
+    orderExportBtn.addEventListener("click", exportOrdersCsv);
+}
+
 function getFilteredProducts() {
     return products.filter(product => {
         const matchesKeyword = !productSearchQuery || [product.name, product.category, product.badge]
@@ -475,41 +498,20 @@ async function saveProduct() {
 
 async function loadOrders() {
     const container = document.getElementById("ordersContainer");
+    const ordersCountText = document.getElementById("ordersCountText");
+    if (ordersCountText) ordersCountText.textContent = "Memuat pesanan...";
     container.innerHTML = `<div class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</div>`;
 
     try {
         const res = await apiFetch("/orders");
         if (!res.ok) throw new Error("not-available");
 
-        const orders = await res.json();
+        ordersData = await res.json();
         ordersLoaded = true;
-
-        if (!orders.length) {
-            container.innerHTML = `<p class="text-muted text-center py-5 mb-0">Belum ada pesanan.</p>`;
-            return;
-        }
-
-        container.innerHTML = `
-            <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead><tr><th>ID</th><th>Pelanggan</th><th>Total</th><th>Status</th><th>Tanggal</th></tr></thead>
-                <tbody>
-                    ${orders.map(o => `
-                        <tr>
-                            <td>${escapeHtml(o.id)}</td>
-                            <td>${escapeHtml(o.customerName || o.name || "-")}</td>
-                            <td>Rp ${Number(o.total || 0).toLocaleString("id-ID")}</td>
-                            <td><span class="badge bg-info">${escapeHtml(o.status || "-")}</span></td>
-                            <td>${o.date ? new Date(o.date).toLocaleDateString("id-ID") : "-"}</td>
-                        </tr>
-                    `).join("")}
-                </tbody>
-            </table>
-            </div>
-        `;
+        renderOrders();
     } catch (err) {
         if (err.message === "unauthorized") return;
-        // Expected for now — the backend doesn't have this endpoint yet.
+        ordersData = [];
         container.innerHTML = `
             <div class="text-center text-muted py-5">
                 <i class="bi bi-cart-x display-4 d-block mb-3"></i>
@@ -517,7 +519,109 @@ async function loadOrders() {
                 <small>Endpoint <code>GET /orders</code> belum tersedia di API kamu.</small>
             </div>
         `;
+        if (ordersCountText) ordersCountText.textContent = "Tidak dapat memuat pesanan.";
     }
+}
+
+function getFilteredOrders() {
+    return ordersData.filter(order => {
+        const text = [order.id, order.customerName, order.name, order.status, order.tujuan, order.email]
+            .map(v => String(v || "").toLowerCase()).join(" ");
+        const matchesKeyword = !orderSearchQuery || text.includes(orderSearchQuery);
+        const matchesStatus = !orderStatusFilterValue || String(order.status || "").toLowerCase() === orderStatusFilterValue;
+        return matchesKeyword && matchesStatus;
+    });
+}
+
+function renderOrders() {
+    const container = document.getElementById("ordersContainer");
+    const ordersCountText = document.getElementById("ordersCountText");
+    const filtered = getFilteredOrders();
+
+    if (!ordersData.length) {
+        container.innerHTML = `<p class="text-muted text-center py-5 mb-0">Belum ada pesanan.</p>`;
+        if (ordersCountText) ordersCountText.textContent = "Belum ada pesanan.";
+        return;
+    }
+
+    if (!filtered.length) {
+        container.innerHTML = `<p class="text-muted text-center py-5 mb-0">Tidak ada pesanan yang cocok dengan filter.</p>`;
+        if (ordersCountText) ordersCountText.textContent = `${ordersData.length} pesanan; 0 cocok.`;
+        return;
+    }
+
+    const rows = filtered.map(o => `
+        <tr>
+            <td><code>${escapeHtml(o.id)}</code></td>
+            <td>${escapeHtml(o.customerName || o.name || "-")}</td>
+            <td>Rp ${Number(o.total || 0).toLocaleString("id-ID")}</td>
+            <td>${statusBadge(o.status)}</td>
+            <td>${o.created_at ? new Date(o.created_at).toLocaleString("id-ID") : o.date ? new Date(o.date).toLocaleString("id-ID") : "-"}</td>
+        </tr>
+    `).join("");
+
+    container.innerHTML = `
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Pelanggan</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Tanggal</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>
+    `;
+
+    if (ordersCountText) {
+        const totalText = `${filtered.length} dari ${ordersData.length} pesanan ditampilkan`;
+        ordersCountText.textContent = totalText;
+    }
+}
+
+function exportOrdersCsv() {
+    if (!ordersData.length) {
+        showToast("Tidak ada pesanan untuk diekspor.", true);
+        return;
+    }
+
+    const filtered = getFilteredOrders();
+    if (!filtered.length) {
+        showToast("Tidak ada pesanan yang cocok untuk diekspor.", true);
+        return;
+    }
+
+    const headers = ["Order ID", "Pelanggan", "Email", "Total", "Status", "Tanggal"];
+    const escapeCsv = (value) => {
+        const text = String(value ?? "");
+        if (/[,\n\r"]/.test(text)) {
+            return `"${text.replace(/"/g, '""')}"`;
+        }
+        return text;
+    };
+    const lines = [headers.join(",")].concat(filtered.map(o => [
+        escapeCsv(o.id),
+        escapeCsv(o.customerName || o.name || "-"),
+        escapeCsv(o.email || "-"),
+        escapeCsv(`Rp ${Number(o.total || 0).toLocaleString("id-ID")}`),
+        escapeCsv(o.status || "-"),
+        escapeCsv(o.created_at ? new Date(o.created_at).toLocaleString("id-ID") : o.date ? new Date(o.date).toLocaleString("id-ID") : "-")
+    ].join(",")));
+
+    const blob = new Blob([lines.join("\r\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `nexshop-orders-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+    showToast(`Ekspor ${filtered.length} pesanan berhasil.`);
 }
 
 // ================================
