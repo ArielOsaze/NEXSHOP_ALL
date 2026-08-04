@@ -2,7 +2,7 @@
    NexShop — theme tokens
    Display: Sora (headings, brand)
    Body: Inter
-   Game/product titles: Barlow Semi Condensed (compact, legible)
+   Game/product titles: Inter (neutral storefront typography)
    Accent/numeric: Space Grotesk (badges, stat-like numbers)
    ========================================================= */
 :root{
@@ -489,31 +489,39 @@ header{ position:sticky; top:0; z-index:100; }
 }
 .card-body{ padding:16px; }
 .card-body h4{
-    font-family:'Barlow Semi Condensed',sans-serif; font-size:18px; line-height:1.15;
-    font-weight:700; letter-spacing:.01em; margin-bottom:6px; color:var(--text);
+    font-family:'Inter',sans-serif; font-size:14.5px; line-height:1.35;
+    font-weight:600; letter-spacing:-.01em; margin-bottom:6px; color:var(--text);
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
 }
 .card-rating{ font-size:12px; color:var(--text-muted); margin-bottom:12px; }
 .stars{ color:var(--text-warning); letter-spacing:1px; }
 .card-footer{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
-.card-price{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; color:var(--text); }
-.card-price-block{ display:flex; flex-direction:column; gap:1px; }
-.price-strike{ font-family:'Space Grotesk',sans-serif; font-size:12px; color:var(--text-dim); text-decoration:line-through; }
-.price-now{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:15px; color:var(--text); }
-.price-now.promo{ color:var(--text-magenta); }
+.card-price{ font-family:'Inter',sans-serif; font-weight:700; font-size:15px; color:var(--text); }
+.card-price-block{ display:flex; flex-direction:column; gap:3px; min-width:0; }
+.price-strike{
+    font-family:'Inter',sans-serif; font-size:11px; line-height:1.15; font-weight:500;
+    color:var(--text-dim); text-decoration-line:line-through; text-decoration-thickness:1px;
+    text-decoration-color:var(--text-muted); white-space:nowrap;
+}
+.price-now{ font-family:'Inter',sans-serif; font-weight:700; font-size:15px; line-height:1.2; letter-spacing:-.02em; color:var(--text); }
+.price-now.promo{ color:var(--text); }
+.price-sale-row{ display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
 .price-now.lg{ font-size:24px; }
 .price-strike.lg{ font-size:15px; }
 .discount-chip{
-    display:inline-block; margin-top:2px; padding:2px 7px; border-radius:100px;
-    background:rgba(240,57,154,.18); border:1px solid rgba(240,57,154,.5);
-    color:var(--text-magenta); font-family:'Space Grotesk',sans-serif; font-size:10.5px; font-weight:700;
+    display:inline-flex; align-items:center; gap:4px; padding:3px 7px; border-radius:5px;
+    background:rgba(240,57,154,.16); border:1px solid rgba(240,57,154,.42);
+    color:var(--text-magenta); font-family:'Inter',sans-serif; font-size:10px; line-height:1;
+    font-weight:700; white-space:nowrap;
 }
+.discount-chip i{ font-size:9px; }
 .flash-ribbon{
     position:absolute; top:10px; right:10px; padding:4px 10px; border-radius:100px;
     background:linear-gradient(135deg,var(--magenta),#F5761F); color:#fff;
     font-size:11px; font-weight:700; box-shadow:0 0 16px rgba(240,57,154,.5);
 }
 .add-btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px; white-space:nowrap;
     padding:8px 16px; border-radius:100px; font-size:13px; font-weight:700;
     background:rgba(139,92,246,.15); color:var(--text-violet); border:1px solid rgba(139,92,246,.4);
     transition:.2s;
@@ -556,7 +564,7 @@ header{ position:sticky; top:0; z-index:100; }
     position:relative; z-index:1; box-shadow:inset 0 0 0 1px var(--soft-border);
 }
 .tgc-logo img{ width:100%; height:100%; object-fit:cover; }
-.topup-game-card h5{ position:relative; z-index:1; font-family:'Barlow Semi Condensed',sans-serif; font-size:17px; line-height:1.15; font-weight:700; margin-bottom:6px; color:var(--text); }
+.topup-game-card h5{ position:relative; z-index:1; font-family:'Inter',sans-serif; font-size:14px; line-height:1.25; font-weight:600; margin-bottom:6px; color:var(--text); }
 .tgc-count{
     position:relative; z-index:1; display:inline-block; font-size:11px; color:var(--text-dim);
     font-family:'Space Grotesk',sans-serif; letter-spacing:.03em;
@@ -658,7 +666,7 @@ header{ position:sticky; top:0; z-index:100; }
     width:38px; height:38px; object-fit:contain; display:block; margin:0 auto 10px;
     filter:drop-shadow(0 0 8px rgba(34,211,238,.4));
 }
-.tw-product-card h5{ font-family:'Barlow Semi Condensed',sans-serif; font-size:15px; line-height:1.15; font-weight:700; margin-bottom:6px; color:var(--text); min-height:34px; }
+.tw-product-card h5{ font-family:'Inter',sans-serif; font-size:13px; line-height:1.3; font-weight:600; margin-bottom:6px; color:var(--text); min-height:34px; }
 .tw-product-price{ font-family:'Space Grotesk',sans-serif; font-weight:700; color:var(--text-cyan); font-size:13.5px; }
 .tw-product-check{
     position:absolute; top:8px; right:8px; width:20px; height:20px; border-radius:50%;
@@ -831,10 +839,11 @@ header{ position:sticky; top:0; z-index:100; }
     background:rgba(8,11,20,.75); font-size:11px; font-weight:700; color:var(--cyan);
     border:1px solid rgba(34,211,238,.4);
 }
-.product-modal-info h3{ font-family:'Barlow Semi Condensed',sans-serif; font-size:25px; line-height:1.1; letter-spacing:.01em; margin-bottom:8px; }
+.product-modal-info h3{ font-family:'Inter',sans-serif; font-size:21px; line-height:1.25; letter-spacing:-.02em; font-weight:700; margin-bottom:8px; }
 .pm-rating{ font-size:13px; color:var(--text-muted); margin-bottom:12px; }
 .pm-desc{ color:var(--text-muted); font-size:14px; margin-bottom:16px; white-space:pre-line; }
-.pm-price{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:24px; color:var(--text); margin-bottom:18px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.pm-price{ font-family:'Inter',sans-serif; font-weight:700; font-size:24px; color:var(--text); margin-bottom:18px; display:flex; flex-direction:column; align-items:flex-start; gap:4px; }
+.pm-price .price-sale-row{ width:100%; gap:10px; }
 .pm-qty{ display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; font-size:14px; color:var(--text-muted); }
 .qty-control{ display:flex; align-items:center; gap:14px; background:var(--bg-panel-2); border-radius:100px; padding:6px 16px; }
 .qty-control button{ width:22px; height:22px; font-size:16px; color:var(--text); }

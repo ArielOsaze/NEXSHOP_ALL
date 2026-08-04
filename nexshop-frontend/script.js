@@ -106,8 +106,10 @@ function priceBlockHtml(p, size = "sm") {
     }
     return `
         <span class="price-strike ${size}">${rupiah(p.strike_price)}</span>
-        <span class="price-now ${size} promo">${rupiah(p.price)}</span>
-        <span class="discount-chip">-${discountPercent(p)}%</span>
+        <span class="price-sale-row">
+            <span class="price-now ${size} promo">${rupiah(p.price)}</span>
+            <span class="discount-chip"><i class="fa-solid fa-tag" aria-hidden="true"></i> -${discountPercent(p)}%</span>
+        </span>
     `;
 }
 const stars = (rating) => "★".repeat(Math.round(rating)) + "☆".repeat(5 - Math.round(rating));
@@ -245,7 +247,7 @@ setTimeout(() => {
                 <div class="card-rating"><span class="stars">${stars(p.rating)}</span> ${p.rating} · ${p.sold} terjual</div>
                 <div class="card-footer">
                     <div class="card-price-block">${priceBlockHtml(p, "sm")}</div>
-                    <button type="button" class="add-btn" data-id="${p.id}">Beli</button>
+                     <button type="button" class="add-btn" data-id="${p.id}"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i> Beli</button>
                 </div>
             </div>
         </div>
