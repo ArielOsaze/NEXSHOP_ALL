@@ -105,11 +105,13 @@ function priceBlockHtml(p, size = "sm") {
         return `<span class="price-now ${size}">${rupiah(p.price)}</span>`;
     }
     return `
-        <span class="price-strike ${size}">${rupiah(p.strike_price)}</span>
-        <span class="price-sale-row">
-            <span class="price-now ${size} promo">${rupiah(p.price)}</span>
+        <div class="price-row">
+            <div class="price-stack">
+                <span class="price-now ${size} promo">${rupiah(p.price)}</span>
+                <span class="price-strike ${size}">${rupiah(p.strike_price)}</span>
+            </div>
             <span class="discount-chip"><i class="fa-solid fa-tag" aria-hidden="true"></i> -${discountPercent(p)}%</span>
-        </span>
+        </div>
     `;
 }
 const stars = (rating) => "★".repeat(Math.round(rating)) + "☆".repeat(5 - Math.round(rating));
