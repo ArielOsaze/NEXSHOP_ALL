@@ -1237,6 +1237,13 @@ menuToggle.addEventListener("click", () => {
 navMenu.querySelectorAll("a, .menu-link-btn").forEach(link => {
     link.addEventListener("click", () => navMenu.classList.remove("active"));
 });
+// Close mobile menu when clicking outside
+document.addEventListener('click', (e) => {
+    if (!navMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+        navMenu.classList.remove('active');
+        menuToggle.setAttribute('aria-expanded', 'false');
+    }
+});
 
 /* ---------- Promo/berita carousel ---------- */
 let heroSlides = [];
