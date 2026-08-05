@@ -142,6 +142,7 @@ let activeProductId = null;
 let pendingQty = 1;
 let checkoutItems = null;
 let checkoutSource = "cart";
+let productRenderVersion = 0;
 
 const saveCart = () => {
     try { localStorage.setItem(cartKey(), JSON.stringify(cart)); } catch (err) {
@@ -317,10 +318,14 @@ function renderProducts() {
         searchClearBtn.classList.toggle("hidden", !searchQuery.trim());
     }
 
+    const renderVersion = ++productRenderVersion;
     grid.style.opacity = 0;
-    grid.style.transform = "translateY(16px)";
+    grid.style.transform = "translateY(10px)";
 
-    setTimeout(() => {
+    requestAnimationFrame(() => {
+        // Pencarian/filter dapat berubah lebih cepat dari frame render. Abaikan
+        // render lama supaya markup dan event yang tampil selalu versi terakhir.
+        if (renderVersion !== productRenderVersion) return;
         if (data.length === 0) {
             grid.innerHTML = `
                 <div class="catalog-empty-state">
@@ -343,7 +348,7 @@ function renderProducts() {
             }
         } else {
             grid.innerHTML = data.map(p => `
-                <div class="card${p.is_flash_sale ? " card-flash" : ""}" data-id="${p.id}" tabindex="0" role="button" aria-label="Lihat detail ${escapeHtml(p.name)}">
+                <article class="card product-card${p.is_flash_sale ? " card-flash" : ""}" data-product-card data-id="${p.id}" tabindex="0" aria-label="Lihat detail ${escapeHtml(p.name)}">
                     <div class="card-img">
                         <img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
                         ${p.is_flash_sale ? '<span class="badge-flash"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}
@@ -356,45 +361,49 @@ function renderProducts() {
                         <div class="card-footer">
                             ${priceBlockHtml(p, "sm")}
                             <div class="card-actions">
-                                <button type="button" class="add-btn" data-id="${p.id}" aria-label="Tambah ke Keranjang"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i></button>
-                                <button type="button" class="buy-btn" data-id="${p.id}"><span>Beli</span></button>
+                                <button type="button" class="add-btn" data-product-action="add" data-id="${p.id}" aria-label="Tambah ${escapeHtml(p.name)} ke keranjang"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i></button>
+                                <button type="button" class="buy-btn" data-product-action="buy" data-id="${p.id}"><span>Beli</span></button>
                             </div>
                         </div>
                     </div>
-                </div>
+                </article>
             `).join("");
-
-            grid.querySelectorAll(".card").forEach(card => {
-                card.addEventListener("click", (e) => {
-                    if (e.target.closest(".add-btn, .buy-btn")) return;
-                    openProductModal(Number(card.dataset.id));
-                });
-                card.addEventListener("keydown", (e) => {
-                    if ((e.key === "Enter" || e.key === " ") && !e.target.closest(".add-btn, .buy-btn")) {
-                        e.preventDefault();
-                        openProductModal(Number(card.dataset.id));
-                    }
-                });
-            });
-
-            grid.querySelectorAll(".add-btn").forEach(btn => {
-                btn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    addToCart(Number(btn.dataset.id), 1);
-                });
-            });
-
-            grid.querySelectorAll(".buy-btn").forEach(btn => {
-                btn.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    openCheckout([{ id: Number(btn.dataset.id), qty: 1 }], "direct");
-                });
-            });
         }
 
         grid.style.opacity = 1;
         grid.style.transform = "translateY(0)";
-    }, 120);
+    });
+}
+
+// Satu handler permanen untuk seluruh katalog. Ini menghilangkan listener
+// ganda saat katalog dirender ulang dan memisahkan tegas area kartu dari aksi
+// pembelian: kartu hanya boleh membuka detail; checkout hanya dari tombol Buy.
+function initProductGridInteractions() {
+    const grid = document.getElementById("cardGrid");
+    if (!grid) return;
+
+    grid.addEventListener("click", (event) => {
+        const action = event.target.closest("[data-product-action]");
+        if (action && grid.contains(action)) {
+            const id = Number(action.dataset.id);
+            if (!Number.isFinite(id)) return;
+            if (action.dataset.productAction === "add") addToCart(id, 1);
+            if (action.dataset.productAction === "buy") openCheckout([{ id, qty: 1 }], "direct");
+            return;
+        }
+
+        const card = event.target.closest("[data-product-card]");
+        if (card && grid.contains(card)) openProductModal(Number(card.dataset.id));
+    });
+
+    grid.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        if (event.target.closest("[data-product-action]")) return;
+        const card = event.target.closest("[data-product-card]");
+        if (!card || !grid.contains(card)) return;
+        event.preventDefault();
+        openProductModal(Number(card.dataset.id));
+    });
 }
 
 /* ---------- Product detail modal ---------- */
@@ -404,8 +413,11 @@ function openProductModal(id) {
     activeProductId = id;
     pendingQty = 1;
 
-    document.getElementById("pmImage").src = p.image;
-    document.getElementById("pmImage").alt = p.name;
+    const image = document.getElementById("pmImage");
+    image.classList.remove("is-loaded");
+    image.classList.add("is-loading");
+    image.src = p.image;
+    image.alt = p.name;
     
     const pmFlash = document.getElementById("pmFlashFlag");
     if (pmFlash) pmFlash.classList.toggle("hidden", !p.is_flash_sale);
@@ -416,6 +428,7 @@ function openProductModal(id) {
     }
 
     document.getElementById("pmTitle").textContent = p.name;
+    document.getElementById("pmCategory").textContent = p.category || "Produk digital";
     document.getElementById("pmStars").innerHTML = `<span class="stars">${stars(p.rating || 5)}</span> ${p.rating || 5}`;
     document.getElementById("pmSold").textContent = `· ${p.sold || 0} terjual`;
     document.getElementById("pmDesc").textContent = p.description || "";
@@ -424,6 +437,15 @@ function openProductModal(id) {
 
     openOverlay("productOverlay");
 }
+
+document.getElementById("pmImage").addEventListener("load", (event) => {
+    event.currentTarget.classList.remove("is-loading");
+    event.currentTarget.classList.add("is-loaded");
+});
+document.getElementById("pmImage").addEventListener("error", (event) => {
+    event.currentTarget.classList.remove("is-loading");
+    event.currentTarget.classList.add("is-loaded");
+});
 
 document.getElementById("pmQtyMinus").addEventListener("click", () => {
     pendingQty = Math.max(1, pendingQty - 1);
@@ -450,6 +472,7 @@ document.getElementById("pmAddBtn").addEventListener("click", () => {
 document.getElementById("pmBuyNowBtn").addEventListener("click", () => {
     const id = activeProductId;
     const qty = pendingQty;
+    if (!Number.isFinite(id)) return;
     closeOverlay("productOverlay");
     openCheckout([{ id, qty }], "direct");
 });
@@ -2201,6 +2224,7 @@ function initMobileMenu() {
 
 async function bootstrapApp() {
     initMobileMenu();
+    initProductGridInteractions();
     initThemeToggle();
     initSearchListeners();
     updateCartCount();
