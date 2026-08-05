@@ -108,15 +108,17 @@ function priceBlockHtml(p, size = "sm") {
     if (!isPromo) {
         return `
             <div class="price-block">
-                <span class="price-main ${size}">${rupiah(p.price)}</span>
+                <div class="price-stack">
+                    <span class="price-main ${size}">${rupiah(p.price)}</span>
+                </div>
             </div>
         `;
     }
     return `
         <div class="price-block promo">
-            <div class="price-left">
-                <span class="price-main ${size} is-discounted">${rupiah(p.price)}</span>
+            <div class="price-stack">
                 <span class="price-strike ${size}">${rupiah(p.strike_price)}</span>
+                <span class="price-main ${size} is-discounted">${rupiah(p.price)}</span>
             </div>
             <span class="discount-badge">-${discountPercent(p)}%</span>
         </div>
