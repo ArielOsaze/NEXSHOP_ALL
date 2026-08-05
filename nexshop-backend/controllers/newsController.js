@@ -72,6 +72,61 @@ async function safeLookup(hostname, options, callback) {
 const safeHttpAgent = new http.Agent({ keepAlive: false, lookup: safeLookup });
 const safeHttpsAgent = new https.Agent({ keepAlive: false, lookup: safeLookup });
 
+function diagnosticBody(value) {
+    if (value === undefined || value === null) return value;
+    if (typeof value === "string") return value.slice(0, 10000);
+    try {
+        return JSON.stringify(value).slice(0, 10000);
+    } catch (err) {
+        return "[Response body tidak dapat diserialisasi]";
+    }
+}
+
+function diagnosticHeaders(headers) {
+    if (!headers) return undefined;
+    if (typeof headers.toJSON === "function") return headers.toJSON();
+    return headers;
+}
+
+function originalImportError(err) {
+    return err && (err.originalError || err.cause) || err;
+}
+
+function logNewsPreviewError(err, requestedUrl) {
+    const original = originalImportError(err) || {};
+    const response = original.response || err.response;
+    const details = {
+        name: original.name || err.name,
+        message: original.message || err.message,
+        code: original.code || err.code,
+        stack: original.stack || err.stack,
+        status: response && response.status || original.status || err.status,
+        requestedUrl: original.config && original.config.url || err.requestedUrl || requestedUrl,
+        responseHeaders: diagnosticHeaders(response && response.headers),
+        responseBody: diagnosticBody(response && response.data)
+    };
+    console.error("Gaming news preview error (full exception):", err);
+    console.error("Gaming news preview error message:", err && err.message);
+    console.error("Gaming news preview error stack:", err && err.stack);
+    console.error("Gaming news preview diagnostics:", details);
+    return details;
+}
+
+function developmentPreviewMessage(err, details) {
+    const reason = details.message || err.message || "Metadata artikel tidak dapat diekstrak";
+    const status = details.status ? `HTTP ${details.status}` : "";
+    const code = details.code ? `(${details.code})` : "";
+    return [status, reason, code].filter(Boolean).join(" ");
+}
+
+function createImportFetchError(message, originalError, requestedUrl) {
+    const error = new Error(message, { cause: originalError });
+    error.name = "NewsImportFetchError";
+    error.originalError = originalError;
+    error.requestedUrl = requestedUrl;
+    return error;
+}
+
 function decodeHtml(value) {
     const entities = { amp: "&", quot: "\"", apos: "'", lt: "<", gt: ">", nbsp: " " };
     return String(value || "").replace(/&(#x[\da-f]+|#\d+|amp|quot|apos|lt|gt|nbsp);/gi, (match, entity) => {
@@ -316,11 +371,15 @@ async function fetchArticle(url) {
             });
         } catch (err) {
             if (err.code === "ERR_BAD_RESPONSE" && /maxContentLength/i.test(err.message || "")) {
-                throw new Error("Halaman publisher terlalu besar untuk dipreview");
+                throw createImportFetchError("Halaman publisher terlalu besar untuk dipreview", err, currentUrl.href);
             }
-            throw new Error(err.message && /privat|internal|Hostname/i.test(err.message)
-                ? err.message
-                : "NexShop tidak dapat mengambil halaman dari URL tersebut");
+            throw createImportFetchError(
+                err.message && /privat|internal|Hostname/i.test(err.message)
+                    ? err.message
+                    : "NexShop tidak dapat mengambil halaman dari URL tersebut",
+                err,
+                currentUrl.href
+            );
         }
         if (response.status >= 300 && response.status < 400 && response.headers.location) {
             const nextUrl = parseHttpsUrl(new URL(response.headers.location, currentUrl).href);
@@ -328,10 +387,22 @@ async function fetchArticle(url) {
             currentUrl = nextUrl;
             continue;
         }
-        if (response.status < 200 || response.status >= 300) throw new Error(`Publisher mengembalikan status ${response.status}`);
+        if (response.status < 200 || response.status >= 300) {
+            const error = new Error(`Publisher mengembalikan status ${response.status}`);
+            error.name = "NewsImportHttpError";
+            error.status = response.status;
+            error.response = response;
+            error.requestedUrl = currentUrl.href;
+            throw error;
+        }
         const contentType = String(response.headers["content-type"] || "").toLowerCase();
         if (contentType && !contentType.includes("text/html") && !contentType.includes("application/xhtml+xml")) {
-            throw new Error("URL tersebut bukan halaman artikel HTML");
+            const error = new Error("URL tersebut bukan halaman artikel HTML");
+            error.name = "NewsImportContentTypeError";
+            error.status = response.status;
+            error.response = response;
+            error.requestedUrl = currentUrl.href;
+            throw error;
         }
         return { html: String(response.data || ""), finalUrl: currentUrl };
     }
@@ -486,8 +557,12 @@ exports.previewNews = async (req, res) => {
         if (duplicate) return res.status(409).json({ message: `Artikel duplikat: “${duplicate.title}” sudah ada di News Manager.`, duplicate });
         return res.json({ message: "Metadata artikel dan ringkasan Indonesia berhasil dibuat", data: preview.data });
     } catch (err) {
-        console.error("Gaming news preview error:", err.message);
-        return res.status(422).json({ message: err.message || "Metadata artikel tidak dapat diekstrak" });
+        const details = logNewsPreviewError(err, articleUrl.href);
+        const isDevelopment = process.env.NODE_ENV !== "production";
+        return res.status(422).json({
+            message: isDevelopment ? developmentPreviewMessage(err, details) : (err.message || "Metadata artikel tidak dapat diekstrak"),
+            ...(isDevelopment ? { error: details } : {})
+        });
     }
 };
 
