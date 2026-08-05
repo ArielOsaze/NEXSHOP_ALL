@@ -229,19 +229,19 @@ h2{ color:var(--text); }
 }
 
 .dashboard-metric-card h2 {
-    margin-top:12px;
-    font-size:2.3rem;
+    margin-top:10px;
+    font-size:2.1rem;
+    font-family:'Space Grotesk', sans-serif;
 }
 
 /* Grid for metric cards to ensure symmetry */
-.dashboard-metrics-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; align-items:stretch; }
-.dashboard-metric-card{ padding:18px; }
-@media(max-width:1100px){ .dashboard-metrics-grid{ grid-template-columns:repeat(2,1fr); } }
-@media(max-width:640px){ .dashboard-metrics-grid{ grid-template-columns:1fr; } }
+.dashboard-metrics-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px; align-items:stretch; }
+.dashboard-metric-card{ padding:20px 18px; display:flex; flex-direction:column; justify-content:center; }
+@media(max-width:1100px){ .dashboard-metrics-grid{ grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); } }
 
 .badge.bg-primary{ background:var(--violet)!important; }
 .badge.bg-secondary{ background:var(--bg-panel-2)!important; color:var(--text-muted); }
-.badge.bg-success{ background:#22C55E!important; }
+.badge.bg-success{ background:#22C55E!important; color:#FFFFFF!important; }
 .badge.bg-info{ background:var(--cyan)!important; color:#0B0F1D!important; }
 .badge.bg-dark-subtle{ background:var(--bg-panel-2)!important; color:var(--text)!important; }
 
@@ -257,7 +257,8 @@ h2{ color:var(--text); }
     background:var(--bg-panel);
     color:var(--text);
     border:1px solid var(--line);
-    border-radius:16px;
+    border-radius:18px;
+    box-shadow:0 24px 60px rgba(0,0,0,.5);
 }
 .modal-header, .modal-footer{ border-color:var(--line); }
 .btn-close{ filter:invert(1) grayscale(1); }

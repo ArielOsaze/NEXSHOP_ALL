@@ -243,21 +243,43 @@
             <!-- STEP 1 — Akun & Nominal digabung, biar diamond langsung bisa dipilih
                  begitu User ID/Server ID diisi — gak perlu klik "Lanjut" dulu. -->
             <div class="tw-panel" data-panel="1">
-                <h4>Masukkan Data Akun</h4>
-                <div class="tw-form-grid">
-                    <label>User ID
-                        <input type="text" id="twUserId" placeholder="Masukkan User ID kamu">
-                    </label>
-                    <label id="twServerWrap" class="hidden">Server ID
-                        <input type="text" id="twServerId" placeholder="Masukkan Server ID">
-                    </label>
-                    <label>Email (buat kirim bukti transaksi)
-                        <input type="email" id="twEmail" placeholder="kamu@email.com">
-                    </label>
+                <div class="tw-account-card">
+                    <div class="tw-account-header">
+                        <span class="tw-account-header-icon" aria-hidden="true"><i class="fa-solid fa-user-shield"></i></span>
+                        <div>
+                            <h4>Informasi Akun Game</h4>
+                            <p>Masukkan ID akun game &amp; email kamu untuk verifikasi Nickname otomatis</p>
+                        </div>
+                    </div>
+                    <div class="tw-form-grid">
+                        <div class="tw-field-group">
+                            <label for="twUserId">User ID</label>
+                            <div class="tw-input-wrap">
+                                <span class="tw-input-icon" aria-hidden="true"><i class="fa-solid fa-gamepad"></i></span>
+                                <input type="text" id="twUserId" placeholder="Masukkan User ID">
+                            </div>
+                        </div>
+                        <div class="tw-field-group hidden" id="twServerWrap">
+                            <label for="twServerId">Server ID</label>
+                            <div class="tw-input-wrap">
+                                <span class="tw-input-icon" aria-hidden="true"><i class="fa-solid fa-server"></i></span>
+                                <input type="text" id="twServerId" placeholder="Masukkan Server ID">
+                            </div>
+                        </div>
+                        <div class="tw-field-group">
+                            <label for="twEmail">Email Bukti Transaksi</label>
+                            <div class="tw-input-wrap">
+                                <span class="tw-input-icon" aria-hidden="true"><i class="fa-solid fa-envelope"></i></span>
+                                <input type="email" id="twEmail" placeholder="kamu@email.com">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tw-account-actions">
+                        <button type="button" class="tw-check-btn" id="twCheckBtn"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Cek Nickname Akun</button>
+                    </div>
+                    <div class="tw-account-result hidden" id="twAccountResult"></div>
+                    <p class="auth-error" id="twStep1Error"></p>
                 </div>
-                <button type="button" class="btn-secondary" id="twCheckBtn">🔍 Cek Akun</button>
-                <div class="tw-account-result hidden" id="twAccountResult"></div>
-                <p class="auth-error" id="twStep1Error"></p>
 
                 <h4 class="tw-nominal-heading">Pilih Nominal</h4>
                 <div class="tw-product-grid" id="twProductGrid"></div>

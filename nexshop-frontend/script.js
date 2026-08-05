@@ -1750,7 +1750,7 @@ document.getElementById("twCheckBtn").addEventListener("click", async () => {
 
     const btn = document.getElementById("twCheckBtn");
     btn.disabled = true;
-    btn.textContent = "Mengecek...";
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Mengecek...';
 
     try {
         const res = await fetch(`${API_BASE}/topup/check-nickname`, {
@@ -1766,11 +1766,11 @@ document.getElementById("twCheckBtn").addEventListener("click", async () => {
             if (data.is_valid) {
                 twState.nickname = data.username || "";
                 resultEl.className = "tw-account-result valid";
-                resultEl.innerHTML = `<span class="tw-check-icon"><i class="fa-solid fa-check" aria-hidden="true"></i></span> Akun ditemukan: <strong>${escapeHtml(data.username || "-")}</strong>`;
+                resultEl.innerHTML = `<span class="tw-check-icon"><i class="fa-solid fa-circle-check" aria-hidden="true"></i></span> Akun ditemukan: <strong>${escapeHtml(data.username || "-")}</strong>`;
             } else {
                 twState.nickname = null;
                 resultEl.className = "tw-account-result invalid";
-                resultEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> User ID${twState.needsServerId ? "/Server ID" : ""} tidak ditemukan. Periksa kembali sebelum melanjutkan.`;
+                resultEl.innerHTML = `<i class="fa-solid fa-circle-xmark" aria-hidden="true"></i> User ID${twState.needsServerId ? "/Server ID" : ""} tidak ditemukan. Periksa kembali sebelum melanjutkan.`;
             }
         } else {
             twState.nicknameSupported = false;
@@ -1784,7 +1784,7 @@ document.getElementById("twCheckBtn").addEventListener("click", async () => {
         resultEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Gagal menghubungi server cek akun. Pastikan data yang kamu masukkan sudah benar.`;
     } finally {
         btn.disabled = false;
-        btn.textContent = "🔍 Cek Akun";
+        btn.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Cek Nickname Akun';
     }
 });
 
