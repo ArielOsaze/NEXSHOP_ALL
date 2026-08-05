@@ -2149,7 +2149,35 @@ function initThemeToggle() {
     });
 }
 
+function initMobileMenu() {
+    const menuToggle = document.getElementById("menuToggle");
+    const navMenu = document.getElementById("navMenu");
+    if (!menuToggle || !navMenu) return;
+
+    menuToggle.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const isOpen = navMenu.classList.toggle("active");
+        menuToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    });
+
+    document.addEventListener("click", (e) => {
+        if (navMenu.classList.contains("active") && !navMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+            navMenu.classList.remove("active");
+            menuToggle.setAttribute("aria-expanded", "false");
+        }
+    });
+
+    navMenu.querySelectorAll("a, button:not(#themeToggle)").forEach(link => {
+        link.addEventListener("click", () => {
+            navMenu.classList.remove("active");
+            menuToggle.setAttribute("aria-expanded", "false");
+        });
+    });
+}
+
 async function bootstrapApp() {
+    initMobileMenu();
     initThemeToggle();
     initSearchListeners();
     updateCartCount();
