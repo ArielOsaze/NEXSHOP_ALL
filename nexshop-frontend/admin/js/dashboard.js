@@ -2764,3 +2764,38 @@ function renderStats(stats) {
         }
     });
 }
+
+function initThemeToggle() {
+    const toggleBtns = document.querySelectorAll("#themeToggle, .theme-toggle");
+    if (!toggleBtns.length) return;
+
+    function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.setAttribute("data-theme", theme);
+        try { localStorage.setItem("nexshop_theme", theme); } catch (e) {}
+        const isLight = theme === "light";
+
+        toggleBtns.forEach(btn => {
+            const icon = btn.querySelector(".theme-toggle-icon, i");
+            if (icon) {
+                icon.className = isLight ? "bi bi-sun-fill" : "bi bi-moon-stars-fill";
+            }
+            btn.setAttribute("aria-pressed", isLight ? "true" : "false");
+        });
+    }
+
+    toggleBtns.forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            const activeTheme = document.documentElement.getAttribute("data-theme") || document.documentElement.dataset.theme || "dark";
+            const nextTheme = activeTheme === "light" ? "dark" : "light";
+            applyTheme(nextTheme);
+        });
+    });
+
+    const currentTheme = localStorage.getItem("nexshop_theme") === "light" ? "light" : (document.documentElement.getAttribute("data-theme") || "dark");
+    applyTheme(currentTheme);
+}
+
+document.addEventListener("DOMContentLoaded", initThemeToggle);
+
