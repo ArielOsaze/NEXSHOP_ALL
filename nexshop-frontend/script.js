@@ -1178,6 +1178,147 @@ function newsSourceInitial(source) {
     return String(source || "N").split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0]).join("").toUpperCase() || "N";
 }
 
+let publicNewsEntries = [];
+let activeNewsIndex = -1;
+let previouslyFocusedNewsElement = null;
+let publicProductsForNews = null;
+
+function newsReadingTime(summary) {
+    return `${Math.max(1, Math.ceil(String(summary || "").trim().split(/\s+/).filter(Boolean).length / 200))} min read`;
+}
+
+function shortNewsSummary(summary) {
+    const words = String(summary || "").trim().split(/\s+/).filter(Boolean);
+    return `${words.slice(0, 28).join(" ")}${words.length > 28 ? "…" : ""}`;
+}
+
+function newsTags(item) {
+    const tags = Array.isArray(item.tags) ? item.tags.filter(Boolean) : [];
+    return tags.length ? tags.slice(0, 8) : [item.category || "Gaming"];
+}
+
+function newsDetailFeedback(button, message) {
+    if (!button) return;
+    const original = button.dataset.originalLabel || button.innerHTML;
+    button.dataset.originalLabel = original;
+    button.textContent = message;
+    setTimeout(() => { button.innerHTML = button.dataset.originalLabel; }, 1800);
+}
+
+function savedNewsBookmarks() {
+    try {
+        const saved = JSON.parse(localStorage.getItem("nexshop-news-bookmarks") || "[]");
+        return new Set(Array.isArray(saved) ? saved.map(Number).filter(Number.isFinite) : []);
+    } catch (err) {
+        return new Set();
+    }
+}
+
+function publisherMarkMarkup(item) {
+    const logo = safeUrl(item.publisher_logo_url);
+    const source = String(item.source || "Publisher");
+    return logo
+        ? `<img class="news-detail-publisher-logo" src="${escapeHtml(logo)}" alt="" loading="lazy" decoding="async">`
+        : `<span class="news-detail-publisher-initial" aria-hidden="true">${escapeHtml(newsSourceInitial(source))}</span>`;
+}
+
+function closeGamingNewsDetail() {
+    const modal = document.getElementById("newsDetailModal");
+    if (!modal || modal.classList.contains("hidden")) return;
+    modal.classList.add("hidden");
+    document.body.classList.remove("news-detail-open");
+    if (previouslyFocusedNewsElement) previouslyFocusedNewsElement.focus();
+}
+
+function renderNewsDetailProducts(item) {
+    const section = document.getElementById("newsDetailProductsSection");
+    const container = document.getElementById("newsDetailProducts");
+    if (!section || !container || !Array.isArray(publicProductsForNews)) return;
+    const keywords = [item.category, ...newsTags(item)].join(" ").toLocaleLowerCase("id-ID").split(/\s+/).filter((word) => word.length > 2);
+    const related = publicProductsForNews.filter((product) => {
+        const haystack = `${product.name || ""} ${product.category || ""} ${product.badge || ""}`.toLocaleLowerCase("id-ID");
+        return keywords.some((word) => haystack.includes(word));
+    }).slice(0, 3);
+    section.classList.toggle("hidden", !related.length);
+    container.innerHTML = related.map((product) => `<a href="#products" class="news-related-product" onclick="closeGamingNewsDetail()"><span>${escapeHtml(product.name || "NexShop Product")}</span><small>${escapeHtml(product.category || "Gaming")}</small></a>`).join("");
+}
+
+async function loadNewsRelatedProducts(item) {
+    try {
+        if (!publicProductsForNews) {
+            const response = await fetch(`${API_BASE}/products`);
+            publicProductsForNews = response.ok ? await response.json() : [];
+        }
+        renderNewsDetailProducts(item);
+    } catch (err) {
+        publicProductsForNews = [];
+        renderNewsDetailProducts(item);
+    }
+}
+
+function openGamingNewsDetail(id) {
+    const index = publicNewsEntries.findIndex((item) => Number(item.id) === Number(id));
+    const item = publicNewsEntries[index];
+    if (!item) return;
+    activeNewsIndex = index;
+    previouslyFocusedNewsElement = document.activeElement;
+    const modal = document.getElementById("newsDetailModal");
+    const imageUrl = safeUrl(item.image_url);
+    const sourceUrl = safeUrl(item.source_url);
+    if (!modal || !imageUrl || !sourceUrl) return;
+    document.getElementById("newsDetailImage").src = imageUrl;
+    document.getElementById("newsDetailImage").alt = item.title || "Gaming news";
+    document.getElementById("newsDetailCategory").textContent = item.category || "Gaming";
+    document.getElementById("newsDetailReadingTime").textContent = newsReadingTime(item.summary);
+    document.getElementById("newsDetailTitle").textContent = item.title || "";
+    document.getElementById("newsDetailPublisher").textContent = item.source || "Publisher";
+    document.getElementById("newsDetailDate").textContent = formatNewsDate(item.published_at);
+    document.getElementById("newsDetailPublisherMark").innerHTML = publisherMarkMarkup(item);
+    document.getElementById("newsDetailTags").innerHTML = newsTags(item).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
+    const sentences = String(item.summary || "").match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [String(item.summary || "")];
+    document.getElementById("newsDetailSummary").innerHTML = sentences.map((sentence) => `<p>${escapeHtml(sentence.trim())}</p>`).join("");
+    document.getElementById("newsDetailHighlights").innerHTML = sentences.slice(0, 3).map((sentence) => `<li>${escapeHtml(sentence.trim())}</li>`).join("");
+    document.getElementById("newsDetailGames").innerHTML = newsTags(item).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
+    document.getElementById("newsDetailOriginal").href = sourceUrl;
+    document.getElementById("newsDetailPrevious").disabled = index <= 0;
+    document.getElementById("newsDetailNext").disabled = index >= publicNewsEntries.length - 1;
+    const saved = savedNewsBookmarks();
+    const bookmark = document.getElementById("newsDetailBookmark");
+    bookmark.setAttribute("aria-pressed", saved.has(Number(item.id)) ? "true" : "false");
+    bookmark.innerHTML = `<i class="${saved.has(Number(item.id)) ? "fa-solid" : "fa-regular"} fa-bookmark"></i> Bookmark`;
+    modal.classList.remove("hidden");
+    document.body.classList.add("news-detail-open");
+    modal.querySelector(".news-detail-shell").focus();
+    loadNewsRelatedProducts(item);
+}
+
+document.addEventListener("click", (event) => {
+    if (event.target.closest("[data-news-close]")) closeGamingNewsDetail();
+    if (event.target.closest("#newsDetailPrevious") && activeNewsIndex > 0) openGamingNewsDetail(publicNewsEntries[activeNewsIndex - 1].id);
+    if (event.target.closest("#newsDetailNext") && activeNewsIndex < publicNewsEntries.length - 1) openGamingNewsDetail(publicNewsEntries[activeNewsIndex + 1].id);
+    if (event.target.closest("#newsDetailCopy")) {
+        const button = event.target.closest("#newsDetailCopy");
+        const link = `${location.origin}${location.pathname}#news-${publicNewsEntries[activeNewsIndex]?.id}`;
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(() => newsDetailFeedback(button, "Link copied")).catch(() => newsDetailFeedback(button, "Copy failed"));
+        else window.prompt("Copy link berita ini:", link);
+    }
+    if (event.target.closest("#newsDetailShare")) {
+        const button = event.target.closest("#newsDetailShare");
+        const link = `${location.origin}${location.pathname}#news-${publicNewsEntries[activeNewsIndex]?.id}`;
+        if (navigator.share) navigator.share({ title: publicNewsEntries[activeNewsIndex]?.title, url: link }).catch(() => {});
+        else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(() => newsDetailFeedback(button, "Link copied"));
+        else window.prompt("Copy link berita ini:", link);
+    }
+    if (event.target.closest("#newsDetailBookmark") && activeNewsIndex >= 0) {
+        const id = Number(publicNewsEntries[activeNewsIndex].id);
+        const saved = savedNewsBookmarks();
+        saved.has(id) ? saved.delete(id) : saved.add(id);
+        localStorage.setItem("nexshop-news-bookmarks", JSON.stringify([...saved]));
+        openGamingNewsDetail(id);
+    }
+});
+document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeGamingNewsDetail(); });
+
 function renderGamingNewsSkeleton() {
     const section = document.getElementById("news");
     const grid = document.getElementById("newsGrid");
@@ -1199,10 +1340,10 @@ function renderGamingNews(items) {
         grid.replaceChildren();
         return;
     }
+    publicNewsEntries = items;
     grid.innerHTML = items.map((item, index) => {
-        const articleUrl = safeUrl(item.source_url);
         const imageUrl = safeUrl(item.image_url);
-        if (!articleUrl || !imageUrl) return "";
+        if (!imageUrl) return "";
         const source = String(item.source || "Publisher");
         const publisherLogoUrl = safeUrl(item.publisher_logo_url);
         const publisherMark = publisherLogoUrl
@@ -1210,14 +1351,14 @@ function renderGamingNews(items) {
             : `<span class="news-source-logo" aria-hidden="true">${escapeHtml(newsSourceInitial(source))}</span>`;
         return `
             <article class="news-card${item.is_featured ? " is-featured" : ""}" style="--news-index:${Math.min(index, 5)}">
-                <a class="news-card-image" href="${escapeHtml(articleUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Baca ${escapeHtml(item.title)} di ${escapeHtml(item.source)}">
+                <button class="news-card-image" type="button" onclick="openGamingNewsDetail(${Number(item.id)})" aria-label="Lihat ringkasan ${escapeHtml(item.title)}">
                     <img src="${escapeHtml(imageUrl)}" alt="" loading="lazy" decoding="async">
-                </a>
+                </button>
                 <div class="news-card-body">
-                    <div class="news-card-meta"><span class="news-card-source">${publisherMark}${escapeHtml(source)}</span><span>${escapeHtml(formatNewsDate(item.published_at))}</span></div>
+                    <div class="news-card-meta"><span>${escapeHtml(item.category || "Gaming")}</span><span class="news-card-source">${publisherMark}${escapeHtml(source)}</span><span>${escapeHtml(formatNewsDate(item.published_at))}</span><span>${escapeHtml(newsReadingTime(item.summary))}</span></div>
                     <h4>${escapeHtml(item.title)}</h4>
-                    <p class="news-card-summary">${escapeHtml(item.summary)}</p>
-                    <a class="news-card-link" href="${escapeHtml(articleUrl)}" target="_blank" rel="noopener noreferrer">Read More <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                    <p class="news-card-summary">${escapeHtml(shortNewsSummary(item.summary))}</p>
+                    <button class="news-card-link" type="button" onclick="openGamingNewsDetail(${Number(item.id)})">View Summary <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
                 </div>
             </article>`;
     }).join("");

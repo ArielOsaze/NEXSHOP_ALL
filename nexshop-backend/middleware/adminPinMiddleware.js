@@ -1,32 +1,48 @@
-const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const supabase = require("../config/db");
 
-const PIN_TOKEN_TTL = "10m";
-
-function pinSecret() {
-    return `${process.env.JWT_SECRET || ""}:admin-security-pin`;
+function isValidSecurityPin(value) {
+    return typeof value === "string" && /^\d{6}$/.test(value);
 }
 
-function issueAdminPinToken(user) {
-    return jwt.sign(
-        { id: user.id, role: user.role, scope: "admin-security-pin" },
-        pinSecret(),
-        { expiresIn: PIN_TOKEN_TTL }
-    );
-}
-
-function requireAdminPin(req, res, next) {
-    const token = req.get("X-Admin-Pin-Token");
-    if (!token) return res.status(428).json({ message: "Verifikasi PIN Keamanan Admin diperlukan", code: "ADMIN_PIN_REQUIRED" });
+async function logSensitiveAction(req, action, details = {}) {
     try {
-        const payload = jwt.verify(token, pinSecret());
-        if (payload.scope !== "admin-security-pin" || String(payload.id) !== String(req.user.id) || payload.role !== "admin") {
-            return res.status(403).json({ message: "Verifikasi PIN Keamanan Admin tidak valid", code: "ADMIN_PIN_INVALID" });
-        }
-        req.adminPinVerified = true;
-        next();
+        await supabase.from("admin_security_audit_logs").insert([{
+            admin_id: req.user.id,
+            admin_email: req.user.email,
+            ip_address: req.ip || "",
+            user_agent: String(req.get("user-agent") || "").slice(0, 500),
+            action,
+            details
+        }]);
     } catch (err) {
-        return res.status(428).json({ message: "Verifikasi PIN Keamanan Admin telah berakhir. Masukkan PIN kembali.", code: "ADMIN_PIN_EXPIRED" });
+        // Audit tidak boleh menjatuhkan operasi utama, tetapi kegagalan tetap terlihat di log server.
+        console.error("Admin security audit log error:", err.message);
     }
 }
 
-module.exports = { issueAdminPinToken, requireAdminPin };
+async function verifyAdminPin(req, pin) {
+    if (!isValidSecurityPin(pin)) return { ok: false, status: 400, message: "Masukkan Security PIN 6 digit yang valid" };
+    try {
+        const { data: user, error } = await supabase.from("users").select("security_pin_hash").eq("id", req.user.id).maybeSingle();
+        if (error) return { ok: false, status: 500, message: "Schema Security PIN belum tersedia. Jalankan migration Security PIN terbaru." };
+        if (!user || !user.security_pin_hash) return { ok: false, status: 428, message: "Security PIN belum dibuat", code: "ADMIN_PIN_SETUP_REQUIRED" };
+        if (!await bcrypt.compare(pin, user.security_pin_hash)) {
+            await logSensitiveAction(req, "PIN_VERIFICATION_FAILED");
+            return { ok: false, status: 401, message: "Security PIN tidak sesuai" };
+        }
+        await logSensitiveAction(req, "PIN_VERIFIED");
+        return { ok: true };
+    } catch (err) {
+        return { ok: false, status: 500, message: "Server gagal memverifikasi Security PIN Admin" };
+    }
+}
+
+async function requireAdminPin(req, res, next) {
+    const checked = await verifyAdminPin(req, req.body && req.body.security_pin);
+    if (!checked.ok) return res.status(checked.status).json({ message: checked.message, code: checked.code });
+    req.adminPinVerified = true;
+    next();
+}
+
+module.exports = { isValidSecurityPin, verifyAdminPin, requireAdminPin, logSensitiveAction };

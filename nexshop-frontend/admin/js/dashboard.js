@@ -3069,6 +3069,7 @@ function applyNewsToForm(data) {
     document.getElementById("newsImageUrl").value = data.image_url || "";
     document.getElementById("newsPublisherLogoUrl").value = data.publisher_logo_url || "";
     document.getElementById("newsCategory").value = data.category || "Gaming";
+    document.getElementById("newsTags").value = Array.isArray(data.tags) ? data.tags.join(", ") : "";
     document.getElementById("newsPublishedAt").value = formatNewsDateInput(data.published_at);
     document.getElementById("newsSortOrder").value = Number(data.sort_order) || 0;
     document.getElementById("newsIsActive").checked = data.is_active !== false;
@@ -3143,7 +3144,7 @@ async function saveNews() {
     if (!editingNewsId && !newsPreviewData) { errorEl.textContent = "Preview URL terlebih dahulu sebelum menyimpan berita baru"; return; }
     if (!title || !summary) { errorEl.textContent = "Judul dan ringkasan wajib diisi"; return; }
     const summaryWords = summary.split(/\s+/).filter(Boolean).length;
-    if (summaryWords < 80 || summaryWords > 150) { errorEl.textContent = "Ringkasan harus berisi 80–150 kata"; return; }
+    if (summaryWords < 300 || summaryWords > 600) { errorEl.textContent = "Ringkasan harus berisi 300–600 kata"; return; }
     const button = document.getElementById("saveNewsBtn");
     const previousHtml = button.innerHTML;
     button.disabled = true;
@@ -3157,6 +3158,7 @@ async function saveNews() {
         image_url: document.getElementById("newsImageUrl").value.trim(),
         publisher_logo_url: document.getElementById("newsPublisherLogoUrl").value.trim(),
         category: document.getElementById("newsCategory").value.trim(),
+        tags: document.getElementById("newsTags").value.split(",").map((tag) => tag.trim()).filter(Boolean),
         published_at: document.getElementById("newsPublishedAt").value,
         sort_order: Number(document.getElementById("newsSortOrder").value || 0),
         is_active: document.getElementById("newsIsActive").checked,
