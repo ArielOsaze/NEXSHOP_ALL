@@ -14,7 +14,11 @@ const TRUSTED_SOURCES = [
     { name: "PlayStation Blog", domains: ["blog.playstation.com"] },
     { name: "Steam News", domains: ["steamcommunity.com", "store.steampowered.com"] },
     { name: "Ubisoft News", domains: ["news.ubisoft.com"] },
-    { name: "EA News", domains: ["ea.com", "news.ea.com"] }
+    { name: "EA News", domains: ["ea.com", "news.ea.com"] },
+    { name: "Gematsu", domains: ["gematsu.com"] },
+    { name: "Polygon", domains: ["polygon.com"] },
+    { name: "VG247", domains: ["vg247.com"] },
+    { name: "GameRant", domains: ["gamerant.com"] }
 ];
 
 function asText(value, maxLength) {
@@ -52,11 +56,22 @@ function toSortOrder(value) {
     return Number.isInteger(number) && number >= 0 && number <= 100000 ? number : 0;
 }
 
+function newsDatabaseMessage(error, fallback) {
+    const code = String(error && error.code || "");
+    if (code === "23505") return "Artikel dari URL tersebut sudah ada";
+    if (["42703", "PGRST204", "PGRST205"].includes(code)) {
+        return "Database Gaming News belum diperbarui. Jalankan migration 16 dan migration 17 di Supabase, lalu muat ulang schema cache Supabase.";
+    }
+    if (code === "42501") return "Akses database ditolak. Periksa permission service key dan policy tabel gaming_news.";
+    return fallback;
+}
+
 function validateNewsPayload(body) {
     const title = asText(body.title, 255);
     const summary = asText(body.summary, 200);
     const sourceUrl = parseHttpsUrl(body.source_url);
     const imageUrl = parseHttpsUrl(body.image_url);
+    const publisherLogoUrl = body.publisher_logo_url ? parseHttpsUrl(body.publisher_logo_url) : null;
     const publishedAt = new Date(body.published_at);
     const source = sourceUrl && getTrustedSource(sourceUrl);
     const isActive = parseBoolean(body.is_active);
@@ -66,6 +81,9 @@ function validateNewsPayload(body) {
 
     if (!title || !summary || !sourceUrl || !imageUrl || Number.isNaN(publishedAt.getTime())) {
         return { error: "Judul, ringkasan, URL artikel, gambar, dan tanggal terbit wajib valid" };
+    }
+    if (body.publisher_logo_url && !publisherLogoUrl) {
+        return { error: "Logo publisher harus berupa URL HTTPS yang valid" };
     }
     if (summary.length < 100) {
         return { error: "Ringkasan harus terdiri dari 100–200 karakter" };
@@ -84,6 +102,7 @@ function validateNewsPayload(body) {
             source: source.name,
             source_url: sourceUrl.href,
             image_url: imageUrl.href,
+            publisher_logo_url: publisherLogoUrl ? publisherLogoUrl.href : "",
             published_at: publishedAt.toISOString(),
             is_active: isActive,
             is_hidden: isHidden,
