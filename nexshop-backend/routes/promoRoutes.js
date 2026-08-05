@@ -3,6 +3,7 @@ const multer = require("multer");
 const router = express.Router();
 const promoController = require("../controllers/promoController");
 const authMiddleware = require("../middleware/authMiddleware");
+const adminMiddleware = require("../middleware/adminMiddleware");
 
 // Batasin ukuran file di sini juga (bukan cuma andalin client_max_body_size
 // di nginx) — biar errornya jelas & konsisten baik di server yang pakai
@@ -23,9 +24,9 @@ function handleUploadError(err, req, res, next) {
 }
 
 router.get("/", promoController.getSlides);                          // publik, buat carousel di toko
-router.get("/all", authMiddleware, promoController.getAllSlidesAdmin); // admin, termasuk yg nonaktif
-router.post("/", authMiddleware, upload.fields([{ name: "image", maxCount: 1 }, { name: "mobile_image", maxCount: 1 }]), handleUploadError, promoController.createSlide);
-router.put("/:id", authMiddleware, upload.fields([{ name: "image", maxCount: 1 }, { name: "mobile_image", maxCount: 1 }]), handleUploadError, promoController.updateSlide);
-router.delete("/:id", authMiddleware, promoController.deleteSlide);
+router.get("/all", authMiddleware, adminMiddleware, promoController.getAllSlidesAdmin); // admin, termasuk yg nonaktif
+router.post("/", authMiddleware, adminMiddleware, upload.fields([{ name: "image", maxCount: 1 }, { name: "mobile_image", maxCount: 1 }]), handleUploadError, promoController.createSlide);
+router.put("/:id", authMiddleware, adminMiddleware, upload.fields([{ name: "image", maxCount: 1 }, { name: "mobile_image", maxCount: 1 }]), handleUploadError, promoController.updateSlide);
+router.delete("/:id", authMiddleware, adminMiddleware, promoController.deleteSlide);
 
 module.exports = router;

@@ -35,8 +35,8 @@ function clearFailedLogin(email) {
 }
 
 function generateOtp() {
-    // kode 6 digit, contoh "042817"
-    return String(Math.floor(100000 + Math.random() * 900000));
+    // kode 6 digit cryptographically secure, contoh "042817"
+    return String(crypto.randomInt(100000, 1000000));
 }
 
 // di-export biar bisa dipakai userController buat fitur admin "Kirim Ulang OTP"

@@ -60,13 +60,21 @@ app.use((req, res, next) => {
     next();
 });
 
+const allowedOrigins = [
+    "https://nexshop.cloud",
+    "https://www.nexshop.cloud",
+    "http://127.0.0.1:5500",
+    "http://localhost:5500"
+];
+if (process.env.FRONTEND_URL) {
+    const cleanFrontendUrl = process.env.FRONTEND_URL.replace(/\/$/, "");
+    if (!allowedOrigins.includes(cleanFrontendUrl)) {
+        allowedOrigins.push(cleanFrontendUrl);
+    }
+}
+
 app.use(cors({
-    origin: [
-        "https://nexshop.cloud",
-        "https://www.nexshop.cloud",
-        "http://127.0.0.1:5500",
-        "http://localhost:5500"
-    ],
+    origin: allowedOrigins,
     credentials: true
 }));
 

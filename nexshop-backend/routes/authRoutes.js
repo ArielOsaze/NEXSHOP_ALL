@@ -3,6 +3,7 @@ const router = express.Router();
 
 const authController = require("../controllers/authController");
 const authMiddleware = require("../middleware/authMiddleware");
+const adminMiddleware = require("../middleware/adminMiddleware");
 const { loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter } = require("../middleware/rateLimiter");
 
 router.post("/register", registerLimiter, authController.register);
@@ -13,7 +14,7 @@ router.post("/forgot-password", forgotPasswordLimiter, authController.forgotPass
 router.post("/reset-password", authController.resetPassword);
 
 // Admin — buka blokir rate-limit login untuk 1 IP (lihat authController.unlockLoginIp)
-router.get("/admin/blocked-ips", authMiddleware, authController.listBlockedIps);
-router.post("/admin/unlock-login", authMiddleware, authController.unlockLoginIp);
+router.get("/admin/blocked-ips", authMiddleware, adminMiddleware, authController.listBlockedIps);
+router.post("/admin/unlock-login", authMiddleware, adminMiddleware, authController.unlockLoginIp);
 
 module.exports = router;
