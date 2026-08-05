@@ -476,3 +476,35 @@ main{
 .sidebar .nav-link{
     cursor:pointer;
 }
+
+/* Curated gaming-news management */
+.news-management-tools{
+    display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+}
+.news-management-tools .input-group{ flex:1 1 280px; }
+.news-management-tools .form-select{ width:min(100%,210px); }
+.news-management-table .news-admin-title{ max-width:360px; font-weight:700; line-height:1.35; }
+.news-management-table .news-admin-summary{ max-width:360px; }
+.news-statuses{ min-width:142px; }
+.news-statuses .badge{ margin:2px 3px 2px 0; }
+.news-row-actions{ min-width:218px; }
+.news-row-actions .btn{ margin:2px; }
+.news-import-preview{
+    display:flex; gap:13px; align-items:center; padding:12px; border:1px solid var(--line);
+    border-radius:12px; background:var(--bg-panel-2);
+}
+.news-import-preview img{
+    width:112px; height:63px; object-fit:cover; flex:0 0 auto; border-radius:8px; background:var(--bg-panel);
+}
+.news-import-preview div{ min-width:0; display:flex; flex:1; flex-direction:column; gap:4px; }
+.news-import-preview strong{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text); }
+.news-import-preview small{ color:var(--text-muted); }
+.news-source-chip{
+    width:max-content; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    font-size:10px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--cyan);
+}
+@media(max-width:640px){
+    .news-management-tools .form-select{ width:100%; }
+    .news-import-preview img{ width:92px; height:54px; }
+    .news-row-actions{ min-width:204px; }
+}

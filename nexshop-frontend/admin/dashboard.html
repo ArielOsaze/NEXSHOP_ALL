@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20260805-news-release">
+<link rel="stylesheet" href="css/style.css?v=20260805-news-import">
 <script src="../theme-init.js"></script>
 </head>
 <body>
@@ -559,13 +559,17 @@
             <h2>Gaming News</h2>
             <p class="text-muted mb-0">Simpan ringkasan original dan tautkan pembaca ke artikel publisher tepercaya.</p>
         </div>
-        <button class="btn btn-success text-nowrap" onclick="openNewsModal()"><i class="bi bi-plus-circle"></i> Tambah Berita</button>
+        <button class="btn btn-success text-nowrap" onclick="openNewsModal()"><i class="bi bi-plus-circle"></i> Tambah dari URL</button>
+    </div>
+    <div class="news-management-tools mb-3">
+        <div class="input-group"><span class="input-group-text"><i class="bi bi-search"></i></span><input id="newsSearch" class="form-control" type="search" placeholder="Cari judul atau publisher..." oninput="renderNews()" aria-label="Cari berita"></div>
+        <select id="newsSort" class="form-select" onchange="renderNews()" aria-label="Urutkan berita"><option value="newest">Tanggal terbaru</option><option value="oldest">Tanggal terlama</option><option value="title">Judul A–Z</option><option value="source">Publisher A–Z</option></select>
     </div>
     <div class="card shadow-sm">
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead><tr><th>Urutan</th><th>Berita</th><th>Sumber</th><th>Terbit</th><th>Status</th><th>Aksi</th></tr></thead>
-                <tbody id="newsItems"><tr><td colspan="6" class="text-center text-muted py-4">Memuat data...</td></tr></tbody>
+            <table class="table table-hover align-middle mb-0 news-management-table">
+                <thead><tr><th>Berita</th><th>Publisher</th><th>Terbit</th><th>Status</th><th>Aksi</th></tr></thead>
+                <tbody id="newsItems"><tr><td colspan="5" class="text-center text-muted py-4">Memuat data...</td></tr></tbody>
             </table>
         </div>
     </div>
@@ -898,17 +902,22 @@
 <!-- Gaming News Modal -->
 <div class="modal fade" id="newsModal" tabindex="-1" aria-labelledby="newsModalTitle" aria-hidden="true">
 <div class="modal-dialog modal-lg"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title" id="newsModalTitle"><i class="bi bi-newspaper me-2"></i>Tambah Berita</h5><button class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
+    <div class="modal-header"><h5 class="modal-title" id="newsModalTitle"><i class="bi bi-newspaper me-2"></i>Tambah Berita dari URL</h5><button class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
     <div class="modal-body"><form id="newsForm"><div class="row g-3">
-        <div class="col-md-8"><label class="form-label" for="newsTitle">Judul</label><input id="newsTitle" class="form-control" maxlength="180" required></div>
-        <div class="col-md-4"><label class="form-label" for="newsSortOrder">Urutan tampil</label><input id="newsSortOrder" type="number" min="0" class="form-control" value="0"></div>
-        <div class="col-12"><label class="form-label" for="newsSummary">Ringkasan original</label><textarea id="newsSummary" class="form-control" rows="3" maxlength="600" required></textarea><div class="form-text">Jangan salin artikel; tulis ringkasan singkat NexShop.</div></div>
-        <div class="col-md-6"><label class="form-label" for="newsSource">Publisher</label><select id="newsSource" class="form-select" required><option value="">Pilih publisher</option><option>IGN</option><option>GameSpot</option><option>PC Gamer</option><option>Eurogamer</option><option>Rock Paper Shotgun</option><option>Xbox Wire</option><option>PlayStation Blog</option><option>Steam News</option><option>Ubisoft News</option><option>EA News</option></select></div>
+        <div class="col-12"><label class="form-label" for="newsImportUrl">URL artikel publisher tepercaya</label><div class="input-group"><input id="newsImportUrl" type="url" class="form-control" placeholder="https://www.ign.com/..." autocomplete="url"><button class="btn btn-outline-info" type="button" id="previewNewsBtn" onclick="previewNewsUrl()"><i class="bi bi-magic me-1"></i>Preview</button></div><div class="form-text">NexShop hanya mengambil metadata ketika URL ini ditempel admin. Isi artikel lengkap tidak disimpan.</div></div>
+        <div class="col-12 d-none" id="newsPreviewWrap"><div class="news-import-preview"><img id="newsPreviewImage" src="" alt=""><div><span id="newsPreviewSource" class="news-source-chip"></span><strong id="newsPreviewTitle"></strong><small id="newsPreviewDate"></small></div></div></div>
+        <div class="col-md-8"><label class="form-label" for="newsTitle">Judul</label><input id="newsTitle" class="form-control" maxlength="255" required></div>
+        <div class="col-md-4"><label class="form-label" for="newsSortOrder">Urutan tampil</label><input id="newsSortOrder" type="number" min="0" max="100000" class="form-control" value="0"></div>
+        <div class="col-12"><label class="form-label" for="newsSummary">Ringkasan NexShop</label><textarea id="newsSummary" class="form-control" rows="3" minlength="100" maxlength="200" required></textarea><div class="form-text">100–200 karakter. Edit seperlunya; jangan salin artikel lengkap.</div></div>
+        <div class="col-md-6"><label class="form-label" for="newsSource">Publisher terdeteksi</label><input id="newsSource" class="form-control" readonly required></div>
         <div class="col-md-6"><label class="form-label" for="newsPublishedAt">Tanggal terbit</label><input id="newsPublishedAt" type="datetime-local" class="form-control" required></div>
         <div class="col-12"><label class="form-label" for="newsSourceUrl">URL artikel asli</label><input id="newsSourceUrl" type="url" class="form-control" placeholder="https://publisher.example/article" required></div>
-        <div class="col-12"><label class="form-label" for="newsImageUrl">URL gambar preview</label><input id="newsImageUrl" type="url" class="form-control" placeholder="https://..." required></div>
-        <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="newsIsActive" checked><label class="form-check-label" for="newsIsActive">Aktif (tampil di halaman utama)</label></div></div>
-    </div><p class="text-danger small mt-3 mb-0" id="newsError"></p></form></div>
+        <div class="col-12"><label class="form-label" for="newsImageUrl">URL gambar utama</label><input id="newsImageUrl" type="url" class="form-control" placeholder="https://..." required></div>
+        <div class="col-sm-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="newsIsActive" checked><label class="form-check-label" for="newsIsActive">Aktif</label></div></div>
+        <div class="col-sm-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="newsIsHidden"><label class="form-check-label" for="newsIsHidden">Sembunyikan dari homepage</label></div></div>
+        <div class="col-sm-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="newsIsPinned"><label class="form-check-label" for="newsIsPinned">Pin berita</label></div></div>
+        <div class="col-sm-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="newsIsFeatured"><label class="form-check-label" for="newsIsFeatured">Feature berita</label></div></div>
+    </div><p class="text-danger small mt-3 mb-0" id="newsError" role="alert"></p></form></div>
     <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-success" id="saveNewsBtn" onclick="saveNews()"><i class="bi bi-floppy"></i> Simpan Berita</button></div>
 </div></div>
 </div>
@@ -1256,7 +1265,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script src="js/dashboard.js?v=20260805-news-release"></script>
+<script src="js/dashboard.js?v=20260805-news-import"></script>
 
 </body>
 </html>

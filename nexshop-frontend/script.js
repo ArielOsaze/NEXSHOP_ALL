@@ -1174,6 +1174,22 @@ function formatNewsDate(value) {
     }).format(date);
 }
 
+function newsSourceInitial(source) {
+    return String(source || "N").split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0]).join("").toUpperCase() || "N";
+}
+
+function renderGamingNewsSkeleton() {
+    const section = document.getElementById("news");
+    const grid = document.getElementById("newsGrid");
+    if (!section || !grid) return;
+    section.classList.remove("hidden");
+    grid.innerHTML = Array.from({ length: 4 }, () => `
+        <article class="news-card news-card-skeleton" aria-label="Memuat berita">
+            <div class="news-skeleton news-skeleton-image"></div>
+            <div class="news-card-body"><div class="news-skeleton news-skeleton-meta"></div><div class="news-skeleton news-skeleton-title"></div><div class="news-skeleton news-skeleton-copy"></div><div class="news-skeleton news-skeleton-copy short"></div><div class="news-skeleton news-skeleton-button"></div></div>
+        </article>`).join("");
+}
+
 function renderGamingNews(items) {
     const section = document.getElementById("news");
     const grid = document.getElementById("newsGrid");
@@ -1183,20 +1199,21 @@ function renderGamingNews(items) {
         grid.replaceChildren();
         return;
     }
-    grid.innerHTML = items.map((item) => {
+    grid.innerHTML = items.map((item, index) => {
         const articleUrl = safeUrl(item.source_url);
         const imageUrl = safeUrl(item.image_url);
         if (!articleUrl || !imageUrl) return "";
+        const source = String(item.source || "Publisher");
         return `
-            <article class="news-card">
+            <article class="news-card${item.is_featured ? " is-featured" : ""}" style="--news-index:${Math.min(index, 5)}">
                 <a class="news-card-image" href="${escapeHtml(articleUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Baca ${escapeHtml(item.title)} di ${escapeHtml(item.source)}">
                     <img src="${escapeHtml(imageUrl)}" alt="" loading="lazy" decoding="async">
                 </a>
                 <div class="news-card-body">
-                    <div class="news-card-meta"><span class="news-card-source">${escapeHtml(item.source)}</span><span>${escapeHtml(formatNewsDate(item.published_at))}</span></div>
+                    <div class="news-card-meta"><span class="news-card-source"><span class="news-source-logo" aria-hidden="true">${escapeHtml(newsSourceInitial(source))}</span>${escapeHtml(source)}</span><span>${escapeHtml(formatNewsDate(item.published_at))}</span></div>
                     <h4>${escapeHtml(item.title)}</h4>
                     <p class="news-card-summary">${escapeHtml(item.summary)}</p>
-                    <a class="news-card-link" href="${escapeHtml(articleUrl)}" target="_blank" rel="noopener noreferrer">Baca selengkapnya <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                    <a class="news-card-link" href="${escapeHtml(articleUrl)}" target="_blank" rel="noopener noreferrer">Read More <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
                 </div>
             </article>`;
     }).join("");
@@ -1204,6 +1221,7 @@ function renderGamingNews(items) {
 }
 
 async function loadGamingNews() {
+    renderGamingNewsSkeleton();
     try {
         const res = await fetch(`${API_BASE}/news`);
         if (!res.ok) throw new Error("Gagal memuat berita game");

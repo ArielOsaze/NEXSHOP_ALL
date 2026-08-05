@@ -29,6 +29,7 @@ let promoCodesLoaded = false;
 let newsLoaded = false;
 let newsEntries = [];
 let editingNewsId = null;
+let newsPreviewData = null;
 let promoCodes = [];
 let editingPromoCodeId = null;
 
@@ -2825,9 +2826,25 @@ function formatNewsDate(value) {
     return Number.isNaN(date.getTime()) ? "-" : new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(date);
 }
 
+function renderNewsPreview(data) {
+    const wrap = document.getElementById("newsPreviewWrap");
+    const image = document.getElementById("newsPreviewImage");
+    if (!data) {
+        wrap.classList.add("d-none");
+        image.removeAttribute("src");
+        return;
+    }
+    image.src = data.image_url || "";
+    image.alt = data.title ? `Preview ${data.title}` : "Preview berita";
+    document.getElementById("newsPreviewSource").textContent = data.source || "Publisher";
+    document.getElementById("newsPreviewTitle").textContent = data.title || "";
+    document.getElementById("newsPreviewDate").textContent = formatNewsDate(data.published_at);
+    wrap.classList.remove("d-none");
+}
+
 async function loadNews() {
     const tbody = document.getElementById("newsItems");
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat berita...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat berita...</td></tr>`;
     try {
         const res = await apiFetch("/news/all");
         if (!res.ok) throw new Error("Gagal mengambil berita game");
@@ -2836,51 +2853,127 @@ async function loadNews() {
         renderNews();
     } catch (err) {
         if (err.message === "unauthorized") return;
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${escapeHtml(err.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">${escapeHtml(err.message)}</td></tr>`;
     }
+}
+
+function visibleNewsEntries() {
+    const query = (document.getElementById("newsSearch")?.value || "").trim().toLocaleLowerCase("id-ID");
+    const sort = document.getElementById("newsSort")?.value || "newest";
+    const rows = newsEntries.filter((item) => !query || [item.title, item.summary, item.source]
+        .some((value) => String(value || "").toLocaleLowerCase("id-ID").includes(query)));
+    return rows.sort((left, right) => {
+        if (sort === "title") return String(left.title || "").localeCompare(String(right.title || ""), "id-ID");
+        if (sort === "source") return String(left.source || "").localeCompare(String(right.source || ""), "id-ID");
+        const leftTime = new Date(left.published_at).getTime() || 0;
+        const rightTime = new Date(right.published_at).getTime() || 0;
+        return sort === "oldest" ? leftTime - rightTime : rightTime - leftTime;
+    });
+}
+
+function newsStatusMarkup(item) {
+    const status = [];
+    status.push(item.is_active ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Nonaktif</span>');
+    if (item.is_hidden) status.push('<span class="badge bg-dark">Disembunyikan</span>');
+    if (item.is_pinned) status.push('<span class="badge bg-info text-dark">Dipin</span>');
+    if (item.is_featured) status.push('<span class="badge bg-warning text-dark">Featured</span>');
+    return status.join(" ");
 }
 
 function renderNews() {
     const tbody = document.getElementById("newsItems");
-    if (!newsEntries.length) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Belum ada berita. Tambahkan preview dari publisher tepercaya.</td></tr>`;
+    const entries = visibleNewsEntries();
+    if (!entries.length) {
+        const message = newsEntries.length ? "Tidak ada berita yang cocok dengan pencarian." : "Belum ada berita. Tambahkan preview dari publisher tepercaya.";
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">${message}</td></tr>`;
         return;
     }
-    tbody.innerHTML = newsEntries.map((item) => `
-        <tr>
-            <td>${Number(item.sort_order) || 0}</td>
-            <td><div class="fw-semibold">${escapeHtml(item.title)}</div><small class="text-muted d-inline-block text-truncate" style="max-width:360px">${escapeHtml(item.summary)}</small></td>
-            <td><a href="${escapeHtml(item.source_url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.source)}</a></td>
-            <td>${formatNewsDate(item.published_at)}</td>
-            <td>${item.is_active ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Nonaktif</span>'}</td>
-            <td class="text-nowrap"><button class="btn btn-warning btn-sm" onclick="editNews(${Number(item.id)})" aria-label="Edit berita"><i class="bi bi-pencil"></i></button> <button class="btn btn-danger btn-sm" onclick="deleteNews(${Number(item.id)})" aria-label="Hapus berita"><i class="bi bi-trash"></i></button></td>
-        </tr>`).join("");
+    tbody.innerHTML = entries.map((item) => {
+        const id = Number(item.id);
+        return `
+            <tr>
+                <td><div class="news-admin-title">${escapeHtml(item.title)}</div><small class="text-muted d-inline-block text-truncate news-admin-summary">${escapeHtml(item.summary)}</small></td>
+                <td><a href="${escapeHtml(item.source_url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.source)}</a></td>
+                <td class="text-nowrap">${formatNewsDate(item.published_at)}</td>
+                <td class="news-statuses">${newsStatusMarkup(item)}</td>
+                <td class="text-nowrap news-row-actions">
+                    <button class="btn btn-outline-info btn-sm" onclick="toggleNewsFlag(${id}, 'is_pinned')" title="${item.is_pinned ? "Lepas pin" : "Pin berita"}" aria-label="${item.is_pinned ? "Lepas pin" : "Pin berita"}"><i class="bi bi-pin-angle${item.is_pinned ? "-fill" : ""}"></i></button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="toggleNewsFlag(${id}, 'is_featured')" title="${item.is_featured ? "Batalkan feature" : "Feature berita"}" aria-label="${item.is_featured ? "Batalkan feature" : "Feature berita"}"><i class="bi bi-star${item.is_featured ? "-fill" : ""}"></i></button>
+                    <button class="btn btn-outline-secondary btn-sm" onclick="toggleNewsFlag(${id}, 'is_hidden')" title="${item.is_hidden ? "Tampilkan di homepage" : "Sembunyikan dari homepage"}" aria-label="${item.is_hidden ? "Tampilkan di homepage" : "Sembunyikan dari homepage"}"><i class="bi bi-eye${item.is_hidden ? "-slash" : ""}"></i></button>
+                    <button class="btn btn-outline-success btn-sm" onclick="toggleNewsFlag(${id}, 'is_active')" title="${item.is_active ? "Nonaktifkan berita" : "Aktifkan berita"}" aria-label="${item.is_active ? "Nonaktifkan berita" : "Aktifkan berita"}"><i class="bi bi-power"></i></button>
+                    <button class="btn btn-warning btn-sm" onclick="editNews(${id})" title="Edit berita" aria-label="Edit berita"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteNews(${id})" title="Hapus berita" aria-label="Hapus berita"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>`;
+    }).join("");
+}
+
+function applyNewsToForm(data) {
+    document.getElementById("newsTitle").value = data.title || "";
+    document.getElementById("newsSummary").value = data.summary || "";
+    document.getElementById("newsSource").value = data.source || "";
+    document.getElementById("newsSourceUrl").value = data.source_url || "";
+    document.getElementById("newsImageUrl").value = data.image_url || "";
+    document.getElementById("newsPublishedAt").value = formatNewsDateInput(data.published_at);
+    document.getElementById("newsSortOrder").value = Number(data.sort_order) || 0;
+    document.getElementById("newsIsActive").checked = data.is_active !== false;
+    document.getElementById("newsIsHidden").checked = !!data.is_hidden;
+    document.getElementById("newsIsPinned").checked = !!data.is_pinned;
+    document.getElementById("newsIsFeatured").checked = !!data.is_featured;
 }
 
 function openNewsModal() {
     editingNewsId = null;
+    newsPreviewData = null;
     document.getElementById("newsForm").reset();
     document.getElementById("newsSortOrder").value = 0;
     document.getElementById("newsPublishedAt").value = formatNewsDateInput(new Date().toISOString());
     document.getElementById("newsIsActive").checked = true;
-    document.getElementById("newsModalTitle").innerHTML = '<i class="bi bi-newspaper me-2"></i>Tambah Berita';
+    document.getElementById("newsModalTitle").innerHTML = '<i class="bi bi-newspaper me-2"></i>Tambah Berita dari URL';
     document.getElementById("newsError").textContent = "";
+    renderNewsPreview(null);
     newsModal.show();
+}
+
+async function previewNewsUrl() {
+    const errorEl = document.getElementById("newsError");
+    const url = document.getElementById("newsImportUrl").value.trim();
+    if (!url) { errorEl.textContent = "Tempel URL artikel publisher terlebih dahulu"; return; }
+    const button = document.getElementById("previewNewsBtn");
+    const previousHtml = button.innerHTML;
+    errorEl.textContent = "";
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Mengambil...';
+    try {
+        const res = await apiFetch("/news/preview", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url })
+        });
+        const result = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(result.message || "Metadata artikel tidak dapat diekstrak");
+        newsPreviewData = result.data;
+        applyNewsToForm(newsPreviewData);
+        document.getElementById("newsImportUrl").value = newsPreviewData.source_url;
+        renderNewsPreview(newsPreviewData);
+        showToast(result.message || "Metadata artikel berhasil diekstrak");
+    } catch (err) {
+        if (err.message !== "unauthorized") errorEl.textContent = err.message;
+    } finally {
+        button.disabled = false;
+        button.innerHTML = previousHtml;
+    }
 }
 
 function editNews(id) {
     const item = newsEntries.find((entry) => Number(entry.id) === Number(id));
     if (!item) return;
     editingNewsId = Number(id);
-    document.getElementById("newsTitle").value = item.title || "";
-    document.getElementById("newsSummary").value = item.summary || "";
-    document.getElementById("newsSource").value = item.source || "";
-    document.getElementById("newsSourceUrl").value = item.source_url || "";
-    document.getElementById("newsImageUrl").value = item.image_url || "";
-    document.getElementById("newsPublishedAt").value = formatNewsDateInput(item.published_at);
-    document.getElementById("newsSortOrder").value = Number(item.sort_order) || 0;
-    document.getElementById("newsIsActive").checked = !!item.is_active;
-    document.getElementById("newsModalTitle").innerHTML = '<i class="bi bi-newspaper me-2"></i>Edit Berita';
+    newsPreviewData = item;
+    document.getElementById("newsImportUrl").value = item.source_url || "";
+    applyNewsToForm(item);
+    renderNewsPreview(item);
+    document.getElementById("newsModalTitle").innerHTML = '<i class="bi bi-pencil-square me-2"></i>Edit Berita';
     document.getElementById("newsError").textContent = "";
     newsModal.show();
 }
@@ -2890,18 +2983,23 @@ async function saveNews() {
     const title = document.getElementById("newsTitle").value.trim();
     const summary = document.getElementById("newsSummary").value.trim();
     if (!title || !summary) { errorEl.textContent = "Judul dan ringkasan wajib diisi"; return; }
+    if (summary.length < 100 || summary.length > 200) { errorEl.textContent = "Ringkasan harus terdiri dari 100–200 karakter"; return; }
     const button = document.getElementById("saveNewsBtn");
     const previousHtml = button.innerHTML;
     button.disabled = true;
     button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
     const payload = {
-        title, summary,
+        title,
+        summary,
         source: document.getElementById("newsSource").value,
         source_url: document.getElementById("newsSourceUrl").value.trim(),
         image_url: document.getElementById("newsImageUrl").value.trim(),
         published_at: document.getElementById("newsPublishedAt").value,
         sort_order: Number(document.getElementById("newsSortOrder").value || 0),
-        is_active: document.getElementById("newsIsActive").checked
+        is_active: document.getElementById("newsIsActive").checked,
+        is_hidden: document.getElementById("newsIsHidden").checked,
+        is_pinned: document.getElementById("newsIsPinned").checked,
+        is_featured: document.getElementById("newsIsFeatured").checked
     };
     try {
         const res = await apiFetch(editingNewsId ? `/news/${editingNewsId}` : "/news", {
@@ -2920,6 +3018,25 @@ async function saveNews() {
     } finally {
         button.disabled = false;
         button.innerHTML = previousHtml;
+    }
+}
+
+async function toggleNewsFlag(id, key) {
+    const item = newsEntries.find((entry) => Number(entry.id) === Number(id));
+    if (!item) return;
+    try {
+        const res = await apiFetch(`/news/${id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ [key]: !item[key] })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal memperbarui status berita");
+        newsLoaded = false;
+        await loadNews();
+        showToast(data.message || "Status berita berhasil diperbarui");
+    } catch (err) {
+        if (err.message !== "unauthorized") showToast(err.message, true);
     }
 }
 
