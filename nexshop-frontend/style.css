@@ -649,18 +649,31 @@ header{ position:sticky; top:0; z-index:100; }
 @media (hover: hover) and (pointer: fine) {
     .card:hover .card-img img{ transform:scale(1.03); }
 }
+.card-badges{
+    position:absolute; top:10px; left:10px; right:10px; z-index:3;
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:6px;
+    pointer-events:none;
+}
 .card-flag{
-    position:absolute; top:12px; right:12px; padding:6px 12px;
-    border-radius:999px; background:linear-gradient(135deg, var(--violet), var(--cyan));
-    color:#fff; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase;
-    box-shadow:0 18px 35px rgba(34,211,238,.18);
-    border:1px solid rgba(255,255,255,.12);
+    position:relative; top:auto; right:auto; padding:5px 11px;
+    border-radius:999px; background:linear-gradient(135deg, #FF1744 0%, #FF6100 100%);
+    color:#fff; font-size:10px; font-weight:800; letter-spacing:.05em; text-transform:uppercase;
+    box-shadow:0 4px 14px rgba(255,23,68,.4);
+    border:1px solid rgba(255,255,255,.2);
+    display:inline-flex; align-items:center; gap:4px;
+    animation:flash-badge-pulse 2.2s ease-in-out infinite alternate;
+}
+@keyframes flash-badge-pulse{
+    from{ box-shadow:0 2px 10px rgba(255,23,68,.35); transform:scale(1); }
+    to{ box-shadow:0 4px 18px rgba(255,97,0,.65); transform:scale(1.02); }
 }
 .card .badge{
-    position:absolute; top:12px; left:12px; padding:8px 16px; border-radius:999px;
-    background:rgba(4,10,25,.85); backdrop-filter:blur(10px);
-    font-size:11px; font-weight:700; color:var(--text-cyan); border:1px solid rgba(34,211,238,.16);
-    text-transform:uppercase; letter-spacing:.08em;
+    position:relative; top:auto; left:auto; padding:5px 11px; border-radius:999px;
+    background:rgba(8,11,20,.85); backdrop-filter:blur(10px);
+    font-size:10px; font-weight:700; color:var(--text-cyan); border:1px solid rgba(34,211,238,.28);
+    text-transform:uppercase; letter-spacing:.06em;
+    max-width:130px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    display:inline-block; margin-left:auto;
 }
 .card-body{ padding:18px 18px 20px; }
 .card-body h4{
@@ -691,21 +704,21 @@ header{ position:sticky; top:0; z-index:100; }
 .price-now{ font-family:'Inter',sans-serif; font-weight:800; font-size:16px; line-height:1.2; letter-spacing:-.03em; color:var(--text); }
 .price-now.promo{
     display:inline-flex; align-items:center; justify-content:center;
-    padding:6px 12px; border-radius:12px;
-    background:linear-gradient(135deg, var(--violet), var(--cyan));
-    color:#fff; border:1px solid rgba(255,255,255,.12);
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
+    padding:4px 10px; border-radius:8px;
+    background:linear-gradient(135deg, #FF1744 0%, #FF6100 100%);
+    color:#fff; border:1px solid rgba(255,255,255,.18);
+    box-shadow:0 2px 10px rgba(255,23,68,.3);
 }
 .price-sale-row{ display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
 .price-now.lg{ font-size:24px; }
 .price-strike.lg{ font-size:15px; }
 .discount-chip{
-    display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
-    background:transparent; border:1px solid rgba(255,255,255,.04); color:var(--text-cyan);
-    font-family:'Inter',sans-serif; font-size:12px; line-height:1.2;
-    font-weight:700; letter-spacing:.04em; text-transform:none; white-space:nowrap;
+    display:inline-flex; align-items:center; gap:6px; padding:4px 9px; border-radius:999px;
+    background:rgba(255,23,68,.14); border:1px solid rgba(255,23,68,.32); color:#FF4D6D;
+    font-family:'Inter',sans-serif; font-size:11px; line-height:1.2;
+    font-weight:700; letter-spacing:.03em; text-transform:none; white-space:nowrap;
 }
-.discount-chip i{ display:inline-block; font-size:12px; opacity:.95; }
+.discount-chip i{ display:inline-block; font-size:11px; opacity:.95; }
 .add-btn{
     display:inline-flex; align-items:center; justify-content:center;
     width:44px; min-width:44px; height:44px; padding:0;

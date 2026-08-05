@@ -295,8 +295,10 @@ function renderProducts() {
                 <div class="card" data-id="${p.id}">
                     <div class="card-img">
                         <img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
-                        ${p.is_flash_sale ? '<span class="card-flag"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}
-                        ${p.badge ? `<span class="badge">${escapeHtml(p.badge)}</span>` : ""}
+                        <div class="card-badges">
+                            ${p.is_flash_sale ? '<span class="card-flag"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}
+                            ${p.badge ? `<span class="badge">${escapeHtml(p.badge)}</span>` : ""}
+                        </div>
                     </div>
                     <div class="card-body">
                         ${p.category ? `<div class="card-category">${escapeHtml(p.category)}</div>` : ""}
@@ -349,11 +351,19 @@ function openProductModal(id) {
 
     document.getElementById("pmImage").src = p.image;
     document.getElementById("pmImage").alt = p.name;
-    document.getElementById("pmBadge").textContent = p.badge;
+    
+    const pmFlash = document.getElementById("pmFlashFlag");
+    if (pmFlash) pmFlash.classList.toggle("hidden", !p.is_flash_sale);
+    const pmBadge = document.getElementById("pmBadge");
+    if (pmBadge) {
+        pmBadge.textContent = p.badge || "";
+        pmBadge.classList.toggle("hidden", !p.badge);
+    }
+
     document.getElementById("pmTitle").textContent = p.name;
-    document.getElementById("pmStars").innerHTML = `<span class="stars">${stars(p.rating)}</span> ${p.rating}`;
-    document.getElementById("pmSold").textContent = `· ${p.sold} terjual`;
-  document.getElementById("pmDesc").textContent = p.description;
+    document.getElementById("pmStars").innerHTML = `<span class="stars">${stars(p.rating || 5)}</span> ${p.rating || 5}`;
+    document.getElementById("pmSold").textContent = `· ${p.sold || 0} terjual`;
+    document.getElementById("pmDesc").textContent = p.description || "";
     document.getElementById("pmPrice").innerHTML = priceBlockHtml(p, "lg");
     document.getElementById("pmQtyValue").value = pendingQty;
 
