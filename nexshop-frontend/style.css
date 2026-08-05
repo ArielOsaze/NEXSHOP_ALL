@@ -644,10 +644,6 @@ header{ position:sticky; top:0; z-index:100; }
     transform:translateY(-4px); border-color:rgba(34,211,238,.4);
     box-shadow:0 12px 30px rgba(0,0,0,.35), 0 0 20px rgba(34,211,238,.12);
 }
-.card.card-flash:hover{
-    border-color:rgba(239,68,68,.45);
-    box-shadow:0 12px 30px rgba(0,0,0,.35), 0 0 20px rgba(239,68,68,.15);
-}
 .card:focus-visible{ border-color:var(--cyan); outline:2px solid var(--cyan); outline-offset:-2px; }
 
 .card-img{ position:relative; aspect-ratio:16/9; background:#020617; overflow:hidden; }
