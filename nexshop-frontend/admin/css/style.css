@@ -11,6 +11,15 @@
     --text-muted:#93A0C7;
 }
 
+:root[data-theme="light"]{
+    --bg-void:#F8FAFC;
+    --bg-panel:#FFFFFF;
+    --bg-panel-2:#F1F5F9;
+    --line:#E2E8F0;
+    --text:#0F172A;
+    --text-muted:#64748B;
+}
+
 *{
     margin:0;
     padding:0;

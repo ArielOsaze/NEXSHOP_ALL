@@ -2116,7 +2116,32 @@ function initSearchListeners() {
     }
 }
 
+function initThemeToggle() {
+    const toggleBtn = document.getElementById("themeToggle");
+    if (!toggleBtn) return;
+
+    function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        try { localStorage.setItem("nexshop_theme", theme); } catch (e) {}
+        const isLight = theme === "light";
+        const icon = toggleBtn.querySelector(".theme-toggle-icon");
+        const label = toggleBtn.querySelector(".theme-toggle-label");
+        if (icon) icon.innerHTML = isLight ? '<i class="fa-solid fa-sun" aria-hidden="true"></i>' : '<i class="fa-solid fa-moon" aria-hidden="true"></i>';
+        if (label) label.textContent = isLight ? "Mode terang" : "Mode gelap";
+        toggleBtn.setAttribute("aria-pressed", isLight ? "true" : "false");
+    }
+
+    const currentTheme = document.documentElement.dataset.theme || "dark";
+    applyTheme(currentTheme);
+
+    toggleBtn.addEventListener("click", () => {
+        const nextTheme = document.documentElement.dataset.theme === "light" ? "dark" : "light";
+        applyTheme(nextTheme);
+    });
+}
+
 async function bootstrapApp() {
+    initThemeToggle();
     initSearchListeners();
     updateCartCount();
     checkResetPasswordLink();
