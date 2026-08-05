@@ -95,4 +95,15 @@ const forgotPasswordLimiter = rateLimit({
     message: { message: "Terlalu banyak permintaan reset password. Coba lagi dalam beberapa menit." }
 });
 
-module.exports = { loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetLoginLimiter, getBlockedLoginIps };
+// Reset password tetap pakai token acak yang panjang, tetapi endpoint ini
+// dibatasi agar tidak bisa dipakai untuk membebani bcrypt/database lewat
+// request otomatis dalam jumlah besar.
+const resetPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak percobaan reset password. Coba lagi beberapa menit." }
+});
+
+module.exports = { loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, resetLoginLimiter, getBlockedLoginIps };

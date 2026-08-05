@@ -12,6 +12,14 @@ const RESET_TOKEN_EXPIRY_MINUTES = 30;
 // FRONTEND_URL di orderController.js/topupController.js
 const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
 
+function isValidEmail(value) {
+    return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()) && value.length <= 254;
+}
+
+function hashResetToken(token) {
+    return crypto.createHash("sha256").update(token).digest("hex");
+}
+
 // Deteksi spam login sederhana (in-memory, per instance server) — bukan
 // pengganti rate limiter beneran, tapi cukup buat kasih tau admin kalau ada
 // yang lagi nyoba brute-force satu akun.
@@ -47,10 +55,15 @@ exports.OTP_EXPIRY_MINUTES = OTP_EXPIRY_MINUTES;
 
 // REGISTER
 exports.register = async (req, res) => {
-    const { fullname, email, password } = req.body;
+    const fullname = typeof req.body.fullname === "string" ? req.body.fullname.trim() : "";
+    const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const password = typeof req.body.password === "string" ? req.body.password : "";
 
     if (!fullname || !email || !password) {
         return res.status(400).json({ message: "Semua field wajib diisi" });
+    }
+    if (fullname.length > 100 || !isValidEmail(email) || password.length < 8 || password.length > 128) {
+        return res.status(400).json({ message: "Data registrasi tidak valid. Password minimal 8 karakter." });
     }
 
     try {
@@ -229,7 +242,12 @@ exports.resendOtp = async (req, res) => {
 
 // LOGIN
 exports.login = async (req, res) => {
-    const { email, password } = req.body;
+    const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    const password = typeof req.body.password === "string" ? req.body.password : "";
+
+    if (!isValidEmail(email) || !password || password.length > 128) {
+        return res.status(401).json({ message: "Email atau password salah" });
+    }
 
     try {
         const { data: user, error } = await supabase
@@ -329,8 +347,8 @@ exports.unlockLoginIp = async (req, res) => {
 
 // LUPA PASSWORD — minta link reset dikirim ke email
 exports.forgotPassword = async (req, res) => {
-    const { email } = req.body;
-    if (!email) {
+    const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    if (!isValidEmail(email)) {
         return res.status(400).json({ message: "Email wajib diisi" });
     }
 
@@ -345,7 +363,7 @@ exports.forgotPassword = async (req, res) => {
         const { data: user, error } = await supabase
             .from("users")
             .select("id, email")
-            .eq("email", email.toLowerCase().trim())
+            .eq("email", email)
             .maybeSingle();
 
         if (error) {
@@ -360,11 +378,12 @@ exports.forgotPassword = async (req, res) => {
         // token acak PANJANG (bukan 6 digit kayak OTP) -- reset password itu
         // sensitif, jadi HARUS gak bisa ditebak/di-brute-force dalam waktu wajar
         const token = crypto.randomBytes(32).toString("hex");
+        const tokenHash = hashResetToken(token);
         const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000).toISOString();
 
         const { error: updateErr } = await supabase
             .from("users")
-            .update({ reset_password_token: token, reset_password_expires_at: expiresAt })
+            .update({ reset_password_token: tokenHash, reset_password_expires_at: expiresAt })
             .eq("id", user.id);
 
         if (updateErr) {
@@ -372,7 +391,11 @@ exports.forgotPassword = async (req, res) => {
             return res.status(500).json({ message: "Gagal membuat token reset" });
         }
 
-        const resetLink = `${FRONTEND_URL}/#/reset-password?token=${token}`;
+        // FRONTEND_URL diwajibkan ketika production (divalidasi saat startup).
+        // Fallback development memudahkan menjalankan store lokal tanpa
+        // membentuk URL dari Host header yang bisa dimanipulasi client.
+        const frontendUrl = FRONTEND_URL || "http://localhost:5500";
+        const resetLink = `${frontendUrl}/#/reset-password?token=${token}`;
 
         try {
             await sendPasswordResetEmail(user.email, resetLink);
@@ -392,20 +415,22 @@ exports.forgotPassword = async (req, res) => {
 
 // RESET PASSWORD — submit password baru pakai token dari email
 exports.resetPassword = async (req, res) => {
-    const { token, newPassword } = req.body;
+    const token = typeof req.body.token === "string" ? req.body.token : "";
+    const newPassword = typeof req.body.newPassword === "string" ? req.body.newPassword : "";
 
     if (!token || !newPassword) {
         return res.status(400).json({ message: "Token dan password baru wajib diisi" });
     }
-    if (newPassword.length < 4) {
-        return res.status(400).json({ message: "Password minimal 4 karakter" });
+    if (!/^[a-f0-9]{64}$/i.test(token) || newPassword.length < 8 || newPassword.length > 128) {
+        return res.status(400).json({ message: "Token atau password baru tidak valid. Password minimal 8 karakter." });
     }
 
     try {
+        const tokenHash = hashResetToken(token);
         const { data: user, error } = await supabase
             .from("users")
             .select("id, reset_password_token, reset_password_expires_at")
-            .eq("reset_password_token", token)
+            .eq("reset_password_token", tokenHash)
             .maybeSingle();
 
         if (error) {

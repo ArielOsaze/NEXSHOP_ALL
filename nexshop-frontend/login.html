@@ -1,44 +1,29 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login NexShop</title>
 </head>
 <body>
 
-<h2>Login</h2>
+<main>
+    <h1>Login NexShop</h1>
 
-<input type="email" id="email" placeholder="Email"><br><br>
+    <form id="loginForm">
+        <label for="email">Email</label><br>
+        <input type="email" id="email" required autocomplete="email"><br><br>
 
-<input type="password" id="password" placeholder="Password"><br><br>
+        <label for="password">Password</label><br>
+        <input type="password" id="password" required autocomplete="current-password"><br><br>
 
-<button onclick="login()">Login</button>
+        <button type="submit" id="loginButton">Login</button>
+    </form>
 
-<pre id="hasil"></pre>
+    <p id="loginStatus" role="status" aria-live="polite"></p>
+</main>
 
-<script>
-async function login() {
-
-    const res = await fetch("http://localhost:3000/api/auth/login", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            email: document.getElementById("email").value,
-            password: document.getElementById("password").value
-        })
-    });
-
-    const data = await res.json();
-
-    document.getElementById("hasil").innerText =
-        JSON.stringify(data, null, 2);
-
-    if(data.token){
-        localStorage.setItem("token", data.token);
-    }
-}
-</script>
+<script src="public-login.js"></script>
 
 </body>
 </html>

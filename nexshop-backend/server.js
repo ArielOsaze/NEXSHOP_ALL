@@ -39,8 +39,12 @@ app.set("trust proxy", 1);
 // =========================
 const PORT = process.env.PORT || 3000;
 
-if (process.env.NODE_ENV === "production" && !process.env.JWT_SECRET) {
-    throw new Error("JWT_SECRET wajib diatur di environment production");
+if (process.env.NODE_ENV === "production") {
+    const requiredEnvironment = ["JWT_SECRET", "SUPABASE_URL", "SUPABASE_SERVICE_KEY", "FRONTEND_URL", "BACKEND_URL"];
+    const missingEnvironment = requiredEnvironment.filter((name) => !process.env[name]);
+    if (missingEnvironment.length) {
+        throw new Error(`Environment production belum lengkap: ${missingEnvironment.join(", ")}`);
+    }
 }
 
 // =========================
@@ -87,7 +91,9 @@ const apiLimiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
     message: { message: "Terlalu banyak permintaan. Coba lagi beberapa menit." },
-    skip: (req) => req.path.includes("/notification") || req.path.includes("tokovoucher-webhook")
+    // Hanya webhook provider yang dikecualikan. Pengecekan substring lama
+    // membuat setiap endpoint dengan kata "notification" ikut melewati limit.
+    skip: (req) => ["/orders/notification", "/topup/notification", "/topup/tokovoucher-webhook"].includes(req.path)
 });
 app.use("/api", apiLimiter);
 

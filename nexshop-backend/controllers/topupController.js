@@ -1,4 +1,5 @@
 const supabase = require("../config/db");
+const crypto = require("crypto");
 const tokovoucher = require("../config/tokovoucher");
 const { createRedirectPayment, checkTransactionStatus } = require("../config/ipaymu");
 
@@ -1310,10 +1311,9 @@ exports.create = async (req, res) => {
 
         const total = Math.max(product.harga_jual - discountAmount, 0);
 
-        // Sama kayak alasan di orderController.js -- tambahin akhiran acak
-        // biar ID gak ketebak cuma dari timestamp doang (endpoint "Cek
-        // Transaksi" publik, gak perlu login).
-        const orderId = "TP" + Date.now() + Math.random().toString(36).slice(2, 6).toUpperCase();
+        // Endpoint tracking guest bersifat publik, jadi ID harus benar-benar
+        // tidak dapat ditebak dari waktu checkout.
+        const orderId = "TP" + crypto.randomBytes(12).toString("hex").toUpperCase();
 
         const { error: insertErr } = await supabase.from("topup_orders").insert([{
             id: orderId,

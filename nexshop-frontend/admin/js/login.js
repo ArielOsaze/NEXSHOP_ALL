@@ -1,7 +1,8 @@
 const API_BASE = "/api";
+const ADMIN_TOKEN_STORAGE_KEY = "nexshop-admin-token";
 
 // Already logged in? Skip straight to dashboard.
-if (localStorage.getItem("token")) {
+if (localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)) {
     window.location.href = "dashboard.html";
 }
 
@@ -53,11 +54,11 @@ form.addEventListener("submit", async (e) => {
             throw new Error(data.message || "Login gagal. Periksa email dan password kamu.");
         }
 
-        if (!data.token) {
-            throw new Error("Server tidak mengirimkan token. Hubungi admin backend.");
+        if (!data.token || !data.user || data.user.role !== "admin") {
+            throw new Error("Akun ini tidak memiliki akses administrator.");
         }
 
-        localStorage.setItem("token", data.token);
+        localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, data.token);
         window.location.href = "dashboard.html";
 
     } catch (err) {

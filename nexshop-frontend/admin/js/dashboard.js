@@ -2,7 +2,8 @@
 // NexShop Dashboard
 // ================================
 
-const token = localStorage.getItem("token");
+const ADMIN_TOKEN_STORAGE_KEY = "nexshop-admin-token";
+const token = localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
 const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
     ? (window.location.port === "3000" ? "/api" : "http://localhost:3000/api")
     : (window.location.protocol.startsWith("http") ? "/api" : "https://nexshop.cloud/api");
@@ -81,7 +82,7 @@ async function apiFetch(path, options = {}) {
     });
 
     if (res.status === 401) {
-        localStorage.removeItem("token");
+        localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
         showToast("Sesi kamu berakhir, silakan login kembali.", true);
         setTimeout(() => window.location.href = "login.html", 1200);
         throw new Error("unauthorized");
@@ -2540,7 +2541,7 @@ function renderPromoCodes() {
 // ================================
 
 function logout() {
-    localStorage.removeItem("token");
+    localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
     window.location.href = "login.html";
 }
 
@@ -2663,7 +2664,7 @@ let idleTimer = null;
 function resetIdleTimer() {
     if (idleTimer) clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
-        localStorage.removeItem("token");
+        localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
         localStorage.setItem("nexshop_admin_logout_reason", "idle");
         window.location.href = "login.html";
     }, IDLE_LIMIT_MS);
@@ -2766,10 +2767,11 @@ function renderStats(stats) {
 }
 
 function initThemeToggle() {
+    const THEME_STORAGE_KEY = "nexshop-admin-theme";
     function applyTheme(theme) {
         document.documentElement.dataset.theme = theme;
         document.documentElement.setAttribute("data-theme", theme);
-        try { localStorage.setItem("nexshop_theme", theme); } catch (e) {}
+        try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch (e) {}
         const isLight = theme === "light";
 
         document.querySelectorAll("#themeToggle, .theme-toggle").forEach(btn => {
@@ -2781,7 +2783,7 @@ function initThemeToggle() {
         });
     }
 
-    const currentTheme = localStorage.getItem("nexshop_theme") === "light" ? "light" : (document.documentElement.getAttribute("data-theme") || "dark");
+    const currentTheme = localStorage.getItem(THEME_STORAGE_KEY) === "light" ? "light" : (document.documentElement.getAttribute("data-theme") || "dark");
     applyTheme(currentTheme);
 
     document.addEventListener("click", (e) => {
@@ -2792,6 +2794,12 @@ function initThemeToggle() {
             const activeTheme = document.documentElement.getAttribute("data-theme") || document.documentElement.dataset.theme || "dark";
             const nextTheme = activeTheme === "light" ? "dark" : "light";
             applyTheme(nextTheme);
+        }
+    });
+
+    window.addEventListener("storage", (e) => {
+        if (e.key === THEME_STORAGE_KEY) {
+            applyTheme(e.newValue === "light" ? "light" : "dark");
         }
     });
 }

@@ -1,4 +1,5 @@
 const supabase = require("../config/db");
+const crypto = require("crypto");
 const { createRedirectPayment, checkTransactionStatus } = require("../config/ipaymu");
 const { validatePromoCode, incrementUsage } = require("./promoCodeController");
 const { buildDiscountedIpaymuItems } = require("../utils/promoDiscountSplit");
@@ -78,12 +79,10 @@ exports.create = async (req, res) => {
         }
 
         const subtotal = item_details.reduce((sum, i) => sum + i.price * i.quantity, 0);
-        // Sengaja ditambahin akhiran acak (bukan cuma timestamp) -- soalnya
-        // "Cek Transaksi" itu endpoint publik (gak perlu login) yang balikin
-        // nama pembeli + total + status kalau ID-nya ketebak. Kalau ID cuma
-        // "NX"+timestamp, orang lain bisa coba-coba beberapa nilai
-        // milidetik di sekitar waktu yang mereka tahu buat nemu ID asli.
-        const orderId = "NX" + Date.now() + Math.random().toString(36).slice(2, 6).toUpperCase();
+        // ID dipakai untuk tracking guest yang bersifat publik. randomBytes
+        // memberi 96 bit entropy, sehingga tidak dapat ditebak dari waktu
+        // checkout seperti ID berbasis timestamp sebelumnya.
+        const orderId = "NX" + crypto.randomBytes(12).toString("hex").toUpperCase();
 
         // Validasi ulang kode promo DI SERVER — jangan pernah percaya angka
         // diskon yang dikirim dari frontend, itu bisa dimanipulasi di browser.
@@ -180,7 +179,7 @@ exports.getPublicStatus = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from("orders")
-            .select("id, status, total, recipient_name, payment_type, created_at, paid_at")
+            .select("id, status, total, payment_type, created_at, paid_at")
             .eq("id", req.params.id)
             .maybeSingle();
 
@@ -199,7 +198,7 @@ exports.getPublicDetail = async (req, res) => {
     try {
         const { data: order, error } = await supabase
             .from("orders")
-            .select("id, status, total, subtotal, discount_amount, promo_code, recipient_name, payment_type, items, created_at, paid_at")
+            .select("id, status, total, subtotal, discount_amount, promo_code, payment_type, items, created_at, paid_at")
             .eq("id", req.params.id)
             .maybeSingle();
 
@@ -223,7 +222,6 @@ exports.getPublicDetail = async (req, res) => {
             id: order.id,
             type: "order",
             status: order.status,
-            recipient_name: order.recipient_name,
             payment_type: order.payment_type,
             items,
             subtotal: order.subtotal,

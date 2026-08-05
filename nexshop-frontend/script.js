@@ -12,7 +12,8 @@ let cachedStoreSettings = null; // diisi loadStoreSettings(), dipakai buat WA CT
 const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
     ? (window.location.port === "3000" ? "/api" : "http://localhost:3000/api")
     : (window.location.protocol.startsWith("http") ? "/api" : "https://nexshop.cloud/api");
-const THEME_STORAGE_KEY = "nexshop_theme";
+const THEME_STORAGE_KEY = "nexshop-public-theme";
+const PUBLIC_TOKEN_STORAGE_KEY = "nexshop-public-token";
 
 const PAYMENT_METHODS = [
     { id: "qris", label: "QRIS", desc: "Scan dengan m-banking atau e-wallet", icon: "fa-qrcode" },
@@ -142,8 +143,16 @@ let pendingQty = 1;
 let checkoutItems = null;
 let checkoutSource = "cart";
 
-const saveCart = () => localStorage.setItem(cartKey(), JSON.stringify(cart));
-const saveUser = () => localStorage.setItem("nexshop_user", JSON.stringify(currentUser));
+const saveCart = () => {
+    try { localStorage.setItem(cartKey(), JSON.stringify(cart)); } catch (err) {
+        console.warn("Keranjang tidak dapat disimpan di browser ini", err);
+    }
+};
+const saveUser = () => {
+    try { localStorage.setItem("nexshop_user", JSON.stringify(currentUser)); } catch (err) {
+        console.warn("Sesi pengguna tidak dapat disimpan di browser ini", err);
+    }
+};
 
 function switchCartContext() {
     cart = safeJSONParse(localStorage.getItem(cartKey()), []);
@@ -166,11 +175,21 @@ function toast(message, type = "default") {
 }
 
 /* ---------- Overlay helpers ---------- */
+let lastFocusedElement = null;
+
+function getFocusableElements(container) {
+    return [...container.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
+        .filter((element) => !element.closest(".hidden"));
+}
+
 function openOverlay(id) {
     const el = document.getElementById(id);
     if (!el) return;
+    lastFocusedElement = document.activeElement;
     el.classList.add("active");
     document.body.style.overflow = "hidden";
+    const focusTarget = getFocusableElements(el)[0];
+    if (focusTarget) requestAnimationFrame(() => focusTarget.focus());
 }
 function closeOverlay(id) {
     const el = document.getElementById(id);
@@ -178,6 +197,10 @@ function closeOverlay(id) {
     el.classList.remove("active");
     if (!document.querySelector(".overlay.active")) {
         document.body.style.overflow = "";
+        if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+            lastFocusedElement.focus();
+        }
+        lastFocusedElement = null;
     }
 }
 document.querySelectorAll("[data-close]").forEach(btn => {
@@ -192,6 +215,27 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
         document.querySelectorAll(".overlay.active").forEach(ov => closeOverlay(ov.id));
         document.getElementById("accountDropdown").classList.remove("active");
+        const navMenu = document.getElementById("navMenu");
+        const menuToggle = document.getElementById("menuToggle");
+        if (navMenu) navMenu.classList.remove("active");
+        if (menuToggle) menuToggle.setAttribute("aria-expanded", "false");
+        return;
+    }
+
+    if (e.key === "Tab") {
+        const activeOverlay = document.querySelector(".overlay.active");
+        if (!activeOverlay) return;
+        const focusable = getFocusableElements(activeOverlay);
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault();
+            last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault();
+            first.focus();
+        }
     }
 });
 
@@ -299,7 +343,7 @@ function renderProducts() {
             }
         } else {
             grid.innerHTML = data.map(p => `
-                <div class="card${p.is_flash_sale ? " card-flash" : ""}" data-id="${p.id}">
+                <div class="card${p.is_flash_sale ? " card-flash" : ""}" data-id="${p.id}" tabindex="0" role="button" aria-label="Lihat detail ${escapeHtml(p.name)}">
                     <div class="card-img">
                         <img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
                         ${p.is_flash_sale ? '<span class="badge-flash"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}
@@ -324,6 +368,12 @@ function renderProducts() {
                 card.addEventListener("click", (e) => {
                     if (e.target.closest(".add-btn, .buy-btn")) return;
                     openProductModal(Number(card.dataset.id));
+                });
+                card.addEventListener("keydown", (e) => {
+                    if ((e.key === "Enter" || e.key === " ") && !e.target.closest(".add-btn, .buy-btn")) {
+                        e.preventDefault();
+                        openProductModal(Number(card.dataset.id));
+                    }
                 });
             });
 
@@ -796,7 +846,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             errorEl.textContent = data.message;
             return;
         }
-        localStorage.setItem("nexshop_token", data.token);
+        localStorage.setItem(PUBLIC_TOKEN_STORAGE_KEY, data.token);
         currentUser = data.user;
         saveUser();
         switchCartContext();
@@ -812,7 +862,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 document.getElementById("logoutBtn").addEventListener("click", () => {
     currentUser = null;
     saveUser();
-    localStorage.removeItem("nexshop_token");
+    localStorage.removeItem(PUBLIC_TOKEN_STORAGE_KEY);
 
     // logout selalu nampilin keranjang kosong (bukan nyisa punya guest sebelumnya)
     cart = [];
@@ -972,7 +1022,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
     e.preventDefault();
     const recipient_name = document.getElementById("checkoutName").value.trim();
     const recipient_email = document.getElementById("checkoutEmail").value.trim();
-    const token = localStorage.getItem("nexshop_token");
+    const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
     const submitBtn = e.target.querySelector('button[type="submit"]');
 
     if (!selectedPaymentMethod) {
@@ -1052,7 +1102,7 @@ function showCheckoutSuccess(recipient_name, total, statusText, orderId) {
         : `⚠️ Kamu checkout tanpa akun — catat Order ID ini baik-baik, karena tidak tersimpan di riwayat manapun: <strong>${orderId}</strong>`;
 
     document.getElementById("checkoutSuccessMsg").innerHTML =
-        `Terima kasih, ${recipient_name}! Pesanan kamu senilai ${rupiah(total)} ${statusText}. ${trackingNote}`;
+        `Terima kasih, ${escapeHtml(recipient_name)}! Pesanan kamu senilai ${rupiah(total)} ${statusText}. ${trackingNote}`;
 
     document.getElementById("checkoutStep").classList.add("hidden");
     document.getElementById("checkoutSuccess").classList.remove("hidden");
@@ -1222,7 +1272,7 @@ async function loadMyTransactions() {
     }
 
     body.innerHTML = `<p class="otp-info">Memuat riwayat transaksi...</p>`;
-    const token = localStorage.getItem("nexshop_token");
+    const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
 
     try {
         const [ordersRes, topupRes] = await Promise.all([
@@ -1932,7 +1982,7 @@ async function submitTopupOrder() {
     btn.textContent = "Memproses...";
 
     try {
-        const token = localStorage.getItem("nexshop_token");
+        const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
         const headers = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
@@ -2112,6 +2162,12 @@ function initThemeToggle() {
             const activeTheme = document.documentElement.getAttribute("data-theme") || document.documentElement.dataset.theme || "dark";
             const nextTheme = activeTheme === "light" ? "dark" : "light";
             applyTheme(nextTheme, true);
+        }
+    });
+
+    window.addEventListener("storage", (e) => {
+        if (e.key === THEME_STORAGE_KEY) {
+            applyTheme(e.newValue === "light" ? "light" : "dark", false);
         }
     });
 }
