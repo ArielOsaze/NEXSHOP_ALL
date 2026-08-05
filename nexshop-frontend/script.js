@@ -2148,29 +2148,29 @@ function initThemeToggle() {
 }
 
 function initMobileMenu() {
-    const menuToggle = document.getElementById("menuToggle");
-    const navMenu = document.getElementById("navMenu");
-    if (!menuToggle || !navMenu) return;
-
-    menuToggle.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const isOpen = navMenu.classList.toggle("active");
-        menuToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
-    });
-
     document.addEventListener("click", (e) => {
-        if (navMenu.classList.contains("active") && !navMenu.contains(e.target) && !menuToggle.contains(e.target)) {
-            navMenu.classList.remove("active");
-            menuToggle.setAttribute("aria-expanded", "false");
-        }
-    });
+        const menuToggle = e.target.closest("#menuToggle, .menu-toggle");
+        const navMenu = document.getElementById("navMenu");
 
-    navMenu.querySelectorAll("a, button:not(#themeToggle)").forEach(link => {
-        link.addEventListener("click", () => {
-            navMenu.classList.remove("active");
-            menuToggle.setAttribute("aria-expanded", "false");
-        });
+        if (menuToggle && navMenu) {
+            e.preventDefault();
+            e.stopPropagation();
+            const isOpen = navMenu.classList.toggle("active");
+            menuToggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+            return;
+        }
+
+        if (navMenu && navMenu.classList.contains("active")) {
+            if (!navMenu.contains(e.target)) {
+                navMenu.classList.remove("active");
+                const btn = document.getElementById("menuToggle");
+                if (btn) btn.setAttribute("aria-expanded", "false");
+            } else if (e.target.closest("a, button:not(#themeToggle)")) {
+                navMenu.classList.remove("active");
+                const btn = document.getElementById("menuToggle");
+                if (btn) btn.setAttribute("aria-expanded", "false");
+            }
+        }
     });
 }
 

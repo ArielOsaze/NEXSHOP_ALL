@@ -371,8 +371,15 @@ header{ position:sticky; top:0; z-index:100; }
 
 .nav-right{ display:flex; align-items:center; gap:10px; position:relative; z-index:10; }
 
-.menu-toggle{ display:none; flex-direction:column; gap:5px; width:26px; cursor:pointer; }
-.menu-toggle span{ height:2px; background:var(--text); border-radius:2px; transition:.25s; }
+.menu-toggle{
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    width:38px; height:38px; padding:8px 6px; border-radius:10px;
+    background:var(--bg-panel); border:1px solid var(--line);
+    cursor:pointer; position:relative; z-index:130; pointer-events:auto;
+    transition:border-color .2s, background-color .2s;
+}
+.menu-toggle:hover{ border-color:var(--violet); }
+.menu-toggle span{ height:2px; width:100%; background:var(--text); border-radius:2px; transition:.25s; }
 
 /* ================= HERO CAROUSEL ================= */
 .hero-carousel{
