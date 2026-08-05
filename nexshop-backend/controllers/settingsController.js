@@ -2,6 +2,7 @@ const supabase = require("../config/db");
 const bcrypt = require("bcrypt");
 const axios = require("axios");
 const { notify } = require("../config/notify");
+const { issueAdminPinToken } = require("../middleware/adminPinMiddleware");
 const {
     getStoreSettings,
     updateStoreSettings,
@@ -50,6 +51,64 @@ function mask(value) {
     return value.slice(0, 4) + "••••••••" + value.slice(-4);
 }
 
+function isValidSecurityPin(value) {
+    return typeof value === "string" && /^\d{6}$/.test(value);
+}
+
+function securityPinSchemaMessage(error) {
+    const code = String(error && error.code || "");
+    if (["42703", "PGRST204", "PGRST205", "42P01"].includes(code)) {
+        return "Schema Security PIN belum tersedia. Jalankan migrations-18-admin-configuration-security.sql di Supabase SQL Editor.";
+    }
+    return "Gagal memeriksa Security PIN Admin";
+}
+
+exports.getAdminPinStatus = async (req, res) => {
+    try {
+        const { data, error } = await supabase.from("users").select("security_pin_hash").eq("id", req.user.id).maybeSingle();
+        if (error) return res.status(500).json({ message: securityPinSchemaMessage(error) });
+        if (!data) return res.status(404).json({ message: "User tidak ditemukan" });
+        return res.json({ configured: !!data.security_pin_hash });
+    } catch (err) {
+        return res.status(500).json({ message: "Server gagal memeriksa Security PIN Admin" });
+    }
+};
+
+exports.setupAdminPin = async (req, res) => {
+    const pin = req.body && req.body.pin;
+    const confirmation = req.body && req.body.confirmation;
+    if (!isValidSecurityPin(pin) || pin !== confirmation) {
+        return res.status(400).json({ message: "Security PIN harus 6 digit dan kedua input harus sama" });
+    }
+    try {
+        const { data: user, error: readError } = await supabase.from("users").select("security_pin_hash").eq("id", req.user.id).maybeSingle();
+        if (readError) return res.status(500).json({ message: securityPinSchemaMessage(readError) });
+        if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
+        if (user.security_pin_hash) return res.status(409).json({ message: "Security PIN sudah dibuat. Gunakan verifikasi PIN." });
+        const security_pin_hash = await bcrypt.hash(pin, 12);
+        const { error: updateError } = await supabase.from("users").update({ security_pin_hash, security_pin_updated_at: new Date().toISOString() }).eq("id", req.user.id);
+        if (updateError) return res.status(500).json({ message: securityPinSchemaMessage(updateError) });
+        notify("security", `${req.user.email} membuat Security PIN Admin`);
+        return res.status(201).json({ message: "Security PIN Admin berhasil dibuat", pin_token: issueAdminPinToken(req.user), expires_in_seconds: 600 });
+    } catch (err) {
+        return res.status(500).json({ message: "Server gagal membuat Security PIN Admin" });
+    }
+};
+
+exports.verifyAdminPin = async (req, res) => {
+    const pin = req.body && req.body.pin;
+    if (!isValidSecurityPin(pin)) return res.status(400).json({ message: "Masukkan Security PIN 6 digit yang valid" });
+    try {
+        const { data: user, error } = await supabase.from("users").select("security_pin_hash").eq("id", req.user.id).maybeSingle();
+        if (error) return res.status(500).json({ message: securityPinSchemaMessage(error) });
+        if (!user || !user.security_pin_hash) return res.status(428).json({ message: "Security PIN belum dibuat", code: "ADMIN_PIN_SETUP_REQUIRED" });
+        if (!await bcrypt.compare(pin, user.security_pin_hash)) return res.status(401).json({ message: "Security PIN tidak sesuai" });
+        return res.json({ message: "Security PIN terverifikasi", pin_token: issueAdminPinToken(req.user), expires_in_seconds: 600 });
+    } catch (err) {
+        return res.status(500).json({ message: "Server gagal memverifikasi Security PIN Admin" });
+    }
+};
+
 exports.getApiKeysAdmin = async (req, res) => {
     if (req.user.role !== "admin") {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
@@ -69,10 +128,29 @@ exports.getApiKeysAdmin = async (req, res) => {
             brevo_sender_name: keys.brevo_sender_name,
             waapi_url: keys.waapi_url, // URL gateway bukan rahasia, gak perlu di-mask
             waapi_key: mask(keys.waapi_key),
-            waapi_target_number: keys.waapi_target_number
+            waapi_target_number: keys.waapi_target_number,
+            gemini_api_key: mask(keys.gemini_api_key),
+            gemini_news_model: keys.gemini_news_model,
+            smtp_host: keys.smtp_host,
+            smtp_port: keys.smtp_port,
+            smtp_user: keys.smtp_user,
+            smtp_password: mask(keys.smtp_password),
+            smtp_from_email: keys.smtp_from_email,
+            smtp_from_name: keys.smtp_from_name
         });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
+    }
+};
+
+exports.revealApiKeysAdmin = async (req, res) => {
+    if (req.user.role !== "admin") return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    try {
+        const keys = await getApiKeys({ fresh: true });
+        // Route ini hanya boleh dilewati PIN token yang berumur 10 menit.
+        return res.json(keys);
+    } catch (err) {
+        return res.status(500).json({ message: "Gagal membuka konfigurasi API" });
     }
 };
 

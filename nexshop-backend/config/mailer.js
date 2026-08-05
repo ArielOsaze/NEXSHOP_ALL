@@ -1,4 +1,5 @@
 const axios = require("axios");
+const nodemailer = require("nodemailer");
 require("dotenv").config();
 const { getApiKeys, getStoreSettings } = require("./settings");
 const { notify } = require("./notify");
@@ -21,6 +22,22 @@ async function getBrevoConfig() {
     const senderEmail = keys.brevo_sender_email;
     const senderName = keys.brevo_sender_name || "NexShop";
 
+    if (keys.smtp_host && keys.smtp_from_email) {
+        const smtpPort = Number(keys.smtp_port || 587);
+        if (!Number.isInteger(smtpPort) || smtpPort < 1 || smtpPort > 65535) {
+            throw new Error("Port SMTP tidak valid. Periksa Admin Configuration Center.");
+        }
+        return {
+            transport: "smtp",
+            smtpHost: keys.smtp_host,
+            smtpPort,
+            smtpUser: keys.smtp_user,
+            smtpPassword: keys.smtp_password,
+            senderEmail: keys.smtp_from_email,
+            senderName: keys.smtp_from_name || "NexShop"
+        };
+    }
+
     if (!apiKey || !senderEmail) {
         const msg = "Brevo API Key atau Sender Email belum diisi — cek Settings > API Keys di admin dashboard.";
         console.log("❌", msg);
@@ -30,17 +47,35 @@ async function getBrevoConfig() {
         throw new Error(msg);
     }
 
-    return { apiKey, senderEmail, senderName };
+    return { transport: "brevo", apiKey, senderEmail, senderName };
+}
+
+async function sendConfiguredEmail(config, { to, subject, htmlContent }) {
+    if (config.transport === "smtp") {
+        const transporter = nodemailer.createTransport({
+            host: config.smtpHost,
+            port: config.smtpPort,
+            secure: config.smtpPort === 465,
+            ...(config.smtpUser ? { auth: { user: config.smtpUser, pass: config.smtpPassword || "" } } : {})
+        });
+        await transporter.sendMail({ from: { name: config.senderName, address: config.senderEmail }, to, subject, html: htmlContent });
+        return;
+    }
+    await axios.post("https://api.brevo.com/v3/smtp/email", {
+        sender: { name: config.senderName, email: config.senderEmail },
+        to: [{ email: to }],
+        subject,
+        htmlContent
+    }, {
+        headers: { "api-key": config.apiKey, "Content-Type": "application/json", "Accept": "application/json" }
+    });
 }
 
 async function sendOtpEmail(to, otp) {
-    const { apiKey, senderEmail, senderName } = await getBrevoConfig();
+    const config = await getBrevoConfig();
     try {
-        await axios.post(
-            "https://api.brevo.com/v3/smtp/email",
-            {
-                sender: { name: senderName, email: senderEmail },
-                to: [{ email: to }],
+        await sendConfiguredEmail(config, {
+                to,
                 subject: "Kode Verifikasi NexShop",
                 htmlContent: `
                     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
@@ -55,18 +90,10 @@ async function sendOtpEmail(to, otp) {
                         </p>
                     </div>
                 `
-            },
-            {
-                headers: {
-                    "api-key": apiKey,
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                }
-            }
-        );
+        });
     } catch (err) {
         const detail = err.response?.data?.message || err.response?.data || err.message;
-        console.log("❌ Brevo gagal kirim OTP:", detail);
+        console.log("❌ Provider email gagal kirim OTP:", detail);
         notify("email", `❌ Gagal kirim email OTP ke ${to}: ${typeof detail === "string" ? detail : JSON.stringify(detail)}`);
         throw err;
     }
@@ -80,7 +107,7 @@ function rupiah(n) {
 // status order pertama kali jadi "paid". Sengaja terpisah dari email OTP
 // biar gampang di-maintain/ganti template masing-masing.
 async function sendOrderInvoiceEmail(to, { orderId, recipientName, items, subtotal, discountAmount, promoCode, total }) {
-    const { apiKey, senderEmail, senderName } = await getBrevoConfig();
+    const config = await getBrevoConfig();
 
     const itemRows = items.map((i) => `
         <tr>
@@ -117,11 +144,8 @@ async function sendOrderInvoiceEmail(to, { orderId, recipientName, items, subtot
     ` : "";
 
     try {
-        await axios.post(
-            "https://api.brevo.com/v3/smtp/email",
-            {
-                sender: { name: senderName, email: senderEmail },
-                to: [{ email: to }],
+        await sendConfiguredEmail(config, {
+                to,
                 subject: `Invoice Pesanan ${orderId} — Pembayaran Berhasil`,
                 htmlContent: `
                     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
@@ -143,18 +167,10 @@ async function sendOrderInvoiceEmail(to, { orderId, recipientName, items, subtot
                         </p>
                     </div>
                 `
-            },
-            {
-                headers: {
-                    "api-key": apiKey,
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                }
-            }
-        );
+        });
     } catch (err) {
         const detail = err.response?.data?.message || err.response?.data || err.message;
-        console.log("❌ Brevo gagal kirim invoice order:", detail);
+        console.log("❌ Provider email gagal kirim invoice order:", detail);
         notify("email", `❌ Gagal kirim invoice order ${orderId} ke ${to}: ${typeof detail === "string" ? detail : JSON.stringify(detail)}`);
         throw err;
     }
@@ -164,14 +180,11 @@ async function sendOrderInvoiceEmail(to, { orderId, recipientName, items, subtot
 // jadi "sukses" (bukan cuma "paid"), karena buat topup yang penting itu
 // diamond/voucher-nya beneran udah kekirim, bukan cuma uangnya diterima.
 async function sendTopupInvoiceEmail(to, { orderId, namaProduk, tujuan, serverId, harga, serialNumber }) {
-    const { apiKey, senderEmail, senderName } = await getBrevoConfig();
+    const config = await getBrevoConfig();
 
     try {
-        await axios.post(
-            "https://api.brevo.com/v3/smtp/email",
-            {
-                sender: { name: senderName, email: senderEmail },
-                to: [{ email: to }],
+        await sendConfiguredEmail(config, {
+                to,
                 subject: `Invoice Topup ${orderId} — Diamond/Voucher Terkirim`,
                 htmlContent: `
                     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
@@ -194,18 +207,10 @@ async function sendTopupInvoiceEmail(to, { orderId, namaProduk, tujuan, serverId
                         </p>
                     </div>
                 `
-            },
-            {
-                headers: {
-                    "api-key": apiKey,
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                }
-            }
-        );
+        });
     } catch (err) {
         const detail = err.response?.data?.message || err.response?.data || err.message;
-        console.log("❌ Brevo gagal kirim invoice topup:", detail);
+        console.log("❌ Provider email gagal kirim invoice topup:", detail);
         notify("email", `❌ Gagal kirim invoice topup ${orderId} ke ${to}: ${typeof detail === "string" ? detail : JSON.stringify(detail)}`);
         throw err;
     }
@@ -216,13 +221,10 @@ async function sendTopupInvoiceEmail(to, { orderId, namaProduk, tujuan, serverId
 // dihapus dari DB begitu password berhasil diganti -- lihat resetPassword
 // di authController.js).
 async function sendPasswordResetEmail(to, resetLink) {
-    const { apiKey, senderEmail, senderName } = await getBrevoConfig();
+    const config = await getBrevoConfig();
     try {
-        await axios.post(
-            "https://api.brevo.com/v3/smtp/email",
-            {
-                sender: { name: senderName, email: senderEmail },
-                to: [{ email: to }],
+        await sendConfiguredEmail(config, {
+                to,
                 subject: "Reset Password NexShop",
                 htmlContent: `
                     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
@@ -241,18 +243,10 @@ async function sendPasswordResetEmail(to, resetLink) {
                         </p>
                     </div>
                 `
-            },
-            {
-                headers: {
-                    "api-key": apiKey,
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                }
-            }
-        );
+        });
     } catch (err) {
         const detail = err.response?.data?.message || err.response?.data || err.message;
-        console.log("❌ Brevo gagal kirim email reset password:", detail);
+        console.log("❌ Provider email gagal kirim email reset password:", detail);
         notify("email", `❌ Gagal kirim email reset password ke ${to}: ${typeof detail === "string" ? detail : JSON.stringify(detail)}`);
         throw err;
     }

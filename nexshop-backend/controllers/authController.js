@@ -298,6 +298,7 @@ exports.login = async (req, res) => {
         res.json({
             message: "Login berhasil",
             token,
+            ...(user.role === "admin" ? { securityPinSetupRequired: !user.security_pin_hash } : {}),
             user: {
                 id: user.id,
                 fullname: user.fullname,

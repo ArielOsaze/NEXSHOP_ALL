@@ -47,7 +47,15 @@ async function getApiKeys({ fresh = false } = {}) {
         // isi dari dashboard sama sekali
         waapi_url: (data && data.waapi_url) || process.env.WAAPI_URL || "",
         waapi_key: (data && data.waapi_key) || process.env.WAAPI_KEY || "",
-        waapi_target_number: (data && data.waapi_target_number) || process.env.WAAPI_TARGET_NUMBER || ""
+        waapi_target_number: (data && data.waapi_target_number) || process.env.WAAPI_TARGET_NUMBER || "",
+        gemini_api_key: (data && data.gemini_api_key) || process.env.GEMINI_API_KEY || "",
+        gemini_news_model: (data && data.gemini_news_model) || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash",
+        smtp_host: (data && data.smtp_host) || process.env.SMTP_HOST || "",
+        smtp_port: (data && data.smtp_port) || process.env.SMTP_PORT || "",
+        smtp_user: (data && data.smtp_user) || process.env.SMTP_USER || "",
+        smtp_password: (data && data.smtp_password) || process.env.SMTP_PASSWORD || "",
+        smtp_from_email: (data && data.smtp_from_email) || process.env.SMTP_FROM_EMAIL || "",
+        smtp_from_name: (data && data.smtp_from_name) || process.env.SMTP_FROM_NAME || "NexShop"
     };
 
     apiKeysCache = { data: merged, ts: now };
@@ -68,7 +76,15 @@ async function updateApiKeys(payload) {
         "brevo_sender_name",
         "waapi_url",
         "waapi_key",
-        "waapi_target_number"
+        "waapi_target_number",
+        "gemini_api_key",
+        "gemini_news_model",
+        "smtp_host",
+        "smtp_port",
+        "smtp_user",
+        "smtp_password",
+        "smtp_from_email",
+        "smtp_from_name"
     ];
     const updatePayload = { updated_at: new Date().toISOString() };
     for (const key of allowed) {

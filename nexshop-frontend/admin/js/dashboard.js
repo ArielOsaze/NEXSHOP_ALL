@@ -4,6 +4,8 @@
 
 const ADMIN_TOKEN_STORAGE_KEY = "nexshop-admin-token";
 const token = localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
+let adminPinToken = sessionStorage.getItem("nexshop-admin-pin-token") || "";
+let adminPinResolver = null;
 const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
     ? (window.location.port === "3000" ? "/api" : "http://localhost:3000/api")
     : (window.location.protocol.startsWith("http") ? "/api" : "https://nexshop.cloud/api");
@@ -83,7 +85,8 @@ async function apiFetch(path, options = {}) {
         ...options,
         headers: {
             ...(options.headers || {}),
-            Authorization: "Bearer " + token
+            Authorization: "Bearer " + token,
+            ...(adminPinToken ? { "X-Admin-Pin-Token": adminPinToken } : {})
         }
     });
 
@@ -95,6 +98,81 @@ async function apiFetch(path, options = {}) {
     }
 
     return res;
+}
+
+function adminPinModalInstance() {
+    return bootstrap.Modal.getOrCreateInstance(document.getElementById("adminPinModal"), { backdrop: "static", keyboard: false });
+}
+
+async function getAdminPinStatus() {
+    const res = await apiFetch("/settings/security-pin");
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || "Gagal memeriksa Security PIN Admin");
+    return data;
+}
+
+function requestAdminPin(setup) {
+    document.getElementById("adminPinModalTitle").textContent = setup ? "Buat Security PIN Admin" : "Security PIN Admin";
+    document.getElementById("adminPinHelp").textContent = setup
+        ? "Buat PIN 6 digit terpisah dari password login. PIN ini wajib untuk membuka atau mengubah konfigurasi sensitif."
+        : "Masukkan Security PIN 6 digit untuk membuka pengaturan sensitif selama 10 menit.";
+    document.getElementById("adminPinConfirmation").classList.toggle("d-none", !setup);
+    document.getElementById("adminPinSubmit").textContent = setup ? "Simpan Security PIN" : "Verifikasi PIN";
+    document.getElementById("adminPinInput").value = "";
+    document.getElementById("adminPinConfirmation").value = "";
+    document.getElementById("adminPinError").textContent = "";
+    document.getElementById("adminPinModal").dataset.mode = setup ? "setup" : "verify";
+    adminPinModalInstance().show();
+    setTimeout(() => document.getElementById("adminPinInput").focus(), 150);
+    return new Promise((resolve, reject) => { adminPinResolver = { resolve, reject }; });
+}
+
+async function ensureAdminPin() {
+    if (adminPinToken) return true;
+    const status = await getAdminPinStatus();
+    await requestAdminPin(!status.configured);
+    return true;
+}
+
+async function submitAdminPin() {
+    const pin = document.getElementById("adminPinInput").value.trim();
+    const confirmation = document.getElementById("adminPinConfirmation").value.trim();
+    const errorEl = document.getElementById("adminPinError");
+    const button = document.getElementById("adminPinSubmit");
+    const setup = document.getElementById("adminPinModal").dataset.mode === "setup";
+    errorEl.textContent = "";
+    if (!/^\d{6}$/.test(pin) || (setup && pin !== confirmation)) {
+        errorEl.textContent = setup ? "PIN harus 6 digit dan kedua input harus sama." : "Masukkan PIN 6 digit yang valid.";
+        return;
+    }
+    button.disabled = true;
+    try {
+        const res = await apiFetch(`/settings/security-pin/${setup ? "setup" : "verify"}`, {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(setup ? { pin, confirmation } : { pin })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Security PIN tidak dapat diverifikasi");
+        adminPinToken = data.pin_token;
+        sessionStorage.setItem("nexshop-admin-pin-token", adminPinToken);
+        adminPinModalInstance().hide();
+        if (adminPinResolver) adminPinResolver.resolve(true);
+        adminPinResolver = null;
+        showToast(data.message || "Security PIN terverifikasi");
+    } catch (err) {
+        errorEl.textContent = err.message;
+    } finally {
+        button.disabled = false;
+    }
+}
+
+async function forceSecurityPinSetupIfMissing() {
+    try {
+        const status = await getAdminPinStatus();
+        if (!status.configured) await requestAdminPin(true);
+    } catch (err) {
+        console.error("Security PIN status error:", err);
+        showToast(err.message || "Security PIN belum dapat diverifikasi", true);
+    }
 }
 
 // ================================
@@ -1136,7 +1214,12 @@ document.querySelectorAll("#settingsTabs [data-settings-tab]").forEach(btn => {
         document.getElementById("settingsTabContent").classList.toggle("d-none", tab !== "content");
         document.getElementById("settingsTabApiKeys").classList.toggle("d-none", tab !== "apikeys");
         document.getElementById("settingsTabSecurity").classList.toggle("d-none", tab !== "security");
-        if (tab === "security") loadBlockedIps();
+        if (tab === "apikeys" || tab === "security") {
+            ensureAdminPin().then(() => {
+                if (tab === "apikeys") loadApiKeys();
+                if (tab === "security") loadBlockedIps();
+            }).catch((err) => showToast(err.message || "Security PIN diperlukan", true));
+        }
     });
 });
 
@@ -1147,6 +1230,7 @@ async function loadBlockedIps() {
     container.innerHTML = `<div class="text-muted text-center py-3 small"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</div>`;
 
     try {
+        await ensureAdminPin();
         const res = await apiFetch("/auth/admin/blocked-ips");
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Gagal memuat daftar IP");
@@ -1199,6 +1283,7 @@ async function unlockLoginIp(ip) {
     }
 
     try {
+        await ensureAdminPin();
         const res = await apiFetch("/auth/admin/unlock-login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1225,10 +1310,9 @@ async function unlockLoginIp(ip) {
 async function loadSettings() {
     settingsLoaded = true;
     try {
-        const [meRes, storeRes, keysRes] = await Promise.all([
+        const [meRes, storeRes] = await Promise.all([
             apiFetch("/settings/me"),
-            apiFetch("/settings/store"),
-            apiFetch("/settings/api-keys")
+            apiFetch("/settings/store")
         ]);
 
         if (meRes.ok) {
@@ -1258,22 +1342,6 @@ async function loadSettings() {
             document.getElementById("refundContentInput").value = store.refund_content || "";
         }
 
-        if (keysRes.ok) {
-            const keys = await keysRes.json();
-            document.getElementById("ipaymuVa").value = keys.ipaymu_va || "";
-            document.getElementById("ipaymuApiKey").value = keys.ipaymu_api_key || "";
-            document.getElementById("ipaymuIsProduction").checked = !!keys.ipaymu_is_production;
-            document.getElementById("tvMemberCode").value = keys.tokovoucher_member_code || "";
-            document.getElementById("tvSecret").value = keys.tokovoucher_secret || "";
-            document.getElementById("agMerchantId").value = keys.apigames_merchant_id || "";
-            document.getElementById("agSecretKey").value = keys.apigames_secret_key || "";
-            document.getElementById("brevoApiKey").value = keys.brevo_api_key || "";
-            document.getElementById("brevoSenderEmail").value = keys.brevo_sender_email || "";
-            document.getElementById("brevoSenderName").value = keys.brevo_sender_name || "";
-            document.getElementById("waapiUrl").value = keys.waapi_url || "";
-            document.getElementById("waapiKey").value = keys.waapi_key || "";
-            document.getElementById("waapiTargetNumber").value = keys.waapi_target_number || "";
-        }
     } catch (err) {
         if (err.message === "unauthorized") return;
         console.error(err);
@@ -1445,12 +1513,21 @@ async function saveApiKeys() {
         brevo_api_key: document.getElementById("brevoApiKey").value.trim(),
         brevo_sender_email: document.getElementById("brevoSenderEmail").value.trim(),
         brevo_sender_name: document.getElementById("brevoSenderName").value.trim(),
+        gemini_api_key: document.getElementById("geminiApiKey").value.trim(),
+        gemini_news_model: document.getElementById("geminiNewsModel").value.trim(),
+        smtp_host: document.getElementById("smtpHost").value.trim(),
+        smtp_port: document.getElementById("smtpPort").value.trim(),
+        smtp_user: document.getElementById("smtpUser").value.trim(),
+        smtp_password: document.getElementById("smtpPassword").value.trim(),
+        smtp_from_email: document.getElementById("smtpFromEmail").value.trim(),
+        smtp_from_name: document.getElementById("smtpFromName").value.trim(),
         waapi_url: document.getElementById("waapiUrl").value.trim(),
         waapi_key: document.getElementById("waapiKey").value.trim(),
         waapi_target_number: document.getElementById("waapiTargetNumber").value.trim()
     };
 
     try {
+        await ensureAdminPin();
         const res = await apiFetch("/settings/api-keys", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -1460,7 +1537,7 @@ async function saveApiKeys() {
         if (!res.ok) throw new Error(data.message || "Gagal menyimpan API keys");
 
         showToast("API keys berhasil disimpan");
-        loadSettings(); // refresh biar key sensitif balik ke bentuk tersamar
+        loadApiKeys(); // refresh biar key sensitif balik ke bentuk tersamar
     } catch (err) {
         if (err.message === "unauthorized") return;
         errorEl.textContent = err.message;
@@ -1485,6 +1562,7 @@ async function testWhatsApp() {
     resultWrap.classList.add("d-none");
 
     try {
+        await ensureAdminPin();
         const res = await apiFetch("/settings/test-whatsapp", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -2812,6 +2890,50 @@ function initThemeToggle() {
     });
 }
 
+async function loadApiKeys(reveal = false) {
+    const errorEl = document.getElementById("apiKeysError");
+    try {
+        await ensureAdminPin();
+        const res = await apiFetch(reveal ? "/settings/api-keys/reveal" : "/settings/api-keys");
+        const keys = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(keys.message || "Gagal memuat konfigurasi API");
+        document.getElementById("ipaymuVa").value = keys.ipaymu_va || "";
+        document.getElementById("ipaymuApiKey").value = keys.ipaymu_api_key || "";
+        document.getElementById("ipaymuIsProduction").checked = !!keys.ipaymu_is_production;
+        document.getElementById("tvMemberCode").value = keys.tokovoucher_member_code || "";
+        document.getElementById("tvSecret").value = keys.tokovoucher_secret || "";
+        document.getElementById("agMerchantId").value = keys.apigames_merchant_id || "";
+        document.getElementById("agSecretKey").value = keys.apigames_secret_key || "";
+        document.getElementById("brevoApiKey").value = keys.brevo_api_key || "";
+        document.getElementById("brevoSenderEmail").value = keys.brevo_sender_email || "";
+        document.getElementById("brevoSenderName").value = keys.brevo_sender_name || "";
+        document.getElementById("geminiApiKey").value = keys.gemini_api_key || "";
+        document.getElementById("geminiNewsModel").value = keys.gemini_news_model || "gemini-2.5-flash";
+        document.getElementById("smtpHost").value = keys.smtp_host || "";
+        document.getElementById("smtpPort").value = keys.smtp_port || "";
+        document.getElementById("smtpUser").value = keys.smtp_user || "";
+        document.getElementById("smtpPassword").value = keys.smtp_password || "";
+        document.getElementById("smtpFromEmail").value = keys.smtp_from_email || "";
+        document.getElementById("smtpFromName").value = keys.smtp_from_name || "";
+        document.getElementById("waapiUrl").value = keys.waapi_url || "";
+        document.getElementById("waapiKey").value = keys.waapi_key || "";
+        document.getElementById("waapiTargetNumber").value = keys.waapi_target_number || "";
+    } catch (err) {
+        if (err.message !== "unauthorized") errorEl.textContent = err.message;
+    }
+}
+
+async function revealApiKeys() {
+    try {
+        await ensureAdminPin();
+        await loadApiKeys(true);
+        showToast("Konfigurasi sensitif ditampilkan selama sesi PIN ini (maksimal 10 menit).");
+        setTimeout(() => loadApiKeys(false), 10 * 60 * 1000);
+    } catch (err) {
+        showToast(err.message || "Gagal membuka konfigurasi API", true);
+    }
+}
+
 // ================================
 // Curated Gaming News
 // ================================
@@ -3146,4 +3268,5 @@ async function deleteNews(id) {
 }
 
 document.addEventListener("DOMContentLoaded", initThemeToggle);
+document.addEventListener("DOMContentLoaded", forceSecurityPinSetupIfMissing);
 
