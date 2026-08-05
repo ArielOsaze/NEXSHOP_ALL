@@ -1448,7 +1448,8 @@ input::placeholder{ color:var(--text-dim); }
     .brand h1{ font-size:18px; }
     .brand .logo{ width:32px; height:32px; }
     .brand .tagline{ font-size:9.5px; }
-    .hero-carousel{ height:min(72vw,300px); }
+    .hero-carousel{ height:auto; aspect-ratio:16/9; min-height:0; width:100%; }
+    .hero-slide.full-image{ background-size:cover; background-position:center; }
     .menu.active{ inset:56px 8px auto 8px; }
 
     .games, .topup-section{ padding:28px 12px 50px; }
