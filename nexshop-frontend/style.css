@@ -117,7 +117,11 @@
     --scroll-thumb-hover:rgba(109,40,217,.38);
 }
 
-*{ margin:0; padding:0; box-sizing:border-box; }
+*{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+:focus{ outline:none; }
+:focus-visible{ outline:2px solid var(--violet); outline-offset:2px; border-radius:6px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{ outline:2px solid var(--violet); outline-offset:2px; }
 
 html{ scroll-behavior:smooth; }
 
@@ -1082,9 +1086,10 @@ header{ position:sticky; top:0; z-index:1000; }
 
 /* ================= OVERLAYS / MODALS ================= */
 .overlay{
-    position:fixed; inset:0; z-index:200; background:var(--overlay-bg); backdrop-filter:blur(4px);
-    display:flex; align-items:center; justify-content:center; padding:20px;
+    position:fixed; inset:0; z-index:2000; background:var(--overlay-bg); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center; padding:20px 16px;
     opacity:0; pointer-events:none; transition:opacity .25s;
+    overflow-y:auto; overscroll-behavior:contain;
 }
 .overlay.active{ opacity:1; pointer-events:auto; }
 .overlay:not(.active) .modal, .overlay:not(.active) .drawer{ transform:translateY(16px) scale(.98); }
@@ -1266,42 +1271,48 @@ input::placeholder{ color:var(--text-dim); }
 .cart-total-row span:last-child{ font-family:'Space Grotesk',sans-serif; color:var(--text-cyan); }
 
 /* checkout modal */
-.checkout-modal{ max-width:480px; }
-#checkoutForm{ display:flex; flex-direction:column; gap:14px; margin-top:16px; }
+.checkout-modal{ max-width:480px; width:100%; padding:24px 20px; }
+#checkoutTitle{ font-size:20px; margin-bottom:4px; }
+#checkoutForm{ display:flex; flex-direction:column; gap:16px; margin-top:16px; }
 .checkout-guest-note, .checkout-payment-note{
-    background:var(--bg-panel-2); border:1px solid var(--line); border-radius:var(--radius-sm);
-    padding:14px; font-size:12.5px; color:var(--text-muted);
+    background:var(--bg-panel-2); border:1px solid var(--line); border-radius:12px;
+    padding:14px 16px; font-size:13px; color:var(--text-muted); line-height:1.5;
 }
-.checkout-guest-note strong, .checkout-payment-note strong{ display:block; color:var(--text); margin-bottom:4px; font-size:13px; }
-.checkout-guest-note button{ color:var(--text-violet); text-decoration:underline; font-weight:600; }
-.checkout-payment-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.checkout-guest-note strong, .checkout-payment-note strong{ display:block; color:var(--text); margin-bottom:6px; font-size:13.5px; }
+.checkout-guest-note button{ color:var(--text-violet); text-decoration:underline; font-weight:600; cursor:pointer; }
+.checkout-payment-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
 .checkout-payment-card{
-    position:relative; display:flex; align-items:center; gap:10px; min-width:0; width:100%;
-    padding:12px; border:1px solid var(--line); border-radius:var(--radius-sm); background:var(--bg-panel-2);
-    color:var(--text); text-align:left; font:inherit; cursor:pointer; transition:.2s;
+    position:relative; display:flex; align-items:center; gap:10px; min-width:0; width:100%; min-height:52px;
+    padding:12px 14px; border:1px solid var(--line); border-radius:12px; background:var(--bg-panel-2);
+    color:var(--text); text-align:left; font:inherit; cursor:pointer; transition:.2s; touch-action:manipulation;
 }
 .checkout-payment-card:hover{ border-color:var(--violet); transform:translateY(-1px); }
 .checkout-payment-card.selected{ border-color:var(--cyan); background:rgba(34,211,238,.10); box-shadow:var(--glow-cyan); }
 .checkout-payment-icon{ width:28px; flex-shrink:0; text-align:center; font-size:20px; color:var(--text-cyan); }
 .checkout-payment-copy{ min-width:0; display:flex; flex-direction:column; gap:2px; }
-.checkout-payment-copy strong{ font-size:12.5px; line-height:1.25; }
-.checkout-payment-copy small{ color:var(--text-muted); font-size:10.5px; line-height:1.25; }
+.checkout-payment-copy strong{ font-size:13px; line-height:1.25; }
+.checkout-payment-copy small{ color:var(--text-muted); font-size:11px; line-height:1.25; }
 .checkout-payment-check{
-    position:absolute; top:7px; right:7px; width:17px; height:17px; border-radius:50%;
+    position:absolute; top:8px; right:8px; width:18px; height:18px; border-radius:50%;
     display:flex; align-items:center; justify-content:center; opacity:0; transform:scale(.6);
-    background:var(--cyan); color:#04141a; font-size:9px; transition:.2s;
+    background:var(--cyan); color:#04141a; font-size:9.5px; transition:.2s;
 }
 .checkout-payment-card.selected .checkout-payment-check{ opacity:1; transform:scale(1); }
 .checkout-payment-icon--qris, .tw-payment-icon--qris{ color:#0EA5E9; }
 .checkout-payment-icon--va, .tw-payment-icon--va{ color:#7C3AED; }
 .checkout-payment-icon--banktransfer, .tw-payment-icon--banktransfer{ color:#16A34A; }
 .checkout-payment-icon--card, .tw-payment-icon--card{ color:#F59E0B; }
-.checkout-summary{ background:var(--bg-panel-2); border-radius:var(--radius-sm); padding:14px; font-size:13.5px; }
+.checkout-summary{ background:var(--bg-panel-2); border:1px solid var(--line); border-radius:12px; padding:16px; font-size:13.5px; }
 .checkout-summary .row{ display:flex; justify-content:space-between; padding:4px 0; color:var(--text-muted); }
 .checkout-summary .row.discount{ color:var(--text-success); }
-.checkout-summary .row.total{ font-weight:700; color:var(--text); border-top:1px solid var(--line); margin-top:6px; padding-top:10px; }
-.promo-code-row{ display:flex; gap:8px; }
-.promo-code-row input{ flex:1; }
+.checkout-summary .row.total{ font-weight:700; color:var(--text); border-top:1px solid var(--line); margin-top:8px; padding-top:12px; font-size:15px; }
+.promo-code-row{ display:flex; gap:8px; align-items:stretch; }
+.promo-code-row input{ flex:1; height:44px; padding:0 14px; border-radius:10px; }
+.promo-code-row button{
+    height:44px; min-height:44px; padding:0 18px; border-radius:10px; background:var(--bg-panel-3);
+    border:1px solid var(--line); color:var(--text); font-weight:700; font-size:13px; white-space:nowrap; transition:.2s; cursor:pointer; touch-action:manipulation;
+}
+.promo-code-row button:hover{ background:var(--violet); border-color:transparent; color:#fff; }
 
 /* ---------- Cek Transaksi (track order) ---------- */
 .track-result{

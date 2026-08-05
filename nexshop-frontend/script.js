@@ -1283,23 +1283,7 @@ async function loadMyTransactions() {
     }
 }
 
-/* ---------- Mobile menu ---------- */
-const menuToggle = document.getElementById("menuToggle");
-const navMenu = document.getElementById("navMenu");
-menuToggle.addEventListener("click", () => {
-    const isOpen = navMenu.classList.toggle("active");
-    menuToggle.setAttribute("aria-expanded", isOpen);
-});
-navMenu.querySelectorAll("a, .menu-link-btn").forEach(link => {
-    link.addEventListener("click", () => navMenu.classList.remove("active"));
-});
-// Close mobile menu when clicking outside
-document.addEventListener('click', (e) => {
-    if (!navMenu.contains(e.target) && !menuToggle.contains(e.target)) {
-        navMenu.classList.remove('active');
-        menuToggle.setAttribute('aria-expanded', 'false');
-    }
-});
+/* ---------- Mobile menu handled via initMobileMenu() below ---------- */
 
 /* ---------- Promo/berita carousel ---------- */
 let heroSlides = [];
