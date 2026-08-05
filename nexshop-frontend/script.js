@@ -104,16 +104,21 @@ function discountPercent(p) {
     return Math.round((1 - Number(p.price) / Number(p.strike_price)) * 100);
 }
 function priceBlockHtml(p, size = "sm") {
-    if (!isFlashSaleActive(p)) {
-        return `<span class="price-now ${size}">${rupiah(p.price)}</span>`;
+    const isPromo = isFlashSaleActive(p);
+    if (!isPromo) {
+        return `
+            <div class="price-block">
+                <span class="price-main ${size}">${rupiah(p.price)}</span>
+            </div>
+        `;
     }
     return `
-        <div class="price-row">
-            <div class="price-stack">
-                <span class="price-now ${size} promo">${rupiah(p.price)}</span>
+        <div class="price-block promo">
+            <div class="price-left">
+                <span class="price-main ${size} is-discounted">${rupiah(p.price)}</span>
                 <span class="price-strike ${size}">${rupiah(p.strike_price)}</span>
             </div>
-            <span class="discount-chip"><i class="fa-solid fa-tag" aria-hidden="true"></i> -${discountPercent(p)}%</span>
+            <span class="discount-badge">-${discountPercent(p)}%</span>
         </div>
     `;
 }
@@ -295,17 +300,15 @@ function renderProducts() {
                 <div class="card${p.is_flash_sale ? " card-flash" : ""}" data-id="${p.id}">
                     <div class="card-img">
                         <img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
-                        <div class="card-badges">
-                            ${p.is_flash_sale ? '<span class="card-flag"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}
-                            ${p.badge ? `<span class="badge">${escapeHtml(p.badge)}</span>` : ""}
-                        </div>
+                        ${p.is_flash_sale ? '<span class="badge-flash"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}
+                        ${p.badge ? `<span class="badge-tag">${escapeHtml(p.badge)}</span>` : ""}
                     </div>
                     <div class="card-body">
                         ${p.category ? `<div class="card-category">${escapeHtml(p.category)}</div>` : ""}
                         <h4>${escapeHtml(p.name)}</h4>
-                        <div class="card-rating"><span class="stars">${stars(p.rating || 5)}</span> ${p.rating || 5} · ${p.sold || 0} terjual</div>
+                        <div class="card-rating"><span class="stars">${stars(p.rating || 5)}</span> <span>${p.rating || 5} · ${p.sold || 0} terjual</span></div>
                         <div class="card-footer">
-                            <div class="card-price-block">${priceBlockHtml(p, "sm")}</div>
+                            ${priceBlockHtml(p, "sm")}
                             <div class="card-actions">
                                 <button type="button" class="add-btn" data-id="${p.id}" aria-label="Tambah ke Keranjang"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i></button>
                                 <button type="button" class="buy-btn" data-id="${p.id}"><span>Beli</span></button>
