@@ -351,6 +351,7 @@ header{ position:sticky; top:0; z-index:100; }
     border:1px solid var(--line); background:var(--bg-panel); color:var(--text);
     display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;
     transition:transform .2s, border-color .2s, background-color .25s ease;
+    cursor:pointer; position:relative; z-index:10; pointer-events:auto;
 }
 .theme-toggle:hover{ border-color:var(--violet); transform:translateY(-1px); }
 .theme-toggle-icon{ font-size:16px; line-height:1; width:18px; text-align:center; }
