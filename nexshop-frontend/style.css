@@ -275,7 +275,7 @@ img{ max-width:100%; display:block; }
 @keyframes loader-glow-pulse{ from{ transform:scale(1); opacity:.32; } to{ transform:scale(1.07); opacity:.45; } }
 @keyframes loader-logo-pulse{ from{ transform:scale(1); } to{ transform:scale(1.03); } }
 /* ================= NAVBAR ================= */
-header{ position:sticky; top:0; z-index:100; }
+header{ position:sticky; top:0; z-index:1000; }
 .navbar{
     display:flex; align-items:center; justify-content:space-between;
     gap:20px;
@@ -291,7 +291,7 @@ header{ position:sticky; top:0; z-index:100; }
     display:none;
 }
 .brand{ display:flex; align-items:center; gap:12px; position:relative; }
-.brand .logo{ width:38px; height:38px; border-radius:9px; filter:drop-shadow(var(--glow-violet)); flex-shrink:0; }
+.brand .logo{ width:38px; height:38px; border-radius:99px; filter:drop-shadow(var(--glow-violet)); flex-shrink:0; }
 
 .brand-text{ position:relative; overflow:hidden; }
 .flag-overlay{
@@ -369,17 +369,18 @@ header{ position:sticky; top:0; z-index:100; }
     padding:0 4px;
 }
 
-.nav-right{ display:flex; align-items:center; gap:10px; position:relative; z-index:10; }
+.nav-right{ display:flex; align-items:center; gap:10px; position:relative; z-index:1001; }
 
 .menu-toggle{
-    display:none; flex-direction:column; align-items:center; justify-content:center; gap:4px;
-    width:38px; height:38px; padding:8px 6px; border-radius:10px;
+    display:none; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+    width:44px; height:44px; min-width:44px; min-height:44px; padding:10px 8px; border-radius:12px;
     background:var(--bg-panel); border:1px solid var(--line);
-    cursor:pointer; position:relative; z-index:130; pointer-events:auto;
+    cursor:pointer; position:relative; z-index:1002; pointer-events:auto;
     transition:border-color .2s, background-color .2s;
+    box-sizing:border-box; touch-action:manipulation;
 }
 .menu-toggle:hover{ border-color:var(--violet); }
-.menu-toggle span{ height:2px; width:100%; background:var(--text); border-radius:2px; transition:.25s; }
+.menu-toggle span{ height:2px; width:100%; background:var(--text); border-radius:2px; transition:.25s; pointer-events:none; }
 
 /* ================= HERO CAROUSEL ================= */
 .hero-carousel{
