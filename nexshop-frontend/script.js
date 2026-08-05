@@ -173,12 +173,18 @@ function toast(message, type = "default") {
 
 /* ---------- Overlay helpers ---------- */
 function openOverlay(id) {
-    document.getElementById(id).classList.add("active");
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.add("active");
     document.body.style.overflow = "hidden";
 }
 function closeOverlay(id) {
-    document.getElementById(id).classList.remove("active");
-    document.body.style.overflow = "";
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.classList.remove("active");
+    if (!document.querySelector(".overlay.active")) {
+        document.body.style.overflow = "";
+    }
 }
 document.querySelectorAll("[data-close]").forEach(btn => {
     btn.addEventListener("click", () => closeOverlay(btn.dataset.close));
