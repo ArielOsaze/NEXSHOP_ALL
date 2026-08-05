@@ -1078,11 +1078,12 @@ header{ position:sticky; top:0; z-index:1000; }
 .contact-list-item .footer-social-icon{ width:36px; height:36px; min-width:36px; font-size:16px; border-radius:10px; }
 .contact-list-item a{ color:var(--text-cyan); font-weight:600; text-decoration:none; }
 .contact-list-item a:hover{ text-decoration:underline; }
-.footer-links{ font-size:13px; color:var(--text-dim); margin-bottom:20px; }
-.footer-link-btn{ color:var(--text-muted); text-decoration:underline; text-underline-offset:3px; }
-.footer-link-btn:hover{ color:var(--text); }
-.footer-link-sep{ margin:0 8px; }
-.footer-copy{ font-size:12px; color:var(--text-dim); }
+.footer-links{ display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:8px 12px; font-size:13px; color:var(--text-dim); margin-bottom:24px; }
+.footer-link-item{ display:inline-flex; align-items:center; gap:12px; white-space:nowrap; }
+.footer-link-btn{ color:var(--text-muted); text-decoration:none; font-weight:500; transition:color .2s; cursor:pointer; font-family:inherit; background:none; border:none; padding:4px 0; }
+.footer-link-btn:hover{ color:var(--text); text-decoration:underline; }
+.footer-link-sep{ color:var(--text-dim); opacity:.6; user-select:none; }
+.footer-copy{ font-size:12px; color:var(--text-dim); text-align:center; }
 
 /* ================= OVERLAYS / MODALS ================= */
 .overlay{

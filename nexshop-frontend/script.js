@@ -69,27 +69,21 @@ function finishInitialLoading() {
 function applyTheme(theme, persist = false) {
     const isLight = theme === "light";
     document.documentElement.dataset.theme = isLight ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", isLight ? "light" : "dark");
 
-    const toggle = document.getElementById("themeToggle");
-    if (toggle) {
-        const icon = toggle.querySelector(".theme-toggle-icon");
-        const label = toggle.querySelector(".theme-toggle-label");
-        toggle.setAttribute("aria-pressed", String(isLight));
-        toggle.setAttribute("aria-label", isLight ? "Aktifkan mode gelap" : "Aktifkan mode terang");
-        toggle.title = isLight ? "Aktifkan mode gelap" : "Aktifkan mode terang";
+    document.querySelectorAll("#themeToggle, .theme-toggle").forEach(btn => {
+        const icon = btn.querySelector(".theme-toggle-icon");
+        const label = btn.querySelector(".theme-toggle-label");
+        btn.setAttribute("aria-pressed", String(isLight));
+        btn.setAttribute("aria-label", isLight ? "Aktifkan mode gelap" : "Aktifkan mode terang");
+        btn.title = isLight ? "Aktifkan mode gelap" : "Aktifkan mode terang";
         if (icon) icon.innerHTML = `<i class="fa-solid ${isLight ? "fa-sun" : "fa-moon"}" aria-hidden="true"></i>`;
         if (label) label.textContent = isLight ? "Mode terang" : "Mode gelap";
-    }
-
-    if (persist) localStorage.setItem(THEME_STORAGE_KEY, isLight ? "light" : "dark");
-}
-
-const themeToggle = document.getElementById("themeToggle");
-if (themeToggle) {
-    applyTheme(document.documentElement.dataset.theme);
-    themeToggle.addEventListener("click", () => {
-        applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light", true);
     });
+
+    if (persist) {
+        try { localStorage.setItem(THEME_STORAGE_KEY, isLight ? "light" : "dark"); } catch (e) {}
+    }
 }
 
 const rupiah = (n) => "Rp" + (Number(n) || 0).toLocaleString("id-ID");
@@ -2107,23 +2101,8 @@ function initSearchListeners() {
 }
 
 function initThemeToggle() {
-    function applyTheme(theme) {
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.setAttribute("data-theme", theme);
-        try { localStorage.setItem("nexshop_theme", theme); } catch (e) {}
-        const isLight = theme === "light";
-
-        document.querySelectorAll("#themeToggle, .theme-toggle").forEach(btn => {
-            const icon = btn.querySelector(".theme-toggle-icon");
-            const label = btn.querySelector(".theme-toggle-label");
-            if (icon) icon.innerHTML = isLight ? '<i class="fa-solid fa-sun" aria-hidden="true"></i>' : '<i class="fa-solid fa-moon" aria-hidden="true"></i>';
-            if (label) label.textContent = isLight ? "Mode terang" : "Mode gelap";
-            btn.setAttribute("aria-pressed", isLight ? "true" : "false");
-        });
-    }
-
-    const currentTheme = localStorage.getItem("nexshop_theme") === "light" ? "light" : (document.documentElement.getAttribute("data-theme") || "dark");
-    applyTheme(currentTheme);
+    const currentTheme = localStorage.getItem(THEME_STORAGE_KEY) === "light" ? "light" : (document.documentElement.getAttribute("data-theme") || "dark");
+    applyTheme(currentTheme, false);
 
     document.addEventListener("click", (e) => {
         const btn = e.target.closest("#themeToggle, .theme-toggle");
@@ -2132,7 +2111,7 @@ function initThemeToggle() {
             e.stopPropagation();
             const activeTheme = document.documentElement.getAttribute("data-theme") || document.documentElement.dataset.theme || "dark";
             const nextTheme = activeTheme === "light" ? "dark" : "light";
-            applyTheme(nextTheme);
+            applyTheme(nextTheme, true);
         }
     });
 }
