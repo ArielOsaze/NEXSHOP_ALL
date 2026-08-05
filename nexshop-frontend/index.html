@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <script src="theme-init.js?v=20260803-ui"></script>
-<link rel="stylesheet" href="style.css?v=20260804-market-actions">
+<link rel="stylesheet" href="style.css?v=20260805-production-audit">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
@@ -132,7 +132,7 @@
             <button class="cart-btn" id="cartBtn" aria-label="Buka keranjang">
                 <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> <span class="cart-count" id="cartCount">0</span>
             </button>
-            <button class="menu-toggle" id="menuToggle" aria-label="Buka menu" aria-expanded="false">
+            <button class="menu-toggle" id="menuToggle" aria-label="Buka menu" aria-expanded="false" aria-controls="navMenu">
                 <span></span><span></span><span></span>
             </button>
         </div>
@@ -462,7 +462,7 @@
 </div>
 
 <!-- Product Detail Modal -->
-<div class="overlay" id="productOverlay">
+<div class="overlay" id="productOverlay" aria-hidden="true">
     <div class="modal product-modal" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
         <button class="modal-close" data-close="productOverlay" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         <div class="product-modal-body">
@@ -705,6 +705,6 @@
   backend langsung kirim balik `paymentUrl` (halaman pembayaran iPaymu)
   dan browser di-redirect ke sana lewat window.location.href. Lihat script.js.
 -->
-<script src="script.js?v=20260804-market-actions"></script>
+<script src="script.js?v=20260805-production-audit"></script>
 </body>
 </html>

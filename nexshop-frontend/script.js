@@ -186,16 +186,21 @@ function getFocusableElements(container) {
 function openOverlay(id) {
     const el = document.getElementById(id);
     if (!el) return;
-    lastFocusedElement = document.activeElement;
+    const wasOpen = el.classList.contains("active");
+    if (!wasOpen) lastFocusedElement = document.activeElement;
+    el.setAttribute("aria-hidden", "false");
     el.classList.add("active");
     document.body.style.overflow = "hidden";
-    const focusTarget = getFocusableElements(el)[0];
-    if (focusTarget) requestAnimationFrame(() => focusTarget.focus());
+    if (!wasOpen) {
+        const focusTarget = getFocusableElements(el)[0];
+        if (focusTarget) requestAnimationFrame(() => focusTarget.focus());
+    }
 }
 function closeOverlay(id) {
     const el = document.getElementById(id);
     if (!el) return;
     el.classList.remove("active");
+    el.setAttribute("aria-hidden", "true");
     if (!document.querySelector(".overlay.active")) {
         document.body.style.overflow = "";
         if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
@@ -208,6 +213,7 @@ document.querySelectorAll("[data-close]").forEach(btn => {
     btn.addEventListener("click", () => closeOverlay(btn.dataset.close));
 });
 document.querySelectorAll(".overlay").forEach(ov => {
+    ov.setAttribute("aria-hidden", String(!ov.classList.contains("active")));
     ov.addEventListener("click", (e) => {
         if (e.target === ov) closeOverlay(ov.id);
     });
@@ -350,7 +356,7 @@ function renderProducts() {
             grid.innerHTML = data.map(p => `
                 <article class="card product-card${p.is_flash_sale ? " card-flash" : ""}" data-product-card data-id="${p.id}" tabindex="0" aria-label="Lihat detail ${escapeHtml(p.name)}">
                     <div class="card-img">
-                        <img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
+                        <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
                         ${p.is_flash_sale ? '<span class="badge-flash"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}
                         ${p.badge ? `<span class="badge-tag">${escapeHtml(p.badge)}</span>` : ""}
                     </div>
@@ -416,7 +422,7 @@ function openProductModal(id) {
     const image = document.getElementById("pmImage");
     image.classList.remove("is-loaded");
     image.classList.add("is-loading");
-    image.src = p.image;
+    image.src = safeUrl(p.image);
     image.alt = p.name;
     
     const pmFlash = document.getElementById("pmFlashFlag");
@@ -515,9 +521,9 @@ function renderCart() {
         const p = PRODUCTS.find(x => x.id === item.id);
         return `
             <div class="cart-item" data-id="${p.id}">
-                <img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async">
+                <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
                 <div class="cart-item-info">
-                    <h5>${p.name}</h5>
+                    <h5>${escapeHtml(p.name)}</h5>
                     <div class="cart-item-price">${rupiah(p.price * item.qty)}</div>
                     <div class="cart-item-controls">
                         <button type="button" class="qty-minus">−</button>
@@ -948,7 +954,7 @@ function renderCheckoutSummary() {
 
     document.getElementById("checkoutSummary").innerHTML = `
         <div class="row"><span>${itemCount} item</span><span>${rupiah(subtotal)}</span></div>
-        ${appliedPromo ? `<div class="row discount"><span>Diskon (${appliedPromo.code})</span><span>-${rupiah(discount)}</span></div>` : ""}
+        ${appliedPromo ? `<div class="row discount"><span>Diskon (${escapeHtml(appliedPromo.code)})</span><span>-${rupiah(discount)}</span></div>` : ""}
         <div class="row total"><span>Total Bayar</span><span>${rupiah(total)}</span></div>
     `;
 }
@@ -1122,10 +1128,10 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
 function showCheckoutSuccess(recipient_name, total, statusText, orderId) {
     const trackingNote = currentUser
         ? `Kamu bisa cek status di "Pesanan Saya".`
-        : `⚠️ Kamu checkout tanpa akun — catat Order ID ini baik-baik, karena tidak tersimpan di riwayat manapun: <strong>${orderId}</strong>`;
+        : `⚠️ Kamu checkout tanpa akun — catat Order ID ini baik-baik, karena tidak tersimpan di riwayat manapun: <strong>${escapeHtml(orderId)}</strong>`;
 
     document.getElementById("checkoutSuccessMsg").innerHTML =
-        `Terima kasih, ${escapeHtml(recipient_name)}! Pesanan kamu senilai ${rupiah(total)} ${statusText}. ${trackingNote}`;
+        `Terima kasih, ${escapeHtml(recipient_name)}! Pesanan kamu senilai ${rupiah(total)} ${escapeHtml(statusText)}. ${trackingNote}`;
 
     document.getElementById("checkoutStep").classList.add("hidden");
     document.getElementById("checkoutSuccess").classList.remove("hidden");
@@ -1375,26 +1381,45 @@ async function loadPromo() {
 const heroMobileQuery = window.matchMedia("(max-width: 860px)");
 
 function heroImageFor(slide) {
-    if (heroMobileQuery.matches && slide.mobile_image_url) return slide.mobile_image_url;
-    return slide.image_url;
+    if (heroMobileQuery.matches && slide.mobile_image_url) return safeUrl(slide.mobile_image_url);
+    return safeUrl(slide.image_url);
+}
+
+function safeUrl(value, fallback = "") {
+    const raw = String(value ?? "").trim();
+    if (!raw) return fallback;
+    try {
+        const url = new URL(raw, window.location.origin);
+        return ["http:", "https:"].includes(url.protocol) ? url.href : fallback;
+    } catch (err) {
+        return fallback;
+    }
+}
+
+function backgroundImageStyle(url) {
+    return url ? escapeHtml(`background-image:url(${JSON.stringify(url)})`) : "";
 }
 
 function renderHeroSlides() {
     const track = document.getElementById("heroTrack");
     const dotsWrap = document.getElementById("heroDots");
 
-    track.innerHTML = heroSlides.map(s => `
-        <div class="hero-slide${s.full_image ? " full-image" : ""}" style="${heroImageFor(s) ? `background-image:url('${heroImageFor(s)}')` : ""}">
-            ${s.full_image ? (s.cta_link ? `<a href="${s.cta_link}" class="hero-slide-link" aria-label="${escapeHtml(s.title || "Promo")}"></a>` : "") : `
+    track.innerHTML = heroSlides.map(s => {
+        const imageUrl = heroImageFor(s);
+        const ctaLink = safeUrl(s.cta_link, "#");
+        return `
+        <div class="hero-slide${s.full_image ? " full-image" : ""}" style="${backgroundImageStyle(imageUrl)}">
+            ${s.full_image ? (s.cta_link ? `<a href="${escapeHtml(ctaLink)}" class="hero-slide-link" aria-label="${escapeHtml(s.title || "Promo")}"></a>` : "") : `
             <div class="hero-text">
                 ${s.badge_text ? `<span class="hero-badge">${escapeHtml(s.badge_text)}</span>` : ""}
                 <h2>${escapeHtml(s.title || "")}</h2>
                 ${s.description ? `<p>${escapeHtml(s.description)}</p>` : ""}
-                ${s.cta_text ? `<a href="${s.cta_link || "#"}" class="hero-cta">${escapeHtml(s.cta_text)}</a>` : ""}
+                ${s.cta_text ? `<a href="${escapeHtml(ctaLink)}" class="hero-cta">${escapeHtml(s.cta_text)}</a>` : ""}
             </div>
             `}
         </div>
-    `).join("");
+    `;
+    }).join("");
 
     dotsWrap.innerHTML = heroSlides.map((_, i) =>
         `<button class="hero-dot${i === 0 ? " active" : ""}" data-index="${i}" aria-label="Slide ${i + 1}"></button>`
@@ -1667,7 +1692,7 @@ function renderTopupGameGrid() {
     grid.innerHTML = TOPUP_GAMES.map(g => `
         <div class="topup-game-card" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
             <div class="tgc-logo">
-                ${g.logo ? `<img src="${g.logo}" alt="${escapeHtml(g.kategori)}" loading="lazy">` : `<span class="diamond-icon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>`}
+                ${g.logo ? `<img src="${escapeHtml(safeUrl(g.logo))}" alt="${escapeHtml(g.kategori)}" loading="lazy">` : `<span class="diamond-icon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>`}
             </div>
             <h5>${escapeHtml(g.kategori)}</h5>
             <span class="tgc-count">${g.products.length} produk</span>
@@ -1703,11 +1728,12 @@ function openGameDetail(kategori) {
         promo: null
     };
 
-    document.getElementById("twLogo").src = game.logo || "images/nexshop-icon.svg";
+    document.getElementById("twLogo").src = safeUrl(game.logo, "images/nexshop-icon.svg");
     document.getElementById("twLogo").alt = game.kategori;
     document.getElementById("twGameName").textContent = game.kategori;
     document.getElementById("twGameDesc").textContent = `Topup ${game.kategori} resmi & instan, diproses otomatis 24 jam.`;
-    document.getElementById("twBanner").style.backgroundImage = game.logo ? `url(${game.logo})` : "none";
+    const gameLogoUrl = safeUrl(game.logo);
+    document.getElementById("twBanner").style.backgroundImage = gameLogoUrl ? `url(${JSON.stringify(gameLogoUrl)})` : "none";
 
     document.getElementById("twUserId").value = "";
     document.getElementById("twServerId").value = "";
@@ -1866,8 +1892,8 @@ function groupTwProducts(products) {
 
 function renderTwProductCard(p) {
     return `
-        <div class="tw-product-card ${twState.product && twState.product.kode_produk === p.kode_produk ? "selected" : ""}" data-kode="${p.kode_produk}">
-            ${p.item_icon ? `<img class="tw-product-icon" src="${p.item_icon}" alt="${escapeHtml(p.nama)}" loading="lazy">` : `<span class="diamond-icon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>`}
+        <div class="tw-product-card ${twState.product && twState.product.kode_produk === p.kode_produk ? "selected" : ""}" data-kode="${escapeHtml(p.kode_produk)}">
+            ${p.item_icon ? `<img class="tw-product-icon" src="${escapeHtml(safeUrl(p.item_icon))}" alt="${escapeHtml(p.nama)}" loading="lazy">` : `<span class="diamond-icon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>`}
             <h5>${escapeHtml(p.nama)}</h5>
             <div class="tw-product-price">${rupiah(p.harga_jual)}</div>
             <span class="tw-product-check"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
@@ -1890,7 +1916,7 @@ function renderTopupProductGrid() {
     grid.innerHTML = TW_PRODUCT_GROUPS.map((g) => {
         const items = buckets[g.key];
         if (!items.length) return "";
-        const heading = activeGroupCount > 1 ? `<h5 class="tw-product-group-heading">${g.label}</h5>` : "";
+        const heading = activeGroupCount > 1 ? `<h5 class="tw-product-group-heading">${escapeHtml(g.label)}</h5>` : "";
         return `<div class="tw-product-group">${heading}<div class="tw-product-group-grid">${items.map(renderTwProductCard).join("")}</div></div>`;
     }).join("");
 
