@@ -12,6 +12,7 @@ form.addEventListener("submit", async (event) => {
     const email = document.getElementById("email").value.trim().toLowerCase();
     const password = document.getElementById("password").value;
     status.textContent = "";
+    status.classList.remove("is-error");
     button.disabled = true;
 
     try {
@@ -30,6 +31,7 @@ form.addEventListener("submit", async (event) => {
         window.location.assign("index.html");
     } catch (error) {
         status.textContent = error.message || "Gagal terhubung ke server.";
+        status.classList.add("is-error");
     } finally {
         button.disabled = false;
     }

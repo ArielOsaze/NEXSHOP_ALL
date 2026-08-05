@@ -4,23 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login NexShop</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="theme-init.js?v=20260803-ui"></script>
+    <link rel="stylesheet" href="style.css?v=20260805-news-release">
 </head>
-<body>
+<body class="public-login-page">
 
-<main>
-    <h1>Login NexShop</h1>
+<main class="public-login-card" aria-labelledby="loginTitle">
+    <a class="public-login-brand" href="index.html" aria-label="Kembali ke beranda NexShop">
+        <img src="images/nexshop-icon.svg" alt="" width="44" height="44">
+        <span>Nex<span>Shop</span></span>
+    </a>
+    <div class="public-login-copy">
+        <p class="eyebrow">Akun NexShop</p>
+        <h1 id="loginTitle">Selamat datang kembali</h1>
+        <p>Masuk untuk melihat riwayat pesanan dan menyimpan checkout dengan lebih praktis.</p>
+    </div>
 
-    <form id="loginForm">
-        <label for="email">Email</label><br>
-        <input type="email" id="email" required autocomplete="email"><br><br>
+    <form id="loginForm" class="public-login-form">
+        <label for="email">Email
+            <input type="email" id="email" required autocomplete="email" placeholder="kamu@email.com">
+        </label>
 
-        <label for="password">Password</label><br>
-        <input type="password" id="password" required autocomplete="current-password"><br><br>
+        <label for="password">Password
+            <input type="password" id="password" required autocomplete="current-password" placeholder="Masukkan password">
+        </label>
 
-        <button type="submit" id="loginButton">Login</button>
+        <p id="loginStatus" class="public-login-status" role="status" aria-live="polite"></p>
+        <button type="submit" id="loginButton" class="btn-primary">Login</button>
     </form>
 
-    <p id="loginStatus" role="status" aria-live="polite"></p>
+    <p class="public-login-help">Belum punya akun? <a href="index.html#top">Daftar dari menu akun di beranda</a>.</p>
 </main>
 
 <script src="public-login.js"></script>

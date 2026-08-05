@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/style.css?v=20260805-news-release">
 <script src="../theme-init.js"></script>
 </head>
 <body>
@@ -32,6 +32,7 @@
         <li class="nav-item"><a class="nav-link" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Topup Diamond</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="users"><i class="bi bi-people me-2"></i>Users</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="promo"><i class="bi bi-megaphone me-2"></i>Promo</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="news"><i class="bi bi-newspaper me-2"></i>Gaming News</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="promocodes"><i class="bi bi-ticket-perforated me-2"></i>Kode Promo</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
     </ul>
@@ -551,6 +552,25 @@
     </div>
 </section>
 
+<!-- ===== Gaming News view ===== -->
+<section id="view-news" class="view-section d-none">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2>Gaming News</h2>
+            <p class="text-muted mb-0">Simpan ringkasan original dan tautkan pembaca ke artikel publisher tepercaya.</p>
+        </div>
+        <button class="btn btn-success text-nowrap" onclick="openNewsModal()"><i class="bi bi-plus-circle"></i> Tambah Berita</button>
+    </div>
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th>Urutan</th><th>Berita</th><th>Sumber</th><th>Terbit</th><th>Status</th><th>Aksi</th></tr></thead>
+                <tbody id="newsItems"><tr><td colspan="6" class="text-center text-muted py-4">Memuat data...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
 <!-- ===== Kode Promo view ===== -->
 <section id="view-promocodes" class="view-section d-none">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -873,6 +893,24 @@
 
 </div>
 </main>
+</div>
+
+<!-- Gaming News Modal -->
+<div class="modal fade" id="newsModal" tabindex="-1" aria-labelledby="newsModalTitle" aria-hidden="true">
+<div class="modal-dialog modal-lg"><div class="modal-content">
+    <div class="modal-header"><h5 class="modal-title" id="newsModalTitle"><i class="bi bi-newspaper me-2"></i>Tambah Berita</h5><button class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
+    <div class="modal-body"><form id="newsForm"><div class="row g-3">
+        <div class="col-md-8"><label class="form-label" for="newsTitle">Judul</label><input id="newsTitle" class="form-control" maxlength="180" required></div>
+        <div class="col-md-4"><label class="form-label" for="newsSortOrder">Urutan tampil</label><input id="newsSortOrder" type="number" min="0" class="form-control" value="0"></div>
+        <div class="col-12"><label class="form-label" for="newsSummary">Ringkasan original</label><textarea id="newsSummary" class="form-control" rows="3" maxlength="600" required></textarea><div class="form-text">Jangan salin artikel; tulis ringkasan singkat NexShop.</div></div>
+        <div class="col-md-6"><label class="form-label" for="newsSource">Publisher</label><select id="newsSource" class="form-select" required><option value="">Pilih publisher</option><option>IGN</option><option>GameSpot</option><option>PC Gamer</option><option>Eurogamer</option><option>Rock Paper Shotgun</option><option>Xbox Wire</option><option>PlayStation Blog</option><option>Steam News</option><option>Ubisoft News</option><option>EA News</option></select></div>
+        <div class="col-md-6"><label class="form-label" for="newsPublishedAt">Tanggal terbit</label><input id="newsPublishedAt" type="datetime-local" class="form-control" required></div>
+        <div class="col-12"><label class="form-label" for="newsSourceUrl">URL artikel asli</label><input id="newsSourceUrl" type="url" class="form-control" placeholder="https://publisher.example/article" required></div>
+        <div class="col-12"><label class="form-label" for="newsImageUrl">URL gambar preview</label><input id="newsImageUrl" type="url" class="form-control" placeholder="https://..." required></div>
+        <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="newsIsActive" checked><label class="form-check-label" for="newsIsActive">Aktif (tampil di halaman utama)</label></div></div>
+    </div><p class="text-danger small mt-3 mb-0" id="newsError"></p></form></div>
+    <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-success" id="saveNewsBtn" onclick="saveNews()"><i class="bi bi-floppy"></i> Simpan Berita</button></div>
+</div></div>
 </div>
 
 <!-- Promo Slide Modal -->
@@ -1218,7 +1256,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script src="js/dashboard.js"></script>
+<script src="js/dashboard.js?v=20260805-news-release"></script>
 
 </body>
 </html>

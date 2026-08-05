@@ -26,6 +26,9 @@ let topupProductsLoaded = false;
 let statsLoaded = false;
 let topupOrdersLoaded = false;
 let promoCodesLoaded = false;
+let newsLoaded = false;
+let newsEntries = [];
+let editingNewsId = null;
 let promoCodes = [];
 let editingPromoCodeId = null;
 
@@ -51,6 +54,7 @@ let productFlashFilterValue = "";
 
 const promoCodeModalEl = document.getElementById("promoCodeModal");
 const promoCodeModal = new bootstrap.Modal(promoCodeModalEl);
+const newsModal = new bootstrap.Modal(document.getElementById("newsModal"));
 
 // ================================
 // Helpers
@@ -128,6 +132,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         if (view === "orders" && !ordersLoaded) loadOrders();
         if (view === "users" && !usersLoaded) { loadUsers(); loadPendingOtp(); }
         if (view === "promo" && !promoLoaded) loadPromo();
+        if (view === "news" && !newsLoaded) loadNews();
         if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
         if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
         if (view === "settings" && !settingsLoaded) loadSettings();
@@ -146,6 +151,7 @@ function switchView(view) {
     if (view === "orders" && !ordersLoaded) loadOrders();
     if (view === "users" && !usersLoaded) { loadUsers(); loadPendingOtp(); }
     if (view === "promo" && !promoLoaded) loadPromo();
+    if (view === "news" && !newsLoaded) loadNews();
     if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
     if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
     if (view === "settings" && !settingsLoaded) loadSettings();
@@ -2802,6 +2808,133 @@ function initThemeToggle() {
             applyTheme(e.newValue === "light" ? "light" : "dark");
         }
     });
+}
+
+// ================================
+// Curated Gaming News
+// ================================
+function formatNewsDateInput(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    const offset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offset).toISOString().slice(0, 16);
+}
+
+function formatNewsDate(value) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "-" : new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(date);
+}
+
+async function loadNews() {
+    const tbody = document.getElementById("newsItems");
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat berita...</td></tr>`;
+    try {
+        const res = await apiFetch("/news/all");
+        if (!res.ok) throw new Error("Gagal mengambil berita game");
+        newsEntries = await res.json();
+        newsLoaded = true;
+        renderNews();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${escapeHtml(err.message)}</td></tr>`;
+    }
+}
+
+function renderNews() {
+    const tbody = document.getElementById("newsItems");
+    if (!newsEntries.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Belum ada berita. Tambahkan preview dari publisher tepercaya.</td></tr>`;
+        return;
+    }
+    tbody.innerHTML = newsEntries.map((item) => `
+        <tr>
+            <td>${Number(item.sort_order) || 0}</td>
+            <td><div class="fw-semibold">${escapeHtml(item.title)}</div><small class="text-muted d-inline-block text-truncate" style="max-width:360px">${escapeHtml(item.summary)}</small></td>
+            <td><a href="${escapeHtml(item.source_url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(item.source)}</a></td>
+            <td>${formatNewsDate(item.published_at)}</td>
+            <td>${item.is_active ? '<span class="badge bg-success">Aktif</span>' : '<span class="badge bg-secondary">Nonaktif</span>'}</td>
+            <td class="text-nowrap"><button class="btn btn-warning btn-sm" onclick="editNews(${Number(item.id)})" aria-label="Edit berita"><i class="bi bi-pencil"></i></button> <button class="btn btn-danger btn-sm" onclick="deleteNews(${Number(item.id)})" aria-label="Hapus berita"><i class="bi bi-trash"></i></button></td>
+        </tr>`).join("");
+}
+
+function openNewsModal() {
+    editingNewsId = null;
+    document.getElementById("newsForm").reset();
+    document.getElementById("newsSortOrder").value = 0;
+    document.getElementById("newsPublishedAt").value = formatNewsDateInput(new Date().toISOString());
+    document.getElementById("newsIsActive").checked = true;
+    document.getElementById("newsModalTitle").innerHTML = '<i class="bi bi-newspaper me-2"></i>Tambah Berita';
+    document.getElementById("newsError").textContent = "";
+    newsModal.show();
+}
+
+function editNews(id) {
+    const item = newsEntries.find((entry) => Number(entry.id) === Number(id));
+    if (!item) return;
+    editingNewsId = Number(id);
+    document.getElementById("newsTitle").value = item.title || "";
+    document.getElementById("newsSummary").value = item.summary || "";
+    document.getElementById("newsSource").value = item.source || "";
+    document.getElementById("newsSourceUrl").value = item.source_url || "";
+    document.getElementById("newsImageUrl").value = item.image_url || "";
+    document.getElementById("newsPublishedAt").value = formatNewsDateInput(item.published_at);
+    document.getElementById("newsSortOrder").value = Number(item.sort_order) || 0;
+    document.getElementById("newsIsActive").checked = !!item.is_active;
+    document.getElementById("newsModalTitle").innerHTML = '<i class="bi bi-newspaper me-2"></i>Edit Berita';
+    document.getElementById("newsError").textContent = "";
+    newsModal.show();
+}
+
+async function saveNews() {
+    const errorEl = document.getElementById("newsError");
+    const title = document.getElementById("newsTitle").value.trim();
+    const summary = document.getElementById("newsSummary").value.trim();
+    if (!title || !summary) { errorEl.textContent = "Judul dan ringkasan wajib diisi"; return; }
+    const button = document.getElementById("saveNewsBtn");
+    const previousHtml = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+    const payload = {
+        title, summary,
+        source: document.getElementById("newsSource").value,
+        source_url: document.getElementById("newsSourceUrl").value.trim(),
+        image_url: document.getElementById("newsImageUrl").value.trim(),
+        published_at: document.getElementById("newsPublishedAt").value,
+        sort_order: Number(document.getElementById("newsSortOrder").value || 0),
+        is_active: document.getElementById("newsIsActive").checked
+    };
+    try {
+        const res = await apiFetch(editingNewsId ? `/news/${editingNewsId}` : "/news", {
+            method: editingNewsId ? "PUT" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menyimpan berita");
+        newsModal.hide();
+        newsLoaded = false;
+        await loadNews();
+        showToast(data.message || "Berita berhasil disimpan");
+    } catch (err) {
+        if (err.message !== "unauthorized") errorEl.textContent = err.message;
+    } finally {
+        button.disabled = false;
+        button.innerHTML = previousHtml;
+    }
+}
+
+async function deleteNews(id) {
+    if (!confirm("Hapus berita ini?")) return;
+    try {
+        const res = await apiFetch(`/news/${id}`, { method: "DELETE" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menghapus berita");
+        newsLoaded = false;
+        await loadNews();
+        showToast(data.message || "Berita berhasil dihapus");
+    } catch (err) {
+        if (err.message !== "unauthorized") showToast(err.message, true);
+    }
 }
 
 document.addEventListener("DOMContentLoaded", initThemeToggle);

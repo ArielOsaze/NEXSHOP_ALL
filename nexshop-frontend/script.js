@@ -1159,8 +1159,59 @@ function openPolicy(tab) {
 }
 
 document.querySelectorAll("[data-policy-tab]").forEach(btn => {
-    btn.addEventListener("click", () => openPolicy(btn.dataset.policyTab));
+    btn.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openPolicy(btn.dataset.policyTab);
+    });
 });
+
+/* ---------- Curated gaming news ---------- */
+function formatNewsDate(value) {
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat("id-ID", {
+        day: "numeric", month: "short", year: "numeric"
+    }).format(date);
+}
+
+function renderGamingNews(items) {
+    const section = document.getElementById("news");
+    const grid = document.getElementById("newsGrid");
+    if (!section || !grid) return;
+    if (!Array.isArray(items) || !items.length) {
+        section.classList.add("hidden");
+        grid.replaceChildren();
+        return;
+    }
+    grid.innerHTML = items.map((item) => {
+        const articleUrl = safeUrl(item.source_url);
+        const imageUrl = safeUrl(item.image_url);
+        if (!articleUrl || !imageUrl) return "";
+        return `
+            <article class="news-card">
+                <a class="news-card-image" href="${escapeHtml(articleUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Baca ${escapeHtml(item.title)} di ${escapeHtml(item.source)}">
+                    <img src="${escapeHtml(imageUrl)}" alt="" loading="lazy" decoding="async">
+                </a>
+                <div class="news-card-body">
+                    <div class="news-card-meta"><span class="news-card-source">${escapeHtml(item.source)}</span><span>${escapeHtml(formatNewsDate(item.published_at))}</span></div>
+                    <h4>${escapeHtml(item.title)}</h4>
+                    <p class="news-card-summary">${escapeHtml(item.summary)}</p>
+                    <a class="news-card-link" href="${escapeHtml(articleUrl)}" target="_blank" rel="noopener noreferrer">Baca selengkapnya <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
+                </div>
+            </article>`;
+    }).join("");
+    section.classList.toggle("hidden", !grid.children.length);
+}
+
+async function loadGamingNews() {
+    try {
+        const res = await fetch(`${API_BASE}/news`);
+        if (!res.ok) throw new Error("Gagal memuat berita game");
+        renderGamingNews(await res.json());
+    } catch (err) {
+        renderGamingNews([]);
+    }
+}
 
 /* ---------- Cek Transaksi (tab publik, cek status via Order ID) ---------- */
 const STATUS_LABEL = {
@@ -2263,6 +2314,7 @@ async function bootstrapApp() {
         loadPromo(),
         loadTopupProducts(),
         loadTrustStats(),
+        loadGamingNews(),
         checkPaymentReturn()
     ]);
 
