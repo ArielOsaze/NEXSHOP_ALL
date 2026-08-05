@@ -369,7 +369,9 @@ header{ position:sticky; top:0; z-index:100; }
     padding:0 4px;
 }
 
-.menu-toggle{ display:none; flex-direction:column; gap:5px; width:26px; }
+.nav-right{ display:flex; align-items:center; gap:10px; position:relative; z-index:10; }
+
+.menu-toggle{ display:none; flex-direction:column; gap:5px; width:26px; cursor:pointer; }
 .menu-toggle span{ height:2px; background:var(--text); border-radius:2px; transition:.25s; }
 
 /* ================= HERO CAROUSEL ================= */
@@ -1087,11 +1089,12 @@ header{ position:sticky; top:0; z-index:100; }
     box-shadow:0 24px 80px rgba(0,0,0,.35);
 }
 .modal-close{
-    position:absolute; top:16px; right:16px; width:36px; height:36px; border-radius:12px;
-    background:rgba(255,255,255,.05); color:var(--text-muted); font-size:16px;
-    display:flex; align-items:center; justify-content:center; transition:.2s;
+    position:absolute; top:14px; right:14px; z-index:30; width:34px; height:34px; border-radius:10px;
+    background:var(--bg-panel-2); color:var(--text); font-size:16px; border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; transition:.2s; cursor:pointer;
+    box-shadow:0 4px 12px rgba(0,0,0,.25);
 }
-.modal-close:hover{ background:var(--danger); color:#fff; }
+.modal-close:hover{ background:var(--danger); color:#fff; border-color:transparent; }
 
 /* policy modal */
 .policy-modal{ max-width:640px; }
@@ -1482,6 +1485,13 @@ input::placeholder{ color:var(--text-dim); }
     .tgc-logo{ width:48px; height:48px; margin:0 auto 8px; border-radius:12px; }
     .topup-game-card h5{ font-size:12px; min-height:30px; line-height:1.25; margin-bottom:2px; }
     .tgc-count{ font-size:9.5px; }
+
+    .modal{ padding:20px 16px; max-height:86vh; border-radius:18px; }
+    .modal-close{ top:10px; right:10px; width:32px; height:32px; font-size:14px; z-index:30; }
+    .product-modal-img .badge{ top:10px; left:10px; padding:4px 10px; font-size:10px; }
+    .pm-desc{ font-size:13.5px; line-height:1.6; margin-bottom:14px; }
+    .pm-price{ font-size:20px; margin-bottom:14px; }
+    .pm-price .price-now{ font-size:20px; }
 
     .ambient-assets{
         position:fixed !important; inset:0 !important; width:100vw; height:100vh;
