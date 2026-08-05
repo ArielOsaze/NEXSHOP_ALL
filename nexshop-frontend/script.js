@@ -292,7 +292,7 @@ function renderProducts() {
             }
         } else {
             grid.innerHTML = data.map(p => `
-                <div class="card" data-id="${p.id}">
+                <div class="card${p.is_flash_sale ? " card-flash" : ""}" data-id="${p.id}">
                     <div class="card-img">
                         <img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
                         <div class="card-badges">

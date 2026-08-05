@@ -635,11 +635,18 @@ header{ position:sticky; top:0; z-index:100; }
 }
 .card{
     background:var(--bg-panel);
-    border:1px solid var(--soft-border); border-radius:12px;
+    border:1px solid var(--line); border-radius:18px;
     overflow:hidden; cursor:pointer; position:relative;
-    transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    transition:transform .28s cubic-bezier(.2,.8,.2,1), border-color .28s, box-shadow .28s, background .28s;
 }
-.card:hover{ transform:translateY(-2px); border-color:rgba(255,255,255,.06); box-shadow:0 6px 20px rgba(0,0,0,.18); }
+.card:hover{
+    transform:translateY(-3px); border-color:var(--cyan);
+    box-shadow:0 12px 28px rgba(0,0,0,.22), 0 0 16px rgba(34,211,238,.16);
+}
+.card.card-flash:hover{
+    border-color:#FF4D6D;
+    box-shadow:0 12px 28px rgba(0,0,0,.25), 0 0 18px rgba(255,23,68,.35);
+}
 .card:focus-visible{ border-color:var(--cyan); outline:2px solid var(--cyan); outline-offset:-2px; box-shadow:0 18px 42px rgba(0,0,0,.22); }
 .card-img{ position:relative; aspect-ratio:4/3; background:linear-gradient(180deg, rgba(16,22,42,.96), rgba(8,11,20,.92)); overflow:hidden; }
 .card-img::after{
