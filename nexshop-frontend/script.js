@@ -1204,13 +1204,17 @@ function renderGamingNews(items) {
         const imageUrl = safeUrl(item.image_url);
         if (!articleUrl || !imageUrl) return "";
         const source = String(item.source || "Publisher");
+        const publisherLogoUrl = safeUrl(item.publisher_logo_url);
+        const publisherMark = publisherLogoUrl
+            ? `<img class="news-source-logo-image" src="${escapeHtml(publisherLogoUrl)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
+            : `<span class="news-source-logo" aria-hidden="true">${escapeHtml(newsSourceInitial(source))}</span>`;
         return `
             <article class="news-card${item.is_featured ? " is-featured" : ""}" style="--news-index:${Math.min(index, 5)}">
                 <a class="news-card-image" href="${escapeHtml(articleUrl)}" target="_blank" rel="noopener noreferrer" aria-label="Baca ${escapeHtml(item.title)} di ${escapeHtml(item.source)}">
                     <img src="${escapeHtml(imageUrl)}" alt="" loading="lazy" decoding="async">
                 </a>
                 <div class="news-card-body">
-                    <div class="news-card-meta"><span class="news-card-source"><span class="news-source-logo" aria-hidden="true">${escapeHtml(newsSourceInitial(source))}</span>${escapeHtml(source)}</span><span>${escapeHtml(formatNewsDate(item.published_at))}</span></div>
+                    <div class="news-card-meta"><span class="news-card-source">${publisherMark}${escapeHtml(source)}</span><span>${escapeHtml(formatNewsDate(item.published_at))}</span></div>
                     <h4>${escapeHtml(item.title)}</h4>
                     <p class="news-card-summary">${escapeHtml(item.summary)}</p>
                     <a class="news-card-link" href="${escapeHtml(articleUrl)}" target="_blank" rel="noopener noreferrer">Read More <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></a>
