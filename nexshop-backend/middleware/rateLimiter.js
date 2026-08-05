@@ -1,5 +1,4 @@
 const rateLimit = require("express-rate-limit");
-const { ipKeyGenerator } = require("express-rate-limit");
 const { notify } = require("../config/notify");
 
 // Kenapa ini penting: sebelumnya endpoint login/register/OTP gak ada
@@ -55,7 +54,7 @@ function getBlockedLoginIps() {
 // blokir loginLimiter di atas untuk 1 alamat IP tertentu, tanpa perlu nunggu
 // windowMs (15 menit) abis sendiri.
 async function resetLoginLimiter(ip) {
-    await loginLimiter.resetKey(ipKeyGenerator(ip));
+    await loginLimiter.resetKey(ip);
     blockedLoginIps.delete(ip);
 }
 

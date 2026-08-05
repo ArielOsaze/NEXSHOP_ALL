@@ -188,6 +188,17 @@
         <p>Dipilih langsung dari yang paling laris minggu ini</p>
     </div>
 
+    <div class="catalog-controls">
+        <div class="catalog-search-wrap">
+            <span class="search-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
+            <input type="text" id="searchProductInput" placeholder="Cari game, voucher, atau produk..." aria-label="Cari produk dalam katalog">
+            <button type="button" id="searchClearBtn" class="search-clear-btn hidden" aria-label="Bersihkan pencarian"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="search-meta" id="searchMeta">
+            <span class="search-count-badge" id="searchCountBadge">0 Produk</span>
+        </div>
+    </div>
+
     <div class="category-filter" id="categoryFilter"></div>
 
     <div class="card-grid" id="cardGrid"></div>

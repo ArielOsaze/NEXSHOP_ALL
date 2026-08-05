@@ -5,7 +5,7 @@ function computeDiscount(promo, subtotal) {
     let discount = 0;
     if (promo.discount_type === "percent") {
         discount = (subtotal * Number(promo.discount_value)) / 100;
-        if (promo.max_discount) {
+        if (promo.max_discount !== null && promo.max_discount !== undefined) {
             discount = Math.min(discount, Number(promo.max_discount));
         }
     } else {

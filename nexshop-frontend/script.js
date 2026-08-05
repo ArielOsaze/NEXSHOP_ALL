@@ -6,9 +6,12 @@
 
 let PRODUCTS = [];
 let selectedCategory = "Semua";
+let searchQuery = "";
 let cachedStoreSettings = null; // diisi loadStoreSettings(), dipakai buat WA CTA di renderTrackResult
 
-const API_BASE = "https://nexshop.cloud/api";
+const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? (window.location.port === "3000" ? "/api" : "http://localhost:3000/api")
+    : (window.location.protocol.startsWith("http") ? "/api" : "https://nexshop.cloud/api");
 const THEME_STORAGE_KEY = "nexshop_theme";
 
 const PAYMENT_METHODS = [
@@ -89,7 +92,7 @@ if (themeToggle) {
     });
 }
 
-const rupiah = (n) => "Rp" + n.toLocaleString("id-ID");
+const rupiah = (n) => "Rp" + (Number(n) || 0).toLocaleString("id-ID");
 
 // Kalau Flash Sale aktif dan ada harga coret yang lebih tinggi dari harga
 // jual, tampilkan harga coret + persentase diskon. Kalau enggak, tampilan
@@ -210,99 +213,131 @@ async function loadProducts() {
     }
 }
 function renderCategories() {
-
     const filter = document.getElementById("categoryFilter");
+    if (!filter) return;
 
     const categories = [
         "Semua",
-        ...new Set(PRODUCTS.map(p => p.category))
+        ...new Set(PRODUCTS.map(p => p.category).filter(Boolean))
     ];
 
     filter.innerHTML = categories.map(cat => `
         <button
             class="category-btn ${cat === selectedCategory ? "active" : ""}"
-            data-category="${cat}">
-            ${cat}
+            data-category="${escapeHtml(cat)}">
+            ${escapeHtml(cat)}
         </button>
     `).join("");
 
     filter.querySelectorAll(".category-btn").forEach(btn => {
-
         btn.onclick = () => {
-
             selectedCategory = btn.dataset.category;
-
             renderCategories();
-
             renderProducts();
-
         };
-
     });
-
 }
 
 function renderProducts() {
-  
     const grid = document.getElementById("cardGrid");
-   const data =
-    selectedCategory === "Semua"
+    if (!grid) return;
+
+    let data = selectedCategory === "Semua"
         ? PRODUCTS
         : PRODUCTS.filter(p => p.category === selectedCategory);
 
-grid.style.opacity = 0;
-grid.style.transform = "translateY(20px)";
+    if (searchQuery.trim()) {
+        const query = searchQuery.trim().toLowerCase();
+        data = data.filter(p =>
+            (p.name && p.name.toLowerCase().includes(query)) ||
+            (p.category && p.category.toLowerCase().includes(query)) ||
+            (p.badge && p.badge.toLowerCase().includes(query)) ||
+            (p.description && p.description.toLowerCase().includes(query))
+        );
+    }
 
-setTimeout(() => {
+    const countBadge = document.getElementById("searchCountBadge");
+    if (countBadge) {
+        countBadge.textContent = `${data.length} Produk`;
+    }
 
-    grid.innerHTML = data.map(p => `
+    const searchClearBtn = document.getElementById("searchClearBtn");
+    if (searchClearBtn) {
+        searchClearBtn.classList.toggle("hidden", !searchQuery.trim());
+    }
 
-        <div class="card" data-id="${p.id}">
-            <div class="card-img">
-                <img src="${p.image}" alt="${p.name}" loading="lazy" decoding="async">
-                ${p.is_flash_sale ? '<span class="card-flag">FLASH SALE</span>' : ""}
-                <span class="badge">${p.badge}</span>
-            </div>
-            <div class="card-body">
-                ${p.category ? `<div class="card-category">${escapeHtml(p.category)}</div>` : ""}
-                <h4>${escapeHtml(p.name)}</h4>
-                <div class="card-rating"><span class="stars">${stars(p.rating)}</span> ${p.rating} · ${p.sold} terjual</div>
-                <div class="card-footer">
-                    <div class="card-price-block">${priceBlockHtml(p, "sm")}</div>
-                    <div class="card-actions">
-                        <button type="button" class="add-btn" data-id="${p.id}" aria-label="Tambah ke Keranjang"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i></button>
-                        <button type="button" class="buy-btn" data-id="${p.id}"><span>Beli</span></button>
+    grid.style.opacity = 0;
+    grid.style.transform = "translateY(16px)";
+
+    setTimeout(() => {
+        if (data.length === 0) {
+            grid.innerHTML = `
+                <div class="catalog-empty-state">
+                    <div class="empty-icon"><i class="fa-solid fa-box-open" aria-hidden="true"></i></div>
+                    <h4>Produk Tidak Ditemukan</h4>
+                    <p>${searchQuery ? `Tidak ada hasil untuk "<strong>${escapeHtml(searchQuery)}</strong>"` : "Belum ada produk untuk kategori ini."}</p>
+                    ${searchQuery || selectedCategory !== "Semua" ? `<button type="button" class="btn-primary btn-sm reset-search-btn" id="resetSearchBtn"><i class="fa-solid fa-rotate-left"></i> Reset Filter</button>` : ""}
+                </div>
+            `;
+            const resetBtn = document.getElementById("resetSearchBtn");
+            if (resetBtn) {
+                resetBtn.addEventListener("click", () => {
+                    searchQuery = "";
+                    selectedCategory = "Semua";
+                    const searchInput = document.getElementById("searchProductInput");
+                    if (searchInput) searchInput.value = "";
+                    renderCategories();
+                    renderProducts();
+                });
+            }
+        } else {
+            grid.innerHTML = data.map(p => `
+                <div class="card" data-id="${p.id}">
+                    <div class="card-img">
+                        <img src="${p.image}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
+                        ${p.is_flash_sale ? '<span class="card-flag"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}
+                        ${p.badge ? `<span class="badge">${escapeHtml(p.badge)}</span>` : ""}
+                    </div>
+                    <div class="card-body">
+                        ${p.category ? `<div class="card-category">${escapeHtml(p.category)}</div>` : ""}
+                        <h4>${escapeHtml(p.name)}</h4>
+                        <div class="card-rating"><span class="stars">${stars(p.rating || 5)}</span> ${p.rating || 5} · ${p.sold || 0} terjual</div>
+                        <div class="card-footer">
+                            <div class="card-price-block">${priceBlockHtml(p, "sm")}</div>
+                            <div class="card-actions">
+                                <button type="button" class="add-btn" data-id="${p.id}" aria-label="Tambah ke Keranjang"><i class="fa-solid fa-cart-plus" aria-hidden="true"></i></button>
+                                <button type="button" class="buy-btn" data-id="${p.id}"><span>Beli</span></button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    `).join("");
+            `).join("");
 
-    grid.querySelectorAll(".card").forEach(card => {
-        card.addEventListener("click", (e) => {
-            if (e.target.closest(".add-btn, .buy-btn")) return; // handled separately
-            openProductModal(Number(card.dataset.id));
-        });
-    });
+            grid.querySelectorAll(".card").forEach(card => {
+                card.addEventListener("click", (e) => {
+                    if (e.target.closest(".add-btn, .buy-btn")) return;
+                    openProductModal(Number(card.dataset.id));
+                });
+            });
 
-    grid.querySelectorAll(".add-btn").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            addToCart(Number(btn.dataset.id), 1);
-        });
-    });
+            grid.querySelectorAll(".add-btn").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    addToCart(Number(btn.dataset.id), 1);
+                });
+            });
 
-    grid.querySelectorAll(".buy-btn").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            openCheckout([{ id: Number(btn.dataset.id), qty: 1 }], "direct");
-        });
-    });
+            grid.querySelectorAll(".buy-btn").forEach(btn => {
+                btn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    openCheckout([{ id: Number(btn.dataset.id), qty: 1 }], "direct");
+                });
+            });
+        }
 
-    grid.style.opacity = 1;
-    grid.style.transform = "translateY(0)";
-
-}, 150);
+        grid.style.opacity = 1;
+        grid.style.transform = "translateY(0)";
+    }, 120);
 }
 
 /* ---------- Product detail modal ---------- */
@@ -2046,7 +2081,28 @@ async function loadTrustStats() {
 }
 
 /* ---------- Init ---------- */
+function initSearchListeners() {
+    const searchInput = document.getElementById("searchProductInput");
+    const searchClearBtn = document.getElementById("searchClearBtn");
+
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+            searchQuery = e.target.value;
+            renderProducts();
+        });
+    }
+
+    if (searchClearBtn) {
+        searchClearBtn.addEventListener("click", () => {
+            searchQuery = "";
+            if (searchInput) searchInput.value = "";
+            renderProducts();
+        });
+    }
+}
+
 async function bootstrapApp() {
+    initSearchListeners();
     updateCartCount();
     checkResetPasswordLink();
     refreshAccountUI();
