@@ -39,34 +39,62 @@ function wordCount(value) {
     return String(value || "").trim().split(/\s+/).filter(Boolean).length;
 }
 
-function isPrivateIp(address) {
+// Semua blok di bawah ini bukan alamat publik yang aman untuk di-fetch.
+// Resolver tetap universal: publisher mana pun diperbolehkan selama DNS-nya
+// menghasilkan alamat IP publik.
+const blockedNewsImportIps = new net.BlockList();
+[
+    ["0.0.0.0", 8], ["10.0.0.0", 8], ["100.64.0.0", 10], ["127.0.0.0", 8],
+    ["169.254.0.0", 16], ["172.16.0.0", 12], ["192.0.0.0", 24], ["192.0.2.0", 24],
+    ["192.88.99.0", 24], ["192.168.0.0", 16], ["198.18.0.0", 15],
+    ["198.51.100.0", 24], ["203.0.113.0", 24], ["224.0.0.0", 4], ["240.0.0.0", 4]
+].forEach(([address, prefix]) => blockedNewsImportIps.addSubnet(address, prefix, "ipv4"));
+[
+    ["::", 128], ["::1", 128], ["100::", 64], ["2001:2::", 48], ["2001:10::", 28],
+    ["2001:db8::", 32], ["fc00::", 7], ["fe80::", 10], ["ff00::", 8]
+].forEach(([address, prefix]) => blockedNewsImportIps.addSubnet(address, prefix, "ipv6"));
+
+function isBlockedNewsImportIp(address) {
     const family = net.isIP(address);
-    if (family === 4) {
-        const [a, b] = address.split(".").map(Number);
-        return a === 0 || a === 10 || a === 127 || a >= 224 || (a === 100 && b >= 64 && b <= 127)
-            || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31)
-            || (a === 192 && (b === 0 || b === 168)) || (a === 198 && (b === 18 || b === 19 || b === 51))
-            || (a === 203 && b === 0);
-    }
-    if (family === 6) {
-        const ip = address.toLowerCase();
-        if (ip.startsWith("::ffff:")) return isPrivateIp(ip.slice(7));
-        return ip === "::1" || ip === "::" || ip.startsWith("fc") || ip.startsWith("fd") || ip.startsWith("fe80:");
-    }
-    return true;
+    if (!family) return true;
+    return blockedNewsImportIps.check(address, family === 4 ? "ipv4" : "ipv6");
 }
 
-async function safeLookup(hostname, options, callback) {
+function safeLookup(hostname, options, callback) {
+    const lookupOptions = typeof options === "function" ? {} : (options || {});
     const done = typeof options === "function" ? options : callback;
-    const family = typeof options === "object" && options.family ? options.family : 0;
-    try {
-        const records = await dns.promises.lookup(hostname, { all: true, verbatim: true, family });
-        const publicRecord = records.find((record) => !isPrivateIp(record.address));
-        if (!publicRecord) return done(new Error("Host URL mengarah ke jaringan privat atau internal"));
-        return done(null, publicRecord.address, publicRecord.family);
-    } catch (err) {
-        return done(new Error("Hostname URL tidak dapat diverifikasi"));
-    }
+    if (typeof done !== "function") throw new TypeError("DNS lookup callback tidak tersedia");
+
+    // Selalu ambil IPv4 dan IPv6 terlebih dahulu. Ini mencegah kegagalan jika
+    // salah satu family diblokir atau tidak tersedia, lalu family lainnya tetap
+    // dapat digunakan oleh Axios/Node.
+    dns.lookup(hostname, { all: true, verbatim: true, family: 0 }, (dnsError, records) => {
+        if (dnsError) return done(dnsError); // pertahankan ENOTFOUND, EAI_AGAIN, dll.
+
+        const publicRecords = (records || []).filter((record) => record && record.address && !isBlockedNewsImportIp(record.address));
+        if (!publicRecords.length) {
+            const error = new Error("Host URL mengarah ke alamat privat, loopback, link-local, multicast, atau reserved");
+            error.code = "EHOSTUNREACH";
+            return done(error);
+        }
+
+        const preferredFamily = Number(lookupOptions.family) || 0;
+        const orderedRecords = preferredFamily
+            ? [...publicRecords.filter((record) => record.family === preferredFamily), ...publicRecords.filter((record) => record.family !== preferredFamily)]
+            : publicRecords;
+
+        // Node mengirim options.all=true pada beberapa jalur Agent. Pada mode
+        // ini callback WAJIB menerima array records, bukan address tunggal.
+        if (lookupOptions.all) return done(null, orderedRecords);
+
+        const selected = orderedRecords[0];
+        if (!selected || !selected.address) {
+            const error = new Error("DNS tidak menghasilkan alamat publik yang valid");
+            error.code = "ENOTFOUND";
+            return done(error);
+        }
+        return done(null, selected.address, selected.family);
+    });
 }
 
 const safeHttpAgent = new http.Agent({ keepAlive: false, lookup: safeLookup });
