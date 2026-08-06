@@ -3968,3 +3968,26 @@ async function deleteKnowledge(id) {
     }
 }
 
+async function reseedKnowledgeBase() {
+    const seedBtn = document.getElementById("btnAutoSeedKnowledge");
+    if (!confirm("Otomatis generate Knowledge Base dari data produk, topup, promo, & informasi toko saat ini?")) return;
+
+    try {
+        if (seedBtn) { seedBtn.disabled = true; seedBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generating...'; }
+        console.log("🪄 Auto-generating RAG Knowledge Base...");
+
+        const res = await apiFetch("/ai/knowledge/reseed", { method: "POST" });
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok) throw new Error(json.message || "Gagal auto-generate knowledge base");
+
+        showToast(json.message || "Berhasil men-generate Knowledge Base otomatis!");
+        loadKnowledgeBase();
+    } catch (err) {
+        console.error("❌ Error reseeding Knowledge Base:", err);
+        showToast(err.message, true);
+    } finally {
+        if (seedBtn) { seedBtn.disabled = false; seedBtn.innerHTML = '<i class="bi bi-magic me-1"></i> Auto-Generate Knowledge'; }
+    }
+}
+

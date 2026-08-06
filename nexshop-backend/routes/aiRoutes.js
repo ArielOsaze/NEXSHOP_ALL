@@ -10,6 +10,7 @@ router.post("/chat", optionalAuthMiddleware, aiController.chat);
 // Admin Knowledge Base CRUD Endpoints
 router.get("/knowledge", authMiddleware, aiController.getKnowledgeBase);
 router.post("/knowledge", authMiddleware, aiController.createKnowledgeBase);
+router.post("/knowledge/reseed", authMiddleware, aiController.reseedKnowledgeBase);
 router.put("/knowledge/:id", authMiddleware, aiController.updateKnowledgeBase);
 router.delete("/knowledge/:id", authMiddleware, aiController.deleteKnowledgeBase);
 

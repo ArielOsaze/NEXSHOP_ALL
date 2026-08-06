@@ -15,11 +15,57 @@ INFORMASI UTAMA NEXSHOP:
 - Game yang Didukung: Mobile Legends (MLBB), Free Fire, PUBG Mobile, Genshin Impact, Valorant, Roblox, Steam Wallet Code, Xbox Game Pass, PlayStation Network (PSN), EA Sports FC, Honor of Kings, Call of Duty Mobile.
 `;
 
+// Smart Query Preprocessor & Synonym Mapping (Toleransi Typo & Abstraksi Istilah)
+function normalizeAndExpandQuery(query) {
+    if (!query) return { raw: "", tokens: [], expandedTerms: [] };
+
+    let q = String(query).toLowerCase().trim();
+    // Normalisasi spasi dan tanda baca
+    q = q.replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
+
+    const synonymMap = [
+        { terms: ["ml", "mlbb", "mobile legend", "mobile legends", "mobilelegend"], expanded: ["mobile legends", "mlbb", "diamond ml"] },
+        { terms: ["ff", "freefire", "free fire"], expanded: ["free fire", "ff", "diamond ff"] },
+        { terms: ["pubg", "pubgm", "pubg mobile", "uc pubg"], expanded: ["pubg mobile", "uc pubg"] },
+        { terms: ["val", "valorant", "vp", "valorant point"], expanded: ["valorant", "vp", "points"] },
+        { terms: ["xgp", "gampass", "gamepas", "game pass", "xbox pass", "xbox game pass"], expanded: ["xbox game pass", "xbox", "game pass"] },
+        { terms: ["steam", "steam wallet", "voucher steam"], expanded: ["steam wallet", "steam code"] },
+        { terms: ["genshin", "primogem", "welkin"], expanded: ["genshin impact", "primogems"] },
+        { terms: ["roblox", "robux"], expanded: ["roblox", "robux"] },
+        { terms: ["promo", "diskon", "voucher", "kupon", "potongan"], expanded: ["promo", "voucher", "diskon"] },
+        { terms: ["bayar", "pembayaran", "qris", "bank", "va", "transfer"], expanded: ["pembayaran", "qris", "virtual account"] },
+        { terms: ["garansi", "refund", "batal", "kembali uang"], expanded: ["refund", "garansi"] },
+        { terms: ["kontak", "admin", "cs", "wa", "whatsapp"], expanded: ["whatsapp", "contact", "support"] }
+    ];
+
+    const tokens = q.split(" ");
+    const expandedTerms = new Set([q]);
+
+    synonymMap.forEach(item => {
+        const matches = item.terms.some(t => q.includes(t) || tokens.includes(t));
+        if (matches) {
+            item.expanded.forEach(exp => expandedTerms.add(exp));
+        }
+    });
+
+    return {
+        raw: q,
+        tokens,
+        expandedTerms: Array.from(expandedTerms)
+    };
+}
+
 // RAG (Retrieval-Augmented Generation) Helper: Cari konteks relevan di DB lokal secara real-time
 async function retrieveContext(query, user) {
-    const qLower = String(query || "").toLowerCase().trim();
+    const { raw: qLower, expandedTerms } = normalizeAndExpandQuery(query);
     const contextLines = [NEXSHOP_STORE_KNOWLEDGE];
     const suggestedCards = [];
+
+    const isTermMatched = (text) => {
+        if (!text) return false;
+        const txtLower = String(text).toLowerCase();
+        return expandedTerms.some(term => txtLower.includes(term));
+    };
 
     try {
         // SELALU panggil getStoreSettings({ fresh: true }) agar jika admin baru mengganti FAQ/Syarat/Kontak, AI langsung menggunakannya!
@@ -40,7 +86,7 @@ async function retrieveContext(query, user) {
         // Search Products (physical / digital)
         const { data: products } = await supabase.from("products").select("id, name, price, strike_price, sold, category, is_flash_sale, badges").limit(30);
         if (products && products.length > 0) {
-            const matchedProducts = products.filter(p => p.name.toLowerCase().includes(qLower) || (p.category && p.category.toLowerCase().includes(qLower)) || qLower.includes("produk") || qLower.includes("murah") || qLower.includes("laris"));
+            const matchedProducts = products.filter(p => isTermMatched(p.name) || isTermMatched(p.category) || qLower.includes("produk") || qLower.includes("murah") || qLower.includes("laris"));
             if (matchedProducts.length > 0) {
                 contextLines.push(`Katalog Produk Terkait: ` + matchedProducts.map(p => `${p.name} - Harga: Rp${Number(p.price).toLocaleString('id-ID')}${p.is_flash_sale ? ' [FLASH SALE]' : ''} (${p.sold || 0} terjual)`).slice(0, 5).join("; "));
                 matchedProducts.slice(0, 3).forEach(p => {
@@ -59,7 +105,7 @@ async function retrieveContext(query, user) {
         // Search Topup Products
         const { data: topups } = await supabase.from("topup_products").select("id, kode_produk, nama, kategori, harga_jual, is_active").eq("is_active", true).limit(40);
         if (topups && topups.length > 0) {
-            const matchedTopups = topups.filter(t => t.nama.toLowerCase().includes(qLower) || (t.kategori && t.kategori.toLowerCase().includes(qLower)) || qLower.includes("topup") || qLower.includes("diamond") || qLower.includes("ml") || qLower.includes("ff") || qLower.includes("pubg"));
+            const matchedTopups = topups.filter(t => isTermMatched(t.nama) || isTermMatched(t.kategori) || qLower.includes("topup") || qLower.includes("diamond"));
             if (matchedTopups.length > 0) {
                 contextLines.push(`Layanan Topup Diamond Terkait: ` + matchedTopups.map(t => `${t.kategori} - ${t.nama}: Rp${Number(t.harga_jual).toLocaleString('id-ID')}`).slice(0, 6).join("; "));
             }
@@ -68,7 +114,7 @@ async function retrieveContext(query, user) {
         // Search Gaming News
         const { data: news } = await supabase.from("gaming_news").select("id, title, summary, source_name, source_url").eq("is_active", true).limit(10);
         if (news && news.length > 0) {
-            const matchedNews = news.filter(n => n.title.toLowerCase().includes(qLower) || (n.summary && n.summary.toLowerCase().includes(qLower)) || qLower.includes("berita") || qLower.includes("news") || qLower.includes("artikel"));
+            const matchedNews = news.filter(n => isTermMatched(n.title) || isTermMatched(n.summary) || qLower.includes("berita") || qLower.includes("news") || qLower.includes("artikel"));
             if (matchedNews.length > 0) {
                 contextLines.push(`Berita Gaming Terbaru: ` + matchedNews.map(n => `${n.title} (${n.source_name || 'Publisher'}): ${n.summary.slice(0, 100)}...`).slice(0, 3).join("; "));
             }
@@ -95,16 +141,16 @@ async function retrieveContext(query, user) {
             const { data: kbItems } = await supabase.from("knowledge_base").select("id, title, category, keywords, content").eq("status", "active").order("priority", { ascending: false }).limit(20);
             const activeKbList = (kbItems && kbItems.length > 0) ? kbItems : inMemoryKnowledgeBase.filter(k => k.status === 'active');
             const matchedKb = activeKbList.filter(k => 
-                k.title.toLowerCase().includes(qLower) || 
-                (k.keywords && k.keywords.toLowerCase().includes(qLower)) ||
-                (k.content && k.content.toLowerCase().includes(qLower)) ||
-                (k.category && k.category.toLowerCase().includes(qLower))
+                isTermMatched(k.title) || 
+                isTermMatched(k.keywords) || 
+                isTermMatched(k.content) || 
+                isTermMatched(k.category)
             );
             if (matchedKb.length > 0) {
                 contextLines.push(`Knowledge Base Terkait: ` + matchedKb.map(k => `[${k.category || 'Umum'}] ${k.title}: ${k.content}`).slice(0, 4).join("\n"));
             }
         } catch (e) {
-            const matchedKb = inMemoryKnowledgeBase.filter(k => k.status === 'active' && (k.title.toLowerCase().includes(qLower) || (k.keywords && k.keywords.toLowerCase().includes(qLower))));
+            const matchedKb = inMemoryKnowledgeBase.filter(k => k.status === 'active' && (isTermMatched(k.title) || isTermMatched(k.keywords)));
             if (matchedKb.length > 0) {
                 contextLines.push(`Knowledge Base Terkait: ` + matchedKb.map(k => `[${k.category || 'Umum'}] ${k.title}: ${k.content}`).slice(0, 4).join("\n"));
             }
@@ -205,22 +251,27 @@ ${contextText || "Tidak ada informasi khusus di database."}`;
         }
 
         // Smart Intent Fallback RAG Engine (Memastikan 100% pertanyaan umum NexShop terjawab)
+        const { raw: qNorm, expandedTerms } = normalizeAndExpandQuery(q);
+        const hasTerm = (t) => expandedTerms.some(term => term.includes(t) || qNorm.includes(t));
+
         let fallbackReply = userName ? `Halo ${userName} 👋 ` : `Halo 👋 `;
 
-        if (qLower.includes("apa itu nexshop") || qLower.includes("tentang nexshop") || qLower.includes("kelebihan") || qLower.includes("kenapa beli") || qLower.includes("aman")) {
+        if (hasTerm("xbox") || hasTerm("game pass") || hasTerm("xgp")) {
+            fallbackReply += "Untuk membeli **Xbox Game Pass** di NexShop:\n1. Masuk ke halaman **Produk / Topup**.\n2. Pilih kategori **Xbox Game Pass**.\n3. Pilih durasi langganan yang diinginkan.\n4. Lakukan pembayaran via QRIS / E-Wallet / VA Bank.\n5. Kode lisensi / akses Game Pass akan langsung dikirimkan!";
+        } else if (hasTerm("steam") || hasTerm("steam wallet")) {
+            fallbackReply += "Untuk membeli **Steam Wallet Code** di NexShop:\n1. Pilih nominal voucher Steam Wallet.\n2. Selesaikan pembayaran otomatis.\n3. Kode voucher akan tampil dan dapat di-redeem langsung di akun Steam Anda!";
+        } else if (hasTerm("apa itu nexshop") || hasTerm("tentang nexshop") || hasTerm("kelebihan") || hasTerm("kenapa beli") || hasTerm("aman")) {
             fallbackReply += "**NexShop** adalah platform marketplace gaming 24/7 resmi di Indonesia.\n\n✨ **Keunggulan NexShop:**\n• Process Instant 1-3 detik otomatis tanpa antri.\n• 100% Legal & Garansi Aman.\n• Harga Grosir Termurah.\n• Pembayaran Lengkap (QRIS, E-Wallet, VA Bank, KK).";
-        } else if (qLower.includes("metode pembayaran") || qLower.includes("bayar lewat apa") || qLower.includes("pembayaran")) {
+        } else if (hasTerm("pembayaran") || hasTerm("bayar") || hasTerm("qris") || hasTerm("va")) {
             fallbackReply += "NexShop mendukung metode pembayaran yang lengkap:\n• **QRIS**: DANA, OVO, GoPay, ShopeePay, LinkAja.\n• **Virtual Account**: BCA, Mandiri, BRI, BNI, Permata.\n• **Kartu Kredit / Debit**.\n\nPembayaran diverifikasi otomatis 24 jam non-stop!";
-        } else if (qLower.includes("topup") || qLower.includes("cara topup") || qLower.includes("ml") || qLower.includes("ff") || qLower.includes("diamond")) {
+        } else if (hasTerm("topup") || hasTerm("ml") || hasTerm("ff") || hasTerm("pubg") || hasTerm("valorant")) {
             fallbackReply += "Cara topup diamond game di NexShop sangat praktis:\n1. Buka tab **Topup** di menu atas.\n2. Pilih game (MLBB, Free Fire, PUBG, Valorant, dll).\n3. Masukkan **User ID** & **Zone ID** kamu.\n4. Pilih nominal diamond & metode pembayaran.\n5. Selesaikan pembayaran, item otomatis masuk dalam 1-3 detik!";
-        } else if (qLower.includes("voucher") || qLower.includes("promo") || qLower.includes("redeem") || qLower.includes("diskon")) {
+        } else if (hasTerm("voucher") || hasTerm("promo") || hasTerm("diskon")) {
             fallbackReply += "Untuk mengklaim diskon:\n1. Gunakan kode promo seperti **NEXPROMO** di halaman Checkout.\n2. Masukkan kode pada kolom **Kode Promo** sebelum bayar untuk pemotongan harga otomatis.";
-        } else if (qLower.includes("refund") || qLower.includes("garansi") || qLower.includes("batal")) {
+        } else if (hasTerm("refund") || hasTerm("garansi")) {
             fallbackReply += "NexShop memberikan **Garansi 100% Uang Kembali** apabila transaksi gagal atau stok habis dalam 24 jam. Hubungi CS WhatsApp kami dengan menyertakan Nomor Order ID untuk klaim refund.";
-        } else if (qLower.includes("admin") || qLower.includes("cs") || qLower.includes("kontak") || qLower.includes("hubungi") || qLower.includes("wa")) {
+        } else if (hasTerm("whatsapp") || hasTerm("contact") || hasTerm("support")) {
             fallbackReply += "Hubungi Tim Customer Service NexShop 24/7 via:\n• **WhatsApp**: 6287792634063\n• **Email**: support@nexshop.cloud";
-        } else if (qLower.includes("game") || qLower.includes("kategori")) {
-            fallbackReply += "Game populer yang tersedia di NexShop:\n🎮 Mobile Legends, Free Fire, PUBG Mobile, Genshin Impact, Valorant, Roblox, Steam Wallet, Xbox Game Pass, & PSN.";
         } else {
             fallbackReply += "Saya adalah **NexBot**, asisten virtual resmi NexShop. Ada yang bisa saya bantu mengenai produk game, topup diamond, promo, atau status pesanan kamu hari ini?";
         }
@@ -339,3 +390,124 @@ exports.deleteKnowledgeBase = async (req, res) => {
         res.json({ message: "Knowledge berhasil dihapus" });
     }
 };
+
+// Admin Controller: Auto Knowledge Seeder & Rebuilder
+exports.reseedKnowledgeBase = async (req, res) => {
+    try {
+        const generatedItems = [];
+
+        // 1. Seed Store Info & Policies
+        const settings = await getStoreSettings({ fresh: true });
+        if (settings) {
+            generatedItems.push({
+                title: "Tentang NexShop & Keunggulan",
+                category: "Store Info",
+                keywords: "nexshop, tentang nexshop, kelebihan, keunggulan, aman, legal, terpercaya",
+                content: `NexShop adalah platform marketplace gaming 24/7 resmi di Indonesia. Layanan instant 1-3 detik, garansi 100% legal & aman, harga grosir termurah, dan dukungan pembayaran lengkap.`,
+                priority: 10,
+                status: "active"
+            });
+            if (settings.faq_content) {
+                generatedItems.push({
+                    title: "FAQ & Pertanyaan Umum",
+                    category: "FAQ",
+                    keywords: "faq, tanya jawab, pertanyaan, cara beli, cara bayar",
+                    content: settings.faq_content,
+                    priority: 9,
+                    status: "active"
+                });
+            }
+            if (settings.refund_content) {
+                generatedItems.push({
+                    title: "Kebijakan Garansi & Refund",
+                    category: "Policy",
+                    keywords: "garansi, refund, pengembalian dana, batal, komplain, cs",
+                    content: settings.refund_content,
+                    priority: 9,
+                    status: "active"
+                });
+            }
+        }
+
+        // 2. Seed Products
+        const { data: products } = await supabase.from("products").select("name, category, price, description").limit(20);
+        if (products && products.length > 0) {
+            products.forEach(p => {
+                let kw = `${p.name.toLowerCase()}, ${p.category ? p.category.toLowerCase() : ''}`;
+                if (p.name.toLowerCase().includes("xbox")) {
+                    kw += ", gamepass, game pass, gampass, gamepas, xgp, xbox pass, ultimate";
+                } else if (p.name.toLowerCase().includes("steam")) {
+                    kw += ", steam wallet, voucher steam, steam code";
+                }
+                generatedItems.push({
+                    title: `Panduan Produk: ${p.name}`,
+                    category: p.category || "Produk",
+                    keywords: kw,
+                    content: `Produk ${p.name} tersedia di NexShop dengan harga Rp${Number(p.price).toLocaleString('id-ID')}. ${p.description || 'Pembelian otomatis instant 24/7.'}`,
+                    priority: 8,
+                    status: "active"
+                });
+            });
+        }
+
+        // 3. Seed Topup Items
+        const { data: topups } = await supabase.from("topup_products").select("kategori, nama, harga_jual").eq("is_active", true).limit(20);
+        if (topups && topups.length > 0) {
+            const categories = Array.from(new Set(topups.map(t => t.kategori)));
+            categories.forEach(cat => {
+                let kw = `${cat.toLowerCase()}, topup ${cat.toLowerCase()}`;
+                if (cat.toLowerCase().includes("mobile legend")) kw += ", ml, mlbb, diamond ml";
+                if (cat.toLowerCase().includes("free fire")) kw += ", ff, diamond ff";
+                if (cat.toLowerCase().includes("pubg")) kw += ", pubgm, uc pubg";
+
+                generatedItems.push({
+                    title: `Panduan Topup: ${cat}`,
+                    category: "Topup Guide",
+                    keywords: kw,
+                    content: `Layanan topup instant ${cat} di NexShop. Masukkan User ID & Zone ID, pilih nominal item, dan selesaikan pembayaran. Proses otomatis 1-3 detik.`,
+                    priority: 8,
+                    status: "active"
+                });
+            });
+        }
+
+        // 4. Seed Promos
+        const { data: promos } = await supabase.from("promo_codes").select("code, discount_value, description").eq("is_active", true).limit(10);
+        if (promos && promos.length > 0) {
+            promos.forEach(pr => {
+                generatedItems.push({
+                    title: `Kode Promo & Voucher: ${pr.code}`,
+                    category: "Promo",
+                    keywords: `${pr.code.toLowerCase()}, promo, voucher, diskon, kupon`,
+                    content: `Gunakan kode promo [${pr.code}] di halaman Checkout untuk mendapatkan diskon tambahan. ${pr.description || ''}`,
+                    priority: 7,
+                    status: "active"
+                });
+            });
+        }
+
+        // Upsert to DB or Memory
+        let savedCount = 0;
+        try {
+            const { data, error } = await supabase.from("knowledge_base").insert(generatedItems).select();
+            if (!error && data) {
+                savedCount = data.length;
+            } else {
+                inMemoryKnowledgeBase = [...generatedItems, ...inMemoryKnowledgeBase];
+                savedCount = generatedItems.length;
+            }
+        } catch (e) {
+            inMemoryKnowledgeBase = [...generatedItems, ...inMemoryKnowledgeBase];
+            savedCount = generatedItems.length;
+        }
+
+        res.json({
+            message: `Berhasil men-generate ${savedCount} entri Knowledge Base otomatis dari data NexShop!`,
+            count: savedCount
+        });
+    } catch (err) {
+        console.error("❌ Error reseeding knowledge base:", err);
+        res.status(500).json({ message: "Gagal men-generate Knowledge Base otomatis: " + err.message });
+    }
+};
+
