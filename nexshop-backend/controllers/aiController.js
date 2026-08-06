@@ -240,38 +240,118 @@ async function retrieveContext(query, user) {
     };
 }
 
-// MAIN RAG AI CHAT CONTROLLER WITH SMART INTENT ROUTING
+// Helper Simpan Percakapan ke Supabase (ai_conversations / ai_conversation_memory)
+async function saveConversationMemoryRecord({ userId, sessionId, role, message, intent, contextText }) {
+    console.log(`💾 [AI MEMORY LOG] Saving Conversation Record (Role: ${role}, Session: ${sessionId})...`);
+    const payload = {
+        user_id: userId || null,
+        session_id: String(sessionId || 'sess-' + Date.now()),
+        role: String(role),
+        message: String(message),
+        intent: intent || 'General',
+        context: contextText ? { summary: contextText.slice(0, 300) } : {},
+        created_at: new Date().toISOString()
+    };
+
+    try {
+        const { data, error } = await supabase.from("ai_conversations").insert([payload]).select().single();
+        if (error) {
+            // Try fallback table name ai_conversation_memory
+            const fallbackRes = await supabase.from("ai_conversation_memory").insert([payload]).select().single();
+            if (fallbackRes.error) {
+                console.error("❌ [AI MEMORY LOG] Conversation Failed to Save:", error.message || fallbackRes.error.message);
+                return null;
+            }
+            console.log("✅ [AI MEMORY LOG] Conversation Saved to ai_conversation_memory table!");
+            return fallbackRes.data;
+        }
+        console.log("✅ [AI MEMORY LOG] Conversation Saved to ai_conversations table!");
+        return data;
+    } catch (err) {
+        console.error("❌ [AI MEMORY LOG] Conversation Failed to Save (Exception):", err.message);
+        return null;
+    }
+}
+
+// Helper Update Memori User ke Supabase (ai_user_memories / ai_user_memory)
+async function saveOrUpdateUserMemoryRecord(user, query, intent) {
+    if (!user || (!user.id && !user.email)) return;
+    console.log(`👤 [AI MEMORY LOG] Updating User Memory for ${user.fullname || user.email}...`);
+
+    const qLower = (query || "").toLowerCase();
+    let favGame = null;
+    if (qLower.includes("ml") || qLower.includes("mobile legend")) favGame = "Mobile Legends";
+    else if (qLower.includes("ff") || qLower.includes("free fire")) favGame = "Free Fire";
+    else if (qLower.includes("pubg")) favGame = "PUBG Mobile";
+    else if (qLower.includes("valorant")) favGame = "Valorant";
+    else if (qLower.includes("xbox") || qLower.includes("game pass")) favGame = "Xbox Game Pass";
+
+    const payload = {
+        user_id: user.id || null,
+        favorite_game: favGame,
+        last_seen_at: new Date().toISOString(),
+        custom_preferences: { last_query: query, last_intent: intent }
+    };
+
+    try {
+        const { error } = await supabase.from("ai_user_memories").upsert([payload], { onConflict: "user_id" });
+        if (error) {
+            await supabase.from("ai_user_memory").upsert([payload], { onConflict: "user_id" });
+        }
+        console.log("✅ [AI MEMORY LOG] User Memory Updated Successfully!");
+    } catch (err) {
+        console.error("⚠️ [AI MEMORY LOG] User Memory Update Skipped:", err.message);
+    }
+}
+
+// MAIN RAG AI CHAT CONTROLLER WITH SMART INTENT ROUTING & AI MEMORY
 exports.chat = async (req, res) => {
-    const { message, history } = req.body;
+    const { message, history, session_id } = req.body;
     if (!message || typeof message !== "string" || !message.trim()) {
         return res.status(400).json({ message: "Pesan tidak boleh kosong" });
     }
 
     const q = message.trim();
     const user = req.user || null;
+    const activeSessionId = session_id || req.headers["x-session-id"] || "sess-" + Date.now();
 
     try {
         const { contextText, cards, intent } = await retrieveContext(q, user);
+
+        // 1. Simpan Pesan User ke Database Memory
+        saveConversationMemoryRecord({
+            userId: user?.id,
+            sessionId: activeSessionId,
+            role: "user",
+            message: q,
+            intent,
+            contextText
+        }).catch(e => console.error("Memory User Save Error:", e));
+
         const apiKeys = await getApiKeys();
         const apiKey = apiKeys.gemini_api_key || process.env.GEMINI_API_KEY || "";
         const model = apiKeys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
 
         const userName = user ? (user.fullname || user.name || "Pelanggan").split(" ")[0] : "";
         const systemPrompt = `Kamu adalah NexBot — Asisten Virtual Resmi NexShop (Marketplace Gaming & Topup Diamond).
-Tugasmu adalah membantu pelanggan menjawab pertanyaan seputar produk, topup, promo, dan cara bertransaksi dengan sopan, ramah, dan ringkas dalam Bahasa Indonesia.
+
+INSTRUKSI KETAT SINGLE SOURCE OF TRUTH (SOT):
+1. KONTEKS DATABASE NEXSHOP DI BAWAH INI ADALAH SATU-SATUNYA SUMBER FAKTA RESMI NEXSHOP.
+2. DILARANG KERAS MERANGKUM, MEMOTONG, DISINGKAT, ATAU MENGILANGKAN POIN/FAKTA DARI KONTEKS.
+3. JIKA KONTEKS BERISI DAFTAR POIN ATAU PENJELASAN (MISALNYA PERBEDAAN SHARING VS PRIVATE), TAMPILKAN SELURUH POIN SECARA LENGKAP DAN JELAS TANPA ADA YANG DIPOTONG.
+4. PERTAHANKAN ISTILAH DAN PERNYATAAN ASLI DARI KONTEKS (CONTOH: JIKA KONTEKS MENYATAKAN "TETAP MENGGUNAKAN AKUN XBOX PRIBADI", MAKA PERTAHANKAN KALIMAT TERSEBUT SECARA UTUH).
+5. DILARANG MENGARANG ATAU MENAMBAHKAN ASUMSI DILUAR KONTEKS.
 
 ${userName ? `Nama pelanggan yang sedang login: ${userName}. Sapa pengguna dengan hangat (contoh: "Halo ${userName} 👋").` : ""}
-
-ATURAN UTAMA (RAG KONTROL PENUH):
-1. Utamakan informasi dari KONTEKS DATABASE NEXSHOP di bawah ini.
-2. Jika pengguna menanyakan definisi atau perbedaan (seperti Sharing vs Private), JELASKAN DENGAN SPESIFIK dan gunakan tabel/poin perbandingan jika relevan.
-3. JIKA INFORMASI TIDAK TERSEDIA di dalam konteks dan kamu tidak yakin, JANGAN MENGARANG. Gunakan pengetahuan dasar NexShop yang tersedia dan sarankan CS WhatsApp Admin jika butuh bantuan lebih lanjut.
 
 KONTEKS DATABASE NEXSHOP:
 ${contextText || "Tidak ada informasi khusus di database."}`;
 
         console.log(`🤖 [RAG AUDIT LOG] FULL PROMPT SENT TO GEMINI:`);
         console.log(systemPrompt.slice(0, 500) + "\n... (truncated for brevity)");
+
+        let finalReplyText = "";
+        let isHandoff = false;
 
         if (apiKey) {
             try {
@@ -299,65 +379,80 @@ ${contextText || "Tidak ada informasi khusus di database."}`;
                     { timeout: 9000 }
                 );
 
-                const replyText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (replyText) {
-                    console.log(`✨ [RAG AUDIT LOG] GEMINI RESPONSE RECEIVED (${replyText.length} chars).`);
-                    return res.json({
-                        reply: replyText,
-                        cards,
-                        handoff: false
-                    });
+                finalReplyText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                if (finalReplyText) {
+                    console.log(`✨ [RAG AUDIT LOG] GEMINI RESPONSE RECEIVED (${finalReplyText.length} chars).`);
                 }
             } catch (geminiErr) {
                 console.log("⚠️ Call Gemini API gagal di NexBot Chat, memakai Smart Intent Fallback:", geminiErr.message);
             }
         }
 
-        // Smart Intent Fallback RAG Engine (Precise Intent Matching)
-        const { raw: qNorm, expandedTerms } = normalizeAndExpandQuery(q);
-        const hasTerm = (t) => expandedTerms.some(term => term.includes(t) || qNorm.includes(t));
+        // Smart Intent Fallback RAG Engine jika Gemini gagal/kosong
+        if (!finalReplyText) {
+            isHandoff = true;
+            const { raw: qNorm, expandedTerms } = normalizeAndExpandQuery(q);
+            const hasTerm = (t) => expandedTerms.some(term => term.includes(t) || qNorm.includes(t));
 
-        let fallbackReply = userName ? `Halo ${userName} 👋 ` : `Halo 👋 `;
+            let fallbackReply = userName ? `Halo ${userName} 👋 ` : `Halo 👋 `;
 
-        if (hasTerm("sharing") || hasTerm("private") || intent === "Comparison") {
-            fallbackReply += "**Perbedaan Xbox Game Pass Sharing vs Private di NexShop:**\n\n" +
-                "• **Xbox Game Pass Private**:\n" +
-                "  - Menggunakan **akun Anda sendiri** (100% Personal).\n" +
-                "  - Bebas mengganti password & email.\n" +
-                "  - Mendukung penuh EA Play (EA FC), Ubisoft Connect, & Call of Duty di PC/Xbox.\n\n" +
-                "• **Xbox Game Pass Sharing**:\n" +
-                "  - Menggunakan akun sekunder yang disediakan.\n" +
-                "  - Harga lebih ekonomis / hemat.\n" +
-                "  - Tetap dapat memainkan ratusan game Game Pass dengan aman.";
-        } else if (hasTerm("xbox") || hasTerm("game pass") || hasTerm("xgp")) {
-            fallbackReply += "Untuk membeli **Xbox Game Pass** di NexShop:\n1. Masuk ke halaman **Produk / Topup**.\n2. Pilih kategori **Xbox Game Pass**.\n3. Pilih durasi langganan (Sharing / Private).\n4. Lakukan pembayaran via QRIS / E-Wallet / VA Bank.\n5. Akses lisensi akan dikirimkan otomatis 1-3 detik!";
-        } else if (hasTerm("steam") || hasTerm("steam wallet")) {
-            fallbackReply += "Untuk membeli **Steam Wallet Code** di NexShop:\n1. Pilih nominal voucher Steam Wallet.\n2. Selesaikan pembayaran otomatis.\n3. Kode voucher akan tampil dan dapat di-redeem langsung di akun Steam Anda!";
-        } else if (hasTerm("apa itu nexshop") || hasTerm("tentang nexshop") || hasTerm("kelebihan") || hasTerm("kenapa beli") || hasTerm("aman")) {
-            fallbackReply += "**NexShop** adalah platform marketplace gaming 24/7 resmi di Indonesia.\n\n✨ **Keunggulan NexShop:**\n• Process Instant 1-3 detik otomatis tanpa antri.\n• 100% Legal & Garansi Aman.\n• Harga Grosir Termurah.\n• Pembayaran Lengkap (QRIS, E-Wallet, VA Bank, KK).";
-        } else if (hasTerm("pembayaran") || hasTerm("bayar") || hasTerm("qris") || hasTerm("va")) {
-            fallbackReply += "NexShop mendukung metode pembayaran yang lengkap:\n• **QRIS**: DANA, OVO, GoPay, ShopeePay, LinkAja.\n• **Virtual Account**: BCA, Mandiri, BRI, BNI, Permata.\n• **Kartu Kredit / Debit**.\n\nPembayaran diverifikasi otomatis 24 jam non-stop!";
-        } else if (hasTerm("topup") || hasTerm("ml") || hasTerm("ff") || hasTerm("pubg") || hasTerm("valorant")) {
-            fallbackReply += "Cara topup diamond game di NexShop sangat praktis:\n1. Buka tab **Topup** di menu atas.\n2. Pilih game (MLBB, Free Fire, PUBG, Valorant, dll).\n3. Masukkan **User ID** & **Zone ID** kamu.\n4. Pilih nominal diamond & metode pembayaran.\n5. Selesaikan pembayaran, item otomatis masuk dalam 1-3 detik!";
-        } else if (hasTerm("voucher") || hasTerm("promo") || hasTerm("diskon")) {
-            fallbackReply += "Untuk mengklaim diskon:\n1. Gunakan kode promo seperti **NEXPROMO** di halaman Checkout.\n2. Masukkan kode pada kolom **Kode Promo** sebelum bayar untuk pemotongan harga otomatis.";
-        } else if (hasTerm("refund") || hasTerm("garansi")) {
-            fallbackReply += "NexShop memberikan **Garansi 100% Uang Kembali** apabila transaksi gagal atau stok habis dalam 24 jam. Hubungi CS WhatsApp kami dengan menyertakan Nomor Order ID untuk klaim refund.";
-        } else if (hasTerm("whatsapp") || hasTerm("contact") || hasTerm("support")) {
-            fallbackReply += "Hubungi Tim Customer Service NexShop 24/7 via:\n• **WhatsApp**: 6287792634063\n• **Email**: support@nexshop.cloud";
-        } else {
-            fallbackReply += "Saya adalah **NexBot**, asisten virtual resmi NexShop. Ada yang bisa saya bantu mengenai produk game, topup diamond, promo, atau status pesanan kamu hari ini?";
+            if (hasTerm("sharing") || hasTerm("private") || intent === "Comparison") {
+                fallbackReply += "**Perbedaan Xbox Game Pass Sharing vs Private di NexShop:**\n\n" +
+                    "• **Xbox Game Pass Private**:\n" +
+                    "  - Menggunakan **akun Anda sendiri** (100% Personal).\n" +
+                    "  - Bebas mengganti password & email.\n" +
+                    "  - Mendukung penuh EA Play (EA FC), Ubisoft Connect, & Call of Duty di PC/Xbox.\n\n" +
+                    "• **Xbox Game Pass Sharing**:\n" +
+                    "  - Menggunakan akun sekunder yang disediakan.\n" +
+                    "  - Harga lebih ekonomis / hemat.\n" +
+                    "  - Tetap dapat memainkan ratusan game Game Pass dengan aman.";
+            } else if (hasTerm("xbox") || hasTerm("game pass") || hasTerm("xgp")) {
+                fallbackReply += "Untuk membeli **Xbox Game Pass** di NexShop:\n1. Masuk ke halaman **Produk / Topup**.\n2. Pilih kategori **Xbox Game Pass**.\n3. Pilih durasi langganan (Sharing / Private).\n4. Lakukan pembayaran via QRIS / E-Wallet / VA Bank.\n5. Akses lisensi akan dikirimkan otomatis 1-3 detik!";
+            } else if (hasTerm("steam") || hasTerm("steam wallet")) {
+                fallbackReply += "Untuk membeli **Steam Wallet Code** di NexShop:\n1. Pilih nominal voucher Steam Wallet.\n2. Selesaikan pembayaran otomatis.\n3. Kode voucher akan tampil dan dapat di-redeem langsung di akun Steam Anda!";
+            } else if (hasTerm("apa itu nexshop") || hasTerm("tentang nexshop") || hasTerm("kelebihan") || hasTerm("kenapa beli") || hasTerm("aman")) {
+                fallbackReply += "**NexShop** adalah platform marketplace gaming 24/7 resmi di Indonesia.\n\n✨ **Keunggulan NexShop:**\n• Process Instant 1-3 detik otomatis tanpa antri.\n• 100% Legal & Garansi Aman.\n• Harga Grosir Termurah.\n• Pembayaran Lengkap (QRIS, E-Wallet, VA Bank, KK).";
+            } else if (hasTerm("pembayaran") || hasTerm("bayar") || hasTerm("qris") || hasTerm("va")) {
+                fallbackReply += "NexShop mendukung metode pembayaran yang lengkap:\n• **QRIS**: DANA, OVO, GoPay, ShopeePay, LinkAja.\n• **Virtual Account**: BCA, Mandiri, BRI, BNI, Permata.\n• **Kartu Kredit / Debit**.\n\nPembayaran diverifikasi otomatis 24 jam non-stop!";
+            } else if (hasTerm("topup") || hasTerm("ml") || hasTerm("ff") || hasTerm("pubg") || hasTerm("valorant")) {
+                fallbackReply += "Cara topup diamond game di NexShop sangat praktis:\n1. Buka tab **Topup** di menu atas.\n2. Pilih game (MLBB, Free Fire, PUBG, Valorant, dll).\n3. Masukkan **User ID** & **Zone ID** kamu.\n4. Pilih nominal diamond & metode pembayaran.\n5. Selesaikan pembayaran, item otomatis masuk dalam 1-3 detik!";
+            } else if (hasTerm("voucher") || hasTerm("promo") || hasTerm("diskon")) {
+                fallbackReply += "Untuk mengklaim diskon:\n1. Gunakan kode promo seperti **NEXPROMO** di halaman Checkout.\n2. Masukkan kode pada kolom **Kode Promo** sebelum bayar untuk pemotongan harga otomatis.";
+            } else if (hasTerm("refund") || hasTerm("garansi")) {
+                fallbackReply += "NexShop memberikan **Garansi 100% Uang Kembali** apabila transaksi gagal atau stok habis dalam 24 jam. Hubungi CS WhatsApp kami dengan menyertakan Nomor Order ID untuk klaim refund.";
+            } else if (hasTerm("whatsapp") || hasTerm("contact") || hasTerm("support")) {
+                fallbackReply += "Hubungi Tim Customer Service NexShop 24/7 via:\n• **WhatsApp**: 6287792634063\n• **Email**: support@nexshop.cloud";
+            } else {
+                fallbackReply += "Saya adalah **NexBot**, asisten virtual resmi NexShop. Ada yang bisa saya bantu mengenai produk game, topup diamond, promo, atau status pesanan kamu hari ini?";
+            }
+            finalReplyText = fallbackReply;
+        }
+
+        // 2. Simpan Balasan Assistant ke Database Memory
+        saveConversationMemoryRecord({
+            userId: user?.id,
+            sessionId: activeSessionId,
+            role: "assistant",
+            message: finalReplyText,
+            intent,
+            contextText
+        }).catch(e => console.error("Memory Assistant Save Error:", e));
+
+        // 3. Update User Memory jika user login
+        if (user) {
+            saveOrUpdateUserMemoryRecord(user, q, intent).catch(e => console.error("User Memory Update Error:", e));
         }
 
         res.json({
-            reply: fallbackReply,
+            reply: finalReplyText,
             cards,
-            handoff: true
+            session_id: activeSessionId,
+            handoff: isHandoff
         });
 
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server Error di NexBot AI Chat" });
+        console.error("❌ Error di NexBot AI Chat:", err);
+        res.status(500).json({ message: "Server Error di NexBot AI Chat: " + err.message });
     }
 };
 

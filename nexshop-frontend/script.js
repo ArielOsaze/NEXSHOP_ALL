@@ -2713,11 +2713,18 @@ function initNexBotChat() {
             const headers = { "Content-Type": "application/json" };
             if (token) headers["Authorization"] = `Bearer ${token}`;
 
+            let sessionId = localStorage.getItem("nexbot_session_id");
+            if (!sessionId) {
+                sessionId = "sess-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
+                localStorage.setItem("nexbot_session_id", sessionId);
+            }
+
             const res = await nativeFetch(`${API_BASE}/ai/chat`, {
                 method: "POST",
                 headers,
                 body: JSON.stringify({
                     message: text,
+                    session_id: sessionId,
                     history: nexbotState.history.slice(-6)
                 })
             });
