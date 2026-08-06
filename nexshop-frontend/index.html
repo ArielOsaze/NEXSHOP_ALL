@@ -715,11 +715,11 @@
     </div>
 </div>
 
-<!-- NexBot AI Floating Chatbot Widget -->
+<!-- NexBot Floating Chatbot Widget -->
 <div class="nexbot-widget" id="nexbotWidget">
-    <button type="button" class="nexbot-float-btn" id="nexbotFloatBtn" aria-label="Tanya NexBot AI">
+    <button type="button" class="nexbot-float-btn" id="nexbotFloatBtn" aria-label="Tanya NexBot">
         <span class="nexbot-float-btn-icon"><i class="fa-solid fa-robot"></i></span>
-        <span class="nexbot-float-btn-label">Tanya AI</span>
+        <span class="nexbot-float-btn-label">Tanya NexBot</span>
     </button>
 
     <div class="nexbot-window hidden" id="nexbotWindow">
@@ -727,32 +727,39 @@
             <div class="nexbot-header-info">
                 <div class="nexbot-avatar"><i class="fa-solid fa-robot"></i></div>
                 <div>
-                    <strong>NexBot AI <span class="nexbot-badge">Official</span></strong>
-                    <div class="nexbot-status"><span class="nexbot-status-dot"></span> CS Gaming Real-time</div>
+                    <strong>NexBot <span class="nexbot-badge">Official</span></strong>
+                    <div class="nexbot-status"><span class="nexbot-status-dot"></span> Online 24/7</div>
                 </div>
             </div>
-            <button type="button" class="nexbot-close-btn" id="nexbotCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="nexbot-close-btn" id="nexbotCloseBtn" aria-label="Tutup NexBot"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
         <div class="nexbot-body" id="nexbotBody">
             <div class="nexbot-msg nexbot-msg--bot">
-                <div class="nexbot-msg-content">
-                    Halo 👋 Saya <strong>NexBot AI</strong>.<br>Ada yang bisa saya bantu mengenai produk game, topup, voucher, atau status pesanan kamu hari ini?
+                <div class="nexbot-msg-content" id="nexbotWelcomeContent">
+                    Halo 👋 Saya <strong>NexBot</strong>, asisten virtual resmi NexShop.<br><br>
+                    Saya dapat membantu Anda mengenai:<br>
+                    🎮 Produk Game<br>
+                    💎 Topup Diamond<br>
+                    🎁 Voucher &amp; Diskon<br>
+                    💳 Pembayaran<br>
+                    📦 Status Pesanan<br>
+                    ❓ FAQ &amp; Bantuan
                 </div>
             </div>
 
             <div class="nexbot-quick-pills">
-                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Cara Topup ML')">Cara Topup ML</button>
-                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Promo Hari Ini')">Promo Hari Ini</button>
-                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Produk Terlaris')">Produk Terlaris</button>
-                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Status Pesanan Saya')">Status Pesanan Saya</button>
-                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Hubungi Admin')">Hubungi Admin</button>
+                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Cara Topup ML')"><i class="fa-solid fa-gamepad"></i> Cara Topup</button>
+                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Promo Hari Ini')"><i class="fa-solid fa-gift"></i> Promo Hari Ini</button>
+                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Produk Terlaris')"><i class="fa-solid fa-fire"></i> Terlaris</button>
+                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Status Pesanan Saya')"><i class="fa-solid fa-box"></i> Pesanan Saya</button>
+                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Hubungi Admin')"><i class="fa-brands fa-whatsapp"></i> Hubungi CS</button>
             </div>
         </div>
 
         <div class="nexbot-footer">
             <form id="nexbotForm" class="nexbot-input-row">
-                <input type="text" id="nexbotInput" placeholder="Ketik pertanyaan kamu di sini..." autocomplete="off">
+                <input type="text" id="nexbotInput" placeholder="Tanyakan apa saja kepada NexBot..." autocomplete="off">
                 <button type="submit" id="nexbotSendBtn" aria-label="Kirim"><i class="fa-solid fa-paper-plane"></i></button>
             </form>
         </div>

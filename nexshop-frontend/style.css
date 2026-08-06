@@ -1777,36 +1777,63 @@ input::placeholder{ color:var(--text-dim); }
 .nexbot-float-btn:hover{ transform:scale(1.05); box-shadow:0 12px 30px rgba(240,57,154,0.55); }
 .nexbot-float-btn-icon{ font-size:18px; }
 
-.nexbot-window{ position:absolute; bottom:64px; right:0; width:360px; height:520px; background:var(--bg-card); border:1px solid var(--line); border-radius:20px; box-shadow:0 16px 40px rgba(0,0,0,0.5); display:flex; flex-direction:column; overflow:hidden; animation:nexbot-pop 0.25s ease-out; }
+.nexbot-window{ position:absolute; bottom:64px; right:0; width:370px; height:530px; background:#0d111e; border:1px solid var(--line); border-radius:20px; box-shadow:0 20px 50px rgba(0,0,0,0.65); display:flex; flex-direction:column; overflow:hidden; animation:nexbot-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1); opacity:1!important; }
+:root[data-theme="light"] .nexbot-window{ background:#ffffff; box-shadow:0 20px 40px rgba(15,23,42,0.15); }
+
 @keyframes nexbot-pop{ from{ opacity:0; transform:translateY(20px) scale(0.95); } to{ opacity:1; transform:translateY(0) scale(1); } }
 
-.nexbot-header{ padding:14px 16px; background:linear-gradient(135deg, var(--bg-void), var(--bg-panel-2)); border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; }
+.nexbot-header{ padding:14px 16px; background:#13192b; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; }
+:root[data-theme="light"] .nexbot-header{ background:#f8fafc; }
 .nexbot-header-info{ display:flex; align-items:center; gap:10px; }
 .nexbot-avatar{ width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, var(--violet-2), var(--cyan)); display:flex; align-items:center; justify-content:center; color:#fff; font-size:16px; }
-.nexbot-badge{ font-size:9px; background:var(--violet); color:#fff; padding:2px 6px; border-radius:4px; margin-left:4px; }
-.nexbot-status{ font-size:10px; color:var(--text-muted); display:flex; align-items:center; gap:4px; }
-.nexbot-status-dot{ width:6px; height:6px; border-radius:50%; background:#22c55e; }
-.nexbot-close-btn{ background:none; border:none; color:var(--text-muted); font-size:16px; cursor:pointer; padding:4px; }
+.nexbot-badge{ font-size:9px; background:var(--violet); color:#fff; padding:2px 6px; border-radius:4px; margin-left:4px; font-weight:700; }
+.nexbot-status{ font-size:10px; color:var(--text-muted); display:flex; align-items:center; gap:4px; margin-top:2px; }
+.nexbot-status-dot{ width:6px; height:6px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px #22c55e; }
+.nexbot-close-btn{ background:none; border:none; color:var(--text-muted); font-size:16px; cursor:pointer; padding:4px; transition:color 0.15s; }
+.nexbot-close-btn:hover{ color:var(--text); }
 
-.nexbot-body{ flex:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
-.nexbot-msg{ display:flex; flex-direction:column; max-width:85%; }
+.nexbot-body{ flex:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; background:#0b0e1a; }
+:root[data-theme="light"] .nexbot-body{ background:#f1f5f9; }
+
+/* Custom Scrollbar NexBot Body */
+.nexbot-body::-webkit-scrollbar{ width:5px; }
+.nexbot-body::-webkit-scrollbar-track{ background:transparent; }
+.nexbot-body::-webkit-scrollbar-thumb{ background:rgba(147,160,199,0.3); border-radius:4px; }
+.nexbot-body::-webkit-scrollbar-thumb:hover{ background:var(--violet); }
+
+.nexbot-msg{ display:flex; flex-direction:column; max-width:88%; animation:nexbot-fade-in 0.2s ease-out; }
+@keyframes nexbot-fade-in{ from{ opacity:0; transform:translateY(6px); } to{ opacity:1; transform:translateY(0); } }
+
 .nexbot-msg--bot{ align-self:flex-start; }
 .nexbot-msg--user{ align-self:flex-end; }
 
-.nexbot-msg-content{ padding:10px 14px; border-radius:14px; font-size:13px; line-height:1.45; word-break:break-word; }
-.nexbot-msg--bot .nexbot-msg-content{ background:var(--bg-panel-2); color:var(--text); border:1px solid var(--line); border-top-left-radius:2px; }
-.nexbot-msg--user .nexbot-msg-content{ background:var(--violet-2); color:#fff; border-top-right-radius:2px; }
+.nexbot-msg-content{ padding:11px 15px; border-radius:16px; font-size:13px; line-height:1.5; word-break:break-word; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+.nexbot-msg--bot .nexbot-msg-content{ background:#161d31; color:var(--text); border:1px solid var(--line); border-top-left-radius:3px; }
+:root[data-theme="light"] .nexbot-msg--bot .nexbot-msg-content{ background:#ffffff; color:#0f172a; border-color:#e2e8f0; }
 
-.nexbot-card-suggest{ background:var(--bg-panel); border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin-top:6px; display:flex; align-items:center; justify-content:space-between; font-size:12px; }
+.nexbot-msg--user .nexbot-msg-content{ background:linear-gradient(135deg, var(--violet-2), var(--violet)); color:#fff; border-top-right-radius:3px; }
 
-.nexbot-quick-pills{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-.nexbot-pill{ font-size:11px; padding:5px 10px; border-radius:12px; background:var(--bg-panel-2); border:1px solid var(--line); color:var(--text); cursor:pointer; transition:.15s; }
-.nexbot-pill:hover{ background:var(--violet-2); color:#fff; border-color:var(--violet-2); }
+.nexbot-msg-content strong{ font-weight:700; color:var(--cyan); }
+:root[data-theme="light"] .nexbot-msg-content strong{ color:var(--violet); }
+.nexbot-msg-content ul, .nexbot-msg-content ol{ margin:6px 0 6px 18px; padding:0; }
+.nexbot-msg-content li{ margin-bottom:3px; }
 
-.nexbot-footer{ padding:10px 12px; border-top:1px solid var(--line); background:var(--bg-panel); }
+.nexbot-card-suggest{ background:var(--bg-panel); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px; display:flex; align-items:center; justify-content:space-between; font-size:12px; box-shadow:0 4px 12px rgba(0,0,0,0.15); transition:transform 0.15s; }
+.nexbot-card-suggest:hover{ transform:translateY(-2px); }
+
+.nexbot-quick-pills{ display:flex; flex-wrap:wrap; gap:6px; margin-top:10px; }
+.nexbot-pill{ font-size:11px; padding:6px 12px; border-radius:14px; background:#161d31; border:1px solid var(--line); color:var(--text); cursor:pointer; transition:all 0.18s ease; display:inline-flex; align-items:center; gap:5px; font-weight:500; }
+:root[data-theme="light"] .nexbot-pill{ background:#ffffff; border-color:#cbd5e1; }
+.nexbot-pill:hover{ background:var(--violet-2); color:#fff; border-color:var(--violet-2); transform:translateY(-1px); box-shadow:0 4px 12px rgba(139,92,246,0.3); }
+
+.nexbot-footer{ padding:12px 14px; border-top:1px solid var(--line); background:#13192b; }
+:root[data-theme="light"] .nexbot-footer{ background:#f8fafc; }
 .nexbot-input-row{ display:flex; gap:8px; }
-.nexbot-input-row input{ flex:1; padding:8px 12px; border-radius:10px; border:1px solid var(--line); background:var(--bg-void); color:var(--text); font-size:13px; outline:none; }
-.nexbot-input-row button{ width:36px; height:36px; border-radius:10px; background:var(--violet-2); color:#fff; border:none; cursor:pointer; }
+.nexbot-input-row input{ flex:1; padding:9px 14px; border-radius:12px; border:1px solid var(--line); background:#0b0e1a; color:var(--text); font-size:13px; outline:none; transition:border-color 0.15s; }
+:root[data-theme="light"] .nexbot-input-row input{ background:#ffffff; color:#0f172a; border-color:#cbd5e1; }
+.nexbot-input-row input:focus{ border-color:var(--violet); }
+.nexbot-input-row button{ width:38px; height:38px; border-radius:12px; background:linear-gradient(135deg, var(--violet-2), var(--violet)); color:#fff; border:none; cursor:pointer; transition:transform 0.15s; }
+.nexbot-input-row button:hover{ transform:scale(1.05); }
 
 @media(max-width:480px){
     .nexbot-window{ width:calc(100vw - 32px); right:-8px; bottom:60px; height:460px; }

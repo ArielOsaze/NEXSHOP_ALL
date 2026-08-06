@@ -106,8 +106,11 @@ exports.chat = async (req, res) => {
         const apiKey = apiKeys.gemini_api_key || process.env.GEMINI_API_KEY || "";
         const model = apiKeys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
 
-        const systemPrompt = `Kamu adalah NexBot AI — Asisten Resmi NexShop (Marketplace Gaming & Topup Diamond).
+        const userName = user ? (user.fullname || user.name || "Pelanggan").split(" ")[0] : "";
+        const systemPrompt = `Kamu adalah NexBot — Asisten Virtual Resmi NexShop (Marketplace Gaming & Topup Diamond).
 Tugasmu adalah membantu pelanggan menjawab pertanyaan seputar produk, topup, promo, dan cara bertransaksi dengan sopan, ramah, dan ringkas dalam Bahasa Indonesia.
+
+${userName ? `Nama pelanggan yang sedang login: ${userName}. Sapa pengguna dengan hangat (contoh: "Halo ${userName} 👋").` : ""}
 
 ATURAN UTAMA (RAG KONTROL PENUH):
 1. Utamakan informasi dari KONTEKS DATABASE NEXSHOP di bawah ini.
@@ -124,7 +127,7 @@ ${contextText || "Tidak ada informasi khusus di database."}`;
                     {
                         contents: [
                             { role: "user", parts: [{ text: systemPrompt }] },
-                            { role: "model", parts: [{ text: "Siap, saya mengerti. Saya akan menjadi NexBot AI yang membantu sesuai konteks database NexShop." }] },
+                            { role: "model", parts: [{ text: "Siap, saya mengerti. Saya adalah NexBot, asisten virtual resmi NexShop." }] },
                             { role: "user", parts: [{ text: q }] }
                         ]
                     },
@@ -145,7 +148,7 @@ ${contextText || "Tidak ada informasi khusus di database."}`;
         }
 
         // Fallback RAG jika Gemini API Key belum ada atau kuota terlampaui
-        let fallbackReply = "Halo 👋 Saya **NexBot AI**.\n\n";
+        let fallbackReply = userName ? `Halo ${userName} 👋 Saya **NexBot**.\n\n` : `Halo 👋 Saya **NexBot**.\n\n`;
         if (q.toLowerCase().includes("topup") || q.toLowerCase().includes("ml") || q.toLowerCase().includes("diamond")) {
             fallbackReply += "Untuk melakukan topup diamond game (Mobile Legends, Free Fire, PUBG, dll):\n1. Masuk ke tab **Topup** di menu navigasi utama.\n2. Pilih game dan nominal diamond.\n3. Masukkan User ID / Zone ID kamu.\n4. Pilih metode pembayaran dan selesaikan transaksi secara otomatis!";
         } else if (q.toLowerCase().includes("promo") || q.toLowerCase().includes("voucher") || q.toLowerCase().includes("diskon")) {

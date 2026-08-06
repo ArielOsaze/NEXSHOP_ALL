@@ -2613,6 +2613,50 @@ function initMobileMenu() {
 }
 
 /* ---------- NexBot AI Floating Chatbot ---------- */
+function parseMarkdownToHtml(text) {
+    if (!text) return "";
+    let html = String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+
+    // Replace **bold** with <strong>bold</strong>
+    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    // Replace *italic* with <em>italic</em>
+    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
+    // Replace bullet list items (- item)
+    html = html.replace(/(?:^|\n)-\s+(.*)/g, "<br>• $1");
+    // Replace linebreaks
+    html = html.replace(/\n/g, "<br>");
+
+    return html;
+}
+
+function updateNexBotGreeting() {
+    const welcomeEl = document.getElementById("nexbotWelcomeContent");
+    if (!welcomeEl) return;
+
+    let userName = "";
+    if (typeof currentUser !== "undefined" && currentUser && (currentUser.name || currentUser.fullname)) {
+        userName = currentUser.name || currentUser.fullname;
+    } else {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+            try {
+                const parsed = JSON.parse(storedUser);
+                userName = parsed.name || parsed.fullname || "";
+            } catch (e) {}
+        }
+    }
+
+    const nameClean = userName.trim().split(" ")[0];
+    const greetingText = nameClean
+        ? `Halo ${escapeHtml(nameClean)} 👋<br>Selamat datang kembali di <strong>NexShop</strong>.<br><br>Saya <strong>NexBot</strong>, asisten virtual Anda. Ada yang bisa saya bantu hari ini?<br><br>🎮 Produk Game<br>💎 Topup Diamond<br>🎁 Voucher &amp; Diskon<br>💳 Pembayaran<br>📦 Status Pesanan<br>❓ FAQ &amp; Bantuan`
+        : `Halo 👋<br>Saya <strong>NexBot</strong>, asisten virtual resmi NexShop.<br><br>Saya dapat membantu Anda mengenai:<br>🎮 Produk Game<br>💎 Topup Diamond<br>🎁 Voucher &amp; Diskon<br>💳 Pembayaran<br>📦 Status Pesanan<br>❓ FAQ &amp; Bantuan`;
+
+    welcomeEl.innerHTML = greetingText;
+}
+
 function initNexBotChat() {
     const floatBtn = document.getElementById("nexbotFloatBtn");
     const closeBtn = document.getElementById("nexbotCloseBtn");
@@ -2626,6 +2670,7 @@ function initNexBotChat() {
     floatBtn.addEventListener("click", () => {
         windowEl.classList.toggle("hidden");
         if (!windowEl.classList.contains("hidden")) {
+            updateNexBotGreeting();
             input.focus();
         }
     });
@@ -2688,13 +2733,14 @@ function appendNexBotMessage(text, sender, cards = [], handoff = false) {
     const msgDiv = document.createElement("div");
     msgDiv.className = `nexbot-msg nexbot-msg--${sender}`;
 
-    let html = `<div class="nexbot-msg-content">${text.replace(/\n/g, "<br>")}</div>`;
+    const formattedContent = sender === "user" ? escapeHtml(text) : parseMarkdownToHtml(text);
+    let html = `<div class="nexbot-msg-content">${formattedContent}</div>`;
 
     if (cards && cards.length > 0) {
         cards.forEach(c => {
             html += `<div class="nexbot-card-suggest">
-                <div><strong>${c.title}</strong><br><small class="text-muted">${c.price || c.desc || ''}</small></div>
-                <a href="${c.url || '#'}">Lihat</a>
+                <div><strong>${escapeHtml(c.title || '')}</strong><br><small class="text-muted">${escapeHtml(c.price || c.desc || '')}</small></div>
+                <a href="${c.url || '#'}" class="nexbot-pill" style="margin:0; text-decoration:none;">Lihat</a>
             </div>`;
         });
     }
