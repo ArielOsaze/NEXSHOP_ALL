@@ -2642,6 +2642,24 @@ async function bootstrapApp() {
     finishInitialLoading(!completed);
 }
 
+// ── Reduced-motion: hentikan SVG SMIL animateTransform pada pita kemerdekaan ──
+(function () {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    function applyRibbonMotion(e) {
+        const anim = document.querySelector(".independence-ribbon__cloth animateTransform");
+        if (!anim) return;
+        if (e.matches) { try { anim.endElement(); } catch (_) {} }
+        else          { try { anim.beginElement(); } catch (_) {} }
+    }
+    mq.addEventListener("change", applyRibbonMotion);
+    // Jalankan sekali setelah DOM siap
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => applyRibbonMotion(mq), { once: true });
+    } else {
+        applyRibbonMotion(mq);
+    }
+})();
+
 function startApp() {
     bootstrapApp().catch(() => finishInitialLoading());
 }

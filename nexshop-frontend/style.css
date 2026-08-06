@@ -352,23 +352,14 @@ header{ position:sticky; top:0; z-index:1000; }
     -webkit-mask-image:radial-gradient(ellipse 62% 68% at center, #000 55%, transparent 100%);
     mask-image:radial-gradient(ellipse 62% 68% at center, #000 55%, transparent 100%);
 }
-.independence-ribbon__cloth{ transform-box:fill-box; will-change:transform; animation:flag-one-way-wave 2.2s linear infinite; }
-.independence-ribbon__fold{ transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-fold 3.8s ease-in-out infinite alternate; }
-.independence-ribbon__fold--2{ animation-delay:-1.9s; }
-.independence-ribbon__highlight{ fill:none; stroke:url(#independenceRibbonLight); stroke-width:3; stroke-linecap:round; opacity:.75; transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-light 3.8s ease-in-out infinite; }
+/* Gelombang pita sekarang digerakkan oleh SVG-native <animateTransform> di index.html,
+   bukan CSS translateX(%). Ini menghilangkan artefak bolak-balik yang disebabkan oleh
+   preserveAspectRatio="none" distortion pada persentase CSS. */
+.independence-ribbon__cloth{ will-change:transform; }
+.independence-ribbon__highlight{ fill:none; stroke:url(#independenceRibbonLight); stroke-width:3; stroke-linecap:round; opacity:.75; transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-light 3.8s linear infinite; }
 .independence-ribbon__highlight--2{ stroke:url(#independenceRibbonLight2); stroke-width:2.2; opacity:.55; animation-delay:-1.4s; animation-duration:4.5s; }
-/* Tiupan angin 100% SATU ARAH konstan dari kiri ke kanan (linear 60FPS, 0 pikselasi, 0 gerakan vertikal).
-   Pakai persen (bukan px) relatif ke bounding-box path (-80..400 = 480 unit) supaya pergeseran selalu
-   tepat 1 panjang gelombang (80/480 = 16.6667%) walau lebar SVG diregangkan non-uniform oleh
-   preserveAspectRatio="none" — ini yang bikin animasi lama terlihat patah/​​​​bolak-balik. */
-@keyframes flag-one-way-wave{
-    0% { transform: translateX(0%); }
-    100% { transform: translateX(16.6667%); }
-}
-/* Kilauan cahaya sutra yang mengalir mengikuti gelombang bendera dari kiri ke kanan */
-@keyframes independence-ribbon-light{ 0%{transform:translateX(-35px);opacity:.15} 50%{transform:translateX(30px);opacity:.85} 100%{transform:translateX(65px);opacity:.2} }
-/* Lipatan bayangan dinamis sesuai alur tiupan angin */
-@keyframes independence-ribbon-fold{ 0%{transform:scaleY(1);opacity:.18} 50%{transform:scaleY(1.28);opacity:.4} 100%{transform:scaleY(.86);opacity:.15} }
+/* Kilauan cahaya sutra yang mengalir SATU ARAH kiri → kanan (tanpa bounce-back) */
+@keyframes independence-ribbon-light{ 0%{transform:translateX(-50px);opacity:0} 40%{opacity:.85} 100%{transform:translateX(90px);opacity:0} }
 
 .brand h1{
     font-size:22px; line-height:1; color:var(--text);
@@ -1781,10 +1772,9 @@ input::placeholder{ color:var(--text-dim); }
 /* Performance: content-visibility for below-fold sections */
 .topup-section{ content-visibility:auto; contain-intrinsic-size:auto 500px; }
 
-/* Ribbon reduced motion */
+/* Ribbon reduced motion — SVG SMIL animateTransform dikontrol via JS (lihat script.js),
+   CSS hanya bisa mematikan highlight yang menggunakan CSS animation. */
 @media(prefers-reduced-motion:reduce){
-    .independence-ribbon__cloth,
-    .independence-ribbon__fold,
     .independence-ribbon__highlight,
     .independence-ribbon__highlight--2{ animation:none !important; }
 }
