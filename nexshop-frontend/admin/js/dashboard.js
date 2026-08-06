@@ -1497,7 +1497,6 @@ async function loadSettings() {
             document.getElementById("storePhone").value = store.contact_phone || "";
             document.getElementById("storeEmail").value = store.contact_email || "";
             document.getElementById("storeAddress").value = store.address || "";
-            document.getElementById("storeFlag").checked = store.flag_enabled !== false;
             document.getElementById("storeTrustBar").checked = store.trust_bar_enabled !== false;
             document.getElementById("storeTrustOrdersOffset").value = store.trust_bar_orders_offset || 0;
             document.getElementById("storeTrustGamesOffset").value = store.trust_bar_games_offset || 0;
@@ -1649,7 +1648,6 @@ async function saveStoreSettings() {
             contact_phone: document.getElementById("storePhone").value.trim(),
             contact_email: document.getElementById("storeEmail").value.trim(),
             address: document.getElementById("storeAddress").value.trim(),
-            flag_enabled: document.getElementById("storeFlag").checked,
             trust_bar_enabled: document.getElementById("storeTrustBar").checked,
             trust_bar_orders_offset: parseInt(document.getElementById("storeTrustOrdersOffset").value, 10) || 0,
             trust_bar_games_offset: parseInt(document.getElementById("storeTrustGamesOffset").value, 10) || 0

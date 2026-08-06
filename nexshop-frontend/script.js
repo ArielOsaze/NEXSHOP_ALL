@@ -1847,9 +1847,6 @@ async function loadStoreSettings() {
             const contactAddress = document.getElementById("contactAddress");
             if (contactAddress) contactAddress.textContent = s.address;
         }
-        // toggle pita bendera sesuai Settings admin (default tampil kalau belum pernah diatur)
-        const flagRibbon = document.getElementById("storeFlagRibbon") || document.querySelector(".independence-ribbon");
-        if (flagRibbon) flagRibbon.classList.toggle("hidden", s.flag_enabled === false);
         // toggle trust bar sesuai Settings admin (default tampil kalau belum pernah diatur)
         const trustBar = document.getElementById("trustBar");
         if (trustBar) trustBar.classList.toggle("hidden", s.trust_bar_enabled === false);
@@ -1923,9 +1920,6 @@ function initEventMascot(config) {
                 const confirmEntrance = () => {
                     if (entranceConfirmed) return;
                     entranceConfirmed = true;
-                    // The marker is deliberately written only after animationstart.
-                    // Previously it was written while the loader still covered the
-                    // navbar, so a desktop visit could consume its only entrance.
                     try { sessionStorage.setItem(playKey, "true"); } catch (err) {}
                 };
                 image.addEventListener("animationstart", confirmEntrance, { once: true });
@@ -2645,25 +2639,7 @@ async function bootstrapApp() {
     finishInitialLoading(!completed);
 }
 
-// ── Reduced-motion: hentikan SVG SMIL animate pada pita kemerdekaan ──
-(function () {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    function applyRibbonMotion(e) {
-        // Semua SMIL <animate> di dalam SVG ribbon (seed, dsb.)
-        const anims = document.querySelectorAll(".independence-ribbon animate");
-        if (!anims.length) return;
-        anims.forEach(a => {
-            try { e.matches ? a.endElement() : a.beginElement(); } catch (_) {}
-        });
-    }
-    mq.addEventListener("change", applyRibbonMotion);
-    // Jalankan sekali setelah DOM siap
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", () => applyRibbonMotion(mq), { once: true });
-    } else {
-        applyRibbonMotion(mq);
-    }
-})();
+
 
 function startApp() {
     bootstrapApp().catch(() => finishInitialLoading());

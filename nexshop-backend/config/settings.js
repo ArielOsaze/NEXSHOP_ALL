@@ -126,10 +126,7 @@ async function getStoreSettings({ fresh = false } = {}) {
         console.log("⚠️ Gagal ambil store_settings:", error.message);
     }
 
-    const merged = data ? {
-        ...data,
-        flag_enabled: data.flag_enabled !== undefined ? Boolean(data.flag_enabled) : true
-    } : {
+    const merged = data || {
         store_name: "NexShop",
         tagline: "Play More. Pay Less.",
         contact_whatsapp: "",
@@ -143,8 +140,7 @@ async function getStoreSettings({ fresh = false } = {}) {
         trust_bar_enabled: true,
         trust_bar_orders_offset: 0,
         trust_bar_games_offset: 0,
-        event_mascot: null,
-        flag_enabled: true
+        event_mascot: null
     };
 
     storeSettingsCache = { data: merged, ts: now };
@@ -155,7 +151,7 @@ async function updateStoreSettings(payload) {
     const allowed = [
         "store_name", "tagline", "contact_whatsapp", "contact_email", "contact_phone",
         "address", "logo_url", "faq", "terms_content", "refund_content", "trust_bar_enabled",
-        "trust_bar_orders_offset", "trust_bar_games_offset", "event_mascot", "flag_enabled"
+        "trust_bar_orders_offset", "trust_bar_games_offset", "event_mascot"
     ];
     const updatePayload = { updated_at: new Date().toISOString() };
     for (const key of allowed) {
@@ -164,24 +160,12 @@ async function updateStoreSettings(payload) {
         }
     }
 
-    let { data, error } = await supabase
+    const { data, error } = await supabase
         .from("store_settings")
         .update(updatePayload)
         .eq("id", 1)
         .select()
         .maybeSingle();
-
-    if (error && error.code === "42703" && updatePayload.flag_enabled !== undefined) {
-        delete updatePayload.flag_enabled;
-        const retry = await supabase
-            .from("store_settings")
-            .update(updatePayload)
-            .eq("id", 1)
-            .select()
-            .maybeSingle();
-        data = retry.data;
-        error = retry.error;
-    }
 
     if (!error) {
         storeSettingsCache = { data: null, ts: 0 };
