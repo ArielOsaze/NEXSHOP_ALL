@@ -2,18 +2,19 @@ const supabase = require("../config/db");
 const { getStoreSettings, getApiKeys } = require("../config/settings");
 const axios = require("axios");
 
-// RAG (Retrieval-Augmented Generation) Helper: Cari konteks relevan di DB lokal
+// RAG (Retrieval-Augmented Generation) Helper: Cari konteks relevan di DB lokal secara real-time
 async function retrieveContext(query, user) {
     const qLower = String(query || "").toLowerCase().trim();
     const contextLines = [];
     const suggestedCards = [];
 
     try {
-        const settings = await getStoreSettings();
+        // SELALU panggil getStoreSettings({ fresh: true }) agar jika admin baru mengganti FAQ/Syarat/Kontak, AI langsung menggunakannya!
+        const settings = await getStoreSettings({ fresh: true });
         if (settings) {
             contextLines.push(`Informasi Toko: ${settings.store_name || 'NexShop'} (${settings.store_tagline || 'Marketplace Gaming'}). WhatsApp CS: ${settings.whatsapp_number || '6287792634063'}. Email CS: ${settings.contact_email || 'support@nexshop.cloud'}.`);
             if (settings.faq_content) {
-                contextLines.push(`FAQ & Panduan: ${settings.faq_content}`);
+                contextLines.push(`FAQ & Panduan Toko: ${settings.faq_content}`);
             }
             if (settings.refund_content) {
                 contextLines.push(`Kebijakan Refund: ${settings.refund_content}`);
@@ -48,6 +49,15 @@ async function retrieveContext(query, user) {
             const matchedTopups = topups.filter(t => t.nama.toLowerCase().includes(qLower) || (t.kategori && t.kategori.toLowerCase().includes(qLower)) || qLower.includes("topup") || qLower.includes("diamond") || qLower.includes("ml") || qLower.includes("ff") || qLower.includes("pubg"));
             if (matchedTopups.length > 0) {
                 contextLines.push(`Layanan Topup Diamond Terkait: ` + matchedTopups.map(t => `${t.kategori} - ${t.nama}: Rp${Number(t.harga_jual).toLocaleString('id-ID')}`).slice(0, 6).join("; "));
+            }
+        }
+
+        // Search Gaming News
+        const { data: news } = await supabase.from("gaming_news").select("id, title, summary, source_name, source_url").eq("is_active", true).limit(10);
+        if (news && news.length > 0) {
+            const matchedNews = news.filter(n => n.title.toLowerCase().includes(qLower) || (n.summary && n.summary.toLowerCase().includes(qLower)) || qLower.includes("berita") || qLower.includes("news") || qLower.includes("artikel"));
+            if (matchedNews.length > 0) {
+                contextLines.push(`Berita Gaming Terbaru: ` + matchedNews.map(n => `${n.title} (${n.source_name || 'Publisher'}): ${n.summary.slice(0, 100)}...`).slice(0, 3).join("; "));
             }
         }
 
@@ -92,7 +102,7 @@ async function retrieveContext(query, user) {
 
 // MAIN RAG AI CHAT CONTROLLER
 exports.chat = async (req, res) => {
-    const { message } = req.body;
+    const { message, history } = req.body;
     if (!message || typeof message !== "string" || !message.trim()) {
         return res.status(400).json({ message: "Pesan tidak boleh kosong" });
     }
@@ -122,15 +132,28 @@ ${contextText || "Tidak ada informasi khusus di database."}`;
 
         if (apiKey) {
             try {
+                const contentsPayload = [
+                    { role: "user", parts: [{ text: systemPrompt }] },
+                    { role: "model", parts: [{ text: "Siap, saya mengerti. Saya adalah NexBot, asisten virtual resmi NexShop." }] }
+                ];
+
+                // Append recent conversation memory (history) if provided
+                if (Array.isArray(history)) {
+                    history.slice(-6).forEach(item => {
+                        if (item.role && item.text) {
+                            contentsPayload.push({
+                                role: item.role === "user" ? "user" : "model",
+                                parts: [{ text: String(item.text) }]
+                            });
+                        }
+                    });
+                }
+
+                contentsPayload.push({ role: "user", parts: [{ text: q }] });
+
                 const response = await axios.post(
                     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-                    {
-                        contents: [
-                            { role: "user", parts: [{ text: systemPrompt }] },
-                            { role: "model", parts: [{ text: "Siap, saya mengerti. Saya adalah NexBot, asisten virtual resmi NexShop." }] },
-                            { role: "user", parts: [{ text: q }] }
-                        ]
-                    },
+                    { contents: contentsPayload },
                     { timeout: 9000 }
                 );
 

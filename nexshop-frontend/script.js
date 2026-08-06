@@ -2657,6 +2657,12 @@ function updateNexBotGreeting() {
     welcomeEl.innerHTML = greetingText;
 }
 
+/* NexBot Local State Management (Isolated from Global App State) */
+const nexbotState = {
+    loading: false,
+    history: []
+};
+
 function initNexBotChat() {
     const floatBtn = document.getElementById("nexbotFloatBtn");
     const closeBtn = document.getElementById("nexbotCloseBtn");
@@ -2664,6 +2670,7 @@ function initNexBotChat() {
     const form = document.getElementById("nexbotForm");
     const input = document.getElementById("nexbotInput");
     const body = document.getElementById("nexbotBody");
+    const sendBtn = document.getElementById("nexbotSendBtn");
 
     if (!floatBtn || !windowEl || !form) return;
 
@@ -2682,10 +2689,17 @@ function initNexBotChat() {
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const text = input.value.trim();
-        if (!text) return;
+        if (!text || nexbotState.loading) return;
+
+        // Activate isolated chat loading state (DO NOT TRIGGER GLOBAL WEBSITE LOADING)
+        nexbotState.loading = true;
+        if (sendBtn) sendBtn.disabled = true;
 
         appendNexBotMessage(text, "user");
         input.value = "";
+
+        // Record user query in conversation memory
+        nexbotState.history.push({ role: "user", text });
 
         const typingEl = appendNexBotTyping();
         body.scrollTop = body.scrollHeight;
@@ -2698,7 +2712,10 @@ function initNexBotChat() {
             const res = await fetch(`${API_BASE}/ai/chat`, {
                 method: "POST",
                 headers,
-                body: JSON.stringify({ message: text })
+                body: JSON.stringify({
+                    message: text,
+                    history: nexbotState.history.slice(-6)
+                })
             });
 
             const data = await res.json().catch(() => ({}));
@@ -2709,10 +2726,18 @@ function initNexBotChat() {
                 return;
             }
 
-            appendNexBotMessage(data.reply || "Maaf, tidak ada tanggapan.", "bot", data.cards, data.handoff);
+            const replyText = data.reply || "Maaf, tidak ada tanggapan.";
+            appendNexBotMessage(replyText, "bot", data.cards, data.handoff);
+
+            // Record bot response in conversation memory
+            nexbotState.history.push({ role: "model", text: replyText });
+
         } catch (err) {
             typingEl.remove();
             appendNexBotMessage("Maaf, terjadi masalah pada jaringan.", "bot");
+        } finally {
+            nexbotState.loading = false;
+            if (sendBtn) sendBtn.disabled = false;
         }
     });
 }
