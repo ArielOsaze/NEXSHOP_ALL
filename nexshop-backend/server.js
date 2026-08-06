@@ -6,6 +6,18 @@ const rateLimit = require("express-rate-limit");
 
 dotenv.config();
 
+const PORT = process.env.PORT || 3000;
+
+// Validasi ini harus mendahului require route/controller karena beberapa di
+// antaranya membuat klien Supabase saat modul dimuat.
+if (process.env.NODE_ENV === "production") {
+    const requiredEnvironment = ["JWT_SECRET", "SUPABASE_URL", "SUPABASE_SERVICE_KEY", "FRONTEND_URL", "BACKEND_URL"];
+    const missingEnvironment = requiredEnvironment.filter((name) => !process.env[name]);
+    if (missingEnvironment.length) {
+        throw new Error(`Environment production belum lengkap: ${missingEnvironment.join(", ")}`);
+    }
+}
+
 require("./config/db");
 
 const authRoutes = require("./routes/authRoutes");
@@ -38,16 +50,6 @@ app.set("trust proxy", 1);
 // =========================
 // Config
 // =========================
-const PORT = process.env.PORT || 3000;
-
-if (process.env.NODE_ENV === "production") {
-    const requiredEnvironment = ["JWT_SECRET", "SUPABASE_URL", "SUPABASE_SERVICE_KEY", "FRONTEND_URL", "BACKEND_URL"];
-    const missingEnvironment = requiredEnvironment.filter((name) => !process.env[name]);
-    if (missingEnvironment.length) {
-        throw new Error(`Environment production belum lengkap: ${missingEnvironment.join(", ")}`);
-    }
-}
-
 // =========================
 // Middleware
 // =========================

@@ -27,6 +27,14 @@ const appLoaderMessage = document.getElementById("appLoaderMessage");
 let activeRequests = 0;
 let initialLoading = true;
 let loaderShowTimer = null;
+let initialReadyDispatched = false;
+
+function notifyInitialReady() {
+    if (initialReadyDispatched) return;
+    initialReadyDispatched = true;
+    // Match the loader fade so entrance animations never run while obscured.
+    window.setTimeout(() => document.dispatchEvent(new Event("nexshop:initial-ready")), 320);
+}
 
 function showAppLoader(message = "Memuat data NexShop...") {
     if (!appLoader) return;
@@ -39,6 +47,7 @@ function hideAppLoader() {
     if (!appLoader) return;
     appLoader.classList.remove("is-visible");
     appLoader.setAttribute("aria-busy", "false");
+    if (!initialLoading) notifyInitialReady();
 }
 
 function beginAppRequest() {
@@ -357,7 +366,7 @@ function renderProducts() {
                 <article class="card product-card${p.is_flash_sale ? " card-flash" : ""}" data-product-card data-id="${p.id}" tabindex="0" aria-label="Lihat detail ${escapeHtml(p.name)}">
                     <div class="card-img">
                         <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
-                        ${(p.is_flash_sale || p.badge) ? `<div class="card-badges">${p.is_flash_sale ? '<span class="badge-flash"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}${p.badge ? `<span class="badge-tag">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}
+                        ${(p.is_flash_sale || p.badge) ? `<div class="card-badges"><div class="card-badges__start">${p.is_flash_sale ? '<span class="badge-flash"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}</div><div class="card-badges__end">${p.badge ? `<span class="badge-tag">${escapeHtml(p.badge)}</span>` : ""}</div></div>` : ""}
                     </div>
                     <div class="card-body">
                         ${p.category ? `<div class="card-category">${escapeHtml(p.category)}</div>` : ""}
@@ -1849,20 +1858,28 @@ function initEventMascot(config) {
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const playKey = `eventMascotPlayed:${config.mascot_url}`;
-    const alreadyPlayed = sessionStorage.getItem(playKey) === "true";
+    let alreadyPlayed = false;
+    try { alreadyPlayed = sessionStorage.getItem(playKey) === "true"; } catch (err) {}
     const enterDuration = 2000 / (Number(config.speed) || 1);
     let started = false;
     const startMascot = () => {
         if (started || document.visibilityState === "hidden") return;
         started = true;
-        // Two frames guarantee that the initial CSS state is painted before the
-        // class is applied; otherwise Chromium may coalesce it and skip entry.
+        // Two painted frames prevent Chromium from coalescing the initial state
+        // and the animation class into one style update.
         requestAnimationFrame(() => requestAnimationFrame(() => {
             if (!reducedMotion && !alreadyPlayed && params.get("mascotPreview") !== "1") {
+                let entranceConfirmed = false;
+                const confirmEntrance = () => {
+                    if (entranceConfirmed) return;
+                    entranceConfirmed = true;
+                    // The marker is deliberately written only after animationstart.
+                    // Previously it was written while the loader still covered the
+                    // navbar, so a desktop visit could consume its only entrance.
+                    try { sessionStorage.setItem(playKey, "true"); } catch (err) {}
+                };
+                image.addEventListener("animationstart", confirmEntrance, { once: true });
                 mascot.classList.add("is-entering");
-                // Mark played only after the browser has actually been given a
-                // frame to start it. The old code wrote this before image load.
-                sessionStorage.setItem(playKey, "true");
                 setTimeout(() => {
                     mascot.classList.remove("is-entering");
                     mascot.classList.add("is-hanging");
@@ -1876,11 +1893,15 @@ function initEventMascot(config) {
         if (document.visibilityState !== "hidden") startMascot();
         else document.addEventListener("visibilitychange", waitForVisible, { once: true });
     };
-    if (image.complete && image.naturalWidth > 0) waitForVisible();
+    const startAfterLoader = () => {
+        if (initialLoading) document.addEventListener("nexshop:initial-ready", waitForVisible, { once: true });
+        else waitForVisible();
+    };
+    if (image.complete && image.naturalWidth > 0) startAfterLoader();
     else {
-        image.addEventListener("load", waitForVisible, { once: true });
+        image.addEventListener("load", startAfterLoader, { once: true });
         // A broken remote asset must never leave an invisible/collapsed event.
-        image.addEventListener("error", waitForVisible, { once: true });
+        image.addEventListener("error", startAfterLoader, { once: true });
     }
     if (!reducedMotion) {
         const blink = () => {

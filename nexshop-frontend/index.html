@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <script src="theme-init.js?v=20260803-ui"></script>
-<link rel="stylesheet" href="style.css?v=20260806-news-detail">
+<link rel="stylesheet" href="style.css?v=20260806-production-audit">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
@@ -99,20 +99,23 @@
                 <img src="images/nexshop-icon.svg" class="logo" id="storeLogoImg" alt="NexShop logo">
                 <!-- Overlay terpisah: tetap terikat pada pusat logo, bukan navbar. -->
                 <div id="eventMascotAnchor" class="event-mascot-anchor" aria-hidden="true"></div>
-            </div>
-            <div class="brand-text">
-                <svg class="flag-overlay" viewBox="0 0 200 100" aria-hidden="true">
+                <!-- Dekorasi musiman terikat ke dudukan logo; logo asli tidak diubah. -->
+                <svg class="independence-flag" viewBox="0 0 140 72" aria-hidden="true" focusable="false">
                     <defs>
-                        <linearGradient id="flagRed" x1="0" x2="1" y1="0" y2=".35"><stop stop-color="#ff3144"/><stop offset=".48" stop-color="#e70011"/><stop offset="1" stop-color="#97000b"/></linearGradient>
-                        <linearGradient id="flagWhite" x1="0" x2="1" y1="0" y2=".35"><stop stop-color="#fff"/><stop offset=".48" stop-color="#f5f5f6"/><stop offset="1" stop-color="#c9cbd0"/></linearGradient>
-                        <filter id="flagShadow" x="-20%" y="-30%" width="150%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-opacity=".34"/></filter>
+                        <linearGradient id="independenceFlagRed" x1="0" x2="1" y1=".1" y2=".8"><stop stop-color="#ff5864"/><stop offset=".5" stop-color="#e81b2f"/><stop offset="1" stop-color="#a40e1c"/></linearGradient>
+                        <linearGradient id="independenceFlagWhite" x1="0" x2="1" y1=".1" y2=".8"><stop stop-color="#ffffff"/><stop offset=".52" stop-color="#eef1f5"/><stop offset="1" stop-color="#bfc6d0"/></linearGradient>
+                        <filter id="independenceFlagShadow" x="-20%" y="-30%" width="150%" height="190%"><feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#020617" flood-opacity=".42"/></filter>
                     </defs>
-                    <g filter="url(#flagShadow)">
-                        <path fill="url(#flagRed)" d="M4 10 C43 1 72 19 106 10 S164 2 196 12 L196 50 C160 41 137 58 102 48 S42 40 4 50Z"/>
-                        <path fill="url(#flagWhite)" d="M4 50 C42 40 71 58 102 48 S160 41 196 50 L196 88 C160 79 136 96 102 86 S43 78 4 88Z"/>
-                        <path fill="none" stroke="rgba(255,255,255,.28)" stroke-width="4" d="M10 15 C48 8 73 23 105 15 S160 9 190 17"/>
+                    <path class="independence-flag__mast" d="M12 9v55"/>
+                    <circle class="independence-flag__finial" cx="12" cy="8" r="3.2"/>
+                    <g class="independence-flag__cloth" filter="url(#independenceFlagShadow)">
+                        <path fill="url(#independenceFlagRed)" d="M15 13c23-5 38 4 58 0 21-4 39-1 56 4v24c-18-4-36-8-56-4-21 4-36-5-58 0z"/>
+                        <path fill="url(#independenceFlagWhite)" d="M15 37c22-5 37 4 58 0 20-4 38 0 56 4v24c-18-4-36-8-56-4-21 4-36-5-58 0z"/>
+                        <path class="independence-flag__highlight" d="M18 17c20-3 36 4 55 0 18-3 34-1 51 2"/>
                     </g>
                 </svg>
+            </div>
+            <div class="brand-text">
                 <h1 id="storeNameText">Nex<span>Shop</span></h1>
                 <div class="tagline" id="storeTagline">Play More. Pay Less.</div>
             </div>
@@ -401,15 +404,6 @@
                 <span class="footer-social-label">@nexshop_id</span>
             </span>
         </a>
-        <button type="button" class="footer-social-link footer-social-link--support" data-policy-tab="contact">
-            <span class="footer-social-icon icon-support" aria-hidden="true">
-                <i class="fa-solid fa-headset"></i>
-            </span>
-            <span class="footer-contact-copy">
-                <strong class="footer-contact-title">Pusat Bantuan</strong>
-                <span class="footer-social-label">Bantuan &amp; status transaksi</span>
-            </span>
-        </button>
     </div>
 
     <div class="footer-links">
@@ -744,6 +738,6 @@
   backend langsung kirim balik `paymentUrl` (halaman pembayaran iPaymu)
   dan browser di-redirect ke sana lewat window.location.href. Lihat script.js.
 -->
-<script src="script.js?v=20260806-news-detail"></script>
+<script src="script.js?v=20260806-production-audit"></script>
 </body>
 </html>
