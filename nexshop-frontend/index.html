@@ -124,37 +124,14 @@
                             <stop offset=".4" stop-color="#ffffff" stop-opacity="0.55"/>
                             <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
                         </linearGradient>
-
-                        <!-- Filter distorsi gelombang kain bendera murni horizontal (0 piksel distorsi vertikal) -->
-                        <filter id="flagClothDisplacement" x="-10%" y="-30%" width="120%" height="160%" color-interpolation-filters="sRGB">
-                            <feTurbulence type="fractalNoise" baseFrequency="0.016 0.001" numOctaves="2" result="noise">
-                                <animate attributeName="baseFrequency" dur="4.2s" values="0.014 0.001; 0.024 0.001; 0.014 0.001" repeatCount="indefinite"/>
-                            </feTurbulence>
-                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="6.5" xChannelSelector="R" yChannelSelector="R"/>
-                        </filter>
                     </defs>
-                    <g class="independence-ribbon__cloth" filter="url(#flagClothDisplacement)">
-                        <!-- Pita Merah: Gelombang tiupan angin SATU ARAH merambat terus ke kanan (tanpa pembalikan ke kiri & tanpa naik-turun) -->
-                        <path fill="url(#independenceRibbonRed)" d="M0 0 C40 6 70 18 110 8 C150 0 190 18 230 8 C265 2 295 14 320 8 L320 26 C295 32 265 20 230 26 C190 34 150 18 110 26 C70 34 40 20 0 26 Z">
-                            <animate attributeName="d" dur="3.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1" values="
-M0 0 C40 6 70 18 110 8 C150 0 190 18 230 8 C265 2 295 14 320 8 L320 26 C295 32 265 20 230 26 C190 34 150 18 110 26 C70 34 40 20 0 26 Z;
-M0 0 C40 18 70 8 C110 18 C150 8 190 0 230 18 C265 8 295 2 320 14 L320 26 C295 20 265 26 230 34 C190 26 150 34 110 26 C70 34 40 20 0 26 Z;
-M0 0 C40 8 70 0 C110 8 C150 18 190 8 230 0 C265 18 295 8 320 2 C320 26 C295 26 265 20 230 26 C190 34 150 26 110 34 C70 26 40 34 0 26 Z;
-M0 0 C40 0 70 14 C110 0 C150 8 190 14 230 6 C265 0 295 18 320 8 L320 26 C295 32 265 14 230 26 C190 20 150 32 110 20 C70 32 40 20 0 26 Z;
-M0 0 C40 6 70 18 110 8 C150 0 190 18 230 8 C265 2 295 14 320 8 L320 26 C295 32 265 20 230 26 C190 34 150 18 110 26 C70 34 40 20 0 26 Z"/>
-                        </path>
-                        <!-- Pita Putih: Gelombang tiupan angin SATU ARAH merambat terus ke kanan -->
-                        <path fill="url(#independenceRibbonWhite)" d="M0 26 C40 20 70 34 110 26 C150 18 190 34 230 26 C265 20 295 32 320 26 L320 52 C295 52 265 46 230 52 C190 52 150 44 110 52 C70 52 40 46 0 52 Z">
-                            <animate attributeName="d" dur="3.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1" values="
-M0 26 C40 20 70 34 110 26 C150 18 190 34 230 26 C265 20 295 32 320 26 L320 52 C295 52 265 46 230 52 C190 52 150 44 110 52 C70 52 40 46 0 52 Z;
-M0 26 C40 32 70 24 C110 32 C150 24 190 18 230 32 C265 24 295 18 320 30 L320 52 C295 44 265 49 230 52 C190 44 150 52 110 44 C70 52 40 44 0 52 Z;
-M0 26 C40 22 70 18 C110 26 C150 32 190 26 230 18 C265 32 295 24 320 20 L320 52 C295 48 265 44 230 52 C190 44 150 52 110 44 C70 52 40 48 0 52 Z;
-M0 26 C40 18 70 30 C110 18 C150 24 190 30 230 24 C265 18 295 34 320 26 L320 52 C295 52 265 40 230 52 C190 46 150 52 110 46 C70 52 40 46 0 52 Z;
-M0 26 C40 20 70 34 110 26 C150 18 190 34 230 26 C265 20 295 32 320 26 L320 52 C295 52 265 46 230 52 C190 52 150 44 110 52 C70 52 40 46 0 52 Z"/>
-                        </path>
-                        <!-- Lipatan bayangan kain -->
-                        <path class="independence-ribbon__fold" fill="none" stroke="rgba(0,0,0,.16)" stroke-width="1.4" d="M100 12c8 4 16 8 24 4s18-10 26-5"/>
-                        <path class="independence-ribbon__fold independence-ribbon__fold--2" fill="none" stroke="rgba(0,0,0,.13)" stroke-width="1.2" d="M180 30c10 3 18 7 28 3s16-9 24-4"/>
+                    <g class="independence-ribbon__cloth">
+                        <!-- Pita Merah: Vektor HD Seamless Wavelength 80px (Tinggi Tetap 0 s/d 26) -->
+                        <path class="independence-ribbon__wave-path" fill="url(#independenceRibbonRed)" d="M -80 0 L 400 0 L 400 26 C 385 32.5 375 32.5 360 26 C 345 19.5 335 19.5 320 26 C 305 32.5 295 32.5 280 26 C 265 19.5 255 19.5 240 26 C 225 32.5 215 32.5 200 26 C 185 19.5 175 19.5 160 26 C 145 32.5 135 32.5 120 26 C 105 19.5 95 19.5 80 26 C 65 32.5 55 32.5 40 26 C 25 19.5 15 19.5 0 26 C -15 32.5 -25 32.5 -40 26 C -55 19.5 -65 19.5 -80 26 Z"/>
+                        <!-- Pita Putih: Vektor HD Seamless Wavelength 80px (Tinggi Tetap 26 s/d 52) -->
+                        <path class="independence-ribbon__wave-path" fill="url(#independenceRibbonWhite)" d="M -80 52 L 400 52 L 400 26 C 385 32.5 375 32.5 360 26 C 345 19.5 335 19.5 320 26 C 305 32.5 295 32.5 280 26 C 265 19.5 255 19.5 240 26 C 225 32.5 215 32.5 200 26 C 185 19.5 175 19.5 160 26 C 145 32.5 135 32.5 120 26 C 105 19.5 95 19.5 80 26 C 65 32.5 55 32.5 40 26 C 25 19.5 15 19.5 0 26 C -15 32.5 -25 32.5 -40 26 C -55 19.5 -65 19.5 -80 26 Z"/>
+                        <!-- Lipatan bayangan kain HD -->
+                        <path class="independence-ribbon__fold-line" fill="none" stroke="rgba(0,0,0,.15)" stroke-width="1.4" d="M -80 26 C -65 32.5 -55 32.5 -40 26 C -25 19.5 -15 19.5 0 26 C 15 32.5 25 32.5 40 26 C 55 19.5 65 19.5 80 26 C 95 32.5 105 32.5 120 26 C 135 19.5 145 19.5 160 26 C 175 32.5 185 32.5 200 26 C 215 19.5 225 19.5 240 26 C 255 32.5 265 32.5 280 26 C 295 19.5 305 19.5 320 26 C 335 32.5 345 32.5 360 26 C 375 19.5 385 19.5 400 26"/>
                     </g>
                     <path class="independence-ribbon__highlight" d="M5 14c35-7 60 7 96 0 38-8 66-7 104 1 40 8 72-3 110-1"/>
                     <path class="independence-ribbon__highlight independence-ribbon__highlight--2" d="M15 34c30-4 54 5 88 1 36-5 64-4 96 3 35 5 66-1 100 0"/>

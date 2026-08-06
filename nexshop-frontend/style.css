@@ -348,25 +348,21 @@ header{ position:sticky; top:0; z-index:1000; }
 
 .brand-text{ position:relative; z-index:6; overflow:visible; isolation:isolate; }
 .brand-text h1,.brand-text .tagline{ position:relative; z-index:1; }
-.independence-ribbon{ position:absolute; z-index:0; left:-6px; top:3px; width:calc(100% + 12px); height:30px; pointer-events:none; opacity:.82; overflow:visible; perspective:400px; filter:drop-shadow(0 6px 10px rgba(0,0,0,.32)); }
-.independence-ribbon__cloth{ transform-box:fill-box; transform-origin:0% 50%; will-change:transform; animation:independence-ribbon-wave 3.2s cubic-bezier(.37,0,.63,1) infinite alternate; }
-.independence-ribbon__fold{ transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-fold 3.2s ease-in-out infinite alternate; }
-.independence-ribbon__fold--2{ animation-delay:-1.6s; }
-.independence-ribbon__highlight{ fill:none; stroke:url(#independenceRibbonLight); stroke-width:2.8; stroke-linecap:round; opacity:.7; transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-light 3.2s ease-in-out infinite alternate; }
-.independence-ribbon__highlight--2{ stroke:url(#independenceRibbonLight2); stroke-width:2; opacity:.5; animation-delay:-1.4s; animation-duration:3.6s; }
-/* Realistis: Efek berkibar bendera Merah Putih 3D dengan gelombang sutra fluid */
-@keyframes independence-ribbon-wave{
-    0% { transform: perspective(400px) rotateY(0deg) rotateZ(0deg) skewY(0deg) translateY(0) scaleY(1); }
-    20% { transform: perspective(400px) rotateY(-5deg) rotateZ(-0.8deg) skewY(-3.8deg) translateY(-2.2px) scaleY(1.08); }
-    45% { transform: perspective(400px) rotateY(6deg) rotateZ(1deg) skewY(4.2deg) translateY(2.8px) scaleY(0.91); }
-    70% { transform: perspective(400px) rotateY(-4deg) rotateZ(-0.5deg) skewY(-2.6deg) translateY(-1.8px) scaleY(1.05); }
-    90% { transform: perspective(400px) rotateY(3deg) rotateZ(0.4deg) skewY(2deg) translateY(1.2px) scaleY(0.95); }
-    100% { transform: perspective(400px) rotateY(0deg) rotateZ(0deg) skewY(0deg) translateY(0) scaleY(1); }
+.independence-ribbon{ position:absolute; z-index:0; left:-22px; top:-7px; width:calc(100% + 44px); height:calc(100% + 14px); min-height:48px; pointer-events:none; opacity:.80 !important; overflow:visible; filter:drop-shadow(0 6px 14px rgba(0,0,0,.35)); }
+.independence-ribbon__cloth{ transform-box:fill-box; will-change:transform; animation:flag-one-way-wave 2.2s linear infinite; }
+.independence-ribbon__fold{ transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-fold 3.8s ease-in-out infinite alternate; }
+.independence-ribbon__fold--2{ animation-delay:-1.9s; }
+.independence-ribbon__highlight{ fill:none; stroke:url(#independenceRibbonLight); stroke-width:3; stroke-linecap:round; opacity:.75; transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-light 3.8s ease-in-out infinite; }
+.independence-ribbon__highlight--2{ stroke:url(#independenceRibbonLight2); stroke-width:2.2; opacity:.55; animation-delay:-1.4s; animation-duration:4.5s; }
+/* Tiupan angin 100% SATU ARAH konstan dari kiri ke kanan (linear 60FPS, 0 pikselasi, 0 gerakan vertikal) */
+@keyframes flag-one-way-wave{
+    0% { transform: translateX(0px); }
+    100% { transform: translateX(80px); }
 }
-/* Kilauan cahaya yang mengalir mengikuti lipatan bendera berkibar */
-@keyframes independence-ribbon-light{ 0%{transform:translateX(-22px) scaleX(.9);opacity:.15} 50%{transform:translateX(18px) scaleX(1.15);opacity:.8} 100%{transform:translateX(36px) scaleX(.95);opacity:.25} }
-/* Lipatan bayangan dinamis sesuai gerakan tiupan angin */
-@keyframes independence-ribbon-fold{ 0%{transform:translateY(0) scaleY(1);opacity:.15} 50%{transform:translateY(-1.5px) scaleY(1.25);opacity:.35} 100%{transform:translateY(1.5px) scaleY(.82);opacity:.12} }
+/* Kilauan cahaya sutra yang mengalir mengikuti gelombang bendera dari kiri ke kanan */
+@keyframes independence-ribbon-light{ 0%{transform:translateX(-35px);opacity:.15} 50%{transform:translateX(30px);opacity:.85} 100%{transform:translateX(65px);opacity:.2} }
+/* Lipatan bayangan dinamis sesuai alur tiupan angin */
+@keyframes independence-ribbon-fold{ 0%{transform:scaleY(1);opacity:.18} 50%{transform:scaleY(1.28);opacity:.4} 100%{transform:scaleY(.86);opacity:.15} }
 
 .brand h1{
     font-size:22px; line-height:1; color:var(--text);
@@ -1668,7 +1664,7 @@ input::placeholder{ color:var(--text-dim); }
     .brand h1{ font-size:18px; }
     .brand .logo{ width:32px; height:32px; }
     .brand .tagline{ font-size:9.5px; }
-    .independence-ribbon{ left:-4px; top:3px; width:calc(100% + 8px); height:25px; }
+    .independence-ribbon{ left:-16px; top:-5px; width:calc(100% + 32px); height:calc(100% + 10px); min-height:38px; opacity:.80 !important; }
     .hero-carousel{ height:auto; aspect-ratio:16/9; min-height:0; width:100%; }
     .hero-slide.full-image{ background-size:contain; background-position:center; background-repeat:no-repeat; }
     .menu.active{ inset:56px 8px auto 8px; }
