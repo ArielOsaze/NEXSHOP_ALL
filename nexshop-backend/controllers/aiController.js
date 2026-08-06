@@ -55,65 +55,126 @@ function normalizeAndExpandQuery(query) {
     };
 }
 
-// Intent Detection Helper
+// NexBot AI Intent Engine V2: Detect Intent (10 Classes)
 function detectUserIntent(query) {
     const q = (query || "").toLowerCase();
-    if (q.includes("beda") || q.includes("perbedaan") || q.includes("vs") || q.includes("komparasi") || q.includes("kelebihan kekurangan")) {
+    
+    // 1. Comparison
+    if (q.includes("beda") || q.includes("bedanya") || q.includes("perbedaan") || q.includes("vs") || q.includes("versus") || q.includes("lebih bagus") || q.includes("lebih baik") || q.includes("dibanding")) {
         return "Comparison";
     }
-    if (q.includes("cara") || q.includes("bagaimana") || q.includes("langkah") || q.includes("panduan") || q.includes("buka")) {
+    // 2. Guide / How-To
+    if (q.includes("cara") || q.includes("tutorial") || q.includes("langkah") || q.includes("panduan") || q.includes("aktivasi") || q.includes("redeem") || q.includes("beli") || q.includes("order") || q.includes("bagaimana") || q.includes("menggunakan")) {
         return "Guide";
     }
-    if (q.includes("apa itu") || q.includes("maksud") || q.includes("pengertian") || q.includes("adalah")) {
+    // 3. Definition
+    if (q.includes("apa itu") || q.includes("apa sih") || q.includes("apa fungsi") || q.includes("pengertian") || q.includes("jelaskan") || q.includes("maksud") || q.includes("apa maksud") || q.includes("itu apa") || q.includes("definisi")) {
         return "Definition";
     }
-    if (q.includes("promo") || q.includes("diskon") || q.includes("voucher") || q.includes("kupon")) {
-        return "Promotion";
-    }
-    if (q.includes("harga") || q.includes("berapa") || q.includes("murah")) {
+    // 4. Pricing
+    if (q.includes("harga") || q.includes("berapa") || q.includes("murah") || q.includes("mahal") || q.includes("biaya")) {
         return "Pricing";
     }
-    if (q.includes("garansi") || q.includes("refund") || q.includes("batal")) {
-        return "Policy";
+    // 5. Payment
+    if (q.includes("bayar") || q.includes("pembayaran") || q.includes("payment") || q.includes("qris") || q.includes("ovo") || q.includes("dana") || q.includes("gopay") || q.includes("bank") || q.includes("transfer") || q.includes("va")) {
+        return "Payment";
     }
-    if (q.includes("status") || q.includes("pesanan") || q.includes("order")) {
-        return "Order";
+    // 6. Promo
+    if (q.includes("promo") || q.includes("voucher") || q.includes("diskon") || q.includes("coupon") || q.includes("kode promo")) {
+        return "Promo";
     }
+    // 7. Refund
+    if (q.includes("refund") || q.includes("cancel") || q.includes("batal") || q.includes("uang kembali") || q.includes("garansi")) {
+        return "Refund";
+    }
+    // 8. Order Status
+    if (q.includes("status") || q.includes("pesanan") || q.includes("order") || q.includes("tracking") || q.includes("diproses") || q.includes("belum masuk")) {
+        return "OrderStatus";
+    }
+    // 9. Product Recommendation
+    if (q.includes("rekomendasi") || q.includes("cocok") || q.includes("saran") || q.includes("bagus mana")) {
+        return "ProductRecommendation";
+    }
+    // 10. Technical Support
+    if (q.includes("error") || q.includes("bug") || q.includes("login") || q.includes("otp") || q.includes("gagal") || q.includes("tidak bisa") || q.includes("masalah")) {
+        return "TechnicalSupport";
+    }
+
     return "General";
 }
 
-// Weighted Knowledge Item Scorer (Title 40%, Keyword 25%, Category 10%, Content 25%)
-function calculateKnowledgeScore(item, query, expandedTerms, intent) {
+// Entity Detection Helper
+function detectEntity(query) {
+    const q = (query || "").toLowerCase();
+    const entities = [];
+
+    if (q.includes("sharing") || q.includes("shared")) entities.push("sharing");
+    if (q.includes("private") || q.includes("personal")) entities.push("private");
+    if (q.includes("xbox") || q.includes("gamepass") || q.includes("game pass") || q.includes("gampass") || q.includes("gamepas") || q.includes("xgp") || q.includes("gp")) entities.push("gamepass");
+    if (q.includes("steam") || q.includes("wallet")) entities.push("steam");
+    if (q.includes("ml") || q.includes("mlbb") || q.includes("mobile legend")) entities.push("mobile_legends");
+    if (q.includes("ff") || q.includes("free fire")) entities.push("free_fire");
+    if (q.includes("pubg") || q.includes("pubgm")) entities.push("pubg");
+    if (q.includes("valorant") || q.includes("val")) entities.push("valorant");
+    if (q.includes("genshin") || q.includes("gi")) entities.push("genshin");
+
+    return entities;
+}
+
+// Scoring Calibrated to Weights: Intent 40%, Entity 30%, Title 15%, Keyword 10%, Content 5%
+function calculateKnowledgeScore(item, query, expandedTerms, intent, entities = []) {
     let score = 0;
     const titleLower = (item.title || "").toLowerCase();
     const keywordsLower = (item.keywords || "").toLowerCase();
     const catLower = (item.category || "").toLowerCase();
     const contentLower = (item.content || "").toLowerCase();
-    const qLower = query.toLowerCase();
 
-    expandedTerms.forEach(term => {
-        if (!term) return;
-        if (titleLower.includes(term)) score += 40;
-        if (keywordsLower.includes(term)) score += 25;
-        if (catLower.includes(term)) score += 10;
-        if (contentLower.includes(term)) score += 25;
-    });
+    // Tentukan inherent intent dari Knowledge item
+    let itemIntent = "General";
+    if (titleLower.includes("cara") || titleLower.includes("panduan") || titleLower.includes("langkah") || titleLower.includes("tutorial") || titleLower.includes("membeli") || catLower.includes("guide")) {
+        itemIntent = "Guide";
+    } else if (titleLower.includes("apa itu") || titleLower.includes("pengertian") || titleLower.includes("definisi") || titleLower.includes("faq")) {
+        itemIntent = "Definition";
+    } else if (titleLower.includes("perbedaan") || titleLower.includes("versus") || titleLower.includes("vs") || titleLower.includes("sharing vs private")) {
+        itemIntent = "Comparison";
+    } else if (titleLower.includes("pembayaran") || titleLower.includes("qris") || catLower.includes("payment")) {
+        itemIntent = "Payment";
+    } else if (titleLower.includes("refund") || titleLower.includes("garansi") || catLower.includes("policy")) {
+        itemIntent = "Refund";
+    }
 
-    // Penanganan Intent Presisi untuk Definition & Comparison
-    if (intent === "Definition" || intent === "Comparison") {
-        if (qLower.includes("sharing") && (titleLower.includes("sharing") || keywordsLower.includes("sharing") || contentLower.includes("sharing"))) {
-            score += 60;
-        }
-        if (qLower.includes("private") && (titleLower.includes("private") || keywordsLower.includes("private") || contentLower.includes("private"))) {
-            score += 60;
-        }
-        if (titleLower.includes("faq") || catLower.includes("faq")) {
+    // 1. Intent Match (40%)
+    if (intent === itemIntent) {
+        score += 40;
+    } else if (intent === "Guide" && itemIntent === "Definition") {
+        // PENALTI KERAS: User minta CARA BELI, DILARANG ambil DEFINISI!
+        score -= 60;
+    } else if (intent === "Definition" && itemIntent === "Guide") {
+        // PENALTI KERAS: User minta DEFINISI, DILARANG ambil CARA BELI!
+        score -= 60;
+    }
+
+    // 2. Entity Match (30%)
+    entities.forEach(ent => {
+        if (titleLower.includes(ent) || keywordsLower.includes(ent) || contentLower.includes(ent)) {
             score += 30;
         }
-        if (titleLower.includes("cara membeli") || titleLower.includes("panduan produk")) {
-            score -= 40; // Kurangi bobot panduan generik saat user meminta definisi/perbedaan
-        }
-    }
+    });
+
+    // 3. Title Exact / Partial Match (15%)
+    expandedTerms.forEach(term => {
+        if (term && titleLower.includes(term)) score += 15;
+    });
+
+    // 4. Keyword Match (10%)
+    expandedTerms.forEach(term => {
+        if (term && keywordsLower.includes(term)) score += 10;
+    });
+
+    // 5. Content Semantic Match (5%)
+    expandedTerms.forEach(term => {
+        if (term && contentLower.includes(term)) score += 5;
+    });
 
     return score;
 }
@@ -122,6 +183,7 @@ function calculateKnowledgeScore(item, query, expandedTerms, intent) {
 async function retrieveContext(query, user) {
     const { raw: qLower, expandedTerms } = normalizeAndExpandQuery(query);
     const intent = detectUserIntent(query);
+    const entities = detectEntity(query);
     const contextLines = [];
     const suggestedCards = [];
 
@@ -131,6 +193,7 @@ async function retrieveContext(query, user) {
     console.log(`• Normalized  : "${qLower}"`);
     console.log(`• Expanded    : [${expandedTerms.join(", ")}]`);
     console.log(`• Intent      : ${intent}`);
+    console.log(`• Entities    : [${entities.join(", ")}]`);
     console.log(`======================================================`);
 
     const isTermMatched = (text) => {
@@ -147,10 +210,10 @@ async function retrieveContext(query, user) {
         const { data: kbItems } = await supabase.from("knowledge_base").select("id, title, category, keywords, content").eq("status", "active").order("priority", { ascending: false }).limit(50);
         const activeKbList = (kbItems && kbItems.length > 0) ? kbItems : inMemoryKnowledgeBase.filter(k => k.status === 'active');
         
-        // Hitung skor berbobot & rangking seluruh kandidat
+        // Hitung skor berbobot & rangking seluruh kandidat berdasarkan Intent & Entity V2
         const scoredKb = activeKbList.map(k => ({
             ...k,
-            score: calculateKnowledgeScore(k, query, expandedTerms, intent)
+            score: calculateKnowledgeScore(k, query, expandedTerms, intent, entities)
         })).filter(k => k.score > 0).sort((a, b) => b.score - a.score);
 
         console.log(`📊 [RAG AUDIT LOG] KNOWLEDGE BASE CANDIDATE SCORES:`);
@@ -167,7 +230,7 @@ async function retrieveContext(query, user) {
     } catch (e) {
         const scoredKb = inMemoryKnowledgeBase.filter(k => k.status === 'active').map(k => ({
             ...k,
-            score: calculateKnowledgeScore(k, query, expandedTerms, intent)
+            score: calculateKnowledgeScore(k, query, expandedTerms, intent, entities)
         })).filter(k => k.score > 0).sort((a, b) => b.score - a.score);
 
         if (scoredKb.length > 0) {

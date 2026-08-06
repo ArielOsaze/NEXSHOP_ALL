@@ -1835,6 +1835,93 @@ input::placeholder{ color:var(--text-dim); }
 .nexbot-input-row button{ width:38px; height:38px; border-radius:12px; background:linear-gradient(135deg, var(--violet-2), var(--violet)); color:#fff; border:none; cursor:pointer; transition:transform 0.15s; }
 .nexbot-input-row button:hover{ transform:scale(1.05); }
 
-@media(max-width:480px){
-    .nexbot-window{ width:calc(100vw - 32px); right:-8px; bottom:60px; height:460px; }
+@media (max-width: 768px) {
+    .nexbot-widget {
+        bottom: 12px;
+        right: 12px;
+        z-index: 10000;
+    }
+
+    .nexbot-window {
+        position: fixed !important;
+        width: 95vw !important;
+        height: 88vh !important;
+        max-height: 90vh !important;
+        bottom: 10px !important;
+        left: 50% !important;
+        right: auto !important;
+        transform: translateX(-50%) !important;
+        border-radius: 20px !important;
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7) !important;
+    }
+
+    .nexbot-header {
+        padding: 14px 18px;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+    }
+
+    .nexbot-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    .nexbot-body {
+        padding: 16px;
+        gap: 14px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .nexbot-msg {
+        max-width: 92%;
+    }
+
+    .nexbot-msg-content {
+        padding: 13px 17px;
+        font-size: 15px;
+        line-height: 1.55;
+        border-radius: 18px;
+    }
+
+    .nexbot-pill {
+        font-size: 13px;
+        padding: 8px 14px;
+        border-radius: 16px;
+        touch-action: manipulation;
+    }
+
+    .nexbot-quick-pills {
+        gap: 8px;
+    }
+
+    .nexbot-footer {
+        padding: 14px 16px;
+        position: sticky;
+        bottom: 0;
+        z-index: 2;
+    }
+
+    .nexbot-input-row {
+        gap: 10px;
+    }
+
+    .nexbot-input-row input {
+        padding: 12px 16px;
+        font-size: 15px;
+        border-radius: 14px;
+        height: 48px;
+    }
+
+    .nexbot-input-row button {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
