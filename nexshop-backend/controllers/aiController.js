@@ -2,17 +2,30 @@ const supabase = require("../config/db");
 const { getStoreSettings, getApiKeys } = require("../config/settings");
 const axios = require("axios");
 
+// Built-in Knowledge Base Resmi NexShop
+const NEXSHOP_STORE_KNOWLEDGE = `
+INFORMASI UTAMA NEXSHOP:
+- Tentang NexShop: NexShop adalah platform marketplace gaming 24/7 resmi di Indonesia yang menyediakan layanan topup diamond game otomatis (1-3 detik), produk digital, voucher game, dan aksesoris gaming dengan harga terjangkau dan terpercaya.
+- Keunggulan NexShop: Proses instant otomatis 24 jam tanpa antri, 100% legal dan garansi aman, harga grosir termurah, dukungan metode pembayaran lengkap (QRIS, E-Wallet, VA Bank, KK), dan customer service responsif.
+- Metode Pembayaran: QRIS (DANA, OVO, GoPay, ShopeePay, LinkAja), Virtual Account (BCA, Mandiri, BRI, BNI, Permata, CIMB), Transfer Bank, dan Kartu Kredit.
+- Cara Topup Diamond: 1. Buka tab Topup di NexShop. 2. Pilih game (MLBB, Free Fire, PUBG Mobile, Genshin Impact, Valorant, dll). 3. Masukkan User ID dan Zone ID. 4. Pilih nominal diamond/item. 5. Pilih metode pembayaran dan selesaikan pesanan. Item masuk otomatis dalam 1-3 detik.
+- Cara Gunakan Voucher / Promo: Masukkan kode promo (seperti NEXPROMO) di halaman Checkout sebelum memilih pembayaran untuk langsung memotong total belanja.
+- Garansi & Kebijakan Refund: Garansi 100% uang kembali jika saldo/item tidak masuk atau stok habis dalam kurun waktu 24 jam. Pembatalan/refund dapat diklaim melalui CS WhatsApp dengan menyertakan Nomor Order ID.
+- Kontak Admin CS: WhatsApp 6287792634063 / Email: support@nexshop.cloud (Aktif 24/7).
+- Game yang Didukung: Mobile Legends (MLBB), Free Fire, PUBG Mobile, Genshin Impact, Valorant, Roblox, Steam Wallet Code, Xbox Game Pass, PlayStation Network (PSN), EA Sports FC, Honor of Kings, Call of Duty Mobile.
+`;
+
 // RAG (Retrieval-Augmented Generation) Helper: Cari konteks relevan di DB lokal secara real-time
 async function retrieveContext(query, user) {
     const qLower = String(query || "").toLowerCase().trim();
-    const contextLines = [];
+    const contextLines = [NEXSHOP_STORE_KNOWLEDGE];
     const suggestedCards = [];
 
     try {
         // SELALU panggil getStoreSettings({ fresh: true }) agar jika admin baru mengganti FAQ/Syarat/Kontak, AI langsung menggunakannya!
         const settings = await getStoreSettings({ fresh: true });
         if (settings) {
-            contextLines.push(`Informasi Toko: ${settings.store_name || 'NexShop'} (${settings.store_tagline || 'Marketplace Gaming'}). WhatsApp CS: ${settings.whatsapp_number || '6287792634063'}. Email CS: ${settings.contact_email || 'support@nexshop.cloud'}.`);
+            contextLines.push(`Informasi Toko Dinamis: ${settings.store_name || 'NexShop'} (${settings.store_tagline || 'Marketplace Gaming'}). WhatsApp CS: ${settings.whatsapp_number || '6287792634063'}. Email CS: ${settings.contact_email || 'support@nexshop.cloud'}.`);
             if (settings.faq_content) {
                 contextLines.push(`FAQ & Panduan Toko: ${settings.faq_content}`);
             }
@@ -100,7 +113,7 @@ async function retrieveContext(query, user) {
     };
 }
 
-// MAIN RAG AI CHAT CONTROLLER
+// MAIN RAG AI CHAT CONTROLLER WITH SMART INTENT ROUTING
 exports.chat = async (req, res) => {
     const { message, history } = req.body;
     if (!message || typeof message !== "string" || !message.trim()) {
@@ -108,6 +121,7 @@ exports.chat = async (req, res) => {
     }
 
     const q = message.trim();
+    const qLower = q.toLowerCase();
     const user = req.user || null;
 
     try {
@@ -125,7 +139,7 @@ ${userName ? `Nama pelanggan yang sedang login: ${userName}. Sapa pengguna denga
 ATURAN UTAMA (RAG KONTROL PENUH):
 1. Utamakan informasi dari KONTEKS DATABASE NEXSHOP di bawah ini.
 2. Jika ada data harga, voucher, atau status order di dalam konteks, sebutkan secara presisi.
-3. JIKA INFORMASI TIDAK TERSEDIA di dalam konteks dan kamu tidak yakin, JANGAN MENGARANG. Katakan dengan jujur dan ramah bahwa kamu belum menemukan informasi tersebut dan sarankan pelanggan menghubungi CS WhatsApp Admin.
+3. JIKA INFORMASI TIDAK TERSEDIA di dalam konteks dan kamu tidak yakin, JANGAN MENGARANG. Gunakan pengetahuan dasar NexShop yang tersedia dan sarankan CS WhatsApp Admin jika butuh bantuan lebih lanjut.
 
 KONTEKS DATABASE NEXSHOP:
 ${contextText || "Tidak ada informasi khusus di database."}`;
@@ -166,18 +180,29 @@ ${contextText || "Tidak ada informasi khusus di database."}`;
                     });
                 }
             } catch (geminiErr) {
-                console.log("⚠️ Call Gemini API gagal di NexBot Chat, memakai fallback RAG local:", geminiErr.message);
+                console.log("⚠️ Call Gemini API gagal di NexBot Chat, memakai Smart Intent Fallback:", geminiErr.message);
             }
         }
 
-        // Fallback RAG jika Gemini API Key belum ada atau kuota terlampaui
-        let fallbackReply = userName ? `Halo ${userName} 👋 Saya **NexBot**.\n\n` : `Halo 👋 Saya **NexBot**.\n\n`;
-        if (q.toLowerCase().includes("topup") || q.toLowerCase().includes("ml") || q.toLowerCase().includes("diamond")) {
-            fallbackReply += "Untuk melakukan topup diamond game (Mobile Legends, Free Fire, PUBG, dll):\n1. Masuk ke tab **Topup** di menu navigasi utama.\n2. Pilih game dan nominal diamond.\n3. Masukkan User ID / Zone ID kamu.\n4. Pilih metode pembayaran dan selesaikan transaksi secara otomatis!";
-        } else if (q.toLowerCase().includes("promo") || q.toLowerCase().includes("voucher") || q.toLowerCase().includes("diskon")) {
-            fallbackReply += "Gunakan kode promo aktif seperti **NEXPROMO** atau ikuti event Flash Sale di halaman utama untuk mendapatkan harga diskon spesial!";
+        // Smart Intent Fallback RAG Engine (Memastikan 100% pertanyaan umum NexShop terjawab)
+        let fallbackReply = userName ? `Halo ${userName} 👋 ` : `Halo 👋 `;
+
+        if (qLower.includes("apa itu nexshop") || qLower.includes("tentang nexshop") || qLower.includes("kelebihan") || qLower.includes("kenapa beli") || qLower.includes("aman")) {
+            fallbackReply += "**NexShop** adalah platform marketplace gaming 24/7 resmi di Indonesia.\n\n✨ **Keunggulan NexShop:**\n• Process Instant 1-3 detik otomatis tanpa antri.\n• 100% Legal & Garansi Aman.\n• Harga Grosir Termurah.\n• Pembayaran Lengkap (QRIS, E-Wallet, VA Bank, KK).";
+        } else if (qLower.includes("metode pembayaran") || qLower.includes("bayar lewat apa") || qLower.includes("pembayaran")) {
+            fallbackReply += "NexShop mendukung metode pembayaran yang lengkap:\n• **QRIS**: DANA, OVO, GoPay, ShopeePay, LinkAja.\n• **Virtual Account**: BCA, Mandiri, BRI, BNI, Permata.\n• **Kartu Kredit / Debit**.\n\nPembayaran diverifikasi otomatis 24 jam non-stop!";
+        } else if (qLower.includes("topup") || qLower.includes("cara topup") || qLower.includes("ml") || qLower.includes("ff") || qLower.includes("diamond")) {
+            fallbackReply += "Cara topup diamond game di NexShop sangat praktis:\n1. Buka tab **Topup** di menu atas.\n2. Pilih game (MLBB, Free Fire, PUBG, Valorant, dll).\n3. Masukkan **User ID** & **Zone ID** kamu.\n4. Pilih nominal diamond & metode pembayaran.\n5. Selesaikan pembayaran, item otomatis masuk dalam 1-3 detik!";
+        } else if (qLower.includes("voucher") || qLower.includes("promo") || qLower.includes("redeem") || qLower.includes("diskon")) {
+            fallbackReply += "Untuk mengklaim diskon:\n1. Gunakan kode promo seperti **NEXPROMO** di halaman Checkout.\n2. Masukkan kode pada kolom **Kode Promo** sebelum bayar untuk pemotongan harga otomatis.";
+        } else if (qLower.includes("refund") || qLower.includes("garansi") || qLower.includes("batal")) {
+            fallbackReply += "NexShop memberikan **Garansi 100% Uang Kembali** apabila transaksi gagal atau stok habis dalam 24 jam. Hubungi CS WhatsApp kami dengan menyertakan Nomor Order ID untuk klaim refund.";
+        } else if (qLower.includes("admin") || qLower.includes("cs") || qLower.includes("kontak") || qLower.includes("hubungi") || qLower.includes("wa")) {
+            fallbackReply += "Hubungi Tim Customer Service NexShop 24/7 via:\n• **WhatsApp**: 6287792634063\n• **Email**: support@nexshop.cloud";
+        } else if (qLower.includes("game") || qLower.includes("kategori")) {
+            fallbackReply += "Game populer yang tersedia di NexShop:\n🎮 Mobile Legends, Free Fire, PUBG Mobile, Genshin Impact, Valorant, Roblox, Steam Wallet, Xbox Game Pass, & PSN.";
         } else {
-            fallbackReply += "Maaf, saya belum menemukan informasi spesifik mengenai pertanyaan Anda. Silakan hubungi CS Admin via WhatsApp untuk bantuan langsung!";
+            fallbackReply += "Saya adalah **NexBot**, asisten virtual resmi NexShop. Ada yang bisa saya bantu mengenai produk game, topup diamond, promo, atau status pesanan kamu hari ini?";
         }
 
         res.json({

@@ -82,6 +82,10 @@ function endAppRequest() {
 
 const nativeFetch = window.fetch.bind(window);
 window.fetch = (...args) => {
+    const url = typeof args[0] === "string" ? args[0] : (args[0] && args[0].url ? args[0].url : "");
+    if (url.includes("/ai/chat")) {
+        return nativeFetch(...args);
+    }
     beginAppRequest();
     return nativeFetch(...args).finally(endAppRequest);
 };
@@ -2709,7 +2713,7 @@ function initNexBotChat() {
             const headers = { "Content-Type": "application/json" };
             if (token) headers["Authorization"] = `Bearer ${token}`;
 
-            const res = await fetch(`${API_BASE}/ai/chat`, {
+            const res = await nativeFetch(`${API_BASE}/ai/chat`, {
                 method: "POST",
                 headers,
                 body: JSON.stringify({
