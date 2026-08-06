@@ -2642,14 +2642,16 @@ async function bootstrapApp() {
     finishInitialLoading(!completed);
 }
 
-// ── Reduced-motion: hentikan SVG SMIL animateTransform pada pita kemerdekaan ──
+// ── Reduced-motion: hentikan SVG SMIL animate pada pita kemerdekaan ──
 (function () {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     function applyRibbonMotion(e) {
-        const anim = document.querySelector(".independence-ribbon__cloth animateTransform");
-        if (!anim) return;
-        if (e.matches) { try { anim.endElement(); } catch (_) {} }
-        else          { try { anim.beginElement(); } catch (_) {} }
+        // Semua SMIL <animate> di dalam SVG ribbon (seed, dsb.)
+        const anims = document.querySelectorAll(".independence-ribbon animate");
+        if (!anims.length) return;
+        anims.forEach(a => {
+            try { e.matches ? a.endElement() : a.beginElement(); } catch (_) {}
+        });
     }
     mq.addEventListener("change", applyRibbonMotion);
     // Jalankan sekali setelah DOM siap
