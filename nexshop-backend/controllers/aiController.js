@@ -347,44 +347,60 @@ ${userName ? `Nama pelanggan yang sedang login: ${userName}. Sapa pengguna denga
 KONTEKS DATABASE NEXSHOP:
 ${contextText || "Tidak ada informasi khusus di database."}`;
 
-        console.log(`🤖 [RAG AUDIT LOG] FULL PROMPT SENT TO GEMINI:`);
-        console.log(systemPrompt.slice(0, 500) + "\n... (truncated for brevity)");
+        console.log(`🤖 [RAG AUDIT LOG] PROMPT AUDIT & TOKEN ESTIMATION:`);
+        console.log(`• System Prompt Length: ${systemPrompt.length} chars (~${Math.ceil(systemPrompt.length / 4)} tokens)`);
+        console.log(`• User Message Length : ${q.length} chars (~${Math.ceil(q.length / 4)} tokens)`);
+        console.log(`• Total Token Est.    : ~${Math.ceil((systemPrompt.length + q.length) / 4)} tokens`);
 
         let finalReplyText = "";
         let isHandoff = false;
 
         if (apiKey) {
             try {
-                const contentsPayload = [
-                    { role: "user", parts: [{ text: systemPrompt }] },
-                    { role: "model", parts: [{ text: "Siap, saya mengerti. Saya adalah NexBot, asisten virtual resmi NexShop." }] }
-                ];
+                // Konstruksi Single Clean Prompt (Identik dengan newsController.js yang terbukti stabil)
+                let fullPrompt = `${systemPrompt}\n\n`;
 
-                if (Array.isArray(history)) {
-                    history.slice(-6).forEach(item => {
-                        if (item.role && item.text) {
-                            contentsPayload.push({
-                                role: item.role === "user" ? "user" : "model",
-                                parts: [{ text: String(item.text) }]
-                            });
+                if (Array.isArray(history) && history.length > 0) {
+                    fullPrompt += `RIWAYAT PERCAKAPAN SEBELUMNYA:\n`;
+                    history.slice(-4).forEach(item => {
+                        if (item.text) {
+                            fullPrompt += `${item.role === 'user' ? 'Pengguna' : 'NexBot'}: ${item.text}\n`;
                         }
                     });
+                    fullPrompt += `\n`;
                 }
 
-                contentsPayload.push({ role: "user", parts: [{ text: q }] });
+                fullPrompt += `PERTANYAAN SEKARANG:\nPengguna: ${q}\nNexBot:`;
 
+                const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+                
+                console.log(`🚀 Sending 1 Single Request to Gemini (${model})...`);
                 const response = await axios.post(
-                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-                    { contents: contentsPayload },
-                    { timeout: 9000 }
+                    targetUrl,
+                    {
+                        contents: [{ parts: [{ text: fullPrompt }] }],
+                        generationConfig: {
+                            temperature: 0.3,
+                            maxOutputTokens: 2048
+                        }
+                    },
+                    {
+                        timeout: 20000,
+                        headers: { "Content-Type": "application/json" }
+                    }
                 );
 
                 finalReplyText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
                 if (finalReplyText) {
-                    console.log(`✨ [RAG AUDIT LOG] GEMINI RESPONSE RECEIVED (${finalReplyText.length} chars).`);
+                    const respTokensEst = Math.ceil(finalReplyText.length / 4);
+                    console.log(`✨ [RAG AUDIT LOG] GEMINI RESPONSE RECEIVED SUCCESS (HTTP ${response.status}, ${finalReplyText.length} chars, ~${respTokensEst} output tokens).`);
                 }
             } catch (geminiErr) {
-                console.log("⚠️ Call Gemini API gagal di NexBot Chat, memakai Smart Intent Fallback:", geminiErr.message);
+                const httpStatus = geminiErr.response ? geminiErr.response.status : "NO_STATUS";
+                const errorBody = geminiErr.response ? JSON.stringify(geminiErr.response.data) : geminiErr.message;
+                console.error(`❌ [GEMINI AUDIT ERROR] HTTP Status: ${httpStatus}`);
+                console.error(`❌ [GEMINI AUDIT ERROR] Full Error Body:`, errorBody);
+                console.log("⚠️ Call Gemini API gagal di NexBot Chat, memakai Smart Intent Fallback.");
             }
         }
 
