@@ -1280,6 +1280,33 @@ async function loadNewsRelatedProducts(item) {
     }
 }
 
+function extractProperHighlights(summaryText, titleText) {
+    const raw = String(summaryText || "").trim();
+    if (!raw) return [titleText ? `Kabar utama seputar ${titleText}.` : "Informasi utama seputar industri gaming."];
+
+    const sentences = (raw.match(/[^.!?]+[.!?]+/g) || [raw])
+        .map((s) => s.trim().replace(/^[-•*]\s*/, ""))
+        .filter((s) => s.length >= 24 && !/^(berikut|dalam berita|sebagai model ai|ringkasan ini|menurut metadata|pembaca dapat|nexshop)/i.test(s));
+
+    if (!sentences.length) {
+        return [titleText ? `Pengumuman penting mengenai ${titleText}.` : "Perkembangan terbaru seputar game dan publisher."];
+    }
+    if (sentences.length <= 3) {
+        return sentences;
+    }
+
+    const highlights = [sentences[0]];
+    const midIdx = Math.floor(sentences.length / 2);
+    if (sentences[midIdx] && !highlights.includes(sentences[midIdx])) highlights.push(sentences[midIdx]);
+    const lastIdx = sentences.length - 1;
+    if (sentences[lastIdx] && !highlights.includes(sentences[lastIdx])) highlights.push(sentences[lastIdx]);
+
+    for (let i = 1; i < sentences.length && highlights.length < 3; i++) {
+        if (!highlights.includes(sentences[i])) highlights.push(sentences[i]);
+    }
+    return highlights;
+}
+
 function openGamingNewsDetail(id) {
     const index = publicNewsEntries.findIndex((item) => Number(item.id) === Number(id));
     const item = publicNewsEntries[index];
@@ -1299,13 +1326,13 @@ function openGamingNewsDetail(id) {
     document.getElementById("newsDetailDate").textContent = formatNewsDate(item.published_at);
     document.getElementById("newsDetailPublisherMark").innerHTML = publisherMarkMarkup(item);
     document.getElementById("newsDetailTags").innerHTML = newsTags(item).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
-    const sentences = String(item.summary || "").match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [String(item.summary || "")];
     const rawSummary = String(item.summary || "").trim();
     const paragraphs = rawSummary ? rawSummary.split(/\r?\n+/).map(p => p.trim()).filter(Boolean) : [];
     document.getElementById("newsDetailSummary").innerHTML = paragraphs.length
         ? paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("")
         : `<p>${escapeHtml(rawSummary)}</p>`;
-    document.getElementById("newsDetailHighlights").innerHTML = sentences.slice(0, 3).map((sentence) => `<li>${escapeHtml(sentence.trim())}</li>`).join("");
+    document.getElementById("newsDetailHighlights").innerHTML = extractProperHighlights(item.summary, item.title)
+        .map((sentence) => `<li>${escapeHtml(sentence)}</li>`).join("");
     document.getElementById("newsDetailGames").innerHTML = newsTags(item).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
     document.getElementById("newsDetailOriginal").href = sourceUrl;
     document.getElementById("newsDetailPrevious").disabled = index <= 0;
