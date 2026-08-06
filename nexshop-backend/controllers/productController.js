@@ -14,14 +14,14 @@ exports.getProducts = async (req, res) => {
 
     if (error) {
       return res.status(500).json({
-        message: error.message,
+        message: process.env.NODE_ENV === "production" ? "Gagal memuat produk" : error.message,
       });
     }
 
     res.json(data);
   } catch (err) {
     res.status(500).json({
-      message: err.message,
+      message: process.env.NODE_ENV === "production" ? "Terjadi kesalahan pada server" : err.message,
     });
   }
 };

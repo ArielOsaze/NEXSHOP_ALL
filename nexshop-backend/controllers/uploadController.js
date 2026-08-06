@@ -53,7 +53,9 @@ async function uploadImage(req, res) {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ message: err.message });
+        res.status(500).json({
+            message: process.env.NODE_ENV === "production" ? "Terjadi kesalahan pada server" : (err.message || "Server Error")
+        });
     }
 }
 
