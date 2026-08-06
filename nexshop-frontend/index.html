@@ -715,14 +715,53 @@
     </div>
 </div>
 
+<!-- NexBot AI Floating Chatbot Widget -->
+<div class="nexbot-widget" id="nexbotWidget">
+    <button type="button" class="nexbot-float-btn" id="nexbotFloatBtn" aria-label="Tanya NexBot AI">
+        <span class="nexbot-float-btn-icon"><i class="fa-solid fa-robot"></i></span>
+        <span class="nexbot-float-btn-label">Tanya AI</span>
+    </button>
+
+    <div class="nexbot-window hidden" id="nexbotWindow">
+        <div class="nexbot-header">
+            <div class="nexbot-header-info">
+                <div class="nexbot-avatar"><i class="fa-solid fa-robot"></i></div>
+                <div>
+                    <strong>NexBot AI <span class="nexbot-badge">Official</span></strong>
+                    <div class="nexbot-status"><span class="nexbot-status-dot"></span> CS Gaming Real-time</div>
+                </div>
+            </div>
+            <button type="button" class="nexbot-close-btn" id="nexbotCloseBtn"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="nexbot-body" id="nexbotBody">
+            <div class="nexbot-msg nexbot-msg--bot">
+                <div class="nexbot-msg-content">
+                    Halo 👋 Saya <strong>NexBot AI</strong>.<br>Ada yang bisa saya bantu mengenai produk game, topup, voucher, atau status pesanan kamu hari ini?
+                </div>
+            </div>
+
+            <div class="nexbot-quick-pills">
+                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Cara Topup ML')">Cara Topup ML</button>
+                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Promo Hari Ini')">Promo Hari Ini</button>
+                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Produk Terlaris')">Produk Terlaris</button>
+                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Status Pesanan Saya')">Status Pesanan Saya</button>
+                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Hubungi Admin')">Hubungi Admin</button>
+            </div>
+        </div>
+
+        <div class="nexbot-footer">
+            <form id="nexbotForm" class="nexbot-input-row">
+                <input type="text" id="nexbotInput" placeholder="Ketik pertanyaan kamu di sini..." autocomplete="off">
+                <button type="submit" id="nexbotSendBtn" aria-label="Kirim"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- Toast container -->
 <div class="toast-container" id="toastContainer"></div>
 
-<!--
-  iPaymu Redirect Payment gak butuh script client-side seperti Snap.js —
-  backend langsung kirim balik `paymentUrl` (halaman pembayaran iPaymu)
-  dan browser di-redirect ke sana lewat window.location.href. Lihat script.js.
--->
-<script src="script.js?v=20260806-production-audit"></script>
+<script src="script.js?v=20260806-nexbot-ai"></script>
 </body>
 </html>

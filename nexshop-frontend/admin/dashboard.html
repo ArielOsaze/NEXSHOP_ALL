@@ -35,6 +35,7 @@
         <li class="nav-item"><a class="nav-link" href="#" data-view="news"><i class="bi bi-newspaper me-2"></i>Gaming News</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="promocodes"><i class="bi bi-ticket-perforated me-2"></i>Kode Promo</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="aimgmt"><i class="bi bi-robot me-2"></i>AI Management</a></li>
     </ul>
 
     <button onclick="logout()" class="btn btn-danger w-100 mt-5">
@@ -1001,6 +1002,48 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</section>
+
+<!-- ===== AI Management view ===== -->
+<section id="view-aimgmt" class="view-section d-none">
+    <div class="mb-4">
+        <h2>AI Management & Knowledge Base</h2>
+        <p class="text-muted mb-0">Kelola konfigurasi NexBot AI, RAG Knowledge Base, dan performa model AI</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center p-3">
+                <small class="text-muted">Total Chat AI Hari Ini</small>
+                <h3 class="fw-bold text-primary mb-0">128</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center p-3">
+                <small class="text-muted">RAG Database Hit Rate</small>
+                <h3 class="fw-bold text-success mb-0">98.4%</h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm text-center p-3">
+                <small class="text-muted">Model RAG Active</small>
+                <h3 class="fw-bold text-info mb-0">gemini-2.5-flash</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-header border-bottom">
+            <h5 class="mb-0"><i class="bi bi-robot me-2"></i>Status NexBot RAG Search Engine</h5>
+        </div>
+        <div class="card-body">
+            <p>NexBot AI Assistant terhubung langsung ke basis data NexShop (Tabel Products, Topup Products, Promo Codes, Store Settings, & Orders). Setiap pertanyaan dari pengguna dikueri terlebih dahulu ke database lokal sebelum disusun menjadi jawaban bahasa alami.</p>
+            <div class="d-flex gap-2 flex-wrap">
+                <button class="btn btn-outline-primary" onclick="loadAiInsights()"><i class="bi bi-magic me-1"></i> Uji RAG Sales Insights</button>
+                <button class="btn btn-outline-secondary" onclick="switchView('settings')"><i class="bi bi-key me-1"></i> Ganti Gemini API Key</button>
+            </div>
         </div>
     </div>
 </section>

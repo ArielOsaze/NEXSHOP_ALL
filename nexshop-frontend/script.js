@@ -2612,6 +2612,115 @@ function initMobileMenu() {
     });
 }
 
+/* ---------- NexBot AI Floating Chatbot ---------- */
+function initNexBotChat() {
+    const floatBtn = document.getElementById("nexbotFloatBtn");
+    const closeBtn = document.getElementById("nexbotCloseBtn");
+    const windowEl = document.getElementById("nexbotWindow");
+    const form = document.getElementById("nexbotForm");
+    const input = document.getElementById("nexbotInput");
+    const body = document.getElementById("nexbotBody");
+
+    if (!floatBtn || !windowEl || !form) return;
+
+    floatBtn.addEventListener("click", () => {
+        windowEl.classList.toggle("hidden");
+        if (!windowEl.classList.contains("hidden")) {
+            input.focus();
+        }
+    });
+
+    closeBtn.addEventListener("click", () => {
+        windowEl.classList.add("hidden");
+    });
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+
+        appendNexBotMessage(text, "user");
+        input.value = "";
+
+        const typingEl = appendNexBotTyping();
+        body.scrollTop = body.scrollHeight;
+
+        try {
+            const token = localStorage.getItem("token");
+            const headers = { "Content-Type": "application/json" };
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+
+            const res = await fetch(`${API_BASE}/ai/chat`, {
+                method: "POST",
+                headers,
+                body: JSON.stringify({ message: text })
+            });
+
+            const data = await res.json().catch(() => ({}));
+            typingEl.remove();
+
+            if (!res.ok) {
+                appendNexBotMessage(data.message || "Maaf, terjadi kendala koneksi.", "bot");
+                return;
+            }
+
+            appendNexBotMessage(data.reply || "Maaf, tidak ada tanggapan.", "bot", data.cards, data.handoff);
+        } catch (err) {
+            typingEl.remove();
+            appendNexBotMessage("Maaf, terjadi masalah pada jaringan.", "bot");
+        }
+    });
+}
+
+function sendNexBotQuick(query) {
+    const input = document.getElementById("nexbotInput");
+    const form = document.getElementById("nexbotForm");
+    if (input && form) {
+        input.value = query;
+        form.dispatchEvent(new Event("submit"));
+    }
+}
+
+function appendNexBotMessage(text, sender, cards = [], handoff = false) {
+    const body = document.getElementById("nexbotBody");
+    if (!body) return;
+
+    const msgDiv = document.createElement("div");
+    msgDiv.className = `nexbot-msg nexbot-msg--${sender}`;
+
+    let html = `<div class="nexbot-msg-content">${text.replace(/\n/g, "<br>")}</div>`;
+
+    if (cards && cards.length > 0) {
+        cards.forEach(c => {
+            html += `<div class="nexbot-card-suggest">
+                <div><strong>${c.title}</strong><br><small class="text-muted">${c.price || c.desc || ''}</small></div>
+                <a href="${c.url || '#'}">Lihat</a>
+            </div>`;
+        });
+    }
+
+    if (handoff) {
+        html += `<div style="margin-top:8px;">
+            <a href="https://wa.me/6287792634063?text=Halo%20Admin%20NexShop,%20saya%20butuh%20bantuan" target="_blank" class="nexbot-pill" style="display:inline-flex; align-items:center; gap:4px; text-decoration:none; background:#25D366; color:#fff;">
+                <i class="fa-brands fa-whatsapp"></i> Hubungi CS WhatsApp
+            </a>
+        </div>`;
+    }
+
+    msgDiv.innerHTML = html;
+    body.appendChild(msgDiv);
+    body.scrollTop = body.scrollHeight;
+}
+
+function appendNexBotTyping() {
+    const body = document.getElementById("nexbotBody");
+    const div = document.createElement("div");
+    div.className = "nexbot-msg nexbot-msg--bot";
+    div.innerHTML = `<div class="nexbot-msg-content text-muted"><em><i class="fa-solid fa-spinner fa-spin me-1"></i> NexBot sedang mengetik...</em></div>`;
+    body.appendChild(div);
+    return div;
+}
+
 async function bootstrapApp() {
     initMobileMenu();
     initProductGridInteractions();
@@ -2620,6 +2729,7 @@ async function bootstrapApp() {
     updateCartCount();
     checkResetPasswordLink();
     refreshAccountUI();
+    initNexBotChat();
 
     const initialRequests = Promise.allSettled([
         loadStoreSettings(),
