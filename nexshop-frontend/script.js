@@ -381,7 +381,7 @@ function renderProducts() {
             grid.innerHTML = data.map(p => `
                 <article class="card product-card${p.is_flash_sale ? " card-flash" : ""}" data-product-card data-id="${p.id}" tabindex="0" aria-label="Lihat detail ${escapeHtml(p.name)}">
                     <div class="card-img">
-                        <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
+                        <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async" onerror="this.classList.add('img-broken');this.closest('.card-img')?.classList.add('has-error');this.onerror=null;">
                         ${(p.is_flash_sale || p.badge) ? `<div class="card-badges"><div class="card-badges__start">${p.is_flash_sale ? '<span class="badge-flash"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}</div><div class="card-badges__end">${p.badge ? `<span class="badge-tag">${escapeHtml(p.badge)}</span>` : ""}</div></div>` : ""}
                     </div>
                     <div class="card-body">
