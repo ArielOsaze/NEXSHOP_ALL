@@ -125,11 +125,10 @@
                         </linearGradient>
                         <!-- Filter kain berkibar: turbulence + displacement -->
                         <filter id="ribbonWave" x="-5%" y="-15%" width="110%" height="130%" color-interpolation-filters="sRGB">
-                            <feTurbulence type="turbulence" baseFrequency="0.015 0.08" numOctaves="3" seed="2" result="noise">
-                                <!-- Seed berubah → pola gelombang berubah → efek kain hidup -->
-                                <animate attributeName="seed" values="2;5;9;14;20;27;35;44;54;65;77;90;80;68;55;42;30;19;11;5;2" dur="8s" repeatCount="indefinite"/>
+                            <feTurbulence type="fractalNoise" baseFrequency="0.008 0.025" numOctaves="2" seed="2" result="noise">
+                                <animate attributeName="baseFrequency" values="0.006 0.02; 0.01 0.035; 0.006 0.02" dur="10s" repeatCount="indefinite"/>
                             </feTurbulence>
-                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G"/>
+                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.5" xChannelSelector="R" yChannelSelector="G"/>
                         </filter>
                     </defs>
                     <g class="independence-ribbon__cloth" filter="url(#ribbonWave)">

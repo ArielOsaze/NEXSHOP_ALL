@@ -348,22 +348,30 @@ header{ position:sticky; top:0; z-index:1000; }
 
 .brand-text{ position:relative; z-index:6; overflow:visible; isolation:isolate; }
 .brand-text h1,.brand-text .tagline{ position:relative; z-index:1; }
-.independence-ribbon{ position:absolute; z-index:0; left:-4px; top:-3px; width:calc(100% + 8px); height:calc(100% + 6px); min-height:40px; pointer-events:none; opacity:.5 !important; overflow:hidden;
-    -webkit-mask-image:radial-gradient(ellipse 62% 68% at center, #000 55%, transparent 100%);
-    mask-image:radial-gradient(ellipse 62% 68% at center, #000 55%, transparent 100%);
+.independence-ribbon{ position:absolute; z-index:0; left:-4px; top:-3px; width:calc(100% + 8px); height:calc(100% + 6px); min-height:40px; pointer-events:none; opacity:.65 !important; overflow:hidden;
+    -webkit-mask-image:radial-gradient(ellipse 70% 75% at center, #000 60%, transparent 100%);
+    mask-image:radial-gradient(ellipse 70% 75% at center, #000 60%, transparent 100%);
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,.25));
 }
-/* Bendera Merah-Putih berkibar: animasi sepenuhnya SVG-native (feTurbulence + SMIL animate seed).
-   CSS hanya mengatur posisi container dan kilauan sutra overlay. */
-.independence-ribbon__cloth{ will-change:filter; }
+.independence-ribbon__cloth{
+    will-change:transform;
+    transform-origin:left center;
+    animation:gentleFlagSway 6.5s ease-in-out infinite alternate;
+}
+@keyframes gentleFlagSway{
+    0%   { transform:translateY(0) rotate(0deg) scaleY(1); }
+    50%  { transform:translateY(-0.8px) rotate(0.4deg) scaleY(1.015); }
+    100% { transform:translateY(0.8px) rotate(-0.4deg) scaleY(0.985); }
+}
 .independence-ribbon__sheen{
     will-change:transform, opacity;
-    animation:ribbon-sheen 4.2s linear infinite;
+    animation:ribbon-sheen 6s ease-in-out infinite;
 }
 /* Kilauan sutra mengalir SATU ARAH kiri → kanan */
 @keyframes ribbon-sheen{
     0%   { transform:translateX(-100%); opacity:0; }
-    20%  { opacity:.5; }
-    50%  { opacity:.35; }
+    30%  { opacity:.4; }
+    60%  { opacity:.25; }
     100% { transform:translateX(100%); opacity:0; }
 }
 
@@ -1619,12 +1627,13 @@ input::placeholder{ color:var(--text-dim); }
     .hero-text{ padding:0 20px; max-width:100%; }
     .hero-text p{ max-width:100%; }
     .hero-arrow{
-        top:auto; bottom:16px; transform:none;
-        width:34px; height:34px; font-size:18px;
+        top:50%; bottom:auto; transform:translateY(-50%);
+        width:36px; height:36px; font-size:18px; z-index:5;
     }
-    .hero-arrow-left{ left:auto; right:64px; }
-    .hero-arrow-right{ right:16px; }
-    .hero-dots{ left:16px; bottom:26px; transform:none; }
+    .hero-arrow:hover{ transform:translateY(-50%) scale(1.08); }
+    .hero-arrow-left{ left:10px; right:auto; }
+    .hero-arrow-right{ right:10px; left:auto; }
+    .hero-dots{ left:50%; bottom:14px; transform:translateX(-50%); z-index:5; }
 
     /* Product modal — stack vertically on mobile */
     .product-modal-body{
