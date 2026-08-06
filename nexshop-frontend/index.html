@@ -125,20 +125,32 @@
                             <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
                         </linearGradient>
 
-                        <!-- Filter distorsi gelombang kain bendera realistis (cloth ripple simulation) -->
+                        <!-- Filter tiupan angin merambat horizontal pada kain bendera -->
                         <filter id="flagClothDisplacement" x="-10%" y="-30%" width="120%" height="160%" color-interpolation-filters="sRGB">
-                            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.03" numOctaves="2" result="noise">
-                                <animate attributeName="baseFrequency" dur="4.8s" values="0.01 0.025; 0.018 0.045; 0.01 0.025" repeatCount="indefinite"/>
+                            <feTurbulence type="fractalNoise" baseFrequency="0.018 0.02" numOctaves="2" result="noise">
+                                <animate attributeName="baseFrequency" dur="4.2s" values="0.015 0.018; 0.025 0.035; 0.015 0.018" repeatCount="indefinite"/>
                             </feTurbulence>
-                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="6.5" xChannelSelector="R" yChannelSelector="G"/>
+                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="7.2" xChannelSelector="R" yChannelSelector="G"/>
                         </filter>
                     </defs>
                     <g class="independence-ribbon__cloth" filter="url(#flagClothDisplacement)">
-                        <path fill="url(#independenceRibbonRed)" d="M0 12 Q40 4 80 15 T160 15 T240 15 T320 12 L320 27 Q280 32 240 21 T160 21 T80 21 T0 27 Z">
-                            <animate attributeName="d" dur="4.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1" values="M0 12 Q40 4 80 15 T160 15 T240 15 T320 12 L320 27 Q280 32 240 21 T160 21 T80 21 T0 27 Z; M0 12 Q40 19 80 9 T160 19 T240 9 T320 17 L320 32 Q280 24 240 34 T160 24 T80 34 T0 27 Z; M0 12 Q40 7 80 17 T160 7 T240 17 T320 11 L320 26 Q280 32 240 22 T160 32 T80 22 T0 27 Z; M0 12 Q40 4 80 15 T160 15 T240 15 T320 12 L320 27 Q280 32 240 21 T160 21 T80 21 T0 27 Z"/>
+                        <!-- Pita Merah: Gelombang tiupan angin merambat dari kiri ke kanan -->
+                        <path fill="url(#independenceRibbonRed)" d="M0 12 C40 6 70 20 110 12 C150 4 190 20 230 12 C265 5 295 18 320 12 L320 27 C295 33 265 20 230 27 C190 35 150 19 110 27 C70 35 40 21 0 27 Z">
+                            <animate attributeName="d" dur="3.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1" values="
+M0 12 C40 6 70 20 110 12 C150 4 190 20 230 12 C265 5 295 18 320 12 L320 27 C295 33 265 20 230 27 C190 35 150 19 110 27 C70 35 40 21 0 27 Z;
+M0 12 C40 18 70 5 110 18 C150 10 190 4 230 18 C265 10 295 5 320 16 L320 31 C295 20 265 25 230 33 C190 19 150 25 110 33 C70 20 40 33 0 27 Z;
+M0 12 C40 8 70 18 110 6 C150 18 190 12 230 6 C265 18 295 12 320 8 L320 23 C295 27 265 33 230 21 C190 27 150 33 110 21 C70 33 40 23 0 27 Z;
+M0 12 C40 16 70 8 110 16 C150 6 190 18 230 14 C265 6 295 16 320 14 L320 29 C295 31 265 21 230 29 C190 33 150 21 110 31 C70 23 40 31 0 27 Z;
+M0 12 C40 6 70 20 110 12 C150 4 190 20 230 12 C265 5 295 18 320 12 L320 27 C295 33 265 20 230 27 C190 35 150 19 110 27 C70 35 40 21 0 27 Z"/>
                         </path>
-                        <path fill="url(#independenceRibbonWhite)" d="M0 27 Q40 19 80 30 T160 30 T240 30 T320 27 L320 42 Q280 47 240 36 T160 36 T80 36 T0 42 Z">
-                            <animate attributeName="d" dur="4.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1; 0.45 0 0.55 1; 0.45 0 0.55 1" values="M0 27 Q40 19 80 30 T160 30 T240 30 T320 27 L320 42 Q280 47 240 36 T160 36 T80 36 T0 42 Z; M0 27 Q40 34 80 24 T160 34 T240 24 T320 32 L320 47 Q280 39 240 49 T160 39 T80 49 T0 42 Z; M0 27 Q40 22 80 32 T160 22 T240 32 T320 26 L320 41 Q280 47 240 37 T160 47 T80 37 T0 42 Z; M0 27 Q40 19 80 30 T160 30 T240 30 T320 27 L320 42 Q280 47 240 36 T160 36 T80 36 T0 42 Z"/>
+                        <!-- Pita Putih: Mengikuti gelombang tiupan angin yang sama -->
+                        <path fill="url(#independenceRibbonWhite)" d="M0 27 C40 21 70 35 110 27 C150 19 190 35 230 27 C265 20 295 33 320 27 L320 42 C295 48 265 35 230 42 C190 50 150 34 110 42 C70 50 40 36 0 42 Z">
+                            <animate attributeName="d" dur="3.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1" values="
+M0 27 C40 21 70 35 110 27 C150 19 190 35 230 27 C265 20 295 33 320 27 L320 42 C295 48 265 35 230 42 C190 50 150 34 110 42 C70 50 40 36 0 42 Z;
+M0 27 C40 33 70 20 110 33 C150 25 190 19 230 33 C265 25 295 20 320 31 L320 46 C295 35 265 40 230 48 C190 34 150 40 110 48 C70 35 40 48 0 42 Z;
+M0 27 C40 23 70 33 110 21 C150 33 190 27 230 21 C265 33 295 27 320 23 L320 38 C295 42 265 48 230 36 C190 42 150 48 110 36 C70 48 40 38 0 42 Z;
+M0 27 C40 31 70 23 110 31 C150 21 190 33 230 29 C265 21 295 31 320 29 L320 44 C295 46 265 36 230 44 C190 48 150 36 110 46 C70 38 40 46 0 42 Z;
+M0 27 C40 21 70 35 110 27 C150 19 190 35 230 27 C265 20 295 33 320 27 L320 42 C295 48 265 35 230 42 C190 50 150 34 110 42 C70 50 40 36 0 42 Z"/>
                         </path>
                         <!-- Lipatan bayangan kain -->
                         <path class="independence-ribbon__fold" fill="none" stroke="rgba(0,0,0,.16)" stroke-width="1.4" d="M100 15c8 4 16 8 24 4s18-10 26-5"/>
