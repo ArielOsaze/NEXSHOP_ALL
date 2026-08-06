@@ -3736,36 +3736,107 @@ async function loadAiInsights() {
 }
 
 /* =========================================================
- * AI Knowledge Base Management Functions
+ * AI Knowledge Base Management Functions (Robust & Debugged)
  * ========================================================= */
 let knowledgeBaseList = [];
 let kbModalInstance = null;
+let isKbLoading = false;
+
+function getKbModalInstance() {
+    const el = document.getElementById("kbModal");
+    if (!el) {
+        console.error("❌ Element #kbModal tidak ditemukan di DOM!");
+        return null;
+    }
+    if (!kbModalInstance) {
+        kbModalInstance = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+    }
+    return kbModalInstance;
+}
 
 async function loadKnowledgeBase() {
     const tbody = document.getElementById("kbTableBody");
-    if (!tbody) return;
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-muted"><i class="bi bi-spinner spinner me-2"></i>Memuat Knowledge Base...</td></tr>`;
+    if (!tbody || isKbLoading) return;
+
+    isKbLoading = true;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted"><span class="spinner-border spinner-border-sm me-2 text-primary" role="status"></span>Memuat Knowledge Base...</td></tr>`;
 
     try {
+        console.log("🔍 Fetching Knowledge Base from /api/ai/knowledge...");
         const res = await apiFetch("/ai/knowledge");
-        const json = await res.json();
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            throw new Error(json.message || `HTTP Error ${res.status}`);
+        }
+
         knowledgeBaseList = json.data || [];
-        renderKnowledgeTable();
+        console.log(`✅ Loaded ${knowledgeBaseList.length} Knowledge Base items.`);
+        populateKbCategories();
+        filterKnowledgeTable();
     } catch (err) {
         if (err.message === "unauthorized") return;
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">Gagal memuat Knowledge Base: ${escapeHtml(err.message)}</td></tr>`;
+        console.error("❌ Error loading Knowledge Base:", err);
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-danger py-4">
+                    <div><i class="bi bi-exclamation-triangle fs-4 d-block mb-1"></i>Gagal memuat Knowledge Base: ${escapeHtml(err.message)}</div>
+                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="loadKnowledgeBase()"><i class="bi bi-arrow-clockwise me-1"></i> Coba Lagi</button>
+                </td>
+            </tr>`;
+    } finally {
+        isKbLoading = false;
     }
 }
 
-function renderKnowledgeTable() {
+function populateKbCategories() {
+    const select = document.getElementById("kbCategoryFilter");
+    if (!select) return;
+
+    const categories = Array.from(new Set(knowledgeBaseList.map(k => k.category || "Umum").filter(Boolean)));
+    const currentVal = select.value;
+
+    select.innerHTML = `<option value="">Semua Kategori</option>` + categories.map(cat => `<option value="${escapeHtml(cat)}">${escapeHtml(cat)}</option>`).join("");
+    select.value = currentVal;
+}
+
+function filterKnowledgeTable() {
     const tbody = document.getElementById("kbTableBody");
     if (!tbody) return;
-    if (knowledgeBaseList.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Belum ada entry Knowledge Base. Klik <strong>Tambah Knowledge</strong> untuk membuat baru.</td></tr>`;
+
+    const query = (document.getElementById("kbSearchInput")?.value || "").toLowerCase().trim();
+    const selectedCat = (document.getElementById("kbCategoryFilter")?.value || "").toLowerCase().trim();
+
+    const filtered = knowledgeBaseList.filter(item => {
+        const matchesQuery = !query || 
+            (item.title && item.title.toLowerCase().includes(query)) ||
+            (item.keywords && item.keywords.toLowerCase().includes(query)) ||
+            (item.content && item.content.toLowerCase().includes(query));
+
+        const matchesCat = !selectedCat || (item.category && item.category.toLowerCase().trim() === selectedCat);
+
+        return matchesQuery && matchesCat;
+    });
+
+    renderKnowledgeTable(filtered);
+}
+
+function renderKnowledgeTable(itemsToRender = knowledgeBaseList) {
+    const tbody = document.getElementById("kbTableBody");
+    if (!tbody) return;
+
+    if (itemsToRender.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4 text-muted">
+                    <div>Belum ada data Knowledge Base yang cocok.</div>
+                    <button class="btn btn-primary btn-sm mt-2" onclick="openAddKnowledgeModal()"><i class="bi bi-plus-circle me-1"></i> Tambah Knowledge Pertama</button>
+                </td>
+            </tr>`;
         return;
     }
 
-    tbody.innerHTML = knowledgeBaseList.map(item => `
+    tbody.innerHTML = itemsToRender.map(item => `
         <tr>
             <td>
                 <strong>${escapeHtml(item.title)}</strong>
@@ -3778,25 +3849,49 @@ function renderKnowledgeTable() {
             </td>
             <td><span class="badge bg-info text-dark">P-${item.priority || 0}</span></td>
             <td class="text-end">
-                <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditKnowledgeModal('${item.id}')"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-sm btn-outline-danger" onclick="deleteKnowledge('${item.id}')"><i class="bi bi-trash"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="openEditKnowledgeModal('${item.id}')"><i class="bi bi-pencil"></i> Edit</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteKnowledge('${item.id}')"><i class="bi bi-trash"></i> Hapus</button>
             </td>
         </tr>
     `).join("");
 }
 
 function openAddKnowledgeModal() {
-    document.getElementById("kbForm").reset();
-    document.getElementById("kbId").value = "";
-    document.getElementById("kbModalTitle").innerHTML = '<i class="bi bi-journal-plus me-2"></i>Tambah Knowledge RAG';
-    document.getElementById("kbError").textContent = "";
-    if (!kbModalInstance) kbModalInstance = new bootstrap.Modal(document.getElementById("kbModal"));
-    kbModalInstance.show();
+    console.log("➕ Opening Add Knowledge Modal...");
+    const modal = getKbModalInstance();
+    if (!modal) {
+        showToast("Modal #kbModal tidak ditemukan pada halaman!", true);
+        return;
+    }
+
+    const form = document.getElementById("kbForm");
+    if (form) form.reset();
+
+    const idEl = document.getElementById("kbId");
+    if (idEl) idEl.value = "";
+
+    const titleEl = document.getElementById("kbModalTitle");
+    if (titleEl) titleEl.innerHTML = '<i class="bi bi-journal-plus me-2"></i>Tambah Knowledge RAG';
+
+    const errEl = document.getElementById("kbError");
+    if (errEl) errEl.textContent = "";
+
+    modal.show();
 }
 
 function openEditKnowledgeModal(id) {
+    console.log(`✏️ Opening Edit Knowledge Modal for ID: ${id}...`);
+    const modal = getKbModalInstance();
+    if (!modal) {
+        showToast("Modal #kbModal tidak ditemukan pada halaman!", true);
+        return;
+    }
+
     const item = knowledgeBaseList.find(k => String(k.id) === String(id));
-    if (!item) return;
+    if (!item) {
+        showToast("Knowledge item tidak ditemukan!", true);
+        return;
+    }
 
     document.getElementById("kbId").value = item.id;
     document.getElementById("kbTitle").value = item.title || "";
@@ -3808,57 +3903,71 @@ function openEditKnowledgeModal(id) {
     document.getElementById("kbError").textContent = "";
 
     document.getElementById("kbModalTitle").innerHTML = '<i class="bi bi-journal-text me-2"></i>Edit Knowledge RAG';
-    if (!kbModalInstance) kbModalInstance = new bootstrap.Modal(document.getElementById("kbModal"));
-    kbModalInstance.show();
+    modal.show();
 }
 
 async function saveKnowledge() {
-    const id = document.getElementById("kbId").value;
-    const title = document.getElementById("kbTitle").value.trim();
-    const category = document.getElementById("kbCategory").value.trim();
-    const keywords = document.getElementById("kbKeywords").value.trim();
-    const content = document.getElementById("kbContent").value.trim();
-    const priority = document.getElementById("kbPriority").value;
-    const status = document.getElementById("kbStatus").value;
+    const saveBtn = document.getElementById("btnSaveKnowledge");
     const errorEl = document.getElementById("kbError");
+    if (errorEl) errorEl.textContent = "";
 
-    errorEl.textContent = "";
+    const id = document.getElementById("kbId")?.value;
+    const title = document.getElementById("kbTitle")?.value.trim();
+    const category = document.getElementById("kbCategory")?.value.trim();
+    const keywords = document.getElementById("kbKeywords")?.value.trim();
+    const content = document.getElementById("kbContent")?.value.trim();
+    const priority = document.getElementById("kbPriority")?.value;
+    const status = document.getElementById("kbStatus")?.value;
+
     if (!title || !content) {
-        errorEl.textContent = "Judul dan Konten wajib diisi!";
+        if (errorEl) errorEl.textContent = "Judul dan Konten wajib diisi!";
         return;
     }
 
     const payload = { title, category, keywords, content, priority, status };
 
     try {
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...'; }
         const url = id ? `/ai/knowledge/${id}` : "/ai/knowledge";
         const method = id ? "PUT" : "POST";
+
+        console.log(`💾 Saving Knowledge (${method} ${url})...`, payload);
         const res = await apiFetch(url, {
             method,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
-        const json = await res.json();
+        const json = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(json.message || "Gagal menyimpan knowledge");
 
         showToast(json.message || "Knowledge berhasil disimpan!");
-        if (kbModalInstance) kbModalInstance.hide();
+        const modal = getKbModalInstance();
+        if (modal) modal.hide();
+
         loadKnowledgeBase();
     } catch (err) {
-        errorEl.textContent = err.message;
+        console.error("❌ Error saving Knowledge:", err);
+        if (errorEl) errorEl.textContent = err.message;
+    } finally {
+        if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="bi bi-floppy me-1"></i> Simpan Knowledge'; }
     }
 }
 
 async function deleteKnowledge(id) {
     if (!confirm("Apakah Anda yakin ingin menghapus entry knowledge ini?")) return;
     try {
+        console.log(`🗑️ Deleting Knowledge ID ${id}...`);
         const res = await apiFetch(`/ai/knowledge/${id}`, { method: "DELETE" });
-        const json = await res.json();
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok) throw new Error(json.message || "Gagal menghapus knowledge");
+
         showToast(json.message || "Knowledge berhasil dihapus");
         loadKnowledgeBase();
     } catch (err) {
-        showToast(err.message, "danger");
+        console.error("❌ Error deleting Knowledge:", err);
+        showToast(err.message, true);
     }
 }
 

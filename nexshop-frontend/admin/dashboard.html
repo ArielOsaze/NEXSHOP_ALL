@@ -1050,7 +1050,17 @@
     <div class="card shadow-sm mt-4">
         <div class="card-header border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Daftar Knowledge Base RAG</h5>
-            <button class="btn btn-primary btn-sm" onclick="openAddKnowledgeModal()"><i class="bi bi-plus-circle me-1"></i> Tambah Knowledge</button>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <div class="input-group input-group-sm" style="width: 220px;">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input id="kbSearchInput" type="text" class="form-control" placeholder="Cari knowledge..." oninput="filterKnowledgeTable()">
+                </div>
+                <select id="kbCategoryFilter" class="form-select form-select-sm" style="width: 140px;" onchange="filterKnowledgeTable()">
+                    <option value="">Semua Kategori</option>
+                </select>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="loadKnowledgeBase()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh</button>
+                <button type="button" class="btn btn-primary btn-sm" id="btnAddKnowledge" onclick="openAddKnowledgeModal()"><i class="bi bi-plus-circle me-1"></i> Tambah Knowledge</button>
+            </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -1495,6 +1505,57 @@
             <div class="modal-footer py-1 px-3 border-top d-flex justify-content-between text-muted small">
                 <span>Gunakan <kbd>↑</kbd> <kbd>↓</kbd> untuk memilih</span>
                 <span>Pintasan: <kbd>Ctrl + K</kbd></span>
+            </div>
+        </div>
+</div>
+
+<!-- Knowledge Base Add/Edit Modal -->
+<div class="modal fade" id="kbModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="kbModalTitle"><i class="bi bi-journal-plus me-2"></i>Tambah Knowledge RAG</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <form id="kbForm">
+                    <input type="hidden" id="kbId">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label" for="kbTitle">Judul Knowledge</label>
+                            <input id="kbTitle" class="form-control" placeholder="misal: Cara Topup MLBB Instant" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="kbCategory">Kategori</label>
+                            <input id="kbCategory" class="form-control" placeholder="Topup Guide, FAQ, Store Info" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="kbKeywords">Keywords (Kata Kunci Intent)</label>
+                            <input id="kbKeywords" class="form-control" placeholder="topup, ml, mobile legends, cara beli, diamond">
+                            <div class="form-text">Pisahkan dengan koma. Digunakan oleh NexBot RAG Search Engine untuk mencocokkan pertanyaan user.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="kbContent">Isi Knowledge / Jawaban Acuan</label>
+                            <textarea id="kbContent" class="form-control" rows="5" placeholder="Tuliskan jawaban lengkap atau informasi referensi di sini..." required></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="kbPriority">Prioritas (0 - 100)</label>
+                            <input id="kbPriority" type="number" class="form-control" value="10" min="0" max="100">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="kbStatus">Status</label>
+                            <select id="kbStatus" class="form-select">
+                                <option value="active">Aktif (RAG Live)</option>
+                                <option value="inactive">Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="text-danger small mt-2 mb-0" id="kbError"></p>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="btnSaveKnowledge" onclick="saveKnowledge()"><i class="bi bi-floppy me-1"></i> Simpan Knowledge</button>
             </div>
         </div>
     </div>
