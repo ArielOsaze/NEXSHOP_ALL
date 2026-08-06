@@ -99,23 +99,21 @@
                 <img src="images/nexshop-icon.svg" class="logo" id="storeLogoImg" alt="NexShop logo">
                 <!-- Overlay terpisah: tetap terikat pada pusat logo, bukan navbar. -->
                 <div id="eventMascotAnchor" class="event-mascot-anchor" aria-hidden="true"></div>
-                <!-- Dekorasi musiman terikat ke dudukan logo; logo asli tidak diubah. -->
-                <svg class="independence-flag" viewBox="0 0 140 72" aria-hidden="true" focusable="false">
-                    <defs>
-                        <linearGradient id="independenceFlagRed" x1="0" x2="1" y1=".1" y2=".8"><stop stop-color="#ff5864"/><stop offset=".5" stop-color="#e81b2f"/><stop offset="1" stop-color="#a40e1c"/></linearGradient>
-                        <linearGradient id="independenceFlagWhite" x1="0" x2="1" y1=".1" y2=".8"><stop stop-color="#ffffff"/><stop offset=".52" stop-color="#eef1f5"/><stop offset="1" stop-color="#bfc6d0"/></linearGradient>
-                        <filter id="independenceFlagShadow" x="-20%" y="-30%" width="150%" height="190%"><feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#020617" flood-opacity=".42"/></filter>
-                    </defs>
-                    <path class="independence-flag__mast" d="M12 9v55"/>
-                    <circle class="independence-flag__finial" cx="12" cy="8" r="3.2"/>
-                    <g class="independence-flag__cloth" filter="url(#independenceFlagShadow)">
-                        <path fill="url(#independenceFlagRed)" d="M15 13c23-5 38 4 58 0 21-4 39-1 56 4v24c-18-4-36-8-56-4-21 4-36-5-58 0z"/>
-                        <path fill="url(#independenceFlagWhite)" d="M15 37c22-5 37 4 58 0 20-4 38 0 56 4v24c-18-4-36-8-56-4-21 4-36-5-58 0z"/>
-                        <path class="independence-flag__highlight" d="M18 17c20-3 36 4 55 0 18-3 34-1 51 2"/>
-                    </g>
-                </svg>
             </div>
             <div class="brand-text">
+                <!-- Pita musim berada di belakang wordmark, bukan di samping atau di atasnya. -->
+                <svg class="independence-ribbon" viewBox="0 0 240 48" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                    <defs>
+                        <linearGradient id="independenceRibbonRed" x1="0" x2="1" y1="0" y2=".9"><stop stop-color="#fc5965"/><stop offset=".52" stop-color="#d91e32"/><stop offset="1" stop-color="#8f0d1b"/></linearGradient>
+                        <linearGradient id="independenceRibbonWhite" x1="0" x2="1" y1="0" y2=".9"><stop stop-color="#ffffff"/><stop offset=".5" stop-color="#e9edf2"/><stop offset="1" stop-color="#b5beca"/></linearGradient>
+                        <linearGradient id="independenceRibbonLight" x1="0" x2="1"><stop stop-color="#ffffff" stop-opacity="0"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+                    </defs>
+                    <g class="independence-ribbon__cloth">
+                        <path fill="url(#independenceRibbonRed)" d="M1 13c27-7 47 5 75 0s49-5 78 1c29 6 54-2 85-1v13c-29-1-55 8-85 1-28-6-50 7-78 1s-48-7-75 0z"/>
+                        <path fill="url(#independenceRibbonWhite)" d="M1 26c27-7 47 5 75 0s49-5 78 1c29 6 54-2 85-1v13c-29-1-55 8-85 1-28-6-50 7-78 1s-48-7-75 0z"/>
+                    </g>
+                    <path class="independence-ribbon__highlight" d="M4 16c26-5 46 5 72 0 29-6 50-5 78 1 30 6 55-2 82-1"/>
+                </svg>
                 <h1 id="storeNameText">Nex<span>Shop</span></h1>
                 <div class="tagline" id="storeTagline">Play More. Pay Less.</div>
             </div>

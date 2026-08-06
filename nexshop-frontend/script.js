@@ -33,7 +33,10 @@ function notifyInitialReady() {
     if (initialReadyDispatched) return;
     initialReadyDispatched = true;
     // Match the loader fade so entrance animations never run while obscured.
-    window.setTimeout(() => document.dispatchEvent(new Event("nexshop:initial-ready")), 320);
+    window.setTimeout(() => {
+        document.body.classList.add("app-ready");
+        document.dispatchEvent(new Event("nexshop:initial-ready"));
+    }, 320);
 }
 
 function showAppLoader(message = "Memuat data NexShop...") {

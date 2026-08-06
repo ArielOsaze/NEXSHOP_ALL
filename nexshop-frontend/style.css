@@ -334,22 +334,13 @@ header{ position:sticky; top:0; z-index:1000; }
 @media (max-width:600px){ .logo-wrapper{--mascot-web-length:36px; width:32px; height:34px; flex-basis:32px;} .brand .logo{width:32px; height:32px;} .event-mascot{--mascot-size:16px;} }
 @media (prefers-reduced-motion:reduce){ .event-mascot,.event-mascot.is-entering,.event-mascot.is-hanging,.event-mascot.is-entering .event-mascot__web{animation:none!important; transform:translateX(-50%)!important; opacity:1!important;} .event-mascot.is-entering .event-mascot__image{animation:none!important; transform:translateX(-50%) scale(var(--mascot-scale))!important; opacity:1!important;} .event-mascot__web{transform:translateX(-50%)!important;} }
 
-.brand-text{ position:relative; z-index:6; overflow:visible; }
-.independence-flag{
-    position:absolute; z-index:5; pointer-events:none; overflow:visible;
-    width:52px; height:28px; left:-25px; top:-13px; opacity:.98;
-    filter:saturate(1.03) contrast(1.02); transform:translateZ(0);
-}
-.independence-flag__mast{ fill:none; stroke:rgba(226,232,240,.78); stroke-width:2.2; stroke-linecap:round; filter:drop-shadow(0 1px 1px rgba(2,6,23,.65)); }
-.independence-flag__finial{ fill:#f8fafc; filter:drop-shadow(0 1px 1px rgba(2,6,23,.65)); }
-.independence-flag__cloth{ transform-box:fill-box; transform-origin:left center; will-change:transform,filter; animation:independence-flag-ripple 5.2s cubic-bezier(.45,.05,.55,.95) infinite; }
-.independence-flag__highlight{ fill:none; stroke:rgba(255,255,255,.34); stroke-width:2.4; stroke-linecap:round; opacity:.72; }
-@keyframes independence-flag-ripple{
-    0%,100%{ transform:perspective(150px) rotateY(0deg) rotateZ(-1deg) translateY(0); filter:brightness(1); }
-    28%{ transform:perspective(150px) rotateY(-8deg) rotateZ(1deg) translateY(-.6px); filter:brightness(1.06); }
-    61%{ transform:perspective(150px) rotateY(6deg) rotateZ(-.5deg) translateY(.7px); filter:brightness(.97); }
-    82%{ transform:perspective(150px) rotateY(-3deg) rotateZ(.4deg) translateY(-.3px); filter:brightness(1.02); }
-}
+.brand-text{ position:relative; z-index:6; overflow:visible; isolation:isolate; }
+.brand-text h1,.brand-text .tagline{ position:relative; z-index:1; }
+.independence-ribbon{ position:absolute; z-index:0; left:-5px; top:4px; width:calc(100% + 10px); height:28px; pointer-events:none; opacity:.46; overflow:visible; filter:drop-shadow(0 2px 3px rgba(2,6,23,.26)); }
+.independence-ribbon__cloth{ transform-box:fill-box; transform-origin:center; will-change:transform; animation:independence-ribbon-ripple 6.6s cubic-bezier(.45,.05,.55,.95) infinite; }
+.independence-ribbon__highlight{ fill:none; stroke:url(#independenceRibbonLight); stroke-width:2.4; stroke-linecap:round; opacity:.44; transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-light 6.6s ease-in-out infinite; }
+@keyframes independence-ribbon-ripple{ 0%,100%{transform:translate3d(0,0,0) skewY(0deg)} 30%{transform:translate3d(0,-.6px,0) skewY(-.6deg)} 64%{transform:translate3d(0,.7px,0) skewY(.5deg)} 82%{transform:translate3d(0,-.25px,0) skewY(-.2deg)} }
+@keyframes independence-ribbon-light{ 0%,100%{transform:translateX(-10px);opacity:.22} 46%{transform:translateX(10px);opacity:.58} 72%{transform:translateX(3px);opacity:.32} }
 
 .brand h1{
     font-size:22px; line-height:1; color:var(--text);
@@ -463,11 +454,12 @@ header{ position:sticky; top:0; z-index:1000; }
 .hero-text{
     position:relative; z-index:1; max-width:560px; padding:0 6vw;
 }
-.hero-text > *{ opacity:0; transform:translateY(10px); animation:hero-fade 520ms ease forwards; }
-.hero-text > *:nth-child(1){ animation-delay:120ms; }
-.hero-text > *:nth-child(2){ animation-delay:200ms; }
-.hero-text > *:nth-child(3){ animation-delay:280ms; }
-.hero-text > *:nth-child(4){ animation-delay:360ms; }
+.hero-text > *{ opacity:0; transform:translateY(10px); }
+.app-ready .hero-text > *{ animation:hero-fade 520ms ease forwards; }
+.app-ready .hero-text > *:nth-child(1){ animation-delay:120ms; }
+.app-ready .hero-text > *:nth-child(2){ animation-delay:200ms; }
+.app-ready .hero-text > *:nth-child(3){ animation-delay:280ms; }
+.app-ready .hero-text > *:nth-child(4){ animation-delay:360ms; }
 .hero-badge{
     display:inline-flex; align-items:center; justify-content:center; min-width:fit-content;
     padding:6px 12px; border-radius:999px;
@@ -1619,7 +1611,7 @@ input::placeholder{ color:var(--text-dim); }
     .brand h1{ font-size:18px; }
     .brand .logo{ width:32px; height:32px; }
     .brand .tagline{ font-size:9.5px; }
-    .independence-flag{ width:45px; height:24px; left:-22px; top:-12px; }
+    .independence-ribbon{ left:-4px; top:3px; width:calc(100% + 8px); height:25px; }
     .hero-carousel{ height:auto; aspect-ratio:16/9; min-height:0; width:100%; }
     .hero-slide.full-image{ background-size:contain; background-position:center; }
     .menu.active{ inset:56px 8px auto 8px; }
