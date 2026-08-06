@@ -348,24 +348,25 @@ header{ position:sticky; top:0; z-index:1000; }
 
 .brand-text{ position:relative; z-index:6; overflow:visible; isolation:isolate; }
 .brand-text h1,.brand-text .tagline{ position:relative; z-index:1; }
-.independence-ribbon{ position:absolute; z-index:0; left:-5px; top:4px; width:calc(100% + 10px); height:28px; pointer-events:none; opacity:.88; overflow:visible; filter:drop-shadow(0 4px 8px rgba(0,0,0,.35)); }
-.independence-ribbon__cloth{ transform-box:fill-box; transform-origin:left center; will-change:transform; animation:independence-ribbon-wave 2.8s ease-in-out infinite alternate; }
-.independence-ribbon__fold{ transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-fold 2.8s ease-in-out infinite alternate; }
-.independence-ribbon__fold--2{ animation-delay:-1.4s; }
-.independence-ribbon__highlight{ fill:none; stroke:url(#independenceRibbonLight); stroke-width:2.8; stroke-linecap:round; opacity:.65; transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-light 2.8s ease-in-out infinite alternate; }
-.independence-ribbon__highlight--2{ stroke:url(#independenceRibbonLight2); stroke-width:2; opacity:.45; animation-delay:-1.2s; animation-duration:3.2s; }
-/* Dynamic flag wave animation — simulates Merah Putih fluttering in the wind */
+.independence-ribbon{ position:absolute; z-index:0; left:-6px; top:3px; width:calc(100% + 12px); height:30px; pointer-events:none; opacity:.82; overflow:visible; perspective:400px; filter:drop-shadow(0 6px 10px rgba(0,0,0,.32)); }
+.independence-ribbon__cloth{ transform-box:fill-box; transform-origin:0% 50%; will-change:transform; animation:independence-ribbon-wave 3.2s cubic-bezier(.37,0,.63,1) infinite alternate; }
+.independence-ribbon__fold{ transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-fold 3.2s ease-in-out infinite alternate; }
+.independence-ribbon__fold--2{ animation-delay:-1.6s; }
+.independence-ribbon__highlight{ fill:none; stroke:url(#independenceRibbonLight); stroke-width:2.8; stroke-linecap:round; opacity:.7; transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-light 3.2s ease-in-out infinite alternate; }
+.independence-ribbon__highlight--2{ stroke:url(#independenceRibbonLight2); stroke-width:2; opacity:.5; animation-delay:-1.4s; animation-duration:3.6s; }
+/* Realistis: Efek berkibar bendera Merah Putih 3D dengan gelombang sutra fluid */
 @keyframes independence-ribbon-wave{
-    0% { transform:translate3d(0, 0, 0) skewY(0deg) scaleY(1); }
-    25% { transform:translate3d(1px, -2px, 0) skewY(-2.5deg) scaleY(1.05); }
-    50% { transform:translate3d(-1px, 2.5px, 0) skewY(2deg) scaleY(.96); }
-    75% { transform:translate3d(1.5px, -1.8px, 0) skewY(-1.8deg) scaleY(1.03); }
-    100% { transform:translate3d(-0.8px, 1.2px, 0) skewY(1.5deg) scaleY(.98); }
+    0% { transform: perspective(400px) rotateY(0deg) rotateZ(0deg) skewY(0deg) translateY(0) scaleY(1); }
+    20% { transform: perspective(400px) rotateY(-5deg) rotateZ(-0.8deg) skewY(-3.8deg) translateY(-2.2px) scaleY(1.08); }
+    45% { transform: perspective(400px) rotateY(6deg) rotateZ(1deg) skewY(4.2deg) translateY(2.8px) scaleY(0.91); }
+    70% { transform: perspective(400px) rotateY(-4deg) rotateZ(-0.5deg) skewY(-2.6deg) translateY(-1.8px) scaleY(1.05); }
+    90% { transform: perspective(400px) rotateY(3deg) rotateZ(0.4deg) skewY(2deg) translateY(1.2px) scaleY(0.95); }
+    100% { transform: perspective(400px) rotateY(0deg) rotateZ(0deg) skewY(0deg) translateY(0) scaleY(1); }
 }
-/* Specular light sweep across the waving fabric */
-@keyframes independence-ribbon-light{ 0%{transform:translateX(-18px);opacity:.2} 50%{transform:translateX(14px);opacity:.75} 100%{transform:translateX(32px);opacity:.3} }
-/* Fold crease undulation */
-@keyframes independence-ribbon-fold{ 0%{transform:translateY(0) scaleY(1);opacity:.18} 50%{transform:translateY(-1px) scaleY(1.18);opacity:.3} 100%{transform:translateY(1.2px) scaleY(.88);opacity:.15} }
+/* Kilauan cahaya yang mengalir mengikuti lipatan bendera berkibar */
+@keyframes independence-ribbon-light{ 0%{transform:translateX(-22px) scaleX(.9);opacity:.15} 50%{transform:translateX(18px) scaleX(1.15);opacity:.8} 100%{transform:translateX(36px) scaleX(.95);opacity:.25} }
+/* Lipatan bayangan dinamis sesuai gerakan tiupan angin */
+@keyframes independence-ribbon-fold{ 0%{transform:translateY(0) scaleY(1);opacity:.15} 50%{transform:translateY(-1.5px) scaleY(1.25);opacity:.35} 100%{transform:translateY(1.5px) scaleY(.82);opacity:.12} }
 
 .brand h1{
     font-size:22px; line-height:1; color:var(--text);
