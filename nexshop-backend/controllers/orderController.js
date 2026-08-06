@@ -435,3 +435,32 @@ exports.handleNotification = async (req, res) => {
         res.status(500).json({ message: err.message || "Server Error" });
     }
 };
+
+// ADMIN — Ubah status pesanan (cancel, refund, mark as paid, dsb.)
+exports.updateOrderStatusAdmin = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const { id } = req.params;
+    const { status } = req.body;
+    if (!["pending", "paid", "expired", "failed", "cancelled", "refunded"].includes(status)) {
+        return res.status(400).json({ message: "Status pesanan tidak valid" });
+    }
+    try {
+        const { data, error } = await supabase
+            .from("orders")
+            .update({ status })
+            .eq("id", id)
+            .select()
+            .maybeSingle();
+
+        if (error) return res.status(500).json({ message: "Gagal memperbarui status pesanan" });
+        if (!data) return res.status(404).json({ message: "Pesanan tidak ditemukan" });
+
+        notify("order", `📦 Admin ${req.user.email} mengubah status order #${id} menjadi "${status}"`);
+        res.json({ message: `Status pesanan berhasil diubah menjadi ${status}`, data });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};

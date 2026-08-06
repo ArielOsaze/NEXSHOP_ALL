@@ -114,6 +114,64 @@ exports.getOverview = async (req, res) => {
     }
 };
 
+// ADMIN — Ekspor data transaksi ke format CSV untuk laporan keuangan/sales report
+exports.exportOrders = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+
+    try {
+        const [ordersRes, topupRes] = await Promise.all([
+            supabase.from("orders").select("id, name, email, total, status, items, created_at").order("created_at", { ascending: false }),
+            supabase.from("topup_orders").select("id, email, harga, status, nama_produk, target_user, created_at").order("created_at", { ascending: false })
+        ]);
+
+        if (ordersRes.error || topupRes.error) {
+            return res.status(500).json({ message: "Gagal mengekspor data pesanan" });
+        }
+
+        const rows = [
+            ["ID Transaksi", "Jenis", "Tanggal", "Nama Pembeli", "Email", "Item / Game", "Total (IDR)", "Status"]
+        ];
+
+        (ordersRes.data || []).forEach(o => {
+            const itemNames = (o.items || []).map(i => `${i.name || 'Produk'} (x${i.qty || 1})`).join("; ");
+            rows.push([
+                `ORD-${o.id}`,
+                "Produk Digital",
+                new Date(o.created_at).toLocaleString("id-ID"),
+                o.name || "-",
+                o.email || "-",
+                itemNames || "-",
+                o.total || 0,
+                o.status || "pending"
+            ]);
+        });
+
+        (topupRes.data || []).forEach(t => {
+            rows.push([
+                `TOP-${t.id}`,
+                "Topup Game",
+                new Date(t.created_at).toLocaleString("id-ID"),
+                t.target_user || "-",
+                t.email || "-",
+                t.nama_produk || "Topup",
+                t.harga || 0,
+                t.status || "pending"
+            ]);
+        });
+
+        const csvString = rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")).join("\n");
+
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader("Content-Disposition", `attachment; filename="laporan_penjualan_nexshop_${new Date().toISOString().slice(0, 10)}.csv"`);
+        res.status(200).send("\uFEFF" + csvString);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 // PUBLIK — ringkasan ringan buat trust bar di halaman utama toko (jumlah
 // transaksi sukses, jumlah game/kategori aktif, dst). SENGAJA cuma hitungan
 // (count), TIDAK ada omzet/revenue — data itu tetap rahasia admin lewat

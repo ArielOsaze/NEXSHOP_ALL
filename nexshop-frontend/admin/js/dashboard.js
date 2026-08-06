@@ -2504,6 +2504,47 @@ async function loadTopupOrders() {
     }
 }
 
+async function exportOrdersCsv() {
+    try {
+        showToast("Mengekspor data pesanan...");
+        const res = await apiFetch("/admin/stats/export-orders");
+        if (!res.ok) throw new Error("Gagal mengunduh laporan pesanan");
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `laporan_penjualan_nexshop_${new Date().toISOString().slice(0,10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+        showToast("Laporan berhasil diunduh!");
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message || "Gagal ekspor laporan", true);
+    }
+}
+
+async function updateOrderStatusAdmin(orderId, newStatus) {
+    if (!confirm(`Ubah status order #${orderId} menjadi "${newStatus}"?`)) return;
+    try {
+        const res = await apiFetch(`/orders/${orderId}/status`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: newStatus })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal mengubah status order");
+
+        showToast(data.message || "Status order berhasil diubah");
+        if (typeof loadOrders === "function") loadOrders();
+        loadTopupOrders();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
 function statusBadge(status) {
     const map = {
         pending: "bg-secondary", paid: "bg-info", processing: "bg-warning",
@@ -2528,9 +2569,17 @@ function renderTopupOrders() {
             <td>${statusBadge(o.status)}</td>
             <td>${o.created_at ? new Date(o.created_at).toLocaleString("id-ID") : "-"}</td>
             <td>
-                <button class="btn btn-outline-secondary btn-sm" onclick="recheckTopupStatus('${o.id}')" title="Cek ulang status ke TokoVoucher">
-                    <i class="bi bi-arrow-repeat"></i>
-                </button>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-secondary btn-sm" onclick="recheckTopupStatus('${o.id}')" title="Cek ulang status ke TokoVoucher">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="updateOrderStatusAdmin('${o.id}', 'cancelled')" title="Batalkan pesanan">
+                        <i class="bi bi-x-circle"></i>
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="updateOrderStatusAdmin('${o.id}', 'refunded')" title="Refund pesanan">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </div>
             </td>
         </tr>
     `).join("");

@@ -12,6 +12,7 @@ router.get("/my", authMiddleware, orderController.getMyOrders);
 router.get("/status/:id", orderController.getPublicStatus); // publik — buat halaman kembali dari pembayaran
 router.get("/track/:id", orderController.getPublicDetail); // publik — buat tab "Cek Transaksi"
 router.get("/", authMiddleware, adminMiddleware, orderController.getAllOrders); // admin dashboard
+router.put("/:id/status", authMiddleware, adminMiddleware, orderController.updateOrderStatusAdmin);
 
 // Webhook dari server iPaymu — SENGAJA tanpa authMiddleware, karena yang
 // memanggil endpoint ini adalah server iPaymu, bukan user yang login.
