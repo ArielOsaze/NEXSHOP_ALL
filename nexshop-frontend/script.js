@@ -1847,6 +1847,9 @@ async function loadStoreSettings() {
             const contactAddress = document.getElementById("contactAddress");
             if (contactAddress) contactAddress.textContent = s.address;
         }
+        // toggle pita bendera sesuai Settings admin (default tampil kalau belum pernah diatur)
+        const flagRibbon = document.getElementById("storeFlagRibbon") || document.querySelector(".independence-ribbon");
+        if (flagRibbon) flagRibbon.classList.toggle("hidden", s.flag_enabled === false);
         // toggle trust bar sesuai Settings admin (default tampil kalau belum pernah diatur)
         const trustBar = document.getElementById("trustBar");
         if (trustBar) trustBar.classList.toggle("hidden", s.trust_bar_enabled === false);

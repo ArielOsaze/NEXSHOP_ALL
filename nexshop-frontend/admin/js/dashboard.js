@@ -1490,6 +1490,14 @@ async function loadSettings() {
         }
 
         if (storeRes.ok) {
+
+        if (meRes.ok) {
+            const me = await meRes.json();
+            document.getElementById("profileName").value = me.fullname || "";
+            document.getElementById("profileEmail").value = me.email || "";
+        }
+
+        if (storeRes.ok) {
             const store = await storeRes.json();
             document.getElementById("storeName").value = store.store_name || "";
             document.getElementById("storeTagline").value = store.tagline || "";
@@ -1497,6 +1505,7 @@ async function loadSettings() {
             document.getElementById("storePhone").value = store.contact_phone || "";
             document.getElementById("storeEmail").value = store.contact_email || "";
             document.getElementById("storeAddress").value = store.address || "";
+            document.getElementById("storeFlag").checked = store.flag_enabled !== false;
             document.getElementById("storeTrustBar").checked = store.trust_bar_enabled !== false;
             document.getElementById("storeTrustOrdersOffset").value = store.trust_bar_orders_offset || 0;
             document.getElementById("storeTrustGamesOffset").value = store.trust_bar_games_offset || 0;
@@ -1631,7 +1640,7 @@ async function saveStoreSettings() {
     try {
         const security_pin = await withAdminPin((pin) => pin, "menyimpan pengaturan toko");
         let logoUrl;
-        const file = storeLogoInput.files[0];
+        const file = storeLogoInput ? storeLogoInput.files[0] : null;
         if (file) {
             const formData = new FormData();
             formData.append("image", file);
@@ -1648,6 +1657,7 @@ async function saveStoreSettings() {
             contact_phone: document.getElementById("storePhone").value.trim(),
             contact_email: document.getElementById("storeEmail").value.trim(),
             address: document.getElementById("storeAddress").value.trim(),
+            flag_enabled: document.getElementById("storeFlag").checked,
             trust_bar_enabled: document.getElementById("storeTrustBar").checked,
             trust_bar_orders_offset: parseInt(document.getElementById("storeTrustOrdersOffset").value, 10) || 0,
             trust_bar_games_offset: parseInt(document.getElementById("storeTrustGamesOffset").value, 10) || 0
