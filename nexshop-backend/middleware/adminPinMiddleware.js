@@ -10,6 +10,7 @@ async function logSensitiveAction(req, action, details = {}) {
         await supabase.from("admin_security_audit_logs").insert([{
             admin_id: req.user.id,
             admin_email: req.user.email,
+            admin_username: req.user.fullname || req.user.email,
             ip_address: req.ip || "",
             user_agent: String(req.get("user-agent") || "").slice(0, 500),
             action,
@@ -40,7 +41,10 @@ async function verifyAdminPin(req, pin) {
 
 async function requireAdminPin(req, res, next) {
     const checked = await verifyAdminPin(req, req.body && req.body.security_pin);
-    if (!checked.ok) return res.status(checked.status).json({ message: checked.message, code: checked.code });
+    if (!checked.ok) {
+        res.set("X-Admin-Pin-Error", "1");
+        return res.status(checked.status).json({ message: checked.message, code: checked.code });
+    }
     req.adminPinVerified = true;
     next();
 }

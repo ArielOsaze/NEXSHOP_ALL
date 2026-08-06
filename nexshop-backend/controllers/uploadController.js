@@ -2,11 +2,12 @@ const supabase = require("../config/db");
 const { createWebpFileName, optimizeImageToWebp } = require("../utils/imageOptimizer");
 
 // Bucket Supabase Storage per jenis upload. Pastikan ketiga bucket ini sudah
-// dibuat di Supabase Storage (public) sebelum dipakai: "products", "promo", "logos".
+// dibuat di Supabase Storage (public) sebelum dipakai: "products", "promo", "logos", "mascots".
 const BUCKETS = {
     product: "products",
     promo: "promo",
-    logo: "logos"
+    logo: "logos",
+    mascot: "mascots"
 };
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];

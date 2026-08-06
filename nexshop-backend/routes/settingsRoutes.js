@@ -22,8 +22,8 @@ router.put("/store", authMiddleware, adminMiddleware, settingsController.updateS
 router.get("/security-pin", authMiddleware, adminMiddleware, settingsController.getAdminPinStatus);
 router.post("/security-pin/setup", authMiddleware, adminMiddleware, settingsController.setupAdminPin);
 router.post("/security-pin/verify", authMiddleware, adminMiddleware, adminPinVerifyLimiter, settingsController.verifyAdminPin);
-router.get("/api-keys", authMiddleware, adminMiddleware, requireAdminPin, settingsController.getApiKeysAdmin);
-router.get("/api-keys/reveal", authMiddleware, adminMiddleware, requireAdminPin, settingsController.revealApiKeysAdmin);
+router.post("/api-keys", authMiddleware, adminMiddleware, requireAdminPin, settingsController.getApiKeysAdmin);
+router.post("/api-keys/reveal", authMiddleware, adminMiddleware, requireAdminPin, settingsController.revealApiKeysAdmin);
 router.put("/api-keys", authMiddleware, adminMiddleware, requireAdminPin, settingsController.updateApiKeysAdmin);
 router.post("/test-whatsapp", authMiddleware, adminMiddleware, requireAdminPin, settingsController.testWhatsAppAdmin);
 

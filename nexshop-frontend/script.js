@@ -1752,6 +1752,7 @@ async function loadStoreSettings() {
         if (!res.ok) return;
         const s = await res.json();
         cachedStoreSettings = s;
+        initEventMascot(s.event_mascot || null);
 
         if (s.store_name) {
             document.title = `${s.store_name} — Digital Gaming Marketplace`;
@@ -1805,6 +1806,64 @@ async function loadStoreSettings() {
         }
     } catch (err) {
         // diem aja, biarin brand default kalau API gagal
+    }
+}
+
+// Event Mascot adalah komponen generik berbasis konfigurasi publik. Ia tidak
+// menyentuh logo; asset dan web selalu berada pada overlay terpisah.
+function initEventMascot(config) {
+    const anchor = document.getElementById("eventMascotAnchor");
+    if (!anchor) return;
+    const params = new URLSearchParams(window.location.search);
+    const previewAsset = params.get("mascotAsset");
+    if (params.get("mascotPreview") === "1" && previewAsset) {
+        config = { enabled: true, mascot_url: previewAsset, speed: 1, delay: 0, scale: 1 };
+    }
+    if (!config || config.enabled !== true || !config.mascot_url) return;
+    const now = Date.now();
+    if (config.start_date && now < new Date(config.start_date).getTime()) return;
+    if (config.end_date && now > new Date(config.end_date).getTime()) return;
+
+    anchor.replaceChildren();
+    const mascot = document.createElement("div");
+    mascot.className = "event-mascot";
+    mascot.style.setProperty("--mascot-scale", String(Math.min(2, Math.max(.5, Number(config.scale) || 1))));
+    mascot.style.setProperty("--mascot-speed", String(Math.min(2, Math.max(.5, Number(config.speed) || 1))));
+    const configuredDelay = Number(config.delay);
+    const delay = Number.isFinite(configuredDelay) ? Math.min(5000, Math.max(0, configuredDelay)) : 500;
+    mascot.style.setProperty("--mascot-delay", `${delay}ms`);
+    mascot.style.setProperty("--mascot-enter-duration", `${2 / (Number(config.speed) || 1)}s`);
+    mascot.style.setProperty("--mascot-offset", ({ left: "-10px", right: "10px", center: "0px" })[config.position] || "0px");
+    const web = document.createElement("span");
+    web.className = "event-mascot__web";
+    if (config.web_url) {
+        web.classList.add("has-asset");
+        web.style.backgroundImage = `url("${String(config.web_url).replace(/["\\]/g, "")}")`;
+    }
+    const image = document.createElement("img");
+    image.className = "event-mascot__image";
+    image.src = config.mascot_url;
+    image.alt = "";
+    image.decoding = "async";
+    mascot.append(web, image);
+    anchor.append(mascot);
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const alreadyPlayed = sessionStorage.getItem("eventMascotPlayed") === "true";
+    if (!alreadyPlayed && !reducedMotion && params.get("mascotPreview") !== "1") {
+        mascot.classList.add("is-entering");
+        sessionStorage.setItem("eventMascotPlayed", "true");
+        setTimeout(() => { mascot.classList.remove("is-entering"); mascot.classList.add("is-hanging"); }, delay + (2000 / (Number(config.speed) || 1)));
+    } else {
+        mascot.classList.add("is-hanging");
+    }
+    if (!reducedMotion) {
+        const blink = () => {
+            mascot.classList.add("is-blinking");
+            setTimeout(() => mascot.classList.remove("is-blinking"), 800);
+            setTimeout(blink, 20000 + Math.random() * 10000);
+        };
+        setTimeout(blink, 20000 + Math.random() * 10000);
     }
 }
 

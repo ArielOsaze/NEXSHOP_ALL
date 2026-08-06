@@ -2,7 +2,7 @@ const supabase = require("../config/db");
 const bcrypt = require("bcrypt");
 const axios = require("axios");
 const { notify } = require("../config/notify");
-const { issueAdminPinToken } = require("../middleware/adminPinMiddleware");
+const { isValidSecurityPin, verifyAdminPin, logSensitiveAction } = require("../middleware/adminPinMiddleware");
 const {
     getStoreSettings,
     updateStoreSettings,
@@ -18,7 +18,15 @@ const {
 exports.getStoreSettingsPublic = async (req, res) => {
     try {
         const data = await getStoreSettings();
-        res.json(data);
+        // API publik sengaja hanya mengirim field storefront yang aman.
+        const publicSettings = (({
+            store_name, tagline, contact_whatsapp, contact_email, contact_phone, address,
+            logo_url, faq, terms_content, refund_content, trust_bar_enabled,
+            trust_bar_orders_offset, trust_bar_games_offset, event_mascot
+        }) => ({ store_name, tagline, contact_whatsapp, contact_email, contact_phone, address,
+            logo_url, faq, terms_content, refund_content, trust_bar_enabled,
+            trust_bar_orders_offset, trust_bar_games_offset, event_mascot }))(data);
+        res.json(publicSettings);
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }
@@ -49,10 +57,6 @@ function mask(value) {
     if (!value) return "";
     if (value.length <= 6) return "••••••";
     return value.slice(0, 4) + "••••••••" + value.slice(-4);
-}
-
-function isValidSecurityPin(value) {
-    return typeof value === "string" && /^\d{6}$/.test(value);
 }
 
 function securityPinSchemaMessage(error) {
@@ -89,24 +93,21 @@ exports.setupAdminPin = async (req, res) => {
         const { error: updateError } = await supabase.from("users").update({ security_pin_hash, security_pin_updated_at: new Date().toISOString() }).eq("id", req.user.id);
         if (updateError) return res.status(500).json({ message: securityPinSchemaMessage(updateError) });
         notify("security", `${req.user.email} membuat Security PIN Admin`);
-        return res.status(201).json({ message: "Security PIN Admin berhasil dibuat", pin_token: issueAdminPinToken(req.user), expires_in_seconds: 600 });
+        await logSensitiveAction(req, "PIN_CREATED");
+        return res.status(201).json({ message: "Security PIN Admin berhasil dibuat" });
     } catch (err) {
         return res.status(500).json({ message: "Server gagal membuat Security PIN Admin" });
     }
 };
 
 exports.verifyAdminPin = async (req, res) => {
-    const pin = req.body && req.body.pin;
-    if (!isValidSecurityPin(pin)) return res.status(400).json({ message: "Masukkan Security PIN 6 digit yang valid" });
-    try {
-        const { data: user, error } = await supabase.from("users").select("security_pin_hash").eq("id", req.user.id).maybeSingle();
-        if (error) return res.status(500).json({ message: securityPinSchemaMessage(error) });
-        if (!user || !user.security_pin_hash) return res.status(428).json({ message: "Security PIN belum dibuat", code: "ADMIN_PIN_SETUP_REQUIRED" });
-        if (!await bcrypt.compare(pin, user.security_pin_hash)) return res.status(401).json({ message: "Security PIN tidak sesuai" });
-        return res.json({ message: "Security PIN terverifikasi", pin_token: issueAdminPinToken(req.user), expires_in_seconds: 600 });
-    } catch (err) {
-        return res.status(500).json({ message: "Server gagal memverifikasi Security PIN Admin" });
+    const checked = await verifyAdminPin(req, req.body && req.body.pin);
+    if (!checked.ok) {
+        res.set("X-Admin-Pin-Error", "1");
+        return res.status(checked.status).json({ message: checked.message, code: checked.code });
     }
+    // Tidak ada token, TTL, atau sesi tepercaya setelah respons ini.
+    return res.json({ message: "Security PIN terverifikasi" });
 };
 
 exports.getApiKeysAdmin = async (req, res) => {
@@ -147,8 +148,14 @@ exports.revealApiKeysAdmin = async (req, res) => {
     if (req.user.role !== "admin") return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     try {
         const keys = await getApiKeys({ fresh: true });
-        // Route ini hanya boleh dilewati PIN token yang berumur 10 menit.
-        return res.json(keys);
+        const key = typeof req.body.key === "string" ? req.body.key : "";
+        const secretKeys = new Set([
+            "ipaymu_api_key", "tokovoucher_secret", "apigames_secret_key", "brevo_api_key",
+            "waapi_key", "gemini_api_key", "smtp_password"
+        ]);
+        if (!secretKeys.has(key)) return res.status(400).json({ message: "Secret yang diminta tidak valid" });
+        await logSensitiveAction(req, req.body.purpose === "copy" ? "COPY_SECRET" : "REVEAL_SECRET", { key });
+        return res.json({ key, value: keys[key] || "" });
     } catch (err) {
         return res.status(500).json({ message: "Gagal membuka konfigurasi API" });
     }
@@ -162,6 +169,7 @@ exports.updateApiKeysAdmin = async (req, res) => {
         // kalau field dikirim kosong/masih berupa mask (mengandung "••••"),
         // jangan ditimpa — anggap admin gak berniat mengganti value itu
         const payload = { ...req.body };
+        delete payload.security_pin;
         for (const key of Object.keys(payload)) {
             if (typeof payload[key] === "string" && payload[key].includes("••")) {
                 delete payload[key];
@@ -174,6 +182,7 @@ exports.updateApiKeysAdmin = async (req, res) => {
             return res.status(500).json({ message: "Gagal update API keys" });
         }
         notify("settings", `🔑 ${req.user.email} mengubah API Keys`);
+        await logSensitiveAction(req, "UPDATE_SECRET", { fields: Object.keys(payload) });
         res.json({ message: "API keys berhasil disimpan" });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });

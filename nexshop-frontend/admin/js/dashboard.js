@@ -4,7 +4,6 @@
 
 const ADMIN_TOKEN_STORAGE_KEY = "nexshop-admin-token";
 const token = localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
-let adminPinToken = sessionStorage.getItem("nexshop-admin-pin-token") || "";
 let adminPinResolver = null;
 const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
     ? (window.location.port === "3000" ? "/api" : "http://localhost:3000/api")
@@ -85,12 +84,11 @@ async function apiFetch(path, options = {}) {
         ...options,
         headers: {
             ...(options.headers || {}),
-            Authorization: "Bearer " + token,
-            ...(adminPinToken ? { "X-Admin-Pin-Token": adminPinToken } : {})
+            Authorization: "Bearer " + token
         }
     });
 
-    if (res.status === 401) {
+    if (res.status === 401 && res.headers.get("X-Admin-Pin-Error") !== "1") {
         localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
         showToast("Sesi kamu berakhir, silakan login kembali.", true);
         setTimeout(() => window.location.href = "login.html", 1200);
@@ -111,11 +109,11 @@ async function getAdminPinStatus() {
     return data;
 }
 
-function requestAdminPin(setup) {
+function requestAdminPin(setup, purpose = "melanjutkan tindakan sensitif ini") {
     document.getElementById("adminPinModalTitle").textContent = setup ? "Buat Security PIN Admin" : "Security PIN Admin";
     document.getElementById("adminPinHelp").textContent = setup
         ? "Buat PIN 6 digit terpisah dari password login. PIN ini wajib untuk membuka atau mengubah konfigurasi sensitif."
-        : "Masukkan Security PIN 6 digit untuk membuka pengaturan sensitif selama 10 menit.";
+        : `Masukkan Security PIN 6 digit untuk ${purpose}. PIN hanya berlaku untuk tindakan ini.`;
     document.getElementById("adminPinConfirmation").classList.toggle("d-none", !setup);
     document.getElementById("adminPinSubmit").textContent = setup ? "Simpan Security PIN" : "Verifikasi PIN";
     document.getElementById("adminPinInput").value = "";
@@ -127,11 +125,14 @@ function requestAdminPin(setup) {
     return new Promise((resolve, reject) => { adminPinResolver = { resolve, reject }; });
 }
 
-async function ensureAdminPin() {
-    if (adminPinToken) return true;
+async function withAdminPin(action, purpose) {
     const status = await getAdminPinStatus();
-    await requestAdminPin(!status.configured);
-    return true;
+    if (!status.configured) {
+        await requestAdminPin(true, purpose);
+        // Pembuatan PIN tidak membuat sesi tepercaya; minta PIN lagi untuk aksi ini.
+    }
+    const pin = await requestAdminPin(false, purpose);
+    return action(pin);
 }
 
 async function submitAdminPin() {
@@ -152,11 +153,10 @@ async function submitAdminPin() {
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Security PIN tidak dapat diverifikasi");
-        adminPinToken = data.pin_token;
-        sessionStorage.setItem("nexshop-admin-pin-token", adminPinToken);
-        adminPinModalInstance().hide();
-        if (adminPinResolver) adminPinResolver.resolve(true);
+        const resolver = adminPinResolver;
         adminPinResolver = null;
+        adminPinModalInstance().hide();
+        if (resolver) resolver.resolve(pin);
         showToast(data.message || "Security PIN terverifikasi");
     } catch (err) {
         errorEl.textContent = err.message;
@@ -165,15 +165,15 @@ async function submitAdminPin() {
     }
 }
 
-async function forceSecurityPinSetupIfMissing() {
-    try {
-        const status = await getAdminPinStatus();
-        if (!status.configured) await requestAdminPin(true);
-    } catch (err) {
-        console.error("Security PIN status error:", err);
-        showToast(err.message || "Security PIN belum dapat diverifikasi", true);
+document.getElementById("adminPinModal").addEventListener("hidden.bs.modal", () => {
+    document.getElementById("adminPinInput").value = "";
+    document.getElementById("adminPinConfirmation").value = "";
+    if (adminPinResolver) {
+        adminPinResolver.reject(new Error("Verifikasi Security PIN dibatalkan"));
+        adminPinResolver = null;
     }
-}
+    hideRevealedSecrets();
+});
 
 // ================================
 // Mobile sidebar (off-canvas)
@@ -1214,24 +1214,26 @@ document.querySelectorAll("#settingsTabs [data-settings-tab]").forEach(btn => {
         document.getElementById("settingsTabContent").classList.toggle("d-none", tab !== "content");
         document.getElementById("settingsTabApiKeys").classList.toggle("d-none", tab !== "apikeys");
         document.getElementById("settingsTabSecurity").classList.toggle("d-none", tab !== "security");
+        document.getElementById("settingsTabMascot").classList.toggle("d-none", tab !== "mascot");
+        hideRevealedSecrets();
         if (tab === "apikeys" || tab === "security") {
-            ensureAdminPin().then(() => {
-                if (tab === "apikeys") loadApiKeys();
-                if (tab === "security") loadBlockedIps();
-            }).catch((err) => showToast(err.message || "Security PIN diperlukan", true));
+            const action = tab === "apikeys" ? loadApiKeys : loadBlockedIps;
+            withAdminPin(action, tab === "apikeys" ? "membuka API Keys" : "membuka Keamanan")
+                .catch((err) => showToast(err.message || "Security PIN diperlukan", true));
         }
     });
 });
 
 // Admin — daftar IP yang lagi diblokir (tab Settings > Keamanan), biar admin
 // tinggal klik tombol, gak perlu cari-cari IP manual.
-async function loadBlockedIps() {
+async function loadBlockedIps(security_pin) {
     const container = document.getElementById("blockedIpsList");
     container.innerHTML = `<div class="text-muted text-center py-3 small"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</div>`;
 
     try {
-        await ensureAdminPin();
-        const res = await apiFetch("/auth/admin/blocked-ips");
+        const res = await apiFetch("/auth/admin/blocked-ips", {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin })
+        });
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || "Gagal memuat daftar IP");
 
@@ -1283,11 +1285,11 @@ async function unlockLoginIp(ip) {
     }
 
     try {
-        await ensureAdminPin();
+        await withAdminPin(async (security_pin) => {
         const res = await apiFetch("/auth/admin/unlock-login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ip })
+            body: JSON.stringify({ ip, security_pin })
         });
         const data = await res.json();
 
@@ -1299,7 +1301,8 @@ async function unlockLoginIp(ip) {
         successEl.textContent = data.message;
         showToast(data.message);
         document.getElementById("unlockLoginIp").value = "";
-        loadBlockedIps();
+        withAdminPin(loadBlockedIps, "memuat daftar IP diblokir").catch(() => {});
+        }, "membuka blokir IP");
     } catch (err) {
         if (err.message === "unauthorized") return;
         console.error(err);
@@ -1340,6 +1343,7 @@ async function loadSettings() {
             renderFaqEditor(Array.isArray(store.faq) ? store.faq : []);
             document.getElementById("termsContentInput").value = store.terms_content || "";
             document.getElementById("refundContentInput").value = store.refund_content || "";
+            populateMascotSettings(store.event_mascot || {});
         }
 
     } catch (err) {
@@ -1527,17 +1531,18 @@ async function saveApiKeys() {
     };
 
     try {
-        await ensureAdminPin();
+        await withAdminPin(async (security_pin) => {
         const res = await apiFetch("/settings/api-keys", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ ...payload, security_pin })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Gagal menyimpan API keys");
 
         showToast("API keys berhasil disimpan");
-        loadApiKeys(); // refresh biar key sensitif balik ke bentuk tersamar
+        withAdminPin(loadApiKeys, "memuat ulang API Keys").catch(() => {});
+        }, "menyimpan API Keys");
     } catch (err) {
         if (err.message === "unauthorized") return;
         errorEl.textContent = err.message;
@@ -1562,29 +1567,27 @@ async function testWhatsApp() {
     resultWrap.classList.add("d-none");
 
     try {
-        await ensureAdminPin();
-        const res = await apiFetch("/settings/test-whatsapp", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json().catch(() => ({}));
-
-        const ok = res.ok && data.success !== false;
-        resultWrap.classList.remove("d-none");
-        alertEl.classList.remove("alert-success", "alert-danger");
-        alertEl.classList.add(ok ? "alert-success" : "alert-danger");
-        alertEl.textContent = data.message || (ok ? "Berhasil." : "Gagal mengirim pesan test.");
-
-        if (data.gateway_response) {
-            rawEl.classList.remove("d-none");
-            rawEl.textContent = typeof data.gateway_response === "string"
-                ? data.gateway_response
-                : JSON.stringify(data.gateway_response, null, 2);
-        } else {
-            rawEl.classList.add("d-none");
-            rawEl.textContent = "";
-        }
+        await withAdminPin(async (security_pin) => {
+            const res = await apiFetch("/settings/test-whatsapp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...payload, security_pin })
+            });
+            const data = await res.json().catch(() => ({}));
+            const ok = res.ok && data.success !== false;
+            resultWrap.classList.remove("d-none");
+            alertEl.classList.remove("alert-success", "alert-danger");
+            alertEl.classList.add(ok ? "alert-success" : "alert-danger");
+            alertEl.textContent = data.message || (ok ? "Berhasil." : "Gagal mengirim pesan test.");
+            if (data.gateway_response) {
+                rawEl.classList.remove("d-none");
+                rawEl.textContent = typeof data.gateway_response === "string"
+                    ? data.gateway_response : JSON.stringify(data.gateway_response, null, 2);
+            } else {
+                rawEl.classList.add("d-none");
+                rawEl.textContent = "";
+            }
+        }, "mengirim test WhatsApp");
     } catch (err) {
         if (err.message === "unauthorized") return;
         resultWrap.classList.remove("d-none");
@@ -2890,11 +2893,105 @@ function initThemeToggle() {
     });
 }
 
-async function loadApiKeys(reveal = false) {
+function toDateTimeLocal(value) {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+}
+
+function populateMascotSettings(config) {
+    document.getElementById("mascotEnabled").checked = config.enabled === true;
+    document.getElementById("mascotEventName").value = config.name || "Spider-Man: Brand New Day";
+    document.getElementById("mascotSpeed").value = config.speed || 1;
+    document.getElementById("mascotDelay").value = Number.isFinite(config.delay) ? config.delay : 500;
+    document.getElementById("mascotScale").value = config.scale || 1;
+    document.getElementById("mascotPosition").value = config.position || "center";
+    document.getElementById("mascotStartDate").value = toDateTimeLocal(config.start_date);
+    document.getElementById("mascotEndDate").value = toDateTimeLocal(config.end_date);
+    document.getElementById("mascotImageInput").dataset.currentUrl = config.mascot_url || "";
+    document.getElementById("mascotWebInput").dataset.currentUrl = config.web_url || "";
+}
+
+async function uploadMascotAsset(input) {
+    const file = input.files[0];
+    if (!file) return input.dataset.currentUrl || "";
+    const formData = new FormData();
+    formData.append("image", file);
+    const res = await apiFetch("/upload?type=mascot", { method: "POST", body: formData });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || "Upload asset mascot gagal");
+    return data.url;
+}
+
+async function saveMascotSettings() {
+    const errorEl = document.getElementById("mascotError");
+    errorEl.textContent = "";
+    try {
+        const mascot_url = await uploadMascotAsset(document.getElementById("mascotImageInput"));
+        const web_url = await uploadMascotAsset(document.getElementById("mascotWebInput"));
+        const event_mascot = {
+            enabled: document.getElementById("mascotEnabled").checked,
+            name: document.getElementById("mascotEventName").value.trim(), mascot_url, web_url,
+            speed: Number(document.getElementById("mascotSpeed").value) || 1,
+            delay: Number(document.getElementById("mascotDelay").value) || 0,
+            scale: Number(document.getElementById("mascotScale").value) || 1,
+            position: document.getElementById("mascotPosition").value,
+            start_date: document.getElementById("mascotStartDate").value || null,
+            end_date: document.getElementById("mascotEndDate").value || null
+        };
+        if (event_mascot.enabled && !mascot_url) throw new Error("Upload asset mascot sebelum mengaktifkan event.");
+        const res = await apiFetch("/settings/store", {
+            method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event_mascot })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menyimpan Event Mascot");
+        populateMascotSettings(event_mascot);
+        showToast("Event Mascot berhasil disimpan");
+    } catch (err) { errorEl.textContent = err.message; }
+}
+
+function previewMascotSettings() {
+    const mascot_url = document.getElementById("mascotImageInput").files[0]
+        ? URL.createObjectURL(document.getElementById("mascotImageInput").files[0])
+        : document.getElementById("mascotImageInput").dataset.currentUrl;
+    if (!mascot_url) return showToast("Upload mascot terlebih dahulu untuk preview.", true);
+    window.open(`../index.html?mascotPreview=1&mascotAsset=${encodeURIComponent(mascot_url)}`, "_blank", "noopener");
+}
+
+const SECRET_API_FIELDS = {
+    ipaymuApiKey: "ipaymu_api_key",
+    tvSecret: "tokovoucher_secret",
+    agSecretKey: "apigames_secret_key",
+    brevoApiKey: "brevo_api_key",
+    geminiApiKey: "gemini_api_key",
+    smtpPassword: "smtp_password",
+    waapiKey: "waapi_key"
+};
+let maskedApiKeys = {};
+let revealedSecretField = null;
+let revealedSecretTimer = null;
+let selectedSecretField = null;
+
+function hideRevealedSecrets() {
+    if (revealedSecretTimer) clearTimeout(revealedSecretTimer);
+    revealedSecretTimer = null;
+    if (revealedSecretField) {
+        const input = document.getElementById(revealedSecretField);
+        if (input) {
+            input.value = maskedApiKeys[revealedSecretField] || "";
+            input.type = "password";
+        }
+    }
+    revealedSecretField = null;
+}
+
+async function loadApiKeys(security_pin) {
     const errorEl = document.getElementById("apiKeysError");
     try {
-        await ensureAdminPin();
-        const res = await apiFetch(reveal ? "/settings/api-keys/reveal" : "/settings/api-keys");
+        const res = await apiFetch("/settings/api-keys", {
+            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin })
+        });
         const keys = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(keys.message || "Gagal memuat konfigurasi API");
         document.getElementById("ipaymuVa").value = keys.ipaymu_va || "";
@@ -2918,21 +3015,66 @@ async function loadApiKeys(reveal = false) {
         document.getElementById("waapiUrl").value = keys.waapi_url || "";
         document.getElementById("waapiKey").value = keys.waapi_key || "";
         document.getElementById("waapiTargetNumber").value = keys.waapi_target_number || "";
+        maskedApiKeys = Object.fromEntries(Object.keys(SECRET_API_FIELDS).map(id => [id, document.getElementById(id).value]));
+        Object.keys(SECRET_API_FIELDS).forEach(id => { document.getElementById(id).type = "password"; });
     } catch (err) {
         if (err.message !== "unauthorized") errorEl.textContent = err.message;
     }
 }
 
 async function revealApiKeys() {
+    const selected = selectedSecretField;
+    if (!selected) {
+        showToast("Pilih salah satu field secret terlebih dahulu.", true);
+        return;
+    }
     try {
-        await ensureAdminPin();
-        await loadApiKeys(true);
-        showToast("Konfigurasi sensitif ditampilkan selama sesi PIN ini (maksimal 10 menit).");
-        setTimeout(() => loadApiKeys(false), 10 * 60 * 1000);
+        await withAdminPin(async (security_pin) => {
+            const res = await apiFetch("/settings/api-keys/reveal", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ security_pin, key: SECRET_API_FIELDS[selected], purpose: "reveal" })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal menampilkan secret");
+            hideRevealedSecrets();
+            const input = document.getElementById(selected);
+            input.type = "text";
+            input.value = data.value;
+            revealedSecretField = selected;
+            revealedSecretTimer = setTimeout(hideRevealedSecrets, 15000);
+            showToast("Secret ditampilkan selama 15 detik.");
+        }, "menampilkan secret yang dipilih");
     } catch (err) {
         showToast(err.message || "Gagal membuka konfigurasi API", true);
     }
 }
+
+async function copySelectedSecret() {
+    const selected = selectedSecretField || revealedSecretField;
+    if (!selected) return showToast("Pilih salah satu field secret terlebih dahulu.", true);
+    try {
+        await withAdminPin(async (security_pin) => {
+            const res = await apiFetch("/settings/api-keys/reveal", {
+                method: "POST", headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ security_pin, key: SECRET_API_FIELDS[selected], purpose: "copy" })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal menyalin secret");
+            await navigator.clipboard.writeText(data.value || "");
+            showToast("Secret berhasil disalin.");
+        }, "menyalin secret yang dipilih");
+    } catch (err) { showToast(err.message || "Gagal menyalin secret", true); }
+}
+
+Object.keys(SECRET_API_FIELDS).forEach((id) => {
+    const field = document.getElementById(id);
+    if (field) {
+        field.addEventListener("copy", (event) => event.preventDefault());
+        field.addEventListener("focus", () => { selectedSecretField = id; });
+    }
+});
+window.addEventListener("blur", hideRevealedSecrets);
+document.addEventListener("visibilitychange", () => { if (document.hidden) hideRevealedSecrets(); });
 
 // ================================
 // Curated Gaming News
@@ -3270,5 +3412,4 @@ async function deleteNews(id) {
 }
 
 document.addEventListener("DOMContentLoaded", initThemeToggle);
-document.addEventListener("DOMContentLoaded", forceSecurityPinSetupIfMissing);
 

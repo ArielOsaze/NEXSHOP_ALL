@@ -80,7 +80,8 @@ if (process.env.FRONTEND_URL) {
 
 app.use(cors({
     origin: allowedOrigins,
-    credentials: true
+    credentials: true,
+    exposedHeaders: ["X-Admin-Pin-Error"]
 }));
 
 app.use(express.json({ limit: "100kb" }));

@@ -624,6 +624,7 @@
         <li class="nav-item"><button class="nav-link" data-settings-tab="content">FAQ / Syarat / Refund</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="apikeys">API Keys</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="security">Keamanan</button></li>
+        <li class="nav-item"><button class="nav-link" data-settings-tab="mascot">Event Mascot</button></li>
     </ul>
 
     <!-- Profil Admin -->
@@ -866,13 +867,34 @@
                     </div>
                 </div>
 
-                <div class="d-flex align-items-center gap-2 flex-wrap"><p class="text-muted small mb-0">Key yang sudah tersimpan ditampilkan tersamar secara default.</p><button type="button" class="btn btn-outline-warning btn-sm" onclick="revealApiKeys()"><i class="bi bi-eye"></i> Tampilkan sementara</button></div>
+                <div class="d-flex align-items-center gap-2 flex-wrap"><p class="text-muted small mb-0">Pilih field secret, lalu tampilkan atau salin. Nilai selalu tersamar secara default.</p><button type="button" class="btn btn-outline-warning btn-sm" onclick="revealApiKeys()"><i class="bi bi-eye"></i> Tampilkan 15 detik</button><button type="button" class="btn btn-outline-secondary btn-sm" onclick="copySelectedSecret()"><i class="bi bi-clipboard"></i> Salin secret</button></div>
                 <p class="text-danger small mb-0" id="apiKeysError"></p>
                 <div class="col-12">
                     <button type="button" class="btn btn-success" onclick="saveApiKeys()">
                         <i class="bi bi-floppy"></i> Simpan API Keys
                     </button>
                 </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Event Mascot: aset dan jadwal terpisah, tidak pernah mengganti logo NexShop. -->
+    <div id="settingsTabMascot" class="card shadow-sm d-none">
+        <div class="card-body">
+            <h6 class="text-uppercase text-muted small">Event Mascot</h6>
+            <p class="text-muted small">Mascot tampil sebagai overlay di bawah logo. Upload PNG/WebP mascot dan web; logo NexShop tidak diubah.</p>
+            <form class="row g-3" style="max-width:680px;">
+                <div class="col-md-6 form-check ms-2"><input id="mascotEnabled" class="form-check-input" type="checkbox"><label class="form-check-label" for="mascotEnabled">Aktifkan Event Mascot</label></div>
+                <div class="col-md-6"><label class="form-label">Nama Event</label><input id="mascotEventName" class="form-control" placeholder="Spider-Man: Brand New Day"></div>
+                <div class="col-md-6"><label class="form-label">Upload Mascot (PNG/WebP)</label><input id="mascotImageInput" type="file" accept="image/png,image/webp" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label">Upload Spider Web (PNG/WebP)</label><input id="mascotWebInput" type="file" accept="image/png,image/webp" class="form-control"></div>
+                <div class="col-md-4"><label class="form-label">Kecepatan animasi</label><input id="mascotSpeed" type="number" min="0.5" max="2" step="0.1" class="form-control" value="1"></div>
+                <div class="col-md-4"><label class="form-label">Delay (ms)</label><input id="mascotDelay" type="number" min="0" max="5000" step="100" class="form-control" value="500"></div>
+                <div class="col-md-4"><label class="form-label">Scale</label><input id="mascotScale" type="number" min="0.5" max="2" step="0.1" class="form-control" value="1"></div>
+                <div class="col-md-4"><label class="form-label">Position</label><select id="mascotPosition" class="form-select"><option value="center">Tengah logo</option><option value="left">Sedikit kiri</option><option value="right">Sedikit kanan</option></select></div>
+                <div class="col-md-6"><label class="form-label">Mulai</label><input id="mascotStartDate" type="datetime-local" class="form-control"></div>
+                <div class="col-md-6"><label class="form-label">Berakhir</label><input id="mascotEndDate" type="datetime-local" class="form-control"></div>
+                <div class="col-12"><button type="button" class="btn btn-success" onclick="saveMascotSettings()"><i class="bi bi-floppy"></i> Simpan Event</button><button type="button" class="btn btn-outline-primary ms-2" onclick="previewMascotSettings()"><i class="bi bi-play"></i> Preview Animation</button><p id="mascotError" class="text-danger small mt-2 mb-0"></p></div>
             </form>
         </div>
     </div>
@@ -1287,7 +1309,7 @@
             <input id="adminPinConfirmation" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" class="form-control text-center mt-2 d-none" placeholder="Ulangi PIN" autocomplete="new-password" aria-label="Konfirmasi Security PIN">
             <p class="text-danger small mt-2 mb-0" id="adminPinError" role="alert"></p>
         </div>
-        <div class="modal-footer"><button type="button" class="btn btn-primary w-100" id="adminPinSubmit" onclick="submitAdminPin()">Verifikasi PIN</button></div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary flex-grow-1" id="adminPinSubmit" onclick="submitAdminPin()">Verifikasi PIN</button></div>
     </div></div>
 </div>
 
