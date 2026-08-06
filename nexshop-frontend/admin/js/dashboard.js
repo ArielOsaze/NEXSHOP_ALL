@@ -3628,5 +3628,109 @@ async function deleteNews(id) {
     }
 }
 
-document.addEventListener("DOMContentLoaded", initThemeToggle);
+document.addEventListener("DOMContentLoaded", () => {
+    initThemeToggle();
+    loadSystemHealth();
+});
+
+// ================================
+// Enterprise Features: Command Palette & System Health
+// ================================
+
+let cmdKModalInstance = null;
+
+function openCmdKModal() {
+    if (!cmdKModalInstance) {
+        cmdKModalInstance = new bootstrap.Modal(document.getElementById("cmdKModal"));
+    }
+    renderCmdKResults();
+    cmdKModalInstance.show();
+    setTimeout(() => document.getElementById("cmdKSearchInput")?.focus(), 300);
+}
+
+function renderCmdKResults() {
+    const query = (document.getElementById("cmdKSearchInput")?.value || "").toLowerCase().trim();
+    const listEl = document.getElementById("cmdKResultsList");
+    if (!listEl) return;
+
+    const items = [
+        { title: "Dashboard Overview", icon: "bi-speedometer2", action: () => switchView("dashboard") },
+        { title: "Statistik & Omzet Penjualan", icon: "bi-graph-up", action: () => switchView("stats") },
+        { title: "Kelola Produk Fisik/Digital", icon: "bi-box-seam", action: () => switchView("dashboard") },
+        { title: "Kelola Pesanan & Transaction Logs", icon: "bi-cart", action: () => switchView("orders") },
+        { title: "Kelola Topup Diamond & Game", icon: "bi-gem", action: () => switchView("topup") },
+        { title: "Daftar Pengguna & OTP", icon: "bi-people", action: () => switchView("users") },
+        { title: "Pengaturan Slide Promo & Banner", icon: "bi-megaphone", action: () => switchView("promo") },
+        { title: "Gaming News & Portal Artikel", icon: "bi-newspaper", action: () => switchView("news") },
+        { title: "Kode Promo & Kupon Diskon", icon: "bi-ticket-perforated", action: () => switchView("promocodes") },
+        { title: "Pengaturan Toko & API Keys", icon: "bi-gear", action: () => switchView("settings") },
+        { title: "Export Laporan CSV / Excel", icon: "bi-file-earmark-excel", action: () => exportOrdersCsv() },
+        { title: "Tambah Produk Baru", icon: "bi-plus-circle", action: () => openProductModal() },
+        { title: "Generate AI Sales Insights", icon: "bi-stars", action: () => { switchView("dashboard"); loadAiInsights(); } }
+    ];
+
+    const filtered = items.filter(i => i.title.toLowerCase().includes(query));
+    if (!filtered.length) {
+        listEl.innerHTML = `<div class="text-center text-muted py-3 small">Tidak ada menu yang sesuai "${escapeHtml(query)}"</div>`;
+        return;
+    }
+
+    listEl.innerHTML = filtered.map((item, idx) => `
+        <div class="cmd-k-item" onclick="execCmdKAction(${idx})">
+            <div><i class="bi ${item.icon} me-2 text-primary"></i><strong>${escapeHtml(item.title)}</strong></div>
+            <span class="text-muted small">Buka <i class="bi bi-chevron-right"></i></span>
+        </div>
+    `).join("");
+
+    window._cmdKFilteredItems = filtered;
+}
+
+function execCmdKAction(idx) {
+    if (window._cmdKFilteredItems && window._cmdKFilteredItems[idx]) {
+        if (cmdKModalInstance) cmdKModalInstance.hide();
+        window._cmdKFilteredItems[idx].action();
+    }
+}
+
+document.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        openCmdKModal();
+    }
+});
+
+async function loadSystemHealth() {
+    try {
+        const res = await apiFetch("/admin/stats/system-health");
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        document.getElementById("sysStatusBadge").textContent = data.status === "online" ? "Online" : "Warning";
+        document.getElementById("sysRamHeap").textContent = (data.memory?.heap_used_mb || 0) + " MB";
+        document.getElementById("sysNodeVer").textContent = data.node_version || "-";
+        
+        const uptimeMins = Math.floor((data.uptime_seconds || 0) / 60);
+        document.getElementById("sysUptime").textContent = `${uptimeMins} m`;
+        document.getElementById("sysDbLatency").textContent = `${data.database?.latency_ms || 0} ms`;
+    } catch (err) {
+        // ignore background errors
+    }
+}
+
+async function loadAiInsights() {
+    const box = document.getElementById("aiInsightsBox");
+    if (!box) return;
+    box.innerHTML = `<span class="spinner-border spinner-border-sm text-primary me-2"></span>Menghubungi Google Gemini AI...`;
+
+    try {
+        const res = await apiFetch("/admin/stats/ai-insights");
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal mendapatkan AI Insights");
+
+        box.innerHTML = escapeHtml(data.advice || "Tidak ada masukan yang dihasilkan saat ini.");
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        box.innerHTML = `<span class="text-danger">${escapeHtml(err.message)}</span>`;
+    }
+}
 

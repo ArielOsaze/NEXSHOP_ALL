@@ -14,16 +14,16 @@
 }
 
 :root[data-theme="light"]{
-    --bg-void:#F8FAFC;
+    --bg-void:#F1F5F9;
     --bg-panel:#FFFFFF;
-    --bg-panel-2:#F1F5F9;
+    --bg-panel-2:#F8FAFC;
     --line:#E2E8F0;
     --text:#0F172A;
     --text-muted:#64748B;
-    --sidebar-bg:linear-gradient(180deg,#FCFAFF,#F1EAFE);
-    --sidebar-text:#251B3B;
-    --text-violet:#6D28D9;
-    --text-cyan:#0E7490;
+    --sidebar-bg:linear-gradient(180deg,#F8FAFC,#F1F5F9);
+    --sidebar-text:#0F172A;
+    --text-violet:#7C3AED;
+    --text-cyan:#0284C7;
 }
 
 *{
@@ -513,3 +513,10 @@ main{
     .news-import-preview img{ width:92px; height:54px; }
     .news-row-actions{ min-width:204px; }
 }
+
+/* Command Palette Kbd Badge & Modal */
+.cmd-k-badge{ font-size:11px; background:var(--bg-panel-2); color:var(--text-muted); padding:3px 7px; border-radius:6px; border:1px solid var(--line); font-family:monospace; }
+.cmd-k-item{ display:flex; align-items:center; justify-content:space-between; padding:10px 14px; border-radius:10px; cursor:pointer; transition:all 0.15s ease; color:var(--text); text-decoration:none; margin-bottom:4px; }
+.cmd-k-item:hover, .cmd-k-item.active{ background:var(--violet); color:#ffffff; }
+.cmd-k-item:hover .text-muted, .cmd-k-item.active .text-muted{ color:rgba(255,255,255,0.8)!important; }
+.ai-advisor-card{ border-left:4px solid var(--violet); background:linear-gradient(135deg, var(--bg-panel), var(--bg-panel-2)); }

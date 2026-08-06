@@ -50,6 +50,11 @@
         <i class="bi bi-list"></i>
     </button>
     <div class="d-flex align-items-center gap-2 ms-auto">
+        <button class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-2" onclick="openCmdKModal()" title="Cari & Pintasan Pintar">
+            <i class="bi bi-search"></i>
+            <span class="d-none d-sm-inline">Cari Pintas</span>
+            <span class="cmd-k-badge">Ctrl + K</span>
+        </button>
         <button class="theme-toggle" id="themeToggle" type="button" aria-label="Ganti tema" aria-pressed="false">
             <span class="theme-toggle-icon" aria-hidden="true"><i class="fa-solid fa-moon"></i></span>
         </button>
@@ -120,6 +125,57 @@
             <div class="card-body dashboard-metric-card">
                 <small>Notifikasi Belum Dibaca</small>
                 <h2 id="dashboardUnreadNotif">0</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gemini AI Sales Advisor & System Health -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm ai-advisor-card h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary"><i class="bi bi-stars"></i> Gemini AI</span>
+                            <h6 class="mb-0 fw-bold">AI Sales Growth Advisor</h6>
+                        </div>
+                        <button class="btn btn-outline-primary btn-sm" onclick="loadAiInsights()">
+                            <i class="bi bi-arrow-clockwise"></i> Generate Insight
+                        </button>
+                    </div>
+                    <div id="aiInsightsBox" class="small text-muted" style="white-space: pre-line;">
+                        Klik "Generate Insight" untuk meminta rekomendasi taktis omzet dari Google Gemini AI berdasarkan data transaksi real-time toko Anda.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-cpu me-1"></i> System Health</h6>
+                        <span class="badge bg-success" id="sysStatusBadge">Online</span>
+                    </div>
+                    <div class="d-flex flex-column gap-2 small">
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">RAM Heap:</span>
+                            <strong id="sysRamHeap">- MB</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Node.js Version:</span>
+                            <strong id="sysNodeVer">-</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Uptime:</span>
+                            <strong id="sysUptime">-</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Supabase Latency:</span>
+                            <strong id="sysDbLatency" class="text-success">- ms</strong>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -1353,6 +1409,28 @@
     </div></div>
 </div>
 
+<!-- Command Palette Modal (Ctrl + K) -->
+<div class="modal fade" id="cmdKModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-2 border-0">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-0"><i class="bi bi-search text-muted"></i></span>
+                    <input id="cmdKSearchInput" type="text" class="form-control border-0 shadow-none" placeholder="Cari menu, tindakan, atau halaman..." oninput="renderCmdKResults()">
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-2 border-top" id="cmdKResultsList">
+                <!-- Nav items filled by JS -->
+            </div>
+            <div class="modal-footer py-1 px-3 border-top d-flex justify-content-between text-muted small">
+                <span>Gunakan <kbd>↑</kbd> <kbd>↓</kbd> untuk memilih</span>
+                <span>Pintasan: <kbd>Ctrl + K</kbd></span>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Toast -->
 <div class="toast-container position-fixed top-0 end-0 p-3">
     <div id="liveToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
@@ -1366,7 +1444,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
-<script src="js/dashboard.js?v=20260806-news-detail"></script>
+<script src="js/dashboard.js?v=20260806-enterprise"></script>
 
 </body>
 </html>

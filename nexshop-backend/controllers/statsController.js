@@ -1,5 +1,6 @@
 const supabase = require("../config/db");
-const { getStoreSettings } = require("../config/settings");
+const { getStoreSettings, getApiKeys } = require("../config/settings");
+const axios = require("axios");
 
 // Status yang dianggap "sukses/terbayar" di masing-masing tabel — dipakai
 // buat hitung omzet asli (bukan sekadar jumlah order yang dibuat).
@@ -169,6 +170,101 @@ exports.exportOrders = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ADMIN — System Health & Performance Status
+exports.getSystemHealth = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    try {
+        const mem = process.memoryUsage();
+        const uptimeSec = Math.floor(process.uptime());
+        
+        const dbStart = Date.now();
+        const { error } = await supabase.from("products").select("id", { count: "exact", head: true });
+        const dbLatencyMs = Date.now() - dbStart;
+
+        res.json({
+            status: "online",
+            uptime_seconds: uptimeSec,
+            node_version: process.version,
+            memory: {
+                rss_mb: Math.round(mem.rss / 1024 / 1024),
+                heap_used_mb: Math.round(mem.heapUsed / 1024 / 1024),
+                heap_total_mb: Math.round(mem.heapTotal / 1024 / 1024)
+            },
+            database: {
+                status: error ? "error" : "healthy",
+                latency_ms: dbLatencyMs,
+                error_message: error ? error.message : null
+            }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Gagal memeriksa kesehatan sistem" });
+    }
+};
+
+// ADMIN — Google Gemini AI Sales Advisor & Insights
+exports.getAiInsights = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+
+    try {
+        const apiKeys = await getApiKeys();
+        const apiKey = apiKeys.gemini_api_key || process.env.GEMINI_API_KEY || "";
+        const model = apiKeys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
+
+        const [ordersRes, topupRes, productsRes] = await Promise.all([
+            supabase.from("orders").select("total, status, items, created_at").order("created_at", { ascending: false }).limit(100),
+            supabase.from("topup_orders").select("harga, status, nama_produk, created_at").order("created_at", { ascending: false }).limit(100),
+            supabase.from("products").select("name, price, sold, is_flash_sale")
+        ]);
+
+        const paidOrders = (ordersRes.data || []).filter(o => o.status === "paid");
+        const paidTopups = (topupRes.data || []).filter(t => t.status === "sukses");
+
+        const totalRevenue = paidOrders.reduce((s, o) => s + Number(o.total || 0), 0) + paidTopups.reduce((s, t) => s + Number(t.harga || 0), 0);
+        const topProducts = (productsRes.data || []).sort((a, b) => (b.sold || 0) - (a.sold || 0)).slice(0, 5);
+
+        const summaryText = `Total Omzet: Rp${totalRevenue.toLocaleString("id-ID")}, Paid Regular Orders: ${paidOrders.length}, Paid Topup Orders: ${paidTopups.length}. Top Products: ${topProducts.map(p => `${p.name} (${p.sold || 0} terjual)`).join(", ")}.`;
+
+        if (apiKey) {
+            try {
+                const response = await axios.post(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+                    {
+                        contents: [{
+                            parts: [{
+                                text: `Kamu adalah Senior E-Commerce Growth Consultant & Data Analyst. Analisis data toko berikut dan berikan 3-4 poin saran taktis konkret untuk meningkatkan penjualan (penetapan harga, promo, stok, waktu jualan): ${summaryText}. Jawab singkat, padat, dan profesional dalam bahasa Indonesia.`
+                            }]
+                        }]
+                    },
+                    { timeout: 8000 }
+                );
+
+                const aiReply = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (aiReply) {
+                    return res.json({ source: "gemini", model, advice: aiReply, summary: summaryText });
+                }
+            } catch (geminiErr) {
+                console.log("⚠️ Call Gemini API gagal, menggunakan AI Engine Fallback:", geminiErr.message);
+            }
+        }
+
+        // Fallback AI Engine jika API Key belum diisi atau kuota habis
+        const fallbackAdvice = `💡 **Rekomendasi AI Growth Advisor (Default Engine)**:\n\n` +
+            `1. **Tingkatkan Promosi Top Products**: Produk terlaris Anda (${topProducts[0]?.name || "Voucher Game"}) menunjukkan minat tinggi. Pertimbangkan menambahkan varian nominal hemat.\n` +
+            `2. **Optimasi Flash Sale**: Aktifkan fitur Flash Sale pada produk dengan konversi tinggi di jam ramai (19:00 - 22:00 WIB).\n` +
+            `3. **Pengingat Stok & Varian**: Tambahkan lebih banyak ragam voucher atau nominal terjangkau untuk menarik lebih banyak transaksi pertama.`;
+
+        res.json({ source: "fallback", model: "internal-growth-engine", advice: fallbackAdvice, summary: summaryText });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Gagal memproses AI Insights" });
     }
 };
 
