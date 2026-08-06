@@ -106,4 +106,14 @@ const resetPasswordLimiter = rateLimit({
     message: { message: "Terlalu banyak percobaan reset password. Coba lagi beberapa menit." }
 });
 
-module.exports = { loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, resetLoginLimiter, getBlockedLoginIps };
+// Chat can trigger database retrieval and optional personalization. Keep it
+// separate from the broad API limiter so one client cannot exhaust the worker.
+const aiChatLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    limit: 40,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak pesan ke NexBot. Coba lagi beberapa menit." }
+});
+
+module.exports = { loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps };
