@@ -101,16 +101,16 @@
                 <div id="eventMascotAnchor" class="event-mascot-anchor" aria-hidden="true"></div>
             </div>
             <div class="brand-text">
-                <svg class="flag-overlay" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true">
-                    <filter id="flagWaveFilter" x="-20%" y="-20%" width="140%" height="140%">
-                        <feTurbulence type="fractalNoise" numOctaves="3" seed="4" result="noise">
-                            <animate attributeName="baseFrequency" dur="4s" values="0.012 0.045;0.028 0.09;0.012 0.045" repeatCount="indefinite" />
-                        </feTurbulence>
-                        <feDisplacementMap in="SourceGraphic" in2="noise" scale="24" xChannelSelector="R" yChannelSelector="G" />
-                    </filter>
-                    <g filter="url(#flagWaveFilter)">
-                        <rect x="0" y="0" width="200" height="50" fill="#E70011" />
-                        <rect x="0" y="50" width="200" height="50" fill="#ffffff" />
+                <svg class="flag-overlay" viewBox="0 0 200 100" aria-hidden="true">
+                    <defs>
+                        <linearGradient id="flagRed" x1="0" x2="1" y1="0" y2=".35"><stop stop-color="#ff3144"/><stop offset=".48" stop-color="#e70011"/><stop offset="1" stop-color="#97000b"/></linearGradient>
+                        <linearGradient id="flagWhite" x1="0" x2="1" y1="0" y2=".35"><stop stop-color="#fff"/><stop offset=".48" stop-color="#f5f5f6"/><stop offset="1" stop-color="#c9cbd0"/></linearGradient>
+                        <filter id="flagShadow" x="-20%" y="-30%" width="150%" height="180%"><feDropShadow dx="0" dy="5" stdDeviation="4" flood-opacity=".34"/></filter>
+                    </defs>
+                    <g filter="url(#flagShadow)">
+                        <path fill="url(#flagRed)" d="M4 10 C43 1 72 19 106 10 S164 2 196 12 L196 50 C160 41 137 58 102 48 S42 40 4 50Z"/>
+                        <path fill="url(#flagWhite)" d="M4 50 C42 40 71 58 102 48 S160 41 196 50 L196 88 C160 79 136 96 102 86 S43 78 4 88Z"/>
+                        <path fill="none" stroke="rgba(255,255,255,.28)" stroke-width="4" d="M10 15 C48 8 73 23 105 15 S160 9 190 17"/>
                     </g>
                 </svg>
                 <h1 id="storeNameText">Nex<span>Shop</span></h1>
@@ -407,7 +407,7 @@
             </span>
             <span class="footer-contact-copy">
                 <strong class="footer-contact-title">Pusat Bantuan</strong>
-                <span class="footer-social-label">FAQ &amp; status transaksi</span>
+                <span class="footer-social-label">Bantuan &amp; status transaksi</span>
             </span>
         </button>
     </div>

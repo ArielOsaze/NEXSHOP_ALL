@@ -902,6 +902,13 @@
     <!-- Keamanan -->
     <div id="settingsTabSecurity" class="card shadow-sm d-none">
         <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap mb-4 pb-4 border-bottom">
+                <div>
+                    <h6 class="text-uppercase text-muted small mb-1">Security PIN</h6>
+                    <p class="text-muted small mb-0">Perubahan PIN memerlukan PIN saat ini dan OTP yang dikirim ke email admin.</p>
+                </div>
+                <button type="button" class="btn btn-outline-warning btn-sm" onclick="openChangeAdminPinModal()"><i class="bi bi-shield-lock"></i> Ubah Security PIN</button>
+            </div>
             <h6 class="text-uppercase text-muted small">IP yang Lagi Diblokir</h6>
             <p class="text-muted small">
                 Endpoint login dibatasi maksimal 10x percobaan gagal per 15 menit per alamat IP,
@@ -1310,6 +1317,35 @@
             <p class="text-danger small mt-2 mb-0" id="adminPinError" role="alert"></p>
         </div>
         <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary flex-grow-1" id="adminPinSubmit" onclick="submitAdminPin()">Verifikasi PIN</button></div>
+    </div></div>
+</div>
+
+<!-- PIN change is explicitly staged: current PIN, email OTP, then new PIN. -->
+<div class="modal fade" id="changeAdminPinModal" tabindex="-1" aria-labelledby="changeAdminPinTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="changeAdminPinTitle">Ubah Security PIN</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Batal"></button></div>
+        <div class="modal-body">
+            <div id="changePinStepCurrent">
+                <p class="small text-muted">Masukkan PIN saat ini. Setelah valid, OTP dikirim ke email admin.</p>
+                <label class="form-label" for="changePinCurrent">PIN saat ini</label>
+                <input id="changePinCurrent" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" class="form-control text-center" autocomplete="current-password">
+            </div>
+            <div id="changePinStepOtp" class="d-none">
+                <p class="small text-muted">Masukkan OTP 6 digit yang dikirim ke email admin. Kode berlaku 5 menit.</p>
+                <label class="form-label" for="changePinOtp">Kode OTP</label>
+                <input id="changePinOtp" type="text" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" class="form-control text-center" autocomplete="one-time-code">
+                <button type="button" class="btn btn-link btn-sm px-0 mt-2" id="changePinResend" onclick="resendAdminPinChangeOtp()" disabled>Kirim ulang OTP <span id="changePinResendTimer">(60)</span></button>
+            </div>
+            <div id="changePinStepNew" class="d-none">
+                <p class="small text-muted">OTP terverifikasi. Buat PIN 6 digit baru.</p>
+                <label class="form-label" for="changePinNew">PIN baru</label>
+                <input id="changePinNew" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" class="form-control text-center" autocomplete="new-password">
+                <label class="form-label mt-2" for="changePinConfirm">Konfirmasi PIN baru</label>
+                <input id="changePinConfirm" type="password" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" class="form-control text-center" autocomplete="new-password">
+            </div>
+            <p class="text-danger small mt-2 mb-0" id="changePinError" role="alert"></p>
+        </div>
+        <div class="modal-footer"><button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-primary flex-grow-1" id="changePinSubmit" onclick="submitAdminPinChangeStep()">Kirim OTP</button></div>
     </div></div>
 </div>
 

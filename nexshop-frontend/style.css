@@ -254,7 +254,7 @@ img{ max-width:100%; display:block; }
 /* ================= GLOBAL LOADING ================= */
 .app-loader{
     position:fixed; inset:0; z-index:1000; display:flex; align-items:center; justify-content:center;
-    padding:24px; background:rgba(7,10,23,.92); backdrop-filter:blur(18px);
+    padding:24px; background:var(--loader-bg); backdrop-filter:blur(18px);
     opacity:0; visibility:hidden; pointer-events:none; transition:opacity .3s ease, visibility .3s ease;
 }
 .app-loader.is-visible{ opacity:1; visibility:visible; pointer-events:auto; }
@@ -334,12 +334,15 @@ header{ position:sticky; top:0; z-index:1000; }
 @media (max-width:600px){ .logo-wrapper{--mascot-web-length:36px; width:32px; height:34px; flex-basis:32px;} .brand .logo{width:32px; height:32px;} .event-mascot{--mascot-size:16px;} }
 @media (prefers-reduced-motion:reduce){ .event-mascot,.event-mascot.is-entering,.event-mascot.is-hanging,.event-mascot.is-entering .event-mascot__web{animation:none!important; transform:translateX(-50%)!important; opacity:1!important;} .event-mascot.is-entering .event-mascot__image{animation:none!important; transform:translateX(-50%) scale(var(--mascot-scale))!important; opacity:1!important;} .event-mascot__web{transform:translateX(-50%)!important;} }
 
-.brand-text{ position:relative; overflow:hidden; }
+.brand-text{ position:relative; overflow:visible; }
 .flag-overlay{
-    position:absolute; inset:0; width:100%; height:100%;
-    opacity:.22; z-index:2; pointer-events:none; mix-blend-mode:normal;
+    position:absolute; top:-8px; right:-34px; width:39px; height:20px;
+    z-index:2; pointer-events:none; opacity:.92; overflow:visible;
+    transform-origin:4% 50%; will-change:transform; backface-visibility:hidden;
+    filter:saturate(1.05) contrast(1.02); animation:flag-waft 4.8s cubic-bezier(.45,.05,.55,.95) infinite;
 }
 .brand-text h1, .brand-text .tagline{ position:relative; z-index:1; }
+@keyframes flag-waft{ 0%,100%{transform:perspective(180px) rotateY(0) rotateZ(-1deg) translateY(0)} 35%{transform:perspective(180px) rotateY(-7deg) rotateZ(1deg) translateY(-1px)} 65%{transform:perspective(180px) rotateY(5deg) rotateZ(-.5deg) translateY(1px)} }
 
 .brand h1{
     font-size:22px; line-height:1; color:var(--text);
@@ -690,25 +693,27 @@ header{ position:sticky; top:0; z-index:1000; }
     .card:hover .card-img img{ transform:scale(1.055); filter:saturate(1.08) contrast(1.03); }
 }
 
+.card-badges{
+    position:absolute; z-index:3; top:10px; left:10px; right:10px;
+    display:flex; flex-wrap:wrap; align-items:flex-start; gap:6px; pointer-events:none;
+}
+/* One badge contract for flash sales, platforms, editions, and product labels. */
+.badge-flash,.badge-tag,.discount-badge{
+    min-height:26px; padding:0 9px; border-radius:8px;
+    display:inline-flex; align-items:center; justify-content:center; gap:5px;
+    font-family:'Space Grotesk',sans-serif; font-size:10px; line-height:1; font-weight:700;
+    letter-spacing:.055em; text-transform:uppercase; white-space:nowrap;
+}
 .badge-flash{
-    position:absolute; top:10px; left:10px; z-index:3;
-    padding:5px 10px; border-radius:999px;
     background:linear-gradient(135deg, #F0445B 0%, #F35A43 48%, #F59E0B 100%);
     border:1px solid rgba(255,255,255,.28); color:#FFFFFF;
-    font-family:'Space Grotesk',sans-serif; font-size:10px; font-weight:700; letter-spacing:.075em; text-transform:uppercase;
-    box-shadow:0 8px 18px rgba(240,71,92,.34), inset 0 1px 0 rgba(255,255,255,.25);
-    display:inline-flex; align-items:center; gap:5px; line-height:1;
+    box-shadow:0 8px 18px rgba(240,71,92,.30), inset 0 1px 0 rgba(255,255,255,.25);
 }
 .badge-flash i{ font-size:10px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.2)); }
 .badge-tag{
-    position:absolute; top:10px; right:10px; z-index:3;
-    padding:3px 8px; border-radius:6px;
-    background:var(--badge-tag-bg); backdrop-filter:blur(8px);
-    border:1px solid var(--line); color:var(--text-cyan);
-    font-size:10px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
-    max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    background:color-mix(in srgb,var(--badge-tag-bg) 88%,transparent); backdrop-filter:blur(10px);
+    border:1px solid var(--line); color:var(--text-cyan); box-shadow:0 6px 14px rgba(0,0,0,.12);
 }
-.card-flash .badge-tag{ top:44px; }
 
 .card-body{ padding:15px 15px 16px; display:flex; flex-direction:column; flex:1 1 auto; }
 .card-category{
@@ -745,10 +750,8 @@ header{ position:sticky; top:0; z-index:1000; }
 }
 .price-strike.lg{ font-size:14px; }
 .discount-badge{
-    padding:3px 7px; border-radius:6px;
     background:rgba(239,68,68,.16); border:1px solid rgba(239,68,68,.3);
-    color:var(--text-danger); font-family:'Inter', sans-serif; font-size:11px; font-weight:700;
-    letter-spacing:-.01em; white-space:nowrap; align-self:flex-end; margin-bottom:2px;
+    color:var(--text-danger); align-self:flex-end; margin-bottom:2px;
 }
 
 .card-actions{ display:flex; align-items:center; gap:8px; width:100%; }
@@ -1609,6 +1612,7 @@ input::placeholder{ color:var(--text-dim); }
     .brand h1{ font-size:18px; }
     .brand .logo{ width:32px; height:32px; }
     .brand .tagline{ font-size:9.5px; }
+    .flag-overlay{ top:-7px; right:-29px; width:33px; height:17px; }
     .hero-carousel{ height:auto; aspect-ratio:16/9; min-height:0; width:100%; }
     .hero-slide.full-image{ background-size:contain; background-position:center; }
     .menu.active{ inset:56px 8px auto 8px; }
@@ -1627,8 +1631,8 @@ input::placeholder{ color:var(--text-dim); }
     .card-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:11px; }
     .card{ border-radius:14px; }
     .card-img{ aspect-ratio:16/10; }
-    .badge-flash{ top:7px; left:7px; font-size:8.5px; padding:4px 7px; }
-    .badge-tag{ top:6px; right:6px; font-size:8.5px; padding:2px 6px; border-radius:5px; max-width:85px; }
+    .card-badges{ top:7px; left:7px; right:7px; gap:5px; }
+    .badge-flash,.badge-tag,.discount-badge{ min-height:22px; padding:0 7px; border-radius:7px; font-size:8.5px; }
     .card-body{ padding:11px 10px 12px; }
     .card-category{ font-size:9.5px; margin-bottom:4px; }
     .card-body h4{ font-size:13px; min-height:34px; line-height:1.3; margin-bottom:4px; }
@@ -1707,11 +1711,6 @@ input::placeholder{ color:var(--text-dim); }
     .ambient-asset--shield{ top:29vh !important; }
     .ambient-asset--crown{ top:12vh !important; }
     .ambient-asset--box{ top:58vh !important; }
-}
-@media(min-width:641px) and (prefers-reduced-motion:reduce){
-    .ambient-asset-glyph{
-        animation:ambient-rain var(--rain-duration,180s) linear var(--rain-delay,0s) infinite !important;
-    }
 }
 
 /* Reduce any remaining heavy image hover scale to none on touch devices */

@@ -175,6 +175,120 @@ document.getElementById("adminPinModal").addEventListener("hidden.bs.modal", () 
     hideRevealedSecrets();
 });
 
+let changePinStage = "current";
+let changePinResendTimerId = null;
+
+function changePinModalInstance() {
+    return bootstrap.Modal.getOrCreateInstance(document.getElementById("changeAdminPinModal"), { backdrop: "static", keyboard: false });
+}
+
+function setChangePinStage(stage) {
+    changePinStage = stage;
+    document.getElementById("changePinStepCurrent").classList.toggle("d-none", stage !== "current");
+    document.getElementById("changePinStepOtp").classList.toggle("d-none", stage !== "otp");
+    document.getElementById("changePinStepNew").classList.toggle("d-none", stage !== "new");
+    document.getElementById("changePinSubmit").textContent = stage === "current" ? "Kirim OTP" : stage === "otp" ? "Verifikasi OTP" : "Simpan PIN Baru";
+    const target = document.getElementById(stage === "current" ? "changePinCurrent" : stage === "otp" ? "changePinOtp" : "changePinNew");
+    setTimeout(() => target?.focus(), 120);
+}
+
+function startChangePinResendTimer(seconds = 60) {
+    clearInterval(changePinResendTimerId);
+    const button = document.getElementById("changePinResend");
+    const label = document.getElementById("changePinResendTimer");
+    let remaining = seconds;
+    button.disabled = true;
+    label.textContent = `(${remaining})`;
+    changePinResendTimerId = setInterval(() => {
+        remaining -= 1;
+        label.textContent = remaining > 0 ? `(${remaining})` : "";
+        if (remaining <= 0) {
+            clearInterval(changePinResendTimerId);
+            changePinResendTimerId = null;
+            button.disabled = false;
+        }
+    }, 1000);
+}
+
+function openChangeAdminPinModal() {
+    document.getElementById("changePinError").textContent = "";
+    document.getElementById("changePinCurrent").value = "";
+    document.getElementById("changePinOtp").value = "";
+    document.getElementById("changePinNew").value = "";
+    document.getElementById("changePinConfirm").value = "";
+    clearInterval(changePinResendTimerId);
+    setChangePinStage("current");
+    changePinModalInstance().show();
+}
+
+async function requestAdminPinChangeOtp() {
+    const currentPin = document.getElementById("changePinCurrent").value.trim();
+    if (!/^\d{6}$/.test(currentPin)) throw new Error("Masukkan PIN saat ini yang valid.");
+    const res = await apiFetch("/settings/security-pin/change/request", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin: currentPin })
+    });
+    // Jangan simpan current PIN di state atau browser sesudah request ini.
+    document.getElementById("changePinCurrent").value = "";
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || "OTP tidak dapat dikirim.");
+    setChangePinStage("otp");
+    startChangePinResendTimer();
+    showToast(data.message || "OTP telah dikirim.");
+}
+
+async function resendAdminPinChangeOtp() {
+    // Resend sengaja kembali ke tahap PIN saat ini, sehingga tidak ada PIN/session
+    // tepercaya yang tersimpan di browser.
+    setChangePinStage("current");
+    document.getElementById("changePinError").textContent = "Masukkan PIN saat ini untuk mengirim OTP baru.";
+}
+
+async function submitAdminPinChangeStep() {
+    const errorEl = document.getElementById("changePinError");
+    const button = document.getElementById("changePinSubmit");
+    errorEl.textContent = "";
+    button.disabled = true;
+    try {
+        if (changePinStage === "current") {
+            await requestAdminPinChangeOtp();
+        } else if (changePinStage === "otp") {
+            const otp = document.getElementById("changePinOtp").value.trim();
+            const res = await apiFetch("/settings/security-pin/change/verify-otp", {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ otp })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "OTP tidak dapat diverifikasi.");
+            document.getElementById("changePinOtp").value = "";
+            clearInterval(changePinResendTimerId);
+            setChangePinStage("new");
+            showToast(data.message || "OTP terverifikasi.");
+        } else {
+            const pin = document.getElementById("changePinNew").value.trim();
+            const confirmation = document.getElementById("changePinConfirm").value.trim();
+            if (!/^\d{6}$/.test(pin) || pin !== confirmation) throw new Error("PIN baru harus 6 digit dan kedua input harus sama.");
+            const res = await apiFetch("/settings/security-pin/change", {
+                method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pin, confirmation })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "PIN tidak dapat diubah.");
+            changePinModalInstance().hide();
+            showToast(data.message || "Security PIN berhasil diubah.");
+        }
+    } catch (err) {
+        errorEl.textContent = err.message || "Proses perubahan PIN gagal.";
+    } finally {
+        button.disabled = false;
+    }
+}
+
+document.getElementById("changeAdminPinModal").addEventListener("hidden.bs.modal", () => {
+    clearInterval(changePinResendTimerId);
+    changePinResendTimerId = null;
+    ["changePinCurrent", "changePinOtp", "changePinNew", "changePinConfirm"].forEach((id) => { document.getElementById(id).value = ""; });
+    document.getElementById("changePinError").textContent = "";
+    changePinStage = "current";
+});
+
 // ================================
 // Mobile sidebar (off-canvas)
 // ================================
@@ -210,7 +324,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         document.getElementById(`view-${view}`).classList.remove("d-none");
 
         if (view === "orders" && !ordersLoaded) loadOrders();
-        if (view === "users" && !usersLoaded) { loadUsers(); loadPendingOtp(); }
+        if (view === "users") openUsersSecurely();
         if (view === "promo" && !promoLoaded) loadPromo();
         if (view === "news" && !newsLoaded) loadNews();
         if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
@@ -229,7 +343,7 @@ function switchView(view) {
     if (target) target.classList.remove("d-none");
 
     if (view === "orders" && !ordersLoaded) loadOrders();
-    if (view === "users" && !usersLoaded) { loadUsers(); loadPendingOtp(); }
+    if (view === "users") openUsersSecurely();
     if (view === "promo" && !promoLoaded) loadPromo();
     if (view === "news" && !newsLoaded) loadNews();
     if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
@@ -717,12 +831,28 @@ function exportOrdersCsv() {
 // Users (waiting on backend endpoint)
 // ================================
 
-async function loadUsers() {
+function scrubUsers() {
+    document.getElementById("usersContainer").innerHTML = `<div class="text-center text-muted py-5">Security PIN diperlukan untuk memuat akun.</div>`;
+    document.getElementById("otpPendingContainer").innerHTML = `<div class="text-center text-muted py-4">Security PIN diperlukan untuk memuat OTP.</div>`;
+}
+
+async function openUsersSecurely() {
+    scrubUsers();
+    try {
+        await withAdminPin(async (security_pin) => {
+            await Promise.all([loadUsers(security_pin), loadPendingOtp(security_pin)]);
+        }, "membuka Admin Accounts");
+    } catch (err) {
+        showToast(err.message || "Security PIN diperlukan", true);
+    }
+}
+
+async function loadUsers(security_pin) {
     const container = document.getElementById("usersContainer");
     container.innerHTML = `<div class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</div>`;
 
     try {
-        const res = await apiFetch("/users");
+        const res = await apiFetch("/users/list", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
         if (!res.ok) throw new Error("not-available");
 
         const users = await res.json();
@@ -779,21 +909,21 @@ async function loadUsers() {
             <div class="text-center text-muted py-5">
                 <i class="bi bi-people display-4 d-block mb-3"></i>
                 Fitur Users belum terhubung ke backend.<br>
-                <small>Endpoint <code>GET /users</code> belum tersedia di API kamu.</small>
+                <small>Data akun tidak dapat dimuat.</small>
             </div>
         `;
     }
 }
 
 async function openUserDetail(id) {
-    const modalEl = document.getElementById("userDetailModal");
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-    const body = document.getElementById("userDetailBody");
-    body.innerHTML = `<div class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</div>`;
-    modal.show();
-
     try {
-        const res = await apiFetch(`/users/${id}/detail`);
+        await withAdminPin(async (security_pin) => {
+        const modalEl = document.getElementById("userDetailModal");
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        const body = document.getElementById("userDetailBody");
+        body.innerHTML = `<div class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</div>`;
+        modal.show();
+        const res = await apiFetch(`/users/${id}/detail`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
         if (!res.ok) {
             const data = await res.json().catch(() => ({}));
             throw new Error(data.message || "Gagal memuat riwayat pelanggan");
@@ -847,28 +977,32 @@ async function openUserDetail(id) {
                 </table>
             </div>
         `;
+        }, "membuka detail akun");
     } catch (err) {
         if (err.message === "unauthorized") return;
-        body.innerHTML = `<div class="text-center text-danger py-5">${escapeHtml(err.message)}</div>`;
+        const body = document.getElementById("userDetailBody");
+        if (body) body.innerHTML = `<div class="text-center text-danger py-5">${escapeHtml(err.message)}</div>`;
     }
 }
 
 async function changeUserRole(id, role) {
     try {
+        await withAdminPin(async (security_pin) => {
         const res = await apiFetch(`/users/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ role })
+            body: JSON.stringify({ role, security_pin })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Gagal mengubah role");
 
         showToast(`Role berhasil diubah jadi "${role}"`);
+        }, "mengubah role akun");
     } catch (err) {
         if (err.message === "unauthorized") return;
         console.error(err);
         showToast(err.message, true);
-        loadUsers(); // refresh biar dropdown balik ke nilai asli kalau gagal
+        openUsersSecurely(); // refresh biar dropdown balik ke nilai asli kalau gagal
     }
 }
 
@@ -879,16 +1013,18 @@ async function toggleUserBlacklist(id, newValue) {
     if (!confirm(confirmMsg)) return;
 
     try {
+        await withAdminPin(async (security_pin) => {
         const res = await apiFetch(`/users/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ is_blacklisted: newValue })
+            body: JSON.stringify({ is_blacklisted: newValue, security_pin })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Gagal mengubah status user");
 
         showToast(newValue ? "Akun berhasil diblokir" : "Blokir berhasil dibuka");
-        loadUsers();
+        await Promise.all([loadUsers(security_pin), loadPendingOtp(security_pin)]);
+        }, newValue ? "memblokir akun" : "membuka blokir akun");
     } catch (err) {
         if (err.message === "unauthorized") return;
         console.error(err);
@@ -901,12 +1037,14 @@ async function deleteUser(id, email) {
     if (!confirm(`Sekali lagi — yakin hapus permanen akun "${email}"?`)) return;
 
     try {
-        const res = await apiFetch(`/users/${id}`, { method: "DELETE" });
+        await withAdminPin(async (security_pin) => {
+        const res = await apiFetch(`/users/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Gagal menghapus user");
 
         showToast("User berhasil dihapus");
-        loadUsers();
+        await Promise.all([loadUsers(security_pin), loadPendingOtp(security_pin)]);
+        }, "menghapus akun permanen");
     } catch (err) {
         if (err.message === "unauthorized") return;
         console.error(err);
@@ -918,12 +1056,12 @@ async function deleteUser(id, email) {
 // OTP Aktif (antisipasi email OTP gagal terkirim)
 // ================================
 
-async function loadPendingOtp() {
+async function loadPendingOtp(security_pin) {
     const container = document.getElementById("otpPendingContainer");
     container.innerHTML = `<div class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</div>`;
 
     try {
-        const res = await apiFetch("/users/otp");
+        const res = await apiFetch("/users/otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
         if (!res.ok) throw new Error("not-available");
 
         const list = await res.json();
@@ -968,7 +1106,8 @@ async function loadPendingOtp() {
 
 async function adminResendOtp(id) {
     try {
-        const res = await apiFetch(`/users/${id}/resend-otp`, { method: "POST" });
+        await withAdminPin(async (security_pin) => {
+        const res = await apiFetch(`/users/${id}/resend-otp`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Gagal mengirim ulang OTP");
 
@@ -977,7 +1116,8 @@ async function adminResendOtp(id) {
         } else {
             showToast(data.message || "Kode OTP baru berhasil dikirim");
         }
-        loadPendingOtp();
+        await Promise.all([loadUsers(security_pin), loadPendingOtp(security_pin)]);
+        }, "mengirim ulang OTP akun");
     } catch (err) {
         if (err.message === "unauthorized") return;
         console.error(err);
@@ -1204,22 +1344,47 @@ async function deletePromoSlide(id) {
 // Settings — Profil Admin / Toko / API Keys
 // ================================
 
+const SENSITIVE_SETTINGS_TABS = new Set(["apikeys", "security", "store", "mascot"]);
+
+function scrubSensitiveSettings() {
+    hideRevealedSecrets();
+    document.getElementById("apiKeysForm")?.reset();
+    const blockedIps = document.getElementById("blockedIpsList");
+    if (blockedIps) blockedIps.innerHTML = `<div class="text-muted text-center py-3 small">Security PIN diperlukan untuk memuat data.</div>`;
+    const unlockInput = document.getElementById("unlockLoginIp");
+    if (unlockInput) unlockInput.value = "";
+}
+
+function activateSettingsTab(tab, button) {
+    document.querySelectorAll("#settingsTabs .nav-link").forEach(b => b.classList.toggle("active", b === button));
+    document.getElementById("settingsTabProfile").classList.toggle("d-none", tab !== "profile");
+    document.getElementById("settingsTabStore").classList.toggle("d-none", tab !== "store");
+    document.getElementById("settingsTabContent").classList.toggle("d-none", tab !== "content");
+    document.getElementById("settingsTabApiKeys").classList.toggle("d-none", tab !== "apikeys");
+    document.getElementById("settingsTabSecurity").classList.toggle("d-none", tab !== "security");
+    document.getElementById("settingsTabMascot").classList.toggle("d-none", tab !== "mascot");
+}
+
 document.querySelectorAll("#settingsTabs [data-settings-tab]").forEach(btn => {
-    btn.addEventListener("click", () => {
-        document.querySelectorAll("#settingsTabs .nav-link").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
+    btn.addEventListener("click", async () => {
         const tab = btn.dataset.settingsTab;
-        document.getElementById("settingsTabProfile").classList.toggle("d-none", tab !== "profile");
-        document.getElementById("settingsTabStore").classList.toggle("d-none", tab !== "store");
-        document.getElementById("settingsTabContent").classList.toggle("d-none", tab !== "content");
-        document.getElementById("settingsTabApiKeys").classList.toggle("d-none", tab !== "apikeys");
-        document.getElementById("settingsTabSecurity").classList.toggle("d-none", tab !== "security");
-        document.getElementById("settingsTabMascot").classList.toggle("d-none", tab !== "mascot");
-        hideRevealedSecrets();
-        if (tab === "apikeys" || tab === "security") {
-            const action = tab === "apikeys" ? loadApiKeys : loadBlockedIps;
-            withAdminPin(action, tab === "apikeys" ? "membuka API Keys" : "membuka Keamanan")
-                .catch((err) => showToast(err.message || "Security PIN diperlukan", true));
+        const previousTab = document.querySelector("#settingsTabs .nav-link.active")?.dataset.settingsTab;
+        if (!SENSITIVE_SETTINGS_TABS.has(tab)) {
+            if (SENSITIVE_SETTINGS_TABS.has(previousTab)) scrubSensitiveSettings();
+            activateSettingsTab(tab, btn);
+            return;
+        }
+        const purpose = tab === "apikeys" ? "membuka API Keys" : tab === "security" ? "membuka Keamanan" : "membuka pengaturan sensitif";
+        try {
+            await withAdminPin(async (security_pin) => {
+                if (SENSITIVE_SETTINGS_TABS.has(previousTab) && previousTab !== tab) scrubSensitiveSettings();
+                activateSettingsTab(tab, btn);
+                if (tab === "apikeys") await loadApiKeys(security_pin);
+                if (tab === "security") await loadBlockedIps(security_pin);
+            }, purpose);
+        } catch (err) {
+            // Jangan pernah mengubah tab sebelum PIN sukses; Batal berarti tetap ditolak.
+            showToast(err.message || "Security PIN diperlukan", true);
         }
     });
 });
@@ -1403,10 +1568,11 @@ async function saveContentSettings() {
     };
 
     try {
+        const security_pin = await withAdminPin((pin) => pin, "menyimpan konten pengaturan");
         const res = await apiFetch("/settings/store", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ ...payload, security_pin })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Gagal menyimpan konten");
@@ -1463,6 +1629,7 @@ async function saveStoreSettings() {
     errorEl.textContent = "";
 
     try {
+        const security_pin = await withAdminPin((pin) => pin, "menyimpan pengaturan toko");
         let logoUrl;
         const file = storeLogoInput.files[0];
         if (file) {
@@ -1490,7 +1657,7 @@ async function saveStoreSettings() {
         const res = await apiFetch("/settings/store", {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ ...payload, security_pin })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Gagal menyimpan pengaturan toko");
@@ -2928,6 +3095,7 @@ async function saveMascotSettings() {
     const errorEl = document.getElementById("mascotError");
     errorEl.textContent = "";
     try {
+        const security_pin = await withAdminPin((pin) => pin, "menyimpan Event Mascot");
         const mascot_url = await uploadMascotAsset(document.getElementById("mascotImageInput"));
         const web_url = await uploadMascotAsset(document.getElementById("mascotWebInput"));
         const event_mascot = {
@@ -2942,7 +3110,7 @@ async function saveMascotSettings() {
         };
         if (event_mascot.enabled && !mascot_url) throw new Error("Upload asset mascot sebelum mengaktifkan event.");
         const res = await apiFetch("/settings/store", {
-            method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event_mascot })
+            method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ event_mascot, security_pin })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Gagal menyimpan Event Mascot");

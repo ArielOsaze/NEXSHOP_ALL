@@ -61,9 +61,9 @@ window.fetch = (...args) => {
     return nativeFetch(...args).finally(endAppRequest);
 };
 
-function finishInitialLoading() {
+function finishInitialLoading(force = false) {
     initialLoading = false;
-    if (activeRequests === 0) hideAppLoader();
+    if (force || activeRequests === 0) hideAppLoader();
     else showAppLoader("Menyiapkan data toko...");
 }
 
@@ -357,8 +357,7 @@ function renderProducts() {
                 <article class="card product-card${p.is_flash_sale ? " card-flash" : ""}" data-product-card data-id="${p.id}" tabindex="0" aria-label="Lihat detail ${escapeHtml(p.name)}">
                     <div class="card-img">
                         <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" loading="lazy" decoding="async">
-                        ${p.is_flash_sale ? '<span class="badge-flash"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}
-                        ${p.badge ? `<span class="badge-tag">${escapeHtml(p.badge)}</span>` : ""}
+                        ${(p.is_flash_sale || p.badge) ? `<div class="card-badges">${p.is_flash_sale ? '<span class="badge-flash"><i class="fa-solid fa-bolt" aria-hidden="true"></i> FLASH SALE</span>' : ""}${p.badge ? `<span class="badge-tag">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}
                     </div>
                     <div class="card-body">
                         ${p.category ? `<div class="card-category">${escapeHtml(p.category)}</div>` : ""}
@@ -1844,20 +1843,48 @@ function initEventMascot(config) {
     image.src = config.mascot_url;
     image.alt = "";
     image.decoding = "async";
+    image.fetchPriority = "high";
     mascot.append(web, image);
     anchor.append(mascot);
 
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const alreadyPlayed = sessionStorage.getItem("eventMascotPlayed") === "true";
-    if (!alreadyPlayed && !reducedMotion && params.get("mascotPreview") !== "1") {
-        mascot.classList.add("is-entering");
-        sessionStorage.setItem("eventMascotPlayed", "true");
-        setTimeout(() => { mascot.classList.remove("is-entering"); mascot.classList.add("is-hanging"); }, delay + (2000 / (Number(config.speed) || 1)));
-    } else {
-        mascot.classList.add("is-hanging");
+    const playKey = `eventMascotPlayed:${config.mascot_url}`;
+    const alreadyPlayed = sessionStorage.getItem(playKey) === "true";
+    const enterDuration = 2000 / (Number(config.speed) || 1);
+    let started = false;
+    const startMascot = () => {
+        if (started || document.visibilityState === "hidden") return;
+        started = true;
+        // Two frames guarantee that the initial CSS state is painted before the
+        // class is applied; otherwise Chromium may coalesce it and skip entry.
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+            if (!reducedMotion && !alreadyPlayed && params.get("mascotPreview") !== "1") {
+                mascot.classList.add("is-entering");
+                // Mark played only after the browser has actually been given a
+                // frame to start it. The old code wrote this before image load.
+                sessionStorage.setItem(playKey, "true");
+                setTimeout(() => {
+                    mascot.classList.remove("is-entering");
+                    mascot.classList.add("is-hanging");
+                }, delay + enterDuration);
+            } else {
+                mascot.classList.add("is-hanging");
+            }
+        }));
+    };
+    const waitForVisible = () => {
+        if (document.visibilityState !== "hidden") startMascot();
+        else document.addEventListener("visibilitychange", waitForVisible, { once: true });
+    };
+    if (image.complete && image.naturalWidth > 0) waitForVisible();
+    else {
+        image.addEventListener("load", waitForVisible, { once: true });
+        // A broken remote asset must never leave an invisible/collapsed event.
+        image.addEventListener("error", waitForVisible, { once: true });
     }
     if (!reducedMotion) {
         const blink = () => {
+            if (!mascot.isConnected) return;
             mascot.classList.add("is-blinking");
             setTimeout(() => mascot.classList.remove("is-blinking"), 800);
             setTimeout(blink, 20000 + Math.random() * 10000);
@@ -2529,7 +2556,7 @@ async function bootstrapApp() {
     checkResetPasswordLink();
     refreshAccountUI();
 
-    await Promise.allSettled([
+    const initialRequests = Promise.allSettled([
         loadStoreSettings(),
         loadProducts(),
         loadPromo(),
@@ -2538,8 +2565,21 @@ async function bootstrapApp() {
         loadGamingNews(),
         checkPaymentReturn()
     ]);
-
-    finishInitialLoading();
+    // A stalled third-party/network request must not leave the page covered by
+    // an indefinitely animated loader. Requests continue in the background.
+    const completed = await Promise.race([
+        initialRequests.then(() => true),
+        new Promise((resolve) => setTimeout(() => resolve(false), 12000))
+    ]);
+    finishInitialLoading(!completed);
 }
 
-bootstrapApp();
+function startApp() {
+    bootstrapApp().catch(() => finishInitialLoading());
+}
+
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", startApp, { once: true });
+} else {
+    startApp();
+}

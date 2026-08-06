@@ -99,6 +99,30 @@ async function sendOtpEmail(to, otp) {
     }
 }
 
+// OTP ini khusus untuk perubahan Security PIN admin. Jangan gunakan template
+// verifikasi akun di atas: masa berlaku dan konteksnya sengaja lebih ketat.
+async function sendAdminPinChangeOtpEmail(to, otp) {
+    const config = await getBrevoConfig();
+    try {
+        await sendConfiguredEmail(config, {
+            to,
+            subject: "Kode perubahan Security PIN NexShop",
+            htmlContent: `
+                <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
+                    <h2 style="color:#7C3AED;">NexShop</h2>
+                    <p>Ada permintaan untuk mengubah Security PIN admin.</p>
+                    <div style="font-size:32px;font-weight:bold;letter-spacing:6px;background:#f2f1f8;padding:16px;text-align:center;border-radius:8px;">${otp}</div>
+                    <p style="color:#666;font-size:13px;margin-top:16px;">Kode ini berlaku 5 menit dan hanya dapat dipakai sekali. Jangan bagikan kepada siapa pun. Jika ini bukan kamu, segera ganti password admin.</p>
+                </div>`
+        });
+    } catch (err) {
+        const detail = err.response?.data?.message || err.response?.data || err.message;
+        console.log("Gagal kirim OTP perubahan Security PIN:", detail);
+        notify("security", `Gagal kirim OTP perubahan Security PIN ke ${to}: ${typeof detail === "string" ? detail : JSON.stringify(detail)}`);
+        throw err;
+    }
+}
+
 function rupiah(n) {
     return "Rp" + Number(n || 0).toLocaleString("id-ID");
 }
@@ -252,4 +276,4 @@ async function sendPasswordResetEmail(to, resetLink) {
     }
 }
 
-module.exports = { sendOtpEmail, sendOrderInvoiceEmail, sendTopupInvoiceEmail, sendPasswordResetEmail };
+module.exports = { sendOtpEmail, sendAdminPinChangeOtpEmail, sendOrderInvoiceEmail, sendTopupInvoiceEmail, sendPasswordResetEmail };

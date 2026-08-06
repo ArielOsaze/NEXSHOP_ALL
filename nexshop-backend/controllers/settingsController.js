@@ -3,6 +3,19 @@ const bcrypt = require("bcrypt");
 const axios = require("axios");
 const { notify } = require("../config/notify");
 const { isValidSecurityPin, verifyAdminPin, logSensitiveAction } = require("../middleware/adminPinMiddleware");
+const { sendAdminPinChangeOtpEmail } = require("../config/mailer");
+const crypto = require("crypto");
+
+const PIN_CHANGE_OTP_TTL_MS = 5 * 60 * 1000;
+const PIN_CHANGE_OTP_MAX_ATTEMPTS = 5;
+
+function hashPinChangeOtp(otp) {
+    return crypto.createHash("sha256").update(otp).digest("hex");
+}
+
+function generatePinChangeOtp() {
+    return String(crypto.randomInt(100000, 1000000));
+}
 const {
     getStoreSettings,
     updateStoreSettings,
@@ -108,6 +121,99 @@ exports.verifyAdminPin = async (req, res) => {
     }
     // Tidak ada token, TTL, atau sesi tepercaya setelah respons ini.
     return res.json({ message: "Security PIN terverifikasi" });
+};
+
+// Perubahan PIN adalah alur terpisah dari verifikasi aksi sensitif biasa.
+// Tidak ada trusted-PIN session: hanya bukti OTP satu-kali milik admin yang
+// bertahan sampai lima menit dan selalu dihapus setelah PIN diperbarui.
+exports.requestAdminPinChangeOtp = async (req, res) => {
+    try {
+        const otp = generatePinChangeOtp();
+        const expiresAt = new Date(Date.now() + PIN_CHANGE_OTP_TTL_MS).toISOString();
+        const { error } = await supabase.from("users").update({
+            security_pin_change_otp_hash: hashPinChangeOtp(otp),
+            security_pin_change_otp_expires_at: expiresAt,
+            security_pin_change_otp_attempts: 0,
+            security_pin_change_otp_verified_at: null
+        }).eq("id", req.user.id);
+        if (error) return res.status(500).json({ message: securityPinSchemaMessage(error) });
+
+        try {
+            await sendAdminPinChangeOtpEmail(req.user.email, otp);
+        } catch (mailError) {
+            await supabase.from("users").update({
+                security_pin_change_otp_hash: null,
+                security_pin_change_otp_expires_at: null,
+                security_pin_change_otp_attempts: 0,
+                security_pin_change_otp_verified_at: null
+            }).eq("id", req.user.id);
+            return res.status(502).json({ message: "OTP tidak dapat dikirim. PIN tidak diubah." });
+        }
+        await logSensitiveAction(req, "PIN_CHANGE_OTP_SENT");
+        return res.json({ message: "Kode OTP telah dikirim ke email admin.", expires_in_seconds: PIN_CHANGE_OTP_TTL_MS / 1000 });
+    } catch (err) {
+        return res.status(500).json({ message: "Server gagal mengirim OTP perubahan PIN" });
+    }
+};
+
+exports.verifyAdminPinChangeOtp = async (req, res) => {
+    const otp = typeof req.body?.otp === "string" ? req.body.otp.trim() : "";
+    if (!/^\d{6}$/.test(otp)) return res.status(400).json({ message: "Masukkan kode OTP 6 digit yang valid" });
+    try {
+        const { data: user, error } = await supabase.from("users")
+            .select("security_pin_change_otp_hash, security_pin_change_otp_expires_at, security_pin_change_otp_attempts")
+            .eq("id", req.user.id).maybeSingle();
+        if (error) return res.status(500).json({ message: securityPinSchemaMessage(error) });
+        if (!user?.security_pin_change_otp_hash || !user.security_pin_change_otp_expires_at || new Date(user.security_pin_change_otp_expires_at) <= new Date()) {
+            return res.status(400).json({ message: "OTP tidak tersedia atau sudah kedaluwarsa. Kirim ulang OTP." });
+        }
+        const attempts = Number(user.security_pin_change_otp_attempts || 0);
+        if (attempts >= PIN_CHANGE_OTP_MAX_ATTEMPTS) return res.status(429).json({ message: "Batas percobaan OTP tercapai. Kirim OTP baru." });
+        if (hashPinChangeOtp(otp) !== user.security_pin_change_otp_hash) {
+            await supabase.from("users").update({ security_pin_change_otp_attempts: attempts + 1 }).eq("id", req.user.id);
+            await logSensitiveAction(req, "PIN_CHANGE_OTP_FAILED", { attempts: attempts + 1 });
+            return res.status(401).json({ message: "Kode OTP tidak sesuai" });
+        }
+        const { error: updateError } = await supabase.from("users").update({ security_pin_change_otp_verified_at: new Date().toISOString() }).eq("id", req.user.id);
+        if (updateError) return res.status(500).json({ message: securityPinSchemaMessage(updateError) });
+        await logSensitiveAction(req, "PIN_CHANGE_OTP_VERIFIED");
+        return res.json({ message: "OTP terverifikasi. Buat PIN baru sekarang." });
+    } catch (err) {
+        return res.status(500).json({ message: "Server gagal memverifikasi OTP perubahan PIN" });
+    }
+};
+
+exports.changeAdminPin = async (req, res) => {
+    const pin = req.body?.pin;
+    const confirmation = req.body?.confirmation;
+    if (!isValidSecurityPin(pin) || pin !== confirmation) return res.status(400).json({ message: "Security PIN baru harus 6 digit dan kedua input harus sama" });
+    try {
+        const { data: user, error } = await supabase.from("users")
+            .select("security_pin_change_otp_expires_at, security_pin_change_otp_verified_at")
+            .eq("id", req.user.id).maybeSingle();
+        if (error) return res.status(500).json({ message: securityPinSchemaMessage(error) });
+        if (!user?.security_pin_change_otp_verified_at || !user.security_pin_change_otp_expires_at || new Date(user.security_pin_change_otp_expires_at) <= new Date()) {
+            return res.status(403).json({ message: "Verifikasi OTP wajib dilakukan sebelum mengubah PIN" });
+        }
+        const security_pin_hash = await bcrypt.hash(pin, 12);
+        const { data: updatedUser, error: updateError } = await supabase.from("users").update({
+            security_pin_hash,
+            security_pin_updated_at: new Date().toISOString(),
+            security_pin_change_otp_hash: null,
+            security_pin_change_otp_expires_at: null,
+            security_pin_change_otp_attempts: 0,
+            security_pin_change_otp_verified_at: null
+        }).eq("id", req.user.id)
+            .eq("security_pin_change_otp_verified_at", user.security_pin_change_otp_verified_at)
+            .select("id").maybeSingle();
+        if (updateError) return res.status(500).json({ message: securityPinSchemaMessage(updateError) });
+        if (!updatedUser) return res.status(409).json({ message: "OTP sudah dipakai atau tidak lagi valid. Ulangi proses perubahan PIN." });
+        notify("security", `${req.user.email} mengubah Security PIN Admin setelah verifikasi OTP`);
+        await logSensitiveAction(req, "PIN_CHANGED_WITH_OTP");
+        return res.json({ message: "Security PIN berhasil diubah." });
+    } catch (err) {
+        return res.status(500).json({ message: "Server gagal mengubah Security PIN" });
+    }
 };
 
 exports.getApiKeysAdmin = async (req, res) => {

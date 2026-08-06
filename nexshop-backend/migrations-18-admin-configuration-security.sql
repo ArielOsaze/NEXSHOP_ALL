@@ -5,7 +5,11 @@
 
 alter table public.users
     add column if not exists security_pin_hash text,
-    add column if not exists security_pin_updated_at timestamptz;
+    add column if not exists security_pin_updated_at timestamptz,
+    add column if not exists security_pin_change_otp_hash text,
+    add column if not exists security_pin_change_otp_expires_at timestamptz,
+    add column if not exists security_pin_change_otp_attempts integer not null default 0,
+    add column if not exists security_pin_change_otp_verified_at timestamptz;
 
 -- Audit hanya dapat diakses backend menggunakan service_role.
 create table if not exists public.admin_security_audit_logs (
