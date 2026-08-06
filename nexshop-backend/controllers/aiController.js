@@ -89,6 +89,7 @@ function calculateKnowledgeScore(item, query, expandedTerms, intent) {
     const keywordsLower = (item.keywords || "").toLowerCase();
     const catLower = (item.category || "").toLowerCase();
     const contentLower = (item.content || "").toLowerCase();
+    const qLower = query.toLowerCase();
 
     expandedTerms.forEach(term => {
         if (!term) return;
@@ -98,12 +99,19 @@ function calculateKnowledgeScore(item, query, expandedTerms, intent) {
         if (contentLower.includes(term)) score += 25;
     });
 
-    if (intent === "Comparison") {
-        if (titleLower.includes("sharing") || titleLower.includes("private") || titleLower.includes("faq") || titleLower.includes("perbedaan")) {
-            score += 50;
+    // Penanganan Intent Presisi untuk Definition & Comparison
+    if (intent === "Definition" || intent === "Comparison") {
+        if (qLower.includes("sharing") && (titleLower.includes("sharing") || keywordsLower.includes("sharing") || contentLower.includes("sharing"))) {
+            score += 60;
         }
-        if (titleLower.includes("cara membeli") || titleLower.includes("promo")) {
-            score -= 30; // Kurangi bobot panduan generik saat user meminta perbandingan
+        if (qLower.includes("private") && (titleLower.includes("private") || keywordsLower.includes("private") || contentLower.includes("private"))) {
+            score += 60;
+        }
+        if (titleLower.includes("faq") || catLower.includes("faq")) {
+            score += 30;
+        }
+        if (titleLower.includes("cara membeli") || titleLower.includes("panduan produk")) {
+            score -= 40; // Kurangi bobot panduan generik saat user meminta definisi/perbedaan
         }
     }
 
@@ -117,6 +125,14 @@ async function retrieveContext(query, user) {
     const contextLines = [NEXSHOP_STORE_KNOWLEDGE];
     const suggestedCards = [];
 
+    console.log(`\n======================================================`);
+    console.log(`🔍 [RAG AUDIT LOG] PIPELINE RETRIEVAL STARTED`);
+    console.log(`• Raw Query   : "${query}"`);
+    console.log(`• Normalized  : "${qLower}"`);
+    console.log(`• Expanded    : [${expandedTerms.join(", ")}]`);
+    console.log(`• Intent      : ${intent}`);
+    console.log(`======================================================`);
+
     const isTermMatched = (text) => {
         if (!text) return false;
         const txtLower = String(text).toLowerCase();
@@ -124,9 +140,8 @@ async function retrieveContext(query, user) {
     };
 
     try {
-        // SELALU panggil getStoreSettings({ fresh: true }) agar jika admin baru mengganti FAQ/Syarat/Kontak, AI langsung menggunakannya!
         const settings = await getStoreSettings({ fresh: true });
-        if (settings && intent !== "Comparison") {
+        if (settings && intent !== "Comparison" && intent !== "Definition") {
             contextLines.push(`Informasi Toko Dinamis: ${settings.store_name || 'NexShop'} (${settings.store_tagline || 'Marketplace Gaming'}). WhatsApp CS: ${settings.whatsapp_number || '6287792634063'}. Email CS: ${settings.contact_email || 'support@nexshop.cloud'}.`);
             if (settings.faq_content) contextLines.push(`FAQ & Panduan Toko: ${settings.faq_content}`);
             if (settings.refund_content) contextLines.push(`Kebijakan Refund: ${settings.refund_content}`);
@@ -134,7 +149,7 @@ async function retrieveContext(query, user) {
         }
 
         // Search Products (physical / digital)
-        if (intent !== "Comparison") {
+        if (intent !== "Comparison" && intent !== "Definition") {
             const { data: products } = await supabase.from("products").select("id, name, price, strike_price, sold, category, is_flash_sale, badges").limit(30);
             if (products && products.length > 0) {
                 const matchedProducts = products.filter(p => isTermMatched(p.name) || isTermMatched(p.category) || qLower.includes("produk") || qLower.includes("murah") || qLower.includes("laris"));
@@ -164,8 +179,9 @@ async function retrieveContext(query, user) {
         }
 
         // Search Dynamic knowledge_base Table (dengan Weighted Scoring & Ranking)
+        let topKbItems = [];
         try {
-            const { data: kbItems } = await supabase.from("knowledge_base").select("id, title, category, keywords, content").eq("status", "active").order("priority", { ascending: false }).limit(40);
+            const { data: kbItems } = await supabase.from("knowledge_base").select("id, title, category, keywords, content").eq("status", "active").order("priority", { ascending: false }).limit(50);
             const activeKbList = (kbItems && kbItems.length > 0) ? kbItems : inMemoryKnowledgeBase.filter(k => k.status === 'active');
             
             // Hitung skor berbobot & rangking seluruh kandidat
@@ -174,10 +190,14 @@ async function retrieveContext(query, user) {
                 score: calculateKnowledgeScore(k, query, expandedTerms, intent)
             })).filter(k => k.score > 0).sort((a, b) => b.score - a.score);
 
+            console.log(`📊 [RAG AUDIT LOG] KNOWLEDGE BASE CANDIDATE SCORES:`);
+            scoredKb.slice(0, 8).forEach((k, idx) => {
+                console.log(`  ${idx + 1}. [Score ${k.score}] "${k.title}" (${k.category || 'FAQ'})`);
+            });
+
             if (scoredKb.length > 0) {
-                // Untuk intent Comparison, ambil minimal 2-4 entri berperingkat tertinggi
-                const limitCount = intent === "Comparison" ? 4 : 5;
-                const topKbItems = scoredKb.slice(0, limitCount);
+                const limitCount = (intent === "Comparison" || intent === "Definition") ? 4 : 5;
+                topKbItems = scoredKb.slice(0, limitCount);
                 contextLines.push(`Knowledge Base Terkait (Top Ranked Intent ${intent}):\n` + topKbItems.map(k => `[${k.category || 'FAQ'}] ${k.title}: ${k.content}`).join("\n---\n"));
             }
         } catch (e) {
@@ -187,7 +207,7 @@ async function retrieveContext(query, user) {
             })).filter(k => k.score > 0).sort((a, b) => b.score - a.score);
 
             if (scoredKb.length > 0) {
-                const topKbItems = scoredKb.slice(0, 4);
+                topKbItems = scoredKb.slice(0, 4);
                 contextLines.push(`Knowledge Base Terkait:\n` + topKbItems.map(k => `[${k.category || 'FAQ'}] ${k.title}: ${k.content}`).join("\n---\n"));
             }
         }
@@ -205,13 +225,18 @@ async function retrieveContext(query, user) {
             }
         }
 
+        console.log(`✅ [RAG AUDIT LOG] SELECTED TOP KNOWLEDGE ITEMS:`);
+        topKbItems.forEach(k => console.log(`  - [${k.category}] ${k.title}`));
+        console.log(`======================================================\n`);
+
     } catch (err) {
         console.error("⚠️ Error retrieving RAG context:", err.message);
     }
 
     return {
         contextText: contextLines.join("\n\n"),
-        cards: suggestedCards
+        cards: suggestedCards,
+        intent
     };
 }
 
@@ -223,11 +248,10 @@ exports.chat = async (req, res) => {
     }
 
     const q = message.trim();
-    const qLower = q.toLowerCase();
     const user = req.user || null;
 
     try {
-        const { contextText, cards } = await retrieveContext(q, user);
+        const { contextText, cards, intent } = await retrieveContext(q, user);
         const apiKeys = await getApiKeys();
         const apiKey = apiKeys.gemini_api_key || process.env.GEMINI_API_KEY || "";
         const model = apiKeys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
@@ -240,11 +264,14 @@ ${userName ? `Nama pelanggan yang sedang login: ${userName}. Sapa pengguna denga
 
 ATURAN UTAMA (RAG KONTROL PENUH):
 1. Utamakan informasi dari KONTEKS DATABASE NEXSHOP di bawah ini.
-2. Jika ada data harga, voucher, atau status order di dalam konteks, sebutkan secara presisi.
+2. Jika pengguna menanyakan definisi atau perbedaan (seperti Sharing vs Private), JELASKAN DENGAN SPESIFIK dan gunakan tabel/poin perbandingan jika relevan.
 3. JIKA INFORMASI TIDAK TERSEDIA di dalam konteks dan kamu tidak yakin, JANGAN MENGARANG. Gunakan pengetahuan dasar NexShop yang tersedia dan sarankan CS WhatsApp Admin jika butuh bantuan lebih lanjut.
 
 KONTEKS DATABASE NEXSHOP:
 ${contextText || "Tidak ada informasi khusus di database."}`;
+
+        console.log(`🤖 [RAG AUDIT LOG] FULL PROMPT SENT TO GEMINI:`);
+        console.log(systemPrompt.slice(0, 500) + "\n... (truncated for brevity)");
 
         if (apiKey) {
             try {
@@ -253,7 +280,6 @@ ${contextText || "Tidak ada informasi khusus di database."}`;
                     { role: "model", parts: [{ text: "Siap, saya mengerti. Saya adalah NexBot, asisten virtual resmi NexShop." }] }
                 ];
 
-                // Append recent conversation memory (history) if provided
                 if (Array.isArray(history)) {
                     history.slice(-6).forEach(item => {
                         if (item.role && item.text) {
@@ -275,6 +301,7 @@ ${contextText || "Tidak ada informasi khusus di database."}`;
 
                 const replyText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (replyText) {
+                    console.log(`✨ [RAG AUDIT LOG] GEMINI RESPONSE RECEIVED (${replyText.length} chars).`);
                     return res.json({
                         reply: replyText,
                         cards,
@@ -286,14 +313,24 @@ ${contextText || "Tidak ada informasi khusus di database."}`;
             }
         }
 
-        // Smart Intent Fallback RAG Engine (Memastikan 100% pertanyaan umum NexShop terjawab)
+        // Smart Intent Fallback RAG Engine (Precise Intent Matching)
         const { raw: qNorm, expandedTerms } = normalizeAndExpandQuery(q);
         const hasTerm = (t) => expandedTerms.some(term => term.includes(t) || qNorm.includes(t));
 
         let fallbackReply = userName ? `Halo ${userName} 👋 ` : `Halo 👋 `;
 
-        if (hasTerm("xbox") || hasTerm("game pass") || hasTerm("xgp")) {
-            fallbackReply += "Untuk membeli **Xbox Game Pass** di NexShop:\n1. Masuk ke halaman **Produk / Topup**.\n2. Pilih kategori **Xbox Game Pass**.\n3. Pilih durasi langganan yang diinginkan.\n4. Lakukan pembayaran via QRIS / E-Wallet / VA Bank.\n5. Kode lisensi / akses Game Pass akan langsung dikirimkan!";
+        if (hasTerm("sharing") || hasTerm("private") || intent === "Comparison") {
+            fallbackReply += "**Perbedaan Xbox Game Pass Sharing vs Private di NexShop:**\n\n" +
+                "• **Xbox Game Pass Private**:\n" +
+                "  - Menggunakan **akun Anda sendiri** (100% Personal).\n" +
+                "  - Bebas mengganti password & email.\n" +
+                "  - Mendukung penuh EA Play (EA FC), Ubisoft Connect, & Call of Duty di PC/Xbox.\n\n" +
+                "• **Xbox Game Pass Sharing**:\n" +
+                "  - Menggunakan akun sekunder yang disediakan.\n" +
+                "  - Harga lebih ekonomis / hemat.\n" +
+                "  - Tetap dapat memainkan ratusan game Game Pass dengan aman.";
+        } else if (hasTerm("xbox") || hasTerm("game pass") || hasTerm("xgp")) {
+            fallbackReply += "Untuk membeli **Xbox Game Pass** di NexShop:\n1. Masuk ke halaman **Produk / Topup**.\n2. Pilih kategori **Xbox Game Pass**.\n3. Pilih durasi langganan (Sharing / Private).\n4. Lakukan pembayaran via QRIS / E-Wallet / VA Bank.\n5. Akses lisensi akan dikirimkan otomatis 1-3 detik!";
         } else if (hasTerm("steam") || hasTerm("steam wallet")) {
             fallbackReply += "Untuk membeli **Steam Wallet Code** di NexShop:\n1. Pilih nominal voucher Steam Wallet.\n2. Selesaikan pembayaran otomatis.\n3. Kode voucher akan tampil dan dapat di-redeem langsung di akun Steam Anda!";
         } else if (hasTerm("apa itu nexshop") || hasTerm("tentang nexshop") || hasTerm("kelebihan") || hasTerm("kenapa beli") || hasTerm("aman")) {
