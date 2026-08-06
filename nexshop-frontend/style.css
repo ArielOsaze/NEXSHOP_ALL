@@ -348,7 +348,10 @@ header{ position:sticky; top:0; z-index:1000; }
 
 .brand-text{ position:relative; z-index:6; overflow:visible; isolation:isolate; }
 .brand-text h1,.brand-text .tagline{ position:relative; z-index:1; }
-.independence-ribbon{ position:absolute; z-index:0; left:-4px; top:-3px; width:calc(100% + 8px); height:calc(100% + 6px); min-height:40px; pointer-events:none; opacity:.5 !important; overflow:hidden; border-radius:6px; filter:drop-shadow(0 3px 8px rgba(0,0,0,.28)); }
+.independence-ribbon{ position:absolute; z-index:0; left:-4px; top:-3px; width:calc(100% + 8px); height:calc(100% + 6px); min-height:40px; pointer-events:none; opacity:.5 !important; overflow:hidden;
+    -webkit-mask-image:radial-gradient(ellipse 62% 68% at center, #000 55%, transparent 100%);
+    mask-image:radial-gradient(ellipse 62% 68% at center, #000 55%, transparent 100%);
+}
 .independence-ribbon__cloth{ transform-box:fill-box; will-change:transform; animation:flag-one-way-wave 2.2s linear infinite; }
 .independence-ribbon__fold{ transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-fold 3.8s ease-in-out infinite alternate; }
 .independence-ribbon__fold--2{ animation-delay:-1.9s; }
