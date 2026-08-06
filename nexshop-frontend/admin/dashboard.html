@@ -1046,6 +1046,32 @@
             </div>
         </div>
     </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-header border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Daftar Knowledge Base RAG</h5>
+            <button class="btn btn-primary btn-sm" onclick="openAddKnowledgeModal()"><i class="bi bi-plus-circle me-1"></i> Tambah Knowledge</button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="kbTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Judul</th>
+                            <th>Kategori</th>
+                            <th>Keywords</th>
+                            <th>Status</th>
+                            <th>Prioritas</th>
+                            <th class="text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="kbTableBody">
+                        <tr><td colspan="6" class="text-center py-3 text-muted">Memuat data Knowledge Base...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </section>
 
 </div>

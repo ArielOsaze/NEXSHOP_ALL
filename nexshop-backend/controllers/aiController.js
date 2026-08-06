@@ -90,6 +90,26 @@ async function retrieveContext(query, user) {
             }
         }
 
+        // Search Dynamic knowledge_base Table
+        try {
+            const { data: kbItems } = await supabase.from("knowledge_base").select("id, title, category, keywords, content").eq("status", "active").order("priority", { ascending: false }).limit(20);
+            const activeKbList = (kbItems && kbItems.length > 0) ? kbItems : inMemoryKnowledgeBase.filter(k => k.status === 'active');
+            const matchedKb = activeKbList.filter(k => 
+                k.title.toLowerCase().includes(qLower) || 
+                (k.keywords && k.keywords.toLowerCase().includes(qLower)) ||
+                (k.content && k.content.toLowerCase().includes(qLower)) ||
+                (k.category && k.category.toLowerCase().includes(qLower))
+            );
+            if (matchedKb.length > 0) {
+                contextLines.push(`Knowledge Base Terkait: ` + matchedKb.map(k => `[${k.category || 'Umum'}] ${k.title}: ${k.content}`).slice(0, 4).join("\n"));
+            }
+        } catch (e) {
+            const matchedKb = inMemoryKnowledgeBase.filter(k => k.status === 'active' && (k.title.toLowerCase().includes(qLower) || (k.keywords && k.keywords.toLowerCase().includes(qLower))));
+            if (matchedKb.length > 0) {
+                contextLines.push(`Knowledge Base Terkait: ` + matchedKb.map(k => `[${k.category || 'Umum'}] ${k.title}: ${k.content}`).slice(0, 4).join("\n"));
+            }
+        }
+
         // Search Orders if User is authenticated
         if (user && user.id) {
             const [regOrdersRes, topupOrdersRes] = await Promise.all([
@@ -214,5 +234,108 @@ ${contextText || "Tidak ada informasi khusus di database."}`;
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Server Error di NexBot AI Chat" });
+    }
+};
+
+// In-memory fallback if table knowledge_base doesn't exist yet in Supabase
+let inMemoryKnowledgeBase = [
+    { id: "kb-1", title: "Keunggulan NexShop", category: "Store Info", keywords: "kelebihan,kenapa beli,aman,legal", content: "NexShop adalah marketplace gaming 24/7 resmi di Indonesia. Proses instant 1-3 detik, 100% legal, harga grosir termurah, dan garansi aman.", status: "active", priority: 10 },
+    { id: "kb-2", title: "Cara Topup Diamond MLBB & Game", category: "Topup Guide", keywords: "topup,ml,ff,pubg,diamond,cara beli", content: "Buka tab Topup, pilih game, masukkan User ID & Zone ID, pilih nominal item dan metode pembayaran. Transaksi diproses otomatis 1-3 detik.", status: "active", priority: 10 },
+    { id: "kb-3", title: "Metode Pembayaran Lengkap", category: "Payment Method", keywords: "pembayaran,bayar,qris,ovo,dana,gopay,va", content: "Mendukung QRIS (DANA, OVO, GoPay, ShopeePay), Virtual Account Bank (BCA, Mandiri, BRI, BNI), dan Kartu Kredit.", status: "active", priority: 9 }
+];
+
+// Admin Controller: Get All Knowledge Entries
+exports.getKnowledgeBase = async (req, res) => {
+    try {
+        const { data, error } = await supabase.from("knowledge_base").select("*").order("priority", { ascending: false });
+        if (error || !data) {
+            return res.json({ data: inMemoryKnowledgeBase, isFallback: true });
+        }
+        res.json({ data, isFallback: false });
+    } catch (err) {
+        res.json({ data: inMemoryKnowledgeBase, isFallback: true });
+    }
+};
+
+// Admin Controller: Create Knowledge Entry
+exports.createKnowledgeBase = async (req, res) => {
+    const { title, category, keywords, content, status, priority } = req.body;
+    if (!title || !content) {
+        return res.status(400).json({ message: "Judul dan Konten wajib diisi" });
+    }
+
+    const newItem = {
+        title: title.trim(),
+        category: (category || "Umum").trim(),
+        keywords: (keywords || "").trim(),
+        content: content.trim(),
+        status: status || "active",
+        priority: Number(priority) || 0,
+        updated_at: new Date().toISOString()
+    };
+
+    try {
+        const { data, error } = await supabase.from("knowledge_base").insert([newItem]).select().single();
+        if (error || !data) {
+            newItem.id = "kb-" + Date.now();
+            newItem.created_at = new Date().toISOString();
+            inMemoryKnowledgeBase.unshift(newItem);
+            return res.status(201).json({ message: "Knowledge berhasil ditambahkan (Memory Mode)", data: newItem });
+        }
+        res.status(201).json({ message: "Knowledge berhasil ditambahkan ke Database", data });
+    } catch (err) {
+        newItem.id = "kb-" + Date.now();
+        newItem.created_at = new Date().toISOString();
+        inMemoryKnowledgeBase.unshift(newItem);
+        res.status(201).json({ message: "Knowledge berhasil ditambahkan (Memory Mode)", data: newItem });
+    }
+};
+
+// Admin Controller: Update Knowledge Entry
+exports.updateKnowledgeBase = async (req, res) => {
+    const { id } = req.params;
+    const { title, category, keywords, content, status, priority } = req.body;
+
+    const updatePayload = {
+        title: title ? title.trim() : undefined,
+        category: category ? category.trim() : undefined,
+        keywords: keywords ? keywords.trim() : undefined,
+        content: content ? content.trim() : undefined,
+        status: status || undefined,
+        priority: priority !== undefined ? Number(priority) : undefined,
+        updated_at: new Date().toISOString()
+    };
+
+    try {
+        const { data, error } = await supabase.from("knowledge_base").update(updatePayload).eq("id", id).select().single();
+        if (error || !data) {
+            const idx = inMemoryKnowledgeBase.findIndex(k => String(k.id) === String(id));
+            if (idx !== -1) {
+                inMemoryKnowledgeBase[idx] = { ...inMemoryKnowledgeBase[idx], ...updatePayload };
+                return res.json({ message: "Knowledge berhasil diperbarui (Memory Mode)", data: inMemoryKnowledgeBase[idx] });
+            }
+            return res.status(404).json({ message: "Knowledge tidak ditemukan" });
+        }
+        res.json({ message: "Knowledge berhasil diperbarui", data });
+    } catch (err) {
+        const idx = inMemoryKnowledgeBase.findIndex(k => String(k.id) === String(id));
+        if (idx !== -1) {
+            inMemoryKnowledgeBase[idx] = { ...inMemoryKnowledgeBase[idx], ...updatePayload };
+            return res.json({ message: "Knowledge berhasil diperbarui (Memory Mode)", data: inMemoryKnowledgeBase[idx] });
+        }
+        res.status(500).json({ message: "Gagal memperbarui knowledge" });
+    }
+};
+
+// Admin Controller: Delete Knowledge Entry
+exports.deleteKnowledgeBase = async (req, res) => {
+    const { id } = req.params;
+    try {
+        await supabase.from("knowledge_base").delete().eq("id", id);
+        inMemoryKnowledgeBase = inMemoryKnowledgeBase.filter(k => String(k.id) !== String(id));
+        res.json({ message: "Knowledge berhasil dihapus" });
+    } catch (err) {
+        inMemoryKnowledgeBase = inMemoryKnowledgeBase.filter(k => String(k.id) !== String(id));
+        res.json({ message: "Knowledge berhasil dihapus" });
     }
 };

@@ -350,6 +350,7 @@ function switchView(view) {
     if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
     if (view === "settings" && !settingsLoaded) loadSettings();
     if (view === "stats" && !statsLoaded) loadStats();
+    if (view === "aimgmt") loadKnowledgeBase();
 }
 
 function openProductModal() {
@@ -3731,6 +3732,133 @@ async function loadAiInsights() {
     } catch (err) {
         if (err.message === "unauthorized") return;
         box.innerHTML = `<span class="text-danger">${escapeHtml(err.message)}</span>`;
+    }
+}
+
+/* =========================================================
+ * AI Knowledge Base Management Functions
+ * ========================================================= */
+let knowledgeBaseList = [];
+let kbModalInstance = null;
+
+async function loadKnowledgeBase() {
+    const tbody = document.getElementById("kbTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-muted"><i class="bi bi-spinner spinner me-2"></i>Memuat Knowledge Base...</td></tr>`;
+
+    try {
+        const res = await apiFetch("/ai/knowledge");
+        const json = await res.json();
+        knowledgeBaseList = json.data || [];
+        renderKnowledgeTable();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">Gagal memuat Knowledge Base: ${escapeHtml(err.message)}</td></tr>`;
+    }
+}
+
+function renderKnowledgeTable() {
+    const tbody = document.getElementById("kbTableBody");
+    if (!tbody) return;
+    if (knowledgeBaseList.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Belum ada entry Knowledge Base. Klik <strong>Tambah Knowledge</strong> untuk membuat baru.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = knowledgeBaseList.map(item => `
+        <tr>
+            <td>
+                <strong>${escapeHtml(item.title)}</strong>
+                <div class="text-muted small">${escapeHtml((item.content || '').slice(0, 70))}...</div>
+            </td>
+            <td><span class="badge bg-secondary">${escapeHtml(item.category || 'Umum')}</span></td>
+            <td><small class="text-muted">${escapeHtml(item.keywords || '-')}</small></td>
+            <td>
+                <span class="badge ${item.status === 'active' ? 'bg-success' : 'bg-danger'}">${item.status === 'active' ? 'Aktif' : 'Nonaktif'}</span>
+            </td>
+            <td><span class="badge bg-info text-dark">P-${item.priority || 0}</span></td>
+            <td class="text-end">
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditKnowledgeModal('${item.id}')"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteKnowledge('${item.id}')"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>
+    `).join("");
+}
+
+function openAddKnowledgeModal() {
+    document.getElementById("kbForm").reset();
+    document.getElementById("kbId").value = "";
+    document.getElementById("kbModalTitle").innerHTML = '<i class="bi bi-journal-plus me-2"></i>Tambah Knowledge RAG';
+    document.getElementById("kbError").textContent = "";
+    if (!kbModalInstance) kbModalInstance = new bootstrap.Modal(document.getElementById("kbModal"));
+    kbModalInstance.show();
+}
+
+function openEditKnowledgeModal(id) {
+    const item = knowledgeBaseList.find(k => String(k.id) === String(id));
+    if (!item) return;
+
+    document.getElementById("kbId").value = item.id;
+    document.getElementById("kbTitle").value = item.title || "";
+    document.getElementById("kbCategory").value = item.category || "";
+    document.getElementById("kbKeywords").value = item.keywords || "";
+    document.getElementById("kbContent").value = item.content || "";
+    document.getElementById("kbPriority").value = item.priority || 10;
+    document.getElementById("kbStatus").value = item.status || "active";
+    document.getElementById("kbError").textContent = "";
+
+    document.getElementById("kbModalTitle").innerHTML = '<i class="bi bi-journal-text me-2"></i>Edit Knowledge RAG';
+    if (!kbModalInstance) kbModalInstance = new bootstrap.Modal(document.getElementById("kbModal"));
+    kbModalInstance.show();
+}
+
+async function saveKnowledge() {
+    const id = document.getElementById("kbId").value;
+    const title = document.getElementById("kbTitle").value.trim();
+    const category = document.getElementById("kbCategory").value.trim();
+    const keywords = document.getElementById("kbKeywords").value.trim();
+    const content = document.getElementById("kbContent").value.trim();
+    const priority = document.getElementById("kbPriority").value;
+    const status = document.getElementById("kbStatus").value;
+    const errorEl = document.getElementById("kbError");
+
+    errorEl.textContent = "";
+    if (!title || !content) {
+        errorEl.textContent = "Judul dan Konten wajib diisi!";
+        return;
+    }
+
+    const payload = { title, category, keywords, content, priority, status };
+
+    try {
+        const url = id ? `/ai/knowledge/${id}` : "/ai/knowledge";
+        const method = id ? "PUT" : "POST";
+        const res = await apiFetch(url, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.message || "Gagal menyimpan knowledge");
+
+        showToast(json.message || "Knowledge berhasil disimpan!");
+        if (kbModalInstance) kbModalInstance.hide();
+        loadKnowledgeBase();
+    } catch (err) {
+        errorEl.textContent = err.message;
+    }
+}
+
+async function deleteKnowledge(id) {
+    if (!confirm("Apakah Anda yakin ingin menghapus entry knowledge ini?")) return;
+    try {
+        const res = await apiFetch(`/ai/knowledge/${id}`, { method: "DELETE" });
+        const json = await res.json();
+        showToast(json.message || "Knowledge berhasil dihapus");
+        loadKnowledgeBase();
+    } catch (err) {
+        showToast(err.message, "danger");
     }
 }
 
