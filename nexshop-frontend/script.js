@@ -1833,7 +1833,6 @@ function initEventMascot(config) {
     const delay = Number.isFinite(configuredDelay) ? Math.min(5000, Math.max(0, configuredDelay)) : 500;
     mascot.style.setProperty("--mascot-delay", `${delay}ms`);
     mascot.style.setProperty("--mascot-enter-duration", `${2 / (Number(config.speed) || 1)}s`);
-    mascot.style.setProperty("--mascot-offset", ({ left: "-10px", right: "10px", center: "0px" })[config.position] || "0px");
     const web = document.createElement("span");
     web.className = "event-mascot__web";
     if (config.web_url) {

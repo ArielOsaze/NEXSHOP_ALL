@@ -2906,7 +2906,7 @@ function populateMascotSettings(config) {
     document.getElementById("mascotSpeed").value = config.speed || 1;
     document.getElementById("mascotDelay").value = Number.isFinite(config.delay) ? config.delay : 500;
     document.getElementById("mascotScale").value = config.scale || 1;
-    document.getElementById("mascotPosition").value = config.position || "center";
+    document.getElementById("mascotPosition").value = "center";
     document.getElementById("mascotStartDate").value = toDateTimeLocal(config.start_date);
     document.getElementById("mascotEndDate").value = toDateTimeLocal(config.end_date);
     document.getElementById("mascotImageInput").dataset.currentUrl = config.mascot_url || "";

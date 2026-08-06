@@ -95,7 +95,11 @@
 <header>
     <nav class="navbar">
         <div class="brand">
-            <img src="images/nexshop-icon.svg" class="logo" id="storeLogoImg" alt="NexShop logo">
+            <div class="logo-wrapper">
+                <img src="images/nexshop-icon.svg" class="logo" id="storeLogoImg" alt="NexShop logo">
+                <!-- Overlay terpisah: tetap terikat pada pusat logo, bukan navbar. -->
+                <div id="eventMascotAnchor" class="event-mascot-anchor" aria-hidden="true"></div>
+            </div>
             <div class="brand-text">
                 <svg class="flag-overlay" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden="true">
                     <filter id="flagWaveFilter" x="-20%" y="-20%" width="140%" height="140%">
@@ -112,8 +116,6 @@
                 <h1 id="storeNameText">Nex<span>Shop</span></h1>
                 <div class="tagline" id="storeTagline">Play More. Pay Less.</div>
             </div>
-            <!-- Overlay terpisah: tidak mengubah atau mengganti logo NexShop. -->
-            <div id="eventMascotAnchor" class="event-mascot-anchor" aria-hidden="true"></div>
         </div>
 
         <div class="menu" id="navMenu">
