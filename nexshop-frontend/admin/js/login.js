@@ -1,4 +1,6 @@
-const API_BASE = "/api";
+const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? (window.location.port === "3000" ? "/api" : "http://localhost:3000/api")
+    : (window.location.protocol.startsWith("http") ? "/api" : "https://nexshop.cloud/api");
 const ADMIN_TOKEN_STORAGE_KEY = "nexshop-admin-token";
 
 // Already logged in? Skip straight to dashboard.

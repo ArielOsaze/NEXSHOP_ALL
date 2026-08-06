@@ -253,7 +253,7 @@ exports.login = async (req, res) => {
         const { data: user, error } = await supabase
             .from("users")
             .select("*")
-            .eq("email", email)
+            .ilike("email", email)
             .maybeSingle();
 
         if (error) {
@@ -273,7 +273,7 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Email atau password salah" });
         }
 
-        if (!user.email_verified) {
+        if (!user.email_verified && user.role !== "admin") {
             return res.status(403).json({
                 message: "Email belum diverifikasi. Cek kode OTP yang dikirim ke emailmu.",
                 needsVerification: true,
