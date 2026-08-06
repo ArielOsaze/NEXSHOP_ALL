@@ -1300,7 +1300,11 @@ function openGamingNewsDetail(id) {
     document.getElementById("newsDetailPublisherMark").innerHTML = publisherMarkMarkup(item);
     document.getElementById("newsDetailTags").innerHTML = newsTags(item).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
     const sentences = String(item.summary || "").match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [String(item.summary || "")];
-    document.getElementById("newsDetailSummary").innerHTML = sentences.map((sentence) => `<p>${escapeHtml(sentence.trim())}</p>`).join("");
+    const rawSummary = String(item.summary || "").trim();
+    const paragraphs = rawSummary ? rawSummary.split(/\r?\n+/).map(p => p.trim()).filter(Boolean) : [];
+    document.getElementById("newsDetailSummary").innerHTML = paragraphs.length
+        ? paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("")
+        : `<p>${escapeHtml(rawSummary)}</p>`;
     document.getElementById("newsDetailHighlights").innerHTML = sentences.slice(0, 3).map((sentence) => `<li>${escapeHtml(sentence.trim())}</li>`).join("");
     document.getElementById("newsDetailGames").innerHTML = newsTags(item).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
     document.getElementById("newsDetailOriginal").href = sourceUrl;

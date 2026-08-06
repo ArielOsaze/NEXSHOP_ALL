@@ -13,6 +13,17 @@
     --bg-panel-3:#212949;
     --line:#242c4a;
 
+/* Sembunyikan scrollbar di seluruh browser tanpa mematikan fungsi scroll */
+html, body, *, ::-webkit-scrollbar {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+}
+::-webkit-scrollbar {
+    display: none !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
     --violet:#8B5CF6;
     --violet-2:#6D28D9;
     --cyan:#22D3EE;
@@ -337,18 +348,24 @@ header{ position:sticky; top:0; z-index:1000; }
 
 .brand-text{ position:relative; z-index:6; overflow:visible; isolation:isolate; }
 .brand-text h1,.brand-text .tagline{ position:relative; z-index:1; }
-.independence-ribbon{ position:absolute; z-index:0; left:-5px; top:4px; width:calc(100% + 10px); height:28px; pointer-events:none; opacity:.25; overflow:visible; filter:drop-shadow(0 2px 4px rgba(2,6,23,.22)); }
-.independence-ribbon__cloth{ transform-box:fill-box; transform-origin:center; will-change:transform; animation:independence-ribbon-ripple 7s cubic-bezier(.45,.05,.55,.95) infinite; }
-.independence-ribbon__fold{ transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-fold 7s ease-in-out infinite; }
-.independence-ribbon__fold--2{ animation-delay:-3.5s; }
-.independence-ribbon__highlight{ fill:none; stroke:url(#independenceRibbonLight); stroke-width:2.4; stroke-linecap:round; opacity:.44; transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-light 7s ease-in-out infinite; }
-.independence-ribbon__highlight--2{ stroke:url(#independenceRibbonLight2); stroke-width:1.8; opacity:.28; animation-delay:-2.8s; animation-duration:8.2s; }
-/* Fabric ripple — soft wind undulation */
-@keyframes independence-ribbon-ripple{ 0%,100%{transform:translate3d(0,0,0) skewY(0deg)} 18%{transform:translate3d(.4px,-.5px,0) skewY(-.5deg)} 38%{transform:translate3d(-.3px,.6px,0) skewY(.4deg)} 56%{transform:translate3d(.2px,-.3px,0) skewY(-.25deg)} 74%{transform:translate3d(-.4px,.5px,0) skewY(.35deg)} 88%{transform:translate3d(.15px,-.2px,0) skewY(-.15deg)} }
-/* Specular light sweep across the fabric */
-@keyframes independence-ribbon-light{ 0%,100%{transform:translateX(-12px);opacity:.18} 32%{transform:translateX(6px);opacity:.52} 58%{transform:translateX(12px);opacity:.28} 78%{transform:translateX(2px);opacity:.38} }
-/* Fold crease undulation — tiny Y movement simulating fabric folds */
-@keyframes independence-ribbon-fold{ 0%,100%{transform:translateY(0) scaleY(1);opacity:.12} 25%{transform:translateY(-.4px) scaleY(1.1);opacity:.18} 50%{transform:translateY(.3px) scaleY(.92);opacity:.10} 75%{transform:translateY(-.2px) scaleY(1.06);opacity:.16} }
+.independence-ribbon{ position:absolute; z-index:0; left:-5px; top:4px; width:calc(100% + 10px); height:28px; pointer-events:none; opacity:.88; overflow:visible; filter:drop-shadow(0 4px 8px rgba(0,0,0,.35)); }
+.independence-ribbon__cloth{ transform-box:fill-box; transform-origin:left center; will-change:transform; animation:independence-ribbon-wave 2.8s ease-in-out infinite alternate; }
+.independence-ribbon__fold{ transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-fold 2.8s ease-in-out infinite alternate; }
+.independence-ribbon__fold--2{ animation-delay:-1.4s; }
+.independence-ribbon__highlight{ fill:none; stroke:url(#independenceRibbonLight); stroke-width:2.8; stroke-linecap:round; opacity:.65; transform-box:fill-box; will-change:transform,opacity; animation:independence-ribbon-light 2.8s ease-in-out infinite alternate; }
+.independence-ribbon__highlight--2{ stroke:url(#independenceRibbonLight2); stroke-width:2; opacity:.45; animation-delay:-1.2s; animation-duration:3.2s; }
+/* Dynamic flag wave animation — simulates Merah Putih fluttering in the wind */
+@keyframes independence-ribbon-wave{
+    0% { transform:translate3d(0, 0, 0) skewY(0deg) scaleY(1); }
+    25% { transform:translate3d(1px, -2px, 0) skewY(-2.5deg) scaleY(1.05); }
+    50% { transform:translate3d(-1px, 2.5px, 0) skewY(2deg) scaleY(.96); }
+    75% { transform:translate3d(1.5px, -1.8px, 0) skewY(-1.8deg) scaleY(1.03); }
+    100% { transform:translate3d(-0.8px, 1.2px, 0) skewY(1.5deg) scaleY(.98); }
+}
+/* Specular light sweep across the waving fabric */
+@keyframes independence-ribbon-light{ 0%{transform:translateX(-18px);opacity:.2} 50%{transform:translateX(14px);opacity:.75} 100%{transform:translateX(32px);opacity:.3} }
+/* Fold crease undulation */
+@keyframes independence-ribbon-fold{ 0%{transform:translateY(0) scaleY(1);opacity:.18} 50%{transform:translateY(-1px) scaleY(1.18);opacity:.3} 100%{transform:translateY(1.2px) scaleY(.88);opacity:.15} }
 
 .brand h1{
     font-size:22px; line-height:1; color:var(--text);
@@ -465,12 +482,12 @@ header{ position:sticky; top:0; z-index:1000; }
 .hero-text{
     position:relative; z-index:1; max-width:560px; padding:0 6vw;
 }
-.hero-text > *{ opacity:0; transform:translateY(10px); }
+.hero-text > *{ opacity:1; transform:none; }
 .app-ready .hero-text > *{ animation:hero-fade 520ms ease forwards; }
-.app-ready .hero-text > *:nth-child(1){ animation-delay:120ms; }
-.app-ready .hero-text > *:nth-child(2){ animation-delay:200ms; }
-.app-ready .hero-text > *:nth-child(3){ animation-delay:280ms; }
-.app-ready .hero-text > *:nth-child(4){ animation-delay:360ms; }
+.app-ready .hero-text > *:nth-child(1){ animation-delay:80ms; }
+.app-ready .hero-text > *:nth-child(2){ animation-delay:160ms; }
+.app-ready .hero-text > *:nth-child(3){ animation-delay:240ms; }
+.app-ready .hero-text > *:nth-child(4){ animation-delay:320ms; }
 .hero-badge{
     display:inline-flex; align-items:center; justify-content:center; min-width:fit-content;
     padding:6px 12px; border-radius:999px;
