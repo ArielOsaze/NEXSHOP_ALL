@@ -125,31 +125,31 @@
                             <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
                         </linearGradient>
 
-                        <!-- Filter tiupan angin merambat horizontal pada kain bendera -->
+                        <!-- Filter distorsi gelombang kain bendera murni horizontal (0 piksel distorsi vertikal) -->
                         <filter id="flagClothDisplacement" x="-10%" y="-30%" width="120%" height="160%" color-interpolation-filters="sRGB">
-                            <feTurbulence type="fractalNoise" baseFrequency="0.016 0.02" numOctaves="2" result="noise">
-                                <animate attributeName="baseFrequency" dur="4.2s" values="0.015 0.018; 0.025 0.035; 0.015 0.018" repeatCount="indefinite"/>
+                            <feTurbulence type="fractalNoise" baseFrequency="0.016 0.001" numOctaves="2" result="noise">
+                                <animate attributeName="baseFrequency" dur="4.2s" values="0.014 0.001; 0.024 0.001; 0.014 0.001" repeatCount="indefinite"/>
                             </feTurbulence>
-                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="7.2" xChannelSelector="R" yChannelSelector="G"/>
+                            <feDisplacementMap in="SourceGraphic" in2="noise" scale="6.5" xChannelSelector="R" yChannelSelector="R"/>
                         </filter>
                     </defs>
                     <g class="independence-ribbon__cloth" filter="url(#flagClothDisplacement)">
-                        <!-- Pita Merah: Mengisi 50% bagian atas tanpa margin kosong -->
-                        <path fill="url(#independenceRibbonRed)" d="M0 0 C40 5 70 18 110 8 C150 0 190 18 230 8 C265 2 295 14 320 8 L320 26 C295 32 265 20 230 26 C190 34 150 18 110 26 C70 34 40 20 0 26 Z">
+                        <!-- Pita Merah: Gelombang tiupan angin SATU ARAH merambat terus ke kanan (tanpa pembalikan ke kiri & tanpa naik-turun) -->
+                        <path fill="url(#independenceRibbonRed)" d="M0 0 C40 6 70 18 110 8 C150 0 190 18 230 8 C265 2 295 14 320 8 L320 26 C295 32 265 20 230 26 C190 34 150 18 110 26 C70 34 40 20 0 26 Z">
                             <animate attributeName="d" dur="3.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1" values="
-M0 0 C40 5 70 18 110 8 C150 0 190 18 230 8 C265 2 295 14 320 8 L320 26 C295 32 265 20 230 26 C190 34 150 18 110 26 C70 34 40 20 0 26 Z;
-M0 0 C40 14 70 2 110 14 C150 6 190 0 230 14 C265 5 295 0 320 12 L320 30 C295 19 265 24 230 32 C190 18 150 24 110 32 C70 19 40 32 0 26 Z;
-M0 0 C40 4 70 14 C110 2 C150 14 190 8 230 2 C265 14 295 8 320 4 L320 24 C295 28 265 34 230 22 C190 28 150 34 110 22 C70 34 40 24 0 26 Z;
-M0 0 C40 12 70 4 110 12 C150 2 190 14 230 10 C265 2 295 12 320 10 L320 28 C295 30 265 20 230 28 C190 32 150 20 110 30 C70 22 40 30 0 26 Z;
-M0 0 C40 5 70 18 110 8 C150 0 190 18 230 8 C265 2 295 14 320 8 L320 26 C295 32 265 20 230 26 C190 34 150 18 110 26 C70 34 40 20 0 26 Z"/>
+M0 0 C40 6 70 18 110 8 C150 0 190 18 230 8 C265 2 295 14 320 8 L320 26 C295 32 265 20 230 26 C190 34 150 18 110 26 C70 34 40 20 0 26 Z;
+M0 0 C40 18 70 8 C110 18 C150 8 190 0 230 18 C265 8 295 2 320 14 L320 26 C295 20 265 26 230 34 C190 26 150 34 110 26 C70 34 40 20 0 26 Z;
+M0 0 C40 8 70 0 C110 8 C150 18 190 8 230 0 C265 18 295 8 320 2 C320 26 C295 26 265 20 230 26 C190 34 150 26 110 34 C70 26 40 34 0 26 Z;
+M0 0 C40 0 70 14 C110 0 C150 8 190 14 230 6 C265 0 295 18 320 8 L320 26 C295 32 265 14 230 26 C190 20 150 32 110 20 C70 32 40 20 0 26 Z;
+M0 0 C40 6 70 18 110 8 C150 0 190 18 230 8 C265 2 295 14 320 8 L320 26 C295 32 265 20 230 26 C190 34 150 18 110 26 C70 34 40 20 0 26 Z"/>
                         </path>
-                        <!-- Pita Putih: Mengisi 50% bagian bawah tanpa margin kosong -->
+                        <!-- Pita Putih: Gelombang tiupan angin SATU ARAH merambat terus ke kanan -->
                         <path fill="url(#independenceRibbonWhite)" d="M0 26 C40 20 70 34 110 26 C150 18 190 34 230 26 C265 20 295 32 320 26 L320 52 C295 52 265 46 230 52 C190 52 150 44 110 52 C70 52 40 46 0 52 Z">
                             <animate attributeName="d" dur="3.8s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1; 0.4 0 0.6 1" values="
 M0 26 C40 20 70 34 110 26 C150 18 190 34 230 26 C265 20 295 32 320 26 L320 52 C295 52 265 46 230 52 C190 52 150 44 110 52 C70 52 40 46 0 52 Z;
-M0 26 C40 32 70 19 110 32 C150 24 190 18 230 32 C265 24 295 19 320 30 L320 52 C295 44 265 49 230 52 C190 43 150 49 110 52 C70 44 40 52 0 52 Z;
-M0 26 C40 22 70 32 110 20 C150 32 190 26 230 20 C265 32 295 26 320 22 L320 52 C295 50 265 52 230 44 C190 50 150 52 110 44 C70 52 40 48 0 52 Z;
-M0 26 C40 30 70 22 110 30 C150 20 190 32 230 28 C265 20 295 30 320 28 L320 52 C295 52 265 44 230 52 C190 48 150 44 110 52 C70 46 40 52 0 52 Z;
+M0 26 C40 32 70 24 C110 32 C150 24 190 18 230 32 C265 24 295 18 320 30 L320 52 C295 44 265 49 230 52 C190 44 150 52 110 44 C70 52 40 44 0 52 Z;
+M0 26 C40 22 70 18 C110 26 C150 32 190 26 230 18 C265 32 295 24 320 20 L320 52 C295 48 265 44 230 52 C190 44 150 52 110 44 C70 52 40 48 0 52 Z;
+M0 26 C40 18 70 30 C110 18 C150 24 190 30 230 24 C265 18 295 34 320 26 L320 52 C295 52 265 40 230 52 C190 46 150 52 110 46 C70 52 40 46 0 52 Z;
 M0 26 C40 20 70 34 110 26 C150 18 190 34 230 26 C265 20 295 32 320 26 L320 52 C295 52 265 46 230 52 C190 52 150 44 110 52 C70 52 40 46 0 52 Z"/>
                         </path>
                         <!-- Lipatan bayangan kain -->
