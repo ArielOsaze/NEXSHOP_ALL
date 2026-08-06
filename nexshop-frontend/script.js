@@ -2619,21 +2619,33 @@ function initMobileMenu() {
 /* ---------- NexBot AI Floating Chatbot ---------- */
 function parseMarkdownToHtml(text) {
     if (!text) return "";
-    let html = String(text)
+    let clean = String(text);
+
+    // Hapus frasa meta AI & Database
+    clean = clean.replace(/Berikut informasi resmi dari Knowledge Base NexShop[^\n]*/gi, "");
+    clean = clean.replace(/Knowledge Base NexShop/gi, "NexShop");
+    clean = clean.replace(/Knowledge Base/gi, "");
+    clean = clean.replace(/Database/gi, "");
+    clean = clean.replace(/AI Reference/gi, "");
+    clean = clean.replace(/FAQ:\s*/gi, "");
+    clean = clean.replace(/📌/g, "");
+
+    let html = clean
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-    // Replace **bold** with <strong>bold</strong>
+    // Format bold & italic
     html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-    // Replace *italic* with <em>italic</em>
     html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
-    // Replace bullet list items (- item)
-    html = html.replace(/(?:^|\n)-\s+(.*)/g, "<br>• $1");
-    // Replace linebreaks
-    html = html.replace(/\n/g, "<br>");
 
-    return html;
+    // Format bullets (- atau •)
+    html = html.replace(/(?:^|\n)(?:•|-|\*)\s+(.*)/g, "<br>• $1");
+
+    // Replace ganti baris ganda dan tunggal
+    html = html.replace(/\n\n/g, "<br><br>").replace(/\n/g, "<br>");
+
+    return html.trim();
 }
 
 function updateNexBotGreeting() {

@@ -293,6 +293,55 @@ async function saveOrUpdateUserMemoryRecord(user, query, intent) {
     }
 }
 
+// Formatter Balasan Customer Service Profesional (Zero AI / Database Meta References)
+function formatCustomerServiceResponse(rawText, userName = "") {
+    if (!rawText) return "";
+
+    let text = String(rawText);
+
+    // 1. Hapus istilah AI, Knowledge Base, Database, dan Meta References
+    text = text.replace(/Berikut informasi resmi dari Knowledge Base NexShop[^\n]*/gi, "");
+    text = text.replace(/Berikut informasi resmi dari Knowledge Base[^\n]*/gi, "");
+    text = text.replace(/Knowledge Base NexShop/gi, "NexShop");
+    text = text.replace(/Knowledge Base/gi, "");
+    text = text.replace(/Database NexShop/gi, "NexShop");
+    text = text.replace(/Database/gi, "");
+    text = text.replace(/AI Reference/gi, "");
+    text = text.replace(/System Context[^\n]*/gi, "");
+    text = text.replace(/FAQ:\s*/gi, "");
+    text = text.replace(/Panduan Produk:\s*/gi, "");
+    text = text.replace(/📌/g, "");
+    text = text.replace(/🤖/g, "");
+    text = text.replace(/\[FAQ\]/g, "");
+    text = text.replace(/\[Store Info\]/g, "");
+    text = text.replace(/\[Policy\]/g, "");
+    text = text.replace(/\[Payment Method\]/g, "");
+
+    // 2. Bersihkan karakter escape & spasi berlebih
+    text = text.replace(/\\n/g, "\n");
+    text = text.replace(/\\r/g, "");
+    text = text.replace(/\\t/g, " ");
+
+    // Hapus tanda bintang Markdown ganda jika ada yang mengganggu
+    text = text.replace(/\*\*(.*?)\*\*/g, "$1");
+
+    let cleanLines = text.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+    let bodyText = cleanLines.join("\n\n");
+
+    // 3. Format Pembuka & Penutup Ramah Khas CS
+    let greeting = userName ? `Halo ${userName}! 👋\n\n` : `Halo! 👋\n\n`;
+    if (bodyText.toLowerCase().startsWith("halo") || bodyText.toLowerCase().startsWith("hai")) {
+        greeting = "";
+    }
+
+    let closing = "\n\nJika ada hal lain yang ingin ditanyakan seputar produk NexShop, silakan tanyakan kapan saja ya! 😊";
+    if (bodyText.includes("ditanyakan") || bodyText.includes("membantu") || bodyText.includes("😊")) {
+        closing = "";
+    }
+
+    return (greeting + bodyText + closing).trim();
+}
+
 // MAIN RAG AI CHAT CONTROLLER WITH SMART INTENT ROUTING & AI MEMORY
 exports.chat = async (req, res) => {
     const { message, history, session_id } = req.body;
@@ -320,16 +369,16 @@ exports.chat = async (req, res) => {
         const userName = user ? (user.fullname || user.name || "Pelanggan").split(" ")[0] : "";
         
         // Ringkas System Prompt (~180 token / ~750 karakter)
-        const systemPrompt = `Kamu adalah NexBot — Asisten Virtual Resmi NexShop (Marketplace Gaming & Topup).
+        const systemPrompt = `Kamu adalah NexBot — Customer Service Resmi NexShop.
 
-ATURAN UTAMA:
-1. KONTEKS DATABASE NEXSHOP ADALAH SATU-SATUNYA SUMBER FAKTA.
-2. DILARANG MENGARANG FAKTA ATAU MENGUBAH ISTILAH/POIN DARI KONTEKS.
-3. GUNAKAN FORMAT MARKDOWN LENGKAP & RAPI.
-4. JIKA KNOWLEDGE TIDAK TERSEDIA, JAWAB BAHWA INFORMASI BELUM TERSEDIA.
-${userName ? `5. SAPA PENGGUNA TERLEBIH DAHULU: "Halo ${userName} 👋"` : ""}
+ATURAN UTAMA CS PROFESIONAL:
+1. JAWAB SEPERTI CUSTOMER SERVICE HUMANIS, RAMAH, DAN PROFESIONAL.
+2. DILARANG MENGGUNAKAN KATA "Knowledge Base", "Database", "AI", ATAU "Context".
+3. DILARANG MERANGKUM ATAU MENGUBAH FAKTA DARI KONTEKS NEXSHOP.
+4. JIKA KNOWLEDGE TIDAK TERSEDIA, SAMPAIKAN BAHWA INFORMASI BELUM TERSEDIA DENGAN SOPAN.
+${userName ? `5. SAPA PENGGUNA TERLEBIH DAHULU: "Halo ${userName}! 👋"` : ""}
 
-KONTEKS DATABASE NEXSHOP:
+KONTEKS INFORMASI NEXSHOP:
 ${contextText || "Belum ada konteks khusus."}`;
 
         console.log(`🤖 [RAG AUDIT LOG] PROMPT AUDIT & TOKEN ESTIMATION:`);
@@ -340,13 +389,14 @@ ${contextText || "Belum ada konteks khusus."}`;
         let finalReplyText = "";
         let isHandoff = false;
 
-        // ⚡ RULE ENGINE: Jika Similarity / Score >= 90 (High Match), Render Knowledge LANGSUNG tanpa panggil Gemini!
+        // ⚡ RULE ENGINE: Jika Similarity / Score >= 90 (High Match), Render CS Response LANGSUNG tanpa panggil Gemini!
         if (maxScore >= 90 && topKbItems && topKbItems.length > 0) {
-            console.log(`⚡ [RULE ENGINE] High Match (Score ${maxScore} >= 90). Rendering Knowledge Base DIRECTLY without Gemini API call!`);
-            let directKbReply = userName ? `Halo ${userName} 👋 ` : `Halo 👋 `;
-            directKbReply += `Berikut informasi resmi dari Knowledge Base NexShop:\n\n`;
-            directKbReply += topKbItems.map(k => `📌 **${k.title}** (${k.category || 'FAQ'})\n${k.content}`).join("\n\n---\n\n");
-            finalReplyText = directKbReply;
+            console.log(`⚡ [RULE ENGINE] High Match (Score ${maxScore} >= 90). Rendering CS response DIRECTLY!`);
+            let kbRaw = topKbItems.map(k => {
+                const titleClean = (k.title || "").replace(/^FAQ:\s*/i, "").replace(/^Panduan Produk:\s*/i, "").replace(/📌/g, "").trim();
+                return `${titleClean}\n\n${k.content}`;
+            }).join("\n\n");
+            finalReplyText = formatCustomerServiceResponse(kbRaw, userName);
         } else {
             // 🌐 MEDIUM / LOW MATCH (Score < 90): Panggil Gemini API
             const apiKeys = await getApiKeys();
@@ -387,8 +437,9 @@ ${contextText || "Belum ada konteks khusus."}`;
                         }
                     );
 
-                    finalReplyText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                    if (finalReplyText) {
+                    const rawGeminiResp = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                    if (rawGeminiResp) {
+                        finalReplyText = formatCustomerServiceResponse(rawGeminiResp, userName);
                         const respTokensEst = Math.ceil(finalReplyText.length / 4);
                         console.log(`✨ [RAG AUDIT LOG] GEMINI RESPONSE RECEIVED SUCCESS (HTTP ${response.status}, ${finalReplyText.length} chars, ~${respTokensEst} output tokens).`);
                     }
@@ -397,58 +448,27 @@ ${contextText || "Belum ada konteks khusus."}`;
                     const errorBody = geminiErr.response ? JSON.stringify(geminiErr.response.data) : geminiErr.message;
                     console.error(`❌ [GEMINI AUDIT ERROR] HTTP Status: ${httpStatus}`);
                     console.error(`❌ [GEMINI AUDIT ERROR] Full Error Body:`, errorBody);
-                    console.log("⚠️ Call Gemini API gagal, beralih ke Direct RAG Knowledge Base Renderer!");
+                    console.log("⚠️ Call Gemini API gagal, beralih ke Direct CS RAG Renderer!");
                 }
             }
         }
 
-        // 🛡️ CRITICAL RAG FALLBACK RENDERER: Jika Gemini gagal/kosong tetapi Knowledge Base ditemukan, render isi Knowledge Base secara LANGSUNG & LENGKAP tanpa dirangkum!
+        // 🛡️ CRITICAL RAG FALLBACK RENDERER: Jika Gemini gagal tetapi KB ditemukan, render sebagai CS balasan langsung
         if (!finalReplyText && topKbItems && topKbItems.length > 0) {
             console.log(`🛡️ [RAG FALLBACK RENDERER] Gemini offline/429. Rendering ${topKbItems.length} Knowledge Base items directly...`);
-            let directKbReply = userName ? `Halo ${userName} 👋 ` : `Halo 👋 `;
-            directKbReply += `Berikut informasi resmi dari Knowledge Base NexShop mengenai pertanyaan Anda:\n\n`;
-            directKbReply += topKbItems.map(k => `📌 **${k.title}** (${k.category || 'FAQ'})\n${k.content}`).join("\n\n---\n\n");
-            finalReplyText = directKbReply;
+            let kbRaw = topKbItems.map(k => {
+                const titleClean = (k.title || "").replace(/^FAQ:\s*/i, "").replace(/^Panduan Produk:\s*/i, "").replace(/📌/g, "").trim();
+                return `${titleClean}\n\n${k.content}`;
+            }).join("\n\n");
+            finalReplyText = formatCustomerServiceResponse(kbRaw, userName);
         }
 
-        // Smart Intent Fallback RAG Engine jika Knowledge Base juga kosong & Gemini gagal
+        // Fallback CS ramah jika informasi tidak ditemukan
         if (!finalReplyText) {
             isHandoff = true;
-            const { raw: qNorm, expandedTerms } = normalizeAndExpandQuery(q);
-            const hasTerm = (t) => expandedTerms.some(term => term.includes(t) || qNorm.includes(t));
-
-            let fallbackReply = userName ? `Halo ${userName} 👋 ` : `Halo 👋 `;
-
-            if (hasTerm("sharing") || hasTerm("private") || intent === "Comparison") {
-                fallbackReply += "**Perbedaan Xbox Game Pass Sharing vs Private di NexShop:**\n\n" +
-                    "• **Xbox Game Pass Private**:\n" +
-                    "  - Menggunakan **akun Anda sendiri** (100% Personal).\n" +
-                    "  - Bebas mengganti password & email.\n" +
-                    "  - Mendukung penuh EA Play (EA FC), Ubisoft Connect, & Call of Duty di PC/Xbox.\n\n" +
-                    "• **Xbox Game Pass Sharing**:\n" +
-                    "  - Menggunakan akun sekunder yang disediakan.\n" +
-                    "  - Harga lebih ekonomis / hemat.\n" +
-                    "  - Tetap dapat memainkan ratusan game Game Pass dengan aman.";
-            } else if (hasTerm("xbox") || hasTerm("game pass") || hasTerm("xgp")) {
-                fallbackReply += "Untuk membeli **Xbox Game Pass** di NexShop:\n1. Masuk ke halaman **Produk / Topup**.\n2. Pilih kategori **Xbox Game Pass**.\n3. Pilih durasi langganan (Sharing / Private).\n4. Lakukan pembayaran via QRIS / E-Wallet / VA Bank.\n5. Akses lisensi akan dikirimkan otomatis 1-3 detik!";
-            } else if (hasTerm("steam") || hasTerm("steam wallet")) {
-                fallbackReply += "Untuk membeli **Steam Wallet Code** di NexShop:\n1. Pilih nominal voucher Steam Wallet.\n2. Selesaikan pembayaran otomatis.\n3. Kode voucher akan tampil dan dapat di-redeem langsung di akun Steam Anda!";
-            } else if (hasTerm("apa itu nexshop") || hasTerm("tentang nexshop") || hasTerm("kelebihan") || hasTerm("kenapa beli") || hasTerm("aman")) {
-                fallbackReply += "**NexShop** adalah platform marketplace gaming 24/7 resmi di Indonesia.\n\n✨ **Keunggulan NexShop:**\n• Process Instant 1-3 detik otomatis tanpa antri.\n• 100% Legal & Garansi Aman.\n• Harga Grosir Termurah.\n• Pembayaran Lengkap (QRIS, E-Wallet, VA Bank, KK).";
-            } else if (hasTerm("pembayaran") || hasTerm("bayar") || hasTerm("qris") || hasTerm("va")) {
-                fallbackReply += "NexShop mendukung metode pembayaran yang lengkap:\n• **QRIS**: DANA, OVO, GoPay, ShopeePay, LinkAja.\n• **Virtual Account**: BCA, Mandiri, BRI, BNI, Permata.\n• **Kartu Kredit / Debit**.\n\nPembayaran diverifikasi otomatis 24 jam non-stop!";
-            } else if (hasTerm("topup") || hasTerm("ml") || hasTerm("ff") || hasTerm("pubg") || hasTerm("valorant")) {
-                fallbackReply += "Cara topup diamond game di NexShop sangat praktis:\n1. Buka tab **Topup** di menu atas.\n2. Pilih game (MLBB, Free Fire, PUBG, Valorant, dll).\n3. Masukkan **User ID** & **Zone ID** kamu.\n4. Pilih nominal diamond & metode pembayaran.\n5. Selesaikan pembayaran, item otomatis masuk dalam 1-3 detik!";
-            } else if (hasTerm("voucher") || hasTerm("promo") || hasTerm("diskon")) {
-                fallbackReply += "Untuk mengklaim diskon:\n1. Gunakan kode promo seperti **NEXPROMO** di halaman Checkout.\n2. Masukkan kode pada kolom **Kode Promo** sebelum bayar untuk pemotongan harga otomatis.";
-            } else if (hasTerm("refund") || hasTerm("garansi")) {
-                fallbackReply += "NexShop memberikan **Garansi 100% Uang Kembali** apabila transaksi gagal atau stok habis dalam 24 jam. Hubungi CS WhatsApp kami dengan menyertakan Nomor Order ID untuk klaim refund.";
-            } else if (hasTerm("whatsapp") || hasTerm("contact") || hasTerm("support")) {
-                fallbackReply += "Hubungi Tim Customer Service NexShop 24/7 via:\n• **WhatsApp**: 6287792634063\n• **Email**: support@nexshop.cloud";
-            } else {
-                fallbackReply += "Saya adalah **NexBot**, asisten virtual resmi NexShop. Ada yang bisa saya bantu mengenai produk game, topup diamond, promo, atau status pesanan kamu hari ini?";
-            }
-            finalReplyText = fallbackReply;
+            let fallbackText = userName ? `Halo ${userName}! 👋\n\n` : `Halo! 👋\n\n`;
+            fallbackText += "Mohon maaf, informasi mengenai hal tersebut belum tersedia saat ini. Silakan hubungi Tim Customer Service kami via WhatsApp di 6287792634063 untuk bantuan lebih lanjut ya! 😊";
+            finalReplyText = fallbackText;
         }
 
         // 2. Simpan Balasan Assistant ke Database Memory
