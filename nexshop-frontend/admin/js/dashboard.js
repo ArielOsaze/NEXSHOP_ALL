@@ -3991,3 +3991,26 @@ async function reseedKnowledgeBase() {
     }
 }
 
+async function generateProductFaqs() {
+    const faqBtn = document.getElementById("btnAutoGenerateFaq");
+    if (!confirm("Otomatis generate FAQ lengkap untuk seluruh katalog produk saat ini?")) return;
+
+    try {
+        if (faqBtn) { faqBtn.disabled = true; faqBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generating FAQ...'; }
+        console.log("❓ Auto-generating Product FAQs...");
+
+        const res = await apiFetch("/ai/faq/generate", { method: "POST" });
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok) throw new Error(json.message || "Gagal auto-generate FAQ produk");
+
+        showToast(json.message || "Berhasil men-generate FAQ produk otomatis!");
+        loadKnowledgeBase();
+    } catch (err) {
+        console.error("❌ Error generating product FAQs:", err);
+        showToast(err.message, true);
+    } finally {
+        if (faqBtn) { faqBtn.disabled = false; faqBtn.innerHTML = '<i class="bi bi-patch-question me-1"></i> Generate FAQ Produk'; }
+    }
+}
+

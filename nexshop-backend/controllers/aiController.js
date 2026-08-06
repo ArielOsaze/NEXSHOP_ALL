@@ -55,9 +55,65 @@ function normalizeAndExpandQuery(query) {
     };
 }
 
+// Intent Detection Helper
+function detectUserIntent(query) {
+    const q = (query || "").toLowerCase();
+    if (q.includes("beda") || q.includes("perbedaan") || q.includes("vs") || q.includes("komparasi") || q.includes("kelebihan kekurangan")) {
+        return "Comparison";
+    }
+    if (q.includes("cara") || q.includes("bagaimana") || q.includes("langkah") || q.includes("panduan") || q.includes("buka")) {
+        return "Guide";
+    }
+    if (q.includes("apa itu") || q.includes("maksud") || q.includes("pengertian") || q.includes("adalah")) {
+        return "Definition";
+    }
+    if (q.includes("promo") || q.includes("diskon") || q.includes("voucher") || q.includes("kupon")) {
+        return "Promotion";
+    }
+    if (q.includes("harga") || q.includes("berapa") || q.includes("murah")) {
+        return "Pricing";
+    }
+    if (q.includes("garansi") || q.includes("refund") || q.includes("batal")) {
+        return "Policy";
+    }
+    if (q.includes("status") || q.includes("pesanan") || q.includes("order")) {
+        return "Order";
+    }
+    return "General";
+}
+
+// Weighted Knowledge Item Scorer (Title 40%, Keyword 25%, Category 10%, Content 25%)
+function calculateKnowledgeScore(item, query, expandedTerms, intent) {
+    let score = 0;
+    const titleLower = (item.title || "").toLowerCase();
+    const keywordsLower = (item.keywords || "").toLowerCase();
+    const catLower = (item.category || "").toLowerCase();
+    const contentLower = (item.content || "").toLowerCase();
+
+    expandedTerms.forEach(term => {
+        if (!term) return;
+        if (titleLower.includes(term)) score += 40;
+        if (keywordsLower.includes(term)) score += 25;
+        if (catLower.includes(term)) score += 10;
+        if (contentLower.includes(term)) score += 25;
+    });
+
+    if (intent === "Comparison") {
+        if (titleLower.includes("sharing") || titleLower.includes("private") || titleLower.includes("faq") || titleLower.includes("perbedaan")) {
+            score += 50;
+        }
+        if (titleLower.includes("cara membeli") || titleLower.includes("promo")) {
+            score -= 30; // Kurangi bobot panduan generik saat user meminta perbandingan
+        }
+    }
+
+    return score;
+}
+
 // RAG (Retrieval-Augmented Generation) Helper: Cari konteks relevan di DB lokal secara real-time
 async function retrieveContext(query, user) {
     const { raw: qLower, expandedTerms } = normalizeAndExpandQuery(query);
+    const intent = detectUserIntent(query);
     const contextLines = [NEXSHOP_STORE_KNOWLEDGE];
     const suggestedCards = [];
 
@@ -70,89 +126,69 @@ async function retrieveContext(query, user) {
     try {
         // SELALU panggil getStoreSettings({ fresh: true }) agar jika admin baru mengganti FAQ/Syarat/Kontak, AI langsung menggunakannya!
         const settings = await getStoreSettings({ fresh: true });
-        if (settings) {
+        if (settings && intent !== "Comparison") {
             contextLines.push(`Informasi Toko Dinamis: ${settings.store_name || 'NexShop'} (${settings.store_tagline || 'Marketplace Gaming'}). WhatsApp CS: ${settings.whatsapp_number || '6287792634063'}. Email CS: ${settings.contact_email || 'support@nexshop.cloud'}.`);
-            if (settings.faq_content) {
-                contextLines.push(`FAQ & Panduan Toko: ${settings.faq_content}`);
-            }
-            if (settings.refund_content) {
-                contextLines.push(`Kebijakan Refund: ${settings.refund_content}`);
-            }
-            if (settings.terms_content) {
-                contextLines.push(`Syarat & Ketentuan: ${settings.terms_content}`);
-            }
+            if (settings.faq_content) contextLines.push(`FAQ & Panduan Toko: ${settings.faq_content}`);
+            if (settings.refund_content) contextLines.push(`Kebijakan Refund: ${settings.refund_content}`);
+            if (settings.terms_content) contextLines.push(`Syarat & Ketentuan: ${settings.terms_content}`);
         }
 
         // Search Products (physical / digital)
-        const { data: products } = await supabase.from("products").select("id, name, price, strike_price, sold, category, is_flash_sale, badges").limit(30);
-        if (products && products.length > 0) {
-            const matchedProducts = products.filter(p => isTermMatched(p.name) || isTermMatched(p.category) || qLower.includes("produk") || qLower.includes("murah") || qLower.includes("laris"));
-            if (matchedProducts.length > 0) {
-                contextLines.push(`Katalog Produk Terkait: ` + matchedProducts.map(p => `${p.name} - Harga: Rp${Number(p.price).toLocaleString('id-ID')}${p.is_flash_sale ? ' [FLASH SALE]' : ''} (${p.sold || 0} terjual)`).slice(0, 5).join("; "));
-                matchedProducts.slice(0, 3).forEach(p => {
-                    suggestedCards.push({
-                        type: "product",
-                        id: p.id,
-                        title: p.name,
-                        price: `Rp ${Number(p.price).toLocaleString('id-ID')}`,
-                        badge: p.is_flash_sale ? "Flash Sale" : (p.badges?.[0] || "Toko"),
-                        url: `#product-${p.id}`
+        if (intent !== "Comparison") {
+            const { data: products } = await supabase.from("products").select("id, name, price, strike_price, sold, category, is_flash_sale, badges").limit(30);
+            if (products && products.length > 0) {
+                const matchedProducts = products.filter(p => isTermMatched(p.name) || isTermMatched(p.category) || qLower.includes("produk") || qLower.includes("murah") || qLower.includes("laris"));
+                if (matchedProducts.length > 0) {
+                    contextLines.push(`Katalog Produk Terkait: ` + matchedProducts.map(p => `${p.name} - Harga: Rp${Number(p.price).toLocaleString('id-ID')}${p.is_flash_sale ? ' [FLASH SALE]' : ''} (${p.sold || 0} terjual)`).slice(0, 5).join("; "));
+                    matchedProducts.slice(0, 3).forEach(p => {
+                        suggestedCards.push({
+                            type: "product",
+                            id: p.id,
+                            title: p.name,
+                            price: `Rp ${Number(p.price).toLocaleString('id-ID')}`,
+                            badge: p.is_flash_sale ? "Flash Sale" : (p.badges?.[0] || "Toko"),
+                            url: `#product-${p.id}`
+                        });
                     });
-                });
+                }
+            }
+
+            // Search Topup Products
+            const { data: topups } = await supabase.from("topup_products").select("id, kode_produk, nama, kategori, harga_jual, is_active").eq("is_active", true).limit(40);
+            if (topups && topups.length > 0) {
+                const matchedTopups = topups.filter(t => isTermMatched(t.nama) || isTermMatched(t.kategori) || qLower.includes("topup") || qLower.includes("diamond"));
+                if (matchedTopups.length > 0) {
+                    contextLines.push(`Layanan Topup Diamond Terkait: ` + matchedTopups.map(t => `${t.kategori} - ${t.nama}: Rp${Number(t.harga_jual).toLocaleString('id-ID')}`).slice(0, 6).join("; "));
+                }
             }
         }
 
-        // Search Topup Products
-        const { data: topups } = await supabase.from("topup_products").select("id, kode_produk, nama, kategori, harga_jual, is_active").eq("is_active", true).limit(40);
-        if (topups && topups.length > 0) {
-            const matchedTopups = topups.filter(t => isTermMatched(t.nama) || isTermMatched(t.kategori) || qLower.includes("topup") || qLower.includes("diamond"));
-            if (matchedTopups.length > 0) {
-                contextLines.push(`Layanan Topup Diamond Terkait: ` + matchedTopups.map(t => `${t.kategori} - ${t.nama}: Rp${Number(t.harga_jual).toLocaleString('id-ID')}`).slice(0, 6).join("; "));
-            }
-        }
-
-        // Search Gaming News
-        const { data: news } = await supabase.from("gaming_news").select("id, title, summary, source_name, source_url").eq("is_active", true).limit(10);
-        if (news && news.length > 0) {
-            const matchedNews = news.filter(n => isTermMatched(n.title) || isTermMatched(n.summary) || qLower.includes("berita") || qLower.includes("news") || qLower.includes("artikel"));
-            if (matchedNews.length > 0) {
-                contextLines.push(`Berita Gaming Terbaru: ` + matchedNews.map(n => `${n.title} (${n.source_name || 'Publisher'}): ${n.summary.slice(0, 100)}...`).slice(0, 3).join("; "));
-            }
-        }
-
-        // Search Promo Codes
-        const { data: promos } = await supabase.from("promo_codes").select("code, discount_type, discount_value, min_purchase, description").eq("is_active", true).limit(10);
-        if (promos && promos.length > 0) {
-            contextLines.push(`Voucher & Kode Promo Aktif: ` + promos.map(pr => `Kode [${pr.code}]: Diskon ${pr.discount_type === 'percent' ? pr.discount_value + '%' : 'Rp' + Number(pr.discount_value).toLocaleString('id-ID')} (Min. Rp${Number(pr.min_purchase).toLocaleString('id-ID')}) - ${pr.description || ''}`).join("; "));
-            if (qLower.includes("promo") || qLower.includes("voucher") || qLower.includes("diskon") || qLower.includes("kode")) {
-                promos.slice(0, 2).forEach(pr => {
-                    suggestedCards.push({
-                        type: "voucher",
-                        code: pr.code,
-                        title: `Kode Diskon: ${pr.code}`,
-                        desc: pr.description || `Diskon ${pr.discount_value} min belanja Rp${Number(pr.min_purchase).toLocaleString('id-ID')}`
-                    });
-                });
-            }
-        }
-
-        // Search Dynamic knowledge_base Table
+        // Search Dynamic knowledge_base Table (dengan Weighted Scoring & Ranking)
         try {
-            const { data: kbItems } = await supabase.from("knowledge_base").select("id, title, category, keywords, content").eq("status", "active").order("priority", { ascending: false }).limit(20);
+            const { data: kbItems } = await supabase.from("knowledge_base").select("id, title, category, keywords, content").eq("status", "active").order("priority", { ascending: false }).limit(40);
             const activeKbList = (kbItems && kbItems.length > 0) ? kbItems : inMemoryKnowledgeBase.filter(k => k.status === 'active');
-            const matchedKb = activeKbList.filter(k => 
-                isTermMatched(k.title) || 
-                isTermMatched(k.keywords) || 
-                isTermMatched(k.content) || 
-                isTermMatched(k.category)
-            );
-            if (matchedKb.length > 0) {
-                contextLines.push(`Knowledge Base Terkait: ` + matchedKb.map(k => `[${k.category || 'Umum'}] ${k.title}: ${k.content}`).slice(0, 4).join("\n"));
+            
+            // Hitung skor berbobot & rangking seluruh kandidat
+            const scoredKb = activeKbList.map(k => ({
+                ...k,
+                score: calculateKnowledgeScore(k, query, expandedTerms, intent)
+            })).filter(k => k.score > 0).sort((a, b) => b.score - a.score);
+
+            if (scoredKb.length > 0) {
+                // Untuk intent Comparison, ambil minimal 2-4 entri berperingkat tertinggi
+                const limitCount = intent === "Comparison" ? 4 : 5;
+                const topKbItems = scoredKb.slice(0, limitCount);
+                contextLines.push(`Knowledge Base Terkait (Top Ranked Intent ${intent}):\n` + topKbItems.map(k => `[${k.category || 'FAQ'}] ${k.title}: ${k.content}`).join("\n---\n"));
             }
         } catch (e) {
-            const matchedKb = inMemoryKnowledgeBase.filter(k => k.status === 'active' && (isTermMatched(k.title) || isTermMatched(k.keywords)));
-            if (matchedKb.length > 0) {
-                contextLines.push(`Knowledge Base Terkait: ` + matchedKb.map(k => `[${k.category || 'Umum'}] ${k.title}: ${k.content}`).slice(0, 4).join("\n"));
+            const scoredKb = inMemoryKnowledgeBase.filter(k => k.status === 'active').map(k => ({
+                ...k,
+                score: calculateKnowledgeScore(k, query, expandedTerms, intent)
+            })).filter(k => k.score > 0).sort((a, b) => b.score - a.score);
+
+            if (scoredKb.length > 0) {
+                const topKbItems = scoredKb.slice(0, 4);
+                contextLines.push(`Knowledge Base Terkait:\n` + topKbItems.map(k => `[${k.category || 'FAQ'}] ${k.title}: ${k.content}`).join("\n---\n"));
             }
         }
 
@@ -510,4 +546,72 @@ exports.reseedKnowledgeBase = async (req, res) => {
         res.status(500).json({ message: "Gagal men-generate Knowledge Base otomatis: " + err.message });
     }
 };
+
+// Admin Controller: Auto FAQ Generator per Produk
+exports.generateProductFaqs = async (req, res) => {
+    try {
+        const { data: products } = await supabase.from("products").select("id, name, category, price, description").limit(50);
+        const faqItems = [];
+
+        if (products && products.length > 0) {
+            products.forEach(p => {
+                const nameLower = p.name.toLowerCase();
+                const catLower = (p.category || "").toLowerCase();
+
+                if (nameLower.includes("xbox") || nameLower.includes("game pass") || nameLower.includes("gamepass")) {
+                    faqItems.push({
+                        title: `FAQ: Xbox Game Pass (${p.name})`,
+                        category: "FAQ",
+                        keywords: "xbox, gamepass, game pass, gampass, gamepas, xgp, xbox pass, sharing, private, ea app, ubisoft, cod, call of duty",
+                        content: `Tanya Jawab ${p.name}:\n• Apakah aman? Ya, 100% legal & terjamin.\n• Apakah butuh akun sendiri? Tersedia versi Private (pakai akun sendiri) & Sharing.\n• Apakah mendukung EA Play & Ubisoft Connect? Ya, dapat memainkan EA FC, Battlefield, serta game Ubisoft di PC/Xbox.\n• Bagaimana cara aktivasi? Panduan & lisensi langsung dikirim instant setelah pembayaran.`,
+                        priority: 10,
+                        status: "active"
+                    });
+                } else if (nameLower.includes("steam")) {
+                    faqItems.push({
+                        title: `FAQ: Steam Wallet Code (${p.name})`,
+                        category: "FAQ",
+                        keywords: "steam, steam wallet, voucher steam, steam code, redeem steam, rupiah steam",
+                        content: `Tanya Jawab ${p.name}:\n• Bagaimana cara redeem? Buka Steam client > Store > Redeem Wallet Code > Masukkan kode dari NexShop.\n• Apakah sesuai saldo IDR? Ya, saldo otomatis terkonversi penuh tanpa potongan.`,
+                        priority: 9,
+                        status: "active"
+                    });
+                } else {
+                    faqItems.push({
+                        title: `FAQ Produk: ${p.name}`,
+                        category: "FAQ",
+                        keywords: `${nameLower}, ${catLower}, beli ${nameLower}, garansi, stok, instant`,
+                        content: `Tanya Jawab ${p.name}:\n• Berapa harganya? Harga spesial Rp${Number(p.price).toLocaleString('id-ID')}.\n• Berapa lama diproses? Proses pengiriman otomatis 1-3 detik.\n• Apakah bergaransi? Bergaransi 100% uang kembali jika terjadi kendala stok.`,
+                        priority: 7,
+                        status: "active"
+                    });
+                }
+            });
+        }
+
+        // Insert into DB or In-Memory
+        let createdCount = 0;
+        try {
+            const { data, error } = await supabase.from("knowledge_base").insert(faqItems).select();
+            if (!error && data) {
+                createdCount = data.length;
+            } else {
+                inMemoryKnowledgeBase = [...faqItems, ...inMemoryKnowledgeBase];
+                createdCount = faqItems.length;
+            }
+        } catch (e) {
+            inMemoryKnowledgeBase = [...faqItems, ...inMemoryKnowledgeBase];
+            createdCount = faqItems.length;
+        }
+
+        res.json({
+            message: `Berhasil men-generate ${createdCount} FAQ Produk otomatis!`,
+            count: createdCount
+        });
+    } catch (err) {
+        console.error("❌ Error generating product FAQs:", err);
+        res.status(500).json({ message: "Gagal men-generate FAQ produk: " + err.message });
+    }
+};
+
 
