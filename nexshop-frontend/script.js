@@ -39,6 +39,16 @@ function notifyInitialReady() {
     }, 320);
 }
 
+// Safety net: if the app-ready class hasn't been applied within 5 seconds of
+// script execution (regardless of loader/fetch state), force it. This prevents
+// a blank hero on slow or stalled network conditions.
+window.setTimeout(() => {
+    if (!initialReadyDispatched) {
+        if (appLoader) { appLoader.classList.remove("is-visible"); appLoader.setAttribute("aria-busy", "false"); }
+        notifyInitialReady();
+    }
+}, 5000);
+
 function showAppLoader(message = "Memuat data NexShop...") {
     if (!appLoader) return;
     if (appLoaderMessage) appLoaderMessage.textContent = message;
@@ -50,7 +60,10 @@ function hideAppLoader() {
     if (!appLoader) return;
     appLoader.classList.remove("is-visible");
     appLoader.setAttribute("aria-busy", "false");
-    if (!initialLoading) notifyInitialReady();
+    // Always notify once the loader is dismissed — the previous guard
+    // `if (!initialLoading)` caused a race where cached fetches resolved
+    // before finishInitialLoading set the flag.
+    notifyInitialReady();
 }
 
 function beginAppRequest() {
