@@ -3748,10 +3748,7 @@ function getKbModalInstance() {
         console.error("❌ Element #kbModal tidak ditemukan di DOM!");
         return null;
     }
-    if (!kbModalInstance) {
-        kbModalInstance = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
-    }
-    return kbModalInstance;
+    return bootstrap.Modal.getOrCreateInstance(el);
 }
 
 async function loadKnowledgeBase() {
