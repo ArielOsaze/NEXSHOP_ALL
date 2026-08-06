@@ -1451,22 +1451,22 @@ async function unlockLoginIp(ip) {
 
     try {
         await withAdminPin(async (security_pin) => {
-        const res = await apiFetch("/auth/admin/unlock-login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ip, security_pin })
-        });
-        const data = await res.json();
+            const res = await apiFetch("/auth/admin/unlock-login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ip, security_pin })
+            });
+            const data = await res.json();
 
-        if (!res.ok) {
-            errorEl.textContent = data.message || "Gagal membuka blokir";
-            return;
-        }
+            if (!res.ok) {
+                errorEl.textContent = data.message || "Gagal membuka blokir";
+                return;
+            }
 
-        successEl.textContent = data.message;
-        showToast(data.message);
-        document.getElementById("unlockLoginIp").value = "";
-        withAdminPin(loadBlockedIps, "memuat daftar IP diblokir").catch(() => {});
+            successEl.textContent = data.message;
+            showToast(data.message);
+            document.getElementById("unlockLoginIp").value = "";
+            withAdminPin(loadBlockedIps, "memuat daftar IP diblokir").catch(() => {});
         }, "membuka blokir IP");
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -1482,14 +1482,6 @@ async function loadSettings() {
             apiFetch("/settings/me"),
             apiFetch("/settings/store")
         ]);
-
-        if (meRes.ok) {
-            const me = await meRes.json();
-            document.getElementById("profileName").value = me.fullname || "";
-            document.getElementById("profileEmail").value = me.email || "";
-        }
-
-        if (storeRes.ok) {
 
         if (meRes.ok) {
             const me = await meRes.json();
