@@ -122,7 +122,7 @@ function calculateKnowledgeScore(item, query, expandedTerms, intent) {
 async function retrieveContext(query, user) {
     const { raw: qLower, expandedTerms } = normalizeAndExpandQuery(query);
     const intent = detectUserIntent(query);
-    const contextLines = [NEXSHOP_STORE_KNOWLEDGE];
+    const contextLines = [];
     const suggestedCards = [];
 
     console.log(`\n======================================================`);
@@ -139,112 +139,97 @@ async function retrieveContext(query, user) {
         return expandedTerms.some(term => txtLower.includes(term));
     };
 
+    let topKbItems = [];
+    let maxScore = 0;
+
     try {
-        const settings = await getStoreSettings({ fresh: true });
-        if (settings && intent !== "Comparison" && intent !== "Definition") {
-            contextLines.push(`Informasi Toko Dinamis: ${settings.store_name || 'NexShop'} (${settings.store_tagline || 'Marketplace Gaming'}). WhatsApp CS: ${settings.whatsapp_number || '6287792634063'}. Email CS: ${settings.contact_email || 'support@nexshop.cloud'}.`);
-            if (settings.faq_content) contextLines.push(`FAQ & Panduan Toko: ${settings.faq_content}`);
-            if (settings.refund_content) contextLines.push(`Kebijakan Refund: ${settings.refund_content}`);
-            if (settings.terms_content) contextLines.push(`Syarat & Ketentuan: ${settings.terms_content}`);
+        // Search Dynamic knowledge_base Table (Top 1-3 Items)
+        const { data: kbItems } = await supabase.from("knowledge_base").select("id, title, category, keywords, content").eq("status", "active").order("priority", { ascending: false }).limit(50);
+        const activeKbList = (kbItems && kbItems.length > 0) ? kbItems : inMemoryKnowledgeBase.filter(k => k.status === 'active');
+        
+        // Hitung skor berbobot & rangking seluruh kandidat
+        const scoredKb = activeKbList.map(k => ({
+            ...k,
+            score: calculateKnowledgeScore(k, query, expandedTerms, intent)
+        })).filter(k => k.score > 0).sort((a, b) => b.score - a.score);
+
+        console.log(`📊 [RAG AUDIT LOG] KNOWLEDGE BASE CANDIDATE SCORES:`);
+        scoredKb.slice(0, 5).forEach((k, idx) => {
+            console.log(`  ${idx + 1}. [Score ${k.score}] "${k.title}" (${k.category || 'FAQ'})`);
+        });
+
+        if (scoredKb.length > 0) {
+            maxScore = scoredKb[0].score;
+            const limitCount = (intent === "Comparison") ? 3 : 2;
+            topKbItems = scoredKb.slice(0, limitCount);
+            contextLines.push(`Knowledge Base Terkait:\n` + topKbItems.map(k => `[${k.category || 'FAQ'}] ${k.title}:\n${k.content}`).join("\n---\n"));
         }
+    } catch (e) {
+        const scoredKb = inMemoryKnowledgeBase.filter(k => k.status === 'active').map(k => ({
+            ...k,
+            score: calculateKnowledgeScore(k, query, expandedTerms, intent)
+        })).filter(k => k.score > 0).sort((a, b) => b.score - a.score);
 
-        // Search Products (physical / digital)
-        if (intent !== "Comparison" && intent !== "Definition") {
-            const { data: products } = await supabase.from("products").select("id, name, price, strike_price, sold, category, is_flash_sale, badges").limit(30);
-            if (products && products.length > 0) {
-                const matchedProducts = products.filter(p => isTermMatched(p.name) || isTermMatched(p.category) || qLower.includes("produk") || qLower.includes("murah") || qLower.includes("laris"));
-                if (matchedProducts.length > 0) {
-                    contextLines.push(`Katalog Produk Terkait: ` + matchedProducts.map(p => `${p.name} - Harga: Rp${Number(p.price).toLocaleString('id-ID')}${p.is_flash_sale ? ' [FLASH SALE]' : ''} (${p.sold || 0} terjual)`).slice(0, 5).join("; "));
-                    matchedProducts.slice(0, 3).forEach(p => {
-                        suggestedCards.push({
-                            type: "product",
-                            id: p.id,
-                            title: p.name,
-                            price: `Rp ${Number(p.price).toLocaleString('id-ID')}`,
-                            badge: p.is_flash_sale ? "Flash Sale" : (p.badges?.[0] || "Toko"),
-                            url: `#product-${p.id}`
-                        });
-                    });
-                }
-            }
-
-            // Search Topup Products
-            const { data: topups } = await supabase.from("topup_products").select("id, kode_produk, nama, kategori, harga_jual, is_active").eq("is_active", true).limit(40);
-            if (topups && topups.length > 0) {
-                const matchedTopups = topups.filter(t => isTermMatched(t.nama) || isTermMatched(t.kategori) || qLower.includes("topup") || qLower.includes("diamond"));
-                if (matchedTopups.length > 0) {
-                    contextLines.push(`Layanan Topup Diamond Terkait: ` + matchedTopups.map(t => `${t.kategori} - ${t.nama}: Rp${Number(t.harga_jual).toLocaleString('id-ID')}`).slice(0, 6).join("; "));
-                }
-            }
+        if (scoredKb.length > 0) {
+            maxScore = scoredKb[0].score;
+            topKbItems = scoredKb.slice(0, 2);
+            contextLines.push(`Knowledge Base Terkait:\n` + topKbItems.map(k => `[${k.category || 'FAQ'}] ${k.title}:\n${k.content}`).join("\n---\n"));
         }
+    }
 
-        // Search Dynamic knowledge_base Table (dengan Weighted Scoring & Ranking)
-        let topKbItems = [];
+    // Jika Knowledge Base tidak ditemukan, tambahkan rekomendasi produk/topup ringan
+    if (topKbItems.length === 0) {
         try {
-            const { data: kbItems } = await supabase.from("knowledge_base").select("id, title, category, keywords, content").eq("status", "active").order("priority", { ascending: false }).limit(50);
-            const activeKbList = (kbItems && kbItems.length > 0) ? kbItems : inMemoryKnowledgeBase.filter(k => k.status === 'active');
-            
-            // Hitung skor berbobot & rangking seluruh kandidat
-            const scoredKb = activeKbList.map(k => ({
-                ...k,
-                score: calculateKnowledgeScore(k, query, expandedTerms, intent)
-            })).filter(k => k.score > 0).sort((a, b) => b.score - a.score);
-
-            console.log(`📊 [RAG AUDIT LOG] KNOWLEDGE BASE CANDIDATE SCORES:`);
-            scoredKb.slice(0, 8).forEach((k, idx) => {
-                console.log(`  ${idx + 1}. [Score ${k.score}] "${k.title}" (${k.category || 'FAQ'})`);
-            });
-
-            if (scoredKb.length > 0) {
-                const limitCount = (intent === "Comparison" || intent === "Definition") ? 4 : 5;
-                topKbItems = scoredKb.slice(0, limitCount);
-                contextLines.push(`Knowledge Base Terkait (Top Ranked Intent ${intent}):\n` + topKbItems.map(k => `[${k.category || 'FAQ'}] ${k.title}: ${k.content}`).join("\n---\n"));
+            const { data: products } = await supabase.from("products").select("id, name, price, is_flash_sale, badges").limit(10);
+            if (products && products.length > 0) {
+                const matchedProducts = products.filter(p => isTermMatched(p.name) || isTermMatched(p.category));
+                if (matchedProducts.length > 0) {
+                    contextLines.push(`Produk Terkait: ` + matchedProducts.map(p => `${p.name} (Rp${Number(p.price).toLocaleString('id-ID')})`).slice(0, 3).join("; "));
+                }
             }
-        } catch (e) {
-            const scoredKb = inMemoryKnowledgeBase.filter(k => k.status === 'active').map(k => ({
-                ...k,
-                score: calculateKnowledgeScore(k, query, expandedTerms, intent)
-            })).filter(k => k.score > 0).sort((a, b) => b.score - a.score);
+        } catch (err) {}
+    }
 
-            if (scoredKb.length > 0) {
-                topKbItems = scoredKb.slice(0, 4);
-                contextLines.push(`Knowledge Base Terkait:\n` + topKbItems.map(k => `[${k.category || 'FAQ'}] ${k.title}: ${k.content}`).join("\n---\n"));
-            }
-        }
-
-        // Search Orders if User is authenticated
-        if (user && user.id) {
+    // Search Orders jika User terautentikasi
+    if (user && user.id) {
+        try {
             const [regOrdersRes, topupOrdersRes] = await Promise.all([
-                supabase.from("orders").select("id, total, status, items, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(3),
-                supabase.from("topup_orders").select("id, nama_produk, harga, status, target_user, created_at").eq("email", user.email).order("created_at", { ascending: false }).limit(3)
+                supabase.from("orders").select("id, total, status, created_at").eq("user_id", user.id).order("created_at", { ascending: false }).limit(2),
+                supabase.from("topup_orders").select("id, nama_produk, harga, status, created_at").eq("email", user.email).order("created_at", { ascending: false }).limit(2)
             ]);
 
             const userOrders = [...(regOrdersRes.data || []), ...(topupOrdersRes.data || [])];
             if (userOrders.length > 0) {
-                contextLines.push(`Histori Pesanan Pengguna (${user.fullname || user.email}): ` + userOrders.map(o => `Order #${o.id} Status: ${o.status.toUpperCase()} (Total: Rp${Number(o.total || o.harga || 0).toLocaleString('id-ID')}, Tgl: ${new Date(o.created_at).toLocaleDateString('id-ID')})`).join("; "));
+                contextLines.push(`Histori Pesanan (${user.fullname || user.email}): ` + userOrders.map(o => `Order #${o.id} (${o.status.toUpperCase()})`).join("; "));
             }
-        }
-
-        console.log(`✅ [RAG AUDIT LOG] SELECTED TOP KNOWLEDGE ITEMS:`);
-        topKbItems.forEach(k => console.log(`  - [${k.category}] ${k.title}`));
-        console.log(`======================================================\n`);
-
-    } catch (err) {
-        console.error("⚠️ Error retrieving RAG context:", err.message);
+        } catch (err) {}
     }
+
+    console.log(`✅ [RAG AUDIT LOG] SELECTED KNOWLEDGE (Top Score: ${maxScore}):`);
+    topKbItems.forEach(k => console.log(`  - [Score ${k.score}] [${k.category}] ${k.title}`));
+    console.log(`======================================================\n`);
 
     return {
         contextText: contextLines.join("\n\n"),
         cards: suggestedCards,
-        intent
+        intent,
+        topKbItems,
+        maxScore
     };
+}
+
+// UUID Helper
+function isUuid(val) {
+    if (!val || typeof val !== "string") return false;
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val);
 }
 
 // Helper Simpan Percakapan ke Supabase (ai_conversations / ai_conversation_memory)
 async function saveConversationMemoryRecord({ userId, sessionId, role, message, intent, contextText }) {
-    console.log(`💾 [AI MEMORY LOG] Saving Conversation Record (Role: ${role}, Session: ${sessionId})...`);
+    const validUuid = isUuid(userId) ? userId : null;
+    console.log(`💾 [AI MEMORY LOG] Saving Conversation Record (Role: ${role}, Session: ${sessionId}, User UUID: ${validUuid || 'Guest/Non-UUID'})...`);
     const payload = {
-        user_id: userId || null,
+        user_id: validUuid,
         session_id: String(sessionId || 'sess-' + Date.now()),
         role: String(role),
         message: String(message),
@@ -256,7 +241,6 @@ async function saveConversationMemoryRecord({ userId, sessionId, role, message, 
     try {
         const { data, error } = await supabase.from("ai_conversations").insert([payload]).select().single();
         if (error) {
-            // Try fallback table name ai_conversation_memory
             const fallbackRes = await supabase.from("ai_conversation_memory").insert([payload]).select().single();
             if (fallbackRes.error) {
                 console.error("❌ [AI MEMORY LOG] Conversation Failed to Save:", error.message || fallbackRes.error.message);
@@ -275,9 +259,14 @@ async function saveConversationMemoryRecord({ userId, sessionId, role, message, 
 
 // Helper Update Memori User ke Supabase (ai_user_memories / ai_user_memory)
 async function saveOrUpdateUserMemoryRecord(user, query, intent) {
-    if (!user || (!user.id && !user.email)) return;
-    console.log(`👤 [AI MEMORY LOG] Updating User Memory for ${user.fullname || user.email}...`);
+    if (!user) return;
+    const validUuid = isUuid(user.id) ? user.id : (isUuid(user.uuid) ? user.uuid : null);
+    if (!validUuid) {
+        console.log(`⚠️ [AI MEMORY LOG] User ID '${user.id}' is non-UUID. Skipping ai_user_memories upsert.`);
+        return;
+    }
 
+    console.log(`👤 [AI MEMORY LOG] Updating User Memory for ${user.fullname || user.email} (${validUuid})...`);
     const qLower = (query || "").toLowerCase();
     let favGame = null;
     if (qLower.includes("ml") || qLower.includes("mobile legend")) favGame = "Mobile Legends";
@@ -287,7 +276,7 @@ async function saveOrUpdateUserMemoryRecord(user, query, intent) {
     else if (qLower.includes("xbox") || qLower.includes("game pass")) favGame = "Xbox Game Pass";
 
     const payload = {
-        user_id: user.id || null,
+        user_id: validUuid,
         favorite_game: favGame,
         last_seen_at: new Date().toISOString(),
         custom_preferences: { last_query: query, last_intent: intent }
@@ -316,7 +305,7 @@ exports.chat = async (req, res) => {
     const activeSessionId = session_id || req.headers["x-session-id"] || "sess-" + Date.now();
 
     try {
-        const { contextText, cards, intent } = await retrieveContext(q, user);
+        const { contextText, cards, intent, topKbItems, maxScore } = await retrieveContext(q, user);
 
         // 1. Simpan Pesan User ke Database Memory
         saveConversationMemoryRecord({
@@ -328,24 +317,20 @@ exports.chat = async (req, res) => {
             contextText
         }).catch(e => console.error("Memory User Save Error:", e));
 
-        const apiKeys = await getApiKeys();
-        const apiKey = apiKeys.gemini_api_key || process.env.GEMINI_API_KEY || "";
-        const model = apiKeys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
-
         const userName = user ? (user.fullname || user.name || "Pelanggan").split(" ")[0] : "";
-        const systemPrompt = `Kamu adalah NexBot — Asisten Virtual Resmi NexShop (Marketplace Gaming & Topup Diamond).
+        
+        // Ringkas System Prompt (~180 token / ~750 karakter)
+        const systemPrompt = `Kamu adalah NexBot — Asisten Virtual Resmi NexShop (Marketplace Gaming & Topup).
 
-INSTRUKSI KETAT SINGLE SOURCE OF TRUTH (SOT):
-1. KONTEKS DATABASE NEXSHOP DI BAWAH INI ADALAH SATU-SATUNYA SUMBER FAKTA RESMI NEXSHOP.
-2. DILARANG KERAS MERANGKUM, MEMOTONG, DISINGKAT, ATAU MENGILANGKAN POIN/FAKTA DARI KONTEKS.
-3. JIKA KONTEKS BERISI DAFTAR POIN ATAU PENJELASAN (MISALNYA PERBEDAAN SHARING VS PRIVATE), TAMPILKAN SELURUH POIN SECARA LENGKAP DAN JELAS TANPA ADA YANG DIPOTONG.
-4. PERTAHANKAN ISTILAH DAN PERNYATAAN ASLI DARI KONTEKS (CONTOH: JIKA KONTEKS MENYATAKAN "TETAP MENGGUNAKAN AKUN XBOX PRIBADI", MAKA PERTAHANKAN KALIMAT TERSEBUT SECARA UTUH).
-5. DILARANG MENGARANG ATAU MENAMBAHKAN ASUMSI DILUAR KONTEKS.
-
-${userName ? `Nama pelanggan yang sedang login: ${userName}. Sapa pengguna dengan hangat (contoh: "Halo ${userName} 👋").` : ""}
+ATURAN UTAMA:
+1. KONTEKS DATABASE NEXSHOP ADALAH SATU-SATUNYA SUMBER FAKTA.
+2. DILARANG MENGARANG FAKTA ATAU MENGUBAH ISTILAH/POIN DARI KONTEKS.
+3. GUNAKAN FORMAT MARKDOWN LENGKAP & RAPI.
+4. JIKA KNOWLEDGE TIDAK TERSEDIA, JAWAB BAHWA INFORMASI BELUM TERSEDIA.
+${userName ? `5. SAPA PENGGUNA TERLEBIH DAHULU: "Halo ${userName} 👋"` : ""}
 
 KONTEKS DATABASE NEXSHOP:
-${contextText || "Tidak ada informasi khusus di database."}`;
+${contextText || "Belum ada konteks khusus."}`;
 
         console.log(`🤖 [RAG AUDIT LOG] PROMPT AUDIT & TOKEN ESTIMATION:`);
         console.log(`• System Prompt Length: ${systemPrompt.length} chars (~${Math.ceil(systemPrompt.length / 4)} tokens)`);
@@ -355,56 +340,78 @@ ${contextText || "Tidak ada informasi khusus di database."}`;
         let finalReplyText = "";
         let isHandoff = false;
 
-        if (apiKey) {
-            try {
-                // Konstruksi Single Clean Prompt (Identik dengan newsController.js yang terbukti stabil)
-                let fullPrompt = `${systemPrompt}\n\n`;
+        // ⚡ RULE ENGINE: Jika Similarity / Score >= 90 (High Match), Render Knowledge LANGSUNG tanpa panggil Gemini!
+        if (maxScore >= 90 && topKbItems && topKbItems.length > 0) {
+            console.log(`⚡ [RULE ENGINE] High Match (Score ${maxScore} >= 90). Rendering Knowledge Base DIRECTLY without Gemini API call!`);
+            let directKbReply = userName ? `Halo ${userName} 👋 ` : `Halo 👋 `;
+            directKbReply += `Berikut informasi resmi dari Knowledge Base NexShop:\n\n`;
+            directKbReply += topKbItems.map(k => `📌 **${k.title}** (${k.category || 'FAQ'})\n${k.content}`).join("\n\n---\n\n");
+            finalReplyText = directKbReply;
+        } else {
+            // 🌐 MEDIUM / LOW MATCH (Score < 90): Panggil Gemini API
+            const apiKeys = await getApiKeys();
+            const apiKey = apiKeys.gemini_api_key || process.env.GEMINI_API_KEY || "";
+            const model = apiKeys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
 
-                if (Array.isArray(history) && history.length > 0) {
-                    fullPrompt += `RIWAYAT PERCAKAPAN SEBELUMNYA:\n`;
-                    history.slice(-4).forEach(item => {
-                        if (item.text) {
-                            fullPrompt += `${item.role === 'user' ? 'Pengguna' : 'NexBot'}: ${item.text}\n`;
-                        }
-                    });
-                    fullPrompt += `\n`;
-                }
+            if (apiKey) {
+                try {
+                    let fullPrompt = `${systemPrompt}\n\n`;
 
-                fullPrompt += `PERTANYAAN SEKARANG:\nPengguna: ${q}\nNexBot:`;
-
-                const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-                
-                console.log(`🚀 Sending 1 Single Request to Gemini (${model})...`);
-                const response = await axios.post(
-                    targetUrl,
-                    {
-                        contents: [{ parts: [{ text: fullPrompt }] }],
-                        generationConfig: {
-                            temperature: 0.3,
-                            maxOutputTokens: 2048
-                        }
-                    },
-                    {
-                        timeout: 20000,
-                        headers: { "Content-Type": "application/json" }
+                    if (Array.isArray(history) && history.length > 0) {
+                        fullPrompt += `RIWAYAT PERCAKAPAN SEBELUMNYA:\n`;
+                        history.slice(-3).forEach(item => {
+                            if (item.text) {
+                                fullPrompt += `${item.role === 'user' ? 'Pengguna' : 'NexBot'}: ${item.text}\n`;
+                            }
+                        });
+                        fullPrompt += `\n`;
                     }
-                );
 
-                finalReplyText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-                if (finalReplyText) {
-                    const respTokensEst = Math.ceil(finalReplyText.length / 4);
-                    console.log(`✨ [RAG AUDIT LOG] GEMINI RESPONSE RECEIVED SUCCESS (HTTP ${response.status}, ${finalReplyText.length} chars, ~${respTokensEst} output tokens).`);
+                    fullPrompt += `PERTANYAAN SEKARANG:\nPengguna: ${q}\nNexBot:`;
+
+                    const targetUrl = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+                    
+                    console.log(`🚀 Sending 1 Request to Gemini (${model})...`);
+                    const response = await axios.post(
+                        targetUrl,
+                        {
+                            contents: [{ parts: [{ text: fullPrompt }] }],
+                            generationConfig: {
+                                temperature: 0.3,
+                                maxOutputTokens: 1500
+                            }
+                        },
+                        {
+                            timeout: 15000,
+                            headers: { "Content-Type": "application/json" }
+                        }
+                    );
+
+                    finalReplyText = response.data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                    if (finalReplyText) {
+                        const respTokensEst = Math.ceil(finalReplyText.length / 4);
+                        console.log(`✨ [RAG AUDIT LOG] GEMINI RESPONSE RECEIVED SUCCESS (HTTP ${response.status}, ${finalReplyText.length} chars, ~${respTokensEst} output tokens).`);
+                    }
+                } catch (geminiErr) {
+                    const httpStatus = geminiErr.response ? geminiErr.response.status : "NO_STATUS";
+                    const errorBody = geminiErr.response ? JSON.stringify(geminiErr.response.data) : geminiErr.message;
+                    console.error(`❌ [GEMINI AUDIT ERROR] HTTP Status: ${httpStatus}`);
+                    console.error(`❌ [GEMINI AUDIT ERROR] Full Error Body:`, errorBody);
+                    console.log("⚠️ Call Gemini API gagal, beralih ke Direct RAG Knowledge Base Renderer!");
                 }
-            } catch (geminiErr) {
-                const httpStatus = geminiErr.response ? geminiErr.response.status : "NO_STATUS";
-                const errorBody = geminiErr.response ? JSON.stringify(geminiErr.response.data) : geminiErr.message;
-                console.error(`❌ [GEMINI AUDIT ERROR] HTTP Status: ${httpStatus}`);
-                console.error(`❌ [GEMINI AUDIT ERROR] Full Error Body:`, errorBody);
-                console.log("⚠️ Call Gemini API gagal di NexBot Chat, memakai Smart Intent Fallback.");
             }
         }
 
-        // Smart Intent Fallback RAG Engine jika Gemini gagal/kosong
+        // 🛡️ CRITICAL RAG FALLBACK RENDERER: Jika Gemini gagal/kosong tetapi Knowledge Base ditemukan, render isi Knowledge Base secara LANGSUNG & LENGKAP tanpa dirangkum!
+        if (!finalReplyText && topKbItems && topKbItems.length > 0) {
+            console.log(`🛡️ [RAG FALLBACK RENDERER] Gemini offline/429. Rendering ${topKbItems.length} Knowledge Base items directly...`);
+            let directKbReply = userName ? `Halo ${userName} 👋 ` : `Halo 👋 `;
+            directKbReply += `Berikut informasi resmi dari Knowledge Base NexShop mengenai pertanyaan Anda:\n\n`;
+            directKbReply += topKbItems.map(k => `📌 **${k.title}** (${k.category || 'FAQ'})\n${k.content}`).join("\n\n---\n\n");
+            finalReplyText = directKbReply;
+        }
+
+        // Smart Intent Fallback RAG Engine jika Knowledge Base juga kosong & Gemini gagal
         if (!finalReplyText) {
             isHandoff = true;
             const { raw: qNorm, expandedTerms } = normalizeAndExpandQuery(q);
