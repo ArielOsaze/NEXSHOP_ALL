@@ -1005,22 +1005,22 @@
         </div>
     </div>
 </section>
-
-<!-- ===== AI Management view ===== -->
 <section id="view-aimgmt" class="view-section d-none">
     <div class="mb-4">
         <h2>AI Management & Knowledge Base</h2>
         <p class="text-muted mb-0">Kelola konfigurasi NexBot AI, RAG Knowledge Base, dan performa model AI</p>
     </div>
 
-    <div class="alert alert-info border-info d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-        <div>
-            <h6 class="alert-heading mb-1"><i class="bi bi-diagram-3-fill me-2"></i>Status System Automatic Failover Multi-AI</h6>
-            <span class="small">Urutan Priority: <strong>1. Google Gemini ➔ 2. Groq AI ➔ 3. OpenRouter</strong> (Bila provider prioritas tinggi gagal/quota habis, sistem otomatis beralih ke provider berikutnya).</span>
-        </div>
-        <div class="text-end">
-            <span class="small text-muted d-block">Active Primary Provider:</span>
-            <span id="activeAiProviderBadge" class="badge bg-primary fs-6"><i class="bi bi-cpu me-1"></i> Google Gemini</span>
+    <div class="card shadow-sm mb-4 p-3 border-0" style="background: var(--bg-panel); border: 1px solid var(--line) !important; border-radius: 16px;">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                <h6 class="mb-1 fw-bold" style="font-family: 'Sora', sans-serif;"><i class="bi bi-diagram-3-fill text-violet me-2"></i>Automatic Failover Multi-AI Engine</h6>
+                <span class="small text-muted">Priority Chain: <strong class="text-light">1. Google Gemini ➔ 2. Groq AI ➔ 3. OpenRouter</strong> (Retries automatically if primary provider fails).</span>
+            </div>
+            <div class="text-end">
+                <span class="small text-muted d-block" style="font-size: 0.75rem;">Active Primary Provider:</span>
+                <span id="activeAiProviderBadge" class="badge bg-primary px-3 py-2 fs-6"><i class="bi bi-cpu me-1"></i> Google Gemini</span>
+            </div>
         </div>
     </div>
 
@@ -1028,58 +1028,58 @@
     <div id="aiProviderCardsContainer" class="row g-3 mb-4">
         <!-- Gemini Card -->
         <div class="col-lg-4">
-            <div class="card shadow-sm h-100 border-0 rounded-3 border-top border-4 border-primary bg-white">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <div class="card accent-card h-100 shadow-sm">
+                <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center" style="border-color: var(--line) !important;">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="bg-primary text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                        <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: rgba(139,92,246,0.15); color: var(--violet);">
                             <i class="bi bi-google fs-5"></i>
                         </div>
                         <div>
-                            <h6 class="mb-0 fw-bold">Google Gemini</h6>
-                            <span class="badge bg-light text-primary border border-primary-subtle" style="font-size: 0.7rem;">Primary Provider</span>
+                            <h6 class="mb-0 fw-bold" style="font-family: 'Sora', sans-serif;">Google Gemini</h6>
+                            <span class="badge bg-dark-subtle border" style="font-size: 0.68rem; border-color: var(--line) !important;">Primary Provider</span>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
-                        <span id="priorityBadge_gemini" class="badge bg-dark text-white">#1</span>
+                        <span id="priorityBadge_gemini" class="badge bg-primary text-white">#1</span>
                         <div class="form-check form-switch mb-0" title="Enable / Disable Provider">
                             <input class="form-check-input" type="checkbox" id="toggle_gemini" checked onchange="toggleAiProvider('gemini', this.checked)">
                         </div>
                     </div>
                 </div>
                 <div class="card-body p-3 d-flex flex-column">
-                    <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
-                        <small class="text-muted fw-semibold">Status API</small>
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded" style="background: var(--bg-panel-2); border: 1px solid var(--line);">
+                        <small class="text-muted fw-semibold" style="font-size: 0.75rem;">Status API</small>
                         <span id="statusBadge_gemini" class="badge bg-secondary px-2 py-1"><i class="bi bi-arrow-repeat spin"></i> Checking...</span>
                     </div>
 
                     <div class="mb-2">
-                        <small class="text-muted d-block" style="font-size: 0.75rem;">Masked API Key</small>
-                        <code id="maskedKey_gemini" class="text-dark font-monospace fw-bold fs-7">Belum diisi</code>
+                        <small class="text-muted d-block" style="font-size: 0.72rem;">Masked API Key</small>
+                        <code id="maskedKey_gemini" class="font-monospace fw-bold fs-7" style="color: var(--text);">Belum diisi</code>
                     </div>
 
                     <div class="mb-3">
-                        <small class="text-muted d-block" style="font-size: 0.75rem;">Model AI Aktif</small>
-                        <span id="model_gemini" class="badge bg-primary-subtle text-primary border border-primary-subtle fw-semibold">gemini-flash-latest</span>
+                        <small class="text-muted d-block" style="font-size: 0.72rem;">Model AI Aktif</small>
+                        <span id="model_gemini" class="badge bg-primary text-white fw-semibold">gemini-flash-latest</span>
                     </div>
 
                     <!-- Metrics Grid -->
-                    <div class="row g-2 text-center bg-light rounded border p-2 mb-3 my-auto">
-                        <div class="col-4 border-end">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">Latency</small>
-                            <span id="latency_gemini" class="fw-bold text-dark fs-7">-</span>
+                    <div class="row g-2 text-center rounded p-2 mb-3 my-auto" style="background: var(--bg-panel-2); border: 1px solid var(--line);">
+                        <div class="col-4 border-end" style="border-color: var(--line) !important;">
+                            <small class="text-muted d-block" style="font-size: 0.68rem;">Latency</small>
+                            <span id="latency_gemini" class="fw-bold fs-7" style="color: var(--text);">-</span>
                         </div>
-                        <div class="col-4 border-end">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">Success %</small>
+                        <div class="col-4 border-end" style="border-color: var(--line) !important;">
+                            <small class="text-muted d-block" style="font-size: 0.68rem;">Success %</small>
                             <span id="rate_gemini" class="fw-bold text-success fs-7">-</span>
                         </div>
                         <div class="col-4">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">Total Req</small>
-                            <span id="requests_gemini" class="fw-bold text-primary fs-7">-</span>
+                            <small class="text-muted d-block" style="font-size: 0.68rem;">Total Req</small>
+                            <span id="requests_gemini" class="fw-bold fs-7" style="color: var(--violet);">-</span>
                         </div>
                     </div>
 
                     <!-- Detail Timestamps -->
-                    <div class="mb-3 small text-muted border-top pt-2" style="font-size: 0.75rem;">
+                    <div class="mb-3 small text-muted border-top pt-2" style="font-size: 0.72rem; border-color: var(--line) !important;">
                         <div class="d-flex justify-content-between">
                             <span>Sukses Terakhir:</span>
                             <span id="lastSuccess_gemini" class="fw-semibold text-success">-</span>
@@ -1090,7 +1090,7 @@
                         </div>
                         <div class="d-flex justify-content-between">
                             <span>Pengecekan:</span>
-                            <span id="lastChecked_gemini" class="fw-semibold text-dark">-</span>
+                            <span id="lastChecked_gemini" class="fw-semibold" style="color: var(--text);">-</span>
                         </div>
                     </div>
 
@@ -1098,7 +1098,7 @@
                         <button class="btn btn-primary btn-sm fw-semibold" onclick="testSingleAiProvider('gemini')">
                             <i class="bi bi-lightning-charge me-1"></i> Test Connection
                         </button>
-                        <button class="btn btn-outline-dark btn-sm" onclick="openApiKeyModal('gemini', 'Google Gemini', 'gemini-flash-latest')">
+                        <button class="btn btn-outline-light btn-sm" onclick="openApiKeyModal('gemini', 'Google Gemini', 'gemini-flash-latest')">
                             <i class="bi bi-sliders me-1"></i> Kelola Key & Model
                         </button>
                     </div>
@@ -1108,15 +1108,15 @@
 
         <!-- Groq Card -->
         <div class="col-lg-4">
-            <div class="card shadow-sm h-100 border-0 rounded-3 border-top border-4 border-warning bg-white">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <div class="card accent-card accent-magenta h-100 shadow-sm">
+                <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center" style="border-color: var(--line) !important;">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="bg-warning text-dark rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                        <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: rgba(240,57,154,0.15); color: var(--magenta);">
                             <i class="bi bi-lightning-fill fs-5"></i>
                         </div>
                         <div>
-                            <h6 class="mb-0 fw-bold">Groq AI</h6>
-                            <span class="badge bg-light text-warning border border-warning-subtle" style="font-size: 0.7rem;">Ultra Fast Inference</span>
+                            <h6 class="mb-0 fw-bold" style="font-family: 'Sora', sans-serif;">Groq AI</h6>
+                            <span class="badge bg-dark-subtle border" style="font-size: 0.68rem; border-color: var(--line) !important;">Ultra Fast Inference</span>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
@@ -1127,39 +1127,39 @@
                     </div>
                 </div>
                 <div class="card-body p-3 d-flex flex-column">
-                    <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
-                        <small class="text-muted fw-semibold">Status API</small>
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded" style="background: var(--bg-panel-2); border: 1px solid var(--line);">
+                        <small class="text-muted fw-semibold" style="font-size: 0.75rem;">Status API</small>
                         <span id="statusBadge_groq" class="badge bg-secondary px-2 py-1"><i class="bi bi-arrow-repeat spin"></i> Checking...</span>
                     </div>
 
                     <div class="mb-2">
-                        <small class="text-muted d-block" style="font-size: 0.75rem;">Masked API Key</small>
-                        <code id="maskedKey_groq" class="text-dark font-monospace fw-bold fs-7">Belum diisi</code>
+                        <small class="text-muted d-block" style="font-size: 0.72rem;">Masked API Key</small>
+                        <code id="maskedKey_groq" class="font-monospace fw-bold fs-7" style="color: var(--text);">Belum diisi</code>
                     </div>
 
                     <div class="mb-3">
-                        <small class="text-muted d-block" style="font-size: 0.75rem;">Model AI Aktif</small>
-                        <span id="model_groq" class="badge bg-warning-subtle text-dark border border-warning-subtle fw-semibold">llama-3.3-70b-versatile</span>
+                        <small class="text-muted d-block" style="font-size: 0.72rem;">Model AI Aktif</small>
+                        <span id="model_groq" class="badge bg-dark-subtle border fw-semibold" style="color: var(--magenta); border-color: var(--line) !important;">llama-3.3-70b-versatile</span>
                     </div>
 
                     <!-- Metrics Grid -->
-                    <div class="row g-2 text-center bg-light rounded border p-2 mb-3 my-auto">
-                        <div class="col-4 border-end">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">Latency</small>
-                            <span id="latency_groq" class="fw-bold text-dark fs-7">-</span>
+                    <div class="row g-2 text-center rounded p-2 mb-3 my-auto" style="background: var(--bg-panel-2); border: 1px solid var(--line);">
+                        <div class="col-4 border-end" style="border-color: var(--line) !important;">
+                            <small class="text-muted d-block" style="font-size: 0.68rem;">Latency</small>
+                            <span id="latency_groq" class="fw-bold fs-7" style="color: var(--text);">-</span>
                         </div>
-                        <div class="col-4 border-end">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">Success %</small>
+                        <div class="col-4 border-end" style="border-color: var(--line) !important;">
+                            <small class="text-muted d-block" style="font-size: 0.68rem;">Success %</small>
                             <span id="rate_groq" class="fw-bold text-success fs-7">-</span>
                         </div>
                         <div class="col-4">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">Total Req</small>
-                            <span id="requests_groq" class="fw-bold text-warning fs-7">-</span>
+                            <small class="text-muted d-block" style="font-size: 0.68rem;">Total Req</small>
+                            <span id="requests_groq" class="fw-bold fs-7" style="color: var(--magenta);">-</span>
                         </div>
                     </div>
 
                     <!-- Detail Timestamps -->
-                    <div class="mb-3 small text-muted border-top pt-2" style="font-size: 0.75rem;">
+                    <div class="mb-3 small text-muted border-top pt-2" style="font-size: 0.72rem; border-color: var(--line) !important;">
                         <div class="d-flex justify-content-between">
                             <span>Sukses Terakhir:</span>
                             <span id="lastSuccess_groq" class="fw-semibold text-success">-</span>
@@ -1170,15 +1170,15 @@
                         </div>
                         <div class="d-flex justify-content-between">
                             <span>Pengecekan:</span>
-                            <span id="lastChecked_groq" class="fw-semibold text-dark">-</span>
+                            <span id="lastChecked_groq" class="fw-semibold" style="color: var(--text);">-</span>
                         </div>
                     </div>
 
                     <div class="d-grid gap-2 mt-auto">
-                        <button class="btn btn-warning text-dark btn-sm fw-semibold" onclick="testSingleAiProvider('groq')">
+                        <button class="btn btn-primary btn-sm fw-semibold" onclick="testSingleAiProvider('groq')">
                             <i class="bi bi-lightning-charge me-1"></i> Test Connection
                         </button>
-                        <button class="btn btn-outline-dark btn-sm" onclick="openApiKeyModal('groq', 'Groq AI', 'llama-3.3-70b-versatile')">
+                        <button class="btn btn-outline-light btn-sm" onclick="openApiKeyModal('groq', 'Groq AI', 'llama-3.3-70b-versatile')">
                             <i class="bi bi-sliders me-1"></i> Kelola Key & Model
                         </button>
                     </div>
@@ -1188,15 +1188,15 @@
 
         <!-- OpenRouter Card -->
         <div class="col-lg-4">
-            <div class="card shadow-sm h-100 border-0 rounded-3 border-top border-4 border-info bg-white">
-                <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+            <div class="card accent-card accent-cyan h-100 shadow-sm">
+                <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center" style="border-color: var(--line) !important;">
                     <div class="d-flex align-items-center gap-2">
-                        <div class="bg-info text-white rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                        <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: rgba(34,211,238,0.15); color: var(--cyan);">
                             <i class="bi bi-globe fs-5"></i>
                         </div>
                         <div>
-                            <h6 class="mb-0 fw-bold">OpenRouter</h6>
-                            <span class="badge bg-light text-info border border-info-subtle" style="font-size: 0.7rem;">Multi LLM Router</span>
+                            <h6 class="mb-0 fw-bold" style="font-family: 'Sora', sans-serif;">OpenRouter</h6>
+                            <span class="badge bg-dark-subtle border" style="font-size: 0.68rem; border-color: var(--line) !important;">Multi LLM Router</span>
                         </div>
                     </div>
                     <div class="d-flex align-items-center gap-2">
@@ -1207,39 +1207,39 @@
                     </div>
                 </div>
                 <div class="card-body p-3 d-flex flex-column">
-                    <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded border">
-                        <small class="text-muted fw-semibold">Status API</small>
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-2 rounded" style="background: var(--bg-panel-2); border: 1px solid var(--line);">
+                        <small class="text-muted fw-semibold" style="font-size: 0.75rem;">Status API</small>
                         <span id="statusBadge_openrouter" class="badge bg-secondary px-2 py-1"><i class="bi bi-arrow-repeat spin"></i> Checking...</span>
                     </div>
 
                     <div class="mb-2">
-                        <small class="text-muted d-block" style="font-size: 0.75rem;">Masked API Key</small>
-                        <code id="maskedKey_openrouter" class="text-dark font-monospace fw-bold fs-7">Belum diisi</code>
+                        <small class="text-muted d-block" style="font-size: 0.72rem;">Masked API Key</small>
+                        <code id="maskedKey_openrouter" class="font-monospace fw-bold fs-7" style="color: var(--text);">Belum diisi</code>
                     </div>
 
                     <div class="mb-3">
-                        <small class="text-muted d-block" style="font-size: 0.75rem;">Model AI Aktif</small>
-                        <span id="model_openrouter" class="badge bg-info-subtle text-dark border border-info-subtle fw-semibold">meta-llama/llama-3.3-70b-instruct</span>
+                        <small class="text-muted d-block" style="font-size: 0.72rem;">Model AI Aktif</small>
+                        <span id="model_openrouter" class="badge bg-dark-subtle border fw-semibold" style="color: var(--cyan); border-color: var(--line) !important;">meta-llama/llama-3.3-70b-instruct</span>
                     </div>
 
                     <!-- Metrics Grid -->
-                    <div class="row g-2 text-center bg-light rounded border p-2 mb-3 my-auto">
-                        <div class="col-4 border-end">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">Latency</small>
-                            <span id="latency_openrouter" class="fw-bold text-dark fs-7">-</span>
+                    <div class="row g-2 text-center rounded p-2 mb-3 my-auto" style="background: var(--bg-panel-2); border: 1px solid var(--line);">
+                        <div class="col-4 border-end" style="border-color: var(--line) !important;">
+                            <small class="text-muted d-block" style="font-size: 0.68rem;">Latency</small>
+                            <span id="latency_openrouter" class="fw-bold fs-7" style="color: var(--text);">-</span>
                         </div>
-                        <div class="col-4 border-end">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">Success %</small>
+                        <div class="col-4 border-end" style="border-color: var(--line) !important;">
+                            <small class="text-muted d-block" style="font-size: 0.68rem;">Success %</small>
                             <span id="rate_openrouter" class="fw-bold text-success fs-7">-</span>
                         </div>
                         <div class="col-4">
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">Total Req</small>
-                            <span id="requests_openrouter" class="fw-bold text-info fs-7">-</span>
+                            <small class="text-muted d-block" style="font-size: 0.68rem;">Total Req</small>
+                            <span id="requests_openrouter" class="fw-bold fs-7" style="color: var(--cyan);">-</span>
                         </div>
                     </div>
 
                     <!-- Detail Timestamps -->
-                    <div class="mb-3 small text-muted border-top pt-2" style="font-size: 0.75rem;">
+                    <div class="mb-3 small text-muted border-top pt-2" style="font-size: 0.72rem; border-color: var(--line) !important;">
                         <div class="d-flex justify-content-between">
                             <span>Sukses Terakhir:</span>
                             <span id="lastSuccess_openrouter" class="fw-semibold text-success">-</span>
@@ -1250,15 +1250,15 @@
                         </div>
                         <div class="d-flex justify-content-between">
                             <span>Pengecekan:</span>
-                            <span id="lastChecked_openrouter" class="fw-semibold text-dark">-</span>
+                            <span id="lastChecked_openrouter" class="fw-semibold" style="color: var(--text);">-</span>
                         </div>
                     </div>
 
                     <div class="d-grid gap-2 mt-auto">
-                        <button class="btn btn-info text-dark btn-sm fw-semibold" onclick="testSingleAiProvider('openrouter')">
+                        <button class="btn btn-primary btn-sm fw-semibold" onclick="testSingleAiProvider('openrouter')">
                             <i class="bi bi-lightning-charge me-1"></i> Test Connection
                         </button>
-                        <button class="btn btn-outline-dark btn-sm" onclick="openApiKeyModal('openrouter', 'OpenRouter', 'meta-llama/llama-3.3-70b-instruct')">
+                        <button class="btn btn-outline-light btn-sm" onclick="openApiKeyModal('openrouter', 'OpenRouter', 'meta-llama/llama-3.3-70b-instruct')">
                             <i class="bi bi-sliders me-1"></i> Kelola Key & Model
                         </button>
                     </div>
@@ -1268,18 +1268,18 @@
     </div>
 
     <!-- Bulk Action bar -->
-    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 p-3 bg-white shadow-sm rounded border">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 p-3 rounded" style="background: var(--bg-panel); border: 1px solid var(--line);">
         <div class="d-flex align-items-center gap-2">
             <button class="btn btn-primary fw-semibold" onclick="testAllAiProviders()"><i class="bi bi-play-circle me-1"></i> Test Seluruh AI Provider</button>
-            <button class="btn btn-outline-secondary" onclick="loadMultiAiStatus()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh Health Status</button>
+            <button class="btn btn-outline-light" onclick="loadMultiAiStatus()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh Health Status</button>
         </div>
         <small class="text-muted"><i class="bi bi-clock-history me-1"></i> Auto Health Check: <strong>Setiap 60 Detik</strong></small>
     </div>
 
     <!-- Multi AI Request Logs Card -->
-    <div class="card shadow-sm mb-4 border-0">
-        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0 fw-bold"><i class="bi bi-list-task text-primary me-2"></i>Log Permintaan Multi-AI Real-Time</h5>
+    <div class="card shadow-sm mb-4">
+        <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-color: var(--line) !important;">
+            <h5 class="mb-0 fw-bold" style="font-family: 'Sora', sans-serif;"><i class="bi bi-list-task text-violet me-2"></i>Log Permintaan Multi-AI Real-Time</h5>
             <div class="d-flex align-items-center gap-2 flex-wrap">
                 <select id="aiLogProviderFilter" class="form-select form-select-sm" style="width: 150px;" onchange="loadMultiAiLogs()">
                     <option value="all">Semua Provider</option>
@@ -1293,13 +1293,13 @@
                     <option value="failed">Gagal</option>
                 </select>
                 <input id="aiLogDateFilter" type="date" class="form-control form-control-sm" style="width: 140px;" onchange="loadMultiAiLogs()">
-                <button class="btn btn-sm btn-outline-secondary" onclick="loadMultiAiLogs()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh</button>
+                <button class="btn btn-sm btn-outline-light" onclick="loadMultiAiLogs()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh</button>
             </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive" style="max-height: 380px;">
                 <table class="table table-hover align-middle mb-0 text-nowrap">
-                    <thead class="table-light">
+                    <thead>
                         <tr>
                             <th>Waktu</th>
                             <th>Provider</th>
@@ -1318,45 +1318,178 @@
             </div>
         </div>
     </div>
+</section>
 
-    <div class="card shadow-sm mt-4">
-        <div class="card-header border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Daftar Knowledge Base RAG</h5>
-            <div class="d-flex align-items-center gap-2 flex-wrap">
-                <div class="input-group input-group-sm" style="width: 220px;">
-                    <span class="input-group-text"><i class="bi bi-search"></i></span>
-                    <input id="kbSearchInput" type="text" class="form-control" placeholder="Cari knowledge..." oninput="filterKnowledgeTable()">
-                </div>
-                <select id="kbCategoryFilter" class="form-select form-select-sm" style="width: 140px;" onchange="filterKnowledgeTable()">
-                    <option value="">Semua Kategori</option>
-                </select>
-                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="loadKnowledgeBase()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh</button>
-                <button type="button" class="btn btn-outline-info btn-sm" id="btnAutoGenerateFaq" onclick="generateProductFaqs()"><i class="bi bi-patch-question me-1"></i> Generate FAQ Produk</button>
-                <button type="button" class="btn btn-outline-success btn-sm" id="btnAutoSeedKnowledge" onclick="reseedKnowledgeBase()"><i class="bi bi-magic me-1"></i> Auto-Generate Knowledge</button>
-                <button type="button" class="btn btn-primary btn-sm" id="btnAddKnowledge" onclick="openAddKnowledgeModal()"><i class="bi bi-plus-circle me-1"></i> Tambah Knowledge</button>
+<!-- Modal Knowledge Base -->
+<div class="modal fade" id="kbModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="kbModalTitle"><i class="bi bi-journal-plus me-2"></i>Tambah Knowledge RAG</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
             </div>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="kbTable">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Judul</th>
-                            <th>Kategori</th>
-                            <th>Keywords</th>
-                            <th>Status</th>
-                            <th>Prioritas</th>
-                            <th class="text-end">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody id="kbTableBody">
-                        <tr><td colspan="6" class="text-center py-3 text-muted">Memuat data Knowledge Base...</td></tr>
-                    </tbody>
-                </table>
+            <div class="modal-body">
+                <form id="kbForm">
+                    <input type="hidden" id="kbId">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label" for="kbTitle">Judul Knowledge</label>
+                            <input id="kbTitle" class="form-control" placeholder="misal: Cara Topup MLBB Instant" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label" for="kbCategory">Kategori</label>
+                            <input id="kbCategory" class="form-control" placeholder="Topup Guide, FAQ, Store Info" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="kbKeywords">Keywords (Kata Kunci Intent)</label>
+                            <input id="kbKeywords" class="form-control" placeholder="topup, ml, mobile legends, cara beli, diamond">
+                            <div class="form-text text-muted">Pisahkan dengan koma. Digunakan oleh NexBot RAG Search Engine untuk mencocokkan pertanyaan user.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="kbContent">Isi Knowledge / Jawaban Acuan</label>
+                            <textarea id="kbContent" class="form-control" rows="5" placeholder="Tuliskan jawaban lengkap atau informasi referensi di sini..." required></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="kbPriority">Prioritas (0 - 100)</label>
+                            <input id="kbPriority" type="number" class="form-control" value="10" min="0" max="100">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="kbStatus">Status</label>
+                            <select id="kbStatus" class="form-select">
+                                <option value="active">Aktif (RAG Live)</option>
+                                <option value="inactive">Nonaktif</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p class="text-danger small mt-2 mb-0" id="kbError"></p>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="btnSaveKnowledge" onclick="saveKnowledge()"><i class="bi bi-floppy me-1"></i> Simpan Knowledge</button>
             </div>
         </div>
     </div>
-</section>
+</div>
+
+<!-- Modal Manage AI Key & Model -->
+<div class="modal fade" id="modalApiKey" tabindex="-1" aria-labelledby="modalApiKeyTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="modalApiKeyTitle">
+                    <i id="modalApiKeyHeaderIcon" class="bi bi-robot text-violet me-2"></i>
+                    Konfigurasi AI Provider: <span id="modalApiKeyProviderTitle" style="color: var(--cyan);">Provider</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formApiKey" onsubmit="event.preventDefault(); saveAiApiKeyFromModal();">
+                    <input type="hidden" id="modalApiKeyProviderId">
+
+                    <!-- Provider Meta & Active Switch -->
+                    <div class="row g-3 align-items-center mb-4 p-3 rounded" style="background: var(--bg-panel-2); border: 1px solid var(--line);">
+                        <div class="col-md-5">
+                            <label class="form-label text-muted small d-block mb-1">PROVIDER ID</label>
+                            <div class="d-flex align-items-center gap-2">
+                                <span id="modalApiKeyBadge" class="badge bg-primary px-3 py-2">Google Gemini</span>
+                                <code id="modalApiKeyMaskedKeyPreview" class="font-monospace fw-bold" style="color: var(--text);">Belum diisi</code>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label text-muted small d-block mb-1">PRIORITAS FAILOVER</label>
+                            <select id="modalApiKeyPriority" class="form-select form-select-sm">
+                                <option value="1">Priority #1 (Utama)</option>
+                                <option value="2">Priority #2 (Kedua)</option>
+                                <option value="3">Priority #3 (Ketiga)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <label class="form-label text-muted small d-block mb-1">STATUS AKTIF</label>
+                            <div class="form-check form-switch d-inline-block">
+                                <input class="form-check-input" type="checkbox" id="modalApiKeyEnabled" checked>
+                                <label class="form-check-label fw-bold" for="modalApiKeyEnabled">Aktif</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Key Section -->
+                    <div class="mb-4">
+                        <label class="form-label fw-bold"><i class="bi bi-key-fill text-warning me-1"></i> API Key Provider</label>
+                        <div class="input-group">
+                            <input type="password" id="modalApiKeyInput" class="form-control font-monospace" placeholder="Masukkan API Key baru atau tempel pengganti..." autocomplete="off">
+                            <button class="btn btn-outline-light" type="button" onclick="toggleShowApiKey()" title="Tampilkan / Sembunyikan Key">
+                                <i id="iconToggleKey" class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-outline-light" type="button" onclick="copyApiKeyToClipboard()" title="Salin Key">
+                                <i class="bi bi-clipboard"></i> Salin
+                            </button>
+                        </div>
+                        <div class="form-text text-muted">Biarkan kosong jika tidak ingin mengupdate API Key yang sudah ada di sistem. Kunci disimpan secara aman & disamarkan.</div>
+                    </div>
+
+                    <!-- Model Selection -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold"><i class="bi bi-cpu text-cyan me-1"></i> Pilih Preset Model AI</label>
+                            <select id="modalApiKeyModelSelect" class="form-select" onchange="onAiModelSelectChange(this.value)">
+                                <!-- Dynamic options according to provider -->
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold"><i class="bi bi-code-square me-1"></i> Nama Model Custom</label>
+                            <input type="text" id="modalApiKeyModelInput" class="form-control font-monospace" placeholder="Atau ketik model custom...">
+                        </div>
+                    </div>
+
+                    <!-- OpenRouter Special Fields (HTTP Referer & App Name) -->
+                    <div id="modalOpenRouterFields" class="p-3 rounded mb-4 d-none" style="background: var(--bg-panel-2); border: 1px solid var(--line);">
+                        <h6 class="fw-bold mb-2" style="color: var(--text);"><i class="bi bi-globe me-1 text-cyan"></i> Pengaturan Khusus OpenRouter</h6>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">HTTP-Referer Header</label>
+                                <input type="url" id="modalApiKeyHttpReferer" class="form-control form-control-sm" placeholder="https://nexshop.id">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold">X-Title (App Name) Header</label>
+                                <input type="text" id="modalApiKeyAppName" class="form-control form-control-sm" placeholder="NexShop NexBot">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Real-Time Connection Test Feedback Inside Modal -->
+                    <div id="modalTestFeedbackAlert" class="alert d-none py-2 mb-3" style="border: 1px solid var(--line);">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span id="modalTestFeedbackText" class="small fw-semibold">Testing...</span>
+                            <span id="modalTestFeedbackBadge" class="badge"></span>
+                        </div>
+                    </div>
+
+                </form>
+            </div>
+            <div class="modal-footer d-flex justify-content-between" style="border-color: var(--line) !important;">
+                <div>
+                    <button type="button" id="btnModalTestConn" class="btn btn-outline-light me-2" onclick="testAiConnectionFromModal()">
+                        <i class="bi bi-lightning-charge me-1"></i> Test Connection
+                    </button>
+                    <button type="button" class="btn btn-outline-light me-2" onclick="resetAiConfigModal()">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Reset Input
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" onclick="deleteAiApiKeyFromModal()">
+                        <i class="bi bi-trash me-1"></i> Hapus Key
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-outline-light me-2" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" id="btnSaveAiConfig" class="btn btn-primary fw-bold" onclick="saveAiApiKeyFromModal()">
+                        <i class="bi bi-floppy me-1"></i> Simpan Konfigurasi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
 
 </div>
 </main>
