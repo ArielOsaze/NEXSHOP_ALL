@@ -1464,9 +1464,6 @@ function renderGamingNews(items) {
         `;
     }).join("");
     section.classList.toggle("hidden", !grid.children.length);
-}      `;
-    }).join("");
-    section.classList.toggle("hidden", !grid.children.length);
 }
 
 async function loadGamingNews() {

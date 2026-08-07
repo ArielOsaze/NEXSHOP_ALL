@@ -465,7 +465,7 @@ header{ position:sticky; top:0; z-index:1000; }
 .hero-text{
     position:relative; z-index:1; max-width:560px; padding:0 6vw;
 }
-.hero-text > *{ opacity:1; transform:none; }
+.hero-text > *{ opacity:0; transform:translateY(20px); }
 .app-ready .hero-text > *{ animation:hero-fade 520ms ease forwards; }
 .app-ready .hero-text > *:nth-child(1){ animation-delay:80ms; }
 .app-ready .hero-text > *:nth-child(2){ animation-delay:160ms; }
