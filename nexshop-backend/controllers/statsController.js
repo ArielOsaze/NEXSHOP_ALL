@@ -299,3 +299,50 @@ exports.getPublicOverview = async (req, res) => {
         res.status(500).json({ message: "Server Error" });
     }
 };
+
+// PUBLIK — Leaderboard Top Spenders
+exports.getLeaderboard = async (req, res) => {
+    try {
+        const [ordersRes, topupRes] = await Promise.all([
+            supabase.from("orders").select("user_id, recipient_email, recipient_name, total, status").eq("status", SUCCESS_ORDER_STATUS),
+            supabase.from("topup_orders").select("user_id, recipient_email, harga, status").eq("status", SUCCESS_TOPUP_STATUS)
+        ]);
+
+        if (ordersRes.error || topupRes.error) {
+            return res.status(500).json({ message: "Gagal mengambil data leaderboard" });
+        }
+
+        const spenders = new Map();
+        
+        function addSpend(id, email, name, amount) {
+            const key = id || email || "Guest";
+            if (!spenders.has(key)) {
+                spenders.set(key, { 
+                    id: key, 
+                    name: name || (email ? email.split('@')[0] : "Guest"), 
+                    email: email,
+                    total_spent: 0 
+                });
+            }
+            spenders.get(key).total_spent += Number(amount || 0);
+        }
+
+        (ordersRes.data || []).forEach(o => addSpend(o.user_id, o.recipient_email, o.recipient_name, o.total));
+        (topupRes.data || []).forEach(t => addSpend(t.user_id, t.recipient_email, null, t.harga));
+
+        const leaderboard = [...spenders.values()]
+            .filter(u => u.id !== "Guest")
+            .sort((a, b) => b.total_spent - a.total_spent)
+            .slice(0, 10)
+            .map(u => ({
+                name: (u.name.length > 3 ? u.name.substring(0, 3) + "***" : u.name + "***"), // Mask name
+                total_spent: u.total_spent
+            }));
+
+        res.json(leaderboard);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+

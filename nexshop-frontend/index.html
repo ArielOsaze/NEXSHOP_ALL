@@ -3,17 +3,94 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NexShop — Digital Gaming Marketplace</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>NexShop - Premium Gaming Store</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                fontFamily: {
+                    sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    serif: ['Plus Jakarta Sans', 'sans-serif'], 
+                },
+                colors: {
+                    brand: {
+                        indigo: '#5d5fef',
+                        cyan: '#00f0ff',
+                        dark: '#08080a',
+                        light: '#f5f5f7',
+                        muted: '#8e8e93',
+                    }
+                },
+                backgroundImage: {
+                    'grain': 'url("https://www.transparenttextures.com/patterns/stardust.png")',
+                },
+                boxShadow: {
+                    'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+                    'glass-light': '0 8px 32px 0 rgba(255, 255, 255, 0.1)',
+                }
+            },
+        },
+    }
+</script>
+<style>
+    /* Subtle Film Grain */
+    .bg-grain-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        pointer-events: none; z-index: 9999; opacity: 0.05;
+        background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
+        background-repeat: repeat;
+    }
+    html.dark .bg-grain-overlay { opacity: 0.03; }
+    /* Glassmorphism utility */
+    .glass-panel {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    html:not(.dark) .glass-panel {
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    .shape-clip-1 { clip-path: polygon(0 0, 100% 5%, 100% 100%, 5% 95%); }
+    .shape-clip-2 { clip-path: polygon(5% 0, 100% 0, 95% 100%, 0 100%); }
+    @keyframes floatSlow {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-15px) rotate(1deg); }
+    }
+    @keyframes revealUp {
+        from { opacity: 0; transform: translateY(30px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .animate-float-slow { animation: floatSlow 8s ease-in-out infinite; }
+    .reveal-up { animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+    .delay-100 { animation-delay: 100ms; }
+    .delay-200 { animation-delay: 200ms; }
+    .delay-300 { animation-delay: 300ms; }
+    .delay-400 { animation-delay: 400ms; }
+    @keyframes scrollText { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    .animate-scroll-text { animation: scrollText 30s linear infinite; }
+    .btn-magnetic { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .btn-magnetic:hover { transform: scale(1.05) translateY(-2px); }
+</style>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <script src="theme-init.js?v=20260803-ui"></script>
 <link rel="stylesheet" href="style.css?v=20260806-spiderweb">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
-<body>
+<body class="font-sans antialiased bg-brand-light dark:bg-[#060608] text-gray-800 dark:text-gray-300 selection:bg-brand-indigo/30 overflow-x-hidden">
+<!-- Ambient Background -->
+<div class="fixed inset-0 z-[-1] pointer-events-none">
+    <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-brand-indigo/20 dark:bg-brand-indigo/10 blur-[120px] rounded-full mix-blend-screen dark:mix-blend-color-dodge"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-brand-cyan/20 dark:bg-brand-cyan/10 blur-[150px] rounded-full mix-blend-screen dark:mix-blend-color-dodge"></div>
+</div>
+<div class="bg-grain-overlay"></div>
 
 <div class="app-loader is-visible" id="appLoader" role="status" aria-live="polite" aria-busy="true">
     <div class="app-loader-glow app-loader-glow--violet"></div>
@@ -92,120 +169,145 @@
     </span>
 </div>
 
-<header>
-    <nav class="navbar">
-        <div class="brand">
-            <div class="logo-wrapper">
-                <img src="images/nexshop-icon.svg" class="logo" id="storeLogoImg" alt="NexShop logo">
-                <!-- Overlay terpisah: tetap terikat pada pusat logo, bukan navbar. -->
-                <div id="eventMascotAnchor" class="event-mascot-anchor" aria-hidden="true"></div>
-            </div>
-            <div class="brand-text">
-                <h1 id="storeNameText">Nex<span>Shop</span></h1>
-                <div class="tagline" id="storeTagline">Play More. Pay Less.</div>
-            </div>
-        </div>
+<nav class="fixed w-full z-50 top-0 transition-all duration-300 px-6 py-4 glass-panel border-b-0 border-x-0 border-t-0" style="background-color: transparent !important; backdrop-filter: none; -webkit-backdrop-filter: none; border: none; box-shadow: none;">
+<div class="max-w-7xl mx-auto flex justify-between items-center">
+<div class="flex items-center gap-3 group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-indigo to-brand-cyan p-[1px] group-hover:rotate-90 transition-transform duration-500">
+<div class="w-full h-full bg-brand-light dark:bg-[#060608] rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan text-lg">sports_esports</span>
+</div>
+</div>
+<span class="font-extrabold text-xl tracking-tight text-gray-900 dark:text-white uppercase" id="storeNameText">NexShop</span>
+</div>
+<div class="hidden md:flex gap-10 items-center">
+<a class="text-sm font-bold text-gray-900 dark:text-white relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-indigo after:scale-x-100 transition-all" href="#games">Katalog</a>
+<a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-cyan after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left" href="#topup">Topup Diamond</a>
+<button type="button" class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors" id="trackOrderBtn">Cek Transaksi</button>
+</div>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors relative" id="cartBtn">
+<span class="material-symbols-outlined text-gray-600 dark:text-gray-300 text-xl">shopping_bag</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-brand-cyan rounded-full animate-ping hidden" id="cartCount"></span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors" id="themeToggle">
+<span class="material-symbols-outlined text-gray-600 dark:text-gray-300 text-xl" id="theme-toggle-icon">light_mode</span>
+</button>
+<div class="w-10 h-10 rounded-full overflow-hidden border border-gray-200 dark:border-white/10 cursor-pointer hover:border-brand-indigo transition-colors ml-2" id="accountBtn">
+<img alt="User" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuABt1gHzdd29XiH3A9kc6cQRk9zVvsdfMqn4owqaqgioace7LLRUP6YSNAvuenbe1rQ6H77l2UwlLoZ5ge8u0m0eHCV8MPBVY9eRg50gyt04elLIWXqqf5xY5y9yPMdEeY461RDyfYLJP5kS-RQvD6AT92Bq3HSovF3laph72b3iUtUfex-OQzUP8e88rT0WZD4i-p1Yprx-S5jkMmd_9SXyGevwctIroGBfGGKUbZWbNjgmQ2LcormFw"/>
+</div>
+</div>
+</div>
+</nav>
 
-        <div class="menu" id="navMenu">
-            <a href="#top">Home</a>
-            <a href="#games">Katalog</a>
-            <a href="#topup">Topup Diamond</a>
-            <button type="button" class="menu-link-btn" id="trackOrderBtn">Cek Transaksi</button>
-            <button type="button" class="menu-link-btn" data-policy-tab="faq">FAQ</button>
-            <button type="button" class="menu-link-btn" data-policy-tab="contact">Kontak</button>
-            <button type="button" class="theme-toggle" id="themeToggle" aria-label="Ganti tema" aria-pressed="false">
-                <span class="theme-toggle-icon" aria-hidden="true"><i class="fa-solid fa-moon"></i></span>
-                <span class="theme-toggle-label">Mode gelap</span>
-            </button>
-            <button class="menu-account-btn" id="accountBtn">Login</button>
-        </div>
-
-        <div class="nav-right">
-            <button class="cart-btn" id="cartBtn" aria-label="Buka keranjang">
-                <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i> <span class="cart-count" id="cartCount">0</span>
-            </button>
-            <button class="menu-toggle" id="menuToggle" aria-label="Buka menu" aria-expanded="false" aria-controls="navMenu">
-                <span></span><span></span><span></span>
-            </button>
-        </div>
-    </nav>
+<header class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 px-6 overflow-hidden" id="top">
+<div class="max-w-7xl mx-auto">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+<div class="lg:col-span-7 z-10 space-y-8 reveal-up">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-indigo/30 bg-brand-indigo/5 text-brand-indigo dark:text-brand-cyan text-xs font-bold uppercase tracking-[0.15em] backdrop-blur-sm">
+<span class="w-2 h-2 rounded-full bg-brand-indigo animate-pulse"></span>
+Premium Digital Goods
+</div>
+<h1 class="text-6xl md:text-8xl font-black text-gray-900 dark:text-white tracking-tighter leading-[0.95]">
+PLAY <span class="text-brand-indigo">MORE</span>,<br/>
+PAY <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">LESS.</span>
+</h1>
+<p class="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-lg font-medium leading-relaxed border-l-2 border-brand-cyan pl-6 tracking-tight">
+Webstore game terlengkap. Dari diskon harian sampai topup instan — aman, cepat, dan terpercaya.
+</p>
+<div class="flex flex-col sm:flex-row gap-5 pt-4">
+<a href="#games" class="btn-magnetic group relative px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-extrabold rounded-2xl overflow-hidden shadow-xl shadow-gray-900/20 dark:shadow-white/10 tracking-tight flex items-center justify-center">
+<div class="absolute inset-0 w-full h-full bg-gradient-to-r from-brand-indigo to-brand-cyan opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+<span class="relative z-10 flex items-center gap-2">Belanja Sekarang <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span></span>
+</a>
+<button onclick="document.getElementById('trackOrderBtn').click()" class="btn-magnetic px-8 py-4 glass-panel text-gray-900 dark:text-white font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors tracking-tight">
+Cek Transaksi
+</button>
+</div>
+</div>
+<div class="lg:col-span-5 relative reveal-up delay-200 hidden lg:block">
+<div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/20 to-brand-cyan/20 blur-3xl rounded-full animate-pulse"></div>
+<div class="relative w-full aspect-square glass-panel rounded-full border border-white/20 p-8 flex items-center justify-center animate-float-slow">
+<div class="w-full h-full rounded-full border border-gray-300 dark:border-white/10 p-6 flex items-center justify-center">
+<div class="w-full h-full rounded-full bg-gradient-to-tr from-brand-indigo/80 to-brand-cyan/80 backdrop-blur-md shadow-2xl flex items-center justify-center overflow-hidden relative">
+<img alt="Texture" class="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-50" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-KvRSCJhh3MLyRjzgq86VY_O7Y0-dTVhPwG7z8fksfZupbcbzgNmsbXvqtOQuiNCsPA_kCHj9bRZs7i4iZdA8-ndy0gflDVNXrQvx0YThIntEhlIpaFs3rqychUVuyI6PVygjeycJ7B1LjpZ7Cl7p8eWcg0-rUJNLS25W41sHdQtzA4wk9VbJpCn2NtrruDLpOvz9ya5E7GVCn0K8bOfAfi1v0gTEx6a8xioo_4b86N0_8IeZgH0iQw"/>
+<span class="material-symbols-outlined text-white text-8xl relative z-10">sports_esports</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="absolute bottom-0 left-0 w-full overflow-hidden py-4 border-y border-gray-200 dark:border-white/5 bg-gray-50/80 dark:bg-[#0a0a0c]/80 backdrop-blur-md">
+<div class="flex whitespace-nowrap animate-scroll-text text-xs font-bold text-gray-500 uppercase tracking-widest gap-8">
+<span>Transaki aman dan cepat 24/7</span> <span class="text-brand-indigo">•</span>
+<span>Pembayaran QRIS & e-Wallet didukung</span> <span class="text-brand-indigo">•</span>
+<span id="trustTotalOrders">- Transaksi Sukses</span> <span class="text-brand-indigo">•</span>
+<span id="trustTotalGames">- Game & Voucher</span> <span class="text-brand-indigo">•</span>
+<span>Transaki aman dan cepat 24/7</span> <span class="text-brand-indigo">•</span>
+<span>Pembayaran QRIS & e-Wallet didukung</span> <span class="text-brand-indigo">•</span>
+<span>100% Legal & Terpercaya</span> <span class="text-brand-indigo">•</span>
+<span>Customer Service siap membantu</span>
+</div>
+</div>
 </header>
 
-<section class="hero-carousel" id="top">
-    <div class="hero-track" id="heroTrack">
-        <!-- Default fallback slide (dipakai saat API promo kosong/gagal) -->
-        <div class="hero-slide" style="background-image:linear-gradient(120deg, rgba(14,18,36,0.6), rgba(6,8,18,0.2));">
-            <div class="hero-text">
-                <span class="hero-badge">Pilihan Editor</span>
-                <h2>Temukan game favorit dengan penawaran terbaik</h2>
-                <p>Dari diskon harian sampai topup instan — aman, cepat, dan terpercaya.</p>
-                <a href="#games" class="hero-cta">Belanja Sekarang</a>
+<main class="max-w-7xl mx-auto px-6 py-20 space-y-32">
+
+<!-- Leaderboard Section (NEW) -->
+<section class="reveal-up delay-100" id="leaderboardSection">
+    <div class="flex items-end justify-between mb-12">
+        <div>
+            <div class="flex items-center gap-2 mb-3">
+                <span class="w-8 h-[2px] bg-brand-indigo"></span>
+                <span class="text-brand-indigo font-bold uppercase tracking-widest text-sm">Hall of Fame</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight">Top <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">Spenders</span></h2>
+        </div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="leaderboardGrid">
+        <!-- JS akan populate ini -->
+    </div>
+</section>
+
+<!-- Top-Up Section -->
+<section class="reveal-up delay-200" id="topup">
+    <div class="flex items-end justify-between mb-12">
+        <div>
+            <div class="flex items-center gap-2 mb-3">
+                <span class="w-8 h-[2px] bg-brand-cyan"></span>
+                <span class="text-brand-cyan font-bold uppercase tracking-widest text-sm">Instan & Otomatis</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight">Top-Up <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">Terpopuler</span></h2>
+        </div>
+    </div>
+    <div class="topup-game-grid grid grid-cols-1 md:grid-cols-3 gap-8" id="topupGameGrid">
+    </div>
+</section>
+
+<!-- Produk & Voucher -->
+<section class="reveal-up delay-300" id="games">
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
+        <div>
+            <div class="flex items-center gap-2 mb-3">
+                <span class="w-8 h-[2px] bg-brand-indigo"></span>
+                <span class="text-brand-indigo font-bold uppercase tracking-widest text-sm">Katalog Lengkap</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight">Produk & <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">Voucher</span></h2>
+        </div>
+        
+        <div class="flex gap-4 catalog-controls">
+            <div class="relative catalog-search-wrap">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                <input type="text" id="searchProductInput" placeholder="Cari game..." class="w-full md:w-64 pl-12 pr-4 py-3 bg-white dark:bg-[#0a0a0c] border border-gray-200 dark:border-white/10 rounded-xl focus:border-brand-indigo dark:focus:border-brand-cyan outline-none transition-colors text-gray-900 dark:text-white font-medium" />
+                <button type="button" id="searchClearBtn" class="search-clear-btn hidden absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="search-meta hidden" id="searchMeta">
+                <span class="search-count-badge" id="searchCountBadge">0 Produk</span>
             </div>
         </div>
-        <!-- slide diisi otomatis oleh JS dari /api/promo -->
     </div>
-    <button class="hero-arrow hero-arrow-left" id="heroPrev" aria-label="Sebelumnya">‹</button>
-    <button class="hero-arrow hero-arrow-right" id="heroNext" aria-label="Berikutnya">›</button>
-    <div class="hero-dots" id="heroDots"></div>
-</section>
-
-<section class="trust-bar" id="trustBar" aria-label="Kenapa pilih NexShop">
-    <div class="trust-stats" id="trustStats">
-        <div class="trust-stat">
-            <span class="trust-stat-value" id="trustTotalOrders">-</span>
-            <span class="trust-stat-label">Transaksi Sukses</span>
-        </div>
-        <div class="trust-stat">
-            <span class="trust-stat-value" id="trustTotalGames">-</span>
-            <span class="trust-stat-label">Game &amp; Voucher Didukung</span>
-        </div>
-        <div class="trust-stat">
-            <span class="trust-stat-value">24/7</span>
-            <span class="trust-stat-label">Proses Otomatis</span>
-        </div>
-    </div>
-    <div class="trust-badges">
-        <div class="trust-badge"><span class="trust-badge-icon" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span><span>Proses Instan</span></div>
-        <div class="trust-badge"><span class="trust-badge-icon" aria-hidden="true"><i class="fa-solid fa-lock"></i></span><span>Pembayaran Aman</span></div>
-        <div class="trust-badge"><span class="trust-badge-icon" aria-hidden="true"><i class="fa-solid fa-comments"></i></span><span>CS Responsif</span></div>
-        <div class="trust-badge"><span class="trust-badge-icon" aria-hidden="true"><i class="fa-solid fa-rotate-left"></i></span><span>Garansi Full Refund</span></div>
-    </div>
-</section>
-
-<main>
-
-<section class="games" id="games">
-    <div class="section-heading">
-        <span class="eyebrow">Katalog Toko</span>
-        <h3>Katalog Populer</h3>
-        <p>Dipilih langsung dari yang paling laris minggu ini</p>
-    </div>
-
-    <div class="catalog-controls">
-        <div class="catalog-search-wrap">
-            <span class="search-icon" aria-hidden="true"><i class="fa-solid fa-magnifying-glass"></i></span>
-            <input type="text" id="searchProductInput" placeholder="Cari game, voucher, atau produk..." aria-label="Cari produk dalam katalog">
-            <button type="button" id="searchClearBtn" class="search-clear-btn hidden" aria-label="Bersihkan pencarian"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-        <div class="search-meta" id="searchMeta">
-            <span class="search-count-badge" id="searchCountBadge">0 Produk</span>
-        </div>
-    </div>
-
-    <div class="category-filter" id="categoryFilter"></div>
-
-    <div class="card-grid" id="cardGrid"></div>
-</section>
-
-
-<section class="topup-section" id="topup">
-    <div class="section-heading topup-heading">
-        <span class="eyebrow eyebrow-cyan">Instan &amp; Otomatis</span>
-        <h3>Topup Diamond &amp; Voucher Game</h3>
-        <p>Pilih game kamu, masukkan ID, bayar — diamond/voucher langsung masuk otomatis 24 jam.</p>
-    </div>
-
-    <div class="topup-game-grid" id="topupGameGrid"></div>
+    <div class="category-filter flex gap-2 mb-8 overflow-x-auto pb-4 hide-scrollbar" id="categoryFilter"></div>
+    <div class="card-grid grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6" id="cardGrid"></div>
 </section>
 
 <!-- Topup Detail (halaman penuh, bukan modal) -->
@@ -309,13 +411,18 @@
     </div>
 </section>
 
-<section class="news-section hidden" id="news" aria-labelledby="newsTitle">
-    <div class="section-heading">
-        <span class="eyebrow">Pilihan Redaksi</span>
-        <h3 id="newsTitle">Latest Gaming News</h3>
-        <p>Ringkasan kabar gaming dari publisher tepercaya. Baca artikel lengkap di sumber aslinya.</p>
+<!-- Gaming News -->
+<section class="reveal-up delay-400 hidden" id="news" aria-labelledby="newsTitle">
+    <div class="flex items-end justify-between mb-12">
+        <div>
+            <div class="flex items-center gap-2 mb-3">
+                <span class="w-8 h-[2px] bg-brand-cyan"></span>
+                <span class="text-brand-cyan font-bold uppercase tracking-widest text-sm">Pilihan Redaksi</span>
+            </div>
+            <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight" id="newsTitle">Latest Gaming <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">News</span></h2>
+        </div>
     </div>
-    <div class="news-grid" id="newsGrid" aria-live="polite"></div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="newsGrid" aria-live="polite"></div>
 </section>
 
 <!-- Detail tetap berada di NexShop; hanya tombol sumber asli yang membuka publisher. -->
