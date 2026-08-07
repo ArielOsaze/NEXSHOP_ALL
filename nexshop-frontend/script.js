@@ -1390,20 +1390,10 @@ function renderGamingNewsSkeleton() {
     const grid = document.getElementById("newsGrid");
     if (!section || !grid) return;
     section.classList.remove("hidden");
-    grid.innerHTML = Array.from({ length: 3 }, () => `
-        <article class="bg-white dark:bg-[#0a0a0c] rounded-2xl overflow-hidden border border-gray-200 dark:border-white/5 flex flex-col" aria-label="Memuat berita">
-            <div class="w-full aspect-video bg-gray-200 dark:bg-white/5 animate-pulse"></div>
-            <div class="p-6 flex flex-col flex-1 gap-4">
-                <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded-full bg-gray-200 dark:bg-white/10 animate-pulse"></div>
-                    <div class="w-20 h-4 bg-gray-200 dark:bg-white/10 animate-pulse rounded"></div>
-                </div>
-                <div class="w-full h-6 bg-gray-200 dark:bg-white/10 animate-pulse rounded"></div>
-                <div class="w-3/4 h-6 bg-gray-200 dark:bg-white/10 animate-pulse rounded mb-2"></div>
-                <div class="w-full h-4 bg-gray-200 dark:bg-white/5 animate-pulse rounded"></div>
-                <div class="w-full h-4 bg-gray-200 dark:bg-white/5 animate-pulse rounded"></div>
-                <div class="mt-auto w-24 h-4 bg-gray-200 dark:bg-white/10 animate-pulse rounded"></div>
-            </div>
+    grid.innerHTML = Array.from({ length: 4 }, () => `
+        <article class="news-card news-card-skeleton" aria-label="Memuat berita">
+            <div class="news-skeleton news-skeleton-image"></div>
+            <div class="news-card-body"><div class="news-skeleton news-skeleton-meta"></div><div class="news-skeleton news-skeleton-title"></div><div class="news-skeleton news-skeleton-copy"></div><div class="news-skeleton news-skeleton-copy short"></div><div class="news-skeleton news-skeleton-button"></div></div>
         </article>`).join("");
 }
 
@@ -1423,36 +1413,23 @@ function renderGamingNews(items) {
         const source = String(item.source || "Publisher");
         const publisherLogoUrl = safeUrl(item.publisher_logo_url);
         const publisherMark = publisherLogoUrl
-            ? `<img class="w-6 h-6 rounded-full" src="${escapeHtml(publisherLogoUrl)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
-            : `<span class="w-6 h-6 rounded-full bg-brand-indigo/20 text-brand-indigo flex items-center justify-center text-[10px] font-bold" aria-hidden="true">${escapeHtml(newsSourceInitial(source))}</span>`;
+            ? `<img class="news-source-logo-image" src="${escapeHtml(publisherLogoUrl)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
+            : `<span class="news-source-logo" aria-hidden="true">${escapeHtml(newsSourceInitial(source))}</span>`;
         return `
-            <article class="group relative bg-white dark:bg-[#0a0a0c] rounded-2xl overflow-hidden border border-gray-200 dark:border-white/5 hover:border-brand-indigo/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer flex flex-col" onclick="openGamingNewsDetail(${Number(item.id)})">
-                <div class="absolute inset-0 bg-gradient-to-b from-transparent to-brand-indigo/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                <div class="relative w-full aspect-video overflow-hidden">
-                    <img src="${escapeHtml(imageUrl)}" alt="" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
-                    <div class="absolute top-4 left-4 bg-gray-900/80 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
-                        ${escapeHtml(item.category || "Gaming")}
-                    </div>
+            <article class="news-card${item.is_featured ? " is-featured" : ""}" style="--news-index:${Math.min(index, 5)}">
+                <button class="news-card-image" type="button" onclick="openGamingNewsDetail(${Number(item.id)})" aria-label="Lihat ringkasan ${escapeHtml(item.title)}">
+                    <img src="${escapeHtml(imageUrl)}" alt="" loading="lazy" decoding="async">
+                </button>
+                <div class="news-card-body">
+                    <div class="news-card-meta"><span>${escapeHtml(item.category || "Gaming")}</span><span class="news-card-source">${publisherMark}${escapeHtml(source)}</span><span>${escapeHtml(formatNewsDate(item.published_at))}</span><span>${escapeHtml(newsReadingTime(item.summary))}</span></div>
+                    <h4>${escapeHtml(item.title)}</h4>
+                    <p class="news-card-summary">${escapeHtml(shortNewsSummary(item.summary))}</p>
+                    <button class="news-card-link" type="button" onclick="openGamingNewsDetail(${Number(item.id)})">View Summary <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></button>
                 </div>
-                <div class="p-6 flex flex-col flex-1 relative z-10">
-                    <div class="flex items-center gap-2 mb-3">
-                        ${publisherMark}
-                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400">${escapeHtml(source)}</span>
-                        <span class="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-                        <span class="text-xs text-gray-400">${escapeHtml(newsReadingTime(item.summary))}</span>
-                    </div>
-                    <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-brand-indigo transition-colors leading-snug">
-                        ${escapeHtml(item.title)}
-                    </h4>
-                    <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-6 font-medium leading-relaxed">
-                        ${escapeHtml(shortNewsSummary(item.summary))}
-                    </p>
-                    <div class="mt-auto flex items-center text-sm font-bold text-brand-indigo group-hover:text-brand-cyan transition-colors">
-                        View Summary <span class="material-symbols-outlined ml-1 text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
-                    </div>
-                </div>
-            </article>
-        `;
+            </article>`;
+    }).join("");
+    section.classList.toggle("hidden", !grid.children.length);
+}      `;
     }).join("");
     section.classList.toggle("hidden", !grid.children.length);
 }
@@ -2093,23 +2070,12 @@ function renderTopupGameGrid() {
     }
 
     grid.innerHTML = TOPUP_GAMES.map(g => `
-        <div class="group relative bg-white dark:bg-[#0a0a0c] rounded-2xl p-6 border border-gray-200 dark:border-white/5 hover:border-brand-cyan/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
-            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-brand-cyan/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none"></div>
-            <div class="flex items-center gap-6 relative z-10">
-                <div class="w-20 h-20 rounded-2xl overflow-hidden shrink-0 shadow-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center p-2">
-                    ${g.logo ? `<img src="${escapeHtml(safeUrl(g.logo))}" alt="${escapeHtml(g.kategori)}" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" loading="lazy">` : `<span class="material-symbols-outlined text-4xl text-gray-400">sports_esports</span>`}
-                </div>
-                <div>
-                    <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-brand-cyan transition-colors">${escapeHtml(g.kategori)}</h4>
-                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 rounded-full text-xs font-bold">
-                        <span class="material-symbols-outlined text-[14px]">inventory_2</span>
-                        ${g.products.length} Produk
-                    </span>
-                </div>
+        <div class="topup-game-card" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
+            <div class="tgc-logo">
+                ${g.logo ? `<img src="${escapeHtml(safeUrl(g.logo))}" alt="${escapeHtml(g.kategori)}" loading="lazy">` : `<span class="diamond-icon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>`}
             </div>
-            <div class="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-brand-cyan/10 text-brand-cyan flex items-center justify-center opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300">
-                <span class="material-symbols-outlined">arrow_forward</span>
-            </div>
+            <h5>${escapeHtml(g.kategori)}</h5>
+            <span class="tgc-count">${g.products.length} produk</span>
         </div>
     `).join("");
 
@@ -2961,7 +2927,7 @@ function renderLeaderboard(data) {
     grid.innerHTML = data.map((user, idx) => `
         <div class="group relative bg-white dark:bg-[#0a0a0c] rounded-2xl p-6 border border-gray-200 dark:border-white/5 hover:border-brand-indigo/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex items-center gap-4">
             <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white relative">
-                ${idx < 3 ? `<span class="material-symbols-outlined absolute -top-2 -right-2 ${medals[idx]} drop-shadow-md text-2xl">military_tech</span>` : ''}
+                ${idx < 3 ? `<i class="fa-solid fa-medal absolute -top-2 -right-2 ${medals[idx]} drop-shadow-md text-2xl"></i>` : ''}
                 ${idx + 1}
             </div>
             <div>
@@ -2969,7 +2935,7 @@ function renderLeaderboard(data) {
                 <div class="text-sm font-medium text-brand-cyan">${rupiah(user.total_spent)}</div>
             </div>
             <div class="ml-auto w-10 h-10 rounded-full bg-brand-indigo/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <span class="material-symbols-outlined text-brand-indigo">workspace_premium</span>
+                <i class="fa-solid fa-award text-brand-indigo"></i>
             </div>
         </div>
     `).join("");
