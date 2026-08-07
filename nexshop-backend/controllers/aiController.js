@@ -4,6 +4,7 @@ const axios = require("axios");
 const { getStoreSettings, getApiKeys, DEFAULT_GEMINI_MODEL, callGeminiWithFallback } = require("../config/settings");
 const { normalizeQuery, detectIntent, detectEntities, rankKnowledge, buildKnowledgeResponse } = require("../utils/nexbotEngine");
 const aiProviderManager = require("../services/aiProviderManager");
+const supabase = require("../config/db");
 
 function maskKey(value) {
     return aiProviderManager.maskKey(value);

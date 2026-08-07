@@ -715,6 +715,18 @@
     </div>
 </div>
 
+<!-- Payment Waiting Modal -->
+<div class="overlay" id="paymentWaitingOverlay">
+    <div class="modal payment-waiting-modal" role="dialog" aria-modal="true" aria-labelledby="paymentWaitingTitle">
+        <div class="modal-content" style="text-align: center; padding: 2rem;">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size: 3rem; color: var(--violet); margin-bottom: 1rem;"></i>
+            <h3 id="paymentWaitingTitle" style="margin-bottom: 0.5rem;">Menunggu Pembayaran...</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">Silakan selesaikan pembayaran di jendela popup iPaymu yang baru saja terbuka.</p>
+            <button class="btn-secondary" id="paymentWaitingCloseBtn" style="width: 100%;">Batalkan / Tutup</button>
+        </div>
+    </div>
+</div>
+
 <!-- NexBot Floating Chatbot Widget -->
 <div class="nexbot-widget" id="nexbotWidget">
     <button type="button" class="nexbot-float-btn" id="nexbotFloatBtn" aria-label="Tanya NexBot">

@@ -1145,7 +1145,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
         checkoutItems = null;
         checkoutSource = "cart";
 
-        window.location.href = data.paymentUrl;
+        openIpaymuPopup(data.paymentUrl, data.orderId, false);
     } catch (err) {
         toast("Gagal terhubung ke server.", "error");
         submitBtn.disabled = false;
@@ -1996,6 +1996,8 @@ function formatPolicyText(text) {
 let TOPUP_PRODUCTS = [];
 let TOPUP_GAMES = [];
 
+let ipaymuPollingInterval = null;
+
 let twState = {
     kategori: null,
     step: 1,
@@ -2123,7 +2125,7 @@ function openGameDetail(kategori) {
 function closeGameDetail() {
     document.getElementById("topupDetail").classList.add("hidden");
     document.getElementById("topup").classList.remove("hidden");
-    document.getElementById("topup").scrollIntoView({ behavior: "smooth", block: "start" });
+    window.scrollTo({ top: document.getElementById("topup").offsetTop - 90, behavior: "smooth" });
 }
 document.getElementById("twBackBtn").addEventListener("click", closeGameDetail);
 
@@ -2431,7 +2433,7 @@ async function submitTopupOrder() {
             return;
         }
 
-        window.location.href = data.paymentUrl;
+        openIpaymuPopup(data.paymentUrl, data.orderId, true);
     } catch (err) {
         errorEl.textContent = "Gagal terhubung ke server.";
         btn.disabled = false;
@@ -2461,6 +2463,71 @@ function openTrackModalWithResult(data, options = {}) {
     document.getElementById("trackForm").classList.add("hidden");
     renderTrackResult(data, options);
     openOverlay("trackOverlay");
+}
+
+/* ---------- iPaymu Popup Checkout ---------- */
+function openIpaymuPopup(paymentUrl, orderId, isTopup) {
+    const w = 600;
+    const h = 700;
+    const left = (window.screen.width / 2) - (w / 2);
+    const top = (window.screen.height / 2) - (h / 2);
+    const popup = window.open(paymentUrl, "iPaymuCheckout", `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
+    
+    document.getElementById("paymentWaitingOverlay").style.display = "flex";
+    
+    const closeBtn = document.getElementById("paymentWaitingCloseBtn");
+    const handleClose = () => {
+        if (popup && !popup.closed) popup.close();
+        document.getElementById("paymentWaitingOverlay").style.display = "none";
+        if (ipaymuPollingInterval) clearInterval(ipaymuPollingInterval);
+        closeBtn.removeEventListener("click", handleClose);
+        
+        // Reset button states
+        const checkoutBtn = document.getElementById("checkoutForm")?.querySelector('button[type="submit"]');
+        if (checkoutBtn) {
+            checkoutBtn.disabled = false;
+            checkoutBtn.textContent = "Bayar Sekarang";
+        }
+        const twNextBtn = document.getElementById("twNextBtn");
+        if (twNextBtn) {
+            twNextBtn.disabled = false;
+            twNextBtn.textContent = "Bayar Sekarang";
+        }
+    };
+    closeBtn.addEventListener("click", handleClose);
+
+    const endpoint = isTopup
+        ? `${API_BASE}/topup/track/${encodeURIComponent(orderId)}`
+        : `${API_BASE}/orders/track/${encodeURIComponent(orderId)}`;
+
+    if (ipaymuPollingInterval) clearInterval(ipaymuPollingInterval);
+    ipaymuPollingInterval = setInterval(async () => {
+        if (popup && popup.closed) {
+            handleClose();
+            return;
+        }
+        try {
+            const res = await fetch(endpoint);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.status === "paid" || data.status === "sukses") {
+                    handleClose();
+                    
+                    if (isTopup) {
+                        document.getElementById("twStep3Error").textContent = "";
+                        closeGameDetail();
+                        toast("Pembayaran Topup Berhasil!", "success");
+                        openTrackModalWithResult(data, { isTopup: true });
+                    } else {
+                        document.getElementById("checkoutStep").classList.add("hidden");
+                        document.getElementById("checkoutSuccess").classList.remove("hidden");
+                    }
+                }
+            }
+        } catch(e) {
+            // Ignore polling errors
+        }
+    }, 3000);
 }
 
 async function checkPaymentReturn() {
