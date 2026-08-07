@@ -4108,6 +4108,7 @@ async function testSingleAiProvider(providerId) {
 
         const res = await apiFetch("/admin/ai/test", {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ provider_id: providerId })
         });
 
@@ -4147,6 +4148,7 @@ async function toggleAiProvider(providerId, enabled) {
     try {
         const res = await apiFetch("/admin/ai/provider", {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id: providerId, enabled })
         });
         const json = await res.json().catch(() => ({}));
@@ -4303,12 +4305,14 @@ async function testAiConnectionFromModal() {
         if (apiKey) {
             await apiFetch("/admin/ai/apikey", {
                 method: "POST",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id, api_key: apiKey, model })
             });
         }
 
         const res = await apiFetch("/admin/ai/test", {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ provider_id: id })
         });
         const json = await res.json().catch(() => ({}));
@@ -4369,6 +4373,7 @@ async function saveAiApiKeyFromModal() {
 
         const res = await apiFetch("/admin/ai/apikey", {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
         const json = await res.json().catch(() => ({}));
@@ -4402,6 +4407,7 @@ async function deleteAiApiKeyFromModal() {
     try {
         const res = await apiFetch("/admin/ai/apikey", {
             method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ id, api_key: "", enabled: false })
         });
         const json = await res.json().catch(() => ({}));
@@ -4481,4 +4487,3 @@ async function loadMultiAiLogs() {
         tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-3">Gagal memuat log: ${escapeHtml(err.message)}</td></tr>`;
     }
 }
-
