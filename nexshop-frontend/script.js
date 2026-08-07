@@ -2702,15 +2702,23 @@ function parseMarkdownToHtml(text) {
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
 
-    // Format bold & italic
-    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
+    // Hapus heading hashes dan jadikan bold (misal: ### Judul)
+    html = html.replace(/^#+\s+(.*)/gm, "<strong>$1</strong>");
 
-    // Format bullets (- atau •)
-    html = html.replace(/(?:^|\n)(?:•|-|\*)\s+(.*)/g, "<br>• $1");
+    // Format bold
+    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    
+    // Format bullets (- atau • atau *) sebelum italic agar tidak bertabrakan
+    html = html.replace(/(?:^|\n)(?:•|-|\*)\s+(.*)/g, "\n• $1");
+
+    // Format italic
+    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
 
     // Replace ganti baris ganda dan tunggal
     html = html.replace(/\n\n/g, "<br><br>").replace(/\n/g, "<br>");
+    
+    // Cleanup <br> berlebih di awal akibat replace baris pertama
+    html = html.replace(/^(?:<br>)+/, "");
 
     return html.trim();
 }
