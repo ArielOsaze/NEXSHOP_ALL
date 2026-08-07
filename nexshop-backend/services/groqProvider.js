@@ -6,8 +6,8 @@ const DEFAULT_MODEL = "llama-3.3-70b-versatile";
 const FALLBACK_MODELS = [
     "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant",
-    "llama3-70b-8192",
-    "mixtral-8x7b-32768"
+    "mixtral-8x7b-32768",
+    "gemma2-9b-it"
 ];
 
 async function generateContent({ apiKey, preferredModel, prompt, systemPrompt = "", timeoutMs = 10000 }) {
@@ -22,6 +22,8 @@ async function generateContent({ apiKey, preferredModel, prompt, systemPrompt = 
         const messages = [];
         if (systemPrompt) messages.push({ role: "system", content: systemPrompt });
         messages.push({ role: "user", content: prompt });
+
+        console.log(`\n[AI Request] Provider: Groq AI | Model: ${modelCandidate}`);
 
         try {
             const res = await axios.post(
@@ -49,6 +51,9 @@ async function generateContent({ apiKey, preferredModel, prompt, systemPrompt = 
                 throw new Error(`Respons Groq (${modelCandidate}) tidak berisi konten`);
             }
 
+            console.log(`[AI Response] Provider: Groq AI | Model: ${modelCandidate} | HTTP Status: ${res.status} | Latency: ${latencyMs}ms`);
+            console.log(`[AI Response Received]: "${text.trim().slice(0, 150)}..."`);
+
             return {
                 provider: "groq",
                 providerName: "Groq AI",
@@ -61,18 +66,22 @@ async function generateContent({ apiKey, preferredModel, prompt, systemPrompt = 
                 error: null
             };
         } catch (err) {
+            const latencyMs = Date.now() - startTime;
             const httpStatus = err.response?.status || 500;
             const errorMessage = err.response?.data?.error?.message || err.message;
             lastError = errorMessage;
             lastHttpStatus = httpStatus;
 
-            const isModelOrQuotaError = httpStatus === 404 || httpStatus === 429 ||
-                (httpStatus === 400 && /model|not available|deprecated|not supported|not found/i.test(errorMessage));
+            console.error(`[AI Error] Provider: Groq AI | Model: ${modelCandidate} | HTTP Status: ${httpStatus} | Latency: ${latencyMs}ms`);
+            console.error(`[AI Error Stack]:`, err.stack || errorMessage);
 
-            if (isModelOrQuotaError) {
+            const isModelOrQuotaError = httpStatus === 404 || httpStatus === 429 ||
+                (httpStatus === 400 && /model|not available|deprecated|not supported|not found|decommissioned/i.test(errorMessage));
+
+            if (isModelOrQuotaError && modelCandidates.indexOf(modelCandidate) < modelCandidates.length - 1) {
+                console.warn(`⚠️ Model Groq '${modelCandidate}' kendala. Mencoba candidate berikutnya...`);
                 continue;
             } else {
-                const latencyMs = Date.now() - startTime;
                 return {
                     provider: "groq",
                     providerName: "Groq AI",

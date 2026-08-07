@@ -9,39 +9,7 @@ function maskKey(value) {
     return aiProviderManager.maskKey(value);
 }
 
-async function callGeminiApi(userMessage, selectedKnowledge, apiKey, model) {
-    const knowledgeText = selectedKnowledge.length ? buildKnowledgeResponse(selectedKnowledge) : "Belum ada informasi khusus untuk pertanyaan ini.";
-    const systemPrompt = `Kamu adalah NexBot, asisten AI resmi dari toko game & e-commerce NexShop.
-Tugas kamu adalah menjawab pertanyaan pelanggan secara ramah, profesional, dan membantu dalam bahasa Indonesia.
-Gunakan FAKTA KNOWLEDGE BASE NEXSHOP di bawah ini sebagai sumber kebenaran utama:
-
---- FAKTA KNOWLEDGE BASE ---
-${knowledgeText}
-----------------------------
-
-Aturan menjawab:
-1. Jawab pertanyaan user berdasarkan Fakta Knowledge Base jika relevan.
-2. Jangan mengarang kebijakan pembayaran, cara topup, atau harga yang bertentangan dengan fakta di atas.
-3. Jawab singkat, jelas, dan ramah dengan format markdown yang rapi.`;
-
-    const contents = [
-        {
-            role: "user",
-            parts: [
-                { text: systemPrompt },
-                { text: `Pertanyaan Pengguna: ${userMessage}` }
-            ]
-        }
-    ];
-
-    return await callGeminiWithFallback({
-        apiKey,
-        preferredModel: model || DEFAULT_GEMINI_MODEL,
-        contents,
-        generationConfig: { temperature: 0.3, maxOutputTokens: 800 },
-        timeoutMs: 10000
-    });
-}
+// Shared AI calls route through aiProviderManager.
 
 async function logGeminiRequest({ userMessage, modelUsed, responseTimeMs, tokenUsage, httpStatus, isSuccess, errorMessage, userId, sessionId }) {
     const payload = {
@@ -289,7 +257,13 @@ Aturan menjawab:
             reply = aiRes.reply;
             source = aiRes.provider; // e.g. "gemini", "groq", "openrouter"
         } else {
-            reply = result.selected.length ? buildKnowledgeResponse(result.selected) : unavailableReply();
+            console.error("❌ AI Provider Manager failed for prompt:", message);
+            console.error("   Error details:", aiRes.error);
+            if (process.env.NODE_ENV !== "production") {
+                reply = `[Dev Mode AI Error]: ${aiRes.error || "Semua AI Provider gagal merespons"}`;
+            } else {
+                reply = result.selected.length ? buildKnowledgeResponse(result.selected) : unavailableReply();
+            }
             source = result.selected.length ? "knowledge" : "handoff";
         }
     }
@@ -312,8 +286,11 @@ exports.chat = async (req, res) => {
         const result = await answer(message, sessionId, req.user || null);
         return res.json({ reply: result.reply, session_id: sessionId, handoff: result.handoff, source: result.source, intent: result.intent, knowledge_ids: result.knowledgeIds });
     } catch (error) {
-        console.error("NexBot chat error:", error.message);
-        return res.status(500).json({ message: "NexBot sedang mengalami kendala. Silakan coba lagi." });
+        console.error("❌ NexBot chat error stack:", error.stack || error);
+        const errorMessage = process.env.NODE_ENV !== "production"
+            ? `NexBot Error: ${error.message}`
+            : "NexBot sedang mengalami kendala. Silakan coba lagi.";
+        return res.status(500).json({ message: errorMessage, error: error.message });
     }
 };
 
@@ -409,56 +386,8 @@ exports.getAnalytics = async (_req, res) => {
 
 exports.testGeminiConnection = async (req, res) => {
     try {
-        const keys = await getApiKeys({ fresh: true });
-        const apiKey = keys.gemini_api_key || process.env.GEMINI_API_KEY || "";
-        const preferredModel = keys.gemini_news_model || DEFAULT_GEMINI_MODEL;
-
-        if (!apiKey) {
-            return res.status(400).json({
-                success: false,
-                connected: false,
-                message: "GEMINI_API_KEY belum diisi di Settings atau .env",
-                model: preferredModel,
-                masked_key: maskKey(apiKey)
-            });
-        }
-
-        const testRes = await callGeminiApi("Ping test koneksi Gemini AI NexShop.", [], apiKey, preferredModel);
-        const actualModel = testRes.activeModel || preferredModel;
-        await logGeminiRequest({
-            userMessage: "[ADMIN_PING_TEST] Connection check",
-            modelUsed: actualModel,
-            responseTimeMs: testRes.responseTimeMs,
-            tokenUsage: testRes.tokenUsage,
-            httpStatus: testRes.httpStatus,
-            isSuccess: testRes.success,
-            errorMessage: testRes.error,
-            userId: req.user?.id,
-            sessionId: "admin-test"
-        });
-
-        if (!testRes.success) {
-            return res.status(testRes.httpStatus || 500).json({
-                success: false,
-                connected: false,
-                message: testRes.error || "Gagal menghubungi Gemini API",
-                latency_ms: testRes.responseTimeMs,
-                http_status: testRes.httpStatus,
-                model: actualModel,
-                masked_key: maskKey(apiKey)
-            });
-        }
-
-        return res.json({
-            success: true,
-            connected: true,
-            message: "Koneksi ke Gemini API berhasil dan responsif!",
-            latency_ms: testRes.responseTimeMs,
-            http_status: testRes.httpStatus,
-            model: actualModel,
-            masked_key: maskKey(apiKey),
-            reply: testRes.reply
-        });
+        const result = await aiProviderManager.testSingleProvider("gemini", req.user?.id);
+        return res.status(result.success ? 200 : (result.httpStatus || 500)).json(result);
     } catch (err) {
         return res.status(500).json({ success: false, connected: false, message: err.message || "Gagal melakukan uji koneksi Gemini" });
     }

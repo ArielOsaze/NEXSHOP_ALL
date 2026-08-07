@@ -173,7 +173,11 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
     const providersList = await loadProviderSettings();
     const enabledProviders = providersList.filter((p) => p.enabled && p.api_key);
 
+    console.log(`\n================== [AI PROVIDER MANAGER EXECUTING] ==================`);
+    console.log(`Available Enabled Providers: ${enabledProviders.map(p => `${p.provider} (Priority ${p.priority})`).join(", ") || "None"}`);
+
     if (!enabledProviders.length) {
+        console.error("❌ [AI PROVIDER MANAGER ERROR]: Tidak ada AI Provider yang aktif atau memiliki API Key terpasang.");
         return {
             success: false,
             reply: null,
@@ -188,6 +192,8 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
         const driver = PROVIDERS[pConfig.id];
         if (!driver) continue;
 
+        console.log(`👉 Selected Provider: ${pConfig.provider} (${pConfig.id}) | Configured Model: ${pConfig.model}`);
+
         const res = await driver.generateContent({
             apiKey: pConfig.api_key,
             preferredModel: pConfig.model,
@@ -197,6 +203,16 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
             appName: pConfig.app_name,
             timeoutMs: 10000
         });
+
+        console.log(`📊 Provider Result Details:`);
+        console.log(`   - Current Provider: ${res.providerName || pConfig.provider}`);
+        console.log(`   - Selected Model: ${res.model}`);
+        console.log(`   - HTTP Status: ${res.httpStatus}`);
+        console.log(`   - Latency: ${res.latencyMs}ms`);
+        console.log(`   - Response Received: ${res.success ? `"${String(res.reply).slice(0, 100)}..."` : "None"}`);
+        if (!res.success) {
+            console.log(`   - Error Message: ${res.error}`);
+        }
 
         await logProviderRequest({
             provider: res.provider || pConfig.id,
@@ -219,6 +235,7 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
                 httpStatus: res.httpStatus || 200,
                 lastChecked: new Date().toISOString()
             };
+            console.log(`✅ Success via ${res.providerName}! Returning response to chatbot.\n===================================================================\n`);
             return {
                 success: true,
                 reply: res.reply,
@@ -239,6 +256,8 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
         lastError = res.error || `Provider ${res.providerName} gagal merespons`;
         console.warn(`🔄 Failover Triggered: ${pConfig.provider} gagal (${res.httpStatus}: ${res.error}). Mencoba provider berikutnya...`);
     }
+
+    console.error(`❌ [AI PROVIDER MANAGER ERROR]: All providers failed. Last Error: ${lastError}\n===================================================================\n`);
 
     return {
         success: false,

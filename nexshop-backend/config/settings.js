@@ -20,76 +20,22 @@ function normalizeGeminiModel(modelInput) {
 }
 
 async function callGeminiWithFallback({ apiKey, preferredModel, contents, generationConfig, timeoutMs = 10000 }) {
-    const requestedModel = normalizeGeminiModel(preferredModel);
-    const modelCandidates = Array.from(new Set([requestedModel, ...GEMINI_FALLBACK_MODELS]));
-    
-    let lastError = null;
-    let lastHttpStatus = 500;
-    const startTime = Date.now();
-
-    for (const modelCandidate of modelCandidates) {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelCandidate)}:generateContent?key=${encodeURIComponent(apiKey)}`;
-        try {
-            const res = await axios.post(
-                endpoint,
-                { contents, generationConfig },
-                { timeout: timeoutMs, headers: { "Content-Type": "application/json" } }
-            );
-
-            const responseTimeMs = Date.now() - startTime;
-            const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-            const tokenUsage = res.data?.usageMetadata || null;
-
-            if (!text) {
-                throw new Error(`Respons Gemini API model ${modelCandidate} tidak berisi kandidat teks`);
-            }
-
-            return {
-                success: true,
-                reply: text.trim(),
-                activeModel: modelCandidate,
-                responseTimeMs,
-                tokenUsage,
-                httpStatus: res.status,
-                error: null,
-                rawData: res.data
-            };
-        } catch (err) {
-            const httpStatus = err.response?.status || 500;
-            const errorMessage = err.response?.data?.error?.message || err.message;
-            lastError = errorMessage;
-            lastHttpStatus = httpStatus;
-
-            const isModelUnavailable = httpStatus === 404 || httpStatus === 429 || 
-                (httpStatus === 400 && /model|not available|deprecated|not supported|not found/i.test(errorMessage));
-
-            if (isModelUnavailable) {
-                console.warn(`⚠️ Model Gemini '${modelCandidate}' kendala (${httpStatus}: ${errorMessage.slice(0, 100)}). Mencoba model fallback berikutnya...`);
-                continue;
-            } else {
-                const responseTimeMs = Date.now() - startTime;
-                return {
-                    success: false,
-                    reply: null,
-                    activeModel: modelCandidate,
-                    responseTimeMs,
-                    tokenUsage: null,
-                    httpStatus,
-                    error: errorMessage
-                };
-            }
-        }
-    }
-
-    const responseTimeMs = Date.now() - startTime;
+    const geminiProvider = require("../services/geminiProvider");
+    const userPrompt = Array.isArray(contents) && contents[0]?.parts ? contents[0].parts.map(p => p.text).join("\n") : "Ping test";
+    const res = await geminiProvider.generateContent({
+        apiKey,
+        preferredModel: normalizeGeminiModel(preferredModel),
+        prompt: userPrompt,
+        timeoutMs
+    });
     return {
-        success: false,
-        reply: null,
-        activeModel: modelCandidates[0],
-        responseTimeMs,
-        tokenUsage: null,
-        httpStatus: lastHttpStatus,
-        error: lastError || "Seluruh model Gemini fallback gagal dihubungi"
+        success: res.success,
+        reply: res.reply,
+        activeModel: res.model,
+        responseTimeMs: res.latencyMs,
+        tokenUsage: res.tokenUsage,
+        httpStatus: res.httpStatus,
+        error: res.error
     };
 }
 
