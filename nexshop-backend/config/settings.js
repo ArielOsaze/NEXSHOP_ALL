@@ -1,4 +1,97 @@
+const axios = require("axios");
 const supabase = require("./db");
+
+const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
+const GEMINI_FALLBACK_MODELS = [
+    "gemini-flash-latest",
+    "gemini-2.5-flash",
+    "gemini-2.0-flash",
+    "gemini-pro-latest",
+    "gemini-3.5-flash",
+    "gemini-2.0-flash-lite"
+];
+
+function normalizeGeminiModel(modelInput) {
+    const trimmed = String(modelInput || "").trim();
+    if (!trimmed || trimmed === "gemini-2.5-flash") {
+        return DEFAULT_GEMINI_MODEL;
+    }
+    return trimmed;
+}
+
+async function callGeminiWithFallback({ apiKey, preferredModel, contents, generationConfig, timeoutMs = 10000 }) {
+    const requestedModel = normalizeGeminiModel(preferredModel);
+    const modelCandidates = Array.from(new Set([requestedModel, ...GEMINI_FALLBACK_MODELS]));
+    
+    let lastError = null;
+    let lastHttpStatus = 500;
+    const startTime = Date.now();
+
+    for (const modelCandidate of modelCandidates) {
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(modelCandidate)}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        try {
+            const res = await axios.post(
+                endpoint,
+                { contents, generationConfig },
+                { timeout: timeoutMs, headers: { "Content-Type": "application/json" } }
+            );
+
+            const responseTimeMs = Date.now() - startTime;
+            const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            const tokenUsage = res.data?.usageMetadata || null;
+
+            if (!text) {
+                throw new Error(`Respons Gemini API model ${modelCandidate} tidak berisi kandidat teks`);
+            }
+
+            return {
+                success: true,
+                reply: text.trim(),
+                activeModel: modelCandidate,
+                responseTimeMs,
+                tokenUsage,
+                httpStatus: res.status,
+                error: null,
+                rawData: res.data
+            };
+        } catch (err) {
+            const httpStatus = err.response?.status || 500;
+            const errorMessage = err.response?.data?.error?.message || err.message;
+            lastError = errorMessage;
+            lastHttpStatus = httpStatus;
+
+            const isModelUnavailable = httpStatus === 404 || httpStatus === 429 || 
+                (httpStatus === 400 && /model|not available|deprecated|not supported|not found/i.test(errorMessage));
+
+            if (isModelUnavailable) {
+                console.warn(`⚠️ Model Gemini '${modelCandidate}' kendala (${httpStatus}: ${errorMessage.slice(0, 100)}). Mencoba model fallback berikutnya...`);
+                continue;
+            } else {
+                const responseTimeMs = Date.now() - startTime;
+                return {
+                    success: false,
+                    reply: null,
+                    activeModel: modelCandidate,
+                    responseTimeMs,
+                    tokenUsage: null,
+                    httpStatus,
+                    error: errorMessage
+                };
+            }
+        }
+    }
+
+    const responseTimeMs = Date.now() - startTime;
+    return {
+        success: false,
+        reply: null,
+        activeModel: modelCandidates[0],
+        responseTimeMs,
+        tokenUsage: null,
+        httpStatus: lastHttpStatus,
+        error: lastError || "Seluruh model Gemini fallback gagal dihubungi"
+    };
+}
 
 // Cache ringan (30 detik) supaya tiap request checkout/transaksi gak selalu
 // query dulu ke tabel settings — tapi tetap cukup responsif kalau admin baru
@@ -37,19 +130,14 @@ async function getApiKeys({ fresh = false } = {}) {
         tokovoucher_secret: (data && data.tokovoucher_secret) || process.env.TOKOVOUCHER_SECRET || "",
         apigames_merchant_id: (data && data.apigames_merchant_id) || process.env.APIGAMES_MERCHANT_ID || "",
         apigames_secret_key: (data && data.apigames_secret_key) || process.env.APIGAMES_SECRET_KEY || "",
-        // Brevo (kirim email OTP & invoice) — fallback ke .env kalau admin
-        // belum pernah isi dari dashboard sama sekali
         brevo_api_key: (data && data.brevo_api_key) || process.env.BREVO_API_KEY || "",
         brevo_sender_email: (data && data.brevo_sender_email) || process.env.EMAIL_USER || "",
         brevo_sender_name: (data && data.brevo_sender_name) || process.env.BREVO_SENDER_NAME || "NexShop",
-        // WA Gateway (waapi.fyas.my.id) — kirim notif WhatsApp tiap ada
-        // pembelian sukses, dst. Fallback ke .env kalau admin belum pernah
-        // isi dari dashboard sama sekali
         waapi_url: (data && data.waapi_url) || process.env.WAAPI_URL || "",
         waapi_key: (data && data.waapi_key) || process.env.WAAPI_KEY || "",
         waapi_target_number: (data && data.waapi_target_number) || process.env.WAAPI_TARGET_NUMBER || "",
         gemini_api_key: (data && data.gemini_api_key) || process.env.GEMINI_API_KEY || "",
-        gemini_news_model: (data && data.gemini_news_model) || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash",
+        gemini_news_model: normalizeGeminiModel((data && data.gemini_news_model) || process.env.GEMINI_NEWS_MODEL),
         smtp_host: (data && data.smtp_host) || process.env.SMTP_HOST || "",
         smtp_port: (data && data.smtp_port) || process.env.SMTP_PORT || "",
         smtp_user: (data && data.smtp_user) || process.env.SMTP_USER || "",
@@ -178,5 +266,9 @@ module.exports = {
     getApiKeys,
     updateApiKeys,
     getStoreSettings,
-    updateStoreSettings
+    updateStoreSettings,
+    DEFAULT_GEMINI_MODEL,
+    GEMINI_FALLBACK_MODELS,
+    normalizeGeminiModel,
+    callGeminiWithFallback
 };

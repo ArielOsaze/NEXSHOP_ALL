@@ -3223,7 +3223,7 @@ async function loadApiKeys(security_pin) {
         document.getElementById("brevoSenderEmail").value = keys.brevo_sender_email || "";
         document.getElementById("brevoSenderName").value = keys.brevo_sender_name || "";
         document.getElementById("geminiApiKey").value = keys.gemini_api_key || "";
-        document.getElementById("geminiNewsModel").value = keys.gemini_news_model || "gemini-2.5-flash";
+        document.getElementById("geminiNewsModel").value = keys.gemini_news_model || "gemini-2.0-flash";
         document.getElementById("smtpHost").value = keys.smtp_host || "";
         document.getElementById("smtpPort").value = keys.smtp_port || "";
         document.getElementById("smtpUser").value = keys.smtp_user || "";
@@ -4042,7 +4042,7 @@ async function loadGeminiStatus() {
         if (successRate) successRate.textContent = `${data.success_rate || 0}%`;
 
         const modelName = document.getElementById("geminiModelName");
-        if (modelName) modelName.textContent = data.model || "gemini-2.5-flash";
+        if (modelName) modelName.textContent = data.model || "gemini-2.0-flash";
 
         const avgLat = document.getElementById("geminiAvgLatency");
         if (avgLat) avgLat.textContent = data.avg_response_time_ms ? `${data.avg_response_time_ms} ms` : "-";
@@ -4136,7 +4136,7 @@ async function loadGeminiLogs() {
                 <tr>
                     <td><small class="text-muted">${timeStr}</small></td>
                     <td title="${escapeHtml(log.user_message || '')}"><strong>${msgTrunc}</strong></td>
-                    <td><span class="badge bg-light text-dark border">${escapeHtml(log.model_used || 'gemini-2.5-flash')}</span></td>
+                    <td><span class="badge bg-light text-dark border">${escapeHtml(log.model_used || 'gemini-2.0-flash')}</span></td>
                     <td>${log.response_time_ms} ms</td>
                     <td><code>${log.http_status}</code></td>
                     <td><span class="badge ${badgeClass}">${badgeText}</span></td>

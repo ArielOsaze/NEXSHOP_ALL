@@ -1,5 +1,5 @@
 const supabase = require("../config/db");
-const { getStoreSettings, getApiKeys } = require("../config/settings");
+const { getStoreSettings, getApiKeys, DEFAULT_GEMINI_MODEL, callGeminiWithFallback } = require("../config/settings");
 const axios = require("axios");
 
 // Status yang dianggap "sukses/terbayar" di masing-masing tabel — dipakai
@@ -218,7 +218,7 @@ exports.getAiInsights = async (req, res) => {
     try {
         const apiKeys = await getApiKeys();
         const apiKey = apiKeys.gemini_api_key || process.env.GEMINI_API_KEY || "";
-        const model = apiKeys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
+        const model = apiKeys.gemini_news_model || DEFAULT_GEMINI_MODEL;
 
         const [ordersRes, topupRes, productsRes] = await Promise.all([
             supabase.from("orders").select("total, status, items, created_at").order("created_at", { ascending: false }).limit(100),
@@ -235,25 +235,20 @@ exports.getAiInsights = async (req, res) => {
         const summaryText = `Total Omzet: Rp${totalRevenue.toLocaleString("id-ID")}, Paid Regular Orders: ${paidOrders.length}, Paid Topup Orders: ${paidTopups.length}. Top Products: ${topProducts.map(p => `${p.name} (${p.sold || 0} terjual)`).join(", ")}.`;
 
         if (apiKey) {
-            try {
-                const response = await axios.post(
-                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-                    {
-                        contents: [{
-                            parts: [{
-                                text: `Kamu adalah Senior E-Commerce Growth Consultant & Data Analyst. Analisis data toko berikut dan berikan 3-4 poin saran taktis konkret untuk meningkatkan penjualan (penetapan harga, promo, stok, waktu jualan): ${summaryText}. Jawab singkat, padat, dan profesional dalam bahasa Indonesia.`
-                            }]
-                        }]
-                    },
-                    { timeout: 8000 }
-                );
+            const geminiRes = await callGeminiWithFallback({
+                apiKey,
+                preferredModel: model,
+                contents: [{
+                    parts: [{
+                        text: `Kamu adalah Senior E-Commerce Growth Consultant & Data Analyst. Analisis data toko berikut dan berikan 3-4 poin saran taktis konkret untuk meningkatkan penjualan (penetapan harga, promo, stok, waktu jualan): ${summaryText}. Jawab singkat, padat, dan profesional dalam bahasa Indonesia.`
+                    }]
+                }],
+                generationConfig: { temperature: 0.3, maxOutputTokens: 800 },
+                timeoutMs: 8000
+            });
 
-                const aiReply = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (aiReply) {
-                    return res.json({ source: "gemini", model, advice: aiReply, summary: summaryText });
-                }
-            } catch (geminiErr) {
-                console.log("⚠️ Call Gemini API gagal, menggunakan AI Engine Fallback:", geminiErr.message);
+            if (geminiRes.success && geminiRes.reply) {
+                return res.json({ source: "gemini", model: geminiRes.activeModel, advice: geminiRes.reply, summary: summaryText });
             }
         }
 

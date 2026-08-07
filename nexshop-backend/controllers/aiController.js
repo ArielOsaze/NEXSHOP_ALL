@@ -1,7 +1,7 @@
 "use strict";
 
 const axios = require("axios");
-const { getStoreSettings, getApiKeys } = require("../config/settings");
+const { getStoreSettings, getApiKeys, DEFAULT_GEMINI_MODEL, callGeminiWithFallback } = require("../config/settings");
 const { normalizeQuery, detectIntent, detectEntities, rankKnowledge, buildKnowledgeResponse } = require("../utils/nexbotEngine");
 
 function maskKey(value) {
@@ -11,7 +11,6 @@ function maskKey(value) {
 }
 
 async function callGeminiApi(userMessage, selectedKnowledge, apiKey, model) {
-    const startTime = Date.now();
     const knowledgeText = selectedKnowledge.length ? buildKnowledgeResponse(selectedKnowledge) : "Belum ada informasi khusus untuk pertanyaan ini.";
     const systemPrompt = `Kamu adalah NexBot, asisten AI resmi dari toko game & e-commerce NexShop.
 Tugas kamu adalah menjawab pertanyaan pelanggan secara ramah, profesional, dan membantu dalam bahasa Indonesia.
@@ -26,52 +25,23 @@ Aturan menjawab:
 2. Jangan mengarang kebijakan pembayaran, cara topup, atau harga yang bertentangan dengan fakta di atas.
 3. Jawab singkat, jelas, dan ramah dengan format markdown yang rapi.`;
 
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    const payload = {
-        contents: [
-            {
-                role: "user",
-                parts: [
-                    { text: systemPrompt },
-                    { text: `Pertanyaan Pengguna: ${userMessage}` }
-                ]
-            }
-        ],
-        generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 800
+    const contents = [
+        {
+            role: "user",
+            parts: [
+                { text: systemPrompt },
+                { text: `Pertanyaan Pengguna: ${userMessage}` }
+            ]
         }
-    };
+    ];
 
-    try {
-        const res = await axios.post(endpoint, payload, { timeout: 10000 });
-        const responseTimeMs = Date.now() - startTime;
-        const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        const tokenUsage = res.data?.usageMetadata || null;
-
-        if (!text) throw new Error("Respons Gemini API tidak berisi teks kandidat");
-
-        return {
-            success: true,
-            reply: text.trim(),
-            responseTimeMs,
-            tokenUsage,
-            httpStatus: res.status,
-            error: null
-        };
-    } catch (err) {
-        const responseTimeMs = Date.now() - startTime;
-        const httpStatus = err.response?.status || 500;
-        const errorMessage = err.response?.data?.error?.message || err.message;
-        return {
-            success: false,
-            reply: null,
-            responseTimeMs,
-            tokenUsage: null,
-            httpStatus,
-            error: errorMessage
-        };
-    }
+    return await callGeminiWithFallback({
+        apiKey,
+        preferredModel: model || DEFAULT_GEMINI_MODEL,
+        contents,
+        generationConfig: { temperature: 0.3, maxOutputTokens: 800 },
+        timeoutMs: 10000
+    });
 }
 
 async function logGeminiRequest({ userMessage, modelUsed, responseTimeMs, tokenUsage, httpStatus, isSuccess, errorMessage, userId, sessionId }) {
@@ -297,13 +267,14 @@ async function answer(message, sessionId, user) {
     } else {
         const keys = await getApiKeys();
         const apiKey = keys.gemini_api_key || process.env.GEMINI_API_KEY || "";
-        const model = keys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
+        const preferredModel = keys.gemini_news_model || DEFAULT_GEMINI_MODEL;
 
         if (apiKey) {
-            const geminiRes = await callGeminiApi(message, result.selected, apiKey, model);
+            const geminiRes = await callGeminiApi(message, result.selected, apiKey, preferredModel);
+            const actualModelUsed = geminiRes.activeModel || preferredModel;
             await logGeminiRequest({
                 userMessage: message,
-                modelUsed: model,
+                modelUsed: actualModelUsed,
                 responseTimeMs: geminiRes.responseTimeMs,
                 tokenUsage: geminiRes.tokenUsage,
                 httpStatus: geminiRes.httpStatus,
@@ -443,22 +414,23 @@ exports.testGeminiConnection = async (req, res) => {
     try {
         const keys = await getApiKeys({ fresh: true });
         const apiKey = keys.gemini_api_key || process.env.GEMINI_API_KEY || "";
-        const model = keys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
+        const preferredModel = keys.gemini_news_model || DEFAULT_GEMINI_MODEL;
 
         if (!apiKey) {
             return res.status(400).json({
                 success: false,
                 connected: false,
                 message: "GEMINI_API_KEY belum diisi di Settings atau .env",
-                model,
+                model: preferredModel,
                 masked_key: maskKey(apiKey)
             });
         }
 
-        const testRes = await callGeminiApi("Ping test koneksi Gemini AI NexShop.", [], apiKey, model);
+        const testRes = await callGeminiApi("Ping test koneksi Gemini AI NexShop.", [], apiKey, preferredModel);
+        const actualModel = testRes.activeModel || preferredModel;
         await logGeminiRequest({
             userMessage: "[ADMIN_PING_TEST] Connection check",
-            modelUsed: model,
+            modelUsed: actualModel,
             responseTimeMs: testRes.responseTimeMs,
             tokenUsage: testRes.tokenUsage,
             httpStatus: testRes.httpStatus,
@@ -475,7 +447,7 @@ exports.testGeminiConnection = async (req, res) => {
                 message: testRes.error || "Gagal menghubungi Gemini API",
                 latency_ms: testRes.responseTimeMs,
                 http_status: testRes.httpStatus,
-                model,
+                model: actualModel,
                 masked_key: maskKey(apiKey)
             });
         }
@@ -486,7 +458,7 @@ exports.testGeminiConnection = async (req, res) => {
             message: "Koneksi ke Gemini API berhasil dan responsif!",
             latency_ms: testRes.responseTimeMs,
             http_status: testRes.httpStatus,
-            model,
+            model: actualModel,
             masked_key: maskKey(apiKey),
             reply: testRes.reply
         });
@@ -499,11 +471,11 @@ exports.getGeminiStatus = async (_req, res) => {
     try {
         const keys = await getApiKeys();
         const apiKey = keys.gemini_api_key || process.env.GEMINI_API_KEY || "";
-        const model = keys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
+        const preferredModel = keys.gemini_news_model || DEFAULT_GEMINI_MODEL;
 
         const { data: logs, error } = await supabase
             .from("ai_gemini_logs")
-            .select("is_success, response_time_ms, http_status, error_message, created_at")
+            .select("is_success, response_time_ms, http_status, error_message, model_used, created_at")
             .order("created_at", { ascending: false })
             .limit(500);
 
@@ -526,11 +498,12 @@ exports.getGeminiStatus = async (_req, res) => {
         const avgLatencyMs = validLatencies.length ? Math.round(validLatencies.reduce((a, b) => a + b, 0) / validLatencies.length) : 0;
 
         const isConnected = !!apiKey && (totalRequests === 0 || (rows[0] && rows[0].is_success));
+        const activeModel = rows[0]?.model_used || preferredModel;
 
         return res.json({
             connected: isConnected,
             has_api_key: !!apiKey,
-            model,
+            model: activeModel,
             masked_key: maskKey(apiKey),
             total_requests: totalRequests,
             successful_requests: successfulRequests,

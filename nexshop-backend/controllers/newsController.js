@@ -5,7 +5,7 @@ const http = require("http");
 const https = require("https");
 const supabase = require("../config/db");
 const { notify } = require("../config/notify");
-const { getApiKeys } = require("../config/settings");
+const { getApiKeys, DEFAULT_GEMINI_MODEL, callGeminiWithFallback } = require("../config/settings");
 
 const MAX_IMPORT_BYTES = 1500000;
 const SUMMARY_MIN_WORDS = 100;
@@ -394,8 +394,7 @@ async function generateIndonesianSummary({ title, description, publisher, isIndo
         const keys = await getApiKeys();
         const apiKey = keys.gemini_api_key || process.env.GEMINI_API_KEY;
         if (!apiKey) return fallback;
-        const model = String(keys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash").trim();
-        if (!/^[a-zA-Z0-9._-]{1,100}$/.test(model)) return fallback;
+        const model = keys.gemini_news_model || DEFAULT_GEMINI_MODEL;
         const sourceLanguage = isIndonesian ? "Indonesia" : "Inggris";
         const prompt = `Buat ringkasan berita gaming profesional dalam bahasa Indonesia alami sebanyak 150 sampai 400 kata yang terdiri dari 2 hingga 4 paragraf rapi (pisahkan antar paragraf dengan dua kali baris baru).
 
@@ -410,20 +409,22 @@ Bahasa sumber: ${sourceLanguage}
 Judul: ${title}
 Deskripsi Sumber: ${description}`;
 
-        const response = await axios.post(
-            `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(apiKey)}`,
-            {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { temperature: 0.2, maxOutputTokens: 900 }
-            },
-            { timeout: 20000, headers: { "Content-Type": "application/json" } }
-        );
-        const rawText = geminiOutputText(response.data);
-        const summary = cleanNewsSummary(rawText);
-        const count = wordCount(summary);
-        return count >= SUMMARY_MIN_WORDS && count <= SUMMARY_MAX_WORDS ? summary : fallback;
+        const geminiRes = await callGeminiWithFallback({
+            apiKey,
+            preferredModel: model,
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.2, maxOutputTokens: 900 },
+            timeoutMs: 20000
+        });
+
+        if (geminiRes.success && geminiRes.reply) {
+            const summary = cleanNewsSummary(geminiRes.reply);
+            const count = wordCount(summary);
+            return count >= SUMMARY_MIN_WORDS && count <= SUMMARY_MAX_WORDS ? summary : fallback;
+        }
+        return fallback;
     } catch (err) {
-        console.warn("Gemini news summary unavailable; using metadata fallback:", err.response && err.response.status || err.code || err.message);
+        console.warn("Gemini news summary unavailable; using metadata fallback:", err.message);
         return fallback;
     }
 }
