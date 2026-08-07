@@ -4317,9 +4317,12 @@ async function testAiConnectionFromModal() {
             throw new Error(json.message || json.error || `HTTP ${res.status}: Gagal menghubungi ${id}`);
         }
 
+        const latencyVal = json.latency ?? json.latency_ms ?? json.latencyMs ?? 0;
+        const httpVal = json.httpStatus ?? json.http_status ?? 200;
+
         if (alertEl) {
             alertEl.className = "alert alert-success py-2 mb-3";
-            textEl.textContent = `✅ Connected! Latency: ${json.latency_ms} ms | HTTP ${json.http_status} OK`;
+            textEl.textContent = `✅ Connected! Latency: ${latencyVal} ms | HTTP ${httpVal} OK`;
             badgeEl.className = "badge bg-success";
             badgeEl.textContent = "🟢 Connected";
         }

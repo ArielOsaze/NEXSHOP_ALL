@@ -590,12 +590,78 @@ exports.updateAdminAiProvider = async (req, res) => {
 
 exports.saveAdminAiApiKey = async (req, res) => {
     try {
-        const { id, api_key, model, priority, enabled, http_referer, app_name } = req.body || {};
-        if (!id) return res.status(400).json({ message: "ID Provider wajib diisi" });
+        const { id, api_key, model, priority, enabled, http_referer, referer, app_name } = req.body || {};
+        if (!id) return res.status(400).json({ success: false, message: "ID Provider wajib diisi" });
 
-        const updated = await aiProviderManager.saveProviderSetting({ id, api_key, model, priority, enabled, http_referer, app_name });
-        return res.json({ message: `Konfigurasi ${id} berhasil disimpan`, data: updated, masked_key: aiProviderManager.maskKey(updated.api_key) });
+        const updated = await aiProviderManager.saveProviderSetting({
+            id,
+            api_key,
+            model,
+            priority,
+            enabled,
+            http_referer: http_referer || referer,
+            app_name
+        });
+        return res.json({
+            success: true,
+            message: `Konfigurasi ${id} berhasil disimpan`,
+            data: updated,
+            masked_key: aiProviderManager.maskKey(updated.api_key)
+        });
     } catch (err) {
-        return res.status(500).json({ message: err.message || "Gagal menyimpan konfigurasi AI Provider" });
+        return res.status(500).json({ success: false, message: err.message || "Gagal menyimpan konfigurasi AI Provider" });
+    }
+};
+
+exports.getAdminAiConfig = async (_req, res) => {
+    try {
+        const providers = await aiProviderManager.loadProviderSettings({ fresh: true });
+        const sanitized = providers.map((p) => ({
+            id: p.id,
+            provider: p.provider,
+            api_key: p.api_key,
+            masked_key: aiProviderManager.maskKey(p.api_key),
+            model: p.model,
+            enabled: p.enabled,
+            priority: p.priority,
+            referer: p.http_referer,
+            http_referer: p.http_referer,
+            app_name: p.app_name,
+            updated_at: p.updated_at
+        }));
+        return res.json({ success: true, data: sanitized, config: sanitized });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+};
+
+exports.saveAdminAiConfig = async (req, res) => {
+    try {
+        const body = req.body || {};
+        const configs = Array.isArray(body) ? body : (body.providers || [body]);
+        const results = [];
+
+        for (const item of configs) {
+            if (item && item.id) {
+                const updated = await aiProviderManager.saveProviderSetting({
+                    id: item.id,
+                    api_key: item.api_key ?? item.apiKey,
+                    model: item.model,
+                    priority: item.priority,
+                    enabled: item.enabled,
+                    http_referer: item.http_referer ?? item.referer,
+                    app_name: item.app_name ?? item.appName
+                });
+                results.push(updated);
+            }
+        }
+
+        return res.json({
+            success: true,
+            message: "Konfigurasi AI Provider berhasil disimpan",
+            data: results
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
     }
 };

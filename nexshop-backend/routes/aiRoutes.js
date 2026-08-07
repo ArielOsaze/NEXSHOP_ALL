@@ -26,6 +26,12 @@ router.get("/gemini-logs", authMiddleware, adminMiddleware, aiController.getGemi
 // Admin Multi-AI Provider System Endpoints
 router.get("/status", authMiddleware, adminMiddleware, aiController.getAdminAiStatus);
 router.get("/admin/status", authMiddleware, adminMiddleware, aiController.getAdminAiStatus);
+router.get("/config", authMiddleware, adminMiddleware, aiController.getAdminAiConfig);
+router.get("/admin/config", authMiddleware, adminMiddleware, aiController.getAdminAiConfig);
+router.put("/config", authMiddleware, adminMiddleware, aiController.saveAdminAiConfig);
+router.put("/admin/config", authMiddleware, adminMiddleware, aiController.saveAdminAiConfig);
+router.post("/config", authMiddleware, adminMiddleware, aiController.saveAdminAiConfig);
+router.post("/admin/config", authMiddleware, adminMiddleware, aiController.saveAdminAiConfig);
 router.get("/logs", authMiddleware, adminMiddleware, aiController.getAdminAiLogs);
 router.get("/admin/logs", authMiddleware, adminMiddleware, aiController.getAdminAiLogs);
 router.post("/test", authMiddleware, adminMiddleware, aiController.testAdminAiProviders);

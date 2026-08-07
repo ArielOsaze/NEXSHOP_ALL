@@ -70,23 +70,49 @@ async function loadProviderSettings({ fresh = false } = {}) {
     return merged;
 }
 
-async function saveProviderSetting({ id, api_key, model, enabled, priority, http_referer, app_name }) {
+const PROVIDER_NAMES = {
+    gemini: "Google Gemini",
+    groq: "Groq AI",
+    openrouter: "OpenRouter"
+};
+
+async function saveProviderSetting({ id, api_key, model, enabled, priority, http_referer, referer, app_name }) {
     if (!PROVIDERS[id]) {
         throw new Error(`Provider ID '${id}' tidak valid`);
     }
 
+    // Fetch existing setting from DB to avoid wiping omitted columns (e.g. api_key)
+    const { data: existing } = await supabase
+        .from("ai_provider_settings")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+
+    const providerTitle = PROVIDER_NAMES[id] || PROVIDERS[id]?.providerName || "AI Provider";
+    const finalReferer = http_referer || referer;
+
+    let targetKey = existing?.api_key || "";
+    if (api_key !== undefined && api_key !== null) {
+        targetKey = String(api_key).trim();
+    }
+
     const payload = {
         id,
-        provider: PROVIDERS[id].providerName,
+        provider: providerTitle,
+        api_key: targetKey,
+        model: (model !== undefined && model !== null && String(model).trim() !== "") 
+            ? String(model).trim() 
+            : (existing?.model || PROVIDERS[id].defaultModel),
+        enabled: enabled !== undefined ? Boolean(enabled) : (existing?.enabled !== undefined ? existing.enabled : true),
+        priority: priority !== undefined ? Number(priority) || 1 : (existing?.priority || 1),
+        http_referer: (finalReferer !== undefined && finalReferer !== null) 
+            ? String(finalReferer).trim() 
+            : (existing?.http_referer || "https://nexshop.id"),
+        app_name: (app_name !== undefined && app_name !== null) 
+            ? String(app_name).trim() 
+            : (existing?.app_name || "NexShop NexBot"),
         updated_at: new Date().toISOString()
     };
-
-    if (api_key !== undefined) payload.api_key = String(api_key).trim();
-    if (model !== undefined) payload.model = String(model).trim();
-    if (enabled !== undefined) payload.enabled = Boolean(enabled);
-    if (priority !== undefined) payload.priority = Number(priority) || 1;
-    if (http_referer !== undefined) payload.http_referer = String(http_referer).trim();
-    if (app_name !== undefined) payload.app_name = String(app_name).trim();
 
     const { data, error } = await supabase
         .from("ai_provider_settings")
@@ -177,7 +203,8 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
                 provider: res.provider,
                 providerName: res.providerName,
                 model: res.model,
-                latencyMs: res.latencyMs
+                latencyMs: res.latencyMs,
+                latency: res.latencyMs
             };
         }
 
@@ -202,7 +229,15 @@ async function testSingleProvider(providerId, userId = null) {
             success: false,
             connected: false,
             provider: providerId,
-            message: `Provider '${providerId}' tidak ditemukan`
+            providerName: providerId,
+            model: "-",
+            latency: 0,
+            latency_ms: 0,
+            latencyMs: 0,
+            httpStatus: 404,
+            http_status: 404,
+            message: `Provider '${providerId}' tidak ditemukan`,
+            error: `Provider '${providerId}' tidak ditemukan`
         };
     }
 
@@ -212,13 +247,36 @@ async function testSingleProvider(providerId, userId = null) {
             connected: false,
             provider: providerId,
             providerName: pConfig.provider,
+            model: pConfig.model,
+            latency: 0,
+            latency_ms: 0,
+            latencyMs: 0,
+            httpStatus: 400,
+            http_status: 400,
             message: `API Key untuk ${pConfig.provider} belum diisi.`,
-            masked_key: maskKey(pConfig.api_key),
-            model: pConfig.model
+            error: `API Key untuk ${pConfig.provider} belum diisi.`,
+            masked_key: maskKey(pConfig.api_key)
         };
     }
 
     const driver = PROVIDERS[providerId];
+    if (!driver) {
+        return {
+            success: false,
+            connected: false,
+            provider: providerId,
+            providerName: pConfig.provider,
+            model: pConfig.model,
+            latency: 0,
+            latency_ms: 0,
+            latencyMs: 0,
+            httpStatus: 500,
+            http_status: 500,
+            message: `Driver untuk ${providerId} belum tersedia`,
+            error: `Driver untuk ${providerId} belum tersedia`
+        };
+    }
+
     const pingPrompt = "Ping test koneksi AI NexShop. Jawab singkat 'OK'.";
     const res = await driver.generateContent({
         apiKey: pConfig.api_key,
@@ -244,16 +302,24 @@ async function testSingleProvider(providerId, userId = null) {
         sessionId: "ping-test"
     });
 
+    const isSuccess = Boolean(res.success);
+    const latencyVal = Number(res.latencyMs) || 0;
+    const httpVal = Number(res.httpStatus) || (isSuccess ? 200 : 500);
+
     return {
-        success: res.success,
-        connected: res.success,
-        provider: res.provider,
-        providerName: res.providerName,
-        model: res.model,
-        latency_ms: res.latencyMs,
-        http_status: res.httpStatus,
-        reply: res.reply,
-        error: res.error,
+        success: isSuccess,
+        connected: isSuccess,
+        provider: res.provider || providerId,
+        providerName: res.providerName || pConfig.provider,
+        model: res.model || pConfig.model,
+        latency: latencyVal,
+        latency_ms: latencyVal,
+        latencyMs: latencyVal,
+        httpStatus: httpVal,
+        http_status: httpVal,
+        reply: res.reply || null,
+        error: res.error || null,
+        message: isSuccess ? `Connection successful (${latencyVal} ms)` : (res.error || "Connection failed"),
         masked_key: maskKey(pConfig.api_key),
         last_checked: new Date().toISOString()
     };
