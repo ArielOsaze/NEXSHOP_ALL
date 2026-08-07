@@ -578,10 +578,10 @@ exports.testAdminAiProviders = async (req, res) => {
 
 exports.updateAdminAiProvider = async (req, res) => {
     try {
-        const { id, model, priority, enabled } = req.body || {};
+        const { id, model, priority, enabled, http_referer, app_name } = req.body || {};
         if (!id) return res.status(400).json({ message: "ID Provider wajib diisi" });
 
-        const updated = await aiProviderManager.saveProviderSetting({ id, model, priority, enabled });
+        const updated = await aiProviderManager.saveProviderSetting({ id, model, priority, enabled, http_referer, app_name });
         return res.json({ message: `Pengaturan ${id} berhasil diperbarui`, data: updated });
     } catch (err) {
         return res.status(500).json({ message: err.message || "Gagal memperbarui pengaturan provider" });
@@ -590,12 +590,12 @@ exports.updateAdminAiProvider = async (req, res) => {
 
 exports.saveAdminAiApiKey = async (req, res) => {
     try {
-        const { id, api_key, model } = req.body || {};
+        const { id, api_key, model, priority, enabled, http_referer, app_name } = req.body || {};
         if (!id) return res.status(400).json({ message: "ID Provider wajib diisi" });
 
-        const updated = await aiProviderManager.saveProviderSetting({ id, api_key, model });
-        return res.json({ message: `API Key ${id} berhasil disimpan`, data: updated, masked_key: aiProviderManager.maskKey(updated.api_key) });
+        const updated = await aiProviderManager.saveProviderSetting({ id, api_key, model, priority, enabled, http_referer, app_name });
+        return res.json({ message: `Konfigurasi ${id} berhasil disimpan`, data: updated, masked_key: aiProviderManager.maskKey(updated.api_key) });
     } catch (err) {
-        return res.status(500).json({ message: err.message || "Gagal menyimpan API Key" });
+        return res.status(500).json({ message: err.message || "Gagal menyimpan konfigurasi AI Provider" });
     }
 };

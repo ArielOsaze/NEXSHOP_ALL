@@ -10,7 +10,7 @@ const FALLBACK_MODELS = [
     "qwen/qwen-2.5-72b-instruct"
 ];
 
-async function generateContent({ apiKey, preferredModel, prompt, systemPrompt = "", timeoutMs = 12000 }) {
+async function generateContent({ apiKey, preferredModel, prompt, systemPrompt = "", httpReferer, appName, timeoutMs = 12000 }) {
     const startTime = Date.now();
     const modelCandidates = Array.from(new Set([preferredModel || DEFAULT_MODEL, ...FALLBACK_MODELS])).filter(Boolean);
 
@@ -36,8 +36,8 @@ async function generateContent({ apiKey, preferredModel, prompt, systemPrompt = 
                     timeout: timeoutMs,
                     headers: {
                         "Authorization": `Bearer ${apiKey}`,
-                        "HTTP-Referer": "https://nexshop.id",
-                        "X-Title": "NexShop NexBot",
+                        "HTTP-Referer": httpReferer || "https://nexshop.id",
+                        "X-Title": appName || "NexShop NexBot",
                         "Content-Type": "application/json"
                     }
                 }

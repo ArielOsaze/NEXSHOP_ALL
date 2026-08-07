@@ -59,6 +59,8 @@ async function loadProviderSettings({ fresh = false } = {}) {
             model: found.model || def.model,
             enabled: found.enabled !== undefined ? found.enabled : def.enabled,
             priority: Number(found.priority || def.priority),
+            http_referer: found.http_referer || "https://nexshop.id",
+            app_name: found.app_name || "NexShop NexBot",
             created_at: found.created_at || new Date().toISOString(),
             updated_at: found.updated_at || new Date().toISOString()
         };
@@ -68,7 +70,7 @@ async function loadProviderSettings({ fresh = false } = {}) {
     return merged;
 }
 
-async function saveProviderSetting({ id, api_key, model, enabled, priority }) {
+async function saveProviderSetting({ id, api_key, model, enabled, priority, http_referer, app_name }) {
     if (!PROVIDERS[id]) {
         throw new Error(`Provider ID '${id}' tidak valid`);
     }
@@ -83,6 +85,8 @@ async function saveProviderSetting({ id, api_key, model, enabled, priority }) {
     if (model !== undefined) payload.model = String(model).trim();
     if (enabled !== undefined) payload.enabled = Boolean(enabled);
     if (priority !== undefined) payload.priority = Number(priority) || 1;
+    if (http_referer !== undefined) payload.http_referer = String(http_referer).trim();
+    if (app_name !== undefined) payload.app_name = String(app_name).trim();
 
     const { data, error } = await supabase
         .from("ai_provider_settings")
@@ -147,6 +151,8 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
             preferredModel: pConfig.model,
             prompt,
             systemPrompt,
+            httpReferer: pConfig.http_referer,
+            appName: pConfig.app_name,
             timeoutMs: 10000
         });
 
@@ -219,6 +225,8 @@ async function testSingleProvider(providerId, userId = null) {
         preferredModel: pConfig.model,
         prompt: pingPrompt,
         systemPrompt: "Jawab tes ping.",
+        httpReferer: pConfig.http_referer,
+        appName: pConfig.app_name,
         timeoutMs: 8000
     });
 
@@ -246,7 +254,8 @@ async function testSingleProvider(providerId, userId = null) {
         http_status: res.httpStatus,
         reply: res.reply,
         error: res.error,
-        masked_key: maskKey(pConfig.api_key)
+        masked_key: maskKey(pConfig.api_key),
+        last_checked: new Date().toISOString()
     };
 }
 
@@ -288,6 +297,8 @@ async function getOverallStatus() {
             has_api_key: !!pConfig.api_key,
             masked_key: maskKey(pConfig.api_key),
             model: pLogs[0]?.model || pConfig.model,
+            http_referer: pConfig.http_referer || "https://nexshop.id",
+            app_name: pConfig.app_name || "NexShop NexBot",
             connected: isConnected,
             total_requests: totalReq,
             successful_requests: successReq,
@@ -297,7 +308,8 @@ async function getOverallStatus() {
             last_request: pLogs[0]?.created_at || null,
             last_success: lastSuccess,
             last_failed: lastFailedAt,
-            last_error: lastError
+            last_error: lastError,
+            last_checked: new Date().toISOString()
         };
     }
 

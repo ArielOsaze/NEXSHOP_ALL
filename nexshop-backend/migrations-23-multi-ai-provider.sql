@@ -9,16 +9,22 @@ create table if not exists public.ai_provider_settings (
     model text not null,
     enabled boolean not null default true,
     priority integer not null default 1,
+    http_referer text default 'https://nexshop.id',
+    app_name text default 'NexShop NexBot',
     created_at timestamptz not null default now(),
     updated_at timestamptz not null default now()
 );
 
+-- Ensure columns exist if table was created in an earlier run
+alter table public.ai_provider_settings add column if not exists http_referer text default 'https://nexshop.id';
+alter table public.ai_provider_settings add column if not exists app_name text default 'NexShop NexBot';
+
 -- Initial seed for the 3 supported AI providers
-insert into public.ai_provider_settings (id, provider, api_key, model, enabled, priority)
+insert into public.ai_provider_settings (id, provider, api_key, model, enabled, priority, http_referer, app_name)
 values 
-    ('gemini', 'Google Gemini', '', 'gemini-flash-latest', true, 1),
-    ('groq', 'Groq AI', '', 'llama-3.3-70b-versatile', true, 2),
-    ('openrouter', 'OpenRouter', '', 'meta-llama/llama-3.3-70b-instruct', true, 3)
+    ('gemini', 'Google Gemini', '', 'gemini-flash-latest', true, 1, 'https://nexshop.id', 'NexShop NexBot'),
+    ('groq', 'Groq AI', '', 'llama-3.3-70b-versatile', true, 2, 'https://nexshop.id', 'NexShop NexBot'),
+    ('openrouter', 'OpenRouter', '', 'meta-llama/llama-3.3-70b-instruct', true, 3, 'https://nexshop.id', 'NexShop NexBot')
 on conflict (id) do nothing;
 
 create table if not exists public.ai_provider_logs (

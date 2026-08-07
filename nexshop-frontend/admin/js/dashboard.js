@@ -4019,10 +4019,16 @@ async function generateProductFaqs() {
 // ===================================
 
 let aiHealthCheckInterval = null;
+let currentMultiAiData = null;
+
+const AI_PRESET_MODELS = {
+    gemini: ["gemini-flash-latest", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash", "custom"],
+    groq: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "llama3-70b-8192", "mixtral-8x7b-32768", "custom"],
+    openrouter: ["meta-llama/llama-3.3-70b-instruct", "deepseek/deepseek-r1-distill-llama-70b", "google/gemini-2.0-flash-001", "qwen/qwen-2.5-72b-instruct", "custom"]
+};
 
 function startAiHealthCheckTimer() {
     if (aiHealthCheckInterval) clearInterval(aiHealthCheckInterval);
-    // Auto connection check every 60 seconds
     aiHealthCheckInterval = setInterval(() => {
         const viewEl = document.getElementById("view-aimgmt");
         if (viewEl && !viewEl.classList.contains("d-none")) {
@@ -4037,6 +4043,7 @@ async function loadMultiAiStatus() {
         const res = await apiFetch("/admin/ai/status");
         if (!res.ok) return;
         const data = await res.json().catch(() => ({}));
+        currentMultiAiData = data;
 
         const activeBadge = document.getElementById("activeAiProviderBadge");
         if (activeBadge) {
@@ -4048,11 +4055,11 @@ async function loadMultiAiStatus() {
             const badge = document.getElementById(`statusBadge_${id}`);
             if (badge) {
                 if (stats.connected) {
-                    badge.className = "badge bg-success";
-                    badge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> 🟢 Connected';
+                    badge.className = "badge bg-success px-2 py-1";
+                    badge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Connected';
                 } else {
-                    badge.className = "badge bg-danger";
-                    badge.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i> 🔴 Disconnected';
+                    badge.className = "badge bg-danger px-2 py-1";
+                    badge.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i> Disconnected';
                 }
             }
 
@@ -4073,6 +4080,18 @@ async function loadMultiAiStatus() {
 
             const toggle = document.getElementById(`toggle_${id}`);
             if (toggle) toggle.checked = Boolean(stats.enabled);
+
+            const priorityBadge = document.getElementById(`priorityBadge_${id}`);
+            if (priorityBadge) priorityBadge.textContent = `#${stats.priority || 1}`;
+
+            const lastSuccessEl = document.getElementById(`lastSuccess_${id}`);
+            if (lastSuccessEl) lastSuccessEl.textContent = stats.last_success ? new Date(stats.last_success).toLocaleTimeString("id-ID") : "-";
+
+            const lastFailedEl = document.getElementById(`lastFailed_${id}`);
+            if (lastFailedEl) lastFailedEl.textContent = stats.last_failed ? new Date(stats.last_failed).toLocaleTimeString("id-ID") : "-";
+
+            const lastCheckedEl = document.getElementById(`lastChecked_${id}`);
+            if (lastCheckedEl) lastCheckedEl.textContent = stats.last_checked ? new Date(stats.last_checked).toLocaleTimeString("id-ID") : "-";
         }
     } catch (err) {
         console.error("Gagal memuat status Multi-AI:", err);
@@ -4083,7 +4102,7 @@ async function testSingleAiProvider(providerId) {
     const badge = document.getElementById(`statusBadge_${providerId}`);
     try {
         if (badge) {
-            badge.className = "badge bg-warning text-dark";
+            badge.className = "badge bg-warning text-dark px-2 py-1";
             badge.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i> Testing...';
         }
 
@@ -4142,28 +4161,208 @@ async function toggleAiProvider(providerId, enabled) {
 }
 
 function openApiKeyModal(providerId, providerName, defaultModel) {
-    document.getElementById("modalApiKeyProviderId").value = providerId;
-    document.getElementById("modalApiKeyProviderName").value = providerName;
-    document.getElementById("modalApiKeyInput").value = "";
+    const stats = currentMultiAiData?.providers?.[providerId] || {};
 
-    const currentModelBadge = document.getElementById(`model_${providerId}`);
-    document.getElementById("modalApiKeyModelInput").value = (currentModelBadge ? currentModelBadge.textContent.trim() : "") || defaultModel;
+    document.getElementById("modalApiKeyProviderId").value = providerId;
+    document.getElementById("modalApiKeyProviderTitle").textContent = providerName;
+    document.getElementById("modalApiKeyBadge").textContent = providerName;
+    document.getElementById("modalApiKeyMaskedKeyPreview").textContent = stats.masked_key || "Belum diisi";
+
+    const keyInput = document.getElementById("modalApiKeyInput");
+    keyInput.value = "";
+    keyInput.type = "password";
+    document.getElementById("iconToggleKey").className = "bi bi-eye";
+
+    // Priority & Enabled
+    const prioritySelect = document.getElementById("modalApiKeyPriority");
+    if (prioritySelect) prioritySelect.value = String(stats.priority || (providerId === "gemini" ? 1 : providerId === "groq" ? 2 : 3));
+
+    const enabledSwitch = document.getElementById("modalApiKeyEnabled");
+    if (enabledSwitch) enabledSwitch.checked = stats.enabled !== undefined ? stats.enabled : true;
+
+    // Model select options
+    const modelSelect = document.getElementById("modalApiKeyModelSelect");
+    const modelCustomInput = document.getElementById("modalApiKeyModelInput");
+    const presetList = AI_PRESET_MODELS[providerId] || [defaultModel, "custom"];
+
+    modelSelect.innerHTML = presetList.map((m) => {
+        if (m === "custom") return `<option value="custom">Model Custom (Tulis sendiri)</option>`;
+        return `<option value="${m}">${m}</option>`;
+    }).join("");
+
+    const activeModel = stats.model || defaultModel;
+    if (presetList.includes(activeModel)) {
+        modelSelect.value = activeModel;
+        modelCustomInput.value = activeModel;
+    } else {
+        modelSelect.value = "custom";
+        modelCustomInput.value = activeModel;
+    }
+
+    // OpenRouter fields
+    const openRouterBox = document.getElementById("modalOpenRouterFields");
+    if (providerId === "openrouter") {
+        openRouterBox.classList.remove("d-none");
+        document.getElementById("modalApiKeyHttpReferer").value = stats.http_referer || "https://nexshop.id";
+        document.getElementById("modalApiKeyAppName").value = stats.app_name || "NexShop NexBot";
+    } else {
+        openRouterBox.classList.add("d-none");
+    }
+
+    // Clear feedback alert
+    const feedbackAlert = document.getElementById("modalTestFeedbackAlert");
+    if (feedbackAlert) feedbackAlert.className = "alert d-none py-2 mb-3";
+
+    // Icons
+    const iconHeader = document.getElementById("modalApiKeyHeaderIcon");
+    if (iconHeader) {
+        if (providerId === "gemini") iconHeader.className = "bi bi-google text-primary me-2";
+        else if (providerId === "groq") iconHeader.className = "bi bi-lightning-fill text-warning me-2";
+        else iconHeader.className = "bi bi-globe text-info me-2";
+    }
 
     const modalEl = document.getElementById("modalApiKey");
-    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl, {
+        backdrop: "static",
+        keyboard: true
+    });
     modal.show();
+}
+
+function onAiModelSelectChange(val) {
+    const input = document.getElementById("modalApiKeyModelInput");
+    if (val !== "custom") {
+        input.value = val;
+    } else {
+        input.focus();
+    }
+}
+
+function toggleShowApiKey() {
+    const input = document.getElementById("modalApiKeyInput");
+    const icon = document.getElementById("iconToggleKey");
+    if (input.type === "password") {
+        input.type = "text";
+        icon.className = "bi bi-eye-slash";
+    } else {
+        input.type = "password";
+        icon.className = "bi bi-eye";
+    }
+}
+
+function copyApiKeyToClipboard() {
+    const input = document.getElementById("modalApiKeyInput");
+    const providerId = document.getElementById("modalApiKeyProviderId").value;
+    const stats = currentMultiAiData?.providers?.[providerId] || {};
+    const textToCopy = input.value.trim() || stats.masked_key || "";
+
+    if (!textToCopy) {
+        showToast("⚠️ Tidak ada API Key yang dapat disalin.", true);
+        return;
+    }
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        showToast("📋 API Key berhasil disalin ke clipboard!");
+    }).catch(() => {
+        showToast("Gagal menyalin key", true);
+    });
+}
+
+function resetAiConfigModal() {
+    document.getElementById("modalApiKeyInput").value = "";
+    document.getElementById("modalApiKeyModelSelect").selectedIndex = 0;
+    const firstVal = document.getElementById("modalApiKeyModelSelect").value;
+    onAiModelSelectChange(firstVal);
+    showToast("Input modal direset ke default.");
+}
+
+async function testAiConnectionFromModal() {
+    const id = document.getElementById("modalApiKeyProviderId").value;
+    const apiKey = document.getElementById("modalApiKeyInput").value.trim();
+    const modelSelect = document.getElementById("modalApiKeyModelSelect").value;
+    const customModel = document.getElementById("modalApiKeyModelInput").value.trim();
+    const model = modelSelect === "custom" ? customModel : (modelSelect || customModel);
+
+    const alertEl = document.getElementById("modalTestFeedbackAlert");
+    const textEl = document.getElementById("modalTestFeedbackText");
+    const badgeEl = document.getElementById("modalTestFeedbackBadge");
+    const btn = document.getElementById("btnModalTestConn");
+
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Testing...';
+        }
+        if (alertEl) {
+            alertEl.className = "alert alert-warning py-2 mb-3";
+            textEl.textContent = `Menguji koneksi ${id}... (Mengirim REST ping real-time)`;
+            badgeEl.className = "badge bg-warning text-dark";
+            badgeEl.textContent = "Testing...";
+        }
+
+        if (apiKey) {
+            await apiFetch("/admin/ai/apikey", {
+                method: "POST",
+                body: JSON.stringify({ id, api_key: apiKey, model })
+            });
+        }
+
+        const res = await apiFetch("/admin/ai/test", {
+            method: "POST",
+            body: JSON.stringify({ provider_id: id })
+        });
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok || !json.success) {
+            throw new Error(json.message || json.error || `HTTP ${res.status}: Gagal menghubungi ${id}`);
+        }
+
+        if (alertEl) {
+            alertEl.className = "alert alert-success py-2 mb-3";
+            textEl.textContent = `✅ Connected! Latency: ${json.latency_ms} ms | HTTP ${json.http_status} OK`;
+            badgeEl.className = "badge bg-success";
+            badgeEl.textContent = "🟢 Connected";
+        }
+        loadMultiAiStatus();
+    } catch (err) {
+        if (alertEl) {
+            alertEl.className = "alert alert-danger py-2 mb-3";
+            textEl.textContent = `🔴 Disconnected: ${err.message}`;
+            badgeEl.className = "badge bg-danger";
+            badgeEl.textContent = "Disconnected";
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-lightning-charge me-1"></i> Test Connection';
+        }
+    }
 }
 
 async function saveAiApiKeyFromModal() {
     const id = document.getElementById("modalApiKeyProviderId").value;
     const apiKey = document.getElementById("modalApiKeyInput").value.trim();
-    const model = document.getElementById("modalApiKeyModelInput").value.trim();
+    const modelSelect = document.getElementById("modalApiKeyModelSelect").value;
+    const customModel = document.getElementById("modalApiKeyModelInput").value.trim();
+    const model = modelSelect === "custom" ? customModel : (modelSelect || customModel);
+    const priority = Number(document.getElementById("modalApiKeyPriority").value) || 1;
+    const enabled = Boolean(document.getElementById("modalApiKeyEnabled").checked);
+    const httpReferer = document.getElementById("modalApiKeyHttpReferer")?.value.trim();
+    const appName = document.getElementById("modalApiKeyAppName")?.value.trim();
 
     if (!id) return;
 
+    const btn = document.getElementById("btnSaveAiConfig");
     try {
-        const payload = { id, model };
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...';
+        }
+
+        const payload = { id, model, priority, enabled };
         if (apiKey) payload.api_key = apiKey;
+        if (httpReferer) payload.http_referer = httpReferer;
+        if (appName) payload.app_name = appName;
 
         const res = await apiFetch("/admin/ai/apikey", {
             method: "POST",
@@ -4171,40 +4370,48 @@ async function saveAiApiKeyFromModal() {
         });
         const json = await res.json().catch(() => ({}));
 
-        if (!res.ok) throw new Error(json.message || "Gagal menyimpan API Key & Model");
+        if (!res.ok) throw new Error(json.message || "Gagal menyimpan konfigurasi AI");
 
-        showToast(json.message || "✅ API Key & Model berhasil disimpan!");
+        showToast(json.message || "✅ Konfigurasi AI berhasil disimpan!");
+
         const modalEl = document.getElementById("modalApiKey");
         const modal = bootstrap.Modal.getInstance(modalEl);
         if (modal) modal.hide();
 
         loadMultiAiStatus();
+        loadMultiAiLogs();
     } catch (err) {
         showToast(err.message, true);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-floppy me-1"></i> Simpan Konfigurasi';
+        }
     }
 }
 
 async function deleteAiApiKeyFromModal() {
     const id = document.getElementById("modalApiKeyProviderId").value;
-    const providerName = document.getElementById("modalApiKeyProviderName").value;
+    const providerTitle = document.getElementById("modalApiKeyProviderTitle").textContent;
 
-    if (!confirm(`Hapus API Key untuk ${providerName}? Provider akan dinonaktifkan.`)) return;
+    if (!confirm(`Hapus API Key untuk ${providerTitle}? Provider akan dinonaktifkan.`)) return;
 
     try {
         const res = await apiFetch("/admin/ai/apikey", {
             method: "POST",
-            body: JSON.stringify({ id, api_key: "" })
+            body: JSON.stringify({ id, api_key: "", enabled: false })
         });
         const json = await res.json().catch(() => ({}));
 
         if (!res.ok) throw new Error(json.message || "Gagal menghapus API Key");
 
-        showToast(`🗑️ API Key untuk ${providerName} berhasil dihapus.`);
+        showToast(`🗑️ API Key untuk ${providerTitle} berhasil dihapus.`);
         const modalEl = document.getElementById("modalApiKey");
         const modal = bootstrap.Modal.getInstance(modalEl);
         if (modal) modal.hide();
 
         loadMultiAiStatus();
+        loadMultiAiLogs();
     } catch (err) {
         showToast(err.message, true);
     }
