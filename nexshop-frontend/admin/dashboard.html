@@ -1013,87 +1013,225 @@
         <p class="text-muted mb-0">Kelola konfigurasi NexBot AI, RAG Knowledge Base, dan performa model AI</p>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="card shadow-sm text-center p-3">
-                <small class="text-muted">Total Permintaan Gemini</small>
-                <h3 id="geminiTotalRequests" class="fw-bold text-primary mb-0">-</h3>
+    <div class="alert alert-info border-info d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
+        <div>
+            <h6 class="alert-heading mb-1"><i class="bi bi-diagram-3-fill me-2"></i>Status System Automatic Failover Multi-AI</h6>
+            <span class="small">Urutan Priority: <strong>1. Google Gemini ➔ 2. Groq AI ➔ 3. OpenRouter</strong> (Bila provider prioritas tinggi gagal/quota habis, sistem otomatis beralih ke provider berikutnya).</span>
+        </div>
+        <div class="text-end">
+            <span class="small text-muted d-block">Active Primary Provider:</span>
+            <span id="activeAiProviderBadge" class="badge bg-primary fs-6"><i class="bi bi-cpu me-1"></i> Google Gemini</span>
+        </div>
+    </div>
+
+    <!-- Provider Cards Row -->
+    <div id="aiProviderCardsContainer" class="row g-3 mb-4">
+        <!-- Gemini Card -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100 border-start border-4 border-primary">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-google text-primary me-2"></i>Google Gemini</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-light text-dark border">Priority #1</span>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="toggle_gemini" checked onchange="toggleAiProvider('gemini', this.checked)">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <small class="text-muted">Status Koneksi</small>
+                        <span id="statusBadge_gemini" class="badge bg-secondary"><i class="bi bi-arrow-repeat spin"></i> Checking...</span>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted d-block">API Key (Masked)</small>
+                        <code id="maskedKey_gemini" class="text-dark font-monospace fw-bold">Belum diisi</code>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Active Model</small>
+                        <span id="model_gemini" class="badge bg-light text-dark border">gemini-flash-latest</span>
+                    </div>
+
+                    <div class="row g-2 text-center my-auto py-2 bg-light rounded border mb-3">
+                        <div class="col-4 border-end">
+                            <small class="text-muted d-block" style="font-size: 0.75rem;">Latency</small>
+                            <span id="latency_gemini" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-4 border-end">
+                            <small class="text-muted d-block" style="font-size: 0.75rem;">Success %</small>
+                            <span id="rate_gemini" class="fw-bold text-success">-</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block" style="font-size: 0.75rem;">Total Req</small>
+                            <span id="requests_gemini" class="fw-bold text-primary">-</span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="testSingleAiProvider('gemini')">
+                            <i class="bi bi-lightning-charge me-1"></i> Uji Koneksi Real-Time
+                        </button>
+                        <button class="btn btn-light btn-sm border" onclick="openApiKeyModal('gemini', 'Google Gemini', 'gemini-flash-latest')">
+                            <i class="bi bi-key me-1"></i> Kelola Key & Model
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm text-center p-3">
-                <small class="text-muted">Tingkat Keberhasilan (Success Rate)</small>
-                <h3 id="geminiSuccessRate" class="fw-bold text-success mb-0">-</h3>
+
+        <!-- Groq Card -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100 border-start border-4 border-warning">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-lightning-fill text-warning me-2"></i>Groq AI</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-light text-dark border">Priority #2</span>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="toggle_groq" checked onchange="toggleAiProvider('groq', this.checked)">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <small class="text-muted">Status Koneksi</small>
+                        <span id="statusBadge_groq" class="badge bg-secondary"><i class="bi bi-arrow-repeat spin"></i> Checking...</span>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted d-block">API Key (Masked)</small>
+                        <code id="maskedKey_groq" class="text-dark font-monospace fw-bold">Belum diisi</code>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Active Model</small>
+                        <span id="model_groq" class="badge bg-light text-dark border">llama-3.3-70b-versatile</span>
+                    </div>
+
+                    <div class="row g-2 text-center my-auto py-2 bg-light rounded border mb-3">
+                        <div class="col-4 border-end">
+                            <small class="text-muted d-block" style="font-size: 0.75rem;">Latency</small>
+                            <span id="latency_groq" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-4 border-end">
+                            <small class="text-muted d-block" style="font-size: 0.75rem;">Success %</small>
+                            <span id="rate_groq" class="fw-bold text-success">-</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block" style="font-size: 0.75rem;">Total Req</small>
+                            <span id="requests_groq" class="fw-bold text-primary">-</span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-2">
+                        <button class="btn btn-outline-warning text-dark btn-sm" onclick="testSingleAiProvider('groq')">
+                            <i class="bi bi-lightning-charge me-1"></i> Uji Koneksi Real-Time
+                        </button>
+                        <button class="btn btn-light btn-sm border" onclick="openApiKeyModal('groq', 'Groq AI', 'llama-3.3-70b-versatile')">
+                            <i class="bi bi-key me-1"></i> Kelola Key & Model
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm text-center p-3">
-                <small class="text-muted">Model Gemini Aktif</small>
-                <h3 id="geminiModelName" class="fw-bold text-info mb-0">gemini-2.0-flash</h3>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card shadow-sm text-center p-3">
-                <small class="text-muted">Latency Rata-rata</small>
-                <h3 id="geminiAvgLatency" class="fw-bold text-warning mb-0">-</h3>
+
+        <!-- OpenRouter Card -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm h-100 border-start border-4 border-info">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-globe text-info me-2"></i>OpenRouter</h6>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-light text-dark border">Priority #3</span>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" id="toggle_openrouter" checked onchange="toggleAiProvider('openrouter', this.checked)">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <small class="text-muted">Status Koneksi</small>
+                        <span id="statusBadge_openrouter" class="badge bg-secondary"><i class="bi bi-arrow-repeat spin"></i> Checking...</span>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted d-block">API Key (Masked)</small>
+                        <code id="maskedKey_openrouter" class="text-dark font-monospace fw-bold">Belum diisi</code>
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted d-block">Active Model</small>
+                        <span id="model_openrouter" class="badge bg-light text-dark border">meta-llama/llama-3.3-70b-instruct</span>
+                    </div>
+
+                    <div class="row g-2 text-center my-auto py-2 bg-light rounded border mb-3">
+                        <div class="col-4 border-end">
+                            <small class="text-muted d-block" style="font-size: 0.75rem;">Latency</small>
+                            <span id="latency_openrouter" class="fw-bold text-dark">-</span>
+                        </div>
+                        <div class="col-4 border-end">
+                            <small class="text-muted d-block" style="font-size: 0.75rem;">Success %</small>
+                            <span id="rate_openrouter" class="fw-bold text-success">-</span>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted d-block" style="font-size: 0.75rem;">Total Req</small>
+                            <span id="requests_openrouter" class="fw-bold text-primary">-</span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-2">
+                        <button class="btn btn-outline-info text-dark btn-sm" onclick="testSingleAiProvider('openrouter')">
+                            <i class="bi bi-lightning-charge me-1"></i> Uji Koneksi Real-Time
+                        </button>
+                        <button class="btn btn-light btn-sm border" onclick="openApiKeyModal('openrouter', 'OpenRouter', 'meta-llama/llama-3.3-70b-instruct')">
+                            <i class="bi bi-key me-1"></i> Kelola Key & Model
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- Bulk Action bar -->
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4 p-3 bg-white shadow-sm rounded border">
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-primary" onclick="testAllAiProviders()"><i class="bi bi-play-circle me-1"></i> Test Seluruh AI Provider</button>
+            <button class="btn btn-outline-secondary" onclick="loadMultiAiStatus()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh Health Status</button>
+        </div>
+        <small class="text-muted"><i class="bi bi-clock-history me-1"></i> Auto Health Check: <strong>Setiap 60 Detik</strong></small>
+    </div>
+
+    <!-- Multi AI Request Logs Card -->
     <div class="card shadow-sm mb-4">
         <div class="card-header border-bottom d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0"><i class="bi bi-robot me-2"></i>Status Koneksi Google Gemini API</h5>
-            <span id="geminiStatusBadge" class="badge bg-secondary px-3 py-2 fs-6">
-                <i class="bi bi-arrow-repeat spin me-1"></i> Memeriksa Koneksi...
-            </span>
-        </div>
-        <div class="card-body">
-            <div class="row g-3 mb-3">
-                <div class="col-md-4">
-                    <small class="text-muted d-block">Status API Key</small>
-                    <span id="geminiMaskedKey" class="fw-bold text-dark font-monospace">-</span>
-                </div>
-                <div class="col-md-4">
-                    <small class="text-muted d-block">Permintaan Sukses Terakhir</small>
-                    <span id="geminiLastSuccess" class="fw-semibold text-success">-</span>
-                </div>
-                <div class="col-md-4">
-                    <small class="text-muted d-block">Permintaan Gagal Terakhir</small>
-                    <span id="geminiLastFailed" class="fw-semibold text-danger">-</span>
-                </div>
+            <h5 class="mb-0"><i class="bi bi-list-task me-2"></i>Log Permintaan Multi-AI Real-Time</h5>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <select id="aiLogProviderFilter" class="form-select form-select-sm" style="width: 150px;" onchange="loadMultiAiLogs()">
+                    <option value="all">Semua Provider</option>
+                    <option value="gemini">Google Gemini</option>
+                    <option value="groq">Groq AI</option>
+                    <option value="openrouter">OpenRouter</option>
+                </select>
+                <select id="aiLogStatusFilter" class="form-select form-select-sm" style="width: 130px;" onchange="loadMultiAiLogs()">
+                    <option value="all">Semua Status</option>
+                    <option value="success">Sukses</option>
+                    <option value="failed">Gagal</option>
+                </select>
+                <input id="aiLogDateFilter" type="date" class="form-control form-control-sm" style="width: 140px;" onchange="loadMultiAiLogs()">
+                <button class="btn btn-sm btn-outline-secondary" onclick="loadMultiAiLogs()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh</button>
             </div>
-            <div id="geminiLastErrorAlert" class="alert alert-danger d-none py-2 mb-3">
-                <strong><i class="bi bi-exclamation-triangle-fill me-1"></i> Pesan Error Terakhir:</strong> <span id="geminiLastErrorText">-</span>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <button id="btnTestGemini" class="btn btn-primary" onclick="testGeminiConnection()"><i class="bi bi-lightning-charge me-1"></i> Uji Koneksi Gemini Real-Time</button>
-                <button class="btn btn-outline-primary" onclick="loadAiInsights()"><i class="bi bi-magic me-1"></i> Uji RAG Sales Insights</button>
-                <button class="btn btn-outline-secondary" onclick="switchView('settings')"><i class="bi bi-key me-1"></i> Pengaturan API Key</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="card shadow-sm mb-4">
-        <div class="card-header border-bottom d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="bi bi-list-stars me-2"></i>Log Permintaan Gemini AI Real-Time</h5>
-            <button class="btn btn-sm btn-outline-secondary" onclick="loadGeminiLogs()"><i class="bi bi-arrow-clockwise me-1"></i> Refresh Log</button>
         </div>
         <div class="card-body p-0">
-            <div class="table-responsive" style="max-height: 320px;">
+            <div class="table-responsive" style="max-height: 360px;">
                 <table class="table table-hover align-middle mb-0 text-nowrap">
                     <thead class="table-light">
                         <tr>
                             <th>Waktu</th>
-                            <th>Pesan Pengguna</th>
+                            <th>Provider</th>
                             <th>Model</th>
+                            <th>Pesan User</th>
                             <th>Latency</th>
                             <th>HTTP Status</th>
                             <th>Status</th>
-                            <th>Keterangan / Error</th>
+                            <th>Keterangan / Token</th>
                         </tr>
                     </thead>
-                    <tbody id="geminiLogsTbody">
-                        <tr><td colspan="7" class="text-center text-muted py-3">Memuat log Gemini AI...</td></tr>
+                    <tbody id="multiAiLogsTbody">
+                        <tr><td colspan="8" class="text-center text-muted py-3">Memuat log AI Provider...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1612,6 +1750,39 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                 <button type="button" class="btn btn-primary" id="btnSaveKnowledge" onclick="saveKnowledge()"><i class="bi bi-floppy me-1"></i> Simpan Knowledge</button>
+            </div>
+        </div>
+    </div>
+<!-- Modal Manage AI Key & Model -->
+<div class="modal fade" id="modalApiKey" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content shadow">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalApiKeyTitle"><i class="bi bi-key-fill me-2 text-primary"></i>Kelola API Key & Model</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formApiKey" onsubmit="event.preventDefault(); saveAiApiKeyFromModal();">
+                    <input type="hidden" id="modalApiKeyProviderId">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Provider</label>
+                        <input type="text" id="modalApiKeyProviderName" class="form-control" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">API Key Baru / Pengganti</label>
+                        <input type="password" id="modalApiKeyInput" class="form-control font-monospace" placeholder="Masukkan API Key baru..." autocomplete="off">
+                        <div class="form-text">Biarkan kosong jika tidak ingin mengubah API Key saat ini. Kunci tersimpan secara aman & selalu disamarkan di UI (Masked Key).</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Model AI yang Digunakan</label>
+                        <input type="text" id="modalApiKeyModelInput" class="form-control font-monospace" placeholder="Contoh: gemini-flash-latest atau llama-3.3-70b-versatile">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-danger me-auto" onclick="deleteAiApiKeyFromModal()"><i class="bi bi-trash me-1"></i> Hapus Key</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="saveAiApiKeyFromModal()"><i class="bi bi-floppy me-1"></i> Simpan Perubahan</button>
             </div>
         </div>
     </div>

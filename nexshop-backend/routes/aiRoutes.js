@@ -18,9 +18,21 @@ router.post("/faq/generate", authMiddleware, adminMiddleware, aiController.gener
 router.put("/knowledge/:id", authMiddleware, adminMiddleware, aiController.updateKnowledgeBase);
 router.get("/analytics", authMiddleware, adminMiddleware, aiController.getAnalytics);
 
-// Admin Gemini AI Status, Test, & Logs Endpoints
+// Admin Gemini AI Status, Test, & Logs Endpoints (Legacy)
 router.get("/gemini-status", authMiddleware, adminMiddleware, aiController.getGeminiStatus);
 router.post("/test-gemini", authMiddleware, adminMiddleware, aiController.testGeminiConnection);
 router.get("/gemini-logs", authMiddleware, adminMiddleware, aiController.getGeminiLogs);
+
+// Admin Multi-AI Provider System Endpoints
+router.get("/status", authMiddleware, adminMiddleware, aiController.getAdminAiStatus);
+router.get("/admin/status", authMiddleware, adminMiddleware, aiController.getAdminAiStatus);
+router.get("/logs", authMiddleware, adminMiddleware, aiController.getAdminAiLogs);
+router.get("/admin/logs", authMiddleware, adminMiddleware, aiController.getAdminAiLogs);
+router.post("/test", authMiddleware, adminMiddleware, aiController.testAdminAiProviders);
+router.post("/admin/test", authMiddleware, adminMiddleware, aiController.testAdminAiProviders);
+router.post("/provider", authMiddleware, adminMiddleware, aiController.updateAdminAiProvider);
+router.post("/admin/provider", authMiddleware, adminMiddleware, aiController.updateAdminAiProvider);
+router.post("/apikey", authMiddleware, adminMiddleware, aiController.saveAdminAiApiKey);
+router.post("/admin/apikey", authMiddleware, adminMiddleware, aiController.saveAdminAiApiKey);
 
 module.exports = router;

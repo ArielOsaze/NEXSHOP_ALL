@@ -3,11 +3,10 @@
 const axios = require("axios");
 const { getStoreSettings, getApiKeys, DEFAULT_GEMINI_MODEL, callGeminiWithFallback } = require("../config/settings");
 const { normalizeQuery, detectIntent, detectEntities, rankKnowledge, buildKnowledgeResponse } = require("../utils/nexbotEngine");
+const aiProviderManager = require("../services/aiProviderManager");
 
 function maskKey(value) {
-    if (!value) return "Belum diisi";
-    if (value.length <= 8) return "••••••••";
-    return value.slice(0, 4) + "••••••••" + value.slice(-4);
+    return aiProviderManager.maskKey(value);
 }
 
 async function callGeminiApi(userMessage, selectedKnowledge, apiKey, model) {
@@ -265,32 +264,30 @@ async function answer(message, sessionId, user) {
         reply = await handleOrderLookup(message, user);
         source = "order_system";
     } else {
-        const keys = await getApiKeys();
-        const apiKey = keys.gemini_api_key || process.env.GEMINI_API_KEY || "";
-        const preferredModel = keys.gemini_news_model || DEFAULT_GEMINI_MODEL;
+        const knowledgeText = result.selected.length ? buildKnowledgeResponse(result.selected) : "Belum ada informasi khusus untuk pertanyaan ini.";
+        const systemPrompt = `Kamu adalah NexBot, asisten AI resmi dari toko game & e-commerce NexShop.
+Tugas kamu adalah menjawab pertanyaan pelanggan secara ramah, profesional, dan membantu dalam bahasa Indonesia.
+Gunakan FAKTA KNOWLEDGE BASE NEXSHOP di bawah ini sebagai sumber kebenaran utama:
 
-        if (apiKey) {
-            const geminiRes = await callGeminiApi(message, result.selected, apiKey, preferredModel);
-            const actualModelUsed = geminiRes.activeModel || preferredModel;
-            await logGeminiRequest({
-                userMessage: message,
-                modelUsed: actualModelUsed,
-                responseTimeMs: geminiRes.responseTimeMs,
-                tokenUsage: geminiRes.tokenUsage,
-                httpStatus: geminiRes.httpStatus,
-                isSuccess: geminiRes.success,
-                errorMessage: geminiRes.error,
-                userId: user?.id,
-                sessionId
-            });
+--- FAKTA KNOWLEDGE BASE ---
+${knowledgeText}
+----------------------------
 
-            if (geminiRes.success && geminiRes.reply) {
-                reply = geminiRes.reply;
-                source = "gemini";
-            } else {
-                reply = result.selected.length ? buildKnowledgeResponse(result.selected) : unavailableReply();
-                source = result.selected.length ? "knowledge" : "handoff";
-            }
+Aturan menjawab:
+1. Jawab pertanyaan user berdasarkan Fakta Knowledge Base jika relevan.
+2. Jangan mengarang kebijakan pembayaran, cara topup, atau harga yang bertentangan dengan fakta di atas.
+3. Jawab singkat, jelas, dan ramah dengan format markdown yang rapi.`;
+
+        const aiRes = await aiProviderManager.generateResponse({
+            prompt: message,
+            systemPrompt,
+            userId: user?.id,
+            sessionId
+        });
+
+        if (aiRes.success && aiRes.reply) {
+            reply = aiRes.reply;
+            source = aiRes.provider; // e.g. "gemini", "groq", "openrouter"
         } else {
             reply = result.selected.length ? buildKnowledgeResponse(result.selected) : unavailableReply();
             source = result.selected.length ? "knowledge" : "handoff";
@@ -302,7 +299,7 @@ async function answer(message, sessionId, user) {
         saveConversation({ userId: user?.id, sessionId, role: "user", message, intent: result.intent, knowledgeIds }),
         saveConversation({ userId: user?.id, sessionId, role: "assistant", message: reply, intent: result.intent, knowledgeIds }),
         updateUserMemory(user, result.query, result.intent, result.entities),
-        saveAnalytics({ ...result, source, failed: !result.selected.length && source !== "order_system" && source !== "gemini", user, sessionId })
+        saveAnalytics({ ...result, source, failed: !result.selected.length && source !== "order_system" && !["gemini", "groq", "openrouter"].includes(source), user, sessionId })
     ]);
     return { reply, source, handoff: source === "handoff", intent: result.intent, entities: result.entities, knowledgeIds };
 }
@@ -534,5 +531,71 @@ exports.getGeminiLogs = async (_req, res) => {
         return res.json({ data: data || [] });
     } catch (err) {
         return res.status(500).json({ message: "Gagal mengambil log Gemini AI" });
+    }
+};
+
+// ===================================
+// MULTI-AI PROVIDER ADMIN HANDLERS
+// ===================================
+
+exports.getAdminAiStatus = async (_req, res) => {
+    try {
+        const status = await aiProviderManager.getOverallStatus();
+        return res.json(status);
+    } catch (err) {
+        return res.status(500).json({ message: "Gagal mengambil status AI Provider", detail: err.message });
+    }
+};
+
+exports.getAdminAiLogs = async (req, res) => {
+    try {
+        const { provider, status, date, limit } = req.query;
+        const logs = await aiProviderManager.getFilteredLogs({
+            provider: provider || "all",
+            status: status || "all",
+            date: date || null,
+            limit: Math.min(200, Number(limit) || 100)
+        });
+        return res.json({ data: logs });
+    } catch (err) {
+        return res.status(500).json({ message: "Gagal mengambil log AI Provider", detail: err.message });
+    }
+};
+
+exports.testAdminAiProviders = async (req, res) => {
+    try {
+        const { provider_id } = req.body || {};
+        if (provider_id) {
+            const result = await aiProviderManager.testSingleProvider(provider_id, req.user?.id);
+            return res.json(result);
+        }
+        const results = await aiProviderManager.testAllProviders(req.user?.id);
+        return res.json({ success: true, providers: results });
+    } catch (err) {
+        return res.status(500).json({ message: "Gagal melakukan test koneksi AI Provider", detail: err.message });
+    }
+};
+
+exports.updateAdminAiProvider = async (req, res) => {
+    try {
+        const { id, model, priority, enabled } = req.body || {};
+        if (!id) return res.status(400).json({ message: "ID Provider wajib diisi" });
+
+        const updated = await aiProviderManager.saveProviderSetting({ id, model, priority, enabled });
+        return res.json({ message: `Pengaturan ${id} berhasil diperbarui`, data: updated });
+    } catch (err) {
+        return res.status(500).json({ message: err.message || "Gagal memperbarui pengaturan provider" });
+    }
+};
+
+exports.saveAdminAiApiKey = async (req, res) => {
+    try {
+        const { id, api_key, model } = req.body || {};
+        if (!id) return res.status(400).json({ message: "ID Provider wajib diisi" });
+
+        const updated = await aiProviderManager.saveProviderSetting({ id, api_key, model });
+        return res.json({ message: `API Key ${id} berhasil disimpan`, data: updated, masked_key: aiProviderManager.maskKey(updated.api_key) });
+    } catch (err) {
+        return res.status(500).json({ message: err.message || "Gagal menyimpan API Key" });
     }
 };

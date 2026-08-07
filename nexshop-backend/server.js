@@ -131,6 +131,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin/stats", statsRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/admin/ai", aiRoutes);
 app.use("/api/stats", statsRoutes); // sama router — /api/stats/public dibuka publik, /api/stats/overview tetap butuh admin
 
 // Endpoint diagnostik hanya tersedia saat development.

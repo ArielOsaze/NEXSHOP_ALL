@@ -350,7 +350,7 @@ function switchView(view) {
     if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
     if (view === "settings" && !settingsLoaded) loadSettings();
     if (view === "stats" && !statsLoaded) loadStats();
-    if (view === "aimgmt") { loadKnowledgeBase(); loadGeminiStatus(); loadGeminiLogs(); }
+    if (view === "aimgmt") { loadKnowledgeBase(); loadMultiAiStatus(); loadMultiAiLogs(); startAiHealthCheckTimer(); }
 }
 
 function openProductModal() {
@@ -4014,113 +4014,226 @@ async function generateProductFaqs() {
     }
 }
 
-// ================================
-// Gemini AI Status & Real-Time Monitoring
-// ================================
+// ===================================
+// Multi-AI Provider System Dashboard
+// ===================================
 
-async function loadGeminiStatus() {
+let aiHealthCheckInterval = null;
+
+function startAiHealthCheckTimer() {
+    if (aiHealthCheckInterval) clearInterval(aiHealthCheckInterval);
+    // Auto connection check every 60 seconds
+    aiHealthCheckInterval = setInterval(() => {
+        const viewEl = document.getElementById("view-aimgmt");
+        if (viewEl && !viewEl.classList.contains("d-none")) {
+            console.log("⏱️ Executing 60s Auto AI Health Check...");
+            loadMultiAiStatus();
+        }
+    }, 60000);
+}
+
+async function loadMultiAiStatus() {
     try {
-        const res = await apiFetch("/ai/gemini-status");
+        const res = await apiFetch("/admin/ai/status");
         if (!res.ok) return;
         const data = await res.json().catch(() => ({}));
 
-        const badge = document.getElementById("geminiStatusBadge");
-        if (badge) {
-            if (data.connected) {
-                badge.className = "badge bg-success px-3 py-2 fs-6";
-                badge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> 🟢 Terhubung (Connected)';
-            } else {
-                badge.className = "badge bg-danger px-3 py-2 fs-6";
-                badge.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i> 🔴 Terputus (Disconnected)';
-            }
+        const activeBadge = document.getElementById("activeAiProviderBadge");
+        if (activeBadge) {
+            activeBadge.innerHTML = `<i class="bi bi-cpu me-1"></i> ${escapeHtml(data.active_provider || 'Google Gemini')}`;
         }
 
-        const totalReq = document.getElementById("geminiTotalRequests");
-        if (totalReq) totalReq.textContent = data.total_requests || 0;
-
-        const successRate = document.getElementById("geminiSuccessRate");
-        if (successRate) successRate.textContent = `${data.success_rate || 0}%`;
-
-        const modelName = document.getElementById("geminiModelName");
-        if (modelName) modelName.textContent = data.model || "gemini-2.0-flash";
-
-        const avgLat = document.getElementById("geminiAvgLatency");
-        if (avgLat) avgLat.textContent = data.avg_response_time_ms ? `${data.avg_response_time_ms} ms` : "-";
-
-        const maskedKey = document.getElementById("geminiMaskedKey");
-        if (maskedKey) maskedKey.textContent = data.masked_key || "Belum diisi";
-
-        const lastSuccess = document.getElementById("geminiLastSuccess");
-        if (lastSuccess) lastSuccess.textContent = data.last_successful_request ? new Date(data.last_successful_request).toLocaleString("id-ID") : "Belum ada";
-
-        const lastFailed = document.getElementById("geminiLastFailed");
-        if (lastFailed) lastFailed.textContent = data.last_failed_request ? new Date(data.last_failed_request).toLocaleString("id-ID") : "Belum ada";
-
-        const alertEl = document.getElementById("geminiLastErrorAlert");
-        const alertText = document.getElementById("geminiLastErrorText");
-        if (alertEl && alertText) {
-            if (data.last_error) {
-                alertText.textContent = data.last_error;
-                alertEl.classList.remove("d-none");
-            } else {
-                alertEl.classList.add("d-none");
+        const providers = data.providers || {};
+        for (const [id, stats] of Object.entries(providers)) {
+            const badge = document.getElementById(`statusBadge_${id}`);
+            if (badge) {
+                if (stats.connected) {
+                    badge.className = "badge bg-success";
+                    badge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> 🟢 Connected';
+                } else {
+                    badge.className = "badge bg-danger";
+                    badge.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i> 🔴 Disconnected';
+                }
             }
+
+            const masked = document.getElementById(`maskedKey_${id}`);
+            if (masked) masked.textContent = stats.masked_key || "Belum diisi";
+
+            const modelEl = document.getElementById(`model_${id}`);
+            if (modelEl) modelEl.textContent = stats.model || "-";
+
+            const latEl = document.getElementById(`latency_${id}`);
+            if (latEl) latEl.textContent = stats.avg_latency_ms ? `${stats.avg_latency_ms} ms` : "-";
+
+            const rateEl = document.getElementById(`rate_${id}`);
+            if (rateEl) rateEl.textContent = `${stats.success_rate || 0}%`;
+
+            const reqEl = document.getElementById(`requests_${id}`);
+            if (reqEl) reqEl.textContent = stats.total_requests || 0;
+
+            const toggle = document.getElementById(`toggle_${id}`);
+            if (toggle) toggle.checked = Boolean(stats.enabled);
         }
     } catch (err) {
-        console.error("Gagal memuat status Gemini:", err);
+        console.error("Gagal memuat status Multi-AI:", err);
     }
 }
 
-async function testGeminiConnection() {
-    const btn = document.getElementById("btnTestGemini");
-    const badge = document.getElementById("geminiStatusBadge");
+async function testSingleAiProvider(providerId) {
+    const badge = document.getElementById(`statusBadge_${providerId}`);
     try {
-        if (btn) {
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menguji Koneksi...';
-        }
         if (badge) {
-            badge.className = "badge bg-warning text-dark px-3 py-2 fs-6";
-            badge.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i> Testing Ping...';
+            badge.className = "badge bg-warning text-dark";
+            badge.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i> Testing...';
         }
 
-        const res = await apiFetch("/ai/test-gemini", { method: "POST" });
+        const res = await apiFetch("/admin/ai/test", {
+            method: "POST",
+            body: JSON.stringify({ provider_id: providerId })
+        });
+
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || !json.success) {
+            throw new Error(json.message || json.error || `HTTP ${res.status}: Gagal menghubungi ${providerId}`);
+        }
+
+        showToast(`✅ Uji Koneksi ${json.providerName || providerId} Berhasil! (${json.latency_ms} ms)`);
+        loadMultiAiStatus();
+        loadMultiAiLogs();
+    } catch (err) {
+        showToast(err.message || `❌ Uji koneksi ${providerId} gagal`, true);
+        loadMultiAiStatus();
+        loadMultiAiLogs();
+    }
+}
+
+async function testAllAiProviders() {
+    try {
+        showToast("🚀 Menguji koneksi ke seluruh AI Provider...");
+        const res = await apiFetch("/admin/ai/test", { method: "POST" });
         const json = await res.json().catch(() => ({}));
 
-        if (!res.ok || !json.success) {
-            throw new Error(json.message || `HTTP ${res.status}: Gagal menghubungi Gemini API`);
-        }
+        if (!res.ok) throw new Error(json.message || "Gagal menguji seluruh provider");
 
-        showToast("✅ Uji Koneksi Gemini Berhasil! API siap digunakan.");
-        loadGeminiStatus();
-        loadGeminiLogs();
+        showToast("✅ Pengujian seluruh AI Provider selesai!");
+        loadMultiAiStatus();
+        loadMultiAiLogs();
     } catch (err) {
-        showToast(err.message || "❌ Uji koneksi Gemini gagal", true);
-        loadGeminiStatus();
-        loadGeminiLogs();
-    } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-lightning-charge me-1"></i> Uji Koneksi Gemini Real-Time';
-        }
+        showToast(err.message || "❌ Gagal menguji provider", true);
+        loadMultiAiStatus();
     }
 }
 
-async function loadGeminiLogs() {
-    const tbody = document.getElementById("geminiLogsTbody");
+async function toggleAiProvider(providerId, enabled) {
+    try {
+        const res = await apiFetch("/admin/ai/provider", {
+            method: "POST",
+            body: JSON.stringify({ id: providerId, enabled })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.message || "Gagal mengubah status provider");
+
+        showToast(`✅ Status ${providerId} berhasil diubah.`);
+        loadMultiAiStatus();
+    } catch (err) {
+        showToast(err.message, true);
+        loadMultiAiStatus();
+    }
+}
+
+function openApiKeyModal(providerId, providerName, defaultModel) {
+    document.getElementById("modalApiKeyProviderId").value = providerId;
+    document.getElementById("modalApiKeyProviderName").value = providerName;
+    document.getElementById("modalApiKeyInput").value = "";
+
+    const currentModelBadge = document.getElementById(`model_${providerId}`);
+    document.getElementById("modalApiKeyModelInput").value = (currentModelBadge ? currentModelBadge.textContent.trim() : "") || defaultModel;
+
+    const modalEl = document.getElementById("modalApiKey");
+    const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+    modal.show();
+}
+
+async function saveAiApiKeyFromModal() {
+    const id = document.getElementById("modalApiKeyProviderId").value;
+    const apiKey = document.getElementById("modalApiKeyInput").value.trim();
+    const model = document.getElementById("modalApiKeyModelInput").value.trim();
+
+    if (!id) return;
+
+    try {
+        const payload = { id, model };
+        if (apiKey) payload.api_key = apiKey;
+
+        const res = await apiFetch("/admin/ai/apikey", {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok) throw new Error(json.message || "Gagal menyimpan API Key & Model");
+
+        showToast(json.message || "✅ API Key & Model berhasil disimpan!");
+        const modalEl = document.getElementById("modalApiKey");
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+
+        loadMultiAiStatus();
+    } catch (err) {
+        showToast(err.message, true);
+    }
+}
+
+async function deleteAiApiKeyFromModal() {
+    const id = document.getElementById("modalApiKeyProviderId").value;
+    const providerName = document.getElementById("modalApiKeyProviderName").value;
+
+    if (!confirm(`Hapus API Key untuk ${providerName}? Provider akan dinonaktifkan.`)) return;
+
+    try {
+        const res = await apiFetch("/admin/ai/apikey", {
+            method: "POST",
+            body: JSON.stringify({ id, api_key: "" })
+        });
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok) throw new Error(json.message || "Gagal menghapus API Key");
+
+        showToast(`🗑️ API Key untuk ${providerName} berhasil dihapus.`);
+        const modalEl = document.getElementById("modalApiKey");
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+
+        loadMultiAiStatus();
+    } catch (err) {
+        showToast(err.message, true);
+    }
+}
+
+async function loadMultiAiLogs() {
+    const tbody = document.getElementById("multiAiLogsTbody");
     if (!tbody) return;
 
+    const providerFilter = document.getElementById("aiLogProviderFilter")?.value || "all";
+    const statusFilter = document.getElementById("aiLogStatusFilter")?.value || "all";
+    const dateFilter = document.getElementById("aiLogDateFilter")?.value || "";
+
     try {
-        const res = await apiFetch("/ai/gemini-logs");
+        const queryParams = new URLSearchParams({
+            provider: providerFilter,
+            status: statusFilter,
+            date: dateFilter,
+            limit: 100
+        });
+
+        const res = await apiFetch(`/admin/ai/logs?${queryParams.toString()}`);
         const json = await res.json().catch(() => ({}));
 
-        if (!res.ok) {
-            throw new Error(json.message || "Gagal memuat log Gemini");
-        }
+        if (!res.ok) throw new Error(json.message || "Gagal memuat log Multi-AI");
 
         const logs = json.data || [];
         if (!logs.length) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">Belum ada aktivitas log permintaan Gemini API.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-3">Tidak ada aktivitas log permintaan AI yang sesuai filter.</td></tr>`;
             return;
         }
 
@@ -4128,16 +4241,26 @@ async function loadGeminiLogs() {
             const timeStr = new Date(log.created_at).toLocaleString("id-ID");
             const badgeClass = log.is_success ? "bg-success" : "bg-danger";
             const badgeText = log.is_success ? "Berhasil" : "Gagal";
-            const msgTrunc = escapeHtml(log.user_message || "-").slice(0, 60);
-            const tokenStr = log.token_usage ? `Prompt: ${log.token_usage.promptTokenCount || 0}, Output: ${log.token_usage.candidatesTokenCount || 0}` : "-";
+            const promptTrunc = escapeHtml(log.user_prompt || "-").slice(0, 50);
+            
+            let tokenStr = "-";
+            if (log.token_usage) {
+                if (typeof log.token_usage === "object") {
+                    const promptTokens = log.token_usage.promptTokenCount || log.token_usage.prompt_tokens || 0;
+                    const compTokens = log.token_usage.candidatesTokenCount || log.token_usage.completion_tokens || 0;
+                    tokenStr = `P: ${promptTokens}, Out: ${compTokens}`;
+                }
+            }
+
             const errStr = log.error_message ? `<span class="text-danger small">${escapeHtml(log.error_message)}</span>` : tokenStr;
 
             return `
                 <tr>
                     <td><small class="text-muted">${timeStr}</small></td>
-                    <td title="${escapeHtml(log.user_message || '')}"><strong>${msgTrunc}</strong></td>
-                    <td><span class="badge bg-light text-dark border">${escapeHtml(log.model_used || 'gemini-2.0-flash')}</span></td>
-                    <td>${log.response_time_ms} ms</td>
+                    <td><span class="badge bg-dark text-white">${escapeHtml(log.provider || 'AI')}</span></td>
+                    <td><span class="badge bg-light text-dark border">${escapeHtml(log.model || '-')}</span></td>
+                    <td title="${escapeHtml(log.user_prompt || '')}"><strong>${promptTrunc}</strong></td>
+                    <td>${log.latency_ms} ms</td>
                     <td><code>${log.http_status}</code></td>
                     <td><span class="badge ${badgeClass}">${badgeText}</span></td>
                     <td><small>${errStr}</small></td>
@@ -4145,7 +4268,7 @@ async function loadGeminiLogs() {
             `;
         }).join("");
     } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-3">Gagal memuat log: ${escapeHtml(err.message)}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-3">Gagal memuat log: ${escapeHtml(err.message)}</td></tr>`;
     }
 }
 
