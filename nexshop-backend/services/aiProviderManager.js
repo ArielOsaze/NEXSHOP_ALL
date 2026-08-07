@@ -11,6 +11,21 @@ const PROVIDERS = {
     openrouter: openrouterProvider
 };
 
+const latestStatusMap = {
+    gemini: { connected: null, latency: null, httpStatus: null, lastChecked: null },
+    groq: { connected: null, latency: null, httpStatus: null, lastChecked: null },
+    openrouter: { connected: null, latency: null, httpStatus: null, lastChecked: null }
+};
+
+function normalizeProviderId(idStr) {
+    if (!idStr) return "gemini";
+    const str = String(idStr).toLowerCase().trim();
+    if (str.includes("gemini")) return "gemini";
+    if (str.includes("groq")) return "groq";
+    if (str.includes("openrouter")) return "openrouter";
+    return str;
+}
+
 const DEFAULT_SETTINGS = [
     { id: "gemini", provider: "Google Gemini", model: "gemini-flash-latest", enabled: true, priority: 1 },
     { id: "groq", provider: "Groq AI", model: "llama-3.3-70b-versatile", enabled: true, priority: 2 },
@@ -77,18 +92,18 @@ const PROVIDER_NAMES = {
 };
 
 async function saveProviderSetting({ id, api_key, model, enabled, priority, http_referer, referer, app_name }) {
-    if (!PROVIDERS[id]) {
+    const pId = normalizeProviderId(id);
+    if (!PROVIDERS[pId]) {
         throw new Error(`Provider ID '${id}' tidak valid`);
     }
 
-    // Fetch existing setting from DB to avoid wiping omitted columns (e.g. api_key)
     const { data: existing } = await supabase
         .from("ai_provider_settings")
         .select("*")
-        .eq("id", id)
+        .eq("id", pId)
         .maybeSingle();
 
-    const providerTitle = PROVIDER_NAMES[id] || PROVIDERS[id]?.providerName || "AI Provider";
+    const providerTitle = PROVIDER_NAMES[pId] || PROVIDERS[pId]?.providerName || "AI Provider";
     const finalReferer = http_referer || referer;
 
     let targetKey = existing?.api_key || "";
@@ -97,12 +112,12 @@ async function saveProviderSetting({ id, api_key, model, enabled, priority, http
     }
 
     const payload = {
-        id,
+        id: pId,
         provider: providerTitle,
         api_key: targetKey,
         model: (model !== undefined && model !== null && String(model).trim() !== "") 
             ? String(model).trim() 
-            : (existing?.model || PROVIDERS[id].defaultModel),
+            : (existing?.model || PROVIDERS[pId].defaultModel),
         enabled: enabled !== undefined ? Boolean(enabled) : (existing?.enabled !== undefined ? existing.enabled : true),
         priority: priority !== undefined ? Number(priority) || 1 : (existing?.priority || 1),
         http_referer: (finalReferer !== undefined && finalReferer !== null) 
@@ -124,7 +139,7 @@ async function saveProviderSetting({ id, api_key, model, enabled, priority, http
         if (error.code === "PGRST204" || /schema cache|relation.*does not exist/i.test(error.message)) {
             throw new Error("Tabel 'ai_provider_settings' belum tersedia di Supabase. Silakan jalankan file migrations-23-multi-ai-provider.sql di Supabase SQL Editor.");
         }
-        throw new Error(`Gagal menyimpan provider setting ${id}: ${error.message}`);
+        throw new Error(`Gagal menyimpan provider setting ${pId}: ${error.message}`);
     }
 
     settingsCache = { data: null, ts: 0 };
@@ -132,8 +147,9 @@ async function saveProviderSetting({ id, api_key, model, enabled, priority, http
 }
 
 async function logProviderRequest({ provider, model, userPrompt, responseText, latencyMs, httpStatus, tokenUsage, isSuccess, errorMessage, userId, sessionId }) {
+    const pId = normalizeProviderId(provider);
     const payload = {
-        provider,
+        provider: pId,
         model: model || "unknown",
         user_prompt: userPrompt ? String(userPrompt).slice(0, 1000) : null,
         response_text: responseText ? String(responseText).slice(0, 1000) : null,
@@ -183,7 +199,7 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
         });
 
         await logProviderRequest({
-            provider: res.provider,
+            provider: res.provider || pConfig.id,
             model: res.model,
             userPrompt: prompt,
             responseText: res.reply,
@@ -197,6 +213,12 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
         });
 
         if (res.success && res.reply) {
+            latestStatusMap[pConfig.id] = {
+                connected: true,
+                latency: res.latencyMs,
+                httpStatus: res.httpStatus || 200,
+                lastChecked: new Date().toISOString()
+            };
             return {
                 success: true,
                 reply: res.reply,
@@ -208,6 +230,12 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
             };
         }
 
+        latestStatusMap[pConfig.id] = {
+            connected: false,
+            latency: res.latencyMs || 0,
+            httpStatus: res.httpStatus || 500,
+            lastChecked: new Date().toISOString()
+        };
         lastError = res.error || `Provider ${res.providerName} gagal merespons`;
         console.warn(`🔄 Failover Triggered: ${pConfig.provider} gagal (${res.httpStatus}: ${res.error}). Mencoba provider berikutnya...`);
     }
@@ -221,31 +249,34 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
 }
 
 async function testSingleProvider(providerId, userId = null) {
+    const pId = normalizeProviderId(providerId);
     const providersList = await loadProviderSettings({ fresh: true });
-    const pConfig = providersList.find((p) => p.id === providerId);
+    const pConfig = providersList.find((p) => p.id === pId);
 
     if (!pConfig) {
+        latestStatusMap[pId] = { connected: false, latency: 0, httpStatus: 404, lastChecked: new Date().toISOString() };
         return {
             success: false,
             connected: false,
-            provider: providerId,
-            providerName: providerId,
+            provider: pId,
+            providerName: pId,
             model: "-",
             latency: 0,
             latency_ms: 0,
             latencyMs: 0,
             httpStatus: 404,
             http_status: 404,
-            message: `Provider '${providerId}' tidak ditemukan`,
-            error: `Provider '${providerId}' tidak ditemukan`
+            message: `Provider '${pId}' tidak ditemukan`,
+            error: `Provider '${pId}' tidak ditemukan`
         };
     }
 
     if (!pConfig.api_key) {
+        latestStatusMap[pId] = { connected: false, latency: 0, httpStatus: 400, lastChecked: new Date().toISOString() };
         return {
             success: false,
             connected: false,
-            provider: providerId,
+            provider: pId,
             providerName: pConfig.provider,
             model: pConfig.model,
             latency: 0,
@@ -259,12 +290,13 @@ async function testSingleProvider(providerId, userId = null) {
         };
     }
 
-    const driver = PROVIDERS[providerId];
+    const driver = PROVIDERS[pId];
     if (!driver) {
+        latestStatusMap[pId] = { connected: false, latency: 0, httpStatus: 500, lastChecked: new Date().toISOString() };
         return {
             success: false,
             connected: false,
-            provider: providerId,
+            provider: pId,
             providerName: pConfig.provider,
             model: pConfig.model,
             latency: 0,
@@ -272,8 +304,8 @@ async function testSingleProvider(providerId, userId = null) {
             latencyMs: 0,
             httpStatus: 500,
             http_status: 500,
-            message: `Driver untuk ${providerId} belum tersedia`,
-            error: `Driver untuk ${providerId} belum tersedia`
+            message: `Driver untuk ${pId} belum tersedia`,
+            error: `Driver untuk ${pId} belum tersedia`
         };
     }
 
@@ -289,8 +321,8 @@ async function testSingleProvider(providerId, userId = null) {
     });
 
     await logProviderRequest({
-        provider: res.provider,
-        model: res.model,
+        provider: pId,
+        model: res.model || pConfig.model,
         userPrompt: "[PING_TEST] " + pingPrompt,
         responseText: res.reply,
         latencyMs: res.latencyMs,
@@ -306,10 +338,17 @@ async function testSingleProvider(providerId, userId = null) {
     const latencyVal = Number(res.latencyMs) || 0;
     const httpVal = Number(res.httpStatus) || (isSuccess ? 200 : 500);
 
+    latestStatusMap[pId] = {
+        connected: isSuccess,
+        latency: latencyVal,
+        httpStatus: httpVal,
+        lastChecked: new Date().toISOString()
+    };
+
     return {
         success: isSuccess,
         connected: isSuccess,
-        provider: res.provider || providerId,
+        provider: pId,
         providerName: res.providerName || pConfig.provider,
         model: res.model || pConfig.model,
         latency: latencyVal,
@@ -342,7 +381,7 @@ async function getOverallStatus() {
     // Group logs by provider
     const providerStats = {};
     for (const pConfig of settingsList) {
-        const pLogs = logs.filter((l) => l.provider === pConfig.id);
+        const pLogs = logs.filter((l) => normalizeProviderId(l.provider) === pConfig.id);
         const totalReq = pLogs.length;
         const successReq = pLogs.filter((l) => l.is_success).length;
         const failedReq = totalReq - successReq;
@@ -353,7 +392,11 @@ async function getOverallStatus() {
         const lastError = lastFailed?.error_message || null;
         const validLat = pLogs.map((l) => l.latency_ms).filter((t) => Number.isInteger(t) && t > 0);
         const avgLat = validLat.length ? Math.round(validLat.reduce((a, b) => a + b, 0) / validLat.length) : 0;
-        const isConnected = !!pConfig.api_key && (totalReq === 0 || (pLogs[0] && pLogs[0].is_success));
+        
+        const runtime = latestStatusMap[pConfig.id];
+        const isConnected = (runtime && runtime.connected !== null)
+            ? runtime.connected
+            : (!!pConfig.api_key && (totalReq === 0 || (pLogs[0] && pLogs[0].is_success)));
 
         providerStats[pConfig.id] = {
             id: pConfig.id,
@@ -370,12 +413,12 @@ async function getOverallStatus() {
             successful_requests: successReq,
             failed_requests: failedReq,
             success_rate: successRate,
-            avg_latency_ms: avgLat,
+            avg_latency_ms: (runtime && runtime.latency) ? runtime.latency : avgLat,
             last_request: pLogs[0]?.created_at || null,
             last_success: lastSuccess,
             last_failed: lastFailedAt,
             last_error: lastError,
-            last_checked: new Date().toISOString()
+            last_checked: runtime?.lastChecked || (pLogs[0]?.created_at || new Date().toISOString())
         };
     }
 
