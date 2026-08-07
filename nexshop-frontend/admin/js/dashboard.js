@@ -350,7 +350,7 @@ function switchView(view) {
     if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
     if (view === "settings" && !settingsLoaded) loadSettings();
     if (view === "stats" && !statsLoaded) loadStats();
-    if (view === "aimgmt") loadKnowledgeBase();
+    if (view === "aimgmt") { loadKnowledgeBase(); loadGeminiStatus(); loadGeminiLogs(); }
 }
 
 function openProductModal() {
@@ -4011,6 +4011,141 @@ async function generateProductFaqs() {
         showToast(err.message, true);
     } finally {
         if (faqBtn) { faqBtn.disabled = false; faqBtn.innerHTML = '<i class="bi bi-patch-question me-1"></i> Generate FAQ Produk'; }
+    }
+}
+
+// ================================
+// Gemini AI Status & Real-Time Monitoring
+// ================================
+
+async function loadGeminiStatus() {
+    try {
+        const res = await apiFetch("/ai/gemini-status");
+        if (!res.ok) return;
+        const data = await res.json().catch(() => ({}));
+
+        const badge = document.getElementById("geminiStatusBadge");
+        if (badge) {
+            if (data.connected) {
+                badge.className = "badge bg-success px-3 py-2 fs-6";
+                badge.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> 🟢 Terhubung (Connected)';
+            } else {
+                badge.className = "badge bg-danger px-3 py-2 fs-6";
+                badge.innerHTML = '<i class="bi bi-x-circle-fill me-1"></i> 🔴 Terputus (Disconnected)';
+            }
+        }
+
+        const totalReq = document.getElementById("geminiTotalRequests");
+        if (totalReq) totalReq.textContent = data.total_requests || 0;
+
+        const successRate = document.getElementById("geminiSuccessRate");
+        if (successRate) successRate.textContent = `${data.success_rate || 0}%`;
+
+        const modelName = document.getElementById("geminiModelName");
+        if (modelName) modelName.textContent = data.model || "gemini-2.5-flash";
+
+        const avgLat = document.getElementById("geminiAvgLatency");
+        if (avgLat) avgLat.textContent = data.avg_response_time_ms ? `${data.avg_response_time_ms} ms` : "-";
+
+        const maskedKey = document.getElementById("geminiMaskedKey");
+        if (maskedKey) maskedKey.textContent = data.masked_key || "Belum diisi";
+
+        const lastSuccess = document.getElementById("geminiLastSuccess");
+        if (lastSuccess) lastSuccess.textContent = data.last_successful_request ? new Date(data.last_successful_request).toLocaleString("id-ID") : "Belum ada";
+
+        const lastFailed = document.getElementById("geminiLastFailed");
+        if (lastFailed) lastFailed.textContent = data.last_failed_request ? new Date(data.last_failed_request).toLocaleString("id-ID") : "Belum ada";
+
+        const alertEl = document.getElementById("geminiLastErrorAlert");
+        const alertText = document.getElementById("geminiLastErrorText");
+        if (alertEl && alertText) {
+            if (data.last_error) {
+                alertText.textContent = data.last_error;
+                alertEl.classList.remove("d-none");
+            } else {
+                alertEl.classList.add("d-none");
+            }
+        }
+    } catch (err) {
+        console.error("Gagal memuat status Gemini:", err);
+    }
+}
+
+async function testGeminiConnection() {
+    const btn = document.getElementById("btnTestGemini");
+    const badge = document.getElementById("geminiStatusBadge");
+    try {
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Menguji Koneksi...';
+        }
+        if (badge) {
+            badge.className = "badge bg-warning text-dark px-3 py-2 fs-6";
+            badge.innerHTML = '<i class="bi bi-arrow-repeat spin me-1"></i> Testing Ping...';
+        }
+
+        const res = await apiFetch("/ai/test-gemini", { method: "POST" });
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok || !json.success) {
+            throw new Error(json.message || `HTTP ${res.status}: Gagal menghubungi Gemini API`);
+        }
+
+        showToast("✅ Uji Koneksi Gemini Berhasil! API siap digunakan.");
+        loadGeminiStatus();
+        loadGeminiLogs();
+    } catch (err) {
+        showToast(err.message || "❌ Uji koneksi Gemini gagal", true);
+        loadGeminiStatus();
+        loadGeminiLogs();
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-lightning-charge me-1"></i> Uji Koneksi Gemini Real-Time';
+        }
+    }
+}
+
+async function loadGeminiLogs() {
+    const tbody = document.getElementById("geminiLogsTbody");
+    if (!tbody) return;
+
+    try {
+        const res = await apiFetch("/ai/gemini-logs");
+        const json = await res.json().catch(() => ({}));
+
+        if (!res.ok) {
+            throw new Error(json.message || "Gagal memuat log Gemini");
+        }
+
+        const logs = json.data || [];
+        if (!logs.length) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-3">Belum ada aktivitas log permintaan Gemini API.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = logs.map(log => {
+            const timeStr = new Date(log.created_at).toLocaleString("id-ID");
+            const badgeClass = log.is_success ? "bg-success" : "bg-danger";
+            const badgeText = log.is_success ? "Berhasil" : "Gagal";
+            const msgTrunc = escapeHtml(log.user_message || "-").slice(0, 60);
+            const tokenStr = log.token_usage ? `Prompt: ${log.token_usage.promptTokenCount || 0}, Output: ${log.token_usage.candidatesTokenCount || 0}` : "-";
+            const errStr = log.error_message ? `<span class="text-danger small">${escapeHtml(log.error_message)}</span>` : tokenStr;
+
+            return `
+                <tr>
+                    <td><small class="text-muted">${timeStr}</small></td>
+                    <td title="${escapeHtml(log.user_message || '')}"><strong>${msgTrunc}</strong></td>
+                    <td><span class="badge bg-light text-dark border">${escapeHtml(log.model_used || 'gemini-2.5-flash')}</span></td>
+                    <td>${log.response_time_ms} ms</td>
+                    <td><code>${log.http_status}</code></td>
+                    <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+                    <td><small>${errStr}</small></td>
+                </tr>
+            `;
+        }).join("");
+    } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-3">Gagal memuat log: ${escapeHtml(err.message)}</td></tr>`;
     }
 }
 

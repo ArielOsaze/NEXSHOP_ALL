@@ -1,8 +1,97 @@
 "use strict";
 
-const supabase = require("../config/db");
-const { getStoreSettings } = require("../config/settings");
+const axios = require("axios");
+const { getStoreSettings, getApiKeys } = require("../config/settings");
 const { normalizeQuery, detectIntent, detectEntities, rankKnowledge, buildKnowledgeResponse } = require("../utils/nexbotEngine");
+
+function maskKey(value) {
+    if (!value) return "Belum diisi";
+    if (value.length <= 8) return "••••••••";
+    return value.slice(0, 4) + "••••••••" + value.slice(-4);
+}
+
+async function callGeminiApi(userMessage, selectedKnowledge, apiKey, model) {
+    const startTime = Date.now();
+    const knowledgeText = selectedKnowledge.length ? buildKnowledgeResponse(selectedKnowledge) : "Belum ada informasi khusus untuk pertanyaan ini.";
+    const systemPrompt = `Kamu adalah NexBot, asisten AI resmi dari toko game & e-commerce NexShop.
+Tugas kamu adalah menjawab pertanyaan pelanggan secara ramah, profesional, dan membantu dalam bahasa Indonesia.
+Gunakan FAKTA KNOWLEDGE BASE NEXSHOP di bawah ini sebagai sumber kebenaran utama:
+
+--- FAKTA KNOWLEDGE BASE ---
+${knowledgeText}
+----------------------------
+
+Aturan menjawab:
+1. Jawab pertanyaan user berdasarkan Fakta Knowledge Base jika relevan.
+2. Jangan mengarang kebijakan pembayaran, cara topup, atau harga yang bertentangan dengan fakta di atas.
+3. Jawab singkat, jelas, dan ramah dengan format markdown yang rapi.`;
+
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    const payload = {
+        contents: [
+            {
+                role: "user",
+                parts: [
+                    { text: systemPrompt },
+                    { text: `Pertanyaan Pengguna: ${userMessage}` }
+                ]
+            }
+        ],
+        generationConfig: {
+            temperature: 0.3,
+            maxOutputTokens: 800
+        }
+    };
+
+    try {
+        const res = await axios.post(endpoint, payload, { timeout: 10000 });
+        const responseTimeMs = Date.now() - startTime;
+        const text = res.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        const tokenUsage = res.data?.usageMetadata || null;
+
+        if (!text) throw new Error("Respons Gemini API tidak berisi teks kandidat");
+
+        return {
+            success: true,
+            reply: text.trim(),
+            responseTimeMs,
+            tokenUsage,
+            httpStatus: res.status,
+            error: null
+        };
+    } catch (err) {
+        const responseTimeMs = Date.now() - startTime;
+        const httpStatus = err.response?.status || 500;
+        const errorMessage = err.response?.data?.error?.message || err.message;
+        return {
+            success: false,
+            reply: null,
+            responseTimeMs,
+            tokenUsage: null,
+            httpStatus,
+            error: errorMessage
+        };
+    }
+}
+
+async function logGeminiRequest({ userMessage, modelUsed, responseTimeMs, tokenUsage, httpStatus, isSuccess, errorMessage, userId, sessionId }) {
+    const payload = {
+        user_message: safeMessage(userMessage),
+        model_used: modelUsed || "gemini-2.5-flash",
+        response_time_ms: Math.round(responseTimeMs || 0),
+        token_usage: tokenUsage || null,
+        http_status: Number(httpStatus || 200),
+        is_success: !!isSuccess,
+        error_message: errorMessage ? String(errorMessage).slice(0, 1000) : null,
+        user_id: userId ? String(userId) : null,
+        session_id: sessionId || null
+    };
+    try {
+        await supabase.from("ai_gemini_logs").insert(payload);
+    } catch (err) {
+        console.warn("Gemini log insert warning:", err.message);
+    }
+}
 
 // This is deliberately small. It makes the public assistant safe during a
 // migration, but it is not a writable pseudo-database: admin changes must be
@@ -116,18 +205,135 @@ function unavailableReply() {
     return "Maaf, informasi untuk pertanyaan tersebut belum tersedia. Agar kami dapat membantu dengan tepat, silakan hubungi Customer Service NexShop dengan detail pertanyaan atau Nomor Order ID Anda.";
 }
 
+async function handleOrderLookup(message, user) {
+    const rawMsg = String(message || "").trim();
+
+    // 1. Cek apakah ada Order ID (contoh: NX123... atau TP123...)
+    const orderIdMatch = rawMsg.match(/\b(NX[A-F0-9]{10,30}|TP[A-F0-9]{10,30})\b/i);
+    if (orderIdMatch) {
+        const orderId = orderIdMatch[1].toUpperCase();
+
+        const { data: regularOrder } = await supabase
+            .from("orders")
+            .select("id, status, total, items, created_at, paid_at")
+            .eq("id", orderId)
+            .maybeSingle();
+
+        if (regularOrder) {
+            const statusLabel = regularOrder.status === "paid" ? "✅ Berhasil (Lunas)" : regularOrder.status === "pending" ? "⏳ Menunggu Pembayaran" : "❌ Gagal / Batal";
+            const itemsSummary = (regularOrder.items || []).map(i => `• ${i.name || 'Produk'} (x${i.qty || 1})`).join("\n");
+            return `📦 **Detail Pesanan ${regularOrder.id}**\n\nStatus: **${statusLabel}**\nTotal: **Rp${Number(regularOrder.total || 0).toLocaleString("id-ID")}**\nTanggal: ${new Date(regularOrder.created_at).toLocaleString("id-ID")}\n\n**Item:**\n${itemsSummary}`;
+        }
+
+        const { data: topupOrder } = await supabase
+            .from("topup_orders")
+            .select("id, status, harga, nama_produk, tujuan, server_id, created_at")
+            .eq("id", orderId)
+            .maybeSingle();
+
+        if (topupOrder) {
+            const statusLabel = (topupOrder.status === "sukses" || topupOrder.status === "paid") ? "✅ Berhasil (Sukses)" : topupOrder.status === "pending" ? "⏳ Menunggu Pembayaran / Diproses" : "❌ Gagal";
+            const targetInfo = topupOrder.tujuan + (topupOrder.server_id ? ` (${topupOrder.server_id})` : "");
+            return `💎 **Detail Topup ${topupOrder.id}**\n\nProduk: **${topupOrder.nama_produk || '-'}**\nTujuan: **${targetInfo}**\nStatus: **${statusLabel}**\nTotal: **Rp${Number(topupOrder.harga || 0).toLocaleString("id-ID")}**\nTanggal: ${new Date(topupOrder.created_at).toLocaleString("id-ID")}`;
+        }
+
+        return `Nomor Order ID **${orderId}** tidak ditemukan di sistem NexShop. Mohon periksa kembali nomor order Anda atau hubungi CS WhatsApp jika membutuhkan bantuan.`;
+    }
+
+    // 2. Cek apakah ada alamat Email di dalam pesan
+    const emailMatch = rawMsg.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+    if (emailMatch) {
+        const email = emailMatch[1].toLowerCase();
+        const [ordersRes, topupRes] = await Promise.all([
+            supabase.from("orders").select("id, status, total, items, created_at").eq("recipient_email", email).order("created_at", { ascending: false }).limit(3),
+            supabase.from("topup_orders").select("id, status, harga, nama_produk, created_at").eq("recipient_email", email).order("created_at", { ascending: false }).limit(3)
+        ]);
+
+        const regList = (ordersRes.data || []).map(o => ({ id: o.id, title: (o.items || []).map(i => i.name).join(", ") || "Pesanan Produk", total: o.total, status: o.status, date: o.created_at }));
+        const topList = (topupRes.data || []).map(t => ({ id: t.id, title: t.nama_produk || "Topup Game", total: t.harga, status: t.status, date: t.created_at }));
+        const combined = [...regList, ...topList].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3);
+
+        if (combined.length) {
+            const listText = combined.map(item => `• **${item.id}** — ${item.title}\n  Total: Rp${Number(item.total).toLocaleString("id-ID")} | Status: **${item.status}**`).join("\n\n");
+            return `📋 **Riwayat Pesanan untuk ${email}:**\n\n${listText}`;
+        }
+
+        return `Tidak ditemukan pesanan dengan email **${email}**. Mohon pastikan alamat email yang Anda masukkan sesuai dengan saat checkout.`;
+    }
+
+    // 3. Jika user sedang terautentikasi (login)
+    if (user?.id) {
+        const [ordersRes, topupRes] = await Promise.all([
+            supabase.from("orders").select("id, status, total, items, created_at").eq("user_id", String(user.id)).order("created_at", { ascending: false }).limit(3),
+            supabase.from("topup_orders").select("id, status, harga, nama_produk, created_at").eq("user_id", String(user.id)).order("created_at", { ascending: false }).limit(3)
+        ]);
+
+        const regList = (ordersRes.data || []).map(o => ({ id: o.id, title: (o.items || []).map(i => i.name).join(", ") || "Pesanan Produk", total: o.total, status: o.status, date: o.created_at }));
+        const topList = (topupRes.data || []).map(t => ({ id: t.id, title: t.nama_produk || "Topup Game", total: t.harga, status: t.status, date: t.created_at }));
+        const combined = [...regList, ...topList].sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 3);
+
+        if (combined.length) {
+            const listText = combined.map(item => `• **${item.id}** — ${item.title}\n  Total: Rp${Number(item.total).toLocaleString("id-ID")} | Status: **${item.status}**`).join("\n\n");
+            return `📦 **Status Pesanan Terbaru Anda:**\n\n${listText}\n\nKetik Nomor Order ID spesifik untuk detail lengkap.`;
+        }
+
+        return `Akun Anda belum memiliki riwayat transaksi di NexShop. Jika Anda melakukan pemesanan tanpa login (Guest Checkout), silakan kirimkan **Nomor Order ID** (contoh: \`NX...\` atau \`TP...\`) atau alamat **Email** transaksi Anda.`;
+    }
+
+    // 4. Guest user tanpa Order ID / Email di pesan
+    return `Untuk mengecek **Status Pesanan Saya**, silakan kirimkan **Nomor Order ID** Anda (contoh: \`NX...\` atau \`TP...\`), atau alamat **Email** yang Anda gunakan saat bertransaksi.\n\nAnda juga dapat mengecek status pesanan secara langsung melalui menu **Cek Transaksi** pada bagian atas website atau menghubungi CS WhatsApp kami.`;
+}
+
 async function answer(message, sessionId, user) {
     const result = await retrieveKnowledge(message, sessionId, user);
-    const reply = result.selected.length ? buildKnowledgeResponse(result.selected) : unavailableReply();
-    const source = result.selected.length ? "knowledge" : "handoff";
+
+    let reply = "";
+    let source = "knowledge";
+    const isOrderQuery = result.intent === "Order" || /\b(NX[A-F0-9]{10,30}|TP[A-F0-9]{10,30})\b/i.test(message) || /status pesanan|lacak|pesanan saya/i.test(message);
+
+    if (isOrderQuery) {
+        reply = await handleOrderLookup(message, user);
+        source = "order_system";
+    } else {
+        const keys = await getApiKeys();
+        const apiKey = keys.gemini_api_key || process.env.GEMINI_API_KEY || "";
+        const model = keys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
+
+        if (apiKey) {
+            const geminiRes = await callGeminiApi(message, result.selected, apiKey, model);
+            await logGeminiRequest({
+                userMessage: message,
+                modelUsed: model,
+                responseTimeMs: geminiRes.responseTimeMs,
+                tokenUsage: geminiRes.tokenUsage,
+                httpStatus: geminiRes.httpStatus,
+                isSuccess: geminiRes.success,
+                errorMessage: geminiRes.error,
+                userId: user?.id,
+                sessionId
+            });
+
+            if (geminiRes.success && geminiRes.reply) {
+                reply = geminiRes.reply;
+                source = "gemini";
+            } else {
+                reply = result.selected.length ? buildKnowledgeResponse(result.selected) : unavailableReply();
+                source = result.selected.length ? "knowledge" : "handoff";
+            }
+        } else {
+            reply = result.selected.length ? buildKnowledgeResponse(result.selected) : unavailableReply();
+            source = result.selected.length ? "knowledge" : "handoff";
+        }
+    }
+
     const knowledgeIds = result.selected.map((item) => String(item.id));
     await Promise.allSettled([
         saveConversation({ userId: user?.id, sessionId, role: "user", message, intent: result.intent, knowledgeIds }),
         saveConversation({ userId: user?.id, sessionId, role: "assistant", message: reply, intent: result.intent, knowledgeIds }),
         updateUserMemory(user, result.query, result.intent, result.entities),
-        saveAnalytics({ ...result, source, failed: !result.selected.length, user, sessionId })
+        saveAnalytics({ ...result, source, failed: !result.selected.length && source !== "order_system" && source !== "gemini", user, sessionId })
     ]);
-    return { reply, source, handoff: !result.selected.length, intent: result.intent, entities: result.entities, knowledgeIds };
+    return { reply, source, handoff: source === "handoff", intent: result.intent, entities: result.entities, knowledgeIds };
 }
 
 exports.chat = async (req, res) => {
@@ -231,4 +437,129 @@ exports.getAnalytics = async (_req, res) => {
     const rows = data || []; const countBy = (key) => Object.entries(rows.reduce((acc, row) => { const value = row[key] || "Tidak diketahui"; acc[value] = (acc[value] || 0) + 1; return acc; }, {})).map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count).slice(0, 10);
     const missing = rows.filter((row) => row.is_failed).reduce((acc, row) => { acc[row.normalized_query] = (acc[row.normalized_query] || 0) + 1; return acc; }, {});
     return res.json({ total_questions: rows.length, failed_questions: rows.filter((row) => row.is_failed).length, popular_questions: countBy("normalized_query"), intents: countBy("intent"), missing_knowledge: Object.entries(missing).map(([query, count]) => ({ query, count, recommendation: `Tambahkan knowledge untuk: ${query}` })).sort((a, b) => b.count - a.count).slice(0, 10) });
+};
+
+exports.testGeminiConnection = async (req, res) => {
+    try {
+        const keys = await getApiKeys({ fresh: true });
+        const apiKey = keys.gemini_api_key || process.env.GEMINI_API_KEY || "";
+        const model = keys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
+
+        if (!apiKey) {
+            return res.status(400).json({
+                success: false,
+                connected: false,
+                message: "GEMINI_API_KEY belum diisi di Settings atau .env",
+                model,
+                masked_key: maskKey(apiKey)
+            });
+        }
+
+        const testRes = await callGeminiApi("Ping test koneksi Gemini AI NexShop.", [], apiKey, model);
+        await logGeminiRequest({
+            userMessage: "[ADMIN_PING_TEST] Connection check",
+            modelUsed: model,
+            responseTimeMs: testRes.responseTimeMs,
+            tokenUsage: testRes.tokenUsage,
+            httpStatus: testRes.httpStatus,
+            isSuccess: testRes.success,
+            errorMessage: testRes.error,
+            userId: req.user?.id,
+            sessionId: "admin-test"
+        });
+
+        if (!testRes.success) {
+            return res.status(testRes.httpStatus || 500).json({
+                success: false,
+                connected: false,
+                message: testRes.error || "Gagal menghubungi Gemini API",
+                latency_ms: testRes.responseTimeMs,
+                http_status: testRes.httpStatus,
+                model,
+                masked_key: maskKey(apiKey)
+            });
+        }
+
+        return res.json({
+            success: true,
+            connected: true,
+            message: "Koneksi ke Gemini API berhasil dan responsif!",
+            latency_ms: testRes.responseTimeMs,
+            http_status: testRes.httpStatus,
+            model,
+            masked_key: maskKey(apiKey),
+            reply: testRes.reply
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, connected: false, message: err.message || "Gagal melakukan uji koneksi Gemini" });
+    }
+};
+
+exports.getGeminiStatus = async (_req, res) => {
+    try {
+        const keys = await getApiKeys();
+        const apiKey = keys.gemini_api_key || process.env.GEMINI_API_KEY || "";
+        const model = keys.gemini_news_model || process.env.GEMINI_NEWS_MODEL || "gemini-2.5-flash";
+
+        const { data: logs, error } = await supabase
+            .from("ai_gemini_logs")
+            .select("is_success, response_time_ms, http_status, error_message, created_at")
+            .order("created_at", { ascending: false })
+            .limit(500);
+
+        if (error) {
+            console.warn("Error fetching ai_gemini_logs:", error.message);
+        }
+
+        const rows = logs || [];
+        const totalRequests = rows.length;
+        const successfulRequests = rows.filter((r) => r.is_success).length;
+        const failedRequests = totalRequests - successfulRequests;
+        const successRate = totalRequests > 0 ? Number(((successfulRequests / totalRequests) * 100).toFixed(1)) : 100.0;
+
+        const lastSuccess = rows.find((r) => r.is_success)?.created_at || null;
+        const lastFailed = rows.find((r) => !r.is_success);
+        const lastFailedAt = lastFailed?.created_at || null;
+        const lastError = lastFailed?.error_message || null;
+
+        const validLatencies = rows.map((r) => r.response_time_ms).filter((t) => Number.isInteger(t) && t > 0);
+        const avgLatencyMs = validLatencies.length ? Math.round(validLatencies.reduce((a, b) => a + b, 0) / validLatencies.length) : 0;
+
+        const isConnected = !!apiKey && (totalRequests === 0 || (rows[0] && rows[0].is_success));
+
+        return res.json({
+            connected: isConnected,
+            has_api_key: !!apiKey,
+            model,
+            masked_key: maskKey(apiKey),
+            total_requests: totalRequests,
+            successful_requests: successfulRequests,
+            failed_requests: failedRequests,
+            success_rate: successRate,
+            last_successful_request: lastSuccess,
+            last_failed_request: lastFailedAt,
+            last_error: lastError,
+            avg_response_time_ms: avgLatencyMs
+        });
+    } catch (err) {
+        return res.status(500).json({ message: "Gagal mengambil status Gemini AI" });
+    }
+};
+
+exports.getGeminiLogs = async (_req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from("ai_gemini_logs")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(100);
+
+        if (error) {
+            return res.status(503).json({ message: "Tabel log Gemini belum tersedia. Jalankan migrations-22-gemini-monitoring.sql di Supabase." });
+        }
+
+        return res.json({ data: data || [] });
+    } catch (err) {
+        return res.status(500).json({ message: "Gagal mengambil log Gemini AI" });
+    }
 };

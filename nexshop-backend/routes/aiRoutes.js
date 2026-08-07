@@ -16,7 +16,11 @@ router.post("/knowledge", authMiddleware, adminMiddleware, aiController.createKn
 router.post("/knowledge/reseed", authMiddleware, adminMiddleware, aiController.reseedKnowledgeBase);
 router.post("/faq/generate", authMiddleware, adminMiddleware, aiController.generateProductFaqs);
 router.put("/knowledge/:id", authMiddleware, adminMiddleware, aiController.updateKnowledgeBase);
-router.delete("/knowledge/:id", authMiddleware, adminMiddleware, aiController.deleteKnowledgeBase);
 router.get("/analytics", authMiddleware, adminMiddleware, aiController.getAnalytics);
+
+// Admin Gemini AI Status, Test, & Logs Endpoints
+router.get("/gemini-status", authMiddleware, adminMiddleware, aiController.getGeminiStatus);
+router.post("/test-gemini", authMiddleware, adminMiddleware, aiController.testGeminiConnection);
+router.get("/gemini-logs", authMiddleware, adminMiddleware, aiController.getGeminiLogs);
 
 module.exports = router;
