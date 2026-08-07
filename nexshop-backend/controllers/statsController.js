@@ -123,11 +123,12 @@ exports.exportOrders = async (req, res) => {
 
     try {
         const [ordersRes, topupRes] = await Promise.all([
-            supabase.from("orders").select("id, name, email, total, status, items, created_at").order("created_at", { ascending: false }),
-            supabase.from("topup_orders").select("id, email, harga, status, nama_produk, target_user, created_at").order("created_at", { ascending: false })
+            supabase.from("orders").select("id, recipient_name, recipient_email, total, status, items, created_at").order("created_at", { ascending: false }),
+            supabase.from("topup_orders").select("id, recipient_email, harga, status, nama_produk, tujuan, server_id, created_at").order("created_at", { ascending: false })
         ]);
 
         if (ordersRes.error || topupRes.error) {
+            console.error("Export orders query error:", ordersRes.error || topupRes.error);
             return res.status(500).json({ message: "Gagal mengekspor data pesanan" });
         }
 
@@ -141,8 +142,8 @@ exports.exportOrders = async (req, res) => {
                 `ORD-${o.id}`,
                 "Produk Digital",
                 new Date(o.created_at).toLocaleString("id-ID"),
-                o.name || "-",
-                o.email || "-",
+                o.recipient_name || "-",
+                o.recipient_email || "-",
                 itemNames || "-",
                 o.total || 0,
                 o.status || "pending"
@@ -150,12 +151,13 @@ exports.exportOrders = async (req, res) => {
         });
 
         (topupRes.data || []).forEach(t => {
+            const userTarget = t.tujuan + (t.server_id ? ` (${t.server_id})` : "");
             rows.push([
                 `TOP-${t.id}`,
                 "Topup Game",
                 new Date(t.created_at).toLocaleString("id-ID"),
-                t.target_user || "-",
-                t.email || "-",
+                userTarget || "-",
+                t.recipient_email || "-",
                 t.nama_produk || "Topup",
                 t.harga || 0,
                 t.status || "pending"

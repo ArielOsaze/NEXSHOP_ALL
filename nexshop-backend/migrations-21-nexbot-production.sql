@@ -23,6 +23,16 @@ alter table public.knowledge_base
     add column if not exists created_at timestamptz not null default now(),
     add column if not exists updated_at timestamptz not null default now();
 
+-- Hapus duplikat judul jika ada sebelum membuat unique index
+delete from public.knowledge_base
+where id in (
+    select id from (
+        select id, row_number() over (partition by title order by updated_at desc, created_at desc) as rnum
+        from public.knowledge_base
+    ) t
+    where t.rnum > 1
+);
+
 create unique index if not exists knowledge_base_title_unique on public.knowledge_base (title);
 create index if not exists knowledge_base_active_priority_idx on public.knowledge_base (priority desc) where status = 'active';
 create index if not exists knowledge_base_title_trgm_idx on public.knowledge_base using gin (title gin_trgm_ops);
@@ -68,6 +78,7 @@ create index if not exists ai_query_analytics_failed_idx on public.ai_query_anal
 
 -- Candidate generation only. The Node ranker makes the final intent/entity,
 -- semantic (trigram), title, keyword, and priority decision deterministically.
+drop function if exists public.search_nexbot_knowledge(text, integer);
 create or replace function public.search_nexbot_knowledge(search_query text, result_limit integer default 80)
 returns table (id uuid, title text, category text, keywords text, content text, status text, priority integer, updated_at timestamptz)
 language sql stable as $$

@@ -2721,7 +2721,7 @@ function initNexBotChat() {
         body.scrollTop = body.scrollHeight;
 
         try {
-            const token = localStorage.getItem("token");
+            const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) || localStorage.getItem("token");
             const headers = { "Content-Type": "application/json" };
             if (token) headers["Authorization"] = `Bearer ${token}`;
 

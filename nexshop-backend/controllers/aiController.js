@@ -184,7 +184,14 @@ exports.createKnowledgeBase = async (req, res) => {
     return res.status(201).json({ message: "Knowledge berhasil ditambahkan", data });
 };
 
+function isValidUuid(value) {
+    return typeof value === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.trim());
+}
+
 exports.updateKnowledgeBase = async (req, res) => {
+    if (!isValidUuid(req.params.id)) {
+        return res.status(400).json({ message: "ID Knowledge Base tidak valid" });
+    }
     const payload = knowledgePayload(req.body, true);
     if (!Object.keys(payload).length) return res.status(400).json({ message: "Tidak ada perubahan valid" });
     const { data, error } = await supabase.from("knowledge_base").update(payload).eq("id", req.params.id).select().maybeSingle();
@@ -194,6 +201,9 @@ exports.updateKnowledgeBase = async (req, res) => {
 };
 
 exports.deleteKnowledgeBase = async (req, res) => {
+    if (!isValidUuid(req.params.id)) {
+        return res.status(400).json({ message: "ID Knowledge Base tidak valid" });
+    }
     const { data, error } = await supabase.from("knowledge_base").delete().eq("id", req.params.id).select("id").maybeSingle();
     if (error) return res.status(503).json({ message: "Gagal menghapus knowledge", detail: error.message });
     if (!data) return res.status(404).json({ message: "Knowledge tidak ditemukan" });
