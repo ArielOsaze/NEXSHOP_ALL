@@ -2025,7 +2025,7 @@ function renderTopupGameGrid() {
         <div class="topup-game-card group relative rounded-3xl overflow-hidden cursor-pointer glass-panel border border-transparent hover:border-brand-cyan/40 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-indigo/20" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
             <div class="relative h-40 sm:h-44 overflow-hidden bg-gradient-to-br from-[#1a1533] to-[#0d1b2e]">
                 ${g.logo ? `
-                <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="absolute inset-0 w-full h-full object-contain sm:object-cover p-4 sm:p-0 group-hover:scale-110 transition-transform duration-500">
                 ` : `
                 <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/30 to-brand-cyan/30"></div>
                 <div class="absolute inset-0 flex items-center justify-center">
