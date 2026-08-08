@@ -1678,6 +1678,17 @@ function escapeHtml(str) {
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
     }[c]));
 }
+
+function safeUrl(value, fallback = "") {
+    const raw = String(value ?? "").trim();
+    if (!raw) return fallback;
+    try {
+        const url = new URL(raw, window.location.origin);
+        return ["http:", "https:"].includes(url.protocol) ? url.href : fallback;
+    } catch (err) {
+        return fallback;
+    }
+}
 /* ---------- Store settings (nama toko, logo, kontak) ---------- */
 function parseContactEmails(value) {
     return (String(value || "")
@@ -1740,24 +1751,27 @@ async function loadStoreSettings() {
             const brandEl = document.getElementById("storeNameText");
             // pertahankan style "Nex<span>Shop</span>" kalau nama masih default,
             // kalau admin ganti nama toko, tampilkan apa adanya
-            if (s.store_name.toLowerCase() !== "nexshop") {
+            if (s.store_name.toLowerCase() !== "nexshop" && brandEl) {
                 brandEl.textContent = s.store_name;
             }
-            document.getElementById("footerBrand").textContent = s.store_name;
+            const footerBrandEl = document.getElementById("footerBrand");
+            if (footerBrandEl) footerBrandEl.textContent = s.store_name;
         }
         if (s.tagline) {
-            document.getElementById("storeTagline").textContent = s.tagline;
+            const taglineEl = document.getElementById("storeTagline");
+            if (taglineEl) taglineEl.textContent = s.tagline;
         }
         if (s.logo_url) {
-            document.getElementById("storeLogoImg").src = s.logo_url;
+            const logoEl = document.getElementById("storeLogoImg");
+            if (logoEl) logoEl.src = s.logo_url;
         }
         if (s.contact_whatsapp) {
             const waLink = document.getElementById("footerWaLink");
-            waLink.href = `https://wa.me/${s.contact_whatsapp.replace(/\D/g, "")}`;
+            if (waLink) waLink.href = `https://wa.me/${s.contact_whatsapp.replace(/\D/g, "")}`;
             const waLabel = document.getElementById("footerWaLabel");
             if (waLabel) waLabel.textContent = s.contact_phone || s.contact_whatsapp;
             const contactWa = document.getElementById("contactWaLink");
-            if (contactWa) {
+            if (contactWa && waLink) {
                 contactWa.href = waLink.href;
                 contactWa.textContent = s.contact_phone || s.contact_whatsapp;
             }
@@ -1765,11 +1779,13 @@ async function loadStoreSettings() {
         if (s.contact_email) updateContactEmailLinks(s.contact_email);
         if (s.address) {
             const footerAddress = document.getElementById("footerAddress");
-            footerAddress.replaceChildren();
-            const addressIcon = document.createElement("i");
-            addressIcon.className = "fa-solid fa-location-dot";
-            addressIcon.setAttribute("aria-hidden", "true");
-            footerAddress.append(addressIcon, document.createTextNode(` ${s.address}`));
+            if (footerAddress) {
+                footerAddress.replaceChildren();
+                const addressIcon = document.createElement("i");
+                addressIcon.className = "fa-solid fa-location-dot";
+                addressIcon.setAttribute("aria-hidden", "true");
+                footerAddress.append(addressIcon, document.createTextNode(` ${s.address}`));
+            }
             const contactAddress = document.getElementById("contactAddress");
             if (contactAddress) contactAddress.textContent = s.address;
         }
@@ -1780,10 +1796,12 @@ async function loadStoreSettings() {
             renderFaqList(s.faq);
         }
         if (s.terms_content) {
-            document.getElementById("termsContent").innerHTML = formatPolicyText(s.terms_content);
+            const termsEl = document.getElementById("termsContent");
+            if (termsEl) termsEl.innerHTML = formatPolicyText(s.terms_content);
         }
         if (s.refund_content) {
-            document.getElementById("refundContent").innerHTML = formatPolicyText(s.refund_content);
+            const refundEl = document.getElementById("refundContent");
+            if (refundEl) refundEl.innerHTML = formatPolicyText(s.refund_content);
         }
     } catch (err) {
         // diem aja, biarin brand default kalau API gagal
