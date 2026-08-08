@@ -389,7 +389,7 @@ function renderProducts() {
                     <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-brand-indigo/5 dark:to-brand-cyan/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none"></div>
                     <div>
                         <div class="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-4">
-                            <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='';">
+                            <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 fallback-clear" loading="lazy" decoding="async">
                             ${(p.is_flash_sale || p.badge) ? `<div class="absolute top-2 left-2 flex flex-col gap-1">${p.is_flash_sale ? '<span class="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg backdrop-blur-md flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">bolt</span> FLASH SALE</span>' : ""}${p.badge ? `<span class="bg-brand-indigo/80 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg backdrop-blur-md">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}
                         </div>
                         ${p.category ? `<div class="text-[10px] font-bold text-brand-indigo dark:text-brand-cyan uppercase tracking-wider mb-1">${escapeHtml(p.category)}</div>` : ""}
@@ -1432,7 +1432,7 @@ function renderGamingNews(items) {
         const source = String(item.source || "Publisher");
         const publisherLogoUrl = safeUrl(item.publisher_logo_url);
         const publisherMark = publisherLogoUrl
-            ? `<img class="w-6 h-6 rounded-full" src="${escapeHtml(publisherLogoUrl)}" alt="" loading="lazy" decoding="async" onerror="this.remove()">`
+            ? `<img class="w-6 h-6 rounded-full fallback-remove" src="${escapeHtml(publisherLogoUrl)}" alt="" loading="lazy" decoding="async">`
             : `<span class="w-6 h-6 rounded-full bg-brand-indigo/20 text-brand-indigo flex items-center justify-center text-[10px] font-bold" aria-hidden="true">${escapeHtml(newsSourceInitial(source))}</span>`;
         return `
             <article class="group relative bg-white dark:bg-[#0a0a0c] rounded-2xl overflow-hidden border border-gray-200 dark:border-white/5 hover:border-brand-indigo/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer flex flex-col" onclick="openGamingNewsDetail(${Number(item.id)})">
@@ -3026,3 +3026,58 @@ if (document.readyState === "loading") {
 } else {
     startApp();
 }
+
+// Global error handler for dynamically rendered images to comply with strict CSP
+document.addEventListener('error', (e) => {
+    if (e.target.tagName && e.target.tagName.toUpperCase() === 'IMG') {
+        if (e.target.classList.contains('fallback-remove')) {
+            e.target.remove();
+        } else if (e.target.classList.contains('fallback-clear')) {
+            e.target.src = '';
+        }
+    }
+}, true); // Use capture phase because error events do not bubble
+
+// Setup CSP-compliant event listeners for HTML elements
+document.addEventListener('DOMContentLoaded', () => {
+    const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
+    const trackOrderBtn = document.getElementById('trackOrderBtn');
+
+    const menuKatalogBtn = document.getElementById('menuKatalogBtn');
+    if (menuKatalogBtn) {
+        menuKatalogBtn.addEventListener('click', () => {
+            if (mobileMenuOverlay) mobileMenuOverlay.classList.remove('active');
+        });
+    }
+
+    const menuTopupBtn = document.getElementById('menuTopupBtn');
+    if (menuTopupBtn) {
+        menuTopupBtn.addEventListener('click', () => {
+            if (mobileMenuOverlay) mobileMenuOverlay.classList.remove('active');
+        });
+    }
+
+    const menuTrackBtn = document.getElementById('menuTrackBtn');
+    if (menuTrackBtn) {
+        menuTrackBtn.addEventListener('click', () => {
+            if (mobileMenuOverlay) mobileMenuOverlay.classList.remove('active');
+            if (trackOrderBtn) trackOrderBtn.click();
+        });
+    }
+
+    const heroTrackBtn = document.getElementById('heroTrackBtn');
+    if (heroTrackBtn) {
+        heroTrackBtn.addEventListener('click', () => {
+            if (trackOrderBtn) trackOrderBtn.click();
+        });
+    }
+
+    document.querySelectorAll('.nexbot-quick-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (typeof window.sendNexBotQuick === 'function') {
+                window.sendNexBotQuick(this.dataset.topic);
+            }
+        });
+    });
+});
+

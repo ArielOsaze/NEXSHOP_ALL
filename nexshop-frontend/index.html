@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NexShop - Premium Gaming Store</title>
-<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link rel="stylesheet" href="tailwind.css?v=20260808-fix">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
@@ -12,35 +12,7 @@
 <script src="theme-init.js?v=20260803-ui"></script>
 <link rel="stylesheet" href="style.css?v=20260806-spiderweb">
 <link rel="icon" type="image/x-icon" href="favicon.ico">
-<script id="tailwind-config">
-    tailwind.config = {
-        darkMode: "class",
-        theme: {
-            extend: {
-                fontFamily: {
-                    sans: ['Plus Jakarta Sans', 'sans-serif'],
-                    serif: ['Plus Jakarta Sans', 'sans-serif'], 
-                },
-                colors: {
-                    brand: {
-                        indigo: '#5d5fef',
-                        cyan: '#00f0ff',
-                        dark: '#08080a',
-                        light: '#f5f5f7',
-                        muted: '#8e8e93',
-                    }
-                },
-                backgroundImage: {
-                    'grain': 'url("https://www.transparenttextures.com/patterns/stardust.png")',
-                },
-                boxShadow: {
-                    'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
-                    'glass-light': '0 8px 32px 0 rgba(255, 255, 255, 0.1)',
-                }
-            },
-        },
-    }
-</script>
+
 <style>
     /* Subtle Film Grain */
     .bg-grain-overlay {
@@ -215,9 +187,9 @@
             <button class="modal-close" data-close="mobileMenuOverlay" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         </div>
         <div class="drawer-body flex flex-col gap-4 p-6">
-            <a class="text-lg font-bold text-gray-900 dark:text-white" href="#games" onclick="document.getElementById('mobileMenuOverlay').classList.remove('active')">Katalog</a>
-            <a class="text-lg font-bold text-gray-900 dark:text-white" href="#topup" onclick="document.getElementById('mobileMenuOverlay').classList.remove('active')">Topup Diamond</a>
-            <button type="button" class="text-left text-lg font-bold text-gray-900 dark:text-white" onclick="document.getElementById('mobileMenuOverlay').classList.remove('active'); document.getElementById('trackOrderBtn').click()">Cek Transaksi</button>
+            <a class="text-lg font-bold text-gray-900 dark:text-white" href="#games" id="menuKatalogBtn">Katalog</a>
+            <a class="text-lg font-bold text-gray-900 dark:text-white" href="#topup" id="menuTopupBtn">Topup Diamond</a>
+            <button type="button" class="text-left text-lg font-bold text-gray-900 dark:text-white" id="menuTrackBtn">Cek Transaksi</button>
         </div>
     </div>
 </div>
@@ -242,7 +214,7 @@ Webstore game terlengkap. Dari diskon harian sampai topup instan — aman, cepat
 <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-brand-indigo to-brand-cyan opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
 <span class="relative z-10 flex items-center gap-2">Belanja Sekarang <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span></span>
 </a>
-<button onclick="document.getElementById('trackOrderBtn').click()" class="btn-magnetic px-8 py-4 glass-panel text-gray-900 dark:text-white font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors tracking-tight">
+<button type="button" id="heroTrackBtn" class="btn-magnetic px-8 py-4 glass-panel text-gray-900 dark:text-white font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors tracking-tight">
 Cek Transaksi
 </button>
 </div>
@@ -891,11 +863,11 @@ Cek Transaksi
             </div>
 
             <div class="nexbot-quick-pills">
-                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Cara Topup ML')"><i class="fa-solid fa-gamepad"></i> Cara Topup</button>
-                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Promo Hari Ini')"><i class="fa-solid fa-gift"></i> Promo Hari Ini</button>
-                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Produk Terlaris')"><i class="fa-solid fa-fire"></i> Terlaris</button>
-                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Status Pesanan Saya')"><i class="fa-solid fa-box"></i> Pesanan Saya</button>
-                <button type="button" class="nexbot-pill" onclick="sendNexBotQuick('Hubungi Admin')"><i class="fa-brands fa-whatsapp"></i> Hubungi CS</button>
+                <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Cara Topup ML"><i class="fa-solid fa-gamepad"></i> Cara Topup</button>
+                <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Promo Hari Ini"><i class="fa-solid fa-gift"></i> Promo Hari Ini</button>
+                <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Produk Terlaris"><i class="fa-solid fa-fire"></i> Terlaris</button>
+                <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Status Pesanan Saya"><i class="fa-solid fa-box"></i> Pesanan Saya</button>
+                <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Hubungi Admin"><i class="fa-brands fa-whatsapp"></i> Hubungi CS</button>
             </div>
         </div>
 
