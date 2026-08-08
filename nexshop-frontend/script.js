@@ -1673,131 +1673,11 @@ async function loadMyTransactions() {
 
 /* ---------- Mobile menu handled via initMobileMenu() below ---------- */
 
-/* ---------- Promo/berita carousel ---------- */
-let heroSlides = [];
-let heroIndex = 0;
-let heroTimer = null;
-
-async function loadPromo() {
-    try {
-        const res = await fetch(`${API_BASE}/promo`);
-        if (!res.ok) return;
-        const slides = await res.json();
-        if (!Array.isArray(slides) || slides.length === 0) return;
-
-        heroSlides = slides;
-        renderHeroSlides();
-        startHeroAutoplay();
-    } catch (err) {
-        // diem aja, biarin section hero kosong kalau API gagal
-    }
-}
-
-const heroMobileQuery = window.matchMedia("(max-width: 860px)");
-
-function heroImageFor(slide) {
-    if (heroMobileQuery.matches && slide.mobile_image_url) return safeUrl(slide.mobile_image_url);
-    return safeUrl(slide.image_url);
-}
-
-function safeUrl(value, fallback = "") {
-    const raw = String(value ?? "").trim();
-    if (!raw) return fallback;
-    try {
-        const url = new URL(raw, window.location.origin);
-        return ["http:", "https:"].includes(url.protocol) ? url.href : fallback;
-    } catch (err) {
-        return fallback;
-    }
-}
-
-function backgroundImageStyle(url) {
-    return url ? escapeHtml(`background-image:url(${JSON.stringify(url)})`) : "";
-}
-
-function renderHeroSlides() {
-    const track = document.getElementById("heroTrack");
-    const dotsWrap = document.getElementById("heroDots");
-
-    track.innerHTML = heroSlides.map(s => {
-        const imageUrl = heroImageFor(s);
-        const ctaLink = safeUrl(s.cta_link, "#");
-        return `
-        <div class="hero-slide${s.full_image ? " full-image" : ""}" style="${backgroundImageStyle(imageUrl)}">
-            ${s.full_image ? (s.cta_link ? `<a href="${escapeHtml(ctaLink)}" class="hero-slide-link" aria-label="${escapeHtml(s.title || "Promo")}"></a>` : "") : `
-            <div class="hero-text">
-                ${s.badge_text ? `<span class="hero-badge">${escapeHtml(s.badge_text)}</span>` : ""}
-                <h2>${escapeHtml(s.title || "")}</h2>
-                ${s.description ? `<p>${escapeHtml(s.description)}</p>` : ""}
-                ${s.cta_text ? `<a href="${escapeHtml(ctaLink)}" class="hero-cta">${escapeHtml(s.cta_text)}</a>` : ""}
-            </div>
-            `}
-        </div>
-    `;
-    }).join("");
-
-    dotsWrap.innerHTML = heroSlides.map((_, i) =>
-        `<button class="hero-dot${i === 0 ? " active" : ""}" data-index="${i}" aria-label="Slide ${i + 1}"></button>`
-    ).join("");
-
-    dotsWrap.querySelectorAll(".hero-dot").forEach(dot => {
-        dot.addEventListener("click", () => {
-            goToHeroSlide(Number(dot.dataset.index));
-            resetHeroAutoplay();
-        });
-    });
-
-    heroIndex = 0;
-    goToHeroSlide(0);
-
-    // sembunyiin panah/dots kalau cuma 1 slide, gak ada gunanya
-    const onlyOne = heroSlides.length <= 1;
-    document.getElementById("heroPrev").classList.toggle("hidden", onlyOne);
-    document.getElementById("heroNext").classList.toggle("hidden", onlyOne);
-    dotsWrap.classList.toggle("hidden", onlyOne);
-}
-
 function escapeHtml(str) {
     return String(str ?? "").replace(/[&<>"']/g, (c) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
     }[c]));
 }
-
-function goToHeroSlide(index) {
-    heroIndex = (index + heroSlides.length) % heroSlides.length;
-    document.getElementById("heroTrack").style.transform = `translateX(-${heroIndex * 100}%)`;
-    document.querySelectorAll(".hero-dot").forEach((dot, i) => {
-        dot.classList.toggle("active", i === heroIndex);
-    });
-}
-
-function startHeroAutoplay() {
-    if (heroSlides.length <= 1) return;
-    clearInterval(heroTimer);
-    heroTimer = setInterval(() => goToHeroSlide(heroIndex + 1), 5000);
-}
-
-// Kalau device diputar (atau browser di-resize) sampe lewatin breakpoint
-// mobile/desktop, render ulang biar gambar banner-nya ikut ganti ke versi
-// yang sesuai (mobile_image_url vs image_url).
-heroMobileQuery.addEventListener("change", () => {
-    if (heroSlides.length) renderHeroSlides();
-});
-
-function resetHeroAutoplay() {
-    clearInterval(heroTimer);
-    startHeroAutoplay();
-}
-
-document.getElementById("heroPrev").addEventListener("click", () => {
-    goToHeroSlide(heroIndex - 1);
-    resetHeroAutoplay();
-});
-document.getElementById("heroNext").addEventListener("click", () => {
-    goToHeroSlide(heroIndex + 1);
-    resetHeroAutoplay();
-});
-
 /* ---------- Store settings (nama toko, logo, kontak) ---------- */
 function parseContactEmails(value) {
     return (String(value || "")
@@ -2986,8 +2866,30 @@ function renderLeaderboard(data) {
     `).join("");
 }
 
+function initNavScroll() {
+    const nav = document.getElementById('mainNav');
+    if (!nav) return;
+    
+    let ticking = false;
+    
+    window.addEventListener('scroll', () => {
+        if (!ticking) {
+            window.requestAnimationFrame(() => {
+                if (window.scrollY > 20) {
+                    nav.classList.add('nav-scrolled');
+                } else {
+                    nav.classList.remove('nav-scrolled');
+                }
+                ticking = false;
+            });
+            ticking = true;
+        }
+    }, { passive: true });
+}
+
 async function bootstrapApp() {
     initMobileMenu();
+    initNavScroll();
     initProductGridInteractions();
     initThemeToggle();
     initSearchListeners();
@@ -2999,7 +2901,6 @@ async function bootstrapApp() {
     const initialRequests = Promise.allSettled([
         loadStoreSettings(),
         loadProducts(),
-        loadPromo(),
         loadTopupProducts(),
         loadTrustStats(),
         loadGamingNews(),
