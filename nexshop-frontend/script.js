@@ -385,30 +385,28 @@ function renderProducts() {
             }
         } else {
             grid.innerHTML = data.map(p => `
-                <article class="group relative rounded-3xl overflow-hidden cursor-pointer glass-panel border border-transparent hover:border-brand-cyan/40 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-indigo/20 flex flex-col h-full" data-product-card data-id="${p.id}" tabindex="0">
-                    <div class="relative h-40 sm:h-44 overflow-hidden bg-gradient-to-br from-[#1a1533] to-[#0d1b2e] shrink-0">
-                        <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 fallback-clear" loading="lazy" decoding="async">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/0 to-black/10 pointer-events-none"></div>
-                        ${(p.is_flash_sale || p.badge) ? `<div class="absolute top-3 left-3 flex flex-col gap-1">${p.is_flash_sale ? '<span class="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1 border border-white/10"><span class="material-symbols-outlined text-[10px]">bolt</span> FLASH SALE</span>' : ""}${p.badge ? `<span class="bg-black/50 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest border border-white/10">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}
-                    </div>
-                    <div class="p-4 sm:p-5 flex flex-col flex-1">
-                        <div class="flex-1">
-                            ${p.category ? `<div class="text-[10px] font-bold text-brand-indigo dark:text-brand-cyan uppercase tracking-wider mb-1">${escapeHtml(p.category)}</div>` : ""}
-                            <h4 class="font-bold text-gray-900 dark:text-white text-base sm:text-lg leading-tight line-clamp-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors">${escapeHtml(p.name)}</h4>
-                            <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mt-2 font-medium">
-                                <span class="text-amber-400">★</span> <span>${p.rating || 5} · ${p.sold || 0} terjual</span>
-                            </div>
+                <article class="group relative bg-white dark:bg-[#0a0a0c] rounded-2xl p-4 border border-gray-200 dark:border-white/5 hover:border-brand-indigo/50 dark:hover:border-brand-cyan/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer flex flex-col justify-between" data-product-card data-id="${p.id}" tabindex="0">
+                    <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-brand-indigo/5 dark:to-brand-cyan/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none"></div>
+                    <div>
+                        <div class="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-4">
+                            <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 fallback-clear" loading="lazy" decoding="async">
+                            ${(p.is_flash_sale || p.badge) ? `<div class="absolute top-2 left-2 flex flex-col gap-1">${p.is_flash_sale ? '<span class="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg backdrop-blur-md flex items-center gap-1"><span class="material-symbols-outlined text-[10px]">bolt</span> FLASH SALE</span>' : ""}${p.badge ? `<span class="bg-brand-indigo/80 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg backdrop-blur-md">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}
                         </div>
-                        <div class="flex items-center justify-between mt-4 shrink-0">
-                            <div class="font-bold text-gray-900 dark:text-white">${priceBlockHtml(p, "sm")}</div>
-                            <div class="flex gap-2 relative z-10">
-                                <button class="w-8 h-8 rounded-full bg-brand-indigo/10 dark:bg-white/5 flex items-center justify-center text-brand-indigo dark:text-brand-cyan hover:bg-brand-indigo hover:text-white transition-colors" data-product-action="add" data-id="${p.id}" title="Tambah ke keranjang">
-                                    <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
-                                </button>
-                                <button class="w-8 h-8 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center text-white dark:text-gray-900 hover:scale-110 transition-transform" data-product-action="buy" data-id="${p.id}" title="Beli sekarang">
-                                    <span class="material-symbols-outlined text-sm">shopping_bag</span>
-                                </button>
-                            </div>
+                        ${p.category ? `<div class="text-[10px] font-bold text-brand-indigo dark:text-brand-cyan uppercase tracking-wider mb-1">${escapeHtml(p.category)}</div>` : ""}
+                        <h4 class="text-sm font-bold text-gray-900 dark:text-white line-clamp-2 mb-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors">${escapeHtml(p.name)}</h4>
+                        <div class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-4 font-medium">
+                            <span class="text-amber-400">★</span> <span>${p.rating || 5} · ${p.sold || 0} terjual</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between mt-auto">
+                        <div class="font-bold text-gray-900 dark:text-white">${priceBlockHtml(p, "sm")}</div>
+                        <div class="flex gap-2 relative z-10">
+                            <button class="w-8 h-8 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-brand-indigo hover:text-white transition-colors" data-product-action="add" data-id="${p.id}">
+                                <span class="material-symbols-outlined text-sm">add_shopping_cart</span>
+                            </button>
+                            <button class="w-8 h-8 rounded-full bg-gray-900 dark:bg-white flex items-center justify-center text-white dark:text-gray-900 hover:scale-110 transition-transform" data-product-action="buy" data-id="${p.id}">
+                                <span class="material-symbols-outlined text-sm">shopping_bag</span>
+                            </button>
                         </div>
                     </div>
                 </article>
@@ -2027,9 +2025,9 @@ function renderTopupGameGrid() {
         <div class="topup-game-card group relative bg-white dark:bg-[#0a0a0c] rounded-2xl p-4 border border-gray-200 dark:border-white/5 hover:border-brand-indigo/50 dark:hover:border-brand-cyan/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer flex flex-col justify-between" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
             <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-brand-indigo/5 dark:to-brand-cyan/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none"></div>
             <div>
-                <div class="relative w-full aspect-[4/3] rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-[#1a1533] to-[#0d1b2e]">
+                <div class="relative w-full aspect-square rounded-xl overflow-hidden mb-4 bg-gradient-to-br from-[#1a1533] to-[#0d1b2e] p-2">
                     ${g.logo ? `
-                    <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                    <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700">
                     ` : `
                     <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/30 to-brand-cyan/30"></div>
                     <div class="absolute inset-0 flex items-center justify-center">
