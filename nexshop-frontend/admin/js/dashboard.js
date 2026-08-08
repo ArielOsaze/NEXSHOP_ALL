@@ -1501,6 +1501,8 @@ async function loadSettings() {
             document.getElementById("storeTrustBar").checked = store.trust_bar_enabled !== false;
             document.getElementById("storeTrustOrdersOffset").value = store.trust_bar_orders_offset || 0;
             document.getElementById("storeTrustGamesOffset").value = store.trust_bar_games_offset || 0;
+            document.getElementById("storeTickerText").value = store.ticker_text || "";
+            document.getElementById("storeTickerSpeed").value = store.ticker_speed_seconds || 30;
             if (store.logo_url) {
                 document.getElementById("storeLogoPreview").src = store.logo_url;
                 document.getElementById("storeLogoPreview").classList.remove("d-none");
@@ -1651,7 +1653,9 @@ async function saveStoreSettings() {
             address: document.getElementById("storeAddress").value.trim(),
             trust_bar_enabled: document.getElementById("storeTrustBar").checked,
             trust_bar_orders_offset: parseInt(document.getElementById("storeTrustOrdersOffset").value, 10) || 0,
-            trust_bar_games_offset: parseInt(document.getElementById("storeTrustGamesOffset").value, 10) || 0
+            trust_bar_games_offset: parseInt(document.getElementById("storeTrustGamesOffset").value, 10) || 0,
+            ticker_text: document.getElementById("storeTickerText").value.trim(),
+            ticker_speed_seconds: parseInt(document.getElementById("storeTickerSpeed").value, 10) || 30
         };
         if (logoUrl) payload.logo_url = logoUrl;
 

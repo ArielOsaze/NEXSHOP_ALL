@@ -772,6 +772,16 @@
                     <input type="number" id="storeTrustGamesOffset" class="form-control" placeholder="0" min="0">
                     <div class="form-text">Ditambahkan ke jumlah kategori game aktif asli.</div>
                 </div>
+                <div class="col-12">
+                    <label class="form-label">Teks Bar Berjalan (Ticker)</label>
+                    <textarea id="storeTickerText" class="form-control" rows="3" placeholder="Transaksi aman dan cepat 24/7|Pembayaran QRIS & e-Wallet didukung|100% Legal & Terpercaya"></textarea>
+                    <div class="form-text">Pisahkan tiap pesan dengan tanda <code>|</code>. Ini teks yang berjalan di bawah hero banner (di atas "Hall of Fame").</div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label">Kecepatan Bar Berjalan (detik)</label>
+                    <input type="number" id="storeTickerSpeed" class="form-control" placeholder="30" min="5" max="120">
+                    <div class="form-text">Makin kecil angkanya, makin cepat jalannya. Default 30 detik.</div>
+                </div>
                 <p class="text-danger small mb-0" id="storeError"></p>
                 <div class="col-12">
                     <button type="button" class="btn btn-success" onclick="saveStoreSettings()">

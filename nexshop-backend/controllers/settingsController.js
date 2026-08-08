@@ -35,10 +35,12 @@ exports.getStoreSettingsPublic = async (req, res) => {
         const publicSettings = (({
             store_name, tagline, contact_whatsapp, contact_email, contact_phone, address,
             logo_url, faq, terms_content, refund_content, trust_bar_enabled,
-            trust_bar_orders_offset, trust_bar_games_offset, event_mascot
+            trust_bar_orders_offset, trust_bar_games_offset, event_mascot,
+            ticker_text, ticker_speed_seconds
         }) => ({ store_name, tagline, contact_whatsapp, contact_email, contact_phone, address,
             logo_url, faq, terms_content, refund_content, trust_bar_enabled,
-            trust_bar_orders_offset, trust_bar_games_offset, event_mascot }))(data);
+            trust_bar_orders_offset, trust_bar_games_offset, event_mascot,
+            ticker_text, ticker_speed_seconds }))(data);
         res.json(publicSettings);
     } catch (err) {
         res.status(500).json({ message: "Server Error" });

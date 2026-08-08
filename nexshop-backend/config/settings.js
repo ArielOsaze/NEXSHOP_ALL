@@ -174,7 +174,9 @@ async function getStoreSettings({ fresh = false } = {}) {
         trust_bar_enabled: true,
         trust_bar_orders_offset: 0,
         trust_bar_games_offset: 0,
-        event_mascot: null
+        event_mascot: null,
+        ticker_text: "Transaksi aman dan cepat 24/7|Pembayaran QRIS & e-Wallet didukung|100% Legal & Terpercaya|Customer Service siap membantu",
+        ticker_speed_seconds: 30
     };
 
     storeSettingsCache = { data: merged, ts: now };
@@ -185,7 +187,8 @@ async function updateStoreSettings(payload) {
     const allowed = [
         "store_name", "tagline", "contact_whatsapp", "contact_email", "contact_phone",
         "address", "logo_url", "faq", "terms_content", "refund_content", "trust_bar_enabled",
-        "trust_bar_orders_offset", "trust_bar_games_offset", "event_mascot"
+        "trust_bar_orders_offset", "trust_bar_games_offset", "event_mascot",
+        "ticker_text", "ticker_speed_seconds"
     ];
     const updatePayload = { updated_at: new Date().toISOString() };
     for (const key of allowed) {

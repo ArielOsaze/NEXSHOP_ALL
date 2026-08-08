@@ -1738,6 +1738,21 @@ function updateContactEmailLinks(value) {
     });
 }
 
+function applyTickerSettings(s) {
+    const track = document.getElementById("tickerTrack");
+    if (track) {
+        const seconds = Number(s && s.ticker_speed_seconds);
+        track.style.animationDuration = `${seconds > 0 ? seconds : 30}s`;
+    }
+    const msgEls = document.querySelectorAll(".ticker-msg");
+    if (!msgEls.length || !s || !s.ticker_text) return;
+    const items = String(s.ticker_text).split("|").map(t => t.trim()).filter(Boolean);
+    if (!items.length) return;
+    msgEls.forEach((el, i) => {
+        el.textContent = items[i % items.length];
+    });
+}
+
 async function loadStoreSettings() {
     try {
         const res = await fetch(`${API_BASE}/settings/store`);
@@ -1792,6 +1807,7 @@ async function loadStoreSettings() {
         // toggle trust bar sesuai Settings admin (default tampil kalau belum pernah diatur)
         const trustBar = document.getElementById("trustBar");
         if (trustBar) trustBar.classList.toggle("hidden", s.trust_bar_enabled === false);
+        applyTickerSettings(s);
         if (Array.isArray(s.faq) && s.faq.length > 0) {
             renderFaqList(s.faq);
         }
@@ -2007,24 +2023,21 @@ function renderTopupGameGrid() {
         const logoUrl = g.logo ? escapeHtml(safeUrl(g.logo)) : "";
         return `
         <div class="topup-game-card group relative rounded-3xl overflow-hidden cursor-pointer glass-panel border border-transparent hover:border-brand-cyan/40 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-indigo/20" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
-            <div class="relative h-40 sm:h-44 overflow-hidden bg-gray-100 dark:bg-black/40">
+            <div class="relative h-40 sm:h-44 overflow-hidden bg-gradient-to-br from-[#1a1533] to-[#0d1b2e]">
                 ${g.logo ? `
-                <img src="${logoUrl}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover scale-150 blur-2xl opacity-30 group-hover:opacity-50 group-hover:scale-[1.65] transition-all duration-700">
-                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/5"></div>
-                <div class="absolute inset-0 flex items-center justify-center p-6">
-                    <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="max-w-[72px] max-h-[72px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-500">
-                </div>
+                <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
                 ` : `
                 <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/30 to-brand-cyan/30"></div>
                 <div class="absolute inset-0 flex items-center justify-center">
                     <span class="material-symbols-outlined text-5xl text-white/70">sports_esports</span>
                 </div>
                 `}
-                <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest border border-white/10">Instan</span>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/0 to-black/10 pointer-events-none"></div>
+                <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest border border-white/10">Instan</span>
             </div>
             <div class="p-4 sm:p-5 flex items-center justify-between gap-3">
                 <div class="min-w-0">
-                    <h4 class="font-bold text-gray-900 dark:text-white text-base sm:text-lg leading-tight line-clamp-1 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors">${escapeHtml(g.kategori)}</h4>
+                    <h4 class="font-bold text-gray-900 dark:text-white text-base sm:text-lg leading-tight line-clamp-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors" title="${escapeHtml(g.kategori)}">${escapeHtml(g.kategori)}</h4>
                     <span class="text-[11px] text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide block mt-1">${g.products.length} Produk</span>
                     ${minPrice !== null ? `<div class="mt-1.5 text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan font-black text-sm">Mulai ${rupiah(minPrice)}</div>` : ""}
                 </div>
