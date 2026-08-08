@@ -1984,9 +1984,9 @@ function buildTopupGames() {
 function renderTopupGameSkeleton() {
     const grid = document.getElementById("topupGameGrid");
     grid.innerHTML = Array.from({ length: 6 }).map(() => `
-        <div class="bg-white dark:bg-[#0a0a0c] rounded-2xl p-6 border border-gray-200 dark:border-white/5 flex items-center gap-6" aria-hidden="true">
-            <div class="w-20 h-20 rounded-2xl bg-gray-200 dark:bg-white/5 animate-pulse shrink-0"></div>
-            <div class="flex-1">
+        <div class="rounded-3xl overflow-hidden glass-panel border border-transparent" aria-hidden="true">
+            <div class="h-40 sm:h-44 bg-gray-200 dark:bg-white/5 animate-pulse"></div>
+            <div class="p-4 sm:p-5">
                 <div class="w-3/4 h-5 bg-gray-200 dark:bg-white/10 animate-pulse rounded mb-3"></div>
                 <div class="w-1/2 h-4 bg-gray-200 dark:bg-white/5 animate-pulse rounded"></div>
             </div>
@@ -2001,26 +2001,40 @@ function renderTopupGameGrid() {
         return;
     }
 
-    grid.innerHTML = TOPUP_GAMES.map(g => `
-        <div class="topup-game-card group relative bg-white dark:bg-[#0a0a0c] rounded-2xl p-6 border border-gray-200 dark:border-white/5 hover:border-brand-cyan/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
-            <div class="absolute inset-0 bg-gradient-to-b from-transparent to-brand-cyan/5 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none"></div>
-            <div class="flex items-center gap-6 relative z-10">
-                <div class="w-20 h-20 rounded-2xl overflow-hidden shrink-0 shadow-lg bg-gray-100 dark:bg-white/5 flex items-center justify-center p-2">
-                    ${g.logo ? `<img src="${escapeHtml(safeUrl(g.logo))}" alt="${escapeHtml(g.kategori)}" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500" loading="lazy">` : `<span class="material-symbols-outlined text-4xl text-gray-400">sports_esports</span>`}
+    grid.innerHTML = TOPUP_GAMES.map(g => {
+        const prices = g.products.map(p => Number(p.harga_jual) || 0).filter(n => n > 0);
+        const minPrice = prices.length ? Math.min(...prices) : null;
+        const logoUrl = g.logo ? escapeHtml(safeUrl(g.logo)) : "";
+        return `
+        <div class="topup-game-card group relative rounded-3xl overflow-hidden cursor-pointer glass-panel border border-transparent hover:border-brand-cyan/40 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-indigo/20" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
+            <div class="relative h-40 sm:h-44 overflow-hidden bg-gray-100 dark:bg-black/40">
+                ${g.logo ? `
+                <img src="${logoUrl}" alt="" aria-hidden="true" class="absolute inset-0 w-full h-full object-cover scale-150 blur-2xl opacity-30 group-hover:opacity-50 group-hover:scale-[1.65] transition-all duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/5"></div>
+                <div class="absolute inset-0 flex items-center justify-center p-6">
+                    <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="max-w-[72px] max-h-[72px] object-contain drop-shadow-2xl group-hover:scale-110 transition-transform duration-500">
                 </div>
-                <div>
-                    <h4 class="text-xl font-bold text-gray-900 dark:text-white mb-2 group-hover:text-brand-cyan transition-colors line-clamp-1">${escapeHtml(g.kategori)}</h4>
-                    <span class="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 rounded-full text-xs font-bold">
-                        <span class="material-symbols-outlined text-[14px]">inventory_2</span>
-                        ${g.products.length} Produk
-                    </span>
+                ` : `
+                <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/30 to-brand-cyan/30"></div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <span class="material-symbols-outlined text-5xl text-white/70">sports_esports</span>
                 </div>
+                `}
+                <span class="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-black/40 backdrop-blur-md text-white text-[10px] font-bold uppercase tracking-widest border border-white/10">Instan</span>
             </div>
-            <div class="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-brand-cyan/10 text-brand-cyan flex items-center justify-center opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 transition-all duration-300">
-                <span class="material-symbols-outlined">arrow_forward</span>
+            <div class="p-4 sm:p-5 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <h4 class="font-bold text-gray-900 dark:text-white text-base sm:text-lg leading-tight line-clamp-1 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors">${escapeHtml(g.kategori)}</h4>
+                    <span class="text-[11px] text-gray-500 dark:text-gray-400 font-semibold uppercase tracking-wide block mt-1">${g.products.length} Produk</span>
+                    ${minPrice !== null ? `<div class="mt-1.5 text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan font-black text-sm">Mulai ${rupiah(minPrice)}</div>` : ""}
+                </div>
+                <div class="w-10 h-10 rounded-full bg-brand-indigo/10 dark:bg-white/5 text-brand-indigo dark:text-brand-cyan flex items-center justify-center shrink-0 group-hover:bg-brand-indigo group-hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-xl">arrow_forward</span>
+                </div>
             </div>
         </div>
-    `).join("");
+    `;
+    }).join("");
 
     grid.querySelectorAll(".topup-game-card").forEach(card => {
         card.addEventListener("click", () => openGameDetail(card.dataset.kategori));
