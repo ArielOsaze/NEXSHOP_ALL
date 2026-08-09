@@ -1419,7 +1419,7 @@ exports.create = async (req, res) => {
                     paymentNo: payment.paymentNo,
                     qrContent: payment.qrContent,
                     expired: payment.expired,
-                    amount: payment.amount,
+                    amount: total,
                     fee: payment.fee
                 }
             });
