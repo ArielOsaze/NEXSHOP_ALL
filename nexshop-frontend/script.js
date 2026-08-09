@@ -288,6 +288,100 @@ document.addEventListener("keydown", (e) => {
 
 /* ---------- Render product catalog ---------- */
 
+let promoSlides = [];
+let promoIndex = 0;
+let promoTimer = null;
+
+async function loadPromo() {
+    try {
+        const res = await fetch(`${API_BASE}/promo`);
+        if (!res.ok) return;
+        promoSlides = await res.json();
+        
+        const section = document.getElementById("promoCarouselSection");
+        if (!promoSlides || promoSlides.length === 0) {
+            if (section) section.classList.add("hidden");
+            return;
+        }
+        
+        if (section) section.classList.remove("hidden");
+        renderPromoCarousel();
+    } catch (err) {
+        console.error("Failed to load promo slides", err);
+    }
+}
+
+function renderPromoCarousel() {
+    const inner = document.getElementById("promoCarouselInner");
+    const indicators = document.getElementById("promoIndicators");
+    
+    if (!inner || !indicators) return;
+    
+    inner.innerHTML = promoSlides.map((slide, i) => {
+        if (slide.full_image) {
+            return `
+                <a href="${slide.cta_link || '#'}" class="w-full h-full flex-shrink-0 relative block">
+                    <img src="${slide.image_url}" alt="${slide.title}" class="w-full h-full object-cover">
+                </a>
+            `;
+        }
+        
+        return `
+            <div class="w-full h-full flex-shrink-0 relative flex items-center p-6 sm:p-12">
+                <img src="${slide.image_url}" alt="" class="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay">
+                <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
+                <div class="relative z-10 max-w-lg">
+                    ${slide.badge_text ? `<span class="inline-block px-3 py-1 bg-brand-indigo text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3">${escapeHtml(slide.badge_text)}</span>` : ''}
+                    <h2 class="text-xl sm:text-3xl md:text-4xl font-black text-white mb-2 sm:mb-3 leading-tight">${escapeHtml(slide.title)}</h2>
+                    ${slide.description ? `<p class="text-sm sm:text-base text-gray-300 mb-4 sm:mb-6 line-clamp-2">${escapeHtml(slide.description)}</p>` : ''}
+                    ${slide.cta_text ? `<a href="${slide.cta_link || '#'}" class="btn-primary inline-flex text-sm sm:text-base">${escapeHtml(slide.cta_text)}</a>` : ''}
+                </div>
+            </div>
+        `;
+    }).join("");
+    
+    indicators.innerHTML = promoSlides.map((_, i) => `
+        <button class="transition-all duration-300 ${i === 0 ? 'w-6 h-2 rounded-full bg-brand-cyan' : 'w-2 h-2 rounded-full bg-white/50'}" onclick="goToPromoSlide(${i})"></button>
+    `).join("");
+    
+    promoIndex = 0;
+    startPromoAutoplay();
+}
+
+function goToPromoSlide(index) {
+    if (promoSlides.length === 0) return;
+    promoIndex = (index + promoSlides.length) % promoSlides.length;
+    
+    const inner = document.getElementById("promoCarouselInner");
+    if (inner) {
+        inner.style.transform = `translateX(-${promoIndex * 100}%)`;
+    }
+    
+    const dots = document.getElementById("promoIndicators").children;
+    Array.from(dots).forEach((dot, i) => {
+        if (i === promoIndex) {
+            dot.className = "w-6 h-2 rounded-full transition-all duration-300 bg-brand-cyan";
+        } else {
+            dot.className = "w-2 h-2 rounded-full transition-all duration-300 bg-white/50";
+        }
+    });
+}
+
+function startPromoAutoplay() {
+    if (promoSlides.length <= 1) return;
+    clearInterval(promoTimer);
+    promoTimer = setInterval(() => goToPromoSlide(promoIndex + 1), 5000);
+}
+
+document.getElementById("promoPrev")?.addEventListener("click", () => {
+    goToPromoSlide(promoIndex - 1);
+    startPromoAutoplay();
+});
+document.getElementById("promoNext")?.addEventListener("click", () => {
+    goToPromoSlide(promoIndex + 1);
+    startPromoAutoplay();
+});
+
 async function loadProducts() {
     try {
         const res = await fetch(`${API_BASE}/products`);
@@ -2994,6 +3088,7 @@ async function bootstrapApp() {
     checkResetPasswordLink();
     refreshAccountUI();
     initNexBotChat();
+    loadPromo();
 
     const initialRequests = Promise.allSettled([
         loadStoreSettings(),
