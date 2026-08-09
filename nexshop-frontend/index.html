@@ -142,7 +142,7 @@
 </div>
 
 <nav class="fixed w-full z-50 top-0 transition-all duration-300 px-[clamp(12px,3vw,32px)] py-3 sm:py-4 glass-panel border-b-0 border-x-0 border-t-0" id="mainNav">
-<div class="max-w-7xl mx-auto flex justify-between items-center">
+<div class="max-w-7xl mx-auto flex justify-between items-center gap-4">
 <div class="flex items-center gap-2 sm:gap-3 group cursor-pointer shrink-0">
 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-indigo to-brand-cyan p-[1px] group-hover:rotate-90 transition-transform duration-500 shrink-0">
 <div class="w-full h-full bg-brand-light dark:bg-[var(--bg-void)] rounded-xl flex items-center justify-center">
@@ -151,11 +151,11 @@
 </div>
 <span class="font-extrabold text-base sm:text-xl tracking-tighter text-gray-900 dark:text-white uppercase shrink-0" id="storeNameText">NexShop</span>
 </div>
-<div class="hidden lg:flex gap-8 lg:gap-10 items-center">
-<a class="text-sm font-bold text-gray-900 dark:text-white relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-indigo after:scale-x-100 transition-all" href="#games">Katalog</a>
-<a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-cyan after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left" href="#topup">Topup Diamond</a>
-<a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-amber-400 after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left" href="#leaderboardSection">Top Spenders</a>
-<button type="button" class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors" id="trackOrderBtn">Cek Transaksi</button>
+<div class="hidden lg:flex gap-4 xl:gap-10 items-center min-w-0 flex-shrink">
+<a class="text-sm font-bold text-gray-900 dark:text-white relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-indigo after:scale-x-100 transition-all truncate" href="#games">Katalog</a>
+<a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-cyan after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left truncate" href="#topup">Topup Diamond</a>
+<a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-amber-400 after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left truncate" href="#leaderboardSection">Top Spenders</a>
+<button type="button" class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors truncate" id="trackOrderBtn">Cek Transaksi</button>
 </div>
 <div class="flex items-center gap-1 sm:gap-2 shrink-0">
 <button class="lg:hidden min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors" id="mobileMenuBtn">
@@ -223,15 +223,27 @@ Cek Transaksi
 </div>
 </div>
 <div class="absolute bottom-0 left-0 w-full overflow-hidden py-4 border-y border-gray-200 dark:border-white/5 bg-gray-50/80 dark:bg-[#0a0a0c]/80 backdrop-blur-md" id="trustBar">
-<div class="flex whitespace-nowrap animate-scroll-text text-xs font-bold text-gray-500 uppercase tracking-widest gap-8" id="tickerTrack">
-<span class="ticker-msg">Transaksi aman dan cepat 24/7</span> <span class="text-brand-indigo">•</span>
-<span class="ticker-msg">Pembayaran QRIS & e-Wallet didukung</span> <span class="text-brand-indigo">•</span>
-<span id="trustTotalOrders">- Transaksi Sukses</span> <span class="text-brand-indigo">•</span>
-<span id="trustTotalGames">- Game & Voucher</span> <span class="text-brand-indigo">•</span>
-<span class="ticker-msg">Transaksi aman dan cepat 24/7</span> <span class="text-brand-indigo">•</span>
-<span class="ticker-msg">Pembayaran QRIS & e-Wallet didukung</span> <span class="text-brand-indigo">•</span>
-<span class="ticker-msg">100% Legal & Terpercaya</span> <span class="text-brand-indigo">•</span>
-<span class="ticker-msg">Customer Service siap membantu</span>
+<div class="flex whitespace-nowrap animate-scroll-text text-xs font-bold text-gray-500 uppercase tracking-widest" id="tickerTrack">
+    <div class="ticker-group flex gap-8 pr-8">
+        <span class="ticker-msg">Transaksi aman dan cepat 24/7</span> <span class="text-brand-indigo">•</span>
+        <span class="ticker-msg">Pembayaran QRIS & e-Wallet didukung</span> <span class="text-brand-indigo">•</span>
+        <span class="trustTotalOrders">- Transaksi Sukses</span> <span class="text-brand-indigo">•</span>
+        <span class="trustTotalGames">- Game & Voucher</span> <span class="text-brand-indigo">•</span>
+        <span class="ticker-msg">Transaksi aman dan cepat 24/7</span> <span class="text-brand-indigo">•</span>
+        <span class="ticker-msg">Pembayaran QRIS & e-Wallet didukung</span> <span class="text-brand-indigo">•</span>
+        <span class="ticker-msg">100% Legal & Terpercaya</span> <span class="text-brand-indigo">•</span>
+        <span class="ticker-msg">Customer Service siap membantu</span> <span class="text-brand-indigo">•</span>
+    </div>
+    <div class="ticker-group flex gap-8 pr-8" aria-hidden="true">
+        <span class="ticker-msg">Transaksi aman dan cepat 24/7</span> <span class="text-brand-indigo">•</span>
+        <span class="ticker-msg">Pembayaran QRIS & e-Wallet didukung</span> <span class="text-brand-indigo">•</span>
+        <span class="trustTotalOrders">- Transaksi Sukses</span> <span class="text-brand-indigo">•</span>
+        <span class="trustTotalGames">- Game & Voucher</span> <span class="text-brand-indigo">•</span>
+        <span class="ticker-msg">Transaksi aman dan cepat 24/7</span> <span class="text-brand-indigo">•</span>
+        <span class="ticker-msg">Pembayaran QRIS & e-Wallet didukung</span> <span class="text-brand-indigo">•</span>
+        <span class="ticker-msg">100% Legal & Terpercaya</span> <span class="text-brand-indigo">•</span>
+        <span class="ticker-msg">Customer Service siap membantu</span> <span class="text-brand-indigo">•</span>
+    </div>
 </div>
 </div>
 </header>
@@ -473,35 +485,8 @@ Cek Transaksi
             <!-- Pembayaran Aman -->
             <div>
                 <h4 class="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Pembayaran Aman</h4>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--bg-panel-2)] transition-transform hover:-translate-y-1">
-                        <span class="material-symbols-outlined text-brand-cyan text-2xl">qr_code_scanner</span>
-                        <div>
-                            <div class="text-sm font-bold text-gray-900 dark:text-white">QRIS</div>
-                            <div class="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">Scan dengan m-banking atau e-wallet</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--bg-panel-2)] transition-transform hover:-translate-y-1">
-                        <span class="material-symbols-outlined text-brand-indigo text-2xl">account_balance</span>
-                        <div>
-                            <div class="text-sm font-bold text-gray-900 dark:text-white">Virtual Account</div>
-                            <div class="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">BCA, BRI, Mandiri, dan bank lain</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--bg-panel-2)] transition-transform hover:-translate-y-1">
-                        <span class="material-symbols-outlined text-green-500 text-2xl">payments</span>
-                        <div>
-                            <div class="text-sm font-bold text-gray-900 dark:text-white">Transfer Bank</div>
-                            <div class="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">Transfer langsung dari rekening bank</div>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--bg-panel-2)] transition-transform hover:-translate-y-1">
-                        <span class="material-symbols-outlined text-orange-400 text-2xl">credit_card</span>
-                        <div>
-                            <div class="text-sm font-bold text-gray-900 dark:text-white">Kartu Kredit/Debit</div>
-                            <div class="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">Visa dan Mastercard</div>
-                        </div>
-                    </div>
+                <div class="text-gray-500 dark:text-gray-400 font-medium text-sm leading-relaxed">
+                    QRIS &bull; E-Wallet &bull; Virtual Account &bull; Transfer Bank
                 </div>
             </div>
         </div>
@@ -839,8 +824,9 @@ Cek Transaksi
 
 <!-- NexBot Floating Chatbot Widget -->
 <div class="nexbot-widget" id="nexbotWidget" style="opacity: 0; pointer-events: none; transition: opacity 0.5s ease-in-out;">
-    <button type="button" class="nexbot-float-btn" id="nexbotFloatBtn" aria-label="Buka NexBot">
+    <button type="button" class="nexbot-float-btn group" id="nexbotFloatBtn" aria-label="Buka NexBot">
         <span class="nexbot-float-btn-icon"><i class="fa-solid fa-robot"></i></span>
+        <span class="nexbot-float-btn-text max-w-0 overflow-hidden group-hover:max-w-[120px] transition-all duration-300 ease-in-out whitespace-nowrap ml-0 group-hover:ml-2 opacity-0 group-hover:opacity-100 font-bold text-sm hidden md:block">Tanya NexBot</span>
     </button>
 
     <div class="nexbot-window hidden" id="nexbotWindow">

@@ -2592,21 +2592,21 @@ function animateTrustCounter(el, target) {
 }
 
 async function loadTrustStats() {
-    const ordersEl = document.getElementById("trustTotalOrders");
-    const gamesEl = document.getElementById("trustTotalGames");
-    if (!ordersEl || !gamesEl) return;
+    const ordersEls = document.querySelectorAll(".trustTotalOrders");
+    const gamesEls = document.querySelectorAll(".trustTotalGames");
+    if (!ordersEls.length || !gamesEls.length) return;
 
     try {
         const res = await fetch(`${API_BASE}/stats/public`);
         if (!res.ok) throw new Error("Gagal memuat statistik");
         const data = await res.json();
 
-        animateTrustCounter(ordersEl, Number(data.total_transaksi_sukses || 0));
-        animateTrustCounter(gamesEl, Number(data.total_game || 0));
+        ordersEls.forEach(el => animateTrustCounter(el, Number(data.total_transaksi_sukses || 0)));
+        gamesEls.forEach(el => animateTrustCounter(el, Number(data.total_game || 0)));
     } catch (err) {
         // trust bar bukan fitur krusial — kalau gagal, biarin tampil "-" aja, gak ganggu belanja
-        ordersEl.textContent = "-";
-        gamesEl.textContent = "-";
+        ordersEls.forEach(el => el.textContent = "-");
+        gamesEls.forEach(el => el.textContent = "-");
     }
 }
 
