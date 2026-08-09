@@ -3093,7 +3093,7 @@ function renderLeaderboard(data) {
                     ${getAvatar(top3[0])}
                 </div>
                 ${getRankBadge(1)}
-                <div class="absolute -top-4 md:-top-6 left-1/2 -translate-x-1/2 text-amber-400 text-xl md:text-3xl animate-bounce">
+                <div class="absolute left-1/2 -translate-x-1/2 text-amber-400 text-xl md:text-3xl animate-bounce" style="top: -1.25rem;">
                     <i class="fa-solid fa-crown drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]"></i>
                 </div>
             </div>
