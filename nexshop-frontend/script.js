@@ -1158,13 +1158,13 @@ function renderCheckoutPaymentMethods() {
             <span class="checkout-payment-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
         </button>
         ${method.id === "va" && selectedPaymentMethod === "va" ? `
-            <div class="va-bank-select-container" style="padding: 12px; background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); border-radius: 8px; margin-top: -12px; margin-bottom: 16px;">
-                <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-color, #555);">Pilih Bank</label>
-                <div class="va-bank-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;">
+            <div class="mt-1 mb-4 p-4 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5">
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Pilih Bank</label>
+                <div class="grid grid-cols-2 min-[400px]:grid-cols-3 gap-2">
                     ${['bca', 'bni', 'mandiri', 'bri', 'cimb'].map(bank => `
-                        <label style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border: 1px solid ${checkoutVaBank === bank ? '#6366f1' : 'rgba(0,0,0,0.1)'}; border-radius: 6px; cursor: pointer; background: ${checkoutVaBank === bank ? '#eff6ff' : 'transparent'}; transition: all 0.2s;">
-                            <input type="radio" name="checkoutVaBankRadio" value="${bank}" ${checkoutVaBank === bank ? 'checked' : ''} style="display:none;">
-                            <span style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: ${checkoutVaBank === bank ? '#4f46e5' : 'inherit'};">${bank === 'cimb' ? 'CIMB Niaga' : bank}</span>
+                        <label class="relative flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 ${checkoutVaBank === bank ? 'border-brand-indigo bg-brand-indigo/10 dark:bg-brand-indigo/20 text-brand-indigo dark:text-brand-cyan' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 text-gray-700 dark:text-gray-400'}">
+                            <input type="radio" name="checkoutVaBankRadio" value="${bank}" ${checkoutVaBank === bank ? 'checked' : ''} class="hidden">
+                            <span class="text-sm font-bold uppercase tracking-wider">${bank === 'cimb' ? 'CIMB' : bank}</span>
                         </label>
                     `).join('')}
                 </div>
@@ -2533,13 +2533,13 @@ function renderTopupPaymentGrid() {
             <span class="tw-payment-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
         </button>
         ${method.id === "va" && twState.payment === "va" ? `
-            <div class="va-bank-select-container" style="padding: 12px; background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); border-radius: 8px; margin-top: -12px; margin-bottom: 16px;">
-                <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-color, #555);">Pilih Bank</label>
-                <div class="va-bank-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;">
+            <div class="mt-1 mb-4 p-4 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5">
+                <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Pilih Bank</label>
+                <div class="grid grid-cols-2 min-[400px]:grid-cols-3 gap-2">
                     ${['bca', 'bni', 'mandiri', 'bri', 'cimb'].map(bank => `
-                        <label style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border: 1px solid ${twState.vaBank === bank ? '#6366f1' : 'rgba(0,0,0,0.1)'}; border-radius: 6px; cursor: pointer; background: ${twState.vaBank === bank ? '#eff6ff' : 'transparent'}; transition: all 0.2s;">
-                            <input type="radio" name="twVaBankRadio" value="${bank}" ${twState.vaBank === bank ? 'checked' : ''} style="display:none;">
-                            <span style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: ${twState.vaBank === bank ? '#4f46e5' : 'inherit'};">${bank === 'cimb' ? 'CIMB Niaga' : bank}</span>
+                        <label class="relative flex items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-all duration-200 ${twState.vaBank === bank ? 'border-brand-indigo bg-brand-indigo/10 dark:bg-brand-indigo/20 text-brand-indigo dark:text-brand-cyan' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20 text-gray-700 dark:text-gray-400'}">
+                            <input type="radio" name="twVaBankRadio" value="${bank}" ${twState.vaBank === bank ? 'checked' : ''} class="hidden">
+                            <span class="text-sm font-bold uppercase tracking-wider">${bank === 'cimb' ? 'CIMB' : bank}</span>
                         </label>
                     `).join('')}
                 </div>
