@@ -1751,17 +1751,42 @@ function updateContactEmailLinks(value) {
 
 function applyTickerSettings(s) {
     const track = document.getElementById("tickerTrack");
-    if (track) {
-        const seconds = Number(s && s.ticker_speed_seconds);
-        track.style.animationDuration = `${seconds > 0 ? seconds : 30}s`;
+    
+    if (!s || !s.ticker_text) {
+        if (track) track.style.display = 'none';
+        return;
     }
-    const msgEls = document.querySelectorAll(".ticker-msg");
-    if (!msgEls.length || !s || !s.ticker_text) return;
+    
     const items = String(s.ticker_text).split("|").map(t => t.trim()).filter(Boolean);
-    if (!items.length) return;
-    msgEls.forEach((el, i) => {
-        el.textContent = items[i % items.length];
-    });
+    if (!items.length) {
+        if (track) track.style.display = 'none';
+        return;
+    }
+    
+    // Repeat items if too few to ensure it fills the screen seamlessly
+    let displayItems = [...items];
+    while (displayItems.length < 8) {
+        displayItems = displayItems.concat(items);
+    }
+    
+    const buildHTML = (groupItems) => groupItems.map(item => `<span class="ticker-msg">${item}</span> <span class="text-brand-indigo">•</span>`).join("");
+    
+    const g1 = document.getElementById("tickerGroup1");
+    const g2 = document.getElementById("tickerGroup2");
+    if (g1) g1.innerHTML = buildHTML(displayItems);
+    if (g2) g2.innerHTML = buildHTML(displayItems);
+    
+    if (track) {
+        track.style.display = 'flex';
+        const seconds = Number(s.ticker_speed_seconds) || 30;
+        
+        // Calculate constant speed: "seconds" is treated as the duration for 100 characters.
+        // This ensures the visual scrolling speed remains exactly the same whether there is 1 short message or 10 long ones.
+        const totalChars = displayItems.join("").length;
+        const calculatedDuration = Math.max((totalChars / 100) * seconds, 5);
+        
+        track.style.animationDuration = `${calculatedDuration}s`;
+    }
 }
 
 async function loadStoreSettings() {
