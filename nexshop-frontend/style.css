@@ -1450,9 +1450,20 @@ input::placeholder{ color:var(--text-dim); }
 .account-avatar{
     width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;
     background:linear-gradient(135deg,var(--violet),var(--cyan)); font-weight:700; color:#fff;
+    flex-shrink:0; overflow:hidden; position:relative;
 }
+.account-avatar-edit{
+    position:absolute; inset:0; background:rgba(0,0,0,0.5); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    opacity:0; transition:opacity 0.2s; border:none; cursor:pointer;
+    z-index:10; font-size:14px;
+}
+.account-avatar:hover .account-avatar-edit{ opacity:1; }
+.hof-avatar-sm{ width:32px; height:32px; }
+.hof-avatar-md{ width:48px; height:48px; }
+.hof-avatar-lg{ width:64px; height:64px; }
 .account-name{ font-weight:600; font-size:14px; }
-.account-email{ font-size:12px; color:var(--text-muted); }
+.account-email{ font-size:12px; color:var(--text-muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .dropdown-item{ width:100%; text-align:left; padding:9px 8px; border-radius:8px; font-size:13.5px; color:var(--text-muted); }
 .dropdown-item:hover{ background:var(--bg-panel-2); color:var(--text); }
 .dropdown-item.logout{ color:var(--text-danger); }
@@ -1985,4 +1996,15 @@ input::placeholder{ color:var(--text-dim); }
   .md\:h-24 { height: 6rem; }
   .md\:p-8 { padding: 2rem; }
   .md\:p-6 { padding: 1.5rem; }
+}
+
+/* Hall of Fame avatar styles */
+.hof-avatar{ position:relative; flex-shrink:0; border-radius:9999px; }
+.hof-avatar--1{ width:96px; height:96px; padding:6px; }
+.hof-avatar--2,
+.hof-avatar--3{ width:64px; height:64px; padding:4px; }
+@media (min-width:768px){
+  .hof-avatar--1{ width:144px; height:144px; padding:8px; }
+  .hof-avatar--2,
+  .hof-avatar--3{ width:96px; height:96px; padding:4px; }
 }

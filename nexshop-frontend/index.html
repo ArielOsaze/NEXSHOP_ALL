@@ -765,8 +765,13 @@ Cek Transaksi
 <!-- Account Dropdown -->
 <div class="account-dropdown" id="accountDropdown">
     <div class="account-info">
-        <div class="account-avatar" id="accountAvatar"></div>
-        <div>
+        <div class="account-avatar" id="accountAvatar">
+            <button type="button" class="account-avatar-edit" id="accountAvatarEditBtn" aria-label="Ganti foto profil">
+                <i class="fa-solid fa-camera"></i>
+            </button>
+        </div>
+        <input type="file" id="accountAvatarInput" accept="image/*" class="hidden">
+        <div style="min-width:0;">
             <div class="account-name" id="accountName"></div>
             <div class="account-email" id="accountEmail"></div>
         </div>

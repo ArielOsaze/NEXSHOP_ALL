@@ -303,7 +303,8 @@ exports.login = async (req, res) => {
                 id: user.id,
                 fullname: user.fullname,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                avatar_url: user.avatar_url
             }
         });
     } catch (error) {

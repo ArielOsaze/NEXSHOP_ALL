@@ -7,14 +7,17 @@ const BUCKETS = {
     product: "products",
     promo: "promo",
     logo: "logos",
-    mascot: "mascots"
+    mascot: "mascots",
+    avatar: "avatars"
 };
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 
 async function uploadImage(req, res) {
     try {
-        if (req.user.role !== "admin") {
+        const type = req.query.type || "product";
+        
+        if (req.user.role !== "admin" && type !== "avatar") {
             return res.status(403).json({ message: "Akses ditolak, khusus admin" });
         }
 
@@ -25,8 +28,11 @@ async function uploadImage(req, res) {
         if (!ALLOWED_MIME_TYPES.includes(req.file.mimetype)) {
             return res.status(400).json({ message: "File harus berupa gambar (JPG, PNG, WEBP, atau GIF)" });
         }
+        
+        if (type === "avatar" && req.file.size > 5 * 1024 * 1024) {
+            return res.status(400).json({ message: "Ukuran foto profil maksimal 5MB" });
+        }
 
-        const type = req.query.type || "product";
         const bucket = BUCKETS[type] || BUCKETS.product;
 
         const preset = type === "logo" ? "logo" : type === "promo" ? "promo" : "product";

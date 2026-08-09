@@ -346,3 +346,26 @@ exports.deleteUser = async (req, res) => {
         res.status(500).json({ message: "Server Error" });
     }
 };
+
+exports.updateOwnAvatar = async (req, res) => {
+    const { avatar_url } = req.body;
+    if (typeof avatar_url !== "string" || !/^https:\/\//.test(avatar_url)) {
+        return res.status(400).json({ message: "avatar_url tidak valid" });
+    }
+    try {
+        const { data, error } = await supabase
+            .from("users")
+            .update({ avatar_url })
+            .eq("id", req.user.id)
+            .select("id, avatar_url");
+            
+        if (error) {
+            console.error(error);
+            return res.status(500).json({ message: "Gagal update foto profil" });
+        }
+        res.json({ message: "Foto profil diperbarui", avatar_url: data[0].avatar_url });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};

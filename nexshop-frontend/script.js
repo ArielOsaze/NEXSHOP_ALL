@@ -735,13 +735,82 @@ function refreshAccountUI() {
     if (currentUser) {
         accountBtn.textContent = currentUser.fullname.split(" ")[0];
         accountBtn.classList.add("logged-in");
-        document.getElementById("accountAvatar").textContent = currentUser.fullname.charAt(0).toUpperCase();
+        const accountAvatar = document.getElementById("accountAvatar");
+        if (currentUser.avatar_url) {
+            accountAvatar.innerHTML = `
+                <img src="${currentUser.avatar_url}" alt="" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+                <button type="button" class="account-avatar-edit" id="accountAvatarEditBtn" aria-label="Ganti foto profil">
+                    <i class="fa-solid fa-camera"></i>
+                </button>
+            `;
+        } else {
+            accountAvatar.innerHTML = `
+                ${currentUser.fullname.charAt(0).toUpperCase()}
+                <button type="button" class="account-avatar-edit" id="accountAvatarEditBtn" aria-label="Ganti foto profil">
+                    <i class="fa-solid fa-camera"></i>
+                </button>
+            `;
+        }
         document.getElementById("accountName").textContent = currentUser.fullname;
         document.getElementById("accountEmail").textContent = currentUser.email;
+        attachAvatarUploadListeners();
     } else {
         accountBtn.textContent = "Login";
         accountBtn.classList.remove("logged-in");
     }
+}
+
+function attachAvatarUploadListeners() {
+    const editBtn = document.getElementById("accountAvatarEditBtn");
+    const fileInput = document.getElementById("accountAvatarInput");
+    if (!editBtn || !fileInput) return;
+    
+    editBtn.onclick = () => fileInput.click();
+    fileInput.onchange = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        try {
+            editBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+            const formData = new FormData();
+            formData.append("image", file);
+            
+            const uploadRes = await fetch(`${API_BASE}/upload?type=avatar`, {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${token}` },
+                body: formData
+            });
+            const uploadData = await uploadRes.json();
+            if (!uploadRes.ok) throw new Error(uploadData.message || "Gagal upload gambar");
+            
+            const updateRes = await fetch(`${API_BASE}/users/me/avatar`, {
+                method: "PUT",
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}` 
+                },
+                body: JSON.stringify({ avatar_url: uploadData.url })
+            });
+            const updateData = await updateRes.json();
+            if (!updateRes.ok) throw new Error(updateData.message || "Gagal update foto profil");
+            
+            currentUser.avatar_url = updateData.avatar_url;
+            localStorage.setItem("nexshop_user", JSON.stringify(currentUser));
+            refreshAccountUI();
+            
+            if (typeof showToast === 'function') {
+                showToast("Sukses", "Foto profil berhasil diperbarui");
+            } else {
+                alert("Foto profil berhasil diperbarui");
+            }
+        } catch (err) {
+            console.error("Avatar upload error:", err);
+            alert("Gagal upload foto profil: " + err.message);
+            editBtn.innerHTML = '<i class="fa-solid fa-camera"></i>';
+        } finally {
+            fileInput.value = "";
+        }
+    };
 }
 
 accountBtn.addEventListener("click", () => {
@@ -3067,7 +3136,7 @@ function renderLeaderboard(data) {
     if (top3[1]) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
-            <div style="aspect-ratio: 1/1; flex-shrink: 0; max-width: 100%;" class="relative w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-slate-400 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
+            <div class="hof-avatar hof-avatar--2 rounded-full p-1 bg-gradient-to-b from-slate-400 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
                 <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[1])}
                 </div>
@@ -3086,7 +3155,7 @@ function renderLeaderboard(data) {
     if (top3[0]) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300 z-10" style="transform: translateY(-1rem);">
-            <div style="aspect-ratio: 1/1; flex-shrink: 0; max-width: 100%;" class="relative w-24 h-24 md:w-36 md:h-36 shrink-0 rounded-full p-1.5 bg-gradient-to-b from-amber-400 via-amber-500 to-gray-800 mb-3 md:mb-5 shadow-[0_0_30px_rgba(251,191,36,0.4)]">
+            <div class="hof-avatar hof-avatar--1 rounded-full p-1.5 bg-gradient-to-b from-amber-400 via-amber-500 to-gray-800 mb-3 md:mb-5 shadow-[0_0_30px_rgba(251,191,36,0.4)]">
                 <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-4 border-gray-900 relative z-10 bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[0])}
                 </div>
@@ -3108,7 +3177,7 @@ function renderLeaderboard(data) {
     if (top3[2]) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
-            <div style="aspect-ratio: 1/1; flex-shrink: 0; max-width: 100%;" class="relative w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-orange-600 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
+            <div class="hof-avatar hof-avatar--3 rounded-full p-1 bg-gradient-to-b from-orange-600 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
                 <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[2])}
                 </div>
