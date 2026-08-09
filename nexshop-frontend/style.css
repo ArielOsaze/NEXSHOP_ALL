@@ -819,7 +819,8 @@ nav#mainNav.nav-scrolled {
 .buy-btn{
     flex:1; height:40px; min-height:40px; border-radius:12px; position:relative; overflow:hidden;
     background:linear-gradient(135deg, var(--violet) 0%, var(--violet-2) 100%);
-    border:1px solid rgba(255,255,255,.15); color:#FFFFFF;
+    border: 1px solid rgba(255,255,255,0.1);
+    color:#FFFFFF;
     font-family:'Sora',sans-serif; font-size:13px; font-weight:600;
     display:flex; align-items:center; justify-content:center;
     box-shadow:0 4px 12px rgba(139,92,246,.25); transition:transform .15s, box-shadow .15s;
@@ -1968,3 +1969,5 @@ input::placeholder{ color:var(--text-dim); }
 .fluid-hero-subtitle {
     font-size: clamp(0.875rem, 1.5vw + 0.5rem, 1.125rem);
 }
+
+.promo-carousel-container { aspect-ratio: 16/9; } @media (min-width: 1024px) { .promo-carousel-container { aspect-ratio: 3/1; } }
