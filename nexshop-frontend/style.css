@@ -1813,7 +1813,7 @@ input::placeholder{ color:var(--text-dim); }
 .nexbot-status-dot{ width:6px; height:6px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px #22c55e; }
 .nexbot-close-btn{ background:none; border:none; color:var(--text-muted); font-size:16px; cursor:pointer; padding:4px; transition:color 0.15s; }
 .nexbot-close-btn:hover{ color:var(--text); }
-.nexbot-body{ flex:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; background-color:transparent; background-image:radial-gradient(var(--line) 1px, transparent 1px); background-size:20px 20px; }
+.nexbot-body{ flex:1; padding:16px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; background-color:transparent; }
 
 /* Custom Scrollbar NexBot Body */
 .nexbot-body::-webkit-scrollbar{ width:5px; }
