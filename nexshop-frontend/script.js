@@ -3051,8 +3051,8 @@ function renderLeaderboard(data) {
     
     // Helper untuk avatar
     const getAvatar = (user) => {
-        if (user.avatar_url) return `<img src="${user.avatar_url}" class="w-full h-full object-cover" style="width: 100%; height: 100%; object-fit: cover; display: block;">`;
-        return `<div class="w-full h-full bg-gray-800 flex items-center justify-center text-2xl font-bold text-gray-500" style="width: 100%; height: 100%;"><i class="fa-solid fa-user"></i></div>`;
+        if (user.avatar_url) return `<img src="${user.avatar_url}" class="w-full h-full object-cover" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: cover; display: block; flex-shrink: 0;">`;
+        return `<div class="w-full h-full bg-gray-800 flex items-center justify-center text-2xl font-bold text-gray-500" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; flex-shrink: 0;"><i class="fa-solid fa-user"></i></div>`;
     };
     
     // Helper untuk rank badge
@@ -3067,8 +3067,8 @@ function renderLeaderboard(data) {
     if (top3[1]) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
-            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-slate-400 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
-                <div style="aspect-ratio: 1/1; width: 100%; height: 100%;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900 flex-shrink-0">
+            <div style="aspect-ratio: 1/1; flex-shrink: 0; max-width: 100%;" class="relative w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-slate-400 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
+                <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[1])}
                 </div>
                 ${getRankBadge(2)}
@@ -3086,8 +3086,8 @@ function renderLeaderboard(data) {
     if (top3[0]) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300 z-10" style="transform: translateY(-1rem);">
-            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-24 h-24 md:w-36 md:h-36 shrink-0 rounded-full p-1.5 bg-gradient-to-b from-amber-400 via-amber-500 to-gray-800 mb-3 md:mb-5 shadow-[0_0_30px_rgba(251,191,36,0.4)]">
-                <div style="aspect-ratio: 1/1; width: 100%; height: 100%;" class="w-full h-full rounded-full overflow-hidden border-4 border-gray-900 relative z-10 bg-gray-900 flex-shrink-0">
+            <div style="aspect-ratio: 1/1; flex-shrink: 0; max-width: 100%;" class="relative w-24 h-24 md:w-36 md:h-36 shrink-0 rounded-full p-1.5 bg-gradient-to-b from-amber-400 via-amber-500 to-gray-800 mb-3 md:mb-5 shadow-[0_0_30px_rgba(251,191,36,0.4)]">
+                <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-4 border-gray-900 relative z-10 bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[0])}
                 </div>
                 ${getRankBadge(1)}
@@ -3108,8 +3108,8 @@ function renderLeaderboard(data) {
     if (top3[2]) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
-            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-orange-600 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
-                <div style="aspect-ratio: 1/1; width: 100%; height: 100%;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900 flex-shrink-0">
+            <div style="aspect-ratio: 1/1; flex-shrink: 0; max-width: 100%;" class="relative w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-orange-600 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
+                <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[2])}
                 </div>
                 ${getRankBadge(3)}
