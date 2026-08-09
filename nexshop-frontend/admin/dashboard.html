@@ -1533,6 +1533,7 @@
         </div>
     </div>
 </section>
+</div>
 </main>
 </div>
 
@@ -1953,91 +1954,6 @@
             <div class="modal-footer py-1 px-3 border-top d-flex justify-content-between text-muted small">
                 <span>Gunakan <kbd>↑</kbd> <kbd>↓</kbd> untuk memilih</span>
                 <span>Pintasan: <kbd>Ctrl + K</kbd></span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Knowledge Base Add/Edit Modal -->
-<div class="modal fade" id="kbModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="kbModalTitle"><i class="bi bi-journal-plus me-2"></i>Tambah Knowledge RAG</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
-            </div>
-            <div class="modal-body">
-                <form id="kbForm">
-                    <input type="hidden" id="kbId">
-                    <div class="row g-3">
-                        <div class="col-md-8">
-                            <label class="form-label" for="kbTitle">Judul Knowledge</label>
-                            <input id="kbTitle" class="form-control" placeholder="misal: Cara Topup MLBB Instant" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label" for="kbCategory">Kategori</label>
-                            <input id="kbCategory" class="form-control" placeholder="Topup Guide, FAQ, Store Info" required>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="kbKeywords">Keywords (Kata Kunci Intent)</label>
-                            <input id="kbKeywords" class="form-control" placeholder="topup, ml, mobile legends, cara beli, diamond">
-                            <div class="form-text">Pisahkan dengan koma. Digunakan oleh NexBot RAG Search Engine untuk mencocokkan pertanyaan user.</div>
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="kbContent">Isi Knowledge / Jawaban Acuan</label>
-                            <textarea id="kbContent" class="form-control" rows="5" placeholder="Tuliskan jawaban lengkap atau informasi referensi di sini..." required></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="kbPriority">Prioritas (0 - 100)</label>
-                            <input id="kbPriority" type="number" class="form-control" value="10" min="0" max="100">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="kbStatus">Status</label>
-                            <select id="kbStatus" class="form-select">
-                                <option value="active">Aktif (RAG Live)</option>
-                                <option value="inactive">Nonaktif</option>
-                            </select>
-                        </div>
-                    </div>
-                    <p class="text-danger small mt-2 mb-0" id="kbError"></p>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" id="btnSaveKnowledge" onclick="saveKnowledge()"><i class="bi bi-floppy me-1"></i> Simpan Knowledge</button>
-            </div>
-        </div>
-    </div>
-<!-- Modal Manage AI Key & Model -->
-<div class="modal fade" id="modalApiKey" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content shadow">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalApiKeyTitle"><i class="bi bi-key-fill me-2 text-primary"></i>Kelola API Key & Model</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="formApiKey" onsubmit="event.preventDefault(); saveAiApiKeyFromModal();">
-                    <input type="hidden" id="modalApiKeyProviderId">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Provider</label>
-                        <input type="text" id="modalApiKeyProviderName" class="form-control" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">API Key Baru / Pengganti</label>
-                        <input type="password" id="modalApiKeyInput" class="form-control font-monospace" placeholder="Masukkan API Key baru..." autocomplete="off">
-                        <div class="form-text">Biarkan kosong jika tidak ingin mengubah API Key saat ini. Kunci tersimpan secara aman & selalu disamarkan di UI (Masked Key).</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Model AI yang Digunakan</label>
-                        <input type="text" id="modalApiKeyModelInput" class="form-control font-monospace" placeholder="Contoh: gemini-flash-latest atau llama-3.3-70b-versatile">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-danger me-auto" onclick="deleteAiApiKeyFromModal()"><i class="bi bi-trash me-1"></i> Hapus Key</button>
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                <button type="button" class="btn btn-primary" onclick="saveAiApiKeyFromModal()"><i class="bi bi-floppy me-1"></i> Simpan Perubahan</button>
             </div>
         </div>
     </div>
