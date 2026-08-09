@@ -1138,6 +1138,7 @@ document.getElementById("myOrdersBtn").addEventListener("click", () => {
 /* ---------- Checkout ---------- */
 let appliedPromo = null; // { code, discount }
 let selectedPaymentMethod = null;
+let checkoutVaBank = "bca";
 
 function getCheckoutItems() {
     return checkoutItems || cart;
@@ -1156,11 +1157,31 @@ function renderCheckoutPaymentMethods() {
             </span>
             <span class="checkout-payment-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
         </button>
+        ${method.id === "va" && selectedPaymentMethod === "va" ? `
+            <div class="va-bank-select-container" style="padding: 12px; background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); border-radius: 8px; margin-top: -12px; margin-bottom: 16px;">
+                <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-color, #555);">Pilih Bank</label>
+                <div class="va-bank-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;">
+                    ${['bca', 'bni', 'mandiri', 'bri', 'cimb'].map(bank => `
+                        <label style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border: 1px solid ${checkoutVaBank === bank ? '#6366f1' : 'rgba(0,0,0,0.1)'}; border-radius: 6px; cursor: pointer; background: ${checkoutVaBank === bank ? '#eff6ff' : 'transparent'}; transition: all 0.2s;">
+                            <input type="radio" name="checkoutVaBankRadio" value="${bank}" ${checkoutVaBank === bank ? 'checked' : ''} style="display:none;">
+                            <span style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: ${checkoutVaBank === bank ? '#4f46e5' : 'inherit'};">${bank === 'cimb' ? 'CIMB Niaga' : bank}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
     `).join("");
 
     grid.querySelectorAll("[data-payment-method]").forEach((card) => {
         card.addEventListener("click", () => {
             selectedPaymentMethod = card.dataset.paymentMethod;
+            renderCheckoutPaymentMethods();
+        });
+    });
+
+    grid.querySelectorAll("input[name='checkoutVaBankRadio']").forEach((radio) => {
+        radio.addEventListener("change", (e) => {
+            checkoutVaBank = e.target.value;
             renderCheckoutPaymentMethods();
         });
     });
@@ -1312,6 +1333,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
                 recipient_name,
                 recipient_email,
                 payment_method: selectedPaymentMethod,
+                payment_channel: checkoutVaBank,
                 items,
                 total,
                 promo_code: appliedPromo ? appliedPromo.code : undefined
@@ -2173,6 +2195,7 @@ let twState = {
     nicknameSupported: false,
     product: null,
     payment: null,
+    vaBank: "bca",
     promo: null // { code, discount } -- diisi kalau kode promo berhasil diterapkan di step Ringkasan
 };
 
@@ -2509,11 +2532,31 @@ function renderTopupPaymentGrid() {
             </span>
             <span class="tw-payment-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
         </button>
+        ${method.id === "va" && twState.payment === "va" ? `
+            <div class="va-bank-select-container" style="padding: 12px; background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05); border-radius: 8px; margin-top: -12px; margin-bottom: 16px;">
+                <label style="font-size: 13px; font-weight: 600; display: block; margin-bottom: 6px; color: var(--text-color, #555);">Pilih Bank</label>
+                <div class="va-bank-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 8px;">
+                    ${['bca', 'bni', 'mandiri', 'bri', 'cimb'].map(bank => `
+                        <label style="display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px; border: 1px solid ${twState.vaBank === bank ? '#6366f1' : 'rgba(0,0,0,0.1)'}; border-radius: 6px; cursor: pointer; background: ${twState.vaBank === bank ? '#eff6ff' : 'transparent'}; transition: all 0.2s;">
+                            <input type="radio" name="twVaBankRadio" value="${bank}" ${twState.vaBank === bank ? 'checked' : ''} style="display:none;">
+                            <span style="font-size: 13px; font-weight: 700; text-transform: uppercase; color: ${twState.vaBank === bank ? '#4f46e5' : 'inherit'};">${bank === 'cimb' ? 'CIMB Niaga' : bank}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            </div>
+        ` : ''}
     `).join("");
 
     grid.querySelectorAll("[data-payment-method]").forEach((card) => {
         card.addEventListener("click", () => {
             twState.payment = card.dataset.paymentMethod;
+            renderTopupPaymentGrid();
+        });
+    });
+
+    grid.querySelectorAll("input[name='twVaBankRadio']").forEach((radio) => {
+        radio.addEventListener("change", (e) => {
+            twState.vaBank = e.target.value;
             renderTopupPaymentGrid();
         });
     });
@@ -2612,7 +2655,8 @@ async function submitTopupOrder() {
                 server_id: twState.serverId || undefined,
                 recipient_email: twState.email,
                 promo_code: twState.promo ? twState.promo.code : undefined,
-                payment_method: twState.payment
+                payment_method: twState.payment,
+                payment_channel: twState.vaBank
             })
         });
         const data = await res.json();
