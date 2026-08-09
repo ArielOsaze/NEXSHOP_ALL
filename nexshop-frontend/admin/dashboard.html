@@ -1505,32 +1505,32 @@
 </div>
 
             <!-- Top Spenders Section -->
-            <section id="view-topSpenders" class="view-section d-none animate-fade-in">
-                <div class="flex justify-between items-center mb-8">
+            <section id="view-topSpenders" class="view-section d-none">
+                <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
                     <div>
-                        <h2 class="text-3xl font-bold text-white mb-1">Top Spenders</h2>
-                        <p class="text-gray-400">Kelola Leaderboard / Hall of Fame</p>
+                        <h2>Top Spenders</h2>
+                        <p class="text-muted mb-0">Kelola Leaderboard / Hall of Fame</p>
                     </div>
-                    <button onclick="openTopSpenderModal()" class="px-5 py-2.5 bg-brand-indigo hover:bg-brand-cyan text-white rounded-xl font-medium transition-colors flex items-center gap-2 shadow-lg shadow-brand-indigo/20">
-                        <i class="fa-solid fa-plus"></i> Tambah Entry
+                    <button class="btn btn-success text-nowrap" onclick="openTopSpenderModal()">
+                        <i class="bi bi-plus-circle"></i> Tambah Entry
                     </button>
                 </div>
                 
-                <div class="glass-panel p-6">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                <div class="card shadow-sm">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
                             <thead>
-                                <tr class="border-b border-white/10 text-gray-400 text-sm">
-                                    <th class="pb-4 font-medium px-4">Rank</th>
-                                    <th class="pb-4 font-medium px-4">User</th>
-                                    <th class="pb-4 font-medium px-4">Total Spending</th>
-                                    <th class="pb-4 font-medium px-4">Badge</th>
-                                    <th class="pb-4 font-medium px-4">Status</th>
-                                    <th class="pb-4 font-medium px-4 text-right">Aksi</th>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>User</th>
+                                    <th>Total Spending</th>
+                                    <th>Badge</th>
+                                    <th>Status</th>
+                                    <th class="text-end">Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="topSpendersTableBody" class="text-sm text-gray-300">
-                                <!-- Data injected by JS -->
+                            <tbody id="topSpendersTableBody">
+                                <!-- Data akan diisi via JS -->
                             </tbody>
                         </table>
                     </div>

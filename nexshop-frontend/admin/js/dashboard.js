@@ -4520,36 +4520,36 @@ function renderTopSpendersTable() {
     if (!tbody) return;
     
     if (adminTopSpenders.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">Belum ada Top Spender manual</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Belum ada Top Spender manual</td></tr>`;
         return;
     }
 
     tbody.innerHTML = adminTopSpenders.map(ts => `
-        <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
-            <td class="py-3 px-4">
-                <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-800 text-xs font-bold ${ts.rank <= 3 ? 'text-brand-cyan' : 'text-gray-400'}">${ts.rank}</span>
+        <tr>
+            <td>
+                <span class="badge ${ts.rank <= 3 ? 'bg-primary' : 'bg-secondary'}">${ts.rank}</span>
             </td>
-            <td class="py-3 px-4 flex items-center gap-3">
-                ${ts.avatar_url ? `<img src="${ts.avatar_url}" class="w-8 h-8 rounded-full object-cover">` : `<div class="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center"><i class="fa-solid fa-user text-xs text-gray-500"></i></div>`}
-                <div>
-                    <div class="font-medium text-white">${escapeHtml(ts.display_name)}</div>
+            <td>
+                <div class="d-flex align-items-center gap-2">
+                    ${ts.avatar_url ? `<img src="${ts.avatar_url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">` : `<div style="width:32px;height:32px;border-radius:50%;background:#495057;display:flex;align-items:center;justify-content:center;"><i class="bi bi-person text-white"></i></div>`}
+                    <div class="fw-bold">${escapeHtml(ts.display_name)}</div>
                 </div>
             </td>
-            <td class="py-3 px-4">Rp ${Number(ts.total_spending).toLocaleString('id-ID')}</td>
-            <td class="py-3 px-4">
-                ${ts.badge ? `<span class="px-2.5 py-1 bg-brand-indigo/20 text-brand-indigo text-xs font-semibold rounded-full border border-brand-indigo/30">${escapeHtml(ts.badge)}</span>` : '-'}
+            <td>Rp ${Number(ts.total_spending).toLocaleString('id-ID')}</td>
+            <td>
+                ${ts.badge ? `<span class="badge bg-info text-dark">${escapeHtml(ts.badge)}</span>` : '-'}
             </td>
-            <td class="py-3 px-4">
-                <span class="px-2 py-1 rounded text-xs font-medium ${ts.is_active ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}">
+            <td>
+                <span class="badge ${ts.is_active ? 'bg-success' : 'bg-danger'}">
                     ${ts.is_active ? 'Active' : 'Inactive'}
                 </span>
             </td>
-            <td class="py-3 px-4 text-right">
-                <button onclick="editTopSpender(${ts.id})" class="text-gray-400 hover:text-brand-cyan transition-colors p-2" title="Edit">
-                    <i class="fa-solid fa-pen"></i>
+            <td class="text-end">
+                <button onclick="editTopSpender(${ts.id})" class="btn btn-warning btn-sm" title="Edit">
+                    <i class="bi bi-pencil"></i>
                 </button>
-                <button onclick="deleteTopSpender(${ts.id})" class="text-gray-400 hover:text-red-500 transition-colors p-2" title="Hapus">
-                    <i class="fa-solid fa-trash"></i>
+                <button onclick="deleteTopSpender(${ts.id})" class="btn btn-danger btn-sm" title="Hapus">
+                    <i class="bi bi-trash"></i>
                 </button>
             </td>
         </tr>
