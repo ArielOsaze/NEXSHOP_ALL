@@ -1263,7 +1263,7 @@ exports.deleteAllProducts = async (req, res) => {
 // sama seperti checkout produk biasa)
 // ===========================================================
 exports.create = async (req, res) => {
-    const { kode_produk, tujuan, server_id, recipient_email, promo_code, payment_method } = req.body;
+    const { kode_produk, tujuan, server_id, recipient_email, promo_code, payment_method, payment_channel } = req.body;
     const userId = req.user ? req.user.id : null;
 
     if (!kode_produk || !tujuan) {
@@ -1355,6 +1355,7 @@ exports.create = async (req, res) => {
                         amount: total,
                         buyerEmail: recipient_email,
                         paymentMethod: ipaymuPaymentMethod,
+                        paymentChannel: payment_channel,
                         notifyUrl: `${BACKEND_URL}/api/topup/notification`
                     });
                 } catch (directErr) {

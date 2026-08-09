@@ -25,7 +25,7 @@ function rupiahLog(n) {
 }
 
 exports.create = async (req, res) => {
-    const { recipient_name, recipient_email, items, payment_method } = req.body;
+    const { recipient_name, recipient_email, items, payment_method, payment_channel } = req.body;
     // req.user bisa null (guest checkout) berkat optionalAuthMiddleware
     const userId = req.user ? req.user.id : null;
 
@@ -143,6 +143,7 @@ exports.create = async (req, res) => {
                         buyerName: recipient_name,
                         buyerEmail: recipient_email,
                         paymentMethod: ipaymuPaymentMethod,
+                        paymentChannel: payment_channel,
                         notifyUrl: `${BACKEND_URL}/api/orders/notification`
                     });
                 } catch (directErr) {
