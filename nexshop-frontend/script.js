@@ -3069,8 +3069,8 @@ function renderLeaderboard(data) {
     if (top3[1]) {
         podiumHtml += `
         <div class="flex flex-col items-center order-2 md:order-1 w-full md:w-1/3 transform hover:-translate-y-2 transition-transform duration-300">
-            <div class="relative w-20 h-20 md:w-24 md:h-24 rounded-full p-1 bg-gradient-to-b from-slate-400 to-gray-800 mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
-                <div class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900 aspect-square">
+            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-20 h-20 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-slate-400 to-gray-800 mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
+                <div style="aspect-ratio: 1/1;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900">
                     ${getAvatar(top3[1])}
                 </div>
                 ${getRankBadge(2)}
@@ -3088,8 +3088,8 @@ function renderLeaderboard(data) {
     if (top3[0]) {
         podiumHtml += `
         <div class="flex flex-col items-center order-1 md:order-2 w-full md:w-1/3 transform hover:-translate-y-2 transition-transform duration-300 md:-translate-y-8 z-10">
-            <div class="relative w-28 h-28 md:w-36 md:h-36 rounded-full p-1.5 bg-gradient-to-b from-amber-400 via-amber-500 to-gray-800 mb-5 shadow-[0_0_30px_rgba(251,191,36,0.4)]">
-                <div class="w-full h-full rounded-full overflow-hidden border-4 border-gray-900 relative z-10 bg-gray-900 aspect-square">
+            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-28 h-28 md:w-36 md:h-36 shrink-0 rounded-full p-1.5 bg-gradient-to-b from-amber-400 via-amber-500 to-gray-800 mb-5 shadow-[0_0_30px_rgba(251,191,36,0.4)]">
+                <div style="aspect-ratio: 1/1;" class="w-full h-full rounded-full overflow-hidden border-4 border-gray-900 relative z-10 bg-gray-900">
                     ${getAvatar(top3[0])}
                 </div>
                 ${getRankBadge(1)}
@@ -3110,8 +3110,8 @@ function renderLeaderboard(data) {
     if (top3[2]) {
         podiumHtml += `
         <div class="flex flex-col items-center order-3 md:order-3 w-full md:w-1/3 transform hover:-translate-y-2 transition-transform duration-300">
-            <div class="relative w-20 h-20 md:w-24 md:h-24 rounded-full p-1 bg-gradient-to-b from-orange-600 to-gray-800 mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
-                <div class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900 aspect-square">
+            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-20 h-20 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-orange-600 to-gray-800 mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
+                <div style="aspect-ratio: 1/1;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900">
                     ${getAvatar(top3[2])}
                 </div>
                 ${getRankBadge(3)}
