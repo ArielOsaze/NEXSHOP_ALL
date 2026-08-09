@@ -3049,7 +3049,7 @@ function renderLeaderboard(data) {
     const top3 = data.slice(0, 3);
     const rest = data.slice(3, 10);
     
-    let podiumHtml = `<div class="flex flex-col md:flex-row items-end justify-center gap-4 md:gap-6 lg:gap-10 mb-12 min-h-[300px]"> `;
+    let podiumHtml = `<div class="flex flex-row items-end justify-center gap-2 md:gap-6 lg:gap-10 mb-12 min-h-[300px]"> `;
     
     // Helper untuk avatar
     const getAvatar = (user) => {
@@ -3068,18 +3068,18 @@ function renderLeaderboard(data) {
     // Render Rank 2 (Left)
     if (top3[1]) {
         podiumHtml += `
-        <div class="flex flex-col items-center order-2 md:order-1 w-full md:w-1/3 transform hover:-translate-y-2 transition-transform duration-300">
-            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-20 h-20 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-slate-400 to-gray-800 mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
+        <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
+            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-slate-400 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
                 <div style="aspect-ratio: 1/1;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900">
                     ${getAvatar(top3[1])}
                 </div>
                 ${getRankBadge(2)}
             </div>
-            <div class="glass-panel w-full p-4 md:p-6 text-center border-t-4 border-slate-400 relative overflow-hidden group">
+            <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-slate-400 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-slate-400/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <div class="font-bold text-white text-lg md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[1].name)}</div>
-                ${top3[1].badge ? `<div class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-brand-indigo/20 text-brand-indigo mb-2 border border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[1].badge)}</div>` : ''}
-                <div class="text-slate-300 font-medium text-sm mt-1 relative z-10">${rupiah(top3[1].total_spent)}</div>
+                <div class="font-bold text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[1].name)}</div>
+                ${top3[1].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[1].badge)}</div>` : ''}
+                <div class="text-slate-300 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[1].total_spent)}</div>
             </div>
         </div>`;
     }
@@ -3087,21 +3087,21 @@ function renderLeaderboard(data) {
     // Render Rank 1 (Center)
     if (top3[0]) {
         podiumHtml += `
-        <div class="flex flex-col items-center order-1 md:order-2 w-full md:w-1/3 transform hover:-translate-y-2 transition-transform duration-300 md:-translate-y-8 z-10">
-            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-28 h-28 md:w-36 md:h-36 shrink-0 rounded-full p-1.5 bg-gradient-to-b from-amber-400 via-amber-500 to-gray-800 mb-5 shadow-[0_0_30px_rgba(251,191,36,0.4)]">
+        <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300 z-10" style="transform: translateY(-1rem);">
+            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-24 h-24 md:w-36 md:h-36 shrink-0 rounded-full p-1.5 bg-gradient-to-b from-amber-400 via-amber-500 to-gray-800 mb-3 md:mb-5 shadow-[0_0_30px_rgba(251,191,36,0.4)]">
                 <div style="aspect-ratio: 1/1;" class="w-full h-full rounded-full overflow-hidden border-4 border-gray-900 relative z-10 bg-gray-900">
                     ${getAvatar(top3[0])}
                 </div>
                 ${getRankBadge(1)}
-                <div class="absolute -top-6 left-1/2 -translate-x-1/2 text-amber-400 text-3xl animate-bounce">
+                <div class="absolute -top-4 md:-top-6 left-1/2 -translate-x-1/2 text-amber-400 text-xl md:text-3xl animate-bounce">
                     <i class="fa-solid fa-crown drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]"></i>
                 </div>
             </div>
-            <div class="glass-panel w-full p-5 md:p-8 text-center border-t-4 border-amber-400 relative overflow-hidden group shadow-[0_0_30px_rgba(139,92,246,0.1)]">
+            <div class="glass-panel w-full p-3 md:p-8 text-center border-t-4 border-amber-400 relative overflow-hidden group shadow-[0_0_30px_rgba(139,92,246,0.1)]">
                 <div class="absolute inset-0 bg-gradient-to-t from-amber-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div class="font-bold text-white text-xl md:text-2xl mb-1 truncate relative z-10">${escapeHtml(top3[0].name)}</div>
-                ${top3[0].badge ? `<div class="inline-block px-2.5 py-1 rounded text-xs font-bold bg-amber-400/20 text-amber-400 mb-2 border border-amber-400/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[0].badge)}</div>` : ''}
-                <div class="text-amber-400 font-bold text-base md:text-lg mt-1 relative z-10">${rupiah(top3[0].total_spent)}</div>
+                <div class="font-bold text-white text-sm md:text-2xl mb-1 truncate relative z-10">${escapeHtml(top3[0].name)}</div>
+                ${top3[0].badge ? `<div class="inline-block px-1 md:px-2.5 py-0.5 md:py-1 rounded text-[8px] md:text-xs font-bold bg-amber-400/20 text-amber-400 mb-1 md:mb-2 border border-amber-400/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[0].badge)}</div>` : ''}
+                <div class="text-amber-400 font-bold text-xs md:text-lg mt-1 relative z-10">${rupiah(top3[0].total_spent)}</div>
             </div>
         </div>`;
     }
@@ -3109,18 +3109,18 @@ function renderLeaderboard(data) {
     // Render Rank 3 (Right)
     if (top3[2]) {
         podiumHtml += `
-        <div class="flex flex-col items-center order-3 md:order-3 w-full md:w-1/3 transform hover:-translate-y-2 transition-transform duration-300">
-            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-20 h-20 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-orange-600 to-gray-800 mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
+        <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
+            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-orange-600 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
                 <div style="aspect-ratio: 1/1;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900">
                     ${getAvatar(top3[2])}
                 </div>
                 ${getRankBadge(3)}
             </div>
-            <div class="glass-panel w-full p-4 md:p-6 text-center border-t-4 border-orange-600 relative overflow-hidden group">
+            <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-orange-600 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-orange-600/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <div class="font-bold text-white text-lg md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[2].name)}</div>
-                ${top3[2].badge ? `<div class="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-brand-indigo/20 text-brand-indigo mb-2 border border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[2].badge)}</div>` : ''}
-                <div class="text-orange-400 font-medium text-sm mt-1 relative z-10">${rupiah(top3[2].total_spent)}</div>
+                <div class="font-bold text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[2].name)}</div>
+                ${top3[2].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[2].badge)}</div>` : ''}
+                <div class="text-orange-400 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[2].total_spent)}</div>
             </div>
         </div>`;
     }
