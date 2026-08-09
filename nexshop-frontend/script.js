@@ -320,7 +320,7 @@ function renderPromoCarousel() {
     inner.innerHTML = promoSlides.map((slide, i) => {
         if (slide.full_image) {
             return `
-                <a href="${slide.cta_link || '#'}" class="min-w-full h-full flex-shrink-0 relative block">
+                <a href="${slide.cta_link || '#'}" class="min-w-full h-full shrink-0 relative block">
                     <picture>
                         <source media="(max-width: 768px)" srcset="${slide.mobile_image_url || slide.image_url}">
                         <img src="${slide.image_url}" alt="${slide.title}" class="absolute inset-0 w-full h-full object-cover">
@@ -330,7 +330,7 @@ function renderPromoCarousel() {
         }
         
         return `
-            <div class="min-w-full h-full flex-shrink-0 relative flex items-center p-6 sm:p-12">
+            <div class="min-w-full h-full shrink-0 relative flex items-center p-6 sm:p-12">
                 <picture>
                     <source media="(max-width: 768px)" srcset="${slide.mobile_image_url || slide.image_url}">
                     <img src="${slide.image_url}" alt="" class="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay">
