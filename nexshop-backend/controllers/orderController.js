@@ -188,7 +188,7 @@ exports.create = async (req, res) => {
 
         await supabase
             .from("orders")
-            .update(updateData)
+            .update(updatePayload)
             .eq("id", orderId);
 
         notify("order", `🛒 Pesanan baru ${orderId} dari ${recipient_name} senilai ${rupiahLog(total)}`);
