@@ -55,6 +55,7 @@
     .btn-magnetic { transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
     .btn-magnetic:hover { transform: scale(1.05) translateY(-2px); }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body class="font-sans antialiased bg-transparent text-gray-800 dark:text-gray-300 selection:bg-brand-indigo/30 overflow-x-hidden">
 <!-- Ambient Background -->
@@ -833,6 +834,42 @@ Cek Transaksi
             <h3 id="paymentWaitingTitle" style="margin-bottom: 0.5rem;">Menunggu Pembayaran...</h3>
             <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">Silakan selesaikan pembayaran di jendela popup iPaymu yang baru saja terbuka.</p>
             <button class="btn-secondary" id="paymentWaitingCloseBtn" style="width: 100%;">Batalkan / Tutup</button>
+        </div>
+    </div>
+</div>
+
+<!-- Direct Payment Modal -->
+<div class="overlay" id="directPaymentOverlay">
+    <div class="modal direct-payment-modal" role="dialog" aria-modal="true" aria-labelledby="dpTitle">
+        <div class="modal-header">
+            <h3 id="dpTitle">Selesaikan Pembayaran</h3>
+            <button class="modal-close" id="dpCloseBtn" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        </div>
+        <div class="modal-content" style="text-align: center; padding: 2rem 1rem;">
+            <div id="dpQrisContainer" class="hidden">
+                <p style="margin-bottom: 1rem; color: var(--text-muted);">Scan QRIS di bawah ini dengan aplikasi E-Wallet atau M-Banking kamu.</p>
+                <div id="dpQrCode" style="display: inline-block; padding: 0.5rem; background: white; border-radius: 8px; margin-bottom: 1rem;"></div>
+            </div>
+            
+            <div id="dpVaContainer" class="hidden">
+                <p style="margin-bottom: 0.5rem; color: var(--text-muted);">Transfer ke Nomor Virtual Account berikut:</p>
+                <div style="font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 0.5rem; color: var(--violet);" id="dpVaNumber"></div>
+                <button type="button" class="btn-secondary" id="dpCopyVaBtn" style="padding: 0.5rem 1rem; font-size: 0.85rem;"><i class="fa-solid fa-copy"></i> Salin Nomor</button>
+            </div>
+
+            <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Total Tagihan:</p>
+                <div style="font-size: 1.25rem; font-weight: bold;" id="dpAmount"></div>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <p style="font-size: 0.85rem; color: var(--text-muted);">Batas Waktu Pembayaran:</p>
+                <div style="font-weight: bold; color: var(--accent);" id="dpExpired"></div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+                <i class="fa-solid fa-spinner fa-spin" style="margin-right: 0.5rem; color: var(--violet);"></i> Menunggu pembayaran masuk otomatis...
+            </div>
         </div>
     </div>
 </div>

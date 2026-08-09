@@ -1326,13 +1326,6 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
             return;
         }
 
-        if (!data.paymentUrl) {
-            toast("URL pembayaran tidak ditemukan dari server.", "error");
-            submitBtn.disabled = false;
-            submitBtn.textContent = "Bayar Sekarang";
-            return;
-        }
-
         // Pesanan sudah tercatat "pending" di server & bakal diupdate otomatis
         // lewat webhook iPaymu begitu lunas. Checkout dari keranjang dikosongkan
         // sebelum redirect, sedangkan "Beli Sekarang" membiarkan keranjang tetap utuh.
@@ -1344,7 +1337,15 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
         checkoutItems = null;
         checkoutSource = "cart";
 
-        openIpaymuPopup(data.paymentUrl, data.orderId, false);
+        if (data.flow === "direct" && data.paymentData) {
+            showDirectPaymentModal(data.paymentData, data.orderId, false);
+        } else if (data.paymentUrl) {
+            openIpaymuPopup(data.paymentUrl, data.orderId, false);
+        } else {
+            toast("Data pembayaran tidak valid dari server.", "error");
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Bayar Sekarang";
+        }
     } catch (err) {
         toast("Gagal terhubung ke server.", "error");
         submitBtn.disabled = false;
@@ -2623,14 +2624,11 @@ async function submitTopupOrder() {
             return;
         }
 
-        if (!data.paymentUrl) {
-            toast("URL pembayaran tidak ditemukan dari server.", "error");
-            btn.disabled = false;
-            btn.textContent = "Bayar Sekarang";
-            return;
+        if (data.flow === "direct" && data.paymentData) {
+            showDirectPaymentModal(data.paymentData, data.orderId, true);
+        } else {
+            openIpaymuPopup(data.paymentUrl, data.orderId, true);
         }
-
-        openIpaymuPopup(data.paymentUrl, data.orderId, true);
     } catch (err) {
         errorEl.textContent = "Gagal terhubung ke server.";
         btn.disabled = false;
@@ -2660,6 +2658,117 @@ function openTrackModalWithResult(data, options = {}) {
     document.getElementById("trackForm").classList.add("hidden");
     renderTrackResult(data, options);
     openOverlay("trackOverlay");
+}
+
+/* ---------- Direct Payment Modal ---------- */
+function showDirectPaymentModal(paymentData, orderId, isTopup) {
+    const qrisContainer = document.getElementById("dpQrisContainer");
+    const vaContainer = document.getElementById("dpVaContainer");
+    const qrCodeDiv = document.getElementById("dpQrCode");
+    const vaNumberDiv = document.getElementById("dpVaNumber");
+    
+    // Set UI elements based on payment channel
+    if (paymentData.qrContent) {
+        qrisContainer.classList.remove("hidden");
+        vaContainer.classList.add("hidden");
+        
+        qrCodeDiv.innerHTML = "";
+        if (typeof QRCode !== "undefined") {
+            new QRCode(qrCodeDiv, {
+                text: paymentData.qrContent,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        } else {
+            qrCodeDiv.innerHTML = "<p>QR Code gagal dimuat.</p>";
+        }
+    } else if (paymentData.paymentNo) {
+        vaContainer.classList.remove("hidden");
+        qrisContainer.classList.add("hidden");
+        vaNumberDiv.textContent = paymentData.paymentNo;
+    }
+
+    document.getElementById("dpAmount").textContent = rupiah(paymentData.amount || 0);
+    document.getElementById("dpExpired").textContent = paymentData.expired || "-";
+
+    openOverlay("directPaymentOverlay");
+
+    // Copy VA handler
+    const copyBtn = document.getElementById("dpCopyVaBtn");
+    if (copyBtn) {
+        const copyHandler = () => {
+            navigator.clipboard.writeText(paymentData.paymentNo).then(() => {
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = `<i class="fa-solid fa-check"></i> Disalin!`;
+                setTimeout(() => { copyBtn.innerHTML = originalText; }, 2000);
+            });
+        };
+        // Remove previous listener to avoid duplicates
+        const newCopyBtn = copyBtn.cloneNode(true);
+        copyBtn.parentNode.replaceChild(newCopyBtn, copyBtn);
+        newCopyBtn.addEventListener("click", copyHandler);
+    }
+
+    // Polling logic
+    const closeBtn = document.getElementById("dpCloseBtn");
+    
+    const handleClose = () => {
+        closeOverlay("directPaymentOverlay");
+        if (ipaymuPollingInterval) clearInterval(ipaymuPollingInterval);
+        
+        // Reset button states
+        const checkoutBtn = document.getElementById("checkoutForm")?.querySelector('button[type="submit"]');
+        if (checkoutBtn) {
+            checkoutBtn.disabled = false;
+            checkoutBtn.textContent = "Bayar Sekarang";
+        }
+        const twNextBtn = document.getElementById("twNextBtn");
+        if (twNextBtn) {
+            twNextBtn.disabled = false;
+            twNextBtn.textContent = "Bayar Sekarang";
+        }
+    };
+    
+    const newCloseBtn = closeBtn.cloneNode(true);
+    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+    newCloseBtn.addEventListener("click", handleClose);
+
+    const endpoint = isTopup
+        ? `${API_BASE}/topup/track/${encodeURIComponent(orderId)}`
+        : `${API_BASE}/orders/track/${encodeURIComponent(orderId)}`;
+
+    if (ipaymuPollingInterval) clearInterval(ipaymuPollingInterval);
+    ipaymuPollingInterval = setInterval(async () => {
+        try {
+            const res = await fetch(endpoint);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.status === "paid" || data.status === "sukses") {
+                    handleClose();
+                    if (isTopup) {
+                        document.getElementById("twStep3Error").textContent = "";
+                        closeGameDetail();
+                        toast("Pembayaran Topup Berhasil!", "success");
+                        openTrackModalWithResult(data, { isTopup: true });
+                    } else {
+                        document.getElementById("checkoutStep").classList.add("hidden");
+                        document.getElementById("checkoutSuccess").classList.remove("hidden");
+                        // Reset cart after success if it was from cart
+                        if (checkoutSource === "cart") {
+                            cart = [];
+                            saveCart();
+                            updateCartCount();
+                        }
+                    }
+                }
+            }
+        } catch(e) {
+            // Ignore polling errors
+        }
+    }, 3000);
 }
 
 /* ---------- iPaymu Popup Checkout ---------- */

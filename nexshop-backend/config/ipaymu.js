@@ -13,6 +13,18 @@ const { getApiKeys } = require("./settings");
 // status pembayaran, bukan query string di returnUrl).
 // ===========================================================
 
+// Konfigurasi payment method yang TERBUKTI support Direct Payment iPaymu.
+// Hanya method yang sudah dikonfirmasi dari dokumentasi resmi iPaymu yang
+// dimasukkan di sini. Sisanya tetap redirect.
+const DIRECT_PAYMENT_METHODS = Object.freeze({
+    qris: { paymentMethod: "qris" },
+    va:   { paymentMethod: "va" }
+});
+
+function isDirectPaymentMethod(method) {
+    return !!DIRECT_PAYMENT_METHODS[method];
+}
+
 function baseUrl(isProduction) {
     return isProduction ? "https://my.ipaymu.com/api/v2" : "https://sandbox.ipaymu.com/api/v2";
 }
@@ -120,4 +132,44 @@ async function checkTransactionStatus(transactionId) {
     return data.Data; // berisi antara lain: Status ("berhasil"/"pending"/"expired"/dst), ReferenceId, Amount, dst
 }
 
-module.exports = { createRedirectPayment, checkTransactionStatus };
+// Bikin transaksi Direct Payment (VA & QRIS)
+// Return { transactionId, paymentNo, qrContent, expired, amount, fee, status, url } atau throw error.
+async function createDirectPayment({ referenceId, amount, buyerName, buyerEmail, buyerPhone, paymentMethod, paymentChannel, notifyUrl }) {
+    const body = {
+        name: buyerName || "Guest",
+        phone: buyerPhone || "08123456789",
+        email: buyerEmail || "guest@example.com",
+        amount,
+        notifyUrl,
+        referenceId,
+        paymentMethod,
+        ...(paymentChannel ? { paymentChannel } : {})
+    };
+
+    const data = await request("/payment/direct", body);
+
+    if (!data || Number(data.Status) !== 200 || !data.Data) {
+        const err = new Error((data && data.Message) || "Gagal membuat transaksi iPaymu (Direct)");
+        err.ipaymuResponse = data;
+        throw err;
+    }
+
+    return {
+        transactionId: data.Data.TransactionId,
+        paymentNo: data.Data.PaymentNo,
+        qrContent: data.Data.QrString || data.Data.QrContent, // iPaymu kadang pakai nama QrString / QrContent
+        expired: data.Data.Expired,
+        amount: data.Data.Amount,
+        fee: data.Data.Fee,
+        status: data.Data.Status,
+        url: data.Data.Url
+    };
+}
+
+module.exports = {
+    createRedirectPayment,
+    checkTransactionStatus,
+    createDirectPayment,
+    isDirectPaymentMethod,
+    DIRECT_PAYMENT_METHODS
+};

@@ -1,7 +1,7 @@
 const supabase = require("../config/db");
 const crypto = require("crypto");
 const tokovoucher = require("../config/tokovoucher");
-const { createRedirectPayment, checkTransactionStatus } = require("../config/ipaymu");
+const { createRedirectPayment, checkTransactionStatus, createDirectPayment, isDirectPaymentMethod } = require("../config/ipaymu");
 
 const { checkNickname } = require("../config/apigames");
 const { notify } = require("../config/notify");
@@ -1344,32 +1344,77 @@ exports.create = async (req, res) => {
             discountAmount
         );
 
+        // Cek apakah payment method ini Direct (QRIS/VA) atau Redirect
+        const isDirect = isDirectPaymentMethod(normalizedPaymentMethod);
+
         let payment;
         try {
-            payment = await createRedirectPayment({
-                referenceId: orderId,
-                itemDetails: ipaymuItems,
-                buyerEmail: recipient_email || undefined,
-                returnUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=success`,
-                cancelUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=cancel`,
-                notifyUrl: `${BACKEND_URL}/api/topup/notification`,
-                paymentMethod: ipaymuPaymentMethod
-            });
+            if (isDirect) {
+                payment = await createDirectPayment({
+                    referenceId: orderId,
+                    amount: total,
+                    buyerEmail: recipient_email,
+                    paymentMethod: ipaymuPaymentMethod,
+                    notifyUrl: `${BACKEND_URL}/api/topup/notification`
+                });
+            } else {
+                payment = await createRedirectPayment({
+                    referenceId: orderId,
+                    itemDetails: ipaymuItems,
+                    buyerEmail: recipient_email || undefined,
+                    returnUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=success`,
+                    cancelUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=cancel`,
+                    notifyUrl: `${BACKEND_URL}/api/topup/notification`,
+                    paymentMethod: ipaymuPaymentMethod
+                });
+            }
         } catch (ipaymuErr) {
             console.log("iPaymu error:", ipaymuErr.ipaymuResponse || ipaymuErr.message);
             await supabase.from("topup_orders").update({ status: "failed" }).eq("id", orderId);
             return res.status(500).json({ message: "Gagal membuat transaksi pembayaran" });
         }
 
-        await supabase.from("topup_orders").update({ ipaymu_session_id: payment.sessionId, payment_url: payment.paymentUrl }).eq("id", orderId);
+        const updatePayload = isDirect 
+            ? {
+                ipaymu_trx_id: payment.transactionId,
+                payment_no: payment.paymentNo,
+                qr_content: payment.qrContent,
+                payment_expired: payment.expired,
+                payment_flow: "direct"
+            };
+        } else {
+            updateData = {
+                ipaymu_session_id: payment.sessionId,
+                payment_url: payment.paymentUrl,
+                payment_flow: "redirect"
+            };
+        }
+
+        await supabase.from("topup_orders").update(updateData).eq("id", orderId);
 
         notify("topup", `💎 Pesanan topup baru ${orderId}: ${product.nama} ke ${tujuan} senilai ${rupiahLog(total)}${appliedPromoCode ? ` (promo ${appliedPromoCode})` : ""}`);
 
-        res.status(201).json({
-            message: "Pesanan topup berhasil dibuat",
-            orderId,
-            paymentUrl: payment.paymentUrl
-        });
+        if (isDirect) {
+            res.status(201).json({
+                message: "Pesanan topup berhasil dibuat",
+                orderId,
+                flow: "direct",
+                paymentData: {
+                    paymentNo: payment.paymentNo,
+                    qrContent: payment.qrContent,
+                    expired: payment.expired,
+                    amount: payment.amount,
+                    fee: payment.fee
+                }
+            });
+        } else {
+            res.status(201).json({
+                message: "Pesanan topup berhasil dibuat",
+                orderId,
+                flow: "redirect",
+                paymentUrl: payment.paymentUrl
+            });
+        }
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error" });
