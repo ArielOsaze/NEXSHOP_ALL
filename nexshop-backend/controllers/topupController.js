@@ -1381,16 +1381,14 @@ exports.create = async (req, res) => {
                 qr_content: payment.qrContent,
                 payment_expired: payment.expired,
                 payment_flow: "direct"
-            };
-        } else {
-            updateData = {
+              }
+            : {
                 ipaymu_session_id: payment.sessionId,
                 payment_url: payment.paymentUrl,
                 payment_flow: "redirect"
-            };
-        }
+              };
 
-        await supabase.from("topup_orders").update(updateData).eq("id", orderId);
+        await supabase.from("topup_orders").update(updatePayload).eq("id", orderId);
 
         notify("topup", `💎 Pesanan topup baru ${orderId}: ${product.nama} ke ${tujuan} senilai ${rupiahLog(total)}${appliedPromoCode ? ` (promo ${appliedPromoCode})` : ""}`);
 
