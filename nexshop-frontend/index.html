@@ -143,22 +143,22 @@
 
 <nav class="fixed w-full z-50 top-0 transition-all duration-300 px-[clamp(12px,3vw,32px)] py-3 sm:py-4 glass-panel border-b-0 border-x-0 border-t-0" id="mainNav">
 <div class="max-w-7xl mx-auto flex justify-between items-center">
-<div class="flex items-center gap-2 sm:gap-3 group cursor-pointer min-w-0">
+<div class="flex items-center gap-2 sm:gap-3 group cursor-pointer shrink-0">
 <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-indigo to-brand-cyan p-[1px] group-hover:rotate-90 transition-transform duration-500 shrink-0">
 <div class="w-full h-full bg-brand-light dark:bg-[var(--bg-void)] rounded-xl flex items-center justify-center">
 <img id="storeLogoImg" src="images/nexshop-icon.svg" alt="NexShop" class="w-full h-full object-contain rounded-lg">
 </div>
 </div>
-<span class="font-extrabold text-base sm:text-xl tracking-tighter text-gray-900 dark:text-white uppercase truncate" id="storeNameText">NexShop</span>
+<span class="font-extrabold text-base sm:text-xl tracking-tighter text-gray-900 dark:text-white uppercase shrink-0" id="storeNameText">NexShop</span>
 </div>
-<div class="hidden md:flex gap-8 lg:gap-10 items-center">
+<div class="hidden lg:flex gap-8 lg:gap-10 items-center">
 <a class="text-sm font-bold text-gray-900 dark:text-white relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-indigo after:scale-x-100 transition-all" href="#games">Katalog</a>
 <a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-cyan after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left" href="#topup">Topup Diamond</a>
 <a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-amber-400 after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left" href="#leaderboardSection">Top Spenders</a>
 <button type="button" class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors" id="trackOrderBtn">Cek Transaksi</button>
 </div>
 <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-<button class="md:hidden min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors" id="mobileMenuBtn">
+<button class="lg:hidden min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors" id="mobileMenuBtn">
 <span class="material-symbols-outlined text-gray-600 dark:text-gray-300 text-xl">menu</span>
 </button>
 <button class="min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors relative" id="cartBtn">
@@ -197,7 +197,7 @@
 <span class="w-2 h-2 rounded-full bg-brand-indigo animate-pulse"></span>
 Premium Digital Goods
 </div>
-<h1 class="text-[clamp(2.2rem,6vw,4.5rem)] font-black text-gray-900 dark:text-white tracking-tighter leading-[1.05]">
+<h1 class="text-[clamp(2.2rem,7vw,5rem)] font-black text-gray-900 dark:text-white tracking-tighter leading-[1.05]">
 PLAY <span class="text-brand-indigo">MORE</span>,<br/>
 PAY <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">LESS.</span>
 </h1>
@@ -214,7 +214,7 @@ Cek Transaksi
 </button>
 </div>
 </div>
-<div class="absolute right-[-10%] top-[5%] w-48 h-48 opacity-20 pointer-events-none lg:pointer-events-auto lg:opacity-100 lg:relative lg:right-auto lg:top-auto lg:w-full lg:h-auto lg:col-span-5 reveal-up delay-200 mt-10 lg:mt-0">
+<div class="relative w-full max-w-[280px] sm:max-w-[360px] mx-auto lg:max-w-none aspect-square lg:col-span-5 reveal-up delay-200 mt-12 lg:mt-0">
 <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/20 to-brand-cyan/20 blur-3xl rounded-full animate-pulse"></div>
 <div class="relative w-full aspect-square glass-panel rounded-full border border-white/20 p-6 sm:p-8 flex items-center justify-center animate-float-slow">
 <div class="w-full h-full rounded-full border border-gray-300 dark:border-white/10 p-4 sm:p-6 flex items-center justify-center">
@@ -296,7 +296,7 @@ Cek Transaksi
         </div>
     </div>
     <div class="category-filter flex gap-2 mb-8 overflow-x-auto pb-4 hide-scrollbar" id="categoryFilter"></div>
-    <div class="card-grid grid grid-cols-3 min-[480px]:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-[clamp(6px,1.5vw,16px)]" id="cardGrid"></div>
+    <div class="card-grid grid grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-[clamp(6px,1.5vw,16px)]" id="cardGrid"></div>
 </section>
 
 <!-- Topup Detail (halaman penuh, bukan modal) -->
@@ -438,66 +438,60 @@ Cek Transaksi
             <nav class="news-detail-pagination" aria-label="Navigasi berita"><button id="newsDetailPrevious" type="button"><i class="fa-solid fa-arrow-left"></i><span>Previous Article</span></button><button id="newsDetailNext" type="button"><span>Next Article</span><i class="fa-solid fa-arrow-right"></i></button></nav>
         </div>
     </article>
-</div>
-
 </main>
 
-<footer class="site-footer pb-32 sm:pb-24 pt-16 mt-20 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0a0a0c]">
-    <div class="footer-brand" id="footerBrand">Nex<span>Shop</span></div>
-    <p>Marketplace gaming digital terpercaya. Transaksi aman, proses cepat.</p>
-
-    <p class="footer-address" id="footerAddress"><i class="fa-solid fa-location-dot" aria-hidden="true"></i> Jl. Siroto, Villa P4A, Pudakpayung, Banyumanik, Semarang</p>
-
-    <div class="footer-contact">
-        <a class="footer-social-link" href="https://wa.me/6287792634063" id="footerWaLink" target="_blank" rel="noopener">
-            <span class="footer-social-icon icon-wa" aria-hidden="true">
-                <i class="fa-brands fa-whatsapp"></i>
-            </span>
-            <span class="footer-contact-copy">
-                <strong class="footer-contact-title">WhatsApp Admin</strong>
-                <span class="footer-social-label" id="footerWaLabel">0877-9263-4063</span>
-            </span>
-        </a>
-        <a class="footer-social-link" href="mailto:nexshop.my.id@gmail.com" id="footerEmailLink">
-            <span class="footer-social-icon icon-mail" aria-hidden="true">
-                <i class="fa-solid fa-envelope"></i>
-            </span>
-            <span class="footer-contact-copy">
-                <strong class="footer-contact-title">Email Dukungan</strong>
-                <span class="footer-social-label" id="footerEmailLabel">nexshop.my.id@gmail.com</span>
-            </span>
-        </a>
-        <a class="footer-social-link hidden" href="mailto:" id="footerEmailLinkSecondary" aria-label="Email kontak kedua">
-            <span class="footer-social-icon icon-mail" aria-hidden="true">
-                <i class="fa-solid fa-envelope"></i>
-            </span>
-            <span class="footer-contact-copy">
-                <strong class="footer-contact-title">Email Dukungan 2</strong>
-                <span class="footer-social-label" id="footerEmailLabelSecondary"></span>
-            </span>
-        </a>
-        <a class="footer-social-link" href="https://www.instagram.com/nexshop_id" id="footerIgLink" target="_blank" rel="noopener">
-            <span class="footer-social-icon icon-ig" aria-hidden="true">
-                <i class="fa-brands fa-instagram"></i>
-            </span>
-            <span class="footer-contact-copy">
-                <strong class="footer-contact-title">Instagram Resmi</strong>
-                <span class="footer-social-label">@nexshop_id</span>
-            </span>
-        </a>
+<footer class="pt-16 pb-32 sm:pb-24 mt-20 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0a0a0c]">
+    <div class="max-w-7xl mx-auto px-[clamp(12px,3vw,32px)]">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 mb-12">
+            <!-- Brand -->
+            <div class="space-y-4">
+                <div class="font-extrabold text-2xl tracking-tighter text-gray-900 dark:text-white uppercase flex items-center gap-2">
+                    <img src="images/nexshop-icon.svg" alt="NexShop Logo" class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-indigo to-brand-cyan p-[1px]"> NexShop
+                </div>
+                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium leading-relaxed max-w-xs">
+                    Marketplace gaming digital terpercaya. Transaksi aman, proses cepat.
+                </p>
+            </div>
+            
+            <!-- Layanan -->
+            <div>
+                <h4 class="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Layanan</h4>
+                <ul class="space-y-3">
+                    <li><a href="#games" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium">Katalog Toko</a></li>
+                    <li><a href="#topup" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium">Flash Sale</a></li>
+                    <li><button type="button" id="trackOrderBtnFooter" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium">Cek Transaksi</button></li>
+                </ul>
+            </div>
+            
+            <!-- Bantuan -->
+            <div>
+                <h4 class="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Bantuan</h4>
+                <ul class="space-y-3">
+                    <li><button type="button" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium" data-policy-tab="faq">FAQ</button></li>
+                    <li><button type="button" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium" data-policy-tab="terms">Terms of Service</button></li>
+                    <li><button type="button" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium" data-policy-tab="refund">Refund Policy</button></li>
+                    <li><button type="button" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium" data-policy-tab="contact">Contact Us</button></li>
+                </ul>
+            </div>
+            
+            <!-- Pembayaran Aman -->
+            <div>
+                <h4 class="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Pembayaran Aman</h4>
+                <div class="flex flex-wrap gap-2">
+                    <span class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold text-gray-700 dark:text-gray-300">QRIS</span>
+                    <span class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold text-gray-700 dark:text-gray-300">iPaymu</span>
+                    <span class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold text-gray-700 dark:text-gray-300">E-Wallet</span>
+                    <span class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold text-gray-700 dark:text-gray-300">VA Bank</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="pt-8 border-t border-gray-200 dark:border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">&copy; 2026 NexShop. All Rights Reserved.</p>
+            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium italic">Designed for Gamers.</p>
+        </div>
     </div>
-
-    <div class="footer-links">
-        <span class="footer-link-item"><button type="button" class="footer-link-btn" id="trackOrderBtnFooter">Cek Transaksi</button><span class="footer-link-sep" aria-hidden="true">·</span></span>
-        <span class="footer-link-item"><button type="button" class="footer-link-btn" data-policy-tab="faq">FAQ</button><span class="footer-link-sep" aria-hidden="true">·</span></span>
-        <span class="footer-link-item"><button type="button" class="footer-link-btn" data-policy-tab="terms">Syarat &amp; Ketentuan</button><span class="footer-link-sep" aria-hidden="true">·</span></span>
-        <span class="footer-link-item"><button type="button" class="footer-link-btn" data-policy-tab="refund">Kebijakan Refund</button><span class="footer-link-sep" aria-hidden="true">·</span></span>
-        <span class="footer-link-item"><button type="button" class="footer-link-btn" data-policy-tab="contact">Kontak</button></span>
-    </div>
-
-    <p class="footer-copy">© 2026 NexShop. All rights reserved.</p>
 </footer>
-
 <!-- FAQ / Terms / Refund / Kontak Modal -->
 <div class="overlay" id="policyOverlay">
     <div class="modal policy-modal" role="dialog" aria-modal="true" aria-labelledby="policyTitle">

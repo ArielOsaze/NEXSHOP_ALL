@@ -1785,8 +1785,8 @@ input::placeholder{ color:var(--text-dim); }
 .topup-section{ content-visibility:auto; contain-intrinsic-size:auto 500px; }
 
 /* NexBot Floating Chat Widget */
-.nexbot-widget{ position:fixed; bottom:24px; right:24px; z-index:9999; }
-.nexbot-float-btn{ display:flex; align-items:center; justify-content:center; width:52px; height:52px; padding:0; border-radius:50%; background:linear-gradient(135deg, var(--violet-2), var(--magenta)); color:#fff; border:1px solid rgba(255,255,255,0.15); cursor:pointer; box-shadow:0 8px 24px rgba(139,92,246,0.3); transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+.nexbot-widget{ position:fixed; bottom:clamp(20px, 4vw, 32px); right:clamp(20px, 4vw, 32px); z-index:40; display:flex; flex-direction:column; align-items:flex-end; pointer-events:none; }
+.nexbot-float-btn{ display:flex; align-items:center; justify-content:center; width:clamp(52px, 6vw, 64px); height:clamp(52px, 6vw, 64px); padding:0; border-radius:50%; background:linear-gradient(135deg, var(--violet-2), var(--magenta)); color:#fff; border:1px solid rgba(255,255,255,0.15); cursor:pointer; box-shadow:0 8px 24px rgba(139,92,246,0.3); transition:all 0.2s cubic-bezier(0.16, 1, 0.3, 1); pointer-events:auto; }
 .nexbot-float-btn:hover{ transform:scale(1.05); box-shadow:0 12px 30px rgba(240,57,154,0.55); }
 .nexbot-float-btn-icon{ font-size:24px; display:flex; align-items:center; justify-content:center; }
 
