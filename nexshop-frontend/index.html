@@ -151,9 +151,10 @@
 </div>
 <span class="font-extrabold text-base sm:text-xl tracking-tighter text-gray-900 dark:text-white uppercase truncate" id="storeNameText">NexShop</span>
 </div>
-<div class="hidden md:flex gap-10 items-center">
+<div class="hidden md:flex gap-8 lg:gap-10 items-center">
 <a class="text-sm font-bold text-gray-900 dark:text-white relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-indigo after:scale-x-100 transition-all" href="#games">Katalog</a>
 <a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-cyan after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left" href="#topup">Topup Diamond</a>
+<a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-amber-400 after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left" href="#leaderboardSection">Top Spenders</a>
 <button type="button" class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors" id="trackOrderBtn">Cek Transaksi</button>
 </div>
 <div class="flex items-center gap-1 sm:gap-2 shrink-0">
@@ -182,6 +183,7 @@
         <div class="drawer-body flex flex-col gap-4 p-6">
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="#games" id="menuKatalogBtn">Katalog</a>
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="#topup" id="menuTopupBtn">Topup Diamond</a>
+            <a class="text-lg font-bold text-gray-900 dark:text-white" href="#leaderboardSection" id="menuLeaderboardBtn">Top Spenders</a>
             <button type="button" class="text-left text-lg font-bold text-gray-900 dark:text-white" id="menuTrackBtn">Cek Transaksi</button>
         </div>
     </div>
@@ -195,11 +197,11 @@
 <span class="w-2 h-2 rounded-full bg-brand-indigo animate-pulse"></span>
 Premium Digital Goods
 </div>
-<h1 class="text-5xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter leading-[0.95]">
+<h1 class="text-[clamp(2.7rem,7vw,5rem)] font-black text-gray-900 dark:text-white tracking-tighter leading-[1.05]">
 PLAY <span class="text-brand-indigo">MORE</span>,<br/>
 PAY <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">LESS.</span>
 </h1>
-<p class="text-lg md:text-xl text-gray-600 dark:text-gray-400 max-w-lg font-medium leading-relaxed border-l-2 border-brand-cyan pl-6 tracking-tight">
+<p class="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-400 max-w-lg font-medium leading-relaxed border-l-2 border-brand-cyan pl-4 sm:pl-6 tracking-tight">
 Webstore game terlengkap. Dari diskon harian sampai topup instan — aman, cepat, dan terpercaya.
 </p>
 <div class="flex flex-col sm:flex-row gap-5 pt-4">
@@ -212,7 +214,7 @@ Cek Transaksi
 </button>
 </div>
 </div>
-<div class="absolute right-[-30%] sm:right-[-10%] top-[10%] w-64 h-64 sm:w-80 sm:h-80 opacity-30 pointer-events-none lg:pointer-events-auto lg:opacity-100 lg:static lg:w-full lg:h-auto lg:col-span-5 reveal-up delay-200">
+<div class="w-full max-w-[280px] sm:max-w-[320px] mx-auto lg:max-w-none opacity-100 pointer-events-none lg:pointer-events-auto lg:col-span-5 reveal-up delay-200 mt-10 lg:mt-0 relative">
 <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/20 to-brand-cyan/20 blur-3xl rounded-full animate-pulse"></div>
 <div class="relative w-full aspect-square glass-panel rounded-full border border-white/20 p-6 sm:p-8 flex items-center justify-center animate-float-slow">
 <div class="w-full h-full rounded-full border border-gray-300 dark:border-white/10 p-4 sm:p-6 flex items-center justify-center">
@@ -238,7 +240,7 @@ Cek Transaksi
 </div>
 </header>
 
-<main class="max-w-7xl mx-auto px-6 py-20 space-y-32">
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20 space-y-24 sm:space-y-32">
 
 <!-- Leaderboard Section (NEW) -->
 <section class="reveal-up delay-100" id="leaderboardSection">
@@ -267,7 +269,7 @@ Cek Transaksi
             <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter">Top-Up <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">Terpopuler</span></h2>
         </div>
     </div>
-    <div class="topup-game-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8" id="topupGameGrid">
+    <div class="topup-game-grid grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8" id="topupGameGrid">
     </div>
 </section>
 
@@ -440,7 +442,7 @@ Cek Transaksi
 
 </main>
 
-<footer class="site-footer">
+<footer class="site-footer pb-32 sm:pb-24 pt-16 mt-20 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[#0a0a0c]">
     <div class="footer-brand" id="footerBrand">Nex<span>Shop</span></div>
     <p>Marketplace gaming digital terpercaya. Transaksi aman, proses cepat.</p>
 

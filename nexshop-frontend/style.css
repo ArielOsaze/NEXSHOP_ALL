@@ -1850,8 +1850,8 @@ input::placeholder{ color:var(--text-dim); }
 
 @media (max-width: 768px) {
     .nexbot-widget {
-        bottom: 12px;
-        right: 12px;
+        bottom: calc(max(16px, env(safe-area-inset-bottom)) + 16px);
+        right: 16px;
         z-index: 10000;
     }
 
