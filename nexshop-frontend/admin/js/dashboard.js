@@ -331,6 +331,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
         if (view === "settings" && !settingsLoaded) loadSettings();
         if (view === "stats" && !statsLoaded) loadStats();
+        if (view === "topSpenders") loadAdminTopSpenders();
     });
 });
 
@@ -351,6 +352,7 @@ function switchView(view) {
     if (view === "settings" && !settingsLoaded) loadSettings();
     if (view === "stats" && !statsLoaded) loadStats();
     if (view === "aimgmt") { loadKnowledgeBase(); loadMultiAiStatus(); loadMultiAiLogs(); startAiHealthCheckTimer(); }
+    if (view === "topSpenders") loadAdminTopSpenders();
 }
 
 function openProductModal() {
@@ -3669,6 +3671,7 @@ function renderCmdKResults() {
         { title: "Gaming News & Portal Artikel", icon: "bi-newspaper", action: () => switchView("news") },
         { title: "Kode Promo & Kupon Diskon", icon: "bi-ticket-perforated", action: () => switchView("promocodes") },
         { title: "Pengaturan Toko & API Keys", icon: "bi-gear", action: () => switchView("settings") },
+        { title: "Top Spenders (Hall of Fame)", icon: "bi-trophy", action: () => switchView("topSpenders") },
         { title: "Export Laporan CSV / Excel", icon: "bi-file-earmark-excel", action: () => exportOrdersCsv() },
         { title: "Tambah Produk Baru", icon: "bi-plus-circle", action: () => openProductModal() },
         { title: "Generate AI Sales Insights", icon: "bi-stars", action: () => { switchView("dashboard"); loadAiInsights(); } }
