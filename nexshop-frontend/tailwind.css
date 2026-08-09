@@ -1638,6 +1638,10 @@ input:where([type='file']):focus {
   padding: 1px;
 }
 
+.p-\[8\%\] {
+  padding: 8%;
+}
+
 .p-\[clamp\(6px\2c 2vw\2c 16px\)\] {
   padding: clamp(6px, 2vw, 16px);
 }
@@ -2590,14 +2594,6 @@ input:where([type='file']):focus {
 
   .sm\:p-5 {
     padding: 1.25rem;
-  }
-
-  .sm\:p-6 {
-    padding: 1.5rem;
-  }
-
-  .sm\:p-8 {
-    padding: 2rem;
   }
 
   .sm\:px-2 {
