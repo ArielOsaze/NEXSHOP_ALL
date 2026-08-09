@@ -2344,6 +2344,11 @@ function goToTwStep(step) {
         document.getElementById("twPromoCodeMsg").className = "promo-code-msg";
         renderTwSummary();
     }
+    // Scroll ke atas wizard supaya user langsung lihat step baru
+    const detail = document.getElementById("topupDetail");
+    if (detail) {
+        window.scrollTo({ top: detail.offsetTop - 90, behavior: "smooth" });
+    }
 }
 
 document.getElementById("twPrevBtn").addEventListener("click", () => {
