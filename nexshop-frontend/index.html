@@ -222,12 +222,11 @@ Cek Transaksi
 </div>
 </div>
 </div>
-<!-- Ticker (Running Text) -->
-<div class="ticker-wrap" id="tickerTrack" style="display: none;">
-    <div class="ticker-inner animate-scroll-text" aria-hidden="true">
-        <div class="ticker-group" id="tickerGroup1"></div>
-        <div class="ticker-group" id="tickerGroup2"></div>
-    </div>
+<div class="absolute bottom-0 left-0 w-full overflow-hidden py-4 border-y border-gray-200 dark:border-white/5 bg-gray-50/80 dark:bg-[#0a0a0c]/80 backdrop-blur-md" id="trustBar">
+<div class="flex whitespace-nowrap animate-scroll-text text-xs font-bold text-gray-500 uppercase tracking-widest" id="tickerTrack" style="display: none;">
+    <div class="ticker-group flex gap-8 pr-8" id="tickerGroup1"></div>
+    <div class="ticker-group flex gap-8 pr-8" id="tickerGroup2" aria-hidden="true"></div>
+</div>
 </div>
 
 <!-- Promo Banner Carousel -->
