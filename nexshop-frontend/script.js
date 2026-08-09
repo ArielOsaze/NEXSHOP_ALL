@@ -320,15 +320,21 @@ function renderPromoCarousel() {
     inner.innerHTML = promoSlides.map((slide, i) => {
         if (slide.full_image) {
             return `
-                <a href="${slide.cta_link || '#'}" class="w-full h-full flex-shrink-0 relative block">
-                    <img src="${slide.image_url}" alt="${slide.title}" class="w-full h-full object-cover">
+                <a href="${slide.cta_link || '#'}" class="min-w-full h-full flex-shrink-0 relative block">
+                    <picture class="w-full h-full absolute inset-0">
+                        <source media="(max-width: 768px)" srcset="${slide.mobile_image_url || slide.image_url}">
+                        <img src="${slide.image_url}" alt="${slide.title}" class="w-full h-full object-cover">
+                    </picture>
                 </a>
             `;
         }
         
         return `
-            <div class="w-full h-full flex-shrink-0 relative flex items-center p-6 sm:p-12">
-                <img src="${slide.image_url}" alt="" class="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay">
+            <div class="min-w-full h-full flex-shrink-0 relative flex items-center p-6 sm:p-12">
+                <picture class="absolute inset-0 w-full h-full opacity-50 mix-blend-overlay">
+                    <source media="(max-width: 768px)" srcset="${slide.mobile_image_url || slide.image_url}">
+                    <img src="${slide.image_url}" alt="" class="w-full h-full object-cover">
+                </picture>
                 <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
                 <div class="relative z-10 max-w-lg">
                     ${slide.badge_text ? `<span class="inline-block px-3 py-1 bg-brand-indigo text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3">${escapeHtml(slide.badge_text)}</span>` : ''}
