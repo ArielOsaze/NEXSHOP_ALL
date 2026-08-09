@@ -25,12 +25,21 @@ function rupiahLog(n) {
 }
 
 exports.create = async (req, res) => {
-    const { recipient_name, recipient_email, items, payment_method, payment_channel } = req.body;
+    const { recipient_name, recipient_email, recipient_phone, items, payment_method, payment_channel } = req.body;
     // req.user bisa null (guest checkout) berkat optionalAuthMiddleware
     const userId = req.user ? req.user.id : null;
 
-    if (!recipient_name || !recipient_email || !Array.isArray(items) || items.length === 0) {
+    if (!recipient_name || !recipient_email || !recipient_phone || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ message: "Data pesanan tidak lengkap" });
+    }
+
+    // Nomor HP WAJIB nyata & unik per pembeli -- kalau kosong/default sebelumnya
+    // (fallback "08123456789" di ipaymu.js) iPaymu Direct Payment (QRIS/VA)
+    // nolak transaksi dengan "Suspicious buyer" karena nomor yang sama
+    // dipakai berulang di banyak transaksi berbeda.
+    const normalizedPhone = String(recipient_phone).trim();
+    if (!/^0[0-9]{8,14}$/.test(normalizedPhone)) {
+        return res.status(400).json({ message: "Nomor HP tidak valid (contoh: 081234567890)" });
     }
 
     const normalizedPaymentMethod = String(payment_method || "").trim().toLowerCase();
@@ -116,6 +125,7 @@ exports.create = async (req, res) => {
                 user_id: userId,
                 recipient_name,
                 recipient_email,
+                recipient_phone: normalizedPhone,
                 payment_method: normalizedPaymentMethod,
                 items,
                 subtotal,
@@ -142,6 +152,7 @@ exports.create = async (req, res) => {
                         amount: total,
                         buyerName: recipient_name,
                         buyerEmail: recipient_email,
+                        buyerPhone: normalizedPhone,
                         paymentMethod: ipaymuPaymentMethod,
                         paymentChannel: payment_channel,
                         notifyUrl: `${BACKEND_URL}/api/orders/notification`
@@ -158,6 +169,7 @@ exports.create = async (req, res) => {
                     itemDetails: ipaymuItems,
                     buyerName: recipient_name,
                     buyerEmail: recipient_email,
+                    buyerPhone: normalizedPhone,
                     returnUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=success`,
                     cancelUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=cancel`,
                     notifyUrl: `${BACKEND_URL}/api/orders/notification`,

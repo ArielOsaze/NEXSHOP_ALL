@@ -1299,7 +1299,13 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
     e.preventDefault();
     const recipient_name = document.getElementById("checkoutName").value.trim();
     const recipient_email = document.getElementById("checkoutEmail").value.trim();
+    const recipient_phone = document.getElementById("checkoutPhone").value.trim();
     const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+
+    if (!/^0[0-9]{8,14}$/.test(recipient_phone)) {
+        toast("Masukkan nomor HP yang valid (contoh: 081234567890).", "error");
+        return;
+    }
     const submitBtn = e.target.querySelector('button[type="submit"]');
 
     if (!selectedPaymentMethod) {
@@ -1332,6 +1338,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
             body: JSON.stringify({
                 recipient_name,
                 recipient_email,
+                recipient_phone,
                 payment_method: selectedPaymentMethod,
                 payment_channel: checkoutVaBank,
                 items,
@@ -2191,6 +2198,7 @@ let twState = {
     userId: "",
     serverId: "",
     email: "",
+    phone: "",
     nickname: null,
     nicknameSupported: false,
     product: null,
@@ -2307,6 +2315,7 @@ function openGameDetail(kategori) {
         userId: "",
         serverId: "",
         email: currentUser ? currentUser.email : "",
+        phone: "",
         nickname: null,
         nicknameSupported: false,
         product: null,
@@ -2384,17 +2393,20 @@ document.getElementById("twNextBtn").addEventListener("click", async () => {
         const userId = document.getElementById("twUserId").value.trim();
         const serverId = document.getElementById("twServerId").value.trim();
         const email = document.getElementById("twEmail").value.trim();
+        const phone = document.getElementById("twPhone").value.trim();
         const errorEl = document.getElementById("twStep1Error");
         errorEl.textContent = "";
 
         if (!userId) { errorEl.textContent = "User ID wajib diisi"; return; }
         if (twState.needsServerId && !serverId) { errorEl.textContent = "Server ID wajib diisi untuk game ini"; return; }
         if (!email || !email.includes("@")) { errorEl.textContent = "Email wajib diisi dengan format yang benar"; return; }
+        if (!/^0[0-9]{8,14}$/.test(phone)) { errorEl.textContent = "Nomor HP wajib diisi dengan format yang benar (contoh: 081234567890)"; return; }
         if (!twState.product) { errorEl.textContent = "Pilih nominal top up dulu ya"; return; }
 
         twState.userId = userId;
         twState.serverId = serverId;
         twState.email = email;
+        twState.phone = phone;
         goToTwStep(2);
         return;
     }
@@ -2654,6 +2666,7 @@ async function submitTopupOrder() {
                 tujuan: twState.userId,
                 server_id: twState.serverId || undefined,
                 recipient_email: twState.email,
+                recipient_phone: twState.phone,
                 promo_code: twState.promo ? twState.promo.code : undefined,
                 payment_method: twState.payment,
                 payment_channel: twState.vaBank

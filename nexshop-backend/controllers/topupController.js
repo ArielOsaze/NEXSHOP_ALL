@@ -1263,11 +1263,19 @@ exports.deleteAllProducts = async (req, res) => {
 // sama seperti checkout produk biasa)
 // ===========================================================
 exports.create = async (req, res) => {
-    const { kode_produk, tujuan, server_id, recipient_email, promo_code, payment_method, payment_channel } = req.body;
+    const { kode_produk, tujuan, server_id, recipient_email, recipient_phone, promo_code, payment_method, payment_channel } = req.body;
     const userId = req.user ? req.user.id : null;
 
     if (!kode_produk || !tujuan) {
         return res.status(400).json({ message: "Produk dan tujuan (Player ID) wajib diisi" });
+    }
+
+    // Wajib diisi & harus nomor asli -- fallback default sebelumnya
+    // ("08123456789" di ipaymu.js) dipakai berulang di semua transaksi dan
+    // diduga jadi penyebab iPaymu Direct Payment nolak dengan "Suspicious buyer".
+    const normalizedPhone = String(recipient_phone || "").trim();
+    if (!/^0[0-9]{8,14}$/.test(normalizedPhone)) {
+        return res.status(400).json({ message: "Nomor HP tidak valid (contoh: 081234567890)" });
     }
 
     const normalizedPaymentMethod = String(payment_method || "").trim().toLowerCase();
@@ -1323,6 +1331,7 @@ exports.create = async (req, res) => {
             tujuan,
             server_id: server_id || null,
             recipient_email: recipient_email || null,
+            recipient_phone: normalizedPhone,
             harga: total,
             subtotal: product.harga_jual,
             promo_code: appliedPromoCode,
@@ -1354,6 +1363,7 @@ exports.create = async (req, res) => {
                         referenceId: orderId,
                         amount: total,
                         buyerEmail: recipient_email,
+                        buyerPhone: normalizedPhone,
                         paymentMethod: ipaymuPaymentMethod,
                         paymentChannel: payment_channel,
                         notifyUrl: `${BACKEND_URL}/api/topup/notification`
@@ -1369,6 +1379,7 @@ exports.create = async (req, res) => {
                     referenceId: orderId,
                     itemDetails: ipaymuItems,
                     buyerEmail: recipient_email || undefined,
+                    buyerPhone: normalizedPhone,
                     returnUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=success`,
                     cancelUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=cancel`,
                     notifyUrl: `${BACKEND_URL}/api/topup/notification`,
