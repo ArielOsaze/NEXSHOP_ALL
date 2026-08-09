@@ -7,7 +7,8 @@ const IMAGE_PRESETS = Object.freeze({
     product: { width: 1600, height: 1600 },
     logo: { width: 1024, height: 1024 },
     promo: { width: 2560, height: 1440 },
-    promoMobile: { width: 1600, height: 2560 }
+    promoMobile: { width: 1600, height: 2560 },
+    avatar: { width: 512, height: 512 }
 });
 
 const MAX_INPUT_PIXELS = 64 * 1000 * 1000;

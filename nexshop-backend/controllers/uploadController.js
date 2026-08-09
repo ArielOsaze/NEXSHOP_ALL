@@ -35,7 +35,8 @@ async function uploadImage(req, res) {
 
         const bucket = BUCKETS[type] || BUCKETS.product;
 
-        const preset = type === "logo" ? "logo" : type === "promo" ? "promo" : "product";
+        const PRESET_MAP = { logo: "logo", promo: "promo", avatar: "avatar" };
+        const preset = PRESET_MAP[type] || "product";
         const optimizedImage = await optimizeImageToWebp(req.file.buffer, preset);
         const fileName = createWebpFileName();
 
@@ -58,7 +59,7 @@ async function uploadImage(req, res) {
             optimizedBytes: optimizedImage.optimizedBytes
         });
     } catch (err) {
-        console.error(err);
+        console.error("Upload error:", err.message, err.statusCode || "", err);
         res.status(500).json({
             message: process.env.NODE_ENV === "production" ? "Terjadi kesalahan pada server" : (err.message || "Server Error")
         });
