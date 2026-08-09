@@ -1344,20 +1344,26 @@ exports.create = async (req, res) => {
             discountAmount
         );
 
-        // Cek apakah payment method ini Direct (QRIS/VA) atau Redirect
-        const isDirect = isDirectPaymentMethod(normalizedPaymentMethod);
+        let isDirect = isDirectPaymentMethod(normalizedPaymentMethod);
 
         let payment;
         try {
             if (isDirect) {
-                payment = await createDirectPayment({
-                    referenceId: orderId,
-                    amount: total,
-                    buyerEmail: recipient_email,
-                    paymentMethod: ipaymuPaymentMethod,
-                    notifyUrl: `${BACKEND_URL}/api/topup/notification`
-                });
-            } else {
+                try {
+                    payment = await createDirectPayment({
+                        referenceId: orderId,
+                        amount: total,
+                        buyerEmail: recipient_email,
+                        paymentMethod: ipaymuPaymentMethod,
+                        notifyUrl: `${BACKEND_URL}/api/topup/notification`
+                    });
+                } catch (directErr) {
+                    console.log("Direct payment failed (IP whitelist/channel error), falling back to redirect:", directErr.ipaymuResponse || directErr.message);
+                    isDirect = false;
+                }
+            }
+
+            if (!isDirect) {
                 payment = await createRedirectPayment({
                     referenceId: orderId,
                     itemDetails: ipaymuItems,
