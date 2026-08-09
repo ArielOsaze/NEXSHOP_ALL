@@ -373,6 +373,13 @@ Cek Transaksi
                                 <input type="email" id="twEmail" placeholder="kamu@email.com">
                             </div>
                         </div>
+                        <div class="tw-field-group">
+                            <label for="twPhone">Nomor HP (WhatsApp)</label>
+                            <div class="tw-input-wrap">
+                                <span class="tw-input-icon" aria-hidden="true"><i class="fa-solid fa-phone"></i></span>
+                                <input type="tel" id="twPhone" required placeholder="08xxxxxxxxxx" pattern="0[0-9]{8,14}">
+                            </div>
+                        </div>
                     </div>
                     <div class="tw-account-actions">
                         <button type="button" class="tw-check-btn" id="twCheckBtn"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Cek Nickname Akun</button>
@@ -793,6 +800,9 @@ Cek Transaksi
                 </label>
                 <label>Email
                     <input type="email" id="checkoutEmail" required placeholder="kamu@email.com">
+                </label>
+                <label>Nomor HP (WhatsApp)
+                    <input type="tel" id="checkoutPhone" required placeholder="08xxxxxxxxxx" pattern="0[0-9]{8,14}">
                 </label>
                 <div class="checkout-guest-note" id="checkoutGuestNote">
                     <strong><i class="fa-solid fa-user" aria-hidden="true"></i> Belanja tanpa akun</strong>
