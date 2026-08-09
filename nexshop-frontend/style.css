@@ -833,7 +833,7 @@ nav#mainNav.nav-scrolled {
 
 /* ---- Step 1: game grid (glassmorphism cards, hover animation) ---- */
 .topup-game-grid{
-    display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:18px;
+    /* handled by tailwind */
 }
 .topup-game-card{
     background:var(--bg-panel);
@@ -1642,7 +1642,7 @@ input::placeholder{ color:var(--text-dim); }
     .product-modal-info{ max-height:none; overflow:visible; padding:0; }
     .product-modal-info h3{ font-size:22px; }
 
-    .topup-game-grid{ grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:12px; }
+    /* topup-game-grid handled by tailwind */
     .topup-game-card{ padding:16px 10px; }
     .tgc-logo{ width:52px; height:52px; }
 
@@ -1707,7 +1707,7 @@ input::placeholder{ color:var(--text-dim); }
     .add-btn{ width:40px; height:40px; min-width:40px; border-radius:11px; font-size:13px; touch-action:manipulation; }
     .buy-btn{ min-height:40px; height:40px; border-radius:11px; font-size:12.5px; padding:0 12px; touch-action:manipulation; }
 
-    .topup-game-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+    /* topup-game-grid handled by tailwind */
     .topup-game-card{ padding:12px 8px; border-radius:12px; }
     .tgc-logo{ width:48px; height:48px; margin:0 auto 8px; border-radius:12px; }
     .topup-game-card h5{ font-size:12px; min-height:30px; line-height:1.25; margin-bottom:2px; }
