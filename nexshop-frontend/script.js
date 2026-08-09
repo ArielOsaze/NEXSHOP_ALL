@@ -2742,6 +2742,28 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
         } else {
             qrCodeDiv.innerHTML = "<p>QR Code gagal dimuat.</p>";
         }
+
+        // Tombol download QR -- qrcodejs render jadi <canvas> (browser modern)
+        // atau <img> (fallback). Tunggu sebentar biar elemennya kebentuk dulu
+        // sebelum kita ambil datanya, karena constructor QRCode render-nya async.
+        const downloadBtn = document.getElementById("dpDownloadQrBtn");
+        if (downloadBtn) {
+            downloadBtn.onclick = () => {
+                const canvas = qrCodeDiv.querySelector("canvas");
+                const img = qrCodeDiv.querySelector("img");
+                const dataUrl = canvas ? canvas.toDataURL("image/png") : (img ? img.src : null);
+                if (!dataUrl) {
+                    toast("QR belum siap, coba lagi sebentar.", "error");
+                    return;
+                }
+                const link = document.createElement("a");
+                link.href = dataUrl;
+                link.download = `QRIS-Nexshop-${orderId}.png`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+        }
     } else if (paymentData.paymentNo) {
         vaContainer.classList.remove("hidden");
         qrisContainer.classList.add("hidden");
