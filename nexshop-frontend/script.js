@@ -2763,15 +2763,21 @@ function initNexBotChat() {
     if (!floatBtn || !windowEl || !form) return;
 
     floatBtn.addEventListener("click", () => {
-        windowEl.classList.toggle("hidden");
-        if (!windowEl.classList.contains("hidden")) {
-            updateNexBotGreeting();
-            input.focus();
+        if (windowEl.classList.contains("hidden")) {
+            floatBtn.classList.add("expanding");
+            setTimeout(() => {
+                windowEl.classList.remove("hidden");
+                floatBtn.classList.add("hidden");
+                floatBtn.classList.remove("expanding");
+                updateNexBotGreeting();
+                input.focus();
+            }, 250);
         }
     });
 
     closeBtn.addEventListener("click", () => {
         windowEl.classList.add("hidden");
+        floatBtn.classList.remove("hidden");
     });
 
     form.addEventListener("submit", async (e) => {
