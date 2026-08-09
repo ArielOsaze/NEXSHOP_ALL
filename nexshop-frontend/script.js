@@ -771,6 +771,9 @@ function attachAvatarUploadListeners() {
         if (!file) return;
         
         try {
+            const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+            if (!token) throw new Error("Silakan login terlebih dahulu");
+            
             editBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             const formData = new FormData();
             formData.append("image", file);
