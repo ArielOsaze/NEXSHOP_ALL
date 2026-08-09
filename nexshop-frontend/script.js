@@ -60,6 +60,15 @@ function hideAppLoader() {
     if (!appLoader) return;
     appLoader.classList.remove("is-visible");
     appLoader.setAttribute("aria-busy", "false");
+    
+    // Delayed NexBot appearance
+    setTimeout(() => {
+        const nexbot = document.getElementById("nexbotWidget");
+        if (nexbot) {
+            nexbot.style.opacity = "1";
+            nexbot.style.pointerEvents = "auto";
+        }
+    }, 800);
     // Always notify once the loader is dismissed — the previous guard
     // `if (!initialLoading)` caused a race where cached fetches resolved
     // before finishInitialLoading set the flag.
@@ -386,7 +395,7 @@ function renderProducts() {
         } else {
             grid.innerHTML = data.map(p => `
                 <article class="group relative rounded-3xl overflow-hidden cursor-pointer glass-panel border border-transparent hover:border-brand-cyan/40 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-indigo/20 flex flex-col h-full" data-product-card data-id="${p.id}" tabindex="0">
-                    <div class="relative h-40 sm:h-44 overflow-hidden bg-gradient-to-br from-[#1a1533] to-[#0d1b2e] shrink-0">
+                    <div class="relative w-full aspect-[16/10] overflow-hidden bg-gradient-to-br from-[#1a1533] to-[#0d1b2e] shrink-0">
                         <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 fallback-clear" loading="lazy" decoding="async">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/0 to-black/10 pointer-events-none"></div>
                         ${(p.is_flash_sale || p.badge) ? `<div class="absolute top-3 left-3 flex flex-col gap-1">${p.is_flash_sale ? '<span class="bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1 border border-white/10"><span class="material-symbols-outlined text-[10px]">bolt</span> FLASH SALE</span>' : ""}${p.badge ? `<span class="bg-black/50 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-widest border border-white/10">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}

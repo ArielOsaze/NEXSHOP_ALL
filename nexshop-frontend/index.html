@@ -195,7 +195,7 @@
 <span class="w-2 h-2 rounded-full bg-brand-indigo animate-pulse"></span>
 Premium Digital Goods
 </div>
-<h1 class="text-6xl md:text-8xl font-black text-gray-900 dark:text-white tracking-tighter leading-[0.95]">
+<h1 class="text-5xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter leading-[0.95]">
 PLAY <span class="text-brand-indigo">MORE</span>,<br/>
 PAY <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">LESS.</span>
 </h1>
@@ -267,7 +267,7 @@ Cek Transaksi
             <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter">Top-Up <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">Terpopuler</span></h2>
         </div>
     </div>
-    <div class="topup-game-grid grid grid-cols-1 md:grid-cols-3 gap-8" id="topupGameGrid">
+    <div class="topup-game-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8" id="topupGameGrid">
     </div>
 </section>
 
@@ -294,7 +294,7 @@ Cek Transaksi
         </div>
     </div>
     <div class="category-filter flex gap-2 mb-8 overflow-x-auto pb-4 hide-scrollbar" id="categoryFilter"></div>
-    <div class="card-grid grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6" id="cardGrid"></div>
+    <div class="card-grid grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6" id="cardGrid"></div>
 </section>
 
 <!-- Topup Detail (halaman penuh, bukan modal) -->
@@ -822,7 +822,7 @@ Cek Transaksi
 </div>
 
 <!-- NexBot Floating Chatbot Widget -->
-<div class="nexbot-widget" id="nexbotWidget">
+<div class="nexbot-widget" id="nexbotWidget" style="opacity: 0; pointer-events: none; transition: opacity 0.5s ease-in-out;">
     <button type="button" class="nexbot-float-btn" id="nexbotFloatBtn" aria-label="Tanya NexBot">
         <span class="nexbot-float-btn-icon"><i class="fa-solid fa-robot"></i></span>
         <span class="nexbot-float-btn-label">Tanya NexBot</span>
