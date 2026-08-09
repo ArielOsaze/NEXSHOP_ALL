@@ -2776,8 +2776,12 @@ function initNexBotChat() {
     });
 
     closeBtn.addEventListener("click", () => {
-        windowEl.classList.add("hidden");
-        floatBtn.classList.remove("hidden");
+        windowEl.classList.add("closing");
+        setTimeout(() => {
+            windowEl.classList.add("hidden");
+            windowEl.classList.remove("closing");
+            floatBtn.classList.remove("hidden");
+        }, 200);
     });
 
     form.addEventListener("submit", async (e) => {
