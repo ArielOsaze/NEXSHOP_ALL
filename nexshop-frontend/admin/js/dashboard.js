@@ -4583,18 +4583,20 @@ function openTopSpenderModal(id = null) {
         title.textContent = "Tambah Top Spender";
     }
     
-    modal.classList.remove("hidden");
+    modal.style.display = "flex";
     setTimeout(() => {
-        content.classList.remove("scale-95", "opacity-0");
+        content.style.transform = "scale(1)";
+        content.style.opacity = "1";
     }, 10);
 }
 
 function closeTopSpenderModal() {
     const modal = document.getElementById("topSpenderModal");
     const content = document.getElementById("topSpenderModalContent");
-    content.classList.add("scale-95", "opacity-0");
+    content.style.transform = "scale(0.95)";
+    content.style.opacity = "0";
     setTimeout(() => {
-        modal.classList.add("hidden");
+        modal.style.display = "none";
     }, 300);
 }
 
