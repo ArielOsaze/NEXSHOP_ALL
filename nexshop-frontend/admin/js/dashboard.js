@@ -4556,19 +4556,25 @@ function renderTopSpendersTable() {
     `).join("");
 }
 
+let topSpenderModalInstance = null;
+
 function openTopSpenderModal(id = null) {
-    const modal = document.getElementById("topSpenderModal");
-    const content = document.getElementById("topSpenderModalContent");
+    if (!topSpenderModalInstance) {
+        const modalEl = document.getElementById('topSpenderModal');
+        if (modalEl) {
+            topSpenderModalInstance = new bootstrap.Modal(modalEl);
+        }
+    }
     const title = document.getElementById("topSpenderModalTitle");
     const form = document.getElementById("topSpenderForm");
     
-    form.reset();
+    if (form) form.reset();
     document.getElementById("tsId").value = "";
     document.getElementById("tsActive").checked = true;
     document.getElementById("tsRank").value = "99";
 
     if (id) {
-        title.textContent = "Edit Top Spender";
+        if (title) title.innerHTML = '<i class="bi bi-trophy me-2"></i>Edit Top Spender';
         const ts = adminTopSpenders.find(t => t.id === id);
         if (ts) {
             document.getElementById("tsId").value = ts.id;
@@ -4580,24 +4586,24 @@ function openTopSpenderModal(id = null) {
             document.getElementById("tsActive").checked = ts.is_active;
         }
     } else {
-        title.textContent = "Tambah Top Spender";
+        if (title) title.innerHTML = '<i class="bi bi-trophy me-2"></i>Tambah Top Spender';
     }
     
-    modal.style.display = "flex";
-    setTimeout(() => {
-        content.style.transform = "scale(1)";
-        content.style.opacity = "1";
-    }, 10);
+    if (topSpenderModalInstance) {
+        topSpenderModalInstance.show();
+    }
 }
 
 function closeTopSpenderModal() {
-    const modal = document.getElementById("topSpenderModal");
-    const content = document.getElementById("topSpenderModalContent");
-    content.style.transform = "scale(0.95)";
-    content.style.opacity = "0";
-    setTimeout(() => {
-        modal.style.display = "none";
-    }, 300);
+    if (topSpenderModalInstance) {
+        topSpenderModalInstance.hide();
+    } else {
+        const modalEl = document.getElementById('topSpenderModal');
+        if (modalEl) {
+            const inst = bootstrap.Modal.getInstance(modalEl);
+            if (inst) inst.hide();
+        }
+    }
 }
 
 async function handleTopSpenderSubmit(e) {
