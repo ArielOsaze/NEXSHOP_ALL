@@ -1,5 +1,6 @@
 const crypto = require("crypto");
 const axios = require("axios");
+const https = require("https");
 const { getApiKeys } = require("./settings");
 
 // ===========================================================
@@ -69,7 +70,8 @@ async function request(path, body) {
                 va,
                 signature,
                 timestamp: buildTimestamp()
-            }
+            },
+            httpsAgent: new https.Agent({ family: 4 })
         });
         return res.data;
     } catch (axiosErr) {
