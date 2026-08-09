@@ -473,11 +473,35 @@ Cek Transaksi
             <!-- Pembayaran Aman -->
             <div>
                 <h4 class="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Pembayaran Aman</h4>
-                <div class="flex flex-wrap gap-2">
-                    <span class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold text-gray-700 dark:text-gray-300">QRIS</span>
-                    <span class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold text-gray-700 dark:text-gray-300">iPaymu</span>
-                    <span class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold text-gray-700 dark:text-gray-300">E-Wallet</span>
-                    <span class="px-3 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 text-xs font-bold text-gray-700 dark:text-gray-300">VA Bank</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--bg-panel-2)] transition-transform hover:-translate-y-1">
+                        <span class="material-symbols-outlined text-brand-cyan text-2xl">qr_code_scanner</span>
+                        <div>
+                            <div class="text-sm font-bold text-gray-900 dark:text-white">QRIS</div>
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">Scan dengan m-banking atau e-wallet</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--bg-panel-2)] transition-transform hover:-translate-y-1">
+                        <span class="material-symbols-outlined text-brand-indigo text-2xl">account_balance</span>
+                        <div>
+                            <div class="text-sm font-bold text-gray-900 dark:text-white">Virtual Account</div>
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">BCA, BRI, Mandiri, dan bank lain</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--bg-panel-2)] transition-transform hover:-translate-y-1">
+                        <span class="material-symbols-outlined text-green-500 text-2xl">payments</span>
+                        <div>
+                            <div class="text-sm font-bold text-gray-900 dark:text-white">Transfer Bank</div>
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">Transfer langsung dari rekening bank</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-[var(--bg-panel-2)] transition-transform hover:-translate-y-1">
+                        <span class="material-symbols-outlined text-orange-400 text-2xl">credit_card</span>
+                        <div>
+                            <div class="text-sm font-bold text-gray-900 dark:text-white">Kartu Kredit/Debit</div>
+                            <div class="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">Visa dan Mastercard</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
