@@ -1550,9 +1550,7 @@ function renderGamingNews(items) {
                 <div class="absolute inset-0 bg-gradient-to-b from-transparent to-brand-indigo/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                 <div class="relative w-full aspect-video overflow-hidden">
                     <img src="${escapeHtml(imageUrl)}" alt="" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
-                    <div class="absolute top-4 left-4 bg-gray-900/80 backdrop-blur text-white text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
-                        ${escapeHtml(item.category || "Gaming")}
-                    </div>
+
                 </div>
                 <div class="p-6 flex flex-col flex-1 relative z-10">
                     <div class="flex items-center gap-2 mb-3">
@@ -2178,7 +2176,7 @@ function renderTopupGameGrid() {
                 </div>
                 <h4 class="text-[clamp(0.65rem,2.2vw,0.85rem)] leading-tight font-bold text-gray-900 dark:text-white line-clamp-2 mb-1 sm:mb-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors" title="${escapeHtml(g.kategori)}">${escapeHtml(g.kategori)}</h4>
                 <div class="flex items-center gap-1 text-[clamp(0.55rem,1.7vw,0.75rem)] text-gray-500 dark:text-gray-400 mb-2 sm:mb-4 font-medium">
-                    <span class="material-symbols-outlined text-[clamp(0.65rem,2vw,1rem)]">inventory_2</span> <span>${g.products.length} Prd</span>
+                    <span class="material-symbols-outlined text-[clamp(0.65rem,2vw,1rem)]">inventory_2</span> <span>${g.products.length} Produk</span>
                 </div>
             </div>
             <div class="flex items-center justify-between mt-auto">
@@ -3065,21 +3063,21 @@ function renderLeaderboard(data) {
         return '';
     };
 
-    // Render Rank 2 (Left)
-    if (top3[1]) {
+    // Render Rank 3 (Left)
+    if (top3[2]) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
-            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-slate-400 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
+            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-orange-600 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
                 <div style="aspect-ratio: 1/1;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900">
-                    ${getAvatar(top3[1])}
+                    ${getAvatar(top3[2])}
                 </div>
-                ${getRankBadge(2)}
+                ${getRankBadge(3)}
             </div>
-            <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-slate-400 relative overflow-hidden group">
-                <div class="absolute inset-0 bg-slate-400/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <div class="font-bold text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[1].name)}</div>
-                ${top3[1].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[1].badge)}</div>` : ''}
-                <div class="text-slate-300 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[1].total_spent)}</div>
+            <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-orange-600 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-orange-600/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                <div class="font-bold text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[2].name)}</div>
+                ${top3[2].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[2].badge)}</div>` : ''}
+                <div class="text-orange-400 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[2].total_spent)}</div>
             </div>
         </div>`;
     }
@@ -3106,21 +3104,21 @@ function renderLeaderboard(data) {
         </div>`;
     }
 
-    // Render Rank 3 (Right)
-    if (top3[2]) {
+    // Render Rank 2 (Right)
+    if (top3[1]) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
-            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-orange-600 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
+            <div style="aspect-ratio: 1/1; flex-shrink: 0;" class="relative w-16 h-16 md:w-24 md:h-24 shrink-0 rounded-full p-1 bg-gradient-to-b from-slate-400 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
                 <div style="aspect-ratio: 1/1;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900">
-                    ${getAvatar(top3[2])}
+                    ${getAvatar(top3[1])}
                 </div>
-                ${getRankBadge(3)}
+                ${getRankBadge(2)}
             </div>
-            <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-orange-600 relative overflow-hidden group">
-                <div class="absolute inset-0 bg-orange-600/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <div class="font-bold text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[2].name)}</div>
-                ${top3[2].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[2].badge)}</div>` : ''}
-                <div class="text-orange-400 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[2].total_spent)}</div>
+            <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-slate-400 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-slate-400/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                <div class="font-bold text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[1].name)}</div>
+                ${top3[1].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[1].badge)}</div>` : ''}
+                <div class="text-slate-300 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[1].total_spent)}</div>
             </div>
         </div>`;
     }
