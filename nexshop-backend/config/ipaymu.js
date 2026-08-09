@@ -135,6 +135,12 @@ async function checkTransactionStatus(transactionId) {
 // Bikin transaksi Direct Payment (VA & QRIS)
 // Return { transactionId, paymentNo, qrContent, expired, amount, fee, status, url } atau throw error.
 async function createDirectPayment({ referenceId, amount, buyerName, buyerEmail, buyerPhone, paymentMethod, paymentChannel, notifyUrl }) {
+    let finalChannel = paymentChannel;
+    if (!finalChannel) {
+        if (paymentMethod === "qris") finalChannel = "qris";
+        if (paymentMethod === "va") finalChannel = "bni";
+    }
+
     const body = {
         name: buyerName || "Guest",
         phone: buyerPhone || "08123456789",
@@ -143,7 +149,7 @@ async function createDirectPayment({ referenceId, amount, buyerName, buyerEmail,
         notifyUrl,
         referenceId,
         paymentMethod,
-        ...(paymentChannel ? { paymentChannel } : {})
+        ...(finalChannel ? { paymentChannel: finalChannel } : {})
     };
 
     const data = await request("/payment/direct", body);
