@@ -1411,6 +1411,10 @@ exports.create = async (req, res) => {
         notify("topup", `💎 Pesanan topup baru ${orderId}: ${product.nama} ke ${tujuan} senilai ${rupiahLog(total)}${appliedPromoCode ? ` (promo ${appliedPromoCode})` : ""}`);
 
         if (isDirect) {
+            // Sama seperti di orderController: nominal yang ditampilkan harus
+            // yang beneran ke-encode di QR/VA iPaymu (bisa termasuk fee kalau
+            // dibebankan ke pembeli), bukan total polos.
+            const displayAmount = payment.amount || (total + (payment.fee || 0));
             res.status(201).json({
                 message: "Pesanan topup berhasil dibuat",
                 orderId,
@@ -1419,7 +1423,7 @@ exports.create = async (req, res) => {
                     paymentNo: payment.paymentNo,
                     qrContent: payment.qrContent,
                     expired: payment.expired,
-                    amount: total,
+                    amount: displayAmount,
                     fee: payment.fee
                 }
             });
