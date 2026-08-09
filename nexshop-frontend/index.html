@@ -257,18 +257,19 @@ Cek Transaksi
 </section>
 
 <!-- Leaderboard Section (NEW) -->
-<section class="reveal-up delay-100" id="leaderboardSection">
-    <div class="flex items-end justify-between mb-12">
-        <div>
-            <div class="flex items-center gap-2 mb-3">
-                <span class="w-8 h-[2px] bg-brand-indigo"></span>
-                <span class="text-brand-indigo font-bold uppercase tracking-widest text-sm">Hall of Fame</span>
-            </div>
-            <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter">Top <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">Spenders</span></h2>
+<section class="reveal-up delay-100 mb-16" id="leaderboardSection">
+    <div class="flex flex-col items-center justify-center mb-12 text-center">
+        <div class="flex items-center gap-2 mb-3">
+            <span class="w-8 h-[2px] bg-brand-indigo"></span>
+            <span class="text-brand-indigo font-bold uppercase tracking-widest text-sm">Community Leaderboard</span>
+            <span class="w-8 h-[2px] bg-brand-indigo"></span>
         </div>
+        <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter">Hall of <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">Fame</span></h2>
+        <p class="text-gray-500 dark:text-gray-400 mt-3 max-w-lg mx-auto">Customer terbaik kami dengan total spending tertinggi.</p>
     </div>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="leaderboardGrid">
-        <!-- JS akan populate ini -->
+    
+    <div id="leaderboardContent" class="max-w-5xl mx-auto">
+        <!-- JS akan populate ini (Podium + List) -->
     </div>
 </section>
 
