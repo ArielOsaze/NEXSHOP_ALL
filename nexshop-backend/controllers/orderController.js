@@ -206,6 +206,12 @@ exports.create = async (req, res) => {
         notify("order", `🛒 Pesanan baru ${orderId} dari ${recipient_name} senilai ${rupiahLog(total)}`);
 
         if (isDirect) {
+            // Nominal yang WAJIB ditampilkan ke pembeli adalah yang beneran
+            // ke-encode di QR/VA dari iPaymu (payment.amount) -- itu bisa
+            // beda dari `total` kita kalau skema fee di akun iPaymu nge-bebanin
+            // biaya admin ke pembeli. Fallback ke total+fee (BUKAN total polos)
+            // kalau iPaymu gak balikin field Amount-nya.
+            const displayAmount = payment.amount || (total + (payment.fee || 0));
             res.status(201).json({
                 message: "Pesanan berhasil dibuat",
                 orderId,
@@ -214,7 +220,7 @@ exports.create = async (req, res) => {
                     paymentNo: payment.paymentNo,
                     qrContent: payment.qrContent,
                     expired: payment.expired,
-                    amount: total,
+                    amount: displayAmount,
                     fee: payment.fee
                 }
             });
