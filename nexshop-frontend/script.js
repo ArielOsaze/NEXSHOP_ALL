@@ -2912,17 +2912,17 @@ function renderLeaderboard(data) {
     const medals = ['text-yellow-400', 'text-gray-400', 'text-amber-600'];
 
     grid.innerHTML = data.map((user, idx) => `
-        <div class="group relative bg-white dark:bg-[#0a0a0c] rounded-2xl p-6 border border-gray-200 dark:border-white/5 hover:border-brand-indigo/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white relative">
-                ${idx < 3 ? `<i class="fa-solid fa-medal absolute -top-2 -right-2 ${medals[idx]} drop-shadow-md text-2xl"></i>` : ''}
+        <div class="group relative bg-white dark:bg-[#0a0a0c] rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-gray-200 dark:border-white/5 hover:border-brand-indigo/50 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 flex items-center gap-3 sm:gap-4">
+            <div class="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full flex items-center justify-center font-bold text-base sm:text-lg bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white relative">
+                ${idx < 3 ? `<i class="fa-solid fa-medal absolute -top-1 sm:-top-2 -right-1 sm:-right-2 ${medals[idx]} drop-shadow-md text-lg sm:text-2xl"></i>` : ''}
                 ${idx + 1}
             </div>
-            <div>
-                <h4 class="font-bold text-gray-900 dark:text-white truncate w-32 group-hover:text-brand-indigo transition-colors">${escapeHtml(user.name)}</h4>
-                <div class="text-sm font-medium text-brand-cyan">${rupiah(user.total_spent)}</div>
+            <div class="min-w-0 flex-1">
+                <h4 class="font-bold text-sm sm:text-base text-gray-900 dark:text-white truncate group-hover:text-brand-indigo transition-colors">${escapeHtml(user.name)}</h4>
+                <div class="text-xs sm:text-sm font-medium text-brand-cyan truncate">${rupiah(user.total_spent)}</div>
             </div>
-            <div class="ml-auto w-10 h-10 rounded-full bg-brand-indigo/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <i class="fa-solid fa-award text-brand-indigo"></i>
+            <div class="ml-2 w-8 h-8 sm:w-10 sm:h-10 shrink-0 rounded-full bg-brand-indigo/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <i class="fa-solid fa-award text-brand-indigo text-sm sm:text-base"></i>
             </div>
         </div>
     `).join("");
