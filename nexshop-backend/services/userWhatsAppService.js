@@ -85,7 +85,10 @@ async function sendUserWhatsApp(targetNumber, type, variables = {}) {
  */
 async function testFonnteConnection(targetNumber, messageText) {
     try {
-        const apiKeys = await getApiKeys();
+        // fresh:true — test dari dashboard harus selalu baca token TERBARU dari
+        // DB, gak boleh kena cache 30 detik (bisa bikin "belum dikonfigurasi"
+        // padahal admin baru saja save).
+        const apiKeys = await getApiKeys({ fresh: true });
         const token = apiKeys.fonnte_token;
         if (!token) throw new Error("Fonnte Token belum dikonfigurasi");
 

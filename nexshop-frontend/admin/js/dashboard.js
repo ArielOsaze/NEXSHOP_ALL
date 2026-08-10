@@ -1770,11 +1770,17 @@ async function saveApiKeys() {
         waapi_url: document.getElementById("waapiUrl").value.trim(),
         waapi_key: document.getElementById("waapiKey").value.trim(),
         waapi_target_number: document.getElementById("waapiTargetNumber").value.trim(),
-        fonnte_api_key: document.getElementById("fonnteApiKey").value.trim(),
-        fonnte_template_otp: document.getElementById("fonnteTemplateOtp").value.trim(),
-        fonnte_template_pending: document.getElementById("fonnteTemplatePending").value.trim(),
-        fonnte_template_success: document.getElementById("fonnteTemplateSuccess").value.trim()
+        fonnte_token: document.getElementById("fonnteApiKey").value.trim(),
+        fonnte_user_enabled: document.getElementById("fonnteUserEnabled").checked,
+        wa_template_otp: document.getElementById("fonnteTemplateOtp").value.trim(),
+        wa_template_pending: document.getElementById("fonnteTemplatePending").value.trim(),
+        wa_template_success: document.getElementById("fonnteTemplateSuccess").value.trim()
     };
+    // Field kosong berarti "tidak diubah" untuk secret fonnte_token — jangan
+    // kirim string kosong ke backend supaya token lama tidak ketimpa/hilang
+    // (lihat updateApiKeys: field yang dikirim "" akan diabaikan, tapi kita
+    // tetap eksplisit di sini biar niatnya jelas dibaca ulang nanti).
+    if (!payload.fonnte_token) delete payload.fonnte_token;
 
     try {
         await withAdminPin(async (security_pin) => {
@@ -1787,7 +1793,9 @@ async function saveApiKeys() {
         if (!res.ok) throw new Error(data.message || "Gagal menyimpan API keys");
 
         showToast("API keys berhasil disimpan");
-        withAdminPin(loadApiKeys, "memuat ulang API Keys").catch(() => {});
+        // Reuse PIN yang sudah diverifikasi di request Save ini — jangan minta
+        // PIN lagi cuma buat reload form (dulu ini penyebab PIN muncul 2x).
+        loadApiKeys(security_pin).catch(() => {});
         }, "menyimpan API Keys");
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -3313,7 +3321,7 @@ const SECRET_API_FIELDS = {
     geminiApiKey: "gemini_api_key",
     smtpPassword: "smtp_password",
     waapiKey: "waapi_key",
-    fonnteApiKey: "fonnte_api_key"
+    fonnteApiKey: "fonnte_token"
 };
 let maskedApiKeys = {};
 let revealedSecretField = null;
@@ -3362,10 +3370,11 @@ async function loadApiKeys(security_pin) {
         document.getElementById("waapiUrl").value = keys.waapi_url || "";
         document.getElementById("waapiKey").value = keys.waapi_key || "";
         document.getElementById("waapiTargetNumber").value = keys.waapi_target_number || "";
-        document.getElementById("fonnteApiKey").value = keys.fonnte_api_key || "";
-        document.getElementById("fonnteTemplateOtp").value = keys.fonnte_template_otp || "";
-        document.getElementById("fonnteTemplatePending").value = keys.fonnte_template_pending || "";
-        document.getElementById("fonnteTemplateSuccess").value = keys.fonnte_template_success || "";
+        document.getElementById("fonnteApiKey").value = keys.fonnte_token || "";
+        document.getElementById("fonnteUserEnabled").checked = !!keys.fonnte_user_enabled;
+        document.getElementById("fonnteTemplateOtp").value = keys.wa_template_otp || "";
+        document.getElementById("fonnteTemplatePending").value = keys.wa_template_pending || "";
+        document.getElementById("fonnteTemplateSuccess").value = keys.wa_template_success || "";
         maskedApiKeys = Object.fromEntries(Object.keys(SECRET_API_FIELDS).map(id => [id, document.getElementById(id).value]));
         Object.keys(SECRET_API_FIELDS).forEach(id => { document.getElementById(id).type = "password"; });
     } catch (err) {

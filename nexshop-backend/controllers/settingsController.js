@@ -224,6 +224,11 @@ exports.getApiKeysAdmin = async (req, res) => {
     }
     try {
         const keys = await getApiKeys({ fresh: true });
+        // Template & toggle notifikasi Fonnte disimpan di store_settings (bukan
+        // api_keys), tapi UI-nya ada di card yang sama ("API Keys" tab) — jadi
+        // digabung di sini biar admin gak perlu 2 kali verifikasi PIN cuma buat
+        // load 1 form.
+        const storeSettings = await getStoreSettings({ fresh: true });
         res.json({
             ipaymu_va: keys.ipaymu_va, // VA bukan rahasia, gak perlu di-mask
             ipaymu_api_key: mask(keys.ipaymu_api_key),
@@ -245,7 +250,13 @@ exports.getApiKeysAdmin = async (req, res) => {
             smtp_user: keys.smtp_user,
             smtp_password: mask(keys.smtp_password),
             smtp_from_email: keys.smtp_from_email,
-            smtp_from_name: keys.smtp_from_name
+            smtp_from_name: keys.smtp_from_name,
+            fonnte_token: mask(keys.fonnte_token),
+            fonnte_configured: !!keys.fonnte_token,
+            fonnte_user_enabled: !!storeSettings.fonnte_user_enabled,
+            wa_template_otp: storeSettings.wa_template_otp,
+            wa_template_pending: storeSettings.wa_template_pending,
+            wa_template_success: storeSettings.wa_template_success
         });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
@@ -259,7 +270,7 @@ exports.revealApiKeysAdmin = async (req, res) => {
         const key = typeof req.body.key === "string" ? req.body.key : "";
         const secretKeys = new Set([
             "ipaymu_api_key", "tokovoucher_secret", "apigames_secret_key", "brevo_api_key",
-            "waapi_key", "gemini_api_key", "smtp_password"
+            "waapi_key", "gemini_api_key", "smtp_password", "fonnte_token"
         ]);
         if (!secretKeys.has(key)) return res.status(400).json({ message: "Secret yang diminta tidak valid" });
         await logSensitiveAction(req, req.body.purpose === "copy" ? "COPY_SECRET" : "REVEAL_SECRET", { key });
@@ -284,13 +295,37 @@ exports.updateApiKeysAdmin = async (req, res) => {
             }
         }
 
+        // Template pesan & toggle notifikasi Fonnte disimpan di store_settings,
+        // bukan api_keys — tapi form-nya digabung 1 card di frontend. Pisahkan
+        // di sini supaya masing-masing ditulis ke tabel yang benar, tetap dalam
+        // 1 request/1 verifikasi PIN yang sama.
+        const storeSettingsFields = [
+            "fonnte_user_enabled", "wa_template_otp", "wa_template_pending", "wa_template_success"
+        ];
+        const storePayload = {};
+        for (const key of storeSettingsFields) {
+            if (payload[key] !== undefined) {
+                storePayload[key] = payload[key];
+                delete payload[key];
+            }
+        }
+
         const { data, error } = await updateApiKeys(payload);
         if (error) {
             console.log(error);
             return res.status(500).json({ message: "Gagal update API keys" });
         }
+
+        if (Object.keys(storePayload).length > 0) {
+            const { error: storeError } = await updateStoreSettings(storePayload);
+            if (storeError) {
+                console.log(storeError);
+                return res.status(500).json({ message: "API keys tersimpan, tapi gagal update template/toggle notifikasi Fonnte" });
+            }
+        }
+
         notify("settings", `🔑 ${req.user.email} mengubah API Keys`);
-        await logSensitiveAction(req, "UPDATE_SECRET", { fields: Object.keys(payload) });
+        await logSensitiveAction(req, "UPDATE_SECRET", { fields: [...Object.keys(payload), ...Object.keys(storePayload)] });
         res.json({ message: "API keys berhasil disimpan" });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
