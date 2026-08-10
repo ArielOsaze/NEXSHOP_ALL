@@ -2,6 +2,7 @@ const supabase = require("../config/db");
 const { sendOtpEmail } = require("../config/mailer");
 const { notify } = require("../config/notify");
 const { generateOtp, OTP_EXPIRY_MINUTES } = require("./authController");
+const { normalizePhoneNumber } = require("../utils/phoneNumber");
 
 // ===========================
 // GET SEMUA USER (untuk admin dashboard)
@@ -371,11 +372,33 @@ exports.updateOwnAvatar = async (req, res) => {
 };
 
 exports.updateOwnPhone = async (req, res) => {
-    const { phone } = req.body;
+    let { phone } = req.body;
     if (!phone || typeof phone !== "string") {
         return res.status(400).json({ message: "Nomor WhatsApp tidak valid" });
     }
+    
+    phone = normalizePhoneNumber(phone);
+    if (!phone || phone.length < 9) {
+        return res.status(400).json({ message: "Nomor WhatsApp tidak valid" });
+    }
+
     try {
+        const { data: existing, error: findErr } = await supabase
+            .from("users")
+            .select("id")
+            .eq("phone", phone)
+            .neq("id", req.user.id)
+            .maybeSingle();
+
+        if (findErr) {
+            console.error(findErr);
+            return res.status(500).json({ message: "Database Error" });
+        }
+
+        if (existing) {
+            return res.status(400).json({ message: "Nomor WhatsApp tersebut sudah terdaftar pada akun lain." });
+        }
+
         const { data, error } = await supabase
             .from("users")
             .update({ phone })
@@ -384,6 +407,9 @@ exports.updateOwnPhone = async (req, res) => {
             
         if (error) {
             console.error(error);
+            if (error.code === '23505' && error.message && error.message.includes('users_phone_key')) {
+                return res.status(400).json({ message: "Nomor WhatsApp tersebut sudah terdaftar pada akun lain." });
+            }
             return res.status(500).json({ message: "Gagal update nomor telepon" });
         }
         res.json({ message: "Nomor telepon diperbarui", phone: data[0].phone });

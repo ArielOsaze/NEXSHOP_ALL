@@ -1769,7 +1769,11 @@ async function saveApiKeys() {
         smtp_from_name: document.getElementById("smtpFromName").value.trim(),
         waapi_url: document.getElementById("waapiUrl").value.trim(),
         waapi_key: document.getElementById("waapiKey").value.trim(),
-        waapi_target_number: document.getElementById("waapiTargetNumber").value.trim()
+        waapi_target_number: document.getElementById("waapiTargetNumber").value.trim(),
+        fonnte_api_key: document.getElementById("fonnteApiKey").value.trim(),
+        fonnte_template_otp: document.getElementById("fonnteTemplateOtp").value.trim(),
+        fonnte_template_pending: document.getElementById("fonnteTemplatePending").value.trim(),
+        fonnte_template_success: document.getElementById("fonnteTemplateSuccess").value.trim()
     };
 
     try {
@@ -1830,6 +1834,56 @@ async function testWhatsApp() {
                 rawEl.textContent = "";
             }
         }, "mengirim test WhatsApp");
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        resultWrap.classList.remove("d-none");
+        alertEl.classList.remove("alert-success");
+        alertEl.classList.add("alert-danger");
+        alertEl.textContent = "Gagal menghubungi server: " + err.message;
+        rawEl.classList.add("d-none");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-whatsapp"></i> Kirim Test`;
+    }
+}
+
+async function testFonnteWhatsApp() {
+    const btn = document.getElementById("fonnteTestBtn");
+    const resultWrap = document.getElementById("fonnteTestResult");
+    const alertEl = document.getElementById("fonnteTestAlert");
+    const rawEl = document.getElementById("fonnteTestRaw");
+
+    const payload = {
+        number: document.getElementById("fonnteTestNumber").value.trim(),
+        message: document.getElementById("fonnteTestMessage").value.trim()
+    };
+
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Mengirim...`;
+    resultWrap.classList.add("d-none");
+
+    try {
+        await withAdminPin(async (security_pin) => {
+            const res = await apiFetch("/settings/test-user-whatsapp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...payload, security_pin })
+            });
+            const data = await res.json().catch(() => ({}));
+            const ok = res.ok && data.success !== false;
+            resultWrap.classList.remove("d-none");
+            alertEl.classList.remove("alert-success", "alert-danger");
+            alertEl.classList.add(ok ? "alert-success" : "alert-danger");
+            alertEl.textContent = data.message || (ok ? "Berhasil." : "Gagal mengirim pesan test.");
+            if (data.gateway_response) {
+                rawEl.classList.remove("d-none");
+                rawEl.textContent = typeof data.gateway_response === "string"
+                    ? data.gateway_response : JSON.stringify(data.gateway_response, null, 2);
+            } else {
+                rawEl.classList.add("d-none");
+                rawEl.textContent = "";
+            }
+        }, "mengirim test Fonnte WhatsApp");
     } catch (err) {
         if (err.message === "unauthorized") return;
         resultWrap.classList.remove("d-none");
@@ -3258,7 +3312,8 @@ const SECRET_API_FIELDS = {
     brevoApiKey: "brevo_api_key",
     geminiApiKey: "gemini_api_key",
     smtpPassword: "smtp_password",
-    waapiKey: "waapi_key"
+    waapiKey: "waapi_key",
+    fonnteApiKey: "fonnte_api_key"
 };
 let maskedApiKeys = {};
 let revealedSecretField = null;
@@ -3307,6 +3362,10 @@ async function loadApiKeys(security_pin) {
         document.getElementById("waapiUrl").value = keys.waapi_url || "";
         document.getElementById("waapiKey").value = keys.waapi_key || "";
         document.getElementById("waapiTargetNumber").value = keys.waapi_target_number || "";
+        document.getElementById("fonnteApiKey").value = keys.fonnte_api_key || "";
+        document.getElementById("fonnteTemplateOtp").value = keys.fonnte_template_otp || "";
+        document.getElementById("fonnteTemplatePending").value = keys.fonnte_template_pending || "";
+        document.getElementById("fonnteTemplateSuccess").value = keys.fonnte_template_success || "";
         maskedApiKeys = Object.fromEntries(Object.keys(SECRET_API_FIELDS).map(id => [id, document.getElementById(id).value]));
         Object.keys(SECRET_API_FIELDS).forEach(id => { document.getElementById(id).type = "password"; });
     } catch (err) {

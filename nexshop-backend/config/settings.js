@@ -89,7 +89,8 @@ async function getApiKeys({ fresh = false } = {}) {
         smtp_user: (data && data.smtp_user) || process.env.SMTP_USER || "",
         smtp_password: (data && data.smtp_password) || process.env.SMTP_PASSWORD || "",
         smtp_from_email: (data && data.smtp_from_email) || process.env.SMTP_FROM_EMAIL || "",
-        smtp_from_name: (data && data.smtp_from_name) || process.env.SMTP_FROM_NAME || "NexShop"
+        smtp_from_name: (data && data.smtp_from_name) || process.env.SMTP_FROM_NAME || "NexShop",
+        fonnte_token: (data && data.fonnte_token) || process.env.FONNTE_TOKEN || ""
     };
 
     apiKeysCache = { data: merged, ts: now };
@@ -118,7 +119,8 @@ async function updateApiKeys(payload) {
         "smtp_user",
         "smtp_password",
         "smtp_from_email",
-        "smtp_from_name"
+        "smtp_from_name",
+        "fonnte_token"
     ];
     const updatePayload = { updated_at: new Date().toISOString() };
     for (const key of allowed) {
@@ -176,7 +178,14 @@ async function getStoreSettings({ fresh = false } = {}) {
         trust_bar_games_offset: 0,
         event_mascot: null,
         ticker_text: "Transaksi aman dan cepat 24/7|Pembayaran QRIS & e-Wallet didukung|100% Legal & Terpercaya|Customer Service siap membantu",
-        ticker_speed_seconds: 30
+        ticker_speed_seconds: 30,
+        fonnte_user_enabled: false,
+        wa_notify_pending_enabled: true,
+        wa_notify_success_enabled: true,
+        wa_notify_otp_enabled: true,
+        wa_template_pending: "Halo {name}, pesanan kamu #{order_id} berhasil dibuat!\n\nSilakan lakukan pembayaran sebesar {total} sebelum waktu habis.\n\nTerima kasih, NexShop.",
+        wa_template_success: "Halo {name}, pembayaran untuk pesanan #{order_id} sebesar {total} telah kami terima.\n\nPesanan sedang diproses, terima kasih sudah berbelanja di NexShop!",
+        wa_template_otp: "Halo!\n\nKode OTP NexShop kamu adalah: *{otp}*\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun."
     };
 
     storeSettingsCache = { data: merged, ts: now };
@@ -188,7 +197,9 @@ async function updateStoreSettings(payload) {
         "store_name", "tagline", "contact_whatsapp", "contact_email", "contact_phone",
         "address", "logo_url", "faq", "terms_content", "refund_content", "trust_bar_enabled",
         "trust_bar_orders_offset", "trust_bar_games_offset", "event_mascot",
-        "ticker_text", "ticker_speed_seconds"
+        "ticker_text", "ticker_speed_seconds",
+        "fonnte_user_enabled", "wa_notify_pending_enabled", "wa_notify_success_enabled",
+        "wa_notify_otp_enabled", "wa_template_pending", "wa_template_success", "wa_template_otp"
     ];
     const updatePayload = { updated_at: new Date().toISOString() };
     for (const key of allowed) {

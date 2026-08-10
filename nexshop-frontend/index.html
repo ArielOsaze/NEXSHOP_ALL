@@ -687,6 +687,15 @@ Cek Transaksi
             <label>Email
                 <input type="email" id="regEmail" required placeholder="kamu@email.com">
             </label>
+            <label>Pilih Pengiriman Kode OTP
+                <select id="regOtpMethod" class="input-select" required>
+                    <option value="email">Kirim ke Email</option>
+                    <option value="whatsapp">Kirim ke WhatsApp</option>
+                </select>
+            </label>
+            <label id="regWhatsappContainer" style="display: none;">Nomor WhatsApp
+                <input type="tel" id="regWhatsapp" placeholder="081234567890" minlength="9" maxlength="15">
+            </label>
             <label>Kata Sandi
                 <div class="password-field">
                     <input type="password" id="regPassword" required minlength="8" placeholder="Minimal 8 karakter">
@@ -698,8 +707,8 @@ Cek Transaksi
         </form>
 
         <form id="otpForm" class="auth-form hidden">
-            <h3>Verifikasi Email</h3>
-            <p class="otp-info">Kode 6 digit sudah dikirim ke <strong id="otpEmailLabel"></strong>. Cek juga folder Spam kalau belum masuk.</p>
+            <h3>Verifikasi Kode OTP</h3>
+            <p class="otp-info">Kode 6 digit sudah dikirim ke <strong id="otpEmailLabel"></strong>. <span id="otpSpamNotice">Cek juga folder Spam kalau belum masuk.</span></p>
             <input type="hidden" id="otpEmail">
             <label>Kode OTP
                 <input type="text" id="otpCode" required maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="6 digit kode">

@@ -1,0 +1,116 @@
+const axios = require("axios");
+const { getApiKeys, getStoreSettings } = require("../config/settings");
+
+/**
+ * Mengganti template variables (misal: {name}, {order_id}) dengan data asli
+ */
+function parseTemplate(template, data) {
+    let result = template;
+    for (const key in data) {
+        // Replace semua occurrence dari {key}
+        result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), data[key] || '');
+    }
+    return result;
+}
+
+/**
+ * Fungsi utama untuk kirim WA ke user via Fonnte
+ * tipe: 'pending' | 'success' | 'otp'
+ */
+async function sendUserWhatsApp(targetNumber, type, variables = {}) {
+    try {
+        const apiKeys = await getApiKeys();
+        const settings = await getStoreSettings();
+
+        // Cek apakah fitur Fonnte diaktifkan secara global
+        if (!settings.fonnte_user_enabled) return { success: false, reason: "disabled_globally" };
+
+        const token = apiKeys.fonnte_token;
+        if (!token) {
+            console.log("⚠️ Fonnte Token belum dikonfigurasi.");
+            return { success: false, reason: "missing_token" };
+        }
+
+        // Cek apakah tipe notifikasi ini diaktifkan
+        let template = "";
+        if (type === "pending") {
+            if (!settings.wa_notify_pending_enabled) return { success: false, reason: "disabled_type" };
+            template = settings.wa_template_pending;
+        } else if (type === "success") {
+            if (!settings.wa_notify_success_enabled) return { success: false, reason: "disabled_type" };
+            template = settings.wa_template_success;
+        } else if (type === "otp") {
+            if (!settings.wa_notify_otp_enabled) return { success: false, reason: "disabled_type" };
+            template = settings.wa_template_otp;
+        } else {
+            return { success: false, reason: "invalid_type" };
+        }
+
+        if (!template) {
+            console.log(`⚠️ Template WhatsApp untuk ${type} kosong.`);
+            return { success: false, reason: "missing_template" };
+        }
+
+        const message = parseTemplate(template, variables);
+
+        const response = await axios.post(
+            "https://api.fonnte.com/send",
+            {
+                target: targetNumber,
+                message: message
+            },
+            {
+                headers: {
+                    Authorization: token
+                },
+                timeout: 10000 // 10 detik agar tidak hang
+            }
+        );
+
+        if (response.data && response.data.status) {
+            return { success: true, response: response.data };
+        } else {
+            console.log("⚠️ Fonnte API gagal:", response.data);
+            return { success: false, reason: "api_error", error: response.data };
+        }
+
+    } catch (err) {
+        console.error("Kesalahan saat mengirim Fonnte WA:", err.message);
+        return { success: false, reason: "exception", error: err.message };
+    }
+}
+
+/**
+ * Khusus untuk testing dari Admin Dashboard
+ */
+async function testFonnteConnection(targetNumber, messageText) {
+    try {
+        const apiKeys = await getApiKeys();
+        const token = apiKeys.fonnte_token;
+        if (!token) throw new Error("Fonnte Token belum dikonfigurasi");
+
+        const response = await axios.post(
+            "https://api.fonnte.com/send",
+            {
+                target: targetNumber,
+                message: messageText
+            },
+            {
+                headers: {
+                    Authorization: token
+                },
+                timeout: 10000
+            }
+        );
+
+        return response.data;
+    } catch (err) {
+        throw err;
+    }
+}
+
+module.exports = {
+    sendUserWhatsApp,
+    testFonnteConnection,
+    parseTemplate
+};

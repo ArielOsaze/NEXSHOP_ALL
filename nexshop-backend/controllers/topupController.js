@@ -5,6 +5,7 @@ const { createRedirectPayment, checkTransactionStatus, createDirectPayment, isDi
 
 const { checkNickname } = require("../config/apigames");
 const { notify } = require("../config/notify");
+const { sendUserWhatsApp } = require("../services/userWhatsAppService");
 const { sendTopupInvoiceEmail } = require("../config/mailer");
 const { sendTelegramNotification } = require("../config/telegram");
 const { sendWhatsAppNotification } = require("../config/whatsapp");
@@ -1415,6 +1416,9 @@ exports.create = async (req, res) => {
             // yang beneran ke-encode di QR/VA iPaymu (bisa termasuk fee kalau
             // dibebankan ke pembeli), bukan total polos.
             const displayAmount = payment.amount || (total + (payment.fee || 0));
+            
+            sendUserWhatsApp(normalizedPhone, "pending", { name: "Pelanggan", order_id: orderId, total: rupiahLog(displayAmount) });
+
             res.status(201).json({
                 message: "Pesanan topup berhasil dibuat",
                 orderId,
@@ -1428,6 +1432,8 @@ exports.create = async (req, res) => {
                 }
             });
         } else {
+            sendUserWhatsApp(normalizedPhone, "pending", { name: "Pelanggan", order_id: orderId, total: rupiahLog(total) });
+
             res.status(201).json({
                 message: "Pesanan topup berhasil dibuat",
                 orderId,

@@ -32,6 +32,7 @@ router.post("/api-keys", authMiddleware, superAdminMiddleware, requireAdminPin, 
 router.post("/api-keys/reveal", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.revealApiKeysAdmin);
 router.put("/api-keys", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.updateApiKeysAdmin);
 router.post("/test-whatsapp", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.testWhatsAppAdmin);
+router.post("/test-user-whatsapp", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.testUserWhatsApp);
 
 // Profil admin yang sedang login
 router.get("/me", authMiddleware, settingsController.getMe);

@@ -364,6 +364,39 @@ exports.testWhatsAppAdmin = async (req, res) => {
     }
 };
 
+exports.testUserWhatsApp = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+
+    try {
+        const { testFonnteConnection } = require("../services/userWhatsAppService");
+        const number = (req.body.number || "").trim();
+        const message = (req.body.message || "").trim() || "Test notifikasi WhatsApp dari Fonnte NexShop ✅";
+
+        if (!number) return res.status(400).json({ message: "Nomor tujuan belum diisi." });
+
+        const started = Date.now();
+        try {
+            const waRes = await testFonnteConnection(number, message);
+            return res.json({
+                success: true,
+                message: `Pesan test berhasil dikirim via Fonnte (${Date.now() - started}ms)`,
+                gateway_response: waRes
+            });
+        } catch (waErr) {
+            return res.status(200).json({
+                success: false,
+                message: "Gagal memanggil Fonnte API: " + (waErr.response?.data?.reason || waErr.message),
+                gateway_response: waErr.response?.data || null
+            });
+        }
+    } catch (err) {
+        console.log("testUserWhatsApp error:", err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 // ===========================================================
 // PROFIL ADMIN — lihat & ubah nama/email/password akun sendiri
 // ===========================================================

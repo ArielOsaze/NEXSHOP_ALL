@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { sendOtpEmail, sendPasswordResetEmail } = require("../config/mailer");
+const { sendUserWhatsApp } = require("../services/userWhatsAppService");
+const { normalizePhoneNumber } = require("../utils/phoneNumber");
 const { notify } = require("../config/notify");
 const { resetLoginLimiter, getBlockedLoginIps } = require("../middleware/rateLimiter");
 
@@ -58,12 +60,24 @@ exports.register = async (req, res) => {
     const fullname = typeof req.body.fullname === "string" ? req.body.fullname.trim() : "";
     const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
     const password = typeof req.body.password === "string" ? req.body.password : "";
+    const otpMethod = typeof req.body.otp_method === "string" ? req.body.otp_method : "email";
+    let whatsapp = typeof req.body.whatsapp === "string" ? req.body.whatsapp.trim() : "";
 
     if (!fullname || !email || !password) {
         return res.status(400).json({ message: "Semua field wajib diisi" });
     }
+    if (otpMethod === "whatsapp" && !whatsapp) {
+        return res.status(400).json({ message: "Nomor WhatsApp wajib diisi jika memilih verifikasi via WhatsApp" });
+    }
     if (fullname.length > 100 || !isValidEmail(email) || password.length < 8 || password.length > 128) {
         return res.status(400).json({ message: "Data registrasi tidak valid. Password minimal 8 karakter." });
+    }
+
+    if (otpMethod === "whatsapp") {
+        whatsapp = normalizePhoneNumber(whatsapp);
+        if (!whatsapp || whatsapp.length < 9) {
+            return res.status(400).json({ message: "Nomor WhatsApp tidak valid" });
+        }
     }
 
     try {
@@ -82,8 +96,26 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: "Email sudah terdaftar" });
         }
 
+        if (otpMethod === "whatsapp") {
+            const { data: existingPhone, error: findPhoneErr } = await supabase
+                .from("users")
+                .select("id")
+                .eq("phone", whatsapp)
+                .maybeSingle();
+
+            if (findPhoneErr) {
+                console.log(findPhoneErr);
+                return res.status(500).json({ message: "Database Error" });
+            }
+
+            if (existingPhone) {
+                return res.status(400).json({ message: "Nomor WhatsApp tersebut sudah terdaftar pada akun lain." });
+            }
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const otp = generateOtp();
+        const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
         const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
 
         const { error: insertErr } = await supabase
@@ -93,32 +125,45 @@ exports.register = async (req, res) => {
                 email,
                 password: hashedPassword,
                 email_verified: false,
-                otp_code: otp,
-                otp_expires_at: otpExpiresAt
+                otp_code: hashedOtp,
+                otp_expires_at: otpExpiresAt,
+                phone: otpMethod === "whatsapp" ? whatsapp : null
             }]);
 
         if (insertErr) {
             console.log(insertErr);
+            if (insertErr.code === '23505' && insertErr.message && insertErr.message.includes('users_phone_key')) {
+                return res.status(400).json({ message: "Nomor WhatsApp tersebut sudah terdaftar pada akun lain." });
+            }
             return res.status(500).json({ message: "Gagal register" });
         }
 
         try {
-            await sendOtpEmail(email, otp);
+            if (otpMethod === "whatsapp") {
+                const resWA = await sendUserWhatsApp(whatsapp, "otp", { otp });
+                if (!resWA.success && resWA.reason !== "disabled_type" && resWA.reason !== "disabled_globally") {
+                    throw new Error("Gagal API Fonnte");
+                }
+            } else {
+                await sendOtpEmail(email, otp);
+            }
         } catch (mailErr) {
-            console.log("Gagal kirim email OTP:", mailErr.message);
+            console.log("Gagal kirim OTP:", mailErr.message);
             // akun tetap dibuat, kode OTP tersimpan di DB (admin bisa lihat
             // lewat menu Users > OTP Aktif kalau emailnya gak sampai), dan
             // user bisa minta kirim ulang lewat /resend-otp
             return res.status(201).json({
-                message: "Register berhasil, tapi gagal mengirim email OTP. Silakan minta kirim ulang atau hubungi admin.",
+                message: "Register berhasil, tapi gagal mengirim OTP. Silakan minta kirim ulang atau hubungi admin.",
                 email,
+                otp_method: otpMethod,
                 emailSent: false
             });
         }
 
         res.status(201).json({
-            message: "Register berhasil. Cek email kamu untuk kode verifikasi.",
+            message: "Register berhasil. Cek " + (otpMethod === "whatsapp" ? "WhatsApp" : "email") + " kamu untuk kode verifikasi.",
             email,
+            otp_method: otpMethod,
             emailSent: true
         });
     } catch (error) {
@@ -155,7 +200,10 @@ exports.verifyOtp = async (req, res) => {
             return res.status(400).json({ message: "Akun sudah terverifikasi" });
         }
 
-        if (!user.otp_code || user.otp_code !== otp) {
+        const hashedInput = crypto.createHash("sha256").update(otp).digest("hex");
+
+        if (!user.otp_code || (user.otp_code !== otp && user.otp_code !== hashedInput)) {
+            // Note: Cek 'otp' (plaintext) untuk backward compatibility dengan kode lama yang belum ter-hash
             return res.status(400).json({ message: "Kode OTP salah" });
         }
 
@@ -191,7 +239,7 @@ exports.resendOtp = async (req, res) => {
     try {
         const { data: user, error } = await supabase
             .from("users")
-            .select("id, email_verified")
+            .select("id, email_verified, phone")
             .eq("email", email)
             .maybeSingle();
 
@@ -209,11 +257,12 @@ exports.resendOtp = async (req, res) => {
         }
 
         const otp = generateOtp();
+        const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
         const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
 
         const { error: updateErr } = await supabase
             .from("users")
-            .update({ otp_code: otp, otp_expires_at: otpExpiresAt })
+            .update({ otp_code: hashedOtp, otp_expires_at: otpExpiresAt })
             .eq("id", user.id);
 
         if (updateErr) {
@@ -222,18 +271,25 @@ exports.resendOtp = async (req, res) => {
         }
 
         try {
-            await sendOtpEmail(email, otp);
+            if (req.body.otp_method === "whatsapp" && user.phone) {
+                const resWA = await sendUserWhatsApp(user.phone, "otp", { otp });
+                if (!resWA.success && resWA.reason !== "disabled_type" && resWA.reason !== "disabled_globally") {
+                    throw new Error("Gagal API Fonnte");
+                }
+            } else {
+                await sendOtpEmail(email, otp);
+            }
         } catch (mailErr) {
-            console.log("Gagal kirim ulang email OTP:", mailErr.message);
+            console.log("Gagal kirim ulang OTP:", mailErr.message);
             // kode OTP tetap dibuat & tersimpan di DB (bisa dilihat admin lewat
             // menu Users > OTP Aktif kalau emailnya gak sampai)
             return res.json({
-                message: "Kode OTP baru sudah dibuat, tapi email gagal terkirim. Hubungi admin/CS untuk minta kode OTP kamu.",
+                message: "Kode OTP baru sudah dibuat, tapi gagal terkirim. Hubungi admin/CS untuk minta kode OTP kamu.",
                 emailSent: false
             });
         }
 
-        res.json({ message: "Kode OTP baru sudah dikirim ke email kamu.", emailSent: true });
+        res.json({ message: `Kode OTP baru sudah dikirim ke ${req.body.otp_method === "whatsapp" ? "WhatsApp" : "email"} kamu.`, emailSent: true });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server Error" });

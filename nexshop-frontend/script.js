@@ -984,18 +984,24 @@ document.getElementById("resetPasswordForm").addEventListener("submit", async (e
     }
 });
 
+document.getElementById("regOtpMethod")?.addEventListener("change", (e) => {
+    document.getElementById("regWhatsappContainer").style.display = e.target.value === "whatsapp" ? "block" : "none";
+});
+
 document.getElementById("registerForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const fullname = document.getElementById("regName").value.trim();
     const email = document.getElementById("regEmail").value.trim().toLowerCase();
     const password = document.getElementById("regPassword").value;
+    const otp_method = document.getElementById("regOtpMethod").value;
+    const whatsapp = document.getElementById("regWhatsapp").value.trim();
     const errorEl = document.getElementById("regError");
 
     try {
         const res = await fetch(`${API_BASE}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ fullname, email, password })
+            body: JSON.stringify({ fullname, email, password, otp_method, whatsapp })
         });
         const data = await res.json();
 
@@ -1005,20 +1011,27 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
         }
         errorEl.textContent = "";
         e.target.reset();
-        showOtpForm(email);
-        toast("Cek email kamu untuk kode verifikasi.", "success");
+        showOtpForm(email, data.otp_method || otp_method);
+        toast(`Cek ${data.otp_method === "whatsapp" ? "WhatsApp" : "email"} kamu untuk kode verifikasi.`, "success");
     } catch (err) {
         errorEl.textContent = "Gagal terhubung ke server.";
     }
 });
 
-function showOtpForm(email) {
+let currentOtpMethod = "email";
+
+function showOtpForm(email, method = "email") {
+    currentOtpMethod = method;
     document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
     document.getElementById("loginForm").classList.add("hidden");
     document.getElementById("registerForm").classList.add("hidden");
     document.getElementById("otpForm").classList.remove("hidden");
     document.getElementById("otpEmail").value = email;
-    document.getElementById("otpEmailLabel").textContent = email;
+    document.getElementById("otpEmailLabel").textContent = method === "whatsapp" ? "WhatsApp" : email;
+    
+    const spamNotice = document.getElementById("otpSpamNotice");
+    if (spamNotice) spamNotice.style.display = method === "whatsapp" ? "none" : "inline";
+
     document.getElementById("otpError").textContent = "";
     openOverlay("authOverlay");
 }
@@ -1066,7 +1079,7 @@ document.getElementById("otpResendBtn").addEventListener("click", async () => {
         const res = await fetch(`${API_BASE}/auth/resend-otp`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email, otp_method: currentOtpMethod })
         });
         const data = await res.json();
 

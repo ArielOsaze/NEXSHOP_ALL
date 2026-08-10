@@ -7,6 +7,7 @@ const { notify } = require("../config/notify");
 const { sendOrderInvoiceEmail } = require("../config/mailer");
 const { sendTelegramNotification } = require("../config/telegram");
 const { sendWhatsAppNotification } = require("../config/whatsapp");
+const { sendUserWhatsApp } = require("../services/userWhatsAppService");
 
 const IPAYMU_PAYMENT_METHODS = Object.freeze({
     qris: "qris",
@@ -212,6 +213,9 @@ exports.create = async (req, res) => {
             // biaya admin ke pembeli. Fallback ke total+fee (BUKAN total polos)
             // kalau iPaymu gak balikin field Amount-nya.
             const displayAmount = payment.amount || (total + (payment.fee || 0));
+            
+            sendUserWhatsApp(normalizedPhone, "pending", { name: recipient_name, order_id: orderId, total: rupiahLog(displayAmount) });
+            
             res.status(201).json({
                 message: "Pesanan berhasil dibuat",
                 orderId,
@@ -225,6 +229,8 @@ exports.create = async (req, res) => {
                 }
             });
         } else {
+            sendUserWhatsApp(normalizedPhone, "pending", { name: recipient_name, order_id: orderId, total: rupiahLog(total) });
+            
             res.status(201).json({
                 message: "Pesanan berhasil dibuat",
                 orderId,
@@ -494,6 +500,12 @@ exports.handleNotification = async (req, res) => {
             sendWhatsAppNotification(
                 `🛒 *Pembelian Baru*\nOrder ID: ${orderId}\nNama: ${existingOrder.recipient_name || "-"}\nTotal: ${rupiahLog(existingOrder.total)}`
             );
+
+            // Anti-duplicate notification (idempotency)
+            const { error: notifErr } = await supabase.from("notification_events").insert([{ order_id: orderId, notification_type: "success" }]);
+            if (!notifErr) {
+                sendUserWhatsApp(existingOrder.recipient_phone, "success", { name: existingOrder.recipient_name, order_id: orderId, total: rupiahLog(existingOrder.total) });
+            }
         }
 
         // iPaymu expect balasan 200 OK sederhana
