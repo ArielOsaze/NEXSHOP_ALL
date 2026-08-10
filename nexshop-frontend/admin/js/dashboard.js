@@ -421,6 +421,11 @@ function renderProducts() {
             <td><span class="badge bg-primary">${escapeHtml(product.badge || "-")}</span></td>
             <td>${escapeHtml(product.category || "-")}</td>
             <td>
+                <div class="form-check form-switch m-0 p-0 d-flex justify-content-center">
+                    <input class="form-check-input ms-0" type="checkbox" onchange="toggleProductStatus(${product.id}, this.checked)" ${product.is_active !== false ? 'checked' : ''}>
+                </div>
+            </td>
+            <td>
                 <button class="btn btn-warning btn-sm" onclick="editProduct(${Number(product.id)})">
                     <i class="bi bi-pencil"></i>
                 </button>
@@ -578,6 +583,32 @@ async function deleteProduct(id) {
 }
 
 // ================================
+// Toggle Status
+// ================================
+
+async function toggleProductStatus(id, isActive) {
+    try {
+        const res = await apiFetch(`/products/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ is_active: isActive })
+        });
+        const data = await res.json().catch(() => ({}));
+
+        if (!res.ok) throw new Error(data.message || "Gagal mengubah status produk");
+
+        showToast("Status produk berhasil diubah");
+        const p = products.find(p => p.id === id);
+        if (p) p.is_active = isActive;
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        console.error(err);
+        showToast(err.message, true);
+        renderProducts(); // revert toggle if failed
+    }
+}
+
+// ================================
 // Edit
 // ================================
 
@@ -594,6 +625,7 @@ function editProduct(id) {
     document.getElementById("price").value = product.price;
     document.getElementById("strikePrice").value = product.strike_price || "";
     document.getElementById("isFlashSale").checked = !!product.is_flash_sale;
+    document.getElementById("isActive").checked = product.is_active !== false;
     document.getElementById("badge").value = product.badge || "";
     document.getElementById("category").value = product.category || "";
     document.getElementById("rating").value = product.rating || "";
@@ -663,6 +695,7 @@ async function saveProduct() {
             price,
             strike_price: Number(document.getElementById("strikePrice").value || 0) || null,
             is_flash_sale: document.getElementById("isFlashSale").checked,
+            is_active: document.getElementById("isActive").checked,
             badge: document.getElementById("badge").value.trim(),
             category: document.getElementById("category").value.trim(),
             rating: Number(document.getElementById("rating").value || 0),

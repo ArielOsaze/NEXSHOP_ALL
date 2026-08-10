@@ -743,6 +743,23 @@ Cek Transaksi
     </div>
 </div>
 
+<!-- Input Phone Modal -->
+<div class="overlay" id="phoneOverlay">
+    <div class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="phoneTitle">
+        <!-- User cannot close this modal, they MUST enter the phone number to proceed or we can let them close it? "dimintain an di save langsung... jdi pas payment gaperliu minta no wa lagi". We will let them close but if they close, they won't have it saved. Better to show close button for UX, but prompt pops up on checkout if missing. -->
+        <button class="modal-close" data-close="phoneOverlay" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        <form id="phoneForm" class="auth-form">
+            <h3 id="phoneTitle">Satu Langkah Lagi!</h3>
+            <p class="otp-info">Masukkan nomor WhatsApp kamu buat mempermudah integrasi pembayaran (biar nggak usah masukin manual lagi pas checkout).</p>
+            <label>Nomor WhatsApp
+                <input type="tel" id="userPhoneInput" required placeholder="08xxxxxxxxxx" pattern="[0-9]+" minlength="9" maxlength="15">
+            </label>
+            <p class="auth-error" id="phoneError"></p>
+            <button type="submit" class="btn-primary" id="phoneSubmitBtn">Simpan Nomor WA</button>
+        </form>
+    </div>
+</div>
+
 <!-- Cek Transaksi Modal -->
 <div class="overlay" id="trackOverlay">
     <div class="modal auth-modal" role="dialog" aria-modal="true" aria-labelledby="trackTitle">

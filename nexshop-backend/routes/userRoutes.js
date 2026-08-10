@@ -11,6 +11,7 @@ router.post("/list", authMiddleware, adminMiddleware, requireAdminPin, userContr
 router.post("/otp", authMiddleware, adminMiddleware, requireAdminPin, userController.getPendingOtp);
 router.post("/:id/detail", authMiddleware, adminMiddleware, requireAdminPin, userController.getUserDetail);
 router.put("/me/avatar", authMiddleware, userController.updateOwnAvatar);
+router.put("/me/phone", authMiddleware, userController.updateOwnPhone);
 router.put("/:id", authMiddleware, adminMiddleware, requireAdminPin, userController.updateUser);
 router.post("/:id/resend-otp", authMiddleware, adminMiddleware, requireAdminPin, userController.adminResendOtp);
 router.delete("/:id", authMiddleware, adminMiddleware, requireAdminPin, userController.deleteUser);

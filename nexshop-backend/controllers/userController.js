@@ -369,3 +369,26 @@ exports.updateOwnAvatar = async (req, res) => {
         res.status(500).json({ message: "Server Error" });
     }
 };
+
+exports.updateOwnPhone = async (req, res) => {
+    const { phone } = req.body;
+    if (!phone || typeof phone !== "string") {
+        return res.status(400).json({ message: "Nomor WhatsApp tidak valid" });
+    }
+    try {
+        const { data, error } = await supabase
+            .from("users")
+            .update({ phone })
+            .eq("id", req.user.id)
+            .select("id, phone");
+            
+        if (error) {
+            console.error(error);
+            return res.status(500).json({ message: "Gagal update nomor telepon" });
+        }
+        res.json({ message: "Nomor telepon diperbarui", phone: data[0].phone });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};

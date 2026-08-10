@@ -6,11 +6,31 @@ const { notify } = require("../config/notify");
 // ===========================
 exports.getProducts = async (req, res) => {
   try {
-    const { data, error } = await supabase
+    let isAdmin = false;
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+      const match = authHeader.match(/^Bearer\s+(.+)$/i);
+      if (match) {
+        try {
+          const decoded = require("jsonwebtoken").verify(match[1], process.env.JWT_SECRET);
+          if (decoded.role === "admin") {
+            isAdmin = true;
+          }
+        } catch (e) {}
+      }
+    }
+
+    let query = supabase
       .from("products")
       .select("*")
       .order("sort_order", { ascending: true })
       .order("id", { ascending: true });
+
+    if (!isAdmin) {
+      query = query.or("is_active.eq.true,is_active.is.null");
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       return res.status(500).json({

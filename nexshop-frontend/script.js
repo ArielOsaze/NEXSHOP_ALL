@@ -241,6 +241,12 @@ function closeOverlay(id) {
     if (!el) return;
     el.classList.remove("active");
     el.setAttribute("aria-hidden", "true");
+    
+    if (id === "trackOverlay" && window.trackPollingTimer) {
+        clearTimeout(window.trackPollingTimer);
+        window.trackPollingTimer = null;
+    }
+
     if (!document.querySelector(".overlay.active")) {
         document.body.style.overflow = "";
         if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
@@ -1107,11 +1113,67 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         saveUser();
         switchCartContext();
         refreshAccountUI();
-        closeOverlay("authOverlay");
-        toast(`Berhasil masuk. Selamat datang kembali, ${data.user.fullname}!`, "success");
+        
+        if (!currentUser.phone) {
+            closeOverlay("authOverlay");
+            openOverlay("phoneOverlay");
+        } else {
+            closeOverlay("authOverlay");
+            toast(`Berhasil masuk. Selamat datang kembali, ${data.user.fullname}!`, "success");
+        }
         e.target.reset();
     } catch (err) {
         errorEl.textContent = "Gagal terhubung ke server.";
+    }
+});
+
+document.getElementById("phoneForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const phone = document.getElementById("userPhoneInput").value.trim();
+    const errorEl = document.getElementById("phoneError");
+    const btn = document.getElementById("phoneSubmitBtn");
+    
+    errorEl.textContent = "";
+    btn.disabled = true;
+    btn.textContent = "Menyimpan...";
+    
+    try {
+        const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+        const res = await fetch(`${API_BASE}/users/me/phone`, {
+            method: "PUT",
+            headers: { 
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}` 
+            },
+            body: JSON.stringify({ phone })
+        });
+        const data = await res.json();
+        
+        if (!res.ok) {
+            errorEl.textContent = data.message || "Gagal menyimpan nomor WA.";
+            return;
+        }
+        
+        if (currentUser) {
+            currentUser.phone = data.phone;
+            saveUser();
+        }
+        
+        closeOverlay("phoneOverlay");
+        toast("Nomor WhatsApp berhasil disimpan!", "success");
+        e.target.reset();
+        
+        // Also pre-fill if checkout is open
+        const checkoutPhone = document.getElementById("checkoutPhone");
+        if (checkoutPhone) checkoutPhone.value = data.phone;
+        const twPhone = document.getElementById("twPhone");
+        if (twPhone) twPhone.value = data.phone;
+        
+    } catch (err) {
+        errorEl.textContent = "Gagal terhubung ke server.";
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Simpan Nomor WA";
     }
 });
 
@@ -1229,9 +1291,18 @@ function openCheckout(items, source = "cart") {
     if (currentUser) {
         document.getElementById("checkoutName").value = currentUser.fullname;
         document.getElementById("checkoutEmail").value = currentUser.email;
+        if (currentUser.phone) {
+            document.getElementById("checkoutPhone").value = currentUser.phone;
+            document.getElementById("checkoutPhone").parentElement.classList.add("hidden");
+        } else {
+            document.getElementById("checkoutPhone").parentElement.classList.remove("hidden");
+            document.getElementById("checkoutPhone").value = "";
+        }
     } else {
         document.getElementById("checkoutName").value = "";
         document.getElementById("checkoutEmail").value = "";
+        document.getElementById("checkoutPhone").value = "";
+        document.getElementById("checkoutPhone").parentElement.classList.remove("hidden");
     }
 
     renderCheckoutSummary();
@@ -1752,6 +1823,26 @@ function renderTrackResult(data, options = {}) {
         ${waCta}
     `;
     document.getElementById("trackResult").classList.remove("hidden");
+
+    if (window.trackPollingTimer) clearTimeout(window.trackPollingTimer);
+    if ((data.status === "pending" || data.status === "0") && document.getElementById("trackOverlay").classList.contains("active")) {
+        window.trackPollingTimer = setTimeout(async () => {
+            if (document.getElementById("trackOverlay").classList.contains("active")) {
+                const isTopup = data.id.toUpperCase().startsWith("TP");
+                const endpoint = isTopup ? `${API_BASE}/topup/track/${encodeURIComponent(data.id)}` : `${API_BASE}/orders/track/${encodeURIComponent(data.id)}`;
+                try {
+                    const res = await fetch(endpoint);
+                    if (res.ok) {
+                        const newData = await res.json();
+                        if (newData.status === "paid" || newData.status === "sukses") {
+                            toast("Pembayaran Berhasil!", "success");
+                        }
+                        renderTrackResult(newData, options);
+                    }
+                } catch(e) {}
+            }
+        }, 5000);
+    }
 }
 
 document.getElementById("trackForm").addEventListener("submit", async (e) => {
@@ -2333,6 +2424,13 @@ function openGameDetail(kategori) {
     document.getElementById("twUserId").value = "";
     document.getElementById("twServerId").value = "";
     document.getElementById("twEmail").value = twState.email;
+    if (currentUser && currentUser.phone) {
+        document.getElementById("twPhone").value = currentUser.phone;
+        document.getElementById("twPhone").parentElement.classList.add("hidden");
+    } else {
+        document.getElementById("twPhone").value = "";
+        document.getElementById("twPhone").parentElement.classList.remove("hidden");
+    }
     document.getElementById("twServerWrap").classList.toggle("hidden", !twState.needsServerId);
     document.getElementById("twAccountResult").className = "tw-account-result hidden";
     document.getElementById("twAccountResult").innerHTML = "";
@@ -3472,6 +3570,10 @@ async function bootstrapApp() {
         new Promise((resolve) => setTimeout(() => resolve(false), 12000))
     ]);
     finishInitialLoading(!completed);
+    
+    if (currentUser && !currentUser.phone) {
+        openOverlay("phoneOverlay");
+    }
 }
 
 
