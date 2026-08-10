@@ -1659,7 +1659,7 @@ input::placeholder{ color:var(--text-dim); }
     }
     .product-modal{ width:min(680px,calc(100vw - 32px)); max-width:680px; overflow-y:auto; }
     .product-modal-img{ aspect-ratio:16/10; min-height:0; }
-    .product-modal-info{ max-height:none; overflow:visible; padding:0; }
+    .product-modal-info{ max-height:none; overflow:visible; padding:0; overscroll-behavior:auto; }
     .product-modal-info h3{ font-size:22px; }
 
     /* topup-game-grid handled by tailwind */
