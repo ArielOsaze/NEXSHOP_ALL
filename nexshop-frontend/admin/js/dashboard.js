@@ -23,6 +23,32 @@ let orderStatusFilterValue = "";
 let usersLoaded = false;
 let promoLoaded = false;
 let settingsLoaded = false;
+let currentUser = null;
+
+async function loadCurrentUser() {
+    try {
+        const res = await apiFetch("/settings/me");
+        if (res.ok) {
+            currentUser = await res.json();
+            document.getElementById("topbarUserName").textContent = currentUser.fullname || currentUser.name || "Admin";
+            
+            const roleBadge = document.getElementById("topbarUserRole");
+            if (currentUser.role === "staff") {
+                roleBadge.textContent = "Staff";
+                roleBadge.classList.replace("bg-primary", "bg-secondary");
+                
+                // Hide restricted menus
+                document.querySelectorAll('.nav-link[data-view="settings"], .nav-link[data-view="aimgmt"]').forEach(el => {
+                    el.closest('.nav-item').style.display = 'none';
+                });
+            } else {
+                roleBadge.textContent = "Admin";
+            }
+        }
+    } catch (err) {
+        console.error("Gagal memuat profil admin:", err);
+    }
+}
 let topupProductsLoaded = false;
 let statsLoaded = false;
 let topupOrdersLoaded = false;
@@ -336,6 +362,11 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
 });
 
 function switchView(view) {
+    if (currentUser && currentUser.role === "staff" && (view === "settings" || view === "aimgmt")) {
+        showToast("Akses ditolak. Fitur ini hanya untuk Super Admin.", true);
+        return;
+    }
+
     document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         link.classList.toggle("active", link.dataset.view === view);
     });
@@ -904,14 +935,17 @@ async function loadUsers(security_pin) {
             <table class="table table-hover align-middle mb-0">
                 <thead><tr><th>ID</th><th>Nama</th><th>Email</th><th>Role</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody>
-                    ${users.map(u => `
+                    ${users.map(u => {
+                        const isStaff = currentUser && currentUser.role === "staff";
+                        return `
                         <tr>
                             <td>${escapeHtml(u.id)}</td>
                             <td>${escapeHtml(u.name || "-")}</td>
                             <td>${escapeHtml(u.email || "-")}</td>
                             <td>
-                                <select class="form-select form-select-sm" style="width:110px;" onchange="changeUserRole(${Number(u.id)}, this.value)">
+                                <select class="form-select form-select-sm" style="width:110px;" onchange="changeUserRole(${Number(u.id)}, this.value)" ${isStaff ? "disabled" : ""}>
                                     <option value="user" ${u.role === "user" ? "selected" : ""}>user</option>
+                                    <option value="staff" ${u.role === "staff" ? "selected" : ""}>staff</option>
                                     <option value="admin" ${u.role === "admin" ? "selected" : ""}>admin</option>
                                 </select>
                             </td>
@@ -922,19 +956,20 @@ async function loadUsers(security_pin) {
                             </td>
                             <td>
                                 <button class="btn btn-sm ${u.is_blacklisted ? "btn-success" : "btn-outline-danger"}"
-                                        onclick="toggleUserBlacklist(${Number(u.id)}, ${!u.is_blacklisted})">
+                                        onclick="toggleUserBlacklist(${Number(u.id)}, ${!u.is_blacklisted})" ${isStaff ? "disabled" : ""}>
                                     <i class="bi ${u.is_blacklisted ? "bi-unlock" : "bi-slash-circle"}"></i>
                                     ${u.is_blacklisted ? "Buka Blokir" : "Blokir"}
                                 </button>
                                 <button class="btn btn-sm btn-outline-info" onclick="openUserDetail(${Number(u.id)})">
                                     <i class="bi bi-clock-history"></i> Riwayat
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${Number(u.id)}, '${escapeHtml(u.email || "").replace(/'/g, "\\'")}')">
+                                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${Number(u.id)}, '${escapeHtml(u.email || "").replace(/'/g, "\\'")}')" ${isStaff ? "disabled" : ""}>
                                     <i class="bi bi-trash"></i> Hapus
                                 </button>
                             </td>
                         </tr>
-                    `).join("")}
+                    `;
+                    }).join("")}
                 </tbody>
             </table>
             </div>
@@ -3669,6 +3704,7 @@ async function deleteNews(id) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    loadCurrentUser();
     initThemeToggle();
     loadSystemHealth();
 });

@@ -56,7 +56,7 @@ exports.updateUser = async (req, res) => {
 
     const updatePayload = {};
     if (role !== undefined) {
-        if (!["user", "admin"].includes(role)) {
+        if (!["user", "staff", "admin"].includes(role)) {
             return res.status(400).json({ message: "Role tidak valid" });
         }
         updatePayload.role = role;
