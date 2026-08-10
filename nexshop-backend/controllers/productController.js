@@ -61,21 +61,22 @@ exports.createProduct = async (req, res) => {
     return res.status(403).json({ message: "Akses ditolak, khusus admin" });
   }
   try {
-   const {
-  name,
-  price,
-  image,
-  badge,
-  rating,
-  sold,
-  description,
-  category,
-  strike_price,
-  is_flash_sale,
-  sort_order,
-} = req.body;
+  const {
+    name,
+    price,
+    image,
+    badge,
+    rating,
+    sold,
+    description,
+    category,
+    strike_price,
+    is_flash_sale,
+    sort_order,
+    is_active,
+  } = req.body;
 
-    if (!name || !price) {
+  if (!name || !price) {
       return res.status(400).json({
         message: "Nama dan harga wajib diisi",
       });
@@ -107,6 +108,7 @@ exports.createProduct = async (req, res) => {
           strike_price: strike_price || null,
           is_flash_sale: !!is_flash_sale,
           sort_order: finalSortOrder,
+          is_active: is_active !== undefined ? !!is_active : true,
         },
       ])
       .select();
@@ -152,6 +154,7 @@ exports.updateProduct = async (req, res) => {
       strike_price,
       is_flash_sale,
       sort_order,
+      is_active,
     } = req.body;
 
     const { data, error } = await supabase
@@ -167,6 +170,7 @@ exports.updateProduct = async (req, res) => {
         category,
         strike_price: strike_price || null,
         is_flash_sale: !!is_flash_sale,
+        ...(is_active !== undefined ? { is_active: !!is_active } : {}),
         ...(sort_order === undefined || sort_order === null || sort_order === "" ? {} : { sort_order }),
       })
       .eq("id", id)
