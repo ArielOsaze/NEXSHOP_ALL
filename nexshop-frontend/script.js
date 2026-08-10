@@ -511,7 +511,7 @@ function renderProducts() {
                             ${p.category ? `<div class="text-[clamp(0.5rem,1.5vw,0.625rem)] font-bold text-brand-indigo dark:text-brand-cyan uppercase tracking-wider mb-1 truncate">${escapeHtml(p.category)}</div>` : ""}
                             <h4 class="font-bold text-gray-900 dark:text-white text-[clamp(0.65rem,2.2vw,1.125rem)] leading-tight line-clamp-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors">${escapeHtml(p.name)}</h4>
                             <div class="flex items-center gap-1 text-[clamp(0.55rem,1.7vw,0.75rem)] text-gray-500 dark:text-gray-400 mt-1 sm:mt-2 font-medium">
-                                <span class="text-amber-400 text-[clamp(0.5rem,1.5vw,0.75rem)]">★</span> <span>${p.rating || 5} · ${p.sold || 0} tjl</span>
+                                <span class="text-amber-400 text-[clamp(0.5rem,1.5vw,0.75rem)]">★</span> <span>${p.rating || 5} · ${p.sold || 0} sold</span>
                             </div>
                         </div>
                         <div class="flex items-center justify-between mt-2 sm:mt-4 shrink-0">
@@ -590,7 +590,7 @@ function openProductModal(id) {
     document.getElementById("pmTitle").textContent = p.name;
     document.getElementById("pmCategory").textContent = p.category || "Produk digital";
     document.getElementById("pmStars").innerHTML = `<span class="stars">${stars(p.rating || 5)}</span> ${p.rating || 5}`;
-    document.getElementById("pmSold").textContent = `· ${p.sold || 0} terjual`;
+    document.getElementById("pmSold").textContent = `· ${p.sold || 0} sold`;
     document.getElementById("pmDesc").textContent = p.description || "";
     document.getElementById("pmPrice").innerHTML = priceBlockHtml(p, "lg");
     document.getElementById("pmQtyValue").value = pendingQty;
