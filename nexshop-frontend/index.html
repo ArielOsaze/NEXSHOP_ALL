@@ -279,7 +279,7 @@ Cek Transaksi
 
 <!-- Top-Up Section -->
 <section class="reveal-up delay-200" id="topup">
-    <div class="flex items-end justify-between mb-12">
+    <div class="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6">
         <div>
             <div class="flex items-center gap-2 mb-3">
                 <span class="w-8 h-[2px] bg-brand-cyan"></span>
@@ -287,7 +287,19 @@ Cek Transaksi
             </div>
             <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter">Top-Up <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">Terpopuler</span></h2>
         </div>
+
+        <div class="flex gap-4 catalog-controls">
+            <div class="relative catalog-search-wrap">
+                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                <input type="text" id="topupSearchInput" placeholder="Cari game topup..." class="w-full md:w-64 pl-12 pr-4 py-3 bg-white dark:bg-[#0a0a0c] border border-gray-200 dark:border-white/10 rounded-xl focus:border-brand-indigo dark:focus:border-brand-cyan outline-none transition-colors text-gray-900 dark:text-white font-medium" />
+                <button type="button" id="topupSearchClearBtn" class="search-clear-btn hidden absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="search-meta hidden" id="topupSearchMeta">
+                <span class="search-count-badge" id="topupSearchCountBadge">0 Game</span>
+            </div>
+        </div>
     </div>
+    <div class="category-filter flex gap-2 mb-8 overflow-x-auto pb-4 hide-scrollbar" id="topupPopularShortcuts"></div>
     <div class="topup-game-grid grid grid-cols-3 min-[480px]:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-[clamp(6px,1.5vw,16px)]" id="topupGameGrid">
     </div>
 </section>

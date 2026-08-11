@@ -7,6 +7,7 @@
 let PRODUCTS = [];
 let selectedCategory = "Semua";
 let searchQuery = "";
+let topupSearchQuery = "";
 let cachedStoreSettings = null; // diisi loadStoreSettings(), dipakai buat WA CTA di renderTrackResult
 
 const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
@@ -2298,6 +2299,16 @@ function formatPolicyText(text) {
 let TOPUP_PRODUCTS = [];
 let TOPUP_GAMES = [];
 
+// Shortcut "sering dicari" di atas grid topup. keywords dicocokkan (contains,
+// case-insensitive) ke nama kategori game dari data admin — tinggal tambah
+// entry baru di sini kalau mau nambah game lain ke tier populer.
+const TOPUP_POPULAR_SHORTCUTS = [
+    { label: "MLBB", keywords: ["mobile legends", "mlbb"] },
+    { label: "PUBGM", keywords: ["pubg"] },
+    { label: "Free Fire", keywords: ["free fire", "ffmax"] },
+    { label: "CODM", keywords: ["call of duty", "codm"] }
+];
+
 let ipaymuPollingInterval = null;
 
 let twState = {
@@ -2350,7 +2361,7 @@ function renderTopupGameSkeleton() {
     grid.innerHTML = Array.from({ length: 6 }).map(() => `
         <div class="rounded-2xl p-4 border border-gray-200 dark:border-white/5 bg-white dark:bg-[#0a0a0c] flex flex-col justify-between" aria-hidden="true">
             <div>
-                <div class="w-full aspect-square rounded-full mb-4 bg-gray-200 dark:bg-white/5 animate-pulse"></div>
+                <div class="w-full aspect-square rounded-xl sm:rounded-2xl mb-4 bg-gray-200 dark:bg-white/5 animate-pulse"></div>
                 <div class="w-3/4 h-4 bg-gray-200 dark:bg-white/10 animate-pulse rounded mb-2"></div>
                 <div class="w-1/2 h-3 bg-gray-200 dark:bg-white/5 animate-pulse rounded"></div>
             </div>
@@ -2362,14 +2373,72 @@ function renderTopupGameSkeleton() {
     `).join("");
 }
 
+function renderTopupPopularShortcuts() {
+    const wrap = document.getElementById("topupPopularShortcuts");
+    if (!wrap) return;
+
+    const query = topupSearchQuery.trim().toLowerCase();
+
+    wrap.innerHTML = `
+        <button type="button" class="category-btn ${!query ? "active" : ""}" data-shortcut="">Semua</button>
+        ${TOPUP_POPULAR_SHORTCUTS.map(s => {
+            const active = query && s.keywords.some(k => k.toLowerCase() === query);
+            return `<button type="button" class="category-btn ${active ? "active" : ""}" data-shortcut="${escapeHtml(s.keywords[0])}">${escapeHtml(s.label)}</button>`;
+        }).join("")}
+    `;
+
+    wrap.querySelectorAll("[data-shortcut]").forEach(btn => {
+        btn.addEventListener("click", () => {
+            topupSearchQuery = btn.dataset.shortcut || "";
+            const input = document.getElementById("topupSearchInput");
+            if (input) input.value = topupSearchQuery;
+            renderTopupGameGrid();
+        });
+    });
+}
+
 function renderTopupGameGrid() {
     const grid = document.getElementById("topupGameGrid");
-    if (!TOPUP_GAMES.length) {
-        grid.innerHTML = `<div class="topup-empty text-center py-8 text-gray-500 col-span-full">Belum ada game topup tersedia saat ini.</div>`;
+    if (!grid) return;
+
+    renderTopupPopularShortcuts();
+
+    const query = topupSearchQuery.trim().toLowerCase();
+    const data = query
+        ? TOPUP_GAMES.filter(g => g.kategori && g.kategori.toLowerCase().includes(query))
+        : TOPUP_GAMES;
+
+    const countBadge = document.getElementById("topupSearchCountBadge");
+    if (countBadge) countBadge.textContent = `${data.length} Game`;
+
+    const clearBtn = document.getElementById("topupSearchClearBtn");
+    if (clearBtn) clearBtn.classList.toggle("hidden", !query);
+
+    const searchMeta = document.getElementById("topupSearchMeta");
+    if (searchMeta) searchMeta.classList.toggle("hidden", !query);
+
+    if (!data.length) {
+        grid.innerHTML = `
+            <div class="catalog-empty-state col-span-full">
+                <div class="empty-icon"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i></div>
+                <h4>Game Tidak Ditemukan</h4>
+                <p>${query ? `Tidak ada hasil untuk "<strong>${escapeHtml(topupSearchQuery)}</strong>"` : "Belum ada game topup tersedia saat ini."}</p>
+                ${query ? `<button type="button" class="btn-primary btn-sm reset-search-btn" id="topupResetSearchBtn"><i class="fa-solid fa-rotate-left"></i> Reset Pencarian</button>` : ""}
+            </div>
+        `;
+        const resetBtn = document.getElementById("topupResetSearchBtn");
+        if (resetBtn) {
+            resetBtn.addEventListener("click", () => {
+                topupSearchQuery = "";
+                const input = document.getElementById("topupSearchInput");
+                if (input) input.value = "";
+                renderTopupGameGrid();
+            });
+        }
         return;
     }
 
-    grid.innerHTML = TOPUP_GAMES.map(g => {
+    grid.innerHTML = data.map(g => {
         const prices = g.products.map(p => Number(p.harga_jual) || 0).filter(n => n > 0);
         const minPrice = prices.length ? Math.min(...prices) : null;
         const logoUrl = g.logo ? escapeHtml(safeUrl(g.logo)) : "";
@@ -2377,7 +2446,7 @@ function renderTopupGameGrid() {
         <div class="topup-game-card group relative bg-white dark:bg-[#0a0a0c] rounded-xl sm:rounded-2xl p-[clamp(6px,2vw,16px)] border border-gray-200 dark:border-white/5 hover:border-brand-indigo/50 dark:hover:border-brand-cyan/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 cursor-pointer flex flex-col justify-between" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
             <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-brand-indigo/5 dark:to-brand-cyan/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl sm:rounded-2xl pointer-events-none"></div>
             <div>
-                <div class="relative w-full aspect-square rounded-full overflow-hidden mb-2 sm:mb-4 bg-gradient-to-br from-[#1a1533] to-[#0d1b2e]">
+                <div class="relative w-full aspect-square rounded-xl sm:rounded-2xl overflow-hidden mb-2 sm:mb-4 bg-gradient-to-br from-[#1a1533] to-[#0d1b2e]">
                     ${g.logo ? `
                     <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                     ` : `
@@ -3132,6 +3201,24 @@ function initSearchListeners() {
             searchQuery = "";
             if (searchInput) searchInput.value = "";
             renderProducts();
+        });
+    }
+
+    const topupSearchInput = document.getElementById("topupSearchInput");
+    const topupSearchClearBtn = document.getElementById("topupSearchClearBtn");
+
+    if (topupSearchInput) {
+        topupSearchInput.addEventListener("input", (e) => {
+            topupSearchQuery = e.target.value;
+            renderTopupGameGrid();
+        });
+    }
+
+    if (topupSearchClearBtn) {
+        topupSearchClearBtn.addEventListener("click", () => {
+            topupSearchQuery = "";
+            if (topupSearchInput) topupSearchInput.value = "";
+            renderTopupGameGrid();
         });
     }
 }
