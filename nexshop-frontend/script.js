@@ -1176,11 +1176,17 @@ document.getElementById("phoneForm").addEventListener("submit", async (e) => {
         toast("Nomor WhatsApp berhasil disimpan!", "success");
         e.target.reset();
         
-        // Also pre-fill if checkout is open
+        // Also pre-fill & hide the field if checkout is open (nomor sudah tersimpan, ga perlu ditampilin lagi)
         const checkoutPhone = document.getElementById("checkoutPhone");
-        if (checkoutPhone) checkoutPhone.value = data.phone;
+        if (checkoutPhone) {
+            checkoutPhone.value = data.phone;
+            checkoutPhone.parentElement.classList.add("hidden");
+        }
         const twPhone = document.getElementById("twPhone");
-        if (twPhone) twPhone.value = data.phone;
+        if (twPhone) {
+            twPhone.value = data.phone;
+            twPhone.parentElement.classList.add("hidden");
+        }
         
     } catch (err) {
         errorEl.textContent = "Gagal terhubung ke server.";
@@ -2344,7 +2350,7 @@ function renderTopupGameSkeleton() {
     grid.innerHTML = Array.from({ length: 6 }).map(() => `
         <div class="rounded-2xl p-4 border border-gray-200 dark:border-white/5 bg-white dark:bg-[#0a0a0c] flex flex-col justify-between" aria-hidden="true">
             <div>
-                <div class="w-full aspect-square rounded-xl mb-4 bg-gray-200 dark:bg-white/5 animate-pulse"></div>
+                <div class="w-full aspect-square rounded-full mb-4 bg-gray-200 dark:bg-white/5 animate-pulse"></div>
                 <div class="w-3/4 h-4 bg-gray-200 dark:bg-white/10 animate-pulse rounded mb-2"></div>
                 <div class="w-1/2 h-3 bg-gray-200 dark:bg-white/5 animate-pulse rounded"></div>
             </div>
@@ -2371,9 +2377,9 @@ function renderTopupGameGrid() {
         <div class="topup-game-card group relative bg-white dark:bg-[#0a0a0c] rounded-xl sm:rounded-2xl p-[clamp(6px,2vw,16px)] border border-gray-200 dark:border-white/5 hover:border-brand-indigo/50 dark:hover:border-brand-cyan/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 cursor-pointer flex flex-col justify-between" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
             <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-brand-indigo/5 dark:to-brand-cyan/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl sm:rounded-2xl pointer-events-none"></div>
             <div>
-                <div class="relative w-full aspect-square rounded-lg sm:rounded-xl overflow-hidden mb-2 sm:mb-4 bg-gradient-to-br from-[#1a1533] to-[#0d1b2e] p-1 sm:p-2">
+                <div class="relative w-full aspect-square rounded-full overflow-hidden mb-2 sm:mb-4 bg-gradient-to-br from-[#1a1533] to-[#0d1b2e]">
                     ${g.logo ? `
-                    <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-700">
+                    <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                     ` : `
                     <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/30 to-brand-cyan/30"></div>
                     <div class="absolute inset-0 flex items-center justify-center">
