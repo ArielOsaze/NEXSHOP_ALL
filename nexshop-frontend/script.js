@@ -2436,9 +2436,6 @@ function renderTopupGameGrid() {
         const prices = g.products.map(p => Number(p.harga_jual) || 0).filter(n => n > 0);
         const minPrice = prices.length ? Math.min(...prices) : null;
         const logoUrl = g.logo ? escapeHtml(safeUrl(g.logo)) : "";
-        // Cuma tampil di card yang emang ada di daftar TOPUP_POPULAR_SHORTCUTS
-        // (game-game yang kita naikkan ke atas grid, lihat buildTopupGames()).
-        const isPopular = getPopularShortcutRank(g.kategori) < TOPUP_POPULAR_SHORTCUTS.length;
         return `
         <div class="topup-game-card group relative bg-white dark:bg-[#0a0a0c] rounded-xl sm:rounded-2xl p-[clamp(6px,2vw,16px)] border border-gray-200 dark:border-white/5 hover:border-brand-indigo/50 dark:hover:border-brand-cyan/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 cursor-pointer flex flex-col justify-between" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
             <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-brand-indigo/5 dark:to-brand-cyan/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl sm:rounded-2xl pointer-events-none"></div>
@@ -2454,7 +2451,6 @@ function renderTopupGameGrid() {
                     `}
                     <span class="absolute top-1 sm:top-2 left-1 sm:left-2 px-1 sm:px-2 py-0.5 sm:py-1 rounded bg-brand-indigo/80 backdrop-blur-md text-white text-[8px] sm:text-[10px] font-bold shadow-lg">INSTAN</span>
                 </div>
-                ${isPopular ? `<div class="flex items-center gap-1 text-[7px] sm:text-[9px] font-bold uppercase tracking-wider text-amber-500 dark:text-amber-400 mb-0.5 sm:mb-1"><span class="material-symbols-outlined text-[9px] sm:text-[10px]">local_fire_department</span>Paling Banyak Dicari</div>` : ""}
                 <h4 class="text-[clamp(0.65rem,2.2vw,0.85rem)] leading-tight font-bold text-gray-900 dark:text-white line-clamp-2 mb-1 sm:mb-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors" title="${escapeHtml(g.kategori)}">${escapeHtml(g.kategori)}</h4>
                 <div class="flex items-center gap-1 text-[clamp(0.55rem,1.7vw,0.75rem)] text-gray-500 dark:text-gray-400 mb-2 sm:mb-4 font-medium">
                     <span class="material-symbols-outlined text-[clamp(0.65rem,2vw,1rem)]">inventory_2</span> <span>${g.products.length} Produk</span>
