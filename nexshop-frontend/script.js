@@ -2342,8 +2342,23 @@ async function loadTopupProducts() {
     }
 }
 
+// Cari posisi game di daftar "paling banyak dicari" (TOPUP_POPULAR_SHORTCUTS).
+// Game yang cocok (contains, case-insensitive) sama salah satu keyword shortcut
+// dianggap populer dan diberi ranking sesuai urutan di TOPUP_POPULAR_SHORTCUTS
+// (0 = paling populer). Game yang gak cocok sama sekali dapet ranking paling
+// besar (di luar daftar shortcut) supaya selalu jatuh di belakang.
+function getPopularShortcutRank(kategori) {
+    const k = String(kategori || "").toLowerCase();
+    const idx = TOPUP_POPULAR_SHORTCUTS.findIndex(s => s.keywords.some(kw => k.includes(kw.toLowerCase())));
+    return idx === -1 ? TOPUP_POPULAR_SHORTCUTS.length : idx;
+}
+
 // Kelompokkan produk topup per kategori (= 1 game/kartu di grid). Logo game
 // diambil dari operator_logo yang diatur admin lewat Admin Dashboard.
+// Urutan grid: game yang "paling banyak dicari" (ada di TOPUP_POPULAR_SHORTCUTS,
+// misal MLBB/PUBGM/Free Fire/CODM) selalu muncul PALING ATAS sesuai urutan
+// shortcut-nya, baru sisanya diurutkan alfabetis di bawahnya -- bukan cuma
+// alfabetis polos kayak sebelumnya.
 function buildTopupGames() {
     const map = new Map();
     TOPUP_PRODUCTS.forEach(p => {
@@ -2353,7 +2368,12 @@ function buildTopupGames() {
         g.products.push(p);
         if (!g.logo && p.operator_logo) g.logo = p.operator_logo;
     });
-    TOPUP_GAMES = [...map.values()].sort((a, b) => a.kategori.localeCompare(b.kategori));
+    TOPUP_GAMES = [...map.values()].sort((a, b) => {
+        const rankA = getPopularShortcutRank(a.kategori);
+        const rankB = getPopularShortcutRank(b.kategori);
+        if (rankA !== rankB) return rankA - rankB;
+        return a.kategori.localeCompare(b.kategori);
+    });
 }
 
 function renderTopupGameSkeleton() {
