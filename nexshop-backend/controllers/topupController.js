@@ -1354,30 +1354,46 @@ exports.create = async (req, res) => {
         let isDirect = isDirectPaymentMethod(normalizedPaymentMethod);
 
         let payment;
+        let debugDirectError = null;
         try {
             if (isDirect) {
                 try {
+                    // Ensure phone starts with 0 for iPaymu to avoid format rejection
+                    let ipaymuPhone = normalizedPhone;
+                    if (ipaymuPhone.startsWith("62")) {
+                        ipaymuPhone = "0" + ipaymuPhone.substring(2);
+                    }
+
                     payment = await createDirectPayment({
                         referenceId: orderId,
                         amount: total,
+                        buyerName: req.user ? req.user.fullname : "Player " + tujuan,
                         buyerEmail: recipient_email,
-                        buyerPhone: normalizedPhone,
+                        buyerPhone: ipaymuPhone,
                         paymentMethod: ipaymuPaymentMethod,
                         paymentChannel: payment_channel,
                         notifyUrl: `${BACKEND_URL}/api/topup/notification`
                     });
                 } catch (directErr) {
+                    debugDirectError = (directErr.ipaymuResponse && directErr.ipaymuResponse.Message) || directErr.message;
                     console.log("Direct payment failed (IP whitelist/channel error), falling back to redirect:", directErr.ipaymuResponse || directErr.message);
                     isDirect = false;
                 }
             }
 
             if (!isDirect) {
+                // Same logic for redirect fallback
+                let ipaymuPhone = normalizedPhone;
+                if (ipaymuPhone.startsWith("62")) {
+                    ipaymuPhone = "0" + ipaymuPhone.substring(2);
+                }
+
                 payment = await createRedirectPayment({
                     referenceId: orderId,
                     itemDetails: ipaymuItems,
+                    buyerName: req.user ? req.user.fullname : "Player " + tujuan,
                     buyerEmail: recipient_email || undefined,
-                    buyerPhone: normalizedPhone,
+                    buyerPhone: ipaymuPhone,
                     returnUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=success`,
                     cancelUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=cancel`,
                     notifyUrl: `${BACKEND_URL}/api/topup/notification`,
@@ -1435,7 +1451,8 @@ exports.create = async (req, res) => {
                 message: "Pesanan topup berhasil dibuat",
                 orderId,
                 flow: "redirect",
-                paymentUrl: payment.paymentUrl
+                paymentUrl: payment.paymentUrl,
+                debugDirectError: debugDirectError
             });
         }
     } catch (err) {
