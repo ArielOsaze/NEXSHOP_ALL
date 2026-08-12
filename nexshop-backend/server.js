@@ -34,6 +34,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
 const newsRoutes = require("./routes/newsRoutes");
 const aiRoutes = require("./routes/aiRoutes");
+const ratingRoutes = require("./routes/ratingRoutes");
 const { startTopupStatusPoller } = require("./jobs/topupStatusPoller");
 
 const app = express();
@@ -132,6 +133,7 @@ app.use("/api/admin/stats", statsRoutes);
 app.use("/api/news", newsRoutes);
 app.use("/api/ai", aiRoutes);
 app.use("/api/admin/ai", aiRoutes);
+app.use("/api/ratings", ratingRoutes);
 app.use("/api/stats", statsRoutes); // sama router — /api/stats/public dibuka publik, /api/stats/overview tetap butuh admin
 
 // Endpoint diagnostik hanya tersedia saat development.

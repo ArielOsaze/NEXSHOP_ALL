@@ -872,7 +872,32 @@ Cek Transaksi
             <div class="success-icon"><i class="fa-solid fa-check" aria-hidden="true"></i></div>
             <h3>Pesanan Berhasil!</h3>
             <p id="checkoutSuccessMsg">Terima kasih, pesanan kamu sedang diproses.</p>
-            <button class="btn-primary" data-close="checkoutOverlay">Selesai</button>
+            
+            <div id="ratingCard" class="hidden" style="margin-top: 1.5rem; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 12px; padding: 1.5rem; text-align: center;">
+                <h4 style="margin-bottom: 0.5rem; font-size: 1.1rem; color: var(--text);">Bagaimana pengalaman belanja Anda di NexShop?</h4>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Masukan Anda membantu kami meningkatkan layanan.</p>
+                <div id="ratingStars" style="display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
+                    <button type="button" class="rating-star" data-score="1" aria-label="Sangat mengecewakan" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;"><i class="fa-regular fa-star"></i></button>
+                    <button type="button" class="rating-star" data-score="2" aria-label="Kurang puas" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;"><i class="fa-regular fa-star"></i></button>
+                    <button type="button" class="rating-star" data-score="3" aria-label="Cukup" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;"><i class="fa-regular fa-star"></i></button>
+                    <button type="button" class="rating-star" data-score="4" aria-label="Puas" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;"><i class="fa-regular fa-star"></i></button>
+                    <button type="button" class="rating-star" data-score="5" aria-label="Sangat puas" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;"><i class="fa-regular fa-star"></i></button>
+                </div>
+                <div id="ratingFormDetails" class="hidden">
+                    <textarea id="ratingComment" placeholder="Ceritakan pengalaman Anda (opsional)" maxlength="500" style="width: 100%; min-height: 80px; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-body); color: var(--text); margin-bottom: 0.5rem; resize: vertical; font-family: inherit; font-size: 0.95rem;"></textarea>
+                    <div style="text-align: right; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1rem;"><span id="ratingCharCount">0</span>/500</div>
+                    <div id="ratingError" class="hidden" style="color: var(--danger); font-size: 0.9rem; margin-bottom: 1rem;"></div>
+                    <div style="display: flex; gap: 0.5rem; justify-content: center;">
+                        <button type="button" class="btn-primary" id="btnSubmitRating" style="flex: 1;">Kirim Rating</button>
+                        <button type="button" class="btn-secondary" id="btnSkipRating" style="flex: 1;">Nanti saja</button>
+                    </div>
+                </div>
+                <div id="ratingSuccessMsg" class="hidden" style="color: var(--success); font-weight: 600; font-size: 1.1rem; margin-top: 1rem;">
+                    <i class="fa-solid fa-check-circle" style="margin-right: 0.5rem;"></i>Terima kasih atas penilaian Anda!
+                </div>
+            </div>
+
+            <button class="btn-primary" data-close="checkoutOverlay" style="margin-top: 1rem;">Selesai</button>
         </div>
     </div>
 </div>

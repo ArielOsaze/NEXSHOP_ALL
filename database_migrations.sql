@@ -25,3 +25,21 @@ CREATE TABLE IF NOT EXISTS notification_events (
 
 -- 4. Unique Constraint untuk Nomor WhatsApp
 ALTER TABLE users ADD CONSTRAINT users_phone_key UNIQUE (phone);
+
+-- 5. Tabel Rating Pengalaman Belanja per Order
+CREATE TABLE IF NOT EXISTS order_ratings (
+    id SERIAL PRIMARY KEY,
+    order_id VARCHAR(50) NOT NULL UNIQUE REFERENCES orders(id) ON DELETE RESTRICT,
+    user_id BIGINT NULL REFERENCES users(id) ON DELETE SET NULL,
+    score INTEGER NOT NULL CHECK (score BETWEEN 1 AND 5),
+    comment TEXT NULL CHECK (
+        comment IS NULL OR char_length(comment) <= 500
+    ),
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_order_ratings_created_at
+    ON order_ratings(created_at);
+
+CREATE INDEX IF NOT EXISTS idx_order_ratings_score
+    ON order_ratings(score);

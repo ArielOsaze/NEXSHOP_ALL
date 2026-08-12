@@ -23,6 +23,7 @@ let orderStatusFilterValue = "";
 let usersLoaded = false;
 let promoLoaded = false;
 let settingsLoaded = false;
+let ratingsLoaded = false;
 let currentUser = null;
 
 async function loadCurrentUser() {
@@ -355,6 +356,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         if (view === "news" && !newsLoaded) loadNews();
         if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
         if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
+        if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); ratingsLoaded = true; }
         if (view === "settings" && !settingsLoaded) loadSettings();
         if (view === "stats" && !statsLoaded) loadStats();
         if (view === "topSpenders") loadAdminTopSpenders();
@@ -380,6 +382,7 @@ function switchView(view) {
     if (view === "news" && !newsLoaded) loadNews();
     if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
     if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
+    if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); ratingsLoaded = true; }
     if (view === "settings" && !settingsLoaded) loadSettings();
     if (view === "stats" && !statsLoaded) loadStats();
     if (view === "aimgmt") { loadKnowledgeBase(); loadMultiAiStatus(); loadMultiAiLogs(); startAiHealthCheckTimer(); }
@@ -4828,3 +4831,96 @@ async function deleteTopSpender(id) {
         }
     }
 }
+
+
+// ================================
+// Ratings Management
+// ================================
+let currentRatingPage = 1;
+
+async function loadAdminRatingSummary() {
+    try {
+        const res = await apiFetch("/ratings/admin/summary");
+        if (res.ok) {
+            const data = await res.json();
+            document.getElementById("ratingAvgVal").textContent = data.average;
+            document.getElementById("ratingTotalVal").textContent = data.total;
+            document.getElementById("ratingPosVal").textContent = data.positive_percentage + "%";
+            document.getElementById("ratingTodayVal").textContent = data.today_count;
+        }
+    } catch (e) {
+        console.error("Gagal memuat ringkasan rating", e);
+    }
+}
+
+async function loadAdminRatings(page = 1) {
+    currentRatingPage = page;
+    const tbody = document.getElementById("adminRatingsTbody");
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>`;
+    
+    const search = document.getElementById("searchRating").value.trim();
+    const score = document.getElementById("filterRatingScore").value;
+    const buyerType = document.getElementById("filterRatingBuyer").value;
+    const dateFrom = document.getElementById("filterRatingFrom").value;
+    const dateTo = document.getElementById("filterRatingTo").value;
+
+    const query = new URLSearchParams({
+        page: currentRatingPage,
+        limit: 10
+    });
+
+    if (search) query.append("search", search);
+    if (score) query.append("score", score);
+    if (buyerType) query.append("buyer_type", buyerType);
+    if (dateFrom) query.append("date_from", dateFrom);
+    if (dateTo) query.append("date_to", dateTo);
+
+    try {
+        const res = await apiFetch(`/ratings/admin?${query.toString()}`);
+        if (!res.ok) throw new Error("Gagal mengambil data rating");
+        const json = await res.json();
+        
+        tbody.innerHTML = "";
+        
+        if (json.data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada ulasan ditemukan.</td></tr>`;
+        } else {
+            json.data.forEach(r => {
+                const tr = document.createElement("tr");
+                const dt = new Date(r.created_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
+                
+                let starsHtml = "";
+                for(let i=1; i<=5; i++) {
+                    if (i <= r.score) starsHtml += `<i class="bi bi-star-fill text-warning me-1"></i>`;
+                    else starsHtml += `<i class="bi bi-star text-muted me-1"></i>`;
+                }
+
+                const buyerTypeBadge = r.is_guest 
+                    ? `<span class="badge bg-secondary ms-2">Guest</span>`
+                    : `<span class="badge bg-primary ms-2">Login</span>`;
+
+                tr.innerHTML = `
+                    <td class="text-nowrap">${dt}</td>
+                    <td><strong>${escapeHtml(r.order_id)}</strong></td>
+                    <td>${escapeHtml(r.buyer_name)} ${buyerTypeBadge}</td>
+                    <td class="text-nowrap">${starsHtml}</td>
+                    <td>${escapeHtml(r.comment || "-")}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+        
+        document.getElementById("ratingPageInfo").textContent = `Halaman ${json.meta.page} dari ${json.meta.totalPages || 1} (${json.meta.total} ulasan)`;
+        
+        document.getElementById("btnRatingPrev").disabled = json.meta.page <= 1;
+        document.getElementById("btnRatingNext").disabled = json.meta.page >= json.meta.totalPages;
+
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error: ${escapeHtml(e.message)}</td></tr>`;
+    }
+}
+
+function changeRatingPage(dir) {
+    loadAdminRatings(currentRatingPage + dir);
+}
+

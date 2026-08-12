@@ -1473,13 +1473,16 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
     }
 });
 
-function showCheckoutSuccess(recipient_name, total, statusText, orderId) {
+async function showPaidOrderSuccess(orderData, isTopup) {
+    if (isTopup || (orderData.status !== "paid" && orderData.status !== "sukses")) return;
+    
+    const orderId = orderData.id || orderData.orderId || orderData.reference_id;
     const trackingNote = currentUser
         ? `Kamu bisa cek status di "Pesanan Saya".`
         : `⚠️ Kamu checkout tanpa akun — catat Order ID ini baik-baik, karena tidak tersimpan di riwayat manapun: <strong>${escapeHtml(orderId)}</strong>`;
 
     document.getElementById("checkoutSuccessMsg").innerHTML =
-        `Terima kasih, ${escapeHtml(recipient_name)}! Pesanan kamu senilai ${rupiah(total)} ${escapeHtml(statusText)}. ${trackingNote}`;
+        `Terima kasih, pesanan kamu senilai ${rupiah(orderData.total || 0)} telah lunas. ${trackingNote}`;
 
     document.getElementById("checkoutStep").classList.add("hidden");
     document.getElementById("checkoutSuccess").classList.remove("hidden");
@@ -1492,6 +1495,95 @@ function showCheckoutSuccess(recipient_name, total, statusText, orderId) {
     }
     checkoutItems = null;
     checkoutSource = "cart";
+
+    // --- INISIALISASI RATING PENGALAMAN ---
+    const lsKey = `nexshop_rating_prompt_seen_${orderId}`;
+    if (!localStorage.getItem(lsKey)) {
+        try {
+            const headers = {};
+            const token = localStorage.getItem("token");
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+            
+            const res = await fetch(`${API_BASE}/ratings/eligibility/${encodeURIComponent(orderId)}`, { headers });
+            if (res.ok) {
+                const eligibility = await res.json();
+                if (eligibility.eligible) {
+                    const ratingCard = document.getElementById("ratingCard");
+                    ratingCard.classList.remove("hidden");
+                    localStorage.setItem(lsKey, "1");
+
+                    let selectedScore = 0;
+                    const stars = document.querySelectorAll(".rating-star");
+                    const formDetails = document.getElementById("ratingFormDetails");
+                    
+                    stars.forEach(star => {
+                        star.onclick = (e) => {
+                            e.preventDefault();
+                            selectedScore = parseInt(star.getAttribute("data-score"), 10);
+                            stars.forEach(s => {
+                                const sScore = parseInt(s.getAttribute("data-score"), 10);
+                                s.innerHTML = sScore <= selectedScore ? '<i class="fa-solid fa-star" style="color:#facc15"></i>' : '<i class="fa-regular fa-star"></i>';
+                            });
+                            formDetails.classList.remove("hidden");
+                            document.getElementById("ratingError").classList.add("hidden");
+                        };
+                    });
+
+                    document.getElementById("ratingComment").oninput = function() {
+                        document.getElementById("ratingCharCount").textContent = this.value.length;
+                    };
+
+                    document.getElementById("btnSkipRating").onclick = function() {
+                        ratingCard.classList.add("hidden");
+                    };
+
+                    document.getElementById("btnSubmitRating").onclick = async function() {
+                        const btn = this;
+                        const errorDiv = document.getElementById("ratingError");
+                        const comment = document.getElementById("ratingComment").value.trim();
+                        
+                        btn.disabled = true;
+                        btn.textContent = "Mengirim...";
+                        errorDiv.classList.add("hidden");
+
+                        try {
+                            const submitRes = await fetch(`${API_BASE}/ratings`, {
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    ...headers
+                                },
+                                body: JSON.stringify({
+                                    order_id: orderId,
+                                    score: selectedScore,
+                                    comment
+                                })
+                            });
+
+                            if (!submitRes.ok) {
+                                const errData = await submitRes.json();
+                                throw new Error(errData.message || "Gagal mengirim rating");
+                            }
+
+                            document.getElementById("ratingStars").style.display = "none";
+                            formDetails.classList.add("hidden");
+                            ratingCard.querySelector("h4").classList.add("hidden");
+                            ratingCard.querySelector("p").classList.add("hidden");
+                            document.getElementById("ratingSuccessMsg").classList.remove("hidden");
+
+                        } catch (err) {
+                            errorDiv.textContent = err.message;
+                            errorDiv.classList.remove("hidden");
+                            btn.disabled = false;
+                            btn.textContent = "Kirim Rating";
+                        }
+                    };
+                }
+            }
+        } catch(e) {
+            console.error("Gagal mengecek eligibility rating", e);
+        }
+    }
 }
 
 /* ---------- FAQ / Terms / Refund / Kontak modal ---------- */
@@ -3013,14 +3105,7 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
                         toast("Pembayaran Topup Berhasil!", "success");
                         openTrackModalWithResult(data, { isTopup: true });
                     } else {
-                        document.getElementById("checkoutStep").classList.add("hidden");
-                        document.getElementById("checkoutSuccess").classList.remove("hidden");
-                        // Reset cart after success if it was from cart
-                        if (checkoutSource === "cart") {
-                            cart = [];
-                            saveCart();
-                            updateCartCount();
-                        }
+                        showPaidOrderSuccess(data, isTopup);
                     }
                 }
             }
@@ -3084,8 +3169,7 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
                         toast("Pembayaran Topup Berhasil!", "success");
                         openTrackModalWithResult(data, { isTopup: true });
                     } else {
-                        document.getElementById("checkoutStep").classList.add("hidden");
-                        document.getElementById("checkoutSuccess").classList.remove("hidden");
+                        showPaidOrderSuccess(data, isTopup);
                     }
                 }
             }
