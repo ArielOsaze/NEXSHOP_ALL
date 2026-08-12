@@ -42,7 +42,7 @@ exports.getUsers = async (req, res) => {
 // UPDATE ROLE / BLACKLIST USER (admin only)
 // ===========================
 exports.updateUser = async (req, res) => {
-    if (!["admin", "staff"].includes(req.user.role)) {
+    if (req.user.role !== "admin") {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -312,7 +312,7 @@ exports.adminResendOtp = async (req, res) => {
 // (order produk biasa + topup diamond). Ini PERMANEN, gak bisa di-undo.
 // ===========================================================
 exports.deleteUser = async (req, res) => {
-    if (!["admin", "staff"].includes(req.user.role)) {
+    if (req.user.role !== "admin") {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 

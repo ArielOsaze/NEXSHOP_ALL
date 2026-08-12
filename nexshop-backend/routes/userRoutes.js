@@ -3,6 +3,7 @@ const router = express.Router();
 const userController = require("../controllers/userController");
 const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
+const superAdminMiddleware = require("../middleware/superAdminMiddleware");
 const { requireAdminPin } = require("../middleware/adminPinMiddleware");
 
 // All account data and mutations are sensitive. POST avoids accepting a PIN in
@@ -12,8 +13,8 @@ router.post("/otp", authMiddleware, adminMiddleware, requireAdminPin, userContro
 router.post("/:id/detail", authMiddleware, adminMiddleware, requireAdminPin, userController.getUserDetail);
 router.put("/me/avatar", authMiddleware, userController.updateOwnAvatar);
 router.put("/me/phone", authMiddleware, userController.updateOwnPhone);
-router.put("/:id", authMiddleware, adminMiddleware, requireAdminPin, userController.updateUser);
+router.put("/:id", authMiddleware, superAdminMiddleware, requireAdminPin, userController.updateUser);
 router.post("/:id/resend-otp", authMiddleware, adminMiddleware, requireAdminPin, userController.adminResendOtp);
-router.delete("/:id", authMiddleware, adminMiddleware, requireAdminPin, userController.deleteUser);
+router.delete("/:id", authMiddleware, superAdminMiddleware, requireAdminPin, userController.deleteUser);
 
 module.exports = router;
