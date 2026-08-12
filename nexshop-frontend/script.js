@@ -2411,6 +2411,23 @@ const TOPUP_POPULAR_SHORTCUTS = [
 
 let ipaymuPollingInterval = null;
 
+// FIX (Agustus 2026): dua variabel ini dipakai di banyak tempat (showDirectPaymentModal,
+// openIpaymuPopup) tapi sebelumnya TIDAK PERNAH dideklarasikan di manapun --
+// baris pertama yang MEMBACA nilainya (`if (ipaymuPollingTimeout) ...`,
+// dieksekusi SEBELUM baris yang nge-assign) langsung throw ReferenceError
+// "ipaymuPollingTimeout is not defined". Ini yang bikin:
+// 1. Modal QRIS/VA (flow "direct") muncul, tapi loop polling status
+//    pembayaran (poll()) GAK PERNAH SEMPAT JALAN -- makanya "Menunggu
+//    pembayaran otomatis..." nyangkut selamanya walau pembayaran udah
+//    sukses di backend.
+// 2. Flow "redirect" (openIpaymuPopup): popup/tab iPaymu tetap kebuka
+//    (window.open jalan duluan), tapi abis itu langsung crash sebelum
+//    polling mulai, dan errornya kebawa ke catch() di submitTopupOrder()
+//    sehingga muncul "Gagal terhubung ke server... ipaymuPollingTimeout is
+//    not defined" padahal sebenarnya bukan masalah koneksi sama sekali.
+let ipaymuPollingTimeout = null;
+let ipaymuPollingController = null;
+
 let twState = {
     kategori: null,
     step: 1,

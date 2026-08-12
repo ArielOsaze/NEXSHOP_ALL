@@ -58,7 +58,45 @@ async function getCreds() {
     };
 }
 
-async function request(path, body, timeoutMs = 15000) {
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// FIX (Agustus 2026): request random gagal di kondisi jaringan yang gak stabil
+// sesaat (VPS <-> server iPaymu) -- kadang sukses, kadang timeout/connection
+// reset, gak konsisten. Timeout tadi cuma bikin gagalnya cepat, tapi belum
+// nutup kegagalan sesaat kayak gini. Sekarang di-retry otomatis, TAPI HANYA
+// kalau errornya jaringan murni (gak ada response SAMA SEKALI dari iPaymu --
+// timeout/connection reset/DNS gagal/dst). Kalau iPaymu sempat merespons
+// (4xx/5xx dengan body, misal "saldo tidak cukup" atau "channel tidak
+// aktif"), itu PENOLAKAN ASLI dari mereka -- JANGAN diulang, karena ngulang
+// permintaan yang emang ditolak gak akan berubah hasilnya dan cuma buang
+// waktu request checkout kamu.
+//
+// Retry aman dilakuin di sini karena semua request kita (create transaksi
+// maupun cek status) selalu nyertain referenceId yang unik per order --
+// asalkan iPaymu treat referenceId sebagai idempotency key (lazim buat API
+// pembayaran), request kedua paling dianggap "transaksi udah ada" bukan bikin
+// transaksi baru dobel. Kalau ternyata iPaymu TIDAK idempotent by
+// referenceId, kabarin saya biar retry-nya dimatikan lagi.
+async function requestWithRetry(path, body, { timeoutMs = 15000, retries = 1 } = {}) {
+    let lastErr;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+        try {
+            return await requestOnce(path, body, timeoutMs);
+        } catch (err) {
+            lastErr = err;
+            const isNetworkLevelError = !err.httpStatus; // gak ada response HTTP sama sekali dari iPaymu
+            const attemptsLeft = attempt < retries;
+            if (!isNetworkLevelError || !attemptsLeft) throw err;
+            console.log(`iPaymu request ke ${path} gagal jaringan (percobaan ${attempt + 1}/${retries + 1}): ${err.message} -- retry...`);
+            await sleep(500 + attempt * 500);
+        }
+    }
+    throw lastErr;
+}
+
+async function requestOnce(path, body, timeoutMs) {
     const { va, apiKey, isProduction } = await getCreds();
     const signature = buildSignature({ method: "POST", va, apiKey, body });
 
@@ -121,7 +159,7 @@ async function createRedirectPayment({ referenceId, itemDetails, buyerName, buye
         ...(paymentChannel ? { paymentChannel } : {})
     };
 
-    const data = await request("/payment", body);
+    const data = await requestWithRetry("/payment", body, { timeoutMs: 15000, retries: 1 });
 
     if (!data || Number(data.Status) !== 200 || !data.Data || !data.Data.Url) {
         const err = new Error((data && data.Message) || "Gagal membuat transaksi iPaymu");
@@ -140,7 +178,8 @@ async function createRedirectPayment({ referenceId, itemDetails, buyerName, buye
 // body webhook (yang secara teori bisa dipalsukan orang lain yang tahu
 // endpoint notify kita). transactionId = TrxId yang dikirim iPaymu di notify.
 async function checkTransactionStatus(transactionId) {
-    const data = await request("/transaction", { transactionId: String(transactionId) });
+    // Read-only, aman di-retry lebih agresif (2x) kalau jaringan lagi flaky.
+    const data = await requestWithRetry("/transaction", { transactionId: String(transactionId) }, { timeoutMs: 15000, retries: 2 });
     if (!data || Number(data.Status) !== 200 || !data.Data) {
         const err = new Error((data && data.Message) || "Gagal mengecek status transaksi iPaymu");
         err.ipaymuResponse = data;
@@ -172,8 +211,9 @@ async function createDirectPayment({ referenceId, amount, buyerName, buyerEmail,
     // Timeout lebih pendek (8s) khusus di sini: Direct Payment ini punya jalur
     // fallback ke Redirect Payment di controller kalau gagal, jadi lebih baik
     // gagal cepat & fallback, daripada bikin seluruh request checkout kelamaan
-    // nunggu 15 detik penuh sebelum baru nyoba redirect.
-    const data = await request("/payment/direct", body, 8000);
+    // nunggu 15 detik penuh sebelum baru nyoba redirect. 1x retry buat nutup
+    // network blip sesaat sebelum benar-benar nyerah dan fallback ke redirect.
+    const data = await requestWithRetry("/payment/direct", body, { timeoutMs: 8000, retries: 1 });
 
     if (!data || Number(data.Status) !== 200 || !data.Data) {
         const err = new Error((data && data.Message) || "Gagal membuat transaksi iPaymu (Direct)");
