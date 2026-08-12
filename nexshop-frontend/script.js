@@ -1311,12 +1311,20 @@ function openCheckout(items, source = "cart") {
     if (currentUser) {
         document.getElementById("checkoutName").value = currentUser.fullname;
         document.getElementById("checkoutEmail").value = currentUser.email;
-        if (currentUser.phone && /^(0|62)[0-9]{8,14}$/.test(currentUser.phone)) {
-            document.getElementById("checkoutPhone").value = currentUser.phone;
+        let cleanPhone = currentUser.phone || "";
+        cleanPhone = cleanPhone.replace(/[^0-9]/g, "");
+        if (cleanPhone.startsWith("62")) {
+            // Keep 62
+        } else if (!cleanPhone.startsWith("0") && cleanPhone.length > 5) {
+            cleanPhone = "0" + cleanPhone; // Fallback to 0 if they entered like 8222...
+        }
+        
+        if (cleanPhone && /^(0|62)[0-9]{8,14}$/.test(cleanPhone)) {
+            document.getElementById("checkoutPhone").value = cleanPhone;
             document.getElementById("checkoutPhone").parentElement.classList.add("hidden");
         } else {
-            document.getElementById("checkoutPhone").parentElement.classList.remove("hidden");
             document.getElementById("checkoutPhone").value = currentUser.phone || "";
+            document.getElementById("checkoutPhone").parentElement.classList.remove("hidden");
         }
     } else {
         document.getElementById("checkoutName").value = "";
@@ -2599,8 +2607,19 @@ function openGameDetail(kategori) {
     document.getElementById("twUserId").value = "";
     document.getElementById("twServerId").value = "";
     document.getElementById("twEmail").value = twState.email;
-    if (currentUser && currentUser.phone && /^(0|62)[0-9]{8,14}$/.test(currentUser.phone)) {
-        document.getElementById("twPhone").value = currentUser.phone;
+
+    let cleanPhone = "";
+    if (currentUser && currentUser.phone) {
+        cleanPhone = currentUser.phone.replace(/[^0-9]/g, "");
+        if (cleanPhone.startsWith("62")) {
+            // Keep 62
+        } else if (!cleanPhone.startsWith("0") && cleanPhone.length > 5) {
+            cleanPhone = "0" + cleanPhone;
+        }
+    }
+
+    if (currentUser && cleanPhone && /^(0|62)[0-9]{8,14}$/.test(cleanPhone)) {
+        document.getElementById("twPhone").value = cleanPhone;
         document.getElementById("twPhone").closest(".tw-field-group").classList.add("hidden");
     } else if (currentUser) {
         document.getElementById("twPhone").value = currentUser.phone || "";
