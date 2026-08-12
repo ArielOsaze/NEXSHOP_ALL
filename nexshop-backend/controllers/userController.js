@@ -42,7 +42,7 @@ exports.getUsers = async (req, res) => {
 // UPDATE ROLE / BLACKLIST USER (admin only)
 // ===========================
 exports.updateUser = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -98,7 +98,7 @@ exports.updateUser = async (req, res) => {
 // produk biasa + topup diamond, buat lihat customer value per orang.
 // ===========================
 exports.getUserDetail = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -188,8 +188,8 @@ exports.getUserDetail = async (req, res) => {
 // status dan klik "Kirim Ulang" jika pengiriman asli gagal.
 // ===========================================================
 exports.getPendingOtp = async (req, res) => {
-    if (req.user.role !== "admin") {
-        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    if (!["admin", "staff"].includes(req.user.role)) {
+        return res.status(403).json({ message: "Akses ditolak, butuh izin admin/staff" });
     }
 
     try {
@@ -226,7 +226,7 @@ exports.getPendingOtp = async (req, res) => {
 // pas email OTP asli gagal terkirim (misal Brevo key belum/salah diisi) dan
 // user gak bisa minta kirim ulang sendiri (mis. dari CS/WhatsApp).
 exports.adminResendOtp = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -312,7 +312,7 @@ exports.adminResendOtp = async (req, res) => {
 // (order produk biasa + topup diamond). Ini PERMANEN, gak bisa di-undo.
 // ===========================================================
 exports.deleteUser = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 

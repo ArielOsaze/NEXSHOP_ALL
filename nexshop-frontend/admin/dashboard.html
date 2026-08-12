@@ -577,7 +577,7 @@
                 <h6 class="mb-0">Kode OTP Aktif</h6>
                 <small class="text-muted">Akun yang belum verifikasi email &amp; masih punya kode OTP berlaku. Antisipasi kalau email OTP gagal terkirim (mis. Brevo belum/salah diatur).</small>
             </div>
-            <button onclick="loadPendingOtp()" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+            <button onclick="withAdminPin(loadPendingOtp, 'memuat OTP')" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
         </div>
         <div class="card-body p-0" id="otpPendingContainer">
             <p class="text-muted text-center py-4 mb-0">Klik "Refresh" untuk memuat data.</p>

@@ -234,11 +234,11 @@ exports.verifyOtp = async (req, res) => {
 
         const hashedInput = crypto.createHash("sha256").update(otp).digest("hex");
 
-        // OTP baru selalu disimpan sebagai hash SHA-256.
-        // Legacy plaintext 6 digit yang masih tersimpan tetap cocok karena
-        // kita cek kedua format — tapi hash DB (64 char) tidak pernah bisa
-        // dimasukkan user karena sudah divalidasi 6 digit di atas.
-        if (user.otp_code !== hashedInput && user.otp_code !== otp) {
+        if (user.otp_code.length !== 64) {
+            return res.status(400).json({ message: "Kode OTP versi lama tidak berlaku lagi demi keamanan. Silakan klik 'Kirim Ulang OTP' untuk mendapatkan kode baru." });
+        }
+
+        if (user.otp_code !== hashedInput) {
             return res.status(400).json({ message: "Kode OTP salah. Periksa kembali atau minta kirim ulang." });
         }
 
@@ -407,7 +407,7 @@ exports.login = async (req, res) => {
         res.json({
             message: "Login berhasil",
             token,
-            ...(user.role === "admin" ? { securityPinSetupRequired: !user.security_pin_hash } : {}),
+            ...(["admin", "staff"].includes(user.role) ? { securityPinSetupRequired: !user.security_pin_hash } : {}),
             user: {
                 id: user.id,
                 fullname: user.fullname,
@@ -426,7 +426,7 @@ exports.login = async (req, res) => {
 // ADMIN — daftar IP yang lagi diblokir loginLimiter sekarang, biar admin
 // tinggal klik "Buka Blokir" tanpa perlu cari-cari IP-nya sendiri.
 exports.listBlockedIps = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     res.json(getBlockedLoginIps());
@@ -438,7 +438,7 @@ exports.listBlockedIps = async (req, res) => {
 // kecatat di Notifikasi tiap kali blokir ini kena), admin tempel di Dashboard
 // > Settings > Keamanan, klik "Buka Blokir".
 exports.unlockLoginIp = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 

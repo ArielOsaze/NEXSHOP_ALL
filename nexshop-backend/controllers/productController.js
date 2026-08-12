@@ -77,7 +77,7 @@ exports.getProductById = async (req, res) => {
 // TAMBAH PRODUK
 // ===========================
 exports.createProduct = async (req, res) => {
-  if (req.user.role !== "admin") {
+  if (!["admin", "staff"].includes(req.user.role)) {
     return res.status(403).json({ message: "Akses ditolak, khusus admin" });
   }
   try {
@@ -156,7 +156,7 @@ exports.createProduct = async (req, res) => {
 // UPDATE PRODUK
 // ===========================
 exports.updateProduct = async (req, res) => {
-  if (req.user.role !== "admin") {
+  if (!["admin", "staff"].includes(req.user.role)) {
     return res.status(403).json({ message: "Akses ditolak, khusus admin" });
   }
   try {
@@ -225,7 +225,7 @@ exports.updateProduct = async (req, res) => {
 // HAPUS PRODUK
 // ===========================
 exports.deleteProduct = async (req, res) => {
-  if (req.user.role !== "admin") {
+  if (!["admin", "staff"].includes(req.user.role)) {
     return res.status(403).json({ message: "Akses ditolak, khusus admin" });
   }
   try {

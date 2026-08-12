@@ -341,7 +341,7 @@ exports.getMyOrders = async (req, res) => {
 // frontend lagi.
 // ===========================
 exports.getAllOrders = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -460,22 +460,29 @@ exports.handleNotification = async (req, res) => {
         if (status !== "paid") {
             query = query.neq("status", "paid");
         }
+        if (status === "paid") {
+            query = query.in("status", ["pending", "failed"]);
+        }
 
-        const { error } = await query;
+        const { data: updatedRows, error } = await query.select();
 
         if (error) {
             console.log(error);
             return res.status(500).json({ message: "Gagal update status pesanan" });
         }
 
+        if (!updatedRows || updatedRows.length === 0) {
+            return res.status(200).json({ message: "OK (No status transition made)" });
+        }
+
         // catat pemakaian kode promo cuma sekali, pas transisi PERTAMA KALI ke "paid"
-        if (status === "paid" && existingOrder.status !== "paid" && existingOrder.promo_code) {
+        if (status === "paid" && existingOrder.promo_code) {
             await incrementUsage(existingOrder.promo_code, existingOrder.recipient_email, orderId);
         }
 
         // kirim invoice email cuma sekali, pas transisi PERTAMA KALI ke "paid" —
         // gagal kirim email JANGAN sampai gagalin response ke iPaymu (bukan fatal)
-        if (status === "paid" && existingOrder.status !== "paid" && existingOrder.recipient_email) {
+        if (status === "paid" && existingOrder.recipient_email) {
             try {
                 const rawItems = Array.isArray(existingOrder.items) ? existingOrder.items : [];
                 const { data: products } = await supabase
@@ -525,7 +532,7 @@ exports.handleNotification = async (req, res) => {
 
 // ADMIN — Ubah status pesanan (cancel, refund, mark as paid, dsb.)
 exports.updateOrderStatusAdmin = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { id } = req.params;

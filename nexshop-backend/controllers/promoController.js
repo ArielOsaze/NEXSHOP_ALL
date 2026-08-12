@@ -49,7 +49,7 @@ exports.getSlides = async (req, res) => {
 
 // Admin only — semua slide termasuk yang nonaktif, buat ditampilin di dashboard
 exports.getAllSlidesAdmin = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -73,7 +73,7 @@ exports.getAllSlidesAdmin = async (req, res) => {
 };
 
 exports.createSlide = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -119,7 +119,7 @@ exports.createSlide = async (req, res) => {
 };
 
 exports.updateSlide = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -167,7 +167,7 @@ exports.updateSlide = async (req, res) => {
 };
 
 exports.deleteSlide = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 

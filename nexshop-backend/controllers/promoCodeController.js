@@ -155,7 +155,7 @@ exports.validate = async (req, res) => {
 // ADMIN — CRUD kode promo
 // ===========================================================
 exports.getAll = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -172,7 +172,7 @@ exports.getAll = async (req, res) => {
 };
 
 exports.create = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -228,7 +228,7 @@ exports.create = async (req, res) => {
 };
 
 exports.update = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -269,7 +269,7 @@ exports.update = async (req, res) => {
 };
 
 exports.remove = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { id } = req.params;

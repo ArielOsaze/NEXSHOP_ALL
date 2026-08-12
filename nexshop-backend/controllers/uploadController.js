@@ -17,7 +17,7 @@ async function uploadImage(req, res) {
     try {
         const type = req.query.type || "product";
         
-        if (req.user.role !== "admin" && type !== "avatar") {
+        if (!["admin", "staff"].includes(req.user.role) && type !== "avatar") {
             return res.status(403).json({ message: "Akses ditolak, khusus admin" });
         }
 

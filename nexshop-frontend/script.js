@@ -1311,12 +1311,12 @@ function openCheckout(items, source = "cart") {
     if (currentUser) {
         document.getElementById("checkoutName").value = currentUser.fullname;
         document.getElementById("checkoutEmail").value = currentUser.email;
-        if (currentUser.phone) {
+        if (currentUser.phone && /^0[0-9]{8,14}$/.test(currentUser.phone)) {
             document.getElementById("checkoutPhone").value = currentUser.phone;
             document.getElementById("checkoutPhone").parentElement.classList.add("hidden");
         } else {
             document.getElementById("checkoutPhone").parentElement.classList.remove("hidden");
-            document.getElementById("checkoutPhone").value = "";
+            document.getElementById("checkoutPhone").value = currentUser.phone || "";
         }
     } else {
         document.getElementById("checkoutName").value = "";
@@ -2599,9 +2599,12 @@ function openGameDetail(kategori) {
     document.getElementById("twUserId").value = "";
     document.getElementById("twServerId").value = "";
     document.getElementById("twEmail").value = twState.email;
-    if (currentUser && currentUser.phone) {
+    if (currentUser && currentUser.phone && /^0[0-9]{8,14}$/.test(currentUser.phone)) {
         document.getElementById("twPhone").value = currentUser.phone;
         document.getElementById("twPhone").closest(".tw-field-group").classList.add("hidden");
+    } else if (currentUser) {
+        document.getElementById("twPhone").value = currentUser.phone || "";
+        document.getElementById("twPhone").closest(".tw-field-group").classList.remove("hidden");
     } else {
         document.getElementById("twPhone").value = "";
         document.getElementById("twPhone").closest(".tw-field-group").classList.remove("hidden");
@@ -3805,7 +3808,7 @@ async function bootstrapApp() {
     ]);
     finishInitialLoading(!completed);
     
-    if (currentUser && !currentUser.phone) {
+    if (currentUser && (!currentUser.phone || !/^0[0-9]{8,14}$/.test(currentUser.phone))) {
         openOverlay("phoneOverlay");
     }
 }

@@ -49,7 +49,7 @@ exports.getStoreSettingsPublic = async (req, res) => {
 
 // Admin only
 exports.updateStoreSettingsAdmin = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -219,7 +219,7 @@ exports.changeAdminPin = async (req, res) => {
 };
 
 exports.getApiKeysAdmin = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -264,7 +264,7 @@ exports.getApiKeysAdmin = async (req, res) => {
 };
 
 exports.revealApiKeysAdmin = async (req, res) => {
-    if (req.user.role !== "admin") return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    if (!["admin", "staff"].includes(req.user.role)) return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     try {
         const keys = await getApiKeys({ fresh: true });
         const key = typeof req.body.key === "string" ? req.body.key : "";
@@ -281,7 +281,7 @@ exports.revealApiKeysAdmin = async (req, res) => {
 };
 
 exports.updateApiKeysAdmin = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -339,7 +339,7 @@ exports.updateApiKeysAdmin = async (req, res) => {
 // order), yang ini justru harus melaporkan hasil sukses/gagal apa adanya
 // biar gampang di-debug dari admin dashboard.
 exports.testWhatsAppAdmin = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -400,7 +400,7 @@ exports.testWhatsAppAdmin = async (req, res) => {
 };
 
 exports.testUserWhatsApp = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -433,7 +433,7 @@ exports.testUserWhatsApp = async (req, res) => {
 };
 
 exports.testApiGamesAdmin = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 

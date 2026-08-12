@@ -338,7 +338,7 @@ function pilihSebaranLog(clustersAsc, cap) {
 }
 
 exports.smartActivateProducts = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { ids, maxAktifPerKategori } = req.body;
@@ -644,7 +644,7 @@ exports.getProducts = async (req, res) => {
 // tombol "Markup Otomatis" atau "Terapkan Markup" manual kalau perlu.
 // ===========================================================
 exports.syncProducts = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -734,7 +734,7 @@ exports.syncProducts = async (req, res) => {
 
 // ADMIN — list semua produk topup (termasuk nonaktif), buat tabel dashboard
 exports.getAllProductsAdmin = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -759,7 +759,7 @@ exports.getAllProductsAdmin = async (req, res) => {
 
 // ADMIN — update harga jual / aktif / butuh server id / urutan tampil
 exports.updateProduct = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { id } = req.params;
@@ -796,7 +796,7 @@ exports.updateProduct = async (req, res) => {
 // gak perlu filter+select-all+bulk-status manual tiap mau sembunyiin
 // satu game dari toko.
 exports.setKategoriActive = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { kategori, is_active } = req.body;
@@ -820,7 +820,7 @@ exports.setKategoriActive = async (req, res) => {
 // ADMIN — set logo game (operator_logo) buat SEMUA produk dalam satu kategori
 // sekaligus, jadi admin gak perlu edit logo satu-satu per denominasi diamond.
 exports.updateCategoryLogo = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { kategori, operator_logo } = req.body;
@@ -844,7 +844,7 @@ exports.updateCategoryLogo = async (req, res) => {
 // ADMIN — aktifkan/nonaktifkan banyak produk sekaligus (checkbox massal di
 // dashboard), jadi gak perlu buka modal edit satu-satu.
 exports.bulkUpdateStatus = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { ids, is_active } = req.body;
@@ -871,7 +871,7 @@ exports.bulkUpdateStatus = async (req, res) => {
 // (checkbox massal di dashboard), misalnya abis sync produk Mobile Legends
 // baru yang semuanya perlu Zone ID, gak perlu buka edit satu-satu.
 exports.bulkUpdateButuhServerId = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { ids, butuh_server_id } = req.body;
@@ -902,7 +902,7 @@ exports.bulkUpdateButuhServerId = async (req, res) => {
 // pembulatan. Ini yang bikin admin gak perlu buka modal edit satu-satu tiap
 // produk cuma buat naikin harga jual dari harga modalnya.
 exports.bulkMarkupPrice = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { ids, type, value, rounding } = req.body;
@@ -976,7 +976,7 @@ exports.bulkMarkupPrice = async (req, res) => {
 // masing). Cocok dipakai abis sync produk baru (misal semua item diamond
 // satu game) biar harganya langsung disesuaikan tanpa itung manual.
 exports.autoMarkupPrice = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { ids } = req.body;
@@ -1036,7 +1036,7 @@ exports.autoMarkupPrice = async (req, res) => {
 // gak perlu buka modal edit satu-satu tiap produk. Beda dari
 // updateCategoryLogo yang isi operator_logo (logo game, dipakai di toko).
 exports.bulkUpdateIcon = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { ids, item_icon } = req.body;
@@ -1066,7 +1066,7 @@ exports.bulkUpdateIcon = async (req, res) => {
 // sekaligus. Tool umum buat rapiin/gabungin kategori kalau ada produk yang
 // kepisah/salah kategori pas sync dari TokoVoucher.
 exports.bulkUpdateKategori = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { ids, kategori } = req.body;
@@ -1096,7 +1096,7 @@ exports.bulkUpdateKategori = async (req, res) => {
 // ADMIN — hapus banyak produk sekaligus berdasarkan pilihan checkbox (beda
 // dari deleteAllProducts yang hapus SEMUA/per-kategori)
 exports.bulkDeleteProducts = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { ids } = req.body;
@@ -1129,7 +1129,7 @@ exports.bulkDeleteProducts = async (req, res) => {
 // icon, atau hapus) yang belum di-undo. Lihat catatan model stack di atas
 // deklarasi logAction().
 exports.undoLastAction = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -1164,7 +1164,7 @@ exports.undoLastAction = async (req, res) => {
 
 // ADMIN — redo aksi yang paling terakhir di-undo (kebalikan dari undoLastAction)
 exports.redoLastAction = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -1198,7 +1198,7 @@ exports.redoLastAction = async (req, res) => {
 // ADMIN — status ringkas buat tombol Undo/Redo di dashboard (enable/disable
 // + label tooltip "aksi apa yang bakal di-undo/redo")
 exports.getActionHistoryStatus = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -1218,7 +1218,7 @@ exports.getActionHistoryStatus = async (req, res) => {
 };
 
 exports.deleteProduct = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { id } = req.params;
@@ -1234,7 +1234,7 @@ exports.deleteProduct = async (req, res) => {
 // ADMIN — hapus SEMUA produk topup sekaligus (biar gak perlu klik hapus satu-satu).
 // Opsional: kirim ?kategori=Mobile Legends buat cuma hapus produk di kategori/game itu saja.
 exports.deleteAllProducts = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { kategori } = req.query;
@@ -1561,7 +1561,7 @@ exports.getMyOrders = async (req, res) => {
 
 // ADMIN — semua order topup, buat dashboard
 exports.getAllOrders = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -1722,10 +1722,24 @@ exports.handleIpaymuNotification = async (req, res) => {
             query = query.neq("status", "processing");
         }
 
-        await query;
+        // Prevent transitioning to processing if it's already processing or sukses
+        if (status === "processing") {
+            query = query.in("status", ["pending", "failed"]);
+        }
+
+        const { data: updatedRows, error } = await query.select();
+        
+        if (error) {
+            console.log(error);
+            return res.status(500).json({ message: "Gagal update status pesanan" });
+        }
+
+        if (!updatedRows || updatedRows.length === 0) {
+            return res.status(200).json({ message: "OK (No status transition made)" });
+        }
 
         // catat pemakaian kode promo cuma sekali, pas transisi PERTAMA KALI ke "processing" (artinya udah lunas iPaymu)
-        if (status === "processing" && order.status !== "processing" && order.promo_code) {
+        if (status === "processing" && order.promo_code) {
             await incrementUsage(order.promo_code, order.recipient_email, orderId);
         }
 
@@ -1774,10 +1788,23 @@ async function reconcileTopupOrder(order, result) {
     if (finalStatus !== "sukses") {
         query = query.neq("status", "sukses");
     }
+    if (finalStatus === "sukses") {
+        query = query.neq("status", "sukses");
+    }
 
-    await query;
+    const { data: updatedRows, error } = await query.select();
+    if (error) {
+        console.log("Gagal update status topup_orders:", error);
+        return finalStatus;
+    }
 
-    if (finalStatus === "sukses" && wasNotYetSukses && order.recipient_email) {
+    // if no rows were updated, it means another process already transitioned it,
+    // or the state was already finalStatus.
+    if (!updatedRows || updatedRows.length === 0) {
+        return finalStatus;
+    }
+
+    if (finalStatus === "sukses" && order.recipient_email) {
         try {
             await sendTopupInvoiceEmail(order.recipient_email, {
                 orderId: order.id,
@@ -1791,7 +1818,7 @@ async function reconcileTopupOrder(order, result) {
             console.log("Gagal kirim invoice topup email:", mailErr.response?.data || mailErr.message);
         }
     }
-    if (finalStatus === "sukses" && wasNotYetSukses) {
+    if (finalStatus === "sukses") {
         sendTelegramNotification(
             `💎 <b>Pembelian Topup Baru</b>\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
         );
@@ -1941,7 +1968,7 @@ exports.pollStuckOrders = async () => {
 
 // ADMIN — cek saldo akun TokoVoucher (dipakai di Settings/Topup dashboard)
 exports.getBalance = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {

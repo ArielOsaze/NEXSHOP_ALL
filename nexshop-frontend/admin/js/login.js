@@ -56,8 +56,8 @@ form.addEventListener("submit", async (e) => {
             throw new Error(data.message || "Login gagal. Periksa email dan password kamu.");
         }
 
-        if (!data.token || !data.user || data.user.role !== "admin") {
-            throw new Error("Akun ini tidak memiliki akses administrator.");
+        if (!data.token || !data.user || !["admin", "staff"].includes(data.user.role)) {
+            throw new Error("Akun ini tidak memiliki akses administrator atau staff.");
         }
 
         localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, data.token);

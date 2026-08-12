@@ -17,7 +17,7 @@ function monthKey(dateStr) {
 // ADMIN — ringkasan statistik penjualan gabungan (produk biasa + topup diamond):
 // total omzet, jumlah order, tren harian/bulanan, produk & kategori topup terlaris.
 exports.getOverview = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -117,7 +117,7 @@ exports.getOverview = async (req, res) => {
 
 // ADMIN — Ekspor data transaksi ke format CSV untuk laporan keuangan/sales report
 exports.exportOrders = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -177,7 +177,7 @@ exports.exportOrders = async (req, res) => {
 
 // ADMIN — System Health & Performance Status
 exports.getSystemHealth = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -211,7 +211,7 @@ exports.getSystemHealth = async (req, res) => {
 
 // ADMIN — Google Gemini AI Sales Advisor & Insights
 exports.getAiInsights = async (req, res) => {
-    if (req.user.role !== "admin") {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
