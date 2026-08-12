@@ -1186,7 +1186,7 @@ document.getElementById("phoneForm").addEventListener("submit", async (e) => {
         const twPhone = document.getElementById("twPhone");
         if (twPhone) {
             twPhone.value = data.phone;
-            twPhone.parentElement.classList.add("hidden");
+            twPhone.closest(".tw-field-group").classList.add("hidden");
         }
         
     } catch (err) {
@@ -2508,10 +2508,10 @@ function openGameDetail(kategori) {
     document.getElementById("twEmail").value = twState.email;
     if (currentUser && currentUser.phone) {
         document.getElementById("twPhone").value = currentUser.phone;
-        document.getElementById("twPhone").parentElement.classList.add("hidden");
+        document.getElementById("twPhone").closest(".tw-field-group").classList.add("hidden");
     } else {
         document.getElementById("twPhone").value = "";
-        document.getElementById("twPhone").parentElement.classList.remove("hidden");
+        document.getElementById("twPhone").closest(".tw-field-group").classList.remove("hidden");
     }
     document.getElementById("twServerWrap").classList.toggle("hidden", !twState.needsServerId);
     document.getElementById("twAccountResult").className = "tw-account-result hidden";
