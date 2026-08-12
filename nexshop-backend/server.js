@@ -36,6 +36,7 @@ const newsRoutes = require("./routes/newsRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const ratingRoutes = require("./routes/ratingRoutes");
 const { startTopupStatusPoller } = require("./jobs/topupStatusPoller");
+const { startRetryPoller } = require("./jobs/notificationRetryPoller");
 
 const app = express();
 

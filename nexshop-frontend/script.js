@@ -3091,8 +3091,11 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
         ? `${API_BASE}/topup/track/${encodeURIComponent(orderId)}`
         : `${API_BASE}/orders/track/${encodeURIComponent(orderId)}`;
 
-    if (ipaymuPollingInterval) clearInterval(ipaymuPollingInterval);
-    ipaymuPollingInterval = setInterval(async () => {
+    if (ipaymuPollingTimeout) clearTimeout(ipaymuPollingTimeout);
+    if (ipaymuPollingController) ipaymuPollingController.abort();
+    ipaymuPollingController = new AbortController();
+
+    const poll = async () => {
         try {
             const res = await fetch(endpoint);
             if (res.ok) {
@@ -3110,9 +3113,12 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
                 }
             }
         } catch(e) {
+            if (e.name === 'AbortError') return;
             // Ignore polling errors
         }
-    }, 3000);
+        ipaymuPollingTimeout = setTimeout(poll, 3000);
+    };
+    poll();
 }
 
 /* ---------- iPaymu Popup Checkout ---------- */
@@ -3129,7 +3135,10 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
     const handleClose = () => {
         if (popup && !popup.closed) popup.close();
         document.getElementById("paymentWaitingOverlay").style.display = "none";
-        if (ipaymuPollingInterval) clearInterval(ipaymuPollingInterval);
+        
+        if (ipaymuPollingTimeout) clearTimeout(ipaymuPollingTimeout);
+        if (ipaymuPollingController) ipaymuPollingController.abort();
+        
         closeBtn.removeEventListener("click", handleClose);
         
         // Reset button states
@@ -3150,8 +3159,11 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
         ? `${API_BASE}/topup/track/${encodeURIComponent(orderId)}`
         : `${API_BASE}/orders/track/${encodeURIComponent(orderId)}`;
 
-    if (ipaymuPollingInterval) clearInterval(ipaymuPollingInterval);
-    ipaymuPollingInterval = setInterval(async () => {
+    if (ipaymuPollingTimeout) clearTimeout(ipaymuPollingTimeout);
+    if (ipaymuPollingController) ipaymuPollingController.abort();
+    ipaymuPollingController = new AbortController();
+
+    const poll = async () => {
         if (popup && popup.closed) {
             handleClose();
             return;
@@ -3174,9 +3186,12 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
                 }
             }
         } catch(e) {
+            if (e.name === 'AbortError') return;
             // Ignore polling errors
         }
-    }, 3000);
+        ipaymuPollingTimeout = setTimeout(poll, 3000);
+    };
+    poll();
 }
 
 async function checkPaymentReturn() {
@@ -3200,16 +3215,27 @@ async function checkPaymentReturn() {
         const maxAttempts = shouldWaitForWebhook ? 6 : 1;
         let data = null;
 
+        const controller = new AbortController();
+        const signal = controller.signal;
+        
+        // Setup listener to abort if user navigates away from the page
+        const abortHandler = () => controller.abort();
+        window.addEventListener("hashchange", abortHandler, { once: true });
+
         for (let attempt = 0; attempt < maxAttempts; attempt++) {
-            const res = await fetch(endpoint);
+            if (signal.aborted) return;
+            const res = await fetch(endpoint, { signal });
             data = await res.json();
             if (!res.ok) {
                 toast(`Order ${orderId}: status belum bisa dicek. Simpan Order ID ini untuk cek manual ke admin.`);
+                controller.abort();
                 return;
             }
             if (data.status !== "pending" || attempt === maxAttempts - 1) break;
             await new Promise((resolve) => setTimeout(resolve, 1200));
         }
+
+        window.removeEventListener("hashchange", abortHandler);
 
         // jaga-jaga: loadStoreSettings() (buat contact_whatsapp) jalan bareng
         // fungsi ini pas page load, jadi bisa aja belum selesai duluan —

@@ -1626,6 +1626,10 @@ async function fulfillOrder(order) {
             sendWhatsAppNotification(
                 `💎 *Pembelian Topup Baru*\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
             );
+            
+            // Fonnte user WA delivery idempotency
+            const { processNotificationEvent } = require('../services/notificationDeliveryService');
+            processNotificationEvent(order.id, "success").catch(e => console.log("Gagal trigger notif WA Topup:", e));
         }
     } catch (err) {
         // Sesuai catatan TokoVoucher: HTTP error / timeout HARUS dianggap PENDING,
@@ -1691,7 +1695,7 @@ exports.handleIpaymuNotification = async (req, res) => {
         let shouldFulfill = false;
 
         if (["berhasil", "success", "1", "paid", "settlement"].includes(verifiedStatus)) {
-            status = "paid";
+            status = "processing"; // Setelah iPaymu sukses, masuk processing sebelum/saat Tokovoucher dikontak
             shouldFulfill = true;
         } else if (["pending", "0"].includes(verifiedStatus)) {
             status = "pending";
@@ -1699,14 +1703,32 @@ exports.handleIpaymuNotification = async (req, res) => {
             status = "failed";
         }
 
-        await supabase.from("topup_orders").update({
+        // Tegakkan status monotonik topup
+        if (order.status === "sukses" && status !== "sukses") {
+            return res.status(200).json({ message: "OK (Ignored downgrade from sukses)" });
+        }
+        if (order.status === "processing" && status === "pending") {
+            return res.status(200).json({ message: "OK (Ignored downgrade from processing to pending)" });
+        }
+
+        // Kueri kondisional untuk mencegah menimpa status yang lebih maju secara race condition
+        let query = supabase.from("topup_orders").update({
             status,
             payment_status: verifiedStatus,
             updated_at: new Date().toISOString()
         }).eq("id", orderId);
 
-        // catat pemakaian kode promo cuma sekali, pas transisi PERTAMA KALI ke "paid"
-        if (status === "paid" && order.status !== "paid" && order.promo_code) {
+        if (status !== "sukses") {
+            query = query.neq("status", "sukses");
+        }
+        if (status === "pending") {
+            query = query.neq("status", "processing");
+        }
+
+        await query;
+
+        // catat pemakaian kode promo cuma sekali, pas transisi PERTAMA KALI ke "processing" (artinya udah lunas iPaymu)
+        if (status === "processing" && order.status !== "processing" && order.promo_code) {
             await incrementUsage(order.promo_code, order.recipient_email, orderId);
         }
 
@@ -1739,13 +1761,24 @@ async function reconcileTopupOrder(order, result) {
     const finalStatus = statusMap[result.status] || "processing";
     const wasNotYetSukses = order.status !== "sukses";
 
-    await supabase.from("topup_orders").update({
+    // Monotonic Check untuk Tokovoucher Webhook / Reconcile
+    if (order.status === "sukses" && finalStatus !== "sukses") {
+        return order.status; // Ignore downgrade
+    }
+
+    let query = supabase.from("topup_orders").update({
         status: finalStatus,
         tv_trx_id: result.trx_id || order.tv_trx_id || null,
         tv_sn: result.sn || order.tv_sn || null,
         tv_message: result.message || order.tv_message || null,
         updated_at: new Date().toISOString()
     }).eq("id", order.id);
+
+    if (finalStatus !== "sukses") {
+        query = query.neq("status", "sukses");
+    }
+
+    await query;
 
     if (finalStatus === "sukses" && wasNotYetSukses && order.recipient_email) {
         try {
@@ -1768,6 +1801,10 @@ async function reconcileTopupOrder(order, result) {
         sendWhatsAppNotification(
             `💎 *Pembelian Topup Baru*\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
         );
+        
+        // Fonnte user WA delivery idempotency
+        const { processNotificationEvent } = require('../services/notificationDeliveryService');
+        processNotificationEvent(order.id, "success").catch(e => console.log("Gagal trigger notif WA Topup:", e));
     }
 
     return finalStatus;
@@ -1838,35 +1875,69 @@ const STUCK_AFTER_MINUTES = 5;
 const MAX_AGE_HOURS = 48;
 
 exports.pollStuckOrders = async () => {
-    const stuckBefore = new Date(Date.now() - STUCK_AFTER_MINUTES * 60 * 1000).toISOString();
     const oldestAllowed = new Date(Date.now() - MAX_AGE_HOURS * 60 * 60 * 1000).toISOString();
+    const now = new Date().toISOString();
+    const lockToken = require('crypto').randomUUID();
 
-    const { data: stuckOrders, error } = await supabase
+    // 1. Recover stale locks
+    const fiveMinsAgo = new Date(Date.now() - 5 * 60000).toISOString();
+    await supabase.from("topup_orders")
+        .update({ locked_at: null, lock_token: null })
+        .eq("status", "processing")
+        .lt("locked_at", fiveMinsAgo);
+
+    // 2. Fetch candidates (where next_status_check_at is null or past)
+    const { data: candidates, error } = await supabase
         .from("topup_orders")
-        .select("*")
-        .eq("status", "processing") // "pending" = belum bayar sama sekali, belum pernah dikirim ke TokoVoucher -- gak perlu (dan gak bisa) dicek
-        .lt("updated_at", stuckBefore)
+        .select("id")
+        .eq("status", "processing")
         .gt("created_at", oldestAllowed)
-        .limit(50); // jaga-jaga biar sekali jalan gak nembak ratusan request ke TokoVoucher
+        .or(`next_status_check_at.is.null,next_status_check_at.lte.${now}`)
+        .limit(10);
 
-    if (error) {
-        console.log("[topup-poller] gagal ambil order yang nyangkut:", error);
-        return;
-    }
-    if (!stuckOrders || !stuckOrders.length) return;
+    if (error || !candidates || !candidates.length) return;
 
-    console.log(`[topup-poller] ngecek ulang ${stuckOrders.length} order topup yang nyangkut...`);
+    for (const candidate of candidates) {
+        // Atomic Claim
+        const { data: order, error: claimErr } = await supabase
+            .from("topup_orders")
+            .update({
+                locked_at: now,
+                lock_token: lockToken
+            })
+            .eq("id", candidate.id)
+            .eq("status", "processing")
+            .is("locked_at", null) // ensure no one else claimed it since we fetched
+            .select()
+            .single();
 
-    for (const order of stuckOrders) {
+        if (claimErr || !order) continue; // Someone else claimed it
+
         try {
             const result = await tokovoucher.checkStatus(order.id);
             const finalStatus = await reconcileTopupOrder(order, result);
-            console.log(`[topup-poller] ${order.id}: ${order.status} -> ${finalStatus}`);
-        } catch (err) {
-            // biarin aja, dicoba lagi di siklus poll berikutnya
-            console.log(`[topup-poller] gagal cek status ${order.id}:`, err.response?.data || err.message);
+
+            if (finalStatus === "processing") {
+                await supabase.from("topup_orders").update({
+                    locked_at: null,
+                    lock_token: null,
+                    next_status_check_at: new Date(Date.now() + 10 * 60000).toISOString()
+                }).eq("id", order.id).eq("lock_token", lockToken);
+            } else {
+                await supabase.from("topup_orders").update({
+                    locked_at: null,
+                    lock_token: null,
+                    next_status_check_at: null
+                }).eq("id", order.id).eq("lock_token", lockToken);
+            }
+        } catch (checkErr) {
+            console.log(`[topup-poller] error ngecek ${order.id}:`, checkErr.message);
+            await supabase.from("topup_orders").update({
+                locked_at: null,
+                lock_token: null,
+                next_status_check_at: new Date(Date.now() + 5 * 60000).toISOString()
+            }).eq("id", order.id).eq("lock_token", lockToken);
         }
-        // jeda kecil antar request biar gak keburu-buru mukul rate limit TokoVoucher
         await new Promise((r) => setTimeout(r, 800));
     }
 };

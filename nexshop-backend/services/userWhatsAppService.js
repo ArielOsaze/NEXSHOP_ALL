@@ -68,15 +68,32 @@ async function sendUserWhatsApp(targetNumber, type, variables = {}) {
         );
 
         if (response.data && response.data.status) {
-            return { success: true, response: response.data };
+            return { success: true, response: response.data, status: response.status };
         } else {
             console.log("⚠️ Fonnte API gagal:", response.data);
-            return { success: false, reason: "api_error", error: response.data };
+            return { success: false, reason: "api_error", error: response.data, status: response.status };
         }
 
     } catch (err) {
         console.error("Kesalahan saat mengirim Fonnte WA:", err.message);
-        return { success: false, reason: "exception", error: err.message };
+        
+        let errorCategory = "unknown"; // default to timeout/disconnect
+        let status = null;
+        if (err.response) {
+            status = err.response.status;
+            if ([400, 401, 403, 404, 405, 422].includes(status)) {
+                errorCategory = "permanent";
+            } else if ([408, 429].includes(status) || (status >= 500 && status <= 599)) {
+                errorCategory = "transient";
+            }
+        }
+        
+        return { 
+            success: false, 
+            reason: errorCategory, 
+            error: err.response?.data || err.message, 
+            status: status 
+        };
     }
 }
 

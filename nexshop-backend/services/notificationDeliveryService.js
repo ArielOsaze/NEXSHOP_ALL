@@ -1,0 +1,210 @@
+const supabase = require('../config/db');
+const { sendUserWhatsApp } = require('./userWhatsAppService');
+const crypto = require('crypto');
+
+function rupiahLog(n) {
+    return "Rp" + Number(n).toLocaleString("id-ID");
+}
+
+async function fetchNotificationPayload(orderId, notificationType) {
+    // Reconstruct payload dynamically so we don't store PII in notification_events
+    if (orderId.startsWith("TP")) {
+        const { data: topup } = await supabase.from('topup_orders').select('*').eq('id', orderId).maybeSingle();
+        if (!topup) return null;
+        return {
+            targetNumber: topup.recipient_phone,
+            variables: { name: "Pelanggan", order_id: orderId, total: rupiahLog(topup.harga) }
+        };
+    } else {
+        const { data: order } = await supabase.from('orders').select('*').eq('id', orderId).maybeSingle();
+        if (!order) return null;
+        return {
+            targetNumber: order.recipient_phone,
+            variables: { name: order.recipient_name, order_id: orderId, total: rupiahLog(order.total) }
+        };
+    }
+}
+
+/**
+ * Handles the delivery of a notification, ensuring idempotency and retry logic.
+ */
+async function processNotificationEvent(orderId, notificationType, type = "success") {
+    // 1. Check or Create Event
+    let eventId = null;
+
+    try {
+        const { data: newEvent, error: insertError } = await supabase
+            .from('notification_events')
+            .insert([{
+                order_id: orderId,
+                notification_type: notificationType,
+                status: 'pending',
+                attempt_count: 0
+            }])
+            .select()
+            .single();
+
+        if (insertError) {
+            // Error duplicate insert -> event already exists
+            if (insertError.code === '23505') {
+                const { data: existing } = await supabase
+                    .from('notification_events')
+                    .select('id, status')
+                    .eq('order_id', orderId)
+                    .eq('notification_type', notificationType)
+                    .single();
+
+                if (existing) {
+                    eventId = existing.id;
+                } else {
+                    return;
+                }
+            } else {
+                return;
+            }
+        } else if (newEvent) {
+            eventId = newEvent.id;
+        }
+    } catch (err) {
+        return;
+    }
+
+    if (!eventId) return;
+
+    // 2. Atomic Claim (Initial)
+    const lockToken = crypto.randomUUID();
+    
+    const { data: claimedEvent, error: claimError } = await supabase
+        .from('notification_events')
+        .update({
+            status: 'sending',
+            attempt_count: 1, // first attempt
+            locked_at: new Date().toISOString(),
+            lock_token: lockToken,
+            next_retry_at: null
+        })
+        .eq('id', eventId)
+        .eq('status', 'pending')
+        .select()
+        .single();
+
+    if (claimError || !claimedEvent) {
+        // Did not claim (could be already processed, sent, sending, or failed). Do nothing.
+        return;
+    }
+
+    // 3. Fetch payload dynamically
+    const payload = await fetchNotificationPayload(orderId, notificationType);
+    if (!payload) {
+        // Fallback safely if order was deleted
+        await finalizeNotificationResult(eventId, lockToken, claimedEvent.attempt_count, { success: false, reason: "permanent", error: "Order not found" });
+        return;
+    }
+
+    // 4. Send WhatsApp
+    const result = await sendUserWhatsApp(payload.targetNumber, type, payload.variables);
+
+    // 5. Update Status based on Lock Ownership
+    await finalizeNotificationResult(eventId, lockToken, claimedEvent.attempt_count, result);
+}
+
+/**
+ * Handles retry delivery specifically from the worker
+ */
+async function processRetryDelivery(candidate) {
+    const lockToken = crypto.randomUUID();
+    const newAttemptCount = candidate.attempt_count + 1;
+
+    // Atomic Claim (Retry)
+    const { data: claimedEvent, error: claimError } = await supabase
+        .from('notification_events')
+        .update({
+            status: 'sending',
+            attempt_count: newAttemptCount,
+            locked_at: new Date().toISOString(),
+            lock_token: lockToken,
+            next_retry_at: null
+        })
+        .eq('id', candidate.id)
+        .eq('status', 'failed')
+        .lt('attempt_count', 3)
+        .lte('next_retry_at', new Date().toISOString())
+        .select()
+        .single();
+    
+    if (claimError || !claimedEvent) {
+        return; // Failed to claim
+    }
+
+    const payload = await fetchNotificationPayload(candidate.order_id, candidate.notification_type);
+    if (!payload) {
+        await finalizeNotificationResult(candidate.id, lockToken, newAttemptCount, { success: false, reason: "permanent", error: "Order not found" });
+        return;
+    }
+
+    const result = await sendUserWhatsApp(payload.targetNumber, candidate.notification_type, payload.variables);
+    await finalizeNotificationResult(candidate.id, lockToken, newAttemptCount, result);
+}
+
+
+/**
+ * Updates the notification event status safely using the lock token.
+ */
+async function finalizeNotificationResult(eventId, lockToken, attemptCount, result) {
+    let newStatus = 'unknown';
+    let nextRetry = null;
+    let lastError = null;
+    let sentAt = null;
+
+    if (result.success) {
+        newStatus = 'sent';
+        sentAt = new Date().toISOString();
+    } else {
+        const reason = result.reason;
+        
+        if (reason === 'permanent' || reason === 'api_error' || reason === 'disabled_globally' || reason === 'disabled_type' || reason === 'missing_token' || reason === 'missing_template' || reason === 'invalid_type') {
+            newStatus = 'failed';
+            lastError = typeof result.error === 'object' ? JSON.stringify(result.error) : result.error || "Permanent Error";
+            nextRetry = null;
+        } else if (reason === 'transient') {
+            newStatus = 'failed';
+            lastError = typeof result.error === 'object' ? JSON.stringify(result.error) : result.error || "Transient Error";
+            // Backoff logic: 1m, 5m
+            if (attemptCount === 1) {
+                nextRetry = new Date(Date.now() + 1 * 60000).toISOString();
+            } else if (attemptCount === 2) {
+                nextRetry = new Date(Date.now() + 5 * 60000).toISOString();
+            } else {
+                nextRetry = null; // No more retries after 3 total attempts
+            }
+        } else {
+            // unknown / timeout
+            newStatus = 'unknown';
+            lastError = typeof result.error === 'object' ? JSON.stringify(result.error) : result.error || "Unknown Error/Timeout";
+            nextRetry = null; 
+        }
+    }
+
+    const { error: finalizeError } = await supabase
+        .from('notification_events')
+        .update({
+            status: newStatus,
+            last_error: lastError,
+            sent_at: sentAt,
+            next_retry_at: nextRetry,
+            locked_at: null,
+            lock_token: null
+        })
+        .eq('id', eventId)
+        .eq('status', 'sending')
+        .eq('lock_token', lockToken);
+
+    if (finalizeError) {
+        console.error(`Failed to finalize notification event ${eventId}:`, finalizeError);
+    }
+}
+
+module.exports = {
+    processNotificationEvent,
+    processRetryDelivery
+};

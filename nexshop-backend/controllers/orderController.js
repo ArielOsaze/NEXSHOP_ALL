@@ -8,6 +8,7 @@ const { sendOrderInvoiceEmail } = require("../config/mailer");
 const { sendTelegramNotification } = require("../config/telegram");
 const { sendWhatsAppNotification } = require("../config/whatsapp");
 const { sendUserWhatsApp } = require("../services/userWhatsAppService");
+const { processNotificationEvent } = require("../services/notificationDeliveryService");
 
 const IPAYMU_PAYMENT_METHODS = Object.freeze({
     qris: "qris",
@@ -439,6 +440,12 @@ exports.handleNotification = async (req, res) => {
             status = "failed";
         }
 
+        // Tegakkan status monotonik: jangan turunkan status dari 'paid'
+        if (existingOrder.status === "paid" && status !== "paid") {
+            console.log(`Mengabaikan update webhook menjadi ${status} karena order ${orderId} sudah paid.`);
+            return res.status(200).json({ message: "OK (Ignored downgrade)" });
+        }
+
         const updatePayload = {
             status,
             payment_type: body.via || body.channel || "ipaymu",
@@ -448,10 +455,13 @@ exports.handleNotification = async (req, res) => {
             updatePayload.paid_at = new Date().toISOString();
         }
 
-        const { error } = await supabase
-            .from("orders")
-            .update(updatePayload)
-            .eq("id", orderId);
+        // Kueri kondisional agar tidak menimpa jika status sudah paid oleh request lain (race condition)
+        let query = supabase.from("orders").update(updatePayload).eq("id", orderId);
+        if (status !== "paid") {
+            query = query.neq("status", "paid");
+        }
+
+        const { error } = await query;
 
         if (error) {
             console.log(error);
@@ -501,11 +511,8 @@ exports.handleNotification = async (req, res) => {
                 `🛒 *Pembelian Baru*\nOrder ID: ${orderId}\nNama: ${existingOrder.recipient_name || "-"}\nTotal: ${rupiahLog(existingOrder.total)}`
             );
 
-            // Anti-duplicate notification (idempotency)
-            const { error: notifErr } = await supabase.from("notification_events").insert([{ order_id: orderId, notification_type: "success" }]);
-            if (!notifErr) {
-                sendUserWhatsApp(existingOrder.recipient_phone, "success", { name: existingOrder.recipient_name, order_id: orderId, total: rupiahLog(existingOrder.total) });
-            }
+            // Anti-duplicate notification (idempotency) melalui service terpusat
+            processNotificationEvent(orderId, "success").catch(e => console.log("Gagal trigger notif WA:", e));
         }
 
         // iPaymu expect balasan 200 OK sederhana

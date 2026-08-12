@@ -375,6 +375,9 @@ function switchView(view) {
     document.querySelectorAll(".view-section").forEach(sec => sec.classList.add("d-none"));
     const target = document.getElementById(`view-${view}`);
     if (target) target.classList.remove("d-none");
+    
+    currentView = view; // Ensure currentView is synced (if it wasn't already)
+    if (view !== "topup" && typeof topupAutoRefreshTimer !== "undefined") clearTimeout(topupAutoRefreshTimer);
 
     if (view === "orders" && !ordersLoaded) loadOrders();
     if (view === "users") openUsersSecurely();
@@ -1919,7 +1922,11 @@ document.querySelectorAll("#topupTabs [data-topup-tab]").forEach(btn => {
         const tab = btn.dataset.topupTab;
         document.getElementById("topupTabProducts").classList.toggle("d-none", tab !== "products");
         document.getElementById("topupTabOrders").classList.toggle("d-none", tab !== "orders");
-        if (tab === "orders" && !topupOrdersLoaded) loadTopupOrders();
+        if (tab === "orders") {
+            loadTopupOrders();
+        } else {
+            if (typeof topupAutoRefreshTimer !== 'undefined') clearTimeout(topupAutoRefreshTimer);
+        }
     });
 });
 
@@ -2627,9 +2634,17 @@ async function deleteTopupProduct(id) {
     }
 }
 
+let topupAutoRefreshTimer = null;
+let isFetchingTopupOrders = false;
+
 async function loadTopupOrders() {
+    if (isFetchingTopupOrders) return;
+    isFetchingTopupOrders = true;
+
     const tbody = document.getElementById("topupOrders");
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat data...</td></tr>`;
+    if (!topupOrdersLoaded) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat data...</td></tr>`;
+    }
 
     try {
         const res = await apiFetch("/topup/admin/orders");
@@ -2639,10 +2654,30 @@ async function loadTopupOrders() {
         topupOrdersLoaded = true;
         renderTopupOrders();
     } catch (err) {
-        if (err.message === "unauthorized") return;
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${escapeHtml(err.message)}</td></tr>`;
+        if (err.message === "unauthorized") {
+            isFetchingTopupOrders = false;
+            return;
+        }
+        if (!topupOrdersLoaded) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">${escapeHtml(err.message)}</td></tr>`;
+        }
+    }
+
+    isFetchingTopupOrders = false;
+
+    // Atomic / Active view only check
+    clearTimeout(topupAutoRefreshTimer);
+    const isTopupTabActive = currentView === "topup" && document.getElementById("topupTabOrders") && !document.getElementById("topupTabOrders").classList.contains("d-none");
+    if (isTopupTabActive && document.visibilityState === "visible") {
+        topupAutoRefreshTimer = setTimeout(loadTopupOrders, 1000);
     }
 }
+
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && currentView === "topup" && document.getElementById("topupTabOrders") && !document.getElementById("topupTabOrders").classList.contains("d-none")) {
+        loadTopupOrders();
+    }
+});
 
 async function exportOrdersCsv() {
     try {
