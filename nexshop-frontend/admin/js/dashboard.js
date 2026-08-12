@@ -926,7 +926,10 @@ async function loadUsers(security_pin) {
 
     try {
         const res = await apiFetch("/users/list", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
-        if (!res.ok) throw new Error("not-available");
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.message || "Gagal memuat daftar akun.");
+        }
 
         const users = await res.json();
         usersLoaded = true;
@@ -985,8 +988,7 @@ async function loadUsers(security_pin) {
         container.innerHTML = `
             <div class="text-center text-muted py-5">
                 <i class="bi bi-people display-4 d-block mb-3"></i>
-                Fitur Users belum terhubung ke backend.<br>
-                <small>Data akun tidak dapat dimuat.</small>
+                ${escapeHtml(err.message)}
             </div>
         `;
     }
