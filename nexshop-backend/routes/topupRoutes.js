@@ -5,9 +5,11 @@ const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 const optionalAuthMiddleware = require("../middleware/optionalAuthMiddleware");
 
+const { checkNicknameLimiter } = require("../middleware/rateLimiter");
+
 // Publik
 router.get("/products", topupController.getProducts);
-router.post("/check-nickname", topupController.checkNicknameHandler); // publik — cek akun sebelum checkout
+router.post("/check-nickname", checkNicknameLimiter, topupController.checkNicknameHandler); // publik — cek akun sebelum checkout
 router.post("/validate-promo", topupController.validatePromo); // publik — tombol "Terapkan" kode promo di halaman topup
 
 // Checkout — boleh guest atau login, sama seperti /api/orders

@@ -980,14 +980,20 @@
                     <input id="tvSecret" class="form-control" placeholder="Secret key dari member.tokovoucher.net">
                 </div>
 
-                <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">ApiGames</h6></div>
+                <div class="col-12 mt-4 d-flex justify-content-between align-items-center">
+                    <h6 class="text-uppercase text-muted small mb-0">ApiGames</h6>
+                    <span id="agStatus" class="badge bg-secondary">ApiGames belum dikonfigurasi</span>
+                </div>
                 <div class="col-12">
                     <label class="form-label">Merchant ID</label>
                     <input id="agMerchantId" class="form-control" placeholder="Merchant ID dari dashboard ApiGames">
                 </div>
                 <div class="col-12">
                     <label class="form-label">Secret Key</label>
-                    <input id="agSecretKey" class="form-control" placeholder="Secret key dari dashboard ApiGames">
+                    <div class="input-group">
+                        <input id="agSecretKey" type="password" class="form-control" placeholder="Tersembunyi jika sudah di-set...">
+                        <button type="button" class="btn btn-outline-secondary" id="agTestBtn" onclick="testApiGames()">Test Koneksi</button>
+                    </div>
                 </div>
                 <div class="col-12">
                     <div class="form-text">Opsional — kalau diisi, customer bisa "Cek Akun" (nickname) otomatis sebelum topup Mobile Legends &amp; Free Fire. Kalau dikosongkan, fitur ini nonaktif dan customer tetap bisa checkout seperti biasa (tanpa cek otomatis). Dapatkan Merchant ID &amp; Secret Key di <a href="https://apigames.id" target="_blank" rel="noopener">apigames.id</a> → menu Pengaturan.</div>

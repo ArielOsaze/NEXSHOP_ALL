@@ -2583,6 +2583,7 @@ function openGameDetail(kategori) {
         phone: "",
         nickname: null,
         nicknameSupported: false,
+        nicknameCheckDisabledReason: null,
         product: null,
         payment: null,
         promo: null
@@ -2609,6 +2610,12 @@ function openGameDetail(kategori) {
     document.getElementById("twAccountResult").className = "tw-account-result hidden";
     document.getElementById("twAccountResult").innerHTML = "";
     document.getElementById("twStep1Error").textContent = "";
+
+    const checkBtn = document.getElementById("twCheckBtn");
+    if (checkBtn) {
+        checkBtn.disabled = false;
+        checkBtn.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Cek Nickname Akun';
+    }
 
     renderTopupProductGrid();
     renderTopupPaymentGrid();
@@ -2716,10 +2723,17 @@ document.getElementById("twCheckBtn").addEventListener("click", async () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ kategori: twState.kategori, tujuan: userId, serverId: serverId || undefined })
         });
-        const data = await res.json();
+        
+        let data = { available: false, reason: "provider_unavailable" };
+        if (res.status === 429) {
+            data.message = "Terlalu banyak percobaan cek akun. Silakan tunggu sebentar.";
+        } else {
+            try { data = await res.json(); } catch(e){}
+        }
+
         resultEl.classList.remove("hidden");
 
-        if (data.supported) {
+        if (data.available) {
             twState.nicknameSupported = true;
             if (data.is_valid) {
                 twState.nickname = data.username || "";
@@ -2734,14 +2748,24 @@ document.getElementById("twCheckBtn").addEventListener("click", async () => {
             twState.nicknameSupported = false;
             twState.nickname = null;
             resultEl.className = "tw-account-result warning";
-            resultEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Cek otomatis belum tersedia untuk game ini. Pastikan User ID${twState.needsServerId ? "/Server ID" : ""} sudah benar sebelum lanjut.`;
+            if (data.reason === "game_unsupported") {
+                resultEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Verifikasi nickname otomatis belum tersedia untuk game ini. Pastikan User ID${twState.needsServerId ? " dan Server ID" : ""} sudah benar sebelum melanjutkan.`;
+                twState.nicknameCheckDisabledReason = "game_unsupported";
+            } else if (data.reason === "service_not_configured") {
+                resultEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Verifikasi nickname sedang belum diaktifkan. Pastikan data akun sudah benar sebelum melanjutkan.`;
+                twState.nicknameCheckDisabledReason = "service_not_configured";
+            } else {
+                resultEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Layanan verifikasi nickname sedang mengalami gangguan. Kamu tetap dapat melanjutkan setelah memastikan data akun benar.`;
+            }
         }
     } catch (err) {
         resultEl.classList.remove("hidden");
         resultEl.className = "tw-account-result warning";
-        resultEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Gagal menghubungi server cek akun. Pastikan data yang kamu masukkan sudah benar.`;
+        resultEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Layanan verifikasi nickname sedang mengalami gangguan. Kamu tetap dapat melanjutkan setelah memastikan data akun benar.`;
     } finally {
-        btn.disabled = false;
+        if (twState.nicknameCheckDisabledReason !== "game_unsupported" && twState.nicknameCheckDisabledReason !== "service_not_configured") {
+            btn.disabled = false;
+        }
         btn.innerHTML = '<i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Cek Nickname Akun';
     }
 });

@@ -1787,6 +1787,7 @@ async function saveApiKeys() {
     // (lihat updateApiKeys: field yang dikirim "" akan diabaikan, tapi kita
     // tetap eksplisit di sini biar niatnya jelas dibaca ulang nanti).
     if (!payload.fonnte_token) delete payload.fonnte_token;
+    if (!payload.apigames_secret_key) delete payload.apigames_secret_key;
 
     try {
         await withAdminPin(async (security_pin) => {
@@ -1808,6 +1809,32 @@ async function saveApiKeys() {
         errorEl.textContent = err.message;
     }
 }
+
+async function testApiGames() {
+    const btn = document.getElementById("agTestBtn");
+    if (!btn) return;
+
+    btn.disabled = true;
+    const oldHtml = btn.innerHTML;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Testing...`;
+
+    try {
+        const res = await apiFetch("/settings/apigames/test", { method: "POST" });
+        const data = await res.json().catch(() => ({}));
+        
+        if (res.ok) {
+            alert(data.message || "Berhasil menghubungi ApiGames");
+        } else {
+            alert(data.message || "Gagal menghubungi ApiGames");
+        }
+    } catch (err) {
+        alert(err.message || "Gagal memanggil API test ApiGames");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = oldHtml;
+    }
+}
+
 
 // Admin — test kirim WhatsApp langsung dari tab API Keys, gak perlu nunggu
 // ada order/topup beneran cuma buat mastiin gateway-nya nyambung.
@@ -3394,6 +3421,16 @@ async function loadApiKeys(security_pin) {
         document.getElementById("tvSecret").value = keys.tokovoucher_secret || "";
         document.getElementById("agMerchantId").value = keys.apigames_merchant_id || "";
         document.getElementById("agSecretKey").value = keys.apigames_secret_key || "";
+        const agStatusEl = document.getElementById("agStatus");
+        if (agStatusEl) {
+            if (keys.apigames_merchant_id && keys.apigames_secret_key) {
+                agStatusEl.textContent = "Konfigurasi ApiGames tersimpan";
+                agStatusEl.className = "badge bg-success";
+            } else {
+                agStatusEl.textContent = "ApiGames belum dikonfigurasi";
+                agStatusEl.className = "badge bg-secondary";
+            }
+        }
         document.getElementById("brevoApiKey").value = keys.brevo_api_key || "";
         document.getElementById("brevoSenderEmail").value = keys.brevo_sender_email || "";
         document.getElementById("brevoSenderName").value = keys.brevo_sender_name || "";

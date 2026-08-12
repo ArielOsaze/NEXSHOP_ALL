@@ -599,15 +599,12 @@ exports.checkNicknameHandler = async (req, res) => {
 
     try {
         const result = await checkNickname({ kategori, tujuan, serverId });
-        if (result === null) {
-            return res.json({ supported: false });
+        if (result && result.reason === "provider_unavailable") {
+            return res.status(502).json(result);
         }
-        res.json({ supported: true, is_valid: result.is_valid, username: result.username });
+        res.json(result);
     } catch (err) {
-        console.log("Cek nickname gagal:", err.message);
-        // gagal manggil API pihak ketiga BUKAN alasan buat block checkout — anggap
-        // aja gak didukung, frontend fallback ke peringatan manual
-        res.json({ supported: false });
+        res.status(502).json({ available: false, reason: "provider_unavailable", message: "Layanan verifikasi nickname sedang tidak tersedia." });
     }
 };
 

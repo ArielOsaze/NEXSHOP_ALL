@@ -116,4 +116,13 @@ const aiChatLimiter = rateLimit({
     message: { message: "Terlalu banyak pesan ke NexBot. Coba lagi beberapa menit." }
 });
 
-module.exports = { loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps };
+// Cek Nickname — cegah abuse / spam hit api eksternal
+const checkNicknameLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 menit
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak percobaan cek akun. Silakan tunggu sebentar." }
+});
+
+module.exports = { loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter };

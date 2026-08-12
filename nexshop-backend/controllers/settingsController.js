@@ -432,6 +432,30 @@ exports.testUserWhatsApp = async (req, res) => {
     }
 };
 
+exports.testApiGamesAdmin = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+
+    try {
+        const keys = await getApiKeys({ fresh: true });
+        if (!keys.apigames_merchant_id || !keys.apigames_secret_key) {
+            return res.status(400).json({ message: "ApiGames belum dikonfigurasi. Harap simpan Merchant ID dan Secret Key terlebih dahulu." });
+        }
+        
+        // Karena ApiGames tidak memiliki endpoint "ping" atau "profile" non-billable
+        // standar yang aman tanpa parameter target akun (game code & user_id valid), 
+        // kita hanya memverifikasi kelengkapan setup.
+        return res.json({ 
+            success: true, 
+            message: "Konfigurasi ApiGames tersimpan. Verifikasi akun dapat diuji menggunakan User ID pelanggan yang valid." 
+        });
+    } catch (err) {
+        console.log("testApiGamesAdmin error:", err);
+        return res.status(500).json({ message: "Server Error" });
+    }
+};
+
 // ===========================================================
 // PROFIL ADMIN — lihat & ubah nama/email/password akun sendiri
 // ===========================================================

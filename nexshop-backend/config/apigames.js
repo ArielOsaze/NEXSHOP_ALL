@@ -11,8 +11,11 @@ const BASE_URL = "https://v1.apigames.id";
 const SUPPORTED_GAMES = {
     "mobile legends": "mobilelegend",
     "mobile legends: bang bang": "mobilelegend",
+    "mobile legend": "mobilelegend",
+    "mlbb": "mobilelegend",
     "free fire": "freefire",
-    "free fire max": "freefire"
+    "free fire max": "freefire",
+    "ff": "freefire"
 };
 
 function md5(str) {
@@ -21,7 +24,8 @@ function md5(str) {
 
 function resolveGameCode(kategori) {
     if (!kategori) return null;
-    return SUPPORTED_GAMES[kategori.trim().toLowerCase()] || null;
+    const normalized = String(kategori).trim().toLowerCase().replace(/\s+/g, " ");
+    return SUPPORTED_GAMES[normalized] || null;
 }
 
 async function getCreds() {
@@ -32,15 +36,13 @@ async function getCreds() {
     return { merchantId: keys.apigames_merchant_id, secretKey: keys.apigames_secret_key };
 }
 
-// Cek nickname akun. Return null kalau gamenya gak didukung ATAU ApiGames belum
-// dikonfigurasi (dianggap "fitur gak aktif", bukan error) — return
-// { is_valid, username } kalau berhasil dicek.
+// Cek nickname akun.
 async function checkNickname({ kategori, tujuan, serverId }) {
     const gameCode = resolveGameCode(kategori);
-    if (!gameCode) return null;
+    if (!gameCode) return { available: false, reason: "game_unsupported" };
 
     const creds = await getCreds();
-    if (!creds) return null;
+    if (!creds) return { available: false, reason: "service_not_configured" };
 
     const { merchantId, secretKey } = creds;
     const signature = md5(merchantId + secretKey);
@@ -49,16 +51,23 @@ async function checkNickname({ kategori, tujuan, serverId }) {
     // "userid(zoneid)" — konvensi umum yang dipakai kebanyakan reseller topup.
     const userId = gameCode === "mobilelegend" && serverId ? `${tujuan}(${serverId})` : tujuan;
 
-    const { data } = await axios.get(`${BASE_URL}/merchant/${merchantId}/cek-username/${gameCode}`, {
-        params: { user_id: userId, signature },
-        timeout: 8000
-    });
+    try {
+        const { data } = await axios.get(`${BASE_URL}/merchant/${merchantId}/cek-username/${gameCode}`, {
+            params: { user_id: userId, signature },
+            timeout: 8000
+        });
 
-    if (!data || !data.data) return null;
-    return {
-        is_valid: !!data.data.is_valid,
-        username: data.data.username || ""
-    };
+        if (!data || typeof data.data !== "object") {
+            return { available: false, reason: "provider_unavailable", message: "Layanan verifikasi nickname sedang tidak tersedia." };
+        }
+        return {
+            available: true,
+            is_valid: !!data.data.is_valid,
+            username: data.data.username || ""
+        };
+    } catch (err) {
+        return { available: false, reason: "provider_unavailable", message: "Layanan verifikasi nickname sedang tidak tersedia." };
+    }
 }
 
 module.exports = { checkNickname, resolveGameCode };
