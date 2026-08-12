@@ -40,8 +40,8 @@ exports.create = async (req, res) => {
     // nolak transaksi dengan "Suspicious buyer" karena nomor yang sama
     // dipakai berulang di banyak transaksi berbeda.
     const normalizedPhone = String(recipient_phone).trim();
-    if (!/^0[0-9]{8,14}$/.test(normalizedPhone)) {
-        return res.status(400).json({ message: "Nomor HP tidak valid (contoh: 081234567890)" });
+    if (!/^(0|62)[0-9]{8,14}$/.test(normalizedPhone)) {
+        return res.status(400).json({ message: "Nomor HP tidak valid (contoh: 08... atau 628...)" });
     }
 
     const normalizedPaymentMethod = String(payment_method || "").trim().toLowerCase();
