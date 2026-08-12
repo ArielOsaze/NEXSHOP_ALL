@@ -26,6 +26,19 @@ function rupiahLog(n) {
     return "Rp" + Number(n).toLocaleString("id-ID");
 }
 
+// Mapping status TokoVoucher -> status internal topup_orders kita.
+// FIX (Agustus 2026): sebelumnya `statusMap` cuma didefinisikan LOKAL di
+// dalam reconcileTopupOrder(), padahal fulfillOrder() juga makai variabel
+// yang sama tanpa pernah didefinisikan di scope-nya -> ReferenceError
+// "statusMap is not defined" tiap kali fulfillOrder() jalan. Karena error
+// itu dilempar SETELAH tokovoucher.createTransaction() sukses (diamond
+// SUDAH terkirim), catch block di fulfillOrder nangkep error itu dan malah
+// nge-set status order jadi "processing" lagi (bukan "sukses") -- makanya
+// diamond masuk tapi status order kelihatan nyangkut/gagal keupdate
+// otomatis di sisi user. Sekarang statusMap didefinisikan sekali di module
+// scope biar dipakai bareng oleh fulfillOrder() dan reconcileTopupOrder().
+const TOKOVOUCHER_STATUS_MAP = { sukses: "sukses", gagal: "gagal", pending: "processing" };
+
 // ===========================================================
 // Bulatkan ke ATAS ke kelipatan `round` terdekat. Pakai epsilon kecil
 // sebelum Math.ceil supaya noise floating-point JS (mis. 5000*1.2 yang
@@ -1608,7 +1621,7 @@ async function fulfillOrder(order) {
         // TokoVoucher mengembalikan status: 0 dan error_msg jika terjadi error (misal IP tidak diizinkan, saldo habis)
         let finalStatus = "processing";
         if (result.status === 0 || result.status === "0") finalStatus = "gagal";
-        else finalStatus = statusMap[result.status] || "processing";
+        else finalStatus = TOKOVOUCHER_STATUS_MAP[result.status] || "processing";
 
         await supabase.from("topup_orders").update({
             status: finalStatus,
@@ -1658,6 +1671,15 @@ async function fulfillOrder(order) {
             tv_message: "Menunggu konfirmasi TokoVoucher",
             updated_at: new Date().toISOString()
         }).eq("id", order.id);
+
+        // Kalau errornya BUKAN error jaringan/HTTP biasa ke TokoVoucher
+        // (misal bug kode kayak "statusMap is not defined" yang sempet
+        // kejadian), langsung kabarin admin -- soalnya kalau ini bug beneran,
+        // order bisa nyangkut lama di "processing" walau diamond-nya udah
+        // kekirim, dan gak akan kelihatan sampai poller jalan 5-10 menit lagi.
+        if (!err.response && !err.request && err.code !== "ECONNABORTED") {
+            notify("security", `⚠️ Error internal (bukan error jaringan TokoVoucher) saat fulfill topup ${order.id}: ${err.message}. Cek log server & status order ini manual.`);
+        }
     }
 }
 
@@ -1788,10 +1810,9 @@ exports.handleIpaymuNotification = async (req, res) => {
 // `result` bentuknya sama persis baik dari payload webhook maupun response
 // checkStatus() -- field: status, message, sn, trx_id.
 async function reconcileTopupOrder(order, result) {
-    const statusMap = { sukses: "sukses", gagal: "gagal", pending: "processing" };
     let finalStatus = "processing";
     if (result.status === 0 || result.status === "0") finalStatus = "gagal";
-    else finalStatus = statusMap[result.status] || "processing";
+    else finalStatus = TOKOVOUCHER_STATUS_MAP[result.status] || "processing";
     
     const wasNotYetSukses = order.status !== "sukses";
 
@@ -1808,12 +1829,11 @@ async function reconcileTopupOrder(order, result) {
         updated_at: new Date().toISOString()
     }).eq("id", order.id);
 
-    if (finalStatus !== "sukses") {
-        query = query.neq("status", "sukses");
-    }
-    if (finalStatus === "sukses") {
-        query = query.neq("status", "sukses");
-    }
+    // Apapun finalStatus-nya, order yang statusnya udah "sukses" gak boleh
+    // ditimpa lagi (baik downgrade maupun re-konfirmasi "sukses" ganda dari
+    // webhook TokoVoucher yang retry / poller yang overlap) -- biar invoice
+    // & notifikasi di bawah gak kekirim dobel.
+    query = query.neq("status", "sukses");
 
     const { data: updatedRows, error } = await query.select();
     if (error) {
