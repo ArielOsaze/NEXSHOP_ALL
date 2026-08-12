@@ -57,10 +57,17 @@ async function checkNickname({ kategori, tujuan, serverId }) {
             timeout: 8000
         });
 
-        // ApiGames mengembalikan "Data Not Found" ketika user_id tidak ditemukan —
-        // ini bukan error provider, ini hasil valid "akun tidak ada"
-        if (data && data.status === "not found") {
-            return { available: true, is_valid: false, username: "" };
+        // ApiGames mengembalikan status 0 jika user_id tidak ditemukan atau invalid
+        if (data && (data.status === 0 || data.status === "0")) {
+            // Bisa jadi invalid/not found, atau signature salah.
+            // Kita anggap is_valid: false jika error_msg mengindikasikan tidak ketemu.
+            const errMsg = (data.error_msg || "").toLowerCase();
+            if (errMsg.includes("not found") || errMsg.includes("tidak ditemukan") || errMsg.includes("invalid") || errMsg.includes("salah")) {
+                return { available: true, is_valid: false, username: "" };
+            }
+            // Jika error lain (misal signature salah), lempar ke error umum
+            console.log("[ApiGames] API Error:", data.error_msg);
+            return { available: false, reason: "provider_unavailable", message: "Layanan verifikasi nickname sedang tidak tersedia." };
         }
 
         if (!data || typeof data.data !== "object") {
@@ -74,7 +81,7 @@ async function checkNickname({ kategori, tujuan, serverId }) {
         }
         return {
             available: true,
-            is_valid: !!data.data.is_valid,
+            is_valid: !!data.data.is_valid || data.status === 1 || data.status === "1",
             username: data.data.username || ""
         };
     } catch (err) {

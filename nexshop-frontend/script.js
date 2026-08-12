@@ -3808,7 +3808,7 @@ async function bootstrapApp() {
     ]);
     finishInitialLoading(!completed);
     
-    if (currentUser && (!currentUser.phone || !/^0[0-9]{8,14}$/.test(currentUser.phone))) {
+    if (currentUser && (!currentUser.phone || !/^(0|62)[0-9]{8,14}$/.test(currentUser.phone))) {
         openOverlay("phoneOverlay");
     }
 }
