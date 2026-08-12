@@ -1389,7 +1389,12 @@ exports.create = async (req, res) => {
                     });
                 } catch (directErr) {
                     debugDirectError = (directErr.ipaymuResponse && directErr.ipaymuResponse.Message) || directErr.message;
-                    console.log("Direct payment failed (IP whitelist/channel error), falling back to redirect:", directErr.ipaymuResponse || directErr.message);
+                    console.log(
+                        directErr.isTimeout
+                            ? `Direct payment TIMEOUT (kemungkinan IP VPS belum di-whitelist iPaymu Direct Payment), fallback ke redirect: ${directErr.message}`
+                            : "Direct payment failed (IP whitelist/channel error), falling back to redirect:",
+                        directErr.ipaymuResponse || directErr.message
+                    );
                     isDirect = false;
                 }
             }

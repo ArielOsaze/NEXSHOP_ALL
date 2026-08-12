@@ -58,7 +58,7 @@ async function getCreds() {
     };
 }
 
-async function request(path, body) {
+async function request(path, body, timeoutMs = 15000) {
     const { va, apiKey, isProduction } = await getCreds();
     const signature = buildSignature({ method: "POST", va, apiKey, body });
 
@@ -71,7 +71,17 @@ async function request(path, body) {
                 signature,
                 timestamp: buildTimestamp()
             },
-            httpsAgent: new https.Agent({ family: 4 })
+            httpsAgent: new https.Agent({ family: 4 }),
+            // FIX (Agustus 2026): sebelumnya gak ada timeout sama sekali di sini.
+            // Kalau IP VPS belum di-whitelist buat Direct Payment (QRIS/VA) di
+            // dashboard iPaymu, request ke endpoint itu bisa nge-HANG lama
+            // (bukan langsung ditolak) -- bikin browser user duluan yang
+            // nyerah/timeout dan nampilin "Gagal terhubung ke server", padahal
+            // di backend requestnya masih jalan dan baru fallback ke redirect
+            // belakangan (jadi keliatan kayak "gagal tapi kok tetep kebuat").
+            // Dengan timeout 15 detik, Direct Payment yang gantung bakal cepat
+            // gagal & fallback ke redirect masih dalam satu request yang sama.
+            timeout: timeoutMs
         });
         return res.data;
     } catch (axiosErr) {
@@ -80,9 +90,14 @@ async function request(path, body) {
         // kenapa iPaymu nolak request (mis. "returnUrl tidak valid", "va tidak
         // ditemukan", dst). Di sini kita bungkus ulang biar alasan aslinya kebawa.
         const responseData = axiosErr.response && axiosErr.response.data;
-        const err = new Error((responseData && responseData.Message) || axiosErr.message);
+        const isTimeout = axiosErr.code === "ECONNABORTED";
+        const err = new Error(
+            (responseData && responseData.Message) ||
+            (isTimeout ? `Timeout ${timeoutMs}ms menghubungi iPaymu (${path})` : axiosErr.message)
+        );
         err.ipaymuResponse = responseData || null;
         err.httpStatus = axiosErr.response && axiosErr.response.status;
+        err.isTimeout = isTimeout;
         throw err;
     }
 }
@@ -154,7 +169,11 @@ async function createDirectPayment({ referenceId, amount, buyerName, buyerEmail,
         ...(finalChannel ? { paymentChannel: finalChannel } : {})
     };
 
-    const data = await request("/payment/direct", body);
+    // Timeout lebih pendek (8s) khusus di sini: Direct Payment ini punya jalur
+    // fallback ke Redirect Payment di controller kalau gagal, jadi lebih baik
+    // gagal cepat & fallback, daripada bikin seluruh request checkout kelamaan
+    // nunggu 15 detik penuh sebelum baru nyoba redirect.
+    const data = await request("/payment/direct", body, 8000);
 
     if (!data || Number(data.Status) !== 200 || !data.Data) {
         const err = new Error((data && data.Message) || "Gagal membuat transaksi iPaymu (Direct)");

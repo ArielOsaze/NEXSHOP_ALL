@@ -2990,7 +2990,24 @@ async function submitTopupOrder() {
                 payment_channel: twState.vaBank
             })
         });
-        const data = await res.json();
+
+        // FIX (Agustus 2026): sebelumnya kalau res.json() gagal parse (misal
+        // server balikin halaman error HTML, bukan JSON, karena request
+        // sempat gantung lama), errornya lolos ke catch generik di bawah dan
+        // user cuma liat "Gagal terhubung ke server" tanpa info apa-apa,
+        // padahal pesanannya bisa jadi TETEP kebuat di backend. Sekarang
+        // dibedain: response gak OK & bukan JSON valid -> pesan lebih jelas
+        // + disaranin cek "Cek Transaksi" pakai Order ID kalau ada.
+        let data;
+        try {
+            data = await res.json();
+        } catch (parseErr) {
+            console.error("Topup checkout: response bukan JSON valid", parseErr);
+            errorEl.textContent = "Server merespons tidak seperti biasa. Kalau saldo/diamond kamu ternyata sudah terpotong, cek status pesanan lewat tab \"Cek Transaksi\" sebelum membayar ulang.";
+            btn.disabled = false;
+            btn.textContent = "Bayar Sekarang";
+            return;
+        }
 
         if (!res.ok) {
             errorEl.textContent = data.message || "Gagal membuat pesanan topup";
@@ -3005,7 +3022,8 @@ async function submitTopupOrder() {
             openIpaymuPopup(data.paymentUrl, data.orderId, true);
         }
     } catch (err) {
-        errorEl.textContent = "Gagal terhubung ke server.";
+        console.error("Topup checkout gagal:", err);
+        errorEl.textContent = "Gagal terhubung ke server. Coba cek koneksi internet kamu lalu ulangi. Kalau ini muncul terus, hubungi admin dengan info ini: " + (err.message || "network error");
         btn.disabled = false;
         btn.textContent = "Bayar Sekarang";
     }
