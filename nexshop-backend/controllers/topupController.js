@@ -1588,14 +1588,17 @@ async function fulfillOrder(order) {
             serverId: order.server_id
         });
 
-        const statusMap = { sukses: "sukses", pending: "processing", gagal: "gagal" };
-        const finalStatus = statusMap[result.status] || "processing";
+        // TokoVoucher mengembalikan status: 0 dan error_msg jika terjadi error (misal IP tidak diizinkan, saldo habis)
+        let finalStatus = "processing";
+        if (result.status === 0 || result.status === "0") finalStatus = "gagal";
+        else finalStatus = statusMap[result.status] || "processing";
+
         await supabase.from("topup_orders").update({
             status: finalStatus,
             tv_ref_id: result.ref_id || order.id,
             tv_trx_id: result.trx_id || null,
             tv_sn: result.sn || null,
-            tv_message: result.message || null,
+            tv_message: result.error_msg || result.message || null,
             updated_at: new Date().toISOString()
         }).eq("id", order.id);
 
@@ -1769,7 +1772,10 @@ exports.handleIpaymuNotification = async (req, res) => {
 // checkStatus() -- field: status, message, sn, trx_id.
 async function reconcileTopupOrder(order, result) {
     const statusMap = { sukses: "sukses", gagal: "gagal", pending: "processing" };
-    const finalStatus = statusMap[result.status] || "processing";
+    let finalStatus = "processing";
+    if (result.status === 0 || result.status === "0") finalStatus = "gagal";
+    else finalStatus = statusMap[result.status] || "processing";
+    
     const wasNotYetSukses = order.status !== "sukses";
 
     // Monotonic Check untuk Tokovoucher Webhook / Reconcile
@@ -1781,7 +1787,7 @@ async function reconcileTopupOrder(order, result) {
         status: finalStatus,
         tv_trx_id: result.trx_id || order.tv_trx_id || null,
         tv_sn: result.sn || order.tv_sn || null,
-        tv_message: result.message || order.tv_message || null,
+        tv_message: result.error_msg || result.message || order.tv_message || null,
         updated_at: new Date().toISOString()
     }).eq("id", order.id);
 
