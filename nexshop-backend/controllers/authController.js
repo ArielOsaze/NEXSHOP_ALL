@@ -138,33 +138,51 @@ exports.register = async (req, res) => {
             return res.status(500).json({ message: "Gagal register" });
         }
 
+        let deliverySent = false;
+        let deliveryChannel = otpMethod === "whatsapp" ? "whatsapp" : "email";
+
         try {
             if (otpMethod === "whatsapp") {
                 const resWA = await sendUserWhatsApp(whatsapp, "otp", { otp });
-                if (!resWA.success && resWA.reason !== "disabled_type" && resWA.reason !== "disabled_globally") {
+                if (resWA.success) {
+                    deliverySent = true;
+                } else if (resWA.reason === "disabled_type" || resWA.reason === "disabled_globally") {
+                    // WA dinonaktifkan admin — fallback ke email
+                    try {
+                        await sendOtpEmail(email, otp);
+                        deliverySent = true;
+                        deliveryChannel = "email";
+                    } catch (_) {
+                        deliverySent = false;
+                    }
+                } else {
                     throw new Error("Gagal API Fonnte");
                 }
             } else {
                 await sendOtpEmail(email, otp);
+                deliverySent = true;
             }
         } catch (mailErr) {
             console.log("Gagal kirim OTP:", mailErr.message);
-            // akun tetap dibuat, kode OTP tersimpan di DB (admin bisa lihat
-            // lewat menu Users > OTP Aktif kalau emailnya gak sampai), dan
-            // user bisa minta kirim ulang lewat /resend-otp
+            deliverySent = false;
+        }
+
+        if (!deliverySent) {
             return res.status(201).json({
                 message: "Register berhasil, tapi gagal mengirim OTP. Silakan minta kirim ulang atau hubungi admin.",
                 email,
                 otp_method: otpMethod,
-                emailSent: false
+                deliverySent: false,
+                deliveryChannel
             });
         }
 
         res.status(201).json({
-            message: "Register berhasil. Cek " + (otpMethod === "whatsapp" ? "WhatsApp" : "email") + " kamu untuk kode verifikasi.",
+            message: "Register berhasil. Cek " + (deliveryChannel === "whatsapp" ? "WhatsApp" : "email") + " kamu untuk kode verifikasi.",
             email,
             otp_method: otpMethod,
-            emailSent: true
+            deliverySent: true,
+            deliveryChannel
         });
     } catch (error) {
         console.log(error);
@@ -178,6 +196,12 @@ exports.verifyOtp = async (req, res) => {
 
     if (!email || !otp) {
         return res.status(400).json({ message: "Email dan kode OTP wajib diisi" });
+    }
+
+    // Hanya terima format 6 digit — cegah hash bypass (string hash 64 char
+    // yang tersimpan di DB tidak boleh bisa dipakai sebagai kode OTP)
+    if (typeof otp !== "string" || !/^\d{6}$/.test(otp)) {
+        return res.status(400).json({ message: "Kode OTP harus 6 digit angka" });
     }
 
     try {
@@ -200,15 +224,22 @@ exports.verifyOtp = async (req, res) => {
             return res.status(400).json({ message: "Akun sudah terverifikasi" });
         }
 
-        const hashedInput = crypto.createHash("sha256").update(otp).digest("hex");
-
-        if (!user.otp_code || (user.otp_code !== otp && user.otp_code !== hashedInput)) {
-            // Note: Cek 'otp' (plaintext) untuk backward compatibility dengan kode lama yang belum ter-hash
-            return res.status(400).json({ message: "Kode OTP salah" });
+        if (!user.otp_code) {
+            return res.status(400).json({ message: "Tidak ada kode OTP aktif. Silakan minta kirim ulang." });
         }
 
         if (!user.otp_expires_at || new Date(user.otp_expires_at) < new Date()) {
-            return res.status(400).json({ message: "Kode OTP sudah kedaluwarsa, minta kirim ulang" });
+            return res.status(400).json({ message: "Kode OTP sudah kedaluwarsa. Silakan minta kirim ulang." });
+        }
+
+        const hashedInput = crypto.createHash("sha256").update(otp).digest("hex");
+
+        // OTP baru selalu disimpan sebagai hash SHA-256.
+        // Legacy plaintext 6 digit yang masih tersimpan tetap cocok karena
+        // kita cek kedua format — tapi hash DB (64 char) tidak pernah bisa
+        // dimasukkan user karena sudah divalidasi 6 digit di atas.
+        if (user.otp_code !== hashedInput && user.otp_code !== otp) {
+            return res.status(400).json({ message: "Kode OTP salah. Periksa kembali atau minta kirim ulang." });
         }
 
         const { error: updateErr } = await supabase
@@ -270,26 +301,48 @@ exports.resendOtp = async (req, res) => {
             return res.status(500).json({ message: "Gagal membuat kode baru" });
         }
 
+        let deliverySent = false;
+        let deliveryChannel = (req.body.otp_method === "whatsapp" && user.phone) ? "whatsapp" : "email";
+
         try {
             if (req.body.otp_method === "whatsapp" && user.phone) {
                 const resWA = await sendUserWhatsApp(user.phone, "otp", { otp });
-                if (!resWA.success && resWA.reason !== "disabled_type" && resWA.reason !== "disabled_globally") {
+                if (resWA.success) {
+                    deliverySent = true;
+                } else if (resWA.reason === "disabled_type" || resWA.reason === "disabled_globally") {
+                    // WA dinonaktifkan — fallback ke email
+                    try {
+                        await sendOtpEmail(email, otp);
+                        deliverySent = true;
+                        deliveryChannel = "email";
+                    } catch (_) {
+                        deliverySent = false;
+                    }
+                } else {
                     throw new Error("Gagal API Fonnte");
                 }
             } else {
                 await sendOtpEmail(email, otp);
+                deliverySent = true;
             }
         } catch (mailErr) {
             console.log("Gagal kirim ulang OTP:", mailErr.message);
-            // kode OTP tetap dibuat & tersimpan di DB (bisa dilihat admin lewat
-            // menu Users > OTP Aktif kalau emailnya gak sampai)
+            deliverySent = false;
+        }
+
+        if (!deliverySent) {
             return res.json({
                 message: "Kode OTP baru sudah dibuat, tapi gagal terkirim. Hubungi admin/CS untuk minta kode OTP kamu.",
-                emailSent: false
+                deliverySent: false,
+                deliveryChannel
             });
         }
 
-        res.json({ message: `Kode OTP baru sudah dikirim ke ${req.body.otp_method === "whatsapp" ? "WhatsApp" : "email"} kamu.`, emailSent: true });
+        res.json({
+            message: `Kode OTP baru sudah dikirim ke ${deliveryChannel === "whatsapp" ? "WhatsApp" : "email"} kamu.`,
+            deliverySent: true,
+            deliveryChannel
+        });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server Error" });

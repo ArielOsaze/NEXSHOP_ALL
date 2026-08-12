@@ -57,7 +57,19 @@ async function checkNickname({ kategori, tujuan, serverId }) {
             timeout: 8000
         });
 
+        // ApiGames mengembalikan "Data Not Found" ketika user_id tidak ditemukan —
+        // ini bukan error provider, ini hasil valid "akun tidak ada"
+        if (data && data.status === "not found") {
+            return { available: true, is_valid: false, username: "" };
+        }
+
         if (!data || typeof data.data !== "object") {
+            console.log("[ApiGames] Unexpected response shape:", {
+                gameCode,
+                status: data?.status,
+                hasData: !!data,
+                dataType: typeof data?.data
+            });
             return { available: false, reason: "provider_unavailable", message: "Layanan verifikasi nickname sedang tidak tersedia." };
         }
         return {
@@ -66,6 +78,23 @@ async function checkNickname({ kategori, tujuan, serverId }) {
             username: data.data.username || ""
         };
     } catch (err) {
+        // Log diagnostik aman — tanpa merchant ID, secret, atau signature
+        const logInfo = {
+            gameCode,
+            errorType: err.code || "UNKNOWN"
+        };
+        if (err.response) {
+            logInfo.httpStatus = err.response.status;
+            // Sanitasi pesan provider — jangan log payload penuh
+            const provMsg = err.response.data?.message || err.response.data?.status || "";
+            logInfo.providerMessage = String(provMsg).substring(0, 200);
+        } else if (err.code === "ECONNABORTED" || err.code === "ETIMEDOUT") {
+            logInfo.errorType = "timeout";
+        } else if (err.code === "ENOTFOUND" || err.code === "ECONNREFUSED") {
+            logInfo.errorType = "network";
+        }
+        console.log("[ApiGames] checkNickname error:", logInfo);
+
         return { available: false, reason: "provider_unavailable", message: "Layanan verifikasi nickname sedang tidak tersedia." };
     }
 }

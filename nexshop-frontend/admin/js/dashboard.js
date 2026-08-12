@@ -1139,7 +1139,10 @@ async function loadPendingOtp(security_pin) {
 
     try {
         const res = await apiFetch("/users/otp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
-        if (!res.ok) throw new Error("not-available");
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.message || "Gagal memuat daftar OTP aktif.");
+        }
 
         const list = await res.json();
 
@@ -1151,13 +1154,12 @@ async function loadPendingOtp(security_pin) {
         container.innerHTML = `
             <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
-                <thead><tr><th>Nama</th><th>Email</th><th>Kode OTP</th><th>Berlaku Sampai</th><th>Status</th><th>Aksi</th></tr></thead>
+                <thead><tr><th>Nama</th><th>Email</th><th>Berlaku Sampai</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody>
                     ${list.map(u => `
                         <tr>
                             <td>${escapeHtml(u.name || "-")}</td>
                             <td>${escapeHtml(u.email || "-")}</td>
-                            <td><code class="fs-6">${escapeHtml(u.otp_code || "-")}</code></td>
                             <td>${u.otp_expires_at ? new Date(u.otp_expires_at).toLocaleString("id-ID") : "-"}</td>
                             <td>
                                 ${u.is_expired
@@ -1177,7 +1179,7 @@ async function loadPendingOtp(security_pin) {
         `;
     } catch (err) {
         if (err.message === "unauthorized") return;
-        container.innerHTML = `<p class="text-muted text-center py-4 mb-0">Gagal memuat daftar OTP aktif.</p>`;
+        container.innerHTML = `<p class="text-muted text-center py-4 mb-0">${escapeHtml(err.message)}</p>`;
     }
 }
 
@@ -1188,8 +1190,8 @@ async function adminResendOtp(id) {
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Gagal mengirim ulang OTP");
 
-        if (data.emailSent === false) {
-            showToast(`${data.message} Kode: ${data.otp_code || "-"}`, true);
+        if (data.deliverySent === false) {
+            showToast(data.message || "OTP dibuat tapi gagal terkirim.", true);
         } else {
             showToast(data.message || "Kode OTP baru berhasil dikirim");
         }
@@ -1816,19 +1818,27 @@ async function testApiGames() {
 
     btn.disabled = true;
     const oldHtml = btn.innerHTML;
-    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Testing...`;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Mengecek...`;
 
     try {
-        const res = await apiFetch("/settings/apigames/test", { method: "POST" });
-        const data = await res.json().catch(() => ({}));
-        
-        if (res.ok) {
-            alert(data.message || "Berhasil menghubungi ApiGames");
-        } else {
-            alert(data.message || "Gagal menghubungi ApiGames");
-        }
+        await withAdminPin(async (security_pin) => {
+            const res = await apiFetch("/settings/apigames/test", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ security_pin })
+            });
+            const data = await res.json().catch(() => ({}));
+
+            if (res.ok) {
+                showToast(data.message || "Konfigurasi ApiGames tersimpan.");
+            } else {
+                showToast(data.message || "Gagal memeriksa konfigurasi ApiGames.", true);
+            }
+        }, "memeriksa konfigurasi ApiGames");
     } catch (err) {
-        alert(err.message || "Gagal memanggil API test ApiGames");
+        if (err.message !== "unauthorized") {
+            showToast(err.message || "Gagal memeriksa konfigurasi ApiGames.", true);
+        }
     } finally {
         btn.disabled = false;
         btn.innerHTML = oldHtml;

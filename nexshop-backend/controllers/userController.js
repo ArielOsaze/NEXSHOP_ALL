@@ -183,10 +183,9 @@ exports.getUserDetail = async (req, res) => {
 };
 
 // ===========================================================
-// OTP AKTIF (admin only) — antisipasi kalau email OTP gagal terkirim
-// (misal Brevo API key salah/belum diisi). Admin bisa lihat kode OTP
-// yang lagi berlaku buat suatu akun dan kasih tau manual ke user, atau
-// klik "Kirim Ulang" buat generate + kirim kode baru dari sini.
+// OTP AKTIF (admin only) — daftar akun yang masih menunggu verifikasi OTP.
+// Kode OTP TIDAK ditampilkan ke admin (keamanan). Admin hanya bisa lihat
+// status dan klik "Kirim Ulang" jika pengiriman asli gagal.
 // ===========================================================
 exports.getPendingOtp = async (req, res) => {
     if (req.user.role !== "admin") {
@@ -196,9 +195,9 @@ exports.getPendingOtp = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from("users")
-            .select("id, fullname, email, otp_code, otp_expires_at, email_verified")
+            .select("id, fullname, email, otp_expires_at, email_verified")
             .eq("email_verified", false)
-            .not("otp_code", "is", null)
+            .not("otp_expires_at", "is", null)
             .order("otp_expires_at", { ascending: false });
 
         if (error) {
@@ -211,7 +210,7 @@ exports.getPendingOtp = async (req, res) => {
             id: u.id,
             name: u.fullname,
             email: u.email,
-            otp_code: u.otp_code,
+            has_otp: true,
             otp_expires_at: u.otp_expires_at,
             is_expired: !u.otp_expires_at || new Date(u.otp_expires_at) < now
         }));
@@ -232,11 +231,12 @@ exports.adminResendOtp = async (req, res) => {
     }
 
     const { id } = req.params;
+    const crypto = require("crypto");
 
     try {
         const { data: user, error } = await supabase
             .from("users")
-            .select("id, email, email_verified")
+            .select("id, email, email_verified, phone")
             .eq("id", id)
             .maybeSingle();
 
@@ -252,11 +252,12 @@ exports.adminResendOtp = async (req, res) => {
         }
 
         const otp = generateOtp();
+        const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
         const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
 
         const { error: updateErr } = await supabase
             .from("users")
-            .update({ otp_code: otp, otp_expires_at: otpExpiresAt })
+            .update({ otp_code: hashedOtp, otp_expires_at: otpExpiresAt })
             .eq("id", user.id);
 
         if (updateErr) {
@@ -264,19 +265,42 @@ exports.adminResendOtp = async (req, res) => {
             return res.status(500).json({ message: "Gagal membuat kode OTP baru" });
         }
 
+        let deliverySent = false;
+        let deliveryChannel = "email";
+
         try {
-            await sendOtpEmail(user.email, otp);
+            // Coba kirim via WA jika user punya nomor, kalau gagal fallback email
+            if (user.phone) {
+                const { sendUserWhatsApp } = require("../services/userWhatsAppService");
+                const resWA = await sendUserWhatsApp(user.phone, "otp", { otp });
+                if (resWA.success) {
+                    deliverySent = true;
+                    deliveryChannel = "whatsapp";
+                }
+            }
+            if (!deliverySent) {
+                await sendOtpEmail(user.email, otp);
+                deliverySent = true;
+                deliveryChannel = "email";
+            }
         } catch (mailErr) {
-            console.log("Admin resend OTP - gagal kirim email:", mailErr.message);
-            // OTP tetap tersimpan di DB, jadi admin masih bisa lihat/kasih tau manual
+            console.log("Admin resend OTP - gagal kirim:", mailErr.message);
+            deliverySent = false;
+        }
+
+        if (!deliverySent) {
             return res.json({
-                message: "Kode OTP baru dibuat, tapi email gagal terkirim. Kode bisa dilihat di tabel di bawah.",
-                otp_code: otp,
-                emailSent: false
+                message: "Kode OTP baru dibuat, tapi gagal terkirim. Minta user klik 'Kirim Ulang OTP' dari halaman verifikasi.",
+                deliverySent: false,
+                deliveryChannel
             });
         }
 
-        res.json({ message: `Kode OTP baru berhasil dikirim ke ${user.email}`, emailSent: true });
+        res.json({
+            message: `Kode OTP baru berhasil dikirim ke ${deliveryChannel === "whatsapp" ? "WhatsApp" : "email"} ${user.email}`,
+            deliverySent: true,
+            deliveryChannel
+        });
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error" });
