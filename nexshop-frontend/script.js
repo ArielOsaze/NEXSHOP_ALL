@@ -1311,7 +1311,7 @@ function openCheckout(items, source = "cart") {
     if (currentUser) {
         document.getElementById("checkoutName").value = currentUser.fullname;
         document.getElementById("checkoutEmail").value = currentUser.email;
-        if (currentUser.phone && /^0[0-9]{8,14}$/.test(currentUser.phone)) {
+        if (currentUser.phone && /^(0|62)[0-9]{8,14}$/.test(currentUser.phone)) {
             document.getElementById("checkoutPhone").value = currentUser.phone;
             document.getElementById("checkoutPhone").parentElement.classList.add("hidden");
         } else {
@@ -1393,7 +1393,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
     const recipient_phone = document.getElementById("checkoutPhone").value.trim();
     const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
 
-    if (!/^0[0-9]{8,14}$/.test(recipient_phone)) {
+    if (!/^(0|62)[0-9]{8,14}$/.test(recipient_phone)) {
         toast("Masukkan nomor HP yang valid (contoh: 081234567890).", "error");
         return;
     }
@@ -2599,7 +2599,7 @@ function openGameDetail(kategori) {
     document.getElementById("twUserId").value = "";
     document.getElementById("twServerId").value = "";
     document.getElementById("twEmail").value = twState.email;
-    if (currentUser && currentUser.phone && /^0[0-9]{8,14}$/.test(currentUser.phone)) {
+    if (currentUser && currentUser.phone && /^(0|62)[0-9]{8,14}$/.test(currentUser.phone)) {
         document.getElementById("twPhone").value = currentUser.phone;
         document.getElementById("twPhone").closest(".tw-field-group").classList.add("hidden");
     } else if (currentUser) {
@@ -2682,7 +2682,7 @@ document.getElementById("twNextBtn").addEventListener("click", async () => {
         if (!userId) { errorEl.textContent = "User ID wajib diisi"; return; }
         if (twState.needsServerId && !serverId) { errorEl.textContent = "Server ID wajib diisi untuk game ini"; return; }
         if (!email || !email.includes("@")) { errorEl.textContent = "Email wajib diisi dengan format yang benar"; return; }
-        if (!/^0[0-9]{8,14}$/.test(phone)) { errorEl.textContent = "Nomor HP wajib diisi dengan format yang benar (contoh: 081234567890)"; return; }
+        if (!/^(0|62)[0-9]{8,14}$/.test(phone)) { errorEl.textContent = "Nomor HP wajib diisi dengan format yang benar (contoh: 08... atau 628...)"; return; }
         if (!twState.product) { errorEl.textContent = "Pilih nominal top up dulu ya"; return; }
 
         twState.userId = userId;
@@ -3124,7 +3124,9 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
 
     const poll = async () => {
         try {
-            const res = await fetch(endpoint);
+            const res = await fetch(endpoint, {
+                cache: 'no-store'
+            });
             if (res.ok) {
                 const data = await res.json();
                 if (data.status === "paid" || data.status === "sukses") {
@@ -3196,7 +3198,9 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
             return;
         }
         try {
-            const res = await fetch(endpoint);
+            const res = await fetch(endpoint, {
+                cache: 'no-store'
+            });
             if (res.ok) {
                 const data = await res.json();
                 if (data.status === "paid" || data.status === "sukses") {

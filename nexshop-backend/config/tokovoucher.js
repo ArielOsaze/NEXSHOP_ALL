@@ -1,8 +1,14 @@
 const axios = require("axios");
 const crypto = require("crypto");
+const https = require("https");
 const { getApiKeys } = require("./settings");
 
 const BASE_URL = "https://api.tokovoucher.net";
+
+const api = axios.create({
+    baseURL: BASE_URL,
+    httpsAgent: new https.Agent({ family: 4 })
+});
 
 function md5(str) {
     return crypto.createHash("md5").update(str).digest("hex");
@@ -35,7 +41,7 @@ async function getCreds() {
 async function checkBalance() {
     const { memberCode, secret } = await getCreds();
     const signature = buildDefaultSignature(memberCode, secret);
-    const { data } = await axios.get(`${BASE_URL}/member`, {
+    const { data } = await api.get(`/member`, {
         params: { member_code: memberCode, signature }
     });
     return data;
@@ -45,7 +51,7 @@ async function checkBalance() {
 async function searchProducts(kode) {
     const { memberCode, secret } = await getCreds();
     const signature = buildDefaultSignature(memberCode, secret);
-    const { data } = await axios.get(`${BASE_URL}/produk/code`, {
+    const { data } = await api.get(`/produk/code`, {
         params: { member_code: memberCode, signature, kode }
     });
     return data;
@@ -56,7 +62,7 @@ async function searchProducts(kode) {
 async function getFullCatalog() {
     const { memberCode, secret } = await getCreds();
     const signature = buildDefaultSignature(memberCode, secret);
-    const { data } = await axios.get(`${BASE_URL}/member/produk/full`, {
+    const { data } = await api.get(`/member/produk/full`, {
         params: { member_code: memberCode, signature }
     });
     return data;
@@ -84,7 +90,7 @@ async function createTransaction({ refId, kodeProduk, tujuan, serverId }) {
     if (serverId) {
         params.server_id = serverId;
     }
-    const { data } = await axios.get(`${BASE_URL}/v1/transaksi`, { params });
+    const { data } = await api.get(`/v1/transaksi`, { params });
     return data;
 }
 
@@ -92,7 +98,7 @@ async function createTransaction({ refId, kodeProduk, tujuan, serverId }) {
 async function checkStatus(refId) {
     const { memberCode, secret } = await getCreds();
     const signature = buildRefSignature(memberCode, secret, refId);
-    const { data } = await axios.get(`${BASE_URL}/v1/transaksi/status`, {
+    const { data } = await api.get(`/v1/transaksi/status`, {
         params: { ref_id: refId, member_code: memberCode, signature }
     });
     return data;

@@ -65,9 +65,9 @@ async function checkNickname({ kategori, tujuan, serverId }) {
             if (errMsg.includes("not found") || errMsg.includes("tidak ditemukan") || errMsg.includes("invalid") || errMsg.includes("salah")) {
                 return { available: true, is_valid: false, username: "" };
             }
-            // Jika error lain (misal signature salah), lempar ke error umum
+            // Jika error lain (misal signature salah, saldo habis), lempar ke error umum dengan pesannya
             console.log("[ApiGames] API Error:", data.error_msg);
-            return { available: false, reason: "provider_unavailable", message: "Layanan verifikasi nickname sedang tidak tersedia." };
+            return { available: false, reason: "provider_unavailable", message: "ApiGames Error: " + (data.error_msg || "Layanan verifikasi nickname sedang tidak tersedia.") };
         }
 
         if (!data || typeof data.data !== "object") {
