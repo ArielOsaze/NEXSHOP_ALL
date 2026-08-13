@@ -166,6 +166,14 @@ exports.create = async (req, res) => {
                             : "Direct payment failed (IP whitelist/channel error), falling back to redirect:",
                         directErr.ipaymuResponse || directErr.message
                     );
+                    notify(
+                        "order",
+                        `⚠️ Fallback direct→redirect utk order ${orderId}: ${
+                            directErr.isTimeout
+                                ? "TIMEOUT (kemungkinan IP VPS belum di-whitelist iPaymu Direct Payment)"
+                                : ((directErr.ipaymuResponse && directErr.ipaymuResponse.Message) || directErr.message || "unknown error")
+                        }`
+                    );
                     isDirect = false;
                 }
             }

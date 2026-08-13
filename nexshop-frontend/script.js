@@ -2409,8 +2409,6 @@ const TOPUP_POPULAR_SHORTCUTS = [
     { label: "CODM", keywords: ["call of duty", "codm"] }
 ];
 
-let ipaymuPollingInterval = null;
-
 // FIX (Agustus 2026): dua variabel ini dipakai di banyak tempat (showDirectPaymentModal,
 // openIpaymuPopup) tapi sebelumnya TIDAK PERNAH dideklarasikan di manapun --
 // baris pertama yang MEMBACA nilainya (`if (ipaymuPollingTimeout) ...`,
@@ -3149,8 +3147,7 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
     
     const handleClose = () => {
         closeOverlay("directPaymentOverlay");
-        if (ipaymuPollingInterval) clearInterval(ipaymuPollingInterval);
-        
+
         // Reset button states
         const checkoutBtn = document.getElementById("checkoutForm")?.querySelector('button[type="submit"]');
         if (checkoutBtn) {
@@ -3214,7 +3211,14 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
     
     document.getElementById("paymentWaitingOverlay").style.display = "flex";
     
-    const closeBtn = document.getElementById("paymentWaitingCloseBtn");
+    // FIX (Bug 4): clone closeBtn dulu sebelum tambah listener baru, sama
+    // seperti showDirectPaymentModal -- tanpa ini, tiap kali popup iPaymu
+    // dibuka lagi, listener numpuk di tombol yang sama (elemen DOM-nya gak
+    // pernah diganti) dan handleClose bisa kepanggil berkali-kali.
+    const oldCloseBtn = document.getElementById("paymentWaitingCloseBtn");
+    const closeBtn = oldCloseBtn.cloneNode(true);
+    oldCloseBtn.parentNode.replaceChild(closeBtn, oldCloseBtn);
+
     const handleClose = () => {
         if (popup && !popup.closed) popup.close();
         document.getElementById("paymentWaitingOverlay").style.display = "none";

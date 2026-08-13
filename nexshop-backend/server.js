@@ -194,4 +194,5 @@ app.listen(PORT, () => {
     console.log("=================================");
 
     startTopupStatusPoller();
+    startRetryPoller();
 });

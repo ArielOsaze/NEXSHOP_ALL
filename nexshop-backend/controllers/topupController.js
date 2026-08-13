@@ -934,7 +934,7 @@ exports.bulkMarkupPrice = async (req, res) => {
     try {
         const { data: productsRaw, error: fetchErr } = await supabase
             .from("topup_products")
-            .select("id, harga_beli, harga_jual, kategori")
+            .select("id, harga_beli, harga_jual, kategori, kode_produk")
             .in("id", ids);
         if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
 
@@ -1395,6 +1395,14 @@ exports.create = async (req, res) => {
                             : "Direct payment failed (IP whitelist/channel error), falling back to redirect:",
                         directErr.ipaymuResponse || directErr.message
                     );
+                    notify(
+                        "topup",
+                        `⚠️ Fallback direct→redirect utk topup order ${orderId}: ${
+                            directErr.isTimeout
+                                ? "TIMEOUT (kemungkinan IP VPS belum di-whitelist iPaymu Direct Payment)"
+                                : (debugDirectError || "unknown error")
+                        }`
+                    );
                     isDirect = false;
                 }
             }
@@ -1469,8 +1477,7 @@ exports.create = async (req, res) => {
                 message: "Pesanan topup berhasil dibuat",
                 orderId,
                 flow: "redirect",
-                paymentUrl: payment.paymentUrl,
-                debugDirectError: debugDirectError
+                paymentUrl: payment.paymentUrl
             });
         }
     } catch (err) {
