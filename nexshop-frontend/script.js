@@ -4084,7 +4084,7 @@ async function initMusicPlayer() {
         const defaultMascot = document.getElementById("defaultMascot");
         const musicPlayerUI = document.getElementById("musicPlayerUI");
         
-        if (data.enabled && data.activeMusic) {
+        if (data.enabled && data.music) {
             // Setup player UI
             const musicCoverImg = document.getElementById("musicCoverImg");
             const musicTitleText = document.getElementById("musicTitleText");
@@ -4093,9 +4093,9 @@ async function initMusicPlayer() {
             const musicPlayIcon = document.getElementById("musicPlayIcon");
             const musicDisc = document.getElementById("musicDisc");
             
-            if (musicCoverImg) musicCoverImg.src = data.activeMusic.cover_url || "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=500&auto=format&fit=crop";
-            if (musicTitleText) musicTitleText.textContent = data.activeMusic.title || "Unknown Title";
-            if (heroAudioPlayer) heroAudioPlayer.src = data.activeMusic.audio_url;
+            if (musicCoverImg) musicCoverImg.src = data.music.cover_url || "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=500&auto=format&fit=crop";
+            if (musicTitleText) musicTitleText.textContent = data.music.title || "Unknown Title";
+            if (heroAudioPlayer) heroAudioPlayer.src = data.music.audio_url;
 
             // Switch visibility
             if (defaultMascot) {
