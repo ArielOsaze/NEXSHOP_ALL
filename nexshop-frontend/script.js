@@ -4106,7 +4106,10 @@ async function initMusicPlayer() {
             if (heroAudioPlayer) {
                 heroAudioPlayer.addEventListener("ended", () => {
                     isPlaying = false;
-                    if (musicPlayIcon) musicPlayIcon.className = "fa-solid fa-play ml-0.5";
+                    if (musicPlayIcon) {
+                        musicPlayIcon.classList.remove("fa-pause");
+                        musicPlayIcon.classList.add("fa-play", "ml-1");
+                    }
                     if (musicDisc) musicDisc.classList.remove("animate-spin-slow");
                 });
             }
@@ -4116,14 +4119,20 @@ async function initMusicPlayer() {
                     if (isPlaying) {
                         heroAudioPlayer.pause();
                         isPlaying = false;
-                        if (musicPlayIcon) musicPlayIcon.className = "fa-solid fa-play ml-0.5";
+                        if (musicPlayIcon) {
+                            musicPlayIcon.classList.remove("fa-pause");
+                            musicPlayIcon.classList.add("fa-play", "ml-1");
+                        }
                         if (musicDisc) musicDisc.classList.remove("animate-spin-slow");
                     } else {
                         heroAudioPlayer.play().catch(err => {
                             console.error("Audio play failed:", err);
                         });
                         isPlaying = true;
-                        if (musicPlayIcon) musicPlayIcon.className = "fa-solid fa-pause";
+                        if (musicPlayIcon) {
+                            musicPlayIcon.classList.remove("fa-play", "ml-1");
+                            musicPlayIcon.classList.add("fa-pause");
+                        }
                         if (musicDisc) musicDisc.classList.add("animate-spin-slow");
                     }
                 });
