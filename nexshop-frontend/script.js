@@ -3892,7 +3892,7 @@ function renderLeaderboard(data) {
                 </div>
                 ${getRankBadge(1)}
                 <div class="absolute left-1/2 -translate-x-1/2 text-amber-500 dark:text-amber-400 text-xl md:text-3xl animate-bounce" style="top: -1.25rem;">
-                    <i class="fa-solid fa-crown drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]"></i>
+                    <i class="fa-solid fa-crown text-amber-500 dark:text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]"></i>
                 </div>
             </div>
             <div class="glass-panel w-full p-3 md:p-8 text-center border-t-4 border-amber-400 relative overflow-hidden group shadow-[0_0_30px_rgba(139,92,246,0.1)]">
