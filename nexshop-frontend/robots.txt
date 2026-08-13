@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /admin
+Disallow: /login.html
+Disallow: /admin/dashboard.html
+
+Sitemap: https://nexshop.cloud/sitemap.xml
