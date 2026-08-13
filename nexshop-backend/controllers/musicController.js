@@ -110,6 +110,44 @@ exports.addMusic = async (req, res) => {
     }
 };
 
+// Edit lagu (Admin)
+exports.updateMusic = async (req, res) => {
+    if (!["admin", "staff"].includes(req.user.role)) {
+        return res.status(403).json({ message: "Akses ditolak" });
+    }
+
+    const { id } = req.params;
+    const { title, audio_url, cover_url } = req.body;
+
+    if (!title || !audio_url || !cover_url) {
+        return res.status(400).json({ message: "Judul, Audio URL, dan Cover URL wajib diisi" });
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from("music_player")
+            .update({
+                title,
+                audio_url,
+                cover_url,
+                updated_at: new Date()
+            })
+            .eq("id", id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Error updating music:", error);
+            return res.status(500).json({ message: "Gagal mengupdate data lagu" });
+        }
+
+        res.json({ message: "Lagu berhasil diupdate", data });
+    } catch (err) {
+        console.error("updateMusic error:", err);
+        res.status(500).json({ message: "Server Error" });
+    }
+};
+
 // Set lagu menjadi aktif (Admin)
 exports.setActiveMusic = async (req, res) => {
     if (!["admin", "staff"].includes(req.user.role)) {

@@ -5096,6 +5096,7 @@ async function loadMusicList() {
                 </td>
                 <td>
                     ${!m.is_active ? `<button class="btn btn-sm btn-outline-success me-1" onclick="setActiveMusic(${m.id})" title="Jadikan Lagu Aktif"><i class="bi bi-check-circle"></i></button>` : ''}
+                    <button class="btn btn-sm btn-outline-warning me-1" onclick="editMusic(${m.id})" title="Edit"><i class="bi bi-pencil"></i></button>
                     <button class="btn btn-sm btn-outline-danger" onclick="deleteMusic(${m.id})" title="Hapus"><i class="bi bi-trash"></i></button>
                 </td>
             </tr>
@@ -5107,10 +5108,30 @@ async function loadMusicList() {
 }
 
 function openMusicModal() {
+    document.getElementById("musicId").value = "";
+    document.getElementById("musicModalTitle").innerHTML = `<i class="bi bi-music-note-list me-2"></i>Tambah Lagu`;
+    musicModal.show();
+}
+
+function editMusic(id) {
+    const music = musicList.find(m => m.id === id);
+    if (!music) return;
+
+    document.getElementById("musicId").value = music.id;
+    document.getElementById("musicTitle").value = music.title;
+    
+    // Preview current audio/cover
+    musicAudioElement.src = music.audio_url;
+    musicAudioPreview.classList.remove("d-none");
+    musicCoverPreview.src = music.cover_url;
+    musicCoverPreview.classList.remove("d-none");
+
+    document.getElementById("musicModalTitle").innerHTML = `<i class="bi bi-music-note-list me-2"></i>Edit Lagu`;
     musicModal.show();
 }
 
 async function saveMusic() {
+    const id = document.getElementById("musicId").value;
     const title = document.getElementById("musicTitle").value.trim();
     const audioFile = musicAudioInput.files[0];
     const coverFile = musicCoverInput.files[0];
@@ -5118,8 +5139,13 @@ async function saveMusic() {
     
     errorEl.textContent = "";
     
-    if (!title || !audioFile || !coverFile) {
-        errorEl.textContent = "Judul, file audio, dan gambar cover wajib diisi!";
+    if (!title) {
+        errorEl.textContent = "Judul lagu wajib diisi!";
+        return;
+    }
+
+    if (!id && (!audioFile || !coverFile)) {
+        errorEl.textContent = "File audio dan gambar cover wajib diisi untuk lagu baru!";
         return;
     }
     
@@ -5129,25 +5155,42 @@ async function saveMusic() {
     saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
     
     try {
-        // Upload audio
-        const audioData = new FormData();
-        audioData.append("audio", audioFile);
-        let audioUploadRes = await apiFetch("/upload/audio", { method: "POST", body: audioData });
-        let audioUploadJson = await audioUploadRes.json().catch(() => ({}));
-        if (!audioUploadRes.ok) throw new Error(audioUploadJson.message || "Gagal upload audio");
-        const audioUrl = audioUploadJson.url;
+        let audioUrl = "";
+        let coverUrl = "";
 
-        // Upload cover (using existing /upload/image with type=music_cover)
-        const coverData = new FormData();
-        coverData.append("image", coverFile);
-        let coverUploadRes = await apiFetch("/upload/image?type=music_cover", { method: "POST", body: coverData });
-        let coverUploadJson = await coverUploadRes.json().catch(() => ({}));
-        if (!coverUploadRes.ok) throw new Error(coverUploadJson.message || "Gagal upload gambar cover");
-        const coverUrl = coverUploadJson.url;
+        if (id) {
+            // Get existing URLs if editing and no new file uploaded
+            const existingMusic = musicList.find(m => m.id == id);
+            audioUrl = existingMusic.audio_url;
+            coverUrl = existingMusic.cover_url;
+        }
+
+        // Upload audio
+        if (audioFile) {
+            const audioData = new FormData();
+            audioData.append("audio", audioFile);
+            let audioUploadRes = await apiFetch("/upload/audio", { method: "POST", body: audioData });
+            let audioUploadJson = await audioUploadRes.json().catch(() => ({}));
+            if (!audioUploadRes.ok) throw new Error(audioUploadJson.message || "Gagal upload audio");
+            audioUrl = audioUploadJson.url;
+        }
+
+        // Upload cover
+        if (coverFile) {
+            const coverData = new FormData();
+            coverData.append("image", coverFile);
+            let coverUploadRes = await apiFetch("/upload/image?type=music_cover", { method: "POST", body: coverData });
+            let coverUploadJson = await coverUploadRes.json().catch(() => ({}));
+            if (!coverUploadRes.ok) throw new Error(coverUploadJson.message || "Gagal upload gambar cover");
+            coverUrl = coverUploadJson.url;
+        }
 
         // Save to DB
-        const res = await apiFetch("/music", {
-            method: "POST",
+        const endpoint = id ? `/music/${id}` : "/music";
+        const method = id ? "PUT" : "POST";
+
+        const res = await apiFetch(endpoint, {
+            method: method,
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title, audio_url: audioUrl, cover_url: coverUrl })
         });
@@ -5156,7 +5199,7 @@ async function saveMusic() {
         if (!res.ok) throw new Error(json.message || "Gagal menyimpan lagu");
         
         musicModal.hide();
-        showToast("Lagu berhasil ditambahkan");
+        showToast(id ? "Lagu berhasil diupdate" : "Lagu berhasil ditambahkan");
         loadMusicList();
         
     } catch (e) {

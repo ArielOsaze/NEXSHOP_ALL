@@ -13,6 +13,7 @@ router.get("/public", musicController.getPublicMusic);
 // ==========================================
 router.get("/admin", authMiddleware, musicController.getAdminMusic);
 router.post("/", authMiddleware, musicController.addMusic);
+router.put("/:id", authMiddleware, musicController.updateMusic);
 router.put("/:id/active", authMiddleware, musicController.setActiveMusic);
 router.delete("/:id", authMiddleware, musicController.deleteMusic);
 router.post("/toggle", authMiddleware, musicController.toggleMusicPlayer);
