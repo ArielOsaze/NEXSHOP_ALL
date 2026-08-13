@@ -4087,22 +4087,18 @@ async function initMusicPlayer() {
         if (data.enabled && data.music) {
             // Setup player UI
             const musicCoverImg = document.getElementById("musicCoverImg");
-            const musicTitleText = document.getElementById("musicTitleText");
             const heroAudioPlayer = document.getElementById("heroAudioPlayer");
             const musicPlayBtn = document.getElementById("musicPlayBtn");
             const musicPlayIcon = document.getElementById("musicPlayIcon");
             const musicDisc = document.getElementById("musicDisc");
             
             if (musicCoverImg) musicCoverImg.src = data.music.cover_url || "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=500&auto=format&fit=crop";
-            if (musicTitleText) musicTitleText.textContent = data.music.title || "Unknown Title";
             if (heroAudioPlayer) heroAudioPlayer.src = data.music.audio_url;
 
-            // Switch visibility
-            if (defaultMascot) {
-                defaultMascot.classList.add("opacity-0", "pointer-events-none");
-            }
-            if (musicPlayerUI) {
-                musicPlayerUI.classList.remove("opacity-0", "pointer-events-none");
+            // Show play button
+            if (musicPlayBtn) {
+                musicPlayBtn.classList.remove("hidden");
+                musicPlayBtn.classList.add("flex");
             }
 
             let isPlaying = false;

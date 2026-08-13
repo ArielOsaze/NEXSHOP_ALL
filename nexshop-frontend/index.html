@@ -214,59 +214,22 @@ Cek Transaksi
 <div class="relative w-full max-w-none ml-auto lg:col-span-5 reveal-up delay-200 mt-0" id="musicPlayerWrapper">
 <div class="w-full" style="padding-top: 100%;"></div>
 <div class="absolute inset-0 flex items-center justify-center">
-    <!-- Default Mascot -->
-    <div id="defaultMascot" class="absolute inset-0 w-full h-full transition-opacity duration-500">
-        <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/20 to-brand-cyan/20 blur-3xl rounded-full animate-pulse"></div>
-        <div class="relative w-full h-full glass-panel rounded-full border border-white/20 p-[8%] flex items-center justify-center animate-float-slow">
-            <div class="w-full h-full rounded-full border border-gray-300 dark:border-white/10 p-[8%] flex items-center justify-center">
-                <div class="w-full h-full rounded-full bg-gradient-to-tr from-brand-indigo/80 to-brand-cyan/80 backdrop-blur-md shadow-2xl flex items-center justify-center overflow-hidden relative">
-                    <img alt="NexShop Mascot" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-KvRSCJhh3MLyRjzgq86VY_O7Y0-dTVhPwG7z8fksfZupbcbzgNmsbXvqtOQuiNCsPA_kCHj9bRZs7i4iZdA8-ndy0gflDVNXrQvx0YThIntEhlIpaFs3rqychUVuyI6PVygjeycJ7B1LjpZ7Cl7p8eWcg0-rUJNLS25W41sHdQtzA4wk9VbJpCn2NtrruDLpOvz9ya5E7GVCn0K8bOfAfi1v0gTEx6a8xioo_4b86N0_8IeZgH0iQw"/>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Music Player UI -->
-    <div id="musicPlayerUI" class="absolute inset-0 w-full h-full opacity-0 pointer-events-none transition-opacity duration-500 flex flex-col items-center justify-center">
-        <!-- Glow background -->
-        <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/30 to-brand-cyan/30 blur-3xl rounded-full animate-pulse opacity-50" id="musicPlayerGlow"></div>
-        
-        <!-- Vinyl Disc Container -->
-        <div class="relative w-[80%] h-[80%] md:w-[85%] md:h-[85%] rounded-full shadow-2xl flex items-center justify-center group animate-float-slow">
-            <!-- Disc Element -->
-            <div id="musicDisc" class="absolute inset-0 w-full h-full rounded-full bg-[#111] flex items-center justify-center border-4 border-[#222] shadow-[0_0_20px_rgba(0,0,0,0.8)] overflow-hidden transition-transform duration-700 ease-linear" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 0 15px rgba(0,0,0,0.5);">
-                <!-- Grooves -->
-                <div class="absolute inset-[10%] rounded-full border border-white/5"></div>
-                <div class="absolute inset-[15%] rounded-full border border-white/5"></div>
-                <div class="absolute inset-[20%] rounded-full border border-white/5"></div>
-                <div class="absolute inset-[25%] rounded-full border border-white/5"></div>
+    <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/20 to-brand-cyan/20 blur-3xl rounded-full animate-pulse"></div>
+    <div class="relative w-full h-full glass-panel rounded-full border border-white/20 p-[8%] flex items-center justify-center animate-float-slow">
+        <div class="w-full h-full rounded-full border border-gray-300 dark:border-white/10 p-[8%] flex items-center justify-center">
+            <div id="musicDisc" class="w-full h-full rounded-full bg-gradient-to-tr from-brand-indigo/80 to-brand-cyan/80 backdrop-blur-md shadow-2xl flex items-center justify-center overflow-hidden relative group">
+                <img id="musicCoverImg" alt="NexShop Mascot" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-KvRSCJhh3MLyRjzgq86VY_O7Y0-dTVhPwG7z8fksfZupbcbzgNmsbXvqtOQuiNCsPA_kCHj9bRZs7i4iZdA8-ndy0gflDVNXrQvx0YThIntEhlIpaFs3rqychUVuyI6PVygjeycJ7B1LjpZ7Cl7p8eWcg0-rUJNLS25W41sHdQtzA4wk9VbJpCn2NtrruDLpOvz9ya5E7GVCn0K8bOfAfi1v0gTEx6a8xioo_4b86N0_8IeZgH0iQw"/>
                 
-                <!-- Music Cover Label -->
-                <div class="relative w-[40%] h-[40%] rounded-full overflow-hidden shadow-lg border-[3px] border-[#333]">
-                    <img id="musicCoverImg" src="" alt="Album Cover" class="absolute inset-0 w-full h-full object-cover" />
-                    <!-- Vinyl Hole -->
-                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-gray-900 dark:bg-[#0a0a0c] rounded-full border border-[#222] shadow-inner z-10 mix-blend-normal"></div>
-                </div>
-
-                <!-- Vinyl reflection overlay -->
-                <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 pointer-events-none mix-blend-overlay"></div>
+                <!-- Transparent Play/Pause Button (Hidden if music disabled) -->
+                <button type="button" id="musicPlayBtn" class="hidden absolute z-10 w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black/40 backdrop-blur-md border border-white/20 items-center justify-center text-white hover:bg-black/60 hover:scale-110 transition-all shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+                    <i class="fa-solid fa-play text-2xl sm:text-3xl ml-1" id="musicPlayIcon"></i>
+                </button>
             </div>
         </div>
-        
-        <!-- Floating Player Controls -->
-        <div class="absolute bottom-[-5%] glass-panel rounded-full px-6 py-3 flex items-center gap-4 shadow-2xl z-20 border border-white/10 backdrop-blur-xl translate-y-4">
-            <div class="flex flex-col flex-1 mr-2 overflow-hidden max-w-[120px] sm:max-w-[160px]">
-                <div class="text-[10px] sm:text-xs text-brand-cyan font-bold uppercase tracking-widest mb-0.5">Now Playing</div>
-                <div class="text-xs sm:text-sm font-bold text-gray-900 dark:text-white truncate" id="musicTitleText">Loading...</div>
-            </div>
-            <button type="button" id="musicPlayBtn" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-brand-indigo to-brand-cyan text-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_15px_rgba(79,70,229,0.5)] flex-shrink-0">
-                <i class="fa-solid fa-play ml-0.5" id="musicPlayIcon"></i>
-            </button>
-        </div>
-
-        <!-- Audio Element -->
-        <audio id="heroAudioPlayer" src="" preload="auto"></audio>
     </div>
+
+    <!-- Audio Element -->
+    <audio id="heroAudioPlayer" src="" preload="auto"></audio>
 </div>
 </div>
 </div>
