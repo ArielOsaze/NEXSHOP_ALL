@@ -2345,14 +2345,19 @@ async function loadStoreSettings() {
             if (logoEl) logoEl.src = s.logo_url;
         }
         if (s.contact_whatsapp) {
+            const cleanWa = s.contact_whatsapp.replace(/\D/g, "");
+            const waUrl = `https://wa.me/${cleanWa}`;
+            const displayLabel = s.contact_phone || s.contact_whatsapp;
+
             const waLink = document.getElementById("footerWaLink");
-            if (waLink) waLink.href = `https://wa.me/${s.contact_whatsapp.replace(/\D/g, "")}`;
+            if (waLink) waLink.href = waUrl;
             const waLabel = document.getElementById("footerWaLabel");
-            if (waLabel) waLabel.textContent = s.contact_phone || s.contact_whatsapp;
+            if (waLabel) waLabel.textContent = displayLabel;
+
             const contactWa = document.getElementById("contactWaLink");
-            if (contactWa && waLink) {
-                contactWa.href = waLink.href;
-                contactWa.textContent = s.contact_phone || s.contact_whatsapp;
+            if (contactWa) {
+                contactWa.href = waUrl;
+                contactWa.textContent = displayLabel;
             }
         }
         if (s.contact_email) updateContactEmailLinks(s.contact_email);
