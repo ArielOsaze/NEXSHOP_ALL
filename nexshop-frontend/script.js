@@ -3873,11 +3873,11 @@ function renderLeaderboard(data) {
                 </div>
                 ${getRankBadge(2)}
             </div>
-            <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-slate-400 relative overflow-hidden group">
-                <div class="absolute inset-0 bg-black/5 dark:bg-slate-400/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <div class="font-bold text-gray-900 dark:text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[1].name)}</div>
-                ${top3[1].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/10 dark:bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/20 dark:border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[1].badge)}</div>` : ''}
-                <div class="text-slate-600 dark:text-slate-300 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[1].total_spent)}</div>
+            <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-slate-300 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-slate-400/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                <div class="font-bold text-sm md:text-xl mb-1 truncate relative z-10" style="color: #cbd5e1;">${escapeHtml(top3[1].name)}</div>
+                ${top3[1].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold mb-1 md:mb-2 border uppercase tracking-wider relative z-10" style="background-color: rgba(203,213,225,0.1); color: #cbd5e1; border-color: rgba(203,213,225,0.3);">${escapeHtml(top3[1].badge)}</div>` : ''}
+                <div class="font-medium text-[10px] md:text-sm mt-1 relative z-10" style="color: #94a3b8;">${rupiah(top3[1].total_spent)}</div>
             </div>
         </div>`;
     }
@@ -3897,9 +3897,9 @@ function renderLeaderboard(data) {
             </div>
             <div class="glass-panel w-full p-3 md:p-8 text-center border-t-4 border-amber-400 relative overflow-hidden group shadow-[0_0_30px_rgba(139,92,246,0.1)]">
                 <div class="absolute inset-0 bg-gradient-to-t from-amber-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div class="font-bold text-gray-900 dark:text-white text-sm md:text-2xl mb-1 truncate relative z-10">${escapeHtml(top3[0].name)}</div>
-                ${top3[0].badge ? `<div class="inline-block px-1 md:px-2.5 py-0.5 md:py-1 rounded text-[8px] md:text-xs font-bold bg-amber-400/10 dark:bg-amber-400/20 text-amber-600 dark:text-amber-400 mb-1 md:mb-2 border border-amber-400/20 dark:border-amber-400/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[0].badge)}</div>` : ''}
-                <div class="text-amber-600 dark:text-amber-400 font-bold text-xs md:text-lg mt-1 relative z-10">${rupiah(top3[0].total_spent)}</div>
+                <div class="font-bold text-sm md:text-2xl mb-1 truncate relative z-10" style="color: #fbbf24;">${escapeHtml(top3[0].name)}</div>
+                ${top3[0].badge ? `<div class="inline-block px-1 md:px-2.5 py-0.5 md:py-1 rounded text-[8px] md:text-xs font-bold mb-1 md:mb-2 border uppercase tracking-wider relative z-10" style="background-color: rgba(251,191,36,0.15); color: #fbbf24; border-color: rgba(251,191,36,0.4);">${escapeHtml(top3[0].badge)}</div>` : ''}
+                <div class="font-bold text-xs md:text-lg mt-1 relative z-10" style="color: #f59e0b;">${rupiah(top3[0].total_spent)}</div>
             </div>
         </div>`;
     }
@@ -3916,9 +3916,9 @@ function renderLeaderboard(data) {
             </div>
             <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-orange-500 dark:border-orange-600 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-orange-600/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <div class="font-bold text-gray-900 dark:text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[2].name)}</div>
-                ${top3[2].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/10 dark:bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/20 dark:border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[2].badge)}</div>` : ''}
-                <div class="text-orange-600 dark:text-orange-400 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[2].total_spent)}</div>
+                <div class="font-bold text-xs md:text-xl mb-1 truncate relative z-10" style="color: #f97316;">${escapeHtml(top3[2].name)}</div>
+                ${top3[2].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold mb-1 md:mb-2 border uppercase tracking-wider relative z-10" style="background-color: rgba(249,115,22,0.1); color: #f97316; border-color: rgba(249,115,22,0.3);">${escapeHtml(top3[2].badge)}</div>` : ''}
+                <div class="font-medium text-[10px] md:text-sm mt-1 relative z-10" style="color: #ea580c;">${rupiah(top3[2].total_spent)}</div>
             </div>
         </div>`;
     }
