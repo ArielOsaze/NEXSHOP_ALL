@@ -354,7 +354,7 @@ function renderPromoCarousel() {
     }).join("");
     
     indicators.innerHTML = promoSlides.map((_, i) => `
-        <button class="transition-all duration-300 ${i === 0 ? 'w-6 h-2 rounded-full bg-brand-cyan' : 'w-2 h-2 rounded-full bg-white/50'}" onclick="goToPromoSlide(${i})"></button>
+        <button class="transition-all duration-300 ${i === 0 ? 'w-6 h-2 rounded-full bg-brand-cyan' : 'w-2 h-2 rounded-full bg-black/20 dark:bg-white/50'}" onclick="goToPromoSlide(${i})"></button>
     `).join("");
     
     promoIndex = 0;
@@ -375,7 +375,7 @@ function goToPromoSlide(index) {
         if (i === promoIndex) {
             dot.className = "w-6 h-2 rounded-full transition-all duration-300 bg-brand-cyan";
         } else {
-            dot.className = "w-2 h-2 rounded-full transition-all duration-300 bg-white/50";
+            dot.className = "w-2 h-2 rounded-full transition-all duration-300 bg-black/20 dark:bg-white/50";
         }
     });
 }
@@ -3847,14 +3847,14 @@ function renderLeaderboard(data) {
     // Helper untuk avatar
     const getAvatar = (user) => {
         if (user.avatar_url) return `<img src="${user.avatar_url}" class="w-full h-full object-cover" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: cover; display: block; flex-shrink: 0;">`;
-        return `<div class="w-full h-full bg-gray-800 flex items-center justify-center text-2xl font-bold text-gray-500" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; flex-shrink: 0;"><i class="fa-solid fa-user"></i></div>`;
+        return `<div class="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-2xl font-bold text-gray-400 dark:text-gray-500" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; flex-shrink: 0;"><i class="fa-solid fa-user"></i></div>`;
     };
     
     // Helper untuk rank badge
     const getRankBadge = (rank) => {
-        if (rank === 1) return '<div class="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 border-2 border-gray-900 flex items-center justify-center text-gray-900 font-bold text-sm shadow-[0_0_15px_rgba(251,191,36,0.5)] z-20">1</div>';
-        if (rank === 2) return '<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-gradient-to-br from-slate-300 to-slate-500 border-2 border-gray-900 flex items-center justify-center text-gray-900 font-bold text-xs shadow-lg z-20">2</div>';
-        if (rank === 3) return '<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 to-orange-700 border-2 border-gray-900 flex items-center justify-center text-gray-900 font-bold text-xs shadow-lg z-20">3</div>';
+        if (rank === 1) return '<div class="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 border-2 border-white dark:border-gray-900 flex items-center justify-center text-gray-900 font-bold text-sm shadow-[0_0_15px_rgba(251,191,36,0.5)] z-20">1</div>';
+        if (rank === 2) return '<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-gradient-to-br from-slate-200 to-slate-400 dark:from-slate-300 dark:to-slate-500 border-2 border-white dark:border-gray-900 flex items-center justify-center text-gray-900 font-bold text-xs shadow-lg z-20">2</div>';
+        if (rank === 3) return '<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-gradient-to-br from-orange-300 to-orange-500 dark:from-orange-400 dark:to-orange-700 border-2 border-white dark:border-gray-900 flex items-center justify-center text-gray-900 font-bold text-xs shadow-lg z-20">3</div>';
         return '';
     };
 
@@ -3862,17 +3862,17 @@ function renderLeaderboard(data) {
     if (top3[1]) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
-            <div class="hof-avatar hof-avatar--2 rounded-full p-1 bg-gradient-to-b from-slate-400 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
-                <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900 flex-shrink-0">
+            <div class="hof-avatar hof-avatar--2 rounded-full p-1 bg-gradient-to-b from-slate-300 to-slate-200 dark:from-slate-400 dark:to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
+                <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-2 border-white dark:border-gray-900 relative z-10 bg-white dark:bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[1])}
                 </div>
                 ${getRankBadge(2)}
             </div>
             <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-slate-400 relative overflow-hidden group">
-                <div class="absolute inset-0 bg-slate-400/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <div class="font-bold text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[1].name)}</div>
-                ${top3[1].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[1].badge)}</div>` : ''}
-                <div class="text-slate-300 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[1].total_spent)}</div>
+                <div class="absolute inset-0 bg-black/5 dark:bg-slate-400/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                <div class="font-bold text-gray-900 dark:text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[1].name)}</div>
+                ${top3[1].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/10 dark:bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/20 dark:border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[1].badge)}</div>` : ''}
+                <div class="text-slate-600 dark:text-slate-300 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[1].total_spent)}</div>
             </div>
         </div>`;
     }
@@ -3881,20 +3881,20 @@ function renderLeaderboard(data) {
     if (top3[0]) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300 z-10" style="transform: translateY(-1rem);">
-            <div class="hof-avatar hof-avatar--1 rounded-full p-1.5 bg-gradient-to-b from-amber-400 via-amber-500 to-gray-800 mb-3 md:mb-5 shadow-[0_0_30px_rgba(251,191,36,0.4)]">
-                <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-4 border-gray-900 relative z-10 bg-gray-900 flex-shrink-0">
+            <div class="hof-avatar hof-avatar--1 rounded-full p-1.5 bg-gradient-to-b from-amber-400 via-amber-300 to-amber-100 dark:to-gray-800 mb-3 md:mb-5 shadow-[0_0_30px_rgba(251,191,36,0.4)]">
+                <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-4 border-white dark:border-gray-900 relative z-10 bg-white dark:bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[0])}
                 </div>
                 ${getRankBadge(1)}
-                <div class="absolute left-1/2 -translate-x-1/2 text-amber-400 text-xl md:text-3xl animate-bounce" style="top: -1.25rem;">
+                <div class="absolute left-1/2 -translate-x-1/2 text-amber-500 dark:text-amber-400 text-xl md:text-3xl animate-bounce" style="top: -1.25rem;">
                     <i class="fa-solid fa-crown drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]"></i>
                 </div>
             </div>
             <div class="glass-panel w-full p-3 md:p-8 text-center border-t-4 border-amber-400 relative overflow-hidden group shadow-[0_0_30px_rgba(139,92,246,0.1)]">
                 <div class="absolute inset-0 bg-gradient-to-t from-amber-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div class="font-bold text-white text-sm md:text-2xl mb-1 truncate relative z-10">${escapeHtml(top3[0].name)}</div>
-                ${top3[0].badge ? `<div class="inline-block px-1 md:px-2.5 py-0.5 md:py-1 rounded text-[8px] md:text-xs font-bold bg-amber-400/20 text-amber-400 mb-1 md:mb-2 border border-amber-400/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[0].badge)}</div>` : ''}
-                <div class="text-amber-400 font-bold text-xs md:text-lg mt-1 relative z-10">${rupiah(top3[0].total_spent)}</div>
+                <div class="font-bold text-gray-900 dark:text-white text-sm md:text-2xl mb-1 truncate relative z-10">${escapeHtml(top3[0].name)}</div>
+                ${top3[0].badge ? `<div class="inline-block px-1 md:px-2.5 py-0.5 md:py-1 rounded text-[8px] md:text-xs font-bold bg-amber-400/10 dark:bg-amber-400/20 text-amber-600 dark:text-amber-400 mb-1 md:mb-2 border border-amber-400/20 dark:border-amber-400/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[0].badge)}</div>` : ''}
+                <div class="text-amber-600 dark:text-amber-400 font-bold text-xs md:text-lg mt-1 relative z-10">${rupiah(top3[0].total_spent)}</div>
             </div>
         </div>`;
     }
@@ -3903,17 +3903,17 @@ function renderLeaderboard(data) {
     if (top3[2]) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
-            <div class="hof-avatar hof-avatar--3 rounded-full p-1 bg-gradient-to-b from-orange-600 to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
-                <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-2 border-gray-900 relative z-10 bg-gray-900 flex-shrink-0">
+            <div class="hof-avatar hof-avatar--3 rounded-full p-1 bg-gradient-to-b from-orange-400 to-orange-200 dark:from-orange-600 dark:to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
+                <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-2 border-white dark:border-gray-900 relative z-10 bg-white dark:bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[2])}
                 </div>
                 ${getRankBadge(3)}
             </div>
-            <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-orange-600 relative overflow-hidden group">
+            <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-orange-500 dark:border-orange-600 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-orange-600/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <div class="font-bold text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[2].name)}</div>
-                ${top3[2].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[2].badge)}</div>` : ''}
-                <div class="text-orange-400 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[2].total_spent)}</div>
+                <div class="font-bold text-gray-900 dark:text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[2].name)}</div>
+                ${top3[2].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/10 dark:bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/20 dark:border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[2].badge)}</div>` : ''}
+                <div class="text-orange-600 dark:text-orange-400 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[2].total_spent)}</div>
             </div>
         </div>`;
     }
@@ -3924,7 +3924,7 @@ function renderLeaderboard(data) {
     if (rest.length > 0) {
         listHtml = `
         <div class="glass-panel p-4 md:p-6 overflow-hidden max-w-3xl mx-auto">
-            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+            <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
                 <i class="fa-solid fa-ranking-star text-brand-indigo"></i> Top 10 Spenders
             </h3>
             <div class="space-y-3">
@@ -3932,17 +3932,17 @@ function renderLeaderboard(data) {
         rest.forEach((user, idx) => {
             const rank = idx + 4;
             listHtml += `
-            <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-colors border border-transparent hover:border-white/5 group">
-                <div class="w-8 text-center font-bold text-gray-500 group-hover:text-white transition-colors">#${rank}</div>
-                <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-800 border border-gray-700 aspect-square shrink-0">
+            <div class="flex items-center gap-4 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors border border-transparent hover:border-black/5 dark:hover:border-white/5 group">
+                <div class="w-8 text-center font-bold text-gray-500 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">#${rank}</div>
+                <div class="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 aspect-square shrink-0">
                     ${getAvatar(user)}
                 </div>
                 <div class="flex-1 min-w-0">
-                    <div class="font-bold text-white truncate text-sm">${escapeHtml(user.name)}</div>
+                    <div class="font-bold text-gray-900 dark:text-white truncate text-sm">${escapeHtml(user.name)}</div>
                     ${user.badge ? `<div class="text-[10px] text-brand-cyan uppercase tracking-wide mt-0.5">${escapeHtml(user.badge)}</div>` : ''}
                 </div>
                 <div class="text-right shrink-0">
-                    <div class="text-gray-300 font-medium text-sm">${rupiah(user.total_spent)}</div>
+                    <div class="text-gray-600 dark:text-gray-300 font-medium text-sm">${rupiah(user.total_spent)}</div>
                 </div>
             </div>
             `;
