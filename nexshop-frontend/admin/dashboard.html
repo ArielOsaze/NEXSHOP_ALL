@@ -38,6 +38,7 @@
         <li class="nav-item"><a class="nav-link" href="#" data-view="ratings"><i class="bi bi-star me-2"></i>Rating</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="aimgmt"><i class="bi bi-robot me-2"></i>AI Management</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="musicplayer"><i class="bi bi-music-note-beamed me-2"></i>Music Player</a></li>
     </ul>
 
     <button onclick="logout()" class="btn btn-danger w-100 mt-5">
@@ -2081,6 +2082,85 @@
         </button>
     </div>
 
+</div>
+</div>
+</div>
+
+<!-- ===== Music Player view ===== -->
+<section id="view-musicplayer" class="view-section d-none">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2>Music Player</h2>
+            <p class="text-muted mb-0">Kelola musik untuk Hero Homepage (Fitur CD/DJ Record)</p>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+            <div class="form-check form-switch me-3">
+                <input class="form-check-input" type="checkbox" id="masterMusicToggle" onchange="toggleMasterMusicPlayer(this.checked)">
+                <label class="form-check-label" for="masterMusicToggle">Master Toggle (Nyala/Mati)</label>
+            </div>
+            <button class="btn btn-success text-nowrap" onclick="openMusicModal()">
+                <i class="bi bi-plus-circle"></i> Tambah Lagu
+            </button>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                <tr>
+                    <th>Cover</th>
+                    <th>Judul Lagu</th>
+                    <th>Audio File</th>
+                    <th>Status</th>
+                    <th>Aksi</th>
+                </tr>
+                </thead>
+                <tbody id="musicList">
+                    <tr><td colspan="5" class="text-center text-muted py-4">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Music Modal -->
+<div class="modal fade" id="musicModal" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content">
+    <div class="modal-header">
+        <h5 class="modal-title" id="musicModalTitle"><i class="bi bi-music-note-list me-2"></i>Tambah Lagu</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+    </div>
+    <div class="modal-body">
+        <form id="musicForm" class="row g-3">
+            <div class="col-12">
+                <label class="form-label">Judul Lagu / Artis</label>
+                <input id="musicTitle" class="form-control" required placeholder="Contoh: NCS - Fade">
+            </div>
+            <div class="col-12">
+                <label class="form-label">File Audio (MP3/WAV/OGG)</label>
+                <input type="file" id="musicAudioInput" class="form-control" accept="audio/*">
+                <div class="form-text">Batas maksimal ukuran file adalah 30MB. File langsung di-upload ke server.</div>
+                <div id="musicAudioPreview" class="mt-3 d-none">
+                    <audio controls class="w-100" id="musicAudioElement"></audio>
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label">Gambar Cover (Square)</label>
+                <input type="file" id="musicCoverInput" class="form-control" accept="image/*">
+                <div class="form-text">Gambar akan otomatis dicrop bentuk lingkaran di homepage. Ukuran saran: 500x500px.</div>
+                <img id="musicCoverPreview" src="" class="img-thumbnail mt-3 d-none" style="max-height:160px; border-radius:50%">
+            </div>
+            <p class="text-danger small mb-0" id="musicError"></p>
+        </form>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+        <button type="button" class="btn btn-success" id="saveMusicBtn" onclick="saveMusic()">
+            <i class="bi bi-floppy"></i> Simpan
+        </button>
+    </div>
 </div>
 </div>
 </div>

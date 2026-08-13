@@ -199,7 +199,7 @@ PLAY <span class="text-brand-indigo">MORE</span>,<br/>
 PAY <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">LESS.</span>
 </h1>
 <p class="text-[clamp(0.85rem,1.8vw,1.15rem)] text-gray-600 dark:text-gray-400 max-w-lg font-medium leading-relaxed border-l-2 border-brand-cyan pl-4 sm:pl-6 tracking-tight">
-Webstore game terlengkap. Dari diskon harian sampai topup instan — aman, cepat, dan terpercaya.
+Webstore game terlengkap. Dari diskon harian sampai topup instan â€” aman, cepat, dan terpercaya.
 </p>
 <div class="flex flex-col sm:flex-row gap-5 pt-4">
 <a href="#games" class="btn-magnetic group relative px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-extrabold rounded-2xl overflow-hidden shadow-xl shadow-gray-900/20 dark:shadow-white/10 tracking-tight flex items-center justify-center">
@@ -211,17 +211,62 @@ Cek Transaksi
 </button>
 </div>
 </div>
-<div class="relative w-full max-w-none ml-auto lg:col-span-5 reveal-up delay-200 mt-0">
+<div class="relative w-full max-w-none ml-auto lg:col-span-5 reveal-up delay-200 mt-0" id="musicPlayerWrapper">
 <div class="w-full" style="padding-top: 100%;"></div>
-<div class="absolute inset-0">
-<div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/20 to-brand-cyan/20 blur-3xl rounded-full animate-pulse"></div>
-<div class="relative w-full h-full glass-panel rounded-full border border-white/20 p-[8%] flex items-center justify-center animate-float-slow">
-<div class="w-full h-full rounded-full border border-gray-300 dark:border-white/10 p-[8%] flex items-center justify-center">
-<div class="w-full h-full rounded-full bg-gradient-to-tr from-brand-indigo/80 to-brand-cyan/80 backdrop-blur-md shadow-2xl flex items-center justify-center overflow-hidden relative">
-<img alt="NexShop Mascot" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-KvRSCJhh3MLyRjzgq86VY_O7Y0-dTVhPwG7z8fksfZupbcbzgNmsbXvqtOQuiNCsPA_kCHj9bRZs7i4iZdA8-ndy0gflDVNXrQvx0YThIntEhlIpaFs3rqychUVuyI6PVygjeycJ7B1LjpZ7Cl7p8eWcg0-rUJNLS25W41sHdQtzA4wk9VbJpCn2NtrruDLpOvz9ya5E7GVCn0K8bOfAfi1v0gTEx6a8xioo_4b86N0_8IeZgH0iQw"/>
-</div>
-</div>
-</div>
+<div class="absolute inset-0 flex items-center justify-center">
+    <!-- Default Mascot -->
+    <div id="defaultMascot" class="absolute inset-0 w-full h-full transition-opacity duration-500">
+        <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/20 to-brand-cyan/20 blur-3xl rounded-full animate-pulse"></div>
+        <div class="relative w-full h-full glass-panel rounded-full border border-white/20 p-[8%] flex items-center justify-center animate-float-slow">
+            <div class="w-full h-full rounded-full border border-gray-300 dark:border-white/10 p-[8%] flex items-center justify-center">
+                <div class="w-full h-full rounded-full bg-gradient-to-tr from-brand-indigo/80 to-brand-cyan/80 backdrop-blur-md shadow-2xl flex items-center justify-center overflow-hidden relative">
+                    <img alt="NexShop Mascot" class="absolute inset-0 w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-KvRSCJhh3MLyRjzgq86VY_O7Y0-dTVhPwG7z8fksfZupbcbzgNmsbXvqtOQuiNCsPA_kCHj9bRZs7i4iZdA8-ndy0gflDVNXrQvx0YThIntEhlIpaFs3rqychUVuyI6PVygjeycJ7B1LjpZ7Cl7p8eWcg0-rUJNLS25W41sHdQtzA4wk9VbJpCn2NtrruDLpOvz9ya5E7GVCn0K8bOfAfi1v0gTEx6a8xioo_4b86N0_8IeZgH0iQw"/>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Music Player UI -->
+    <div id="musicPlayerUI" class="absolute inset-0 w-full h-full opacity-0 pointer-events-none transition-opacity duration-500 flex flex-col items-center justify-center">
+        <!-- Glow background -->
+        <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/30 to-brand-cyan/30 blur-3xl rounded-full animate-pulse opacity-50" id="musicPlayerGlow"></div>
+        
+        <!-- Vinyl Disc Container -->
+        <div class="relative w-[80%] h-[80%] md:w-[85%] md:h-[85%] rounded-full shadow-2xl flex items-center justify-center group animate-float-slow">
+            <!-- Disc Element -->
+            <div id="musicDisc" class="absolute inset-0 w-full h-full rounded-full bg-[#111] flex items-center justify-center border-4 border-[#222] shadow-[0_0_20px_rgba(0,0,0,0.8)] overflow-hidden transition-transform duration-700 ease-linear" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 0 15px rgba(0,0,0,0.5);">
+                <!-- Grooves -->
+                <div class="absolute inset-[10%] rounded-full border border-white/5"></div>
+                <div class="absolute inset-[15%] rounded-full border border-white/5"></div>
+                <div class="absolute inset-[20%] rounded-full border border-white/5"></div>
+                <div class="absolute inset-[25%] rounded-full border border-white/5"></div>
+                
+                <!-- Music Cover Label -->
+                <div class="relative w-[40%] h-[40%] rounded-full overflow-hidden shadow-lg border-[3px] border-[#333]">
+                    <img id="musicCoverImg" src="" alt="Album Cover" class="absolute inset-0 w-full h-full object-cover" />
+                    <!-- Vinyl Hole -->
+                    <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-gray-900 dark:bg-[#0a0a0c] rounded-full border border-[#222] shadow-inner z-10 mix-blend-normal"></div>
+                </div>
+
+                <!-- Vinyl reflection overlay -->
+                <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 pointer-events-none mix-blend-overlay"></div>
+            </div>
+        </div>
+        
+        <!-- Floating Player Controls -->
+        <div class="absolute bottom-[-5%] glass-panel rounded-full px-6 py-3 flex items-center gap-4 shadow-2xl z-20 border border-white/10 backdrop-blur-xl translate-y-4">
+            <div class="flex flex-col flex-1 mr-2 overflow-hidden max-w-[120px] sm:max-w-[160px]">
+                <div class="text-[10px] sm:text-xs text-brand-cyan font-bold uppercase tracking-widest mb-0.5">Now Playing</div>
+                <div class="text-xs sm:text-sm font-bold text-gray-900 dark:text-white truncate" id="musicTitleText">Loading...</div>
+            </div>
+            <button type="button" id="musicPlayBtn" class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-r from-brand-indigo to-brand-cyan text-white flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_15px_rgba(79,70,229,0.5)] flex-shrink-0">
+                <i class="fa-solid fa-play ml-0.5" id="musicPlayIcon"></i>
+            </button>
+        </div>
+
+        <!-- Audio Element -->
+        <audio id="heroAudioPlayer" src="" preload="auto"></audio>
+    </div>
 </div>
 </div>
 </div>
@@ -355,8 +400,8 @@ Cek Transaksi
         </div>
 
         <div class="tw-panels">
-            <!-- STEP 1 — Akun & Nominal digabung, biar diamond langsung bisa dipilih
-                 begitu User ID/Server ID diisi — gak perlu klik "Lanjut" dulu. -->
+            <!-- STEP 1 â€” Akun & Nominal digabung, biar diamond langsung bisa dipilih
+                 begitu User ID/Server ID diisi â€” gak perlu klik "Lanjut" dulu. -->
             <div class="tw-panel" data-panel="1">
                 <div class="tw-account-card">
                     <div class="tw-account-header">
@@ -407,14 +452,14 @@ Cek Transaksi
                 <div class="tw-product-grid" id="twProductGrid"></div>
             </div>
 
-            <!-- STEP 2 — Pilih metode pembayaran -->
+            <!-- STEP 2 â€” Pilih metode pembayaran -->
             <div class="tw-panel hidden" data-panel="2">
                 <h4>Pilih Metode Pembayaran</h4>
                 <p class="tw-panel-sub">Pilih metode di NexShop. Setelah itu kamu akan diarahkan ke halaman pembayaran iPaymu sesuai pilihanmu.</p>
                 <div class="tw-payment-grid" id="twPaymentGrid"></div>
             </div>
 
-            <!-- STEP 3 — Ringkasan -->
+            <!-- STEP 3 â€” Ringkasan -->
             <div class="tw-panel hidden" data-panel="3">
                 <h4>Ringkasan Pesanan</h4>
                 <div class="promo-code-row">
@@ -556,7 +601,7 @@ Cek Transaksi
                     <li>Seluruh transaksi diproses melalui payment gateway resmi <strong>iPaymu</strong> (QRIS, Virtual Account/Transfer Bank, E-Wallet, dan Kartu Kredit/Debit). NexShop tidak menerima pembayaran manual di luar sistem.</li>
                     <li>Pastikan data akun/email yang kamu daftarkan sudah benar. Pesanan akan diproses dan dikirim ke email yang terdaftar setelah pembayaran terverifikasi oleh iPaymu.</li>
                     <li>Waktu proses pesanan umumnya beberapa menit hingga maksimal 24 jam pada jam kerja, tergantung ketersediaan stok.</li>
-                    <li>Produk yang dijual berupa akun/akses/kode digital maupun topup diamond/voucher game. Dilarang keras memperjualbelikan kembali, membagikan, atau mengubah kredensial akun tanpa izin — pelanggaran membatalkan garansi.</li>
+                    <li>Produk yang dijual berupa akun/akses/kode digital maupun topup diamond/voucher game. Dilarang keras memperjualbelikan kembali, membagikan, atau mengubah kredensial akun tanpa izin â€” pelanggaran membatalkan garansi.</li>
                     <li>Untuk produk Topup Diamond, pastikan ID/Server tujuan yang dimasukkan sudah benar. NexShop tidak bertanggung jawab atas kesalahan input ID dari pembeli.</li>
                     <li>NexShop berhak menolak atau membatalkan pesanan yang terindikasi penyalahgunaan, transaksi mencurigakan, atau melanggar kebijakan ini.</li>
                     <li>NexShop dapat memperbarui syarat &amp; ketentuan ini sewaktu-waktu; perubahan berlaku sejak dipublikasikan di halaman ini.</li>
@@ -573,7 +618,7 @@ Cek Transaksi
                     <li>Pengajuan refund wajib disertai bukti pembayaran (order ID / bukti transaksi iPaymu) dan dilaporkan ke admin maksimal <strong>1x24 jam</strong> setelah pesanan diterima.</li>
                     <li>Refund <strong>tidak berlaku</strong> apabila akun/kode sudah digunakan, kredensial (email/password) sudah diubah oleh pembeli, atau ID/Server tujuan topup yang dimasukkan salah dari sisi pembeli.</li>
                     <li>Refund <strong>tidak berlaku</strong> untuk kesalahan input data dari pembeli (misalnya email tujuan atau ID game salah) setelah pesanan berhasil diproses.</li>
-                    <li>Dana yang disetujui untuk direfund akan dikembalikan ke metode pembayaran asal melalui sistem iPaymu, dengan estimasi proses 3–14 hari kerja tergantung kebijakan bank/e-wallet/penyedia pembayaran terkait.</li>
+                    <li>Dana yang disetujui untuk direfund akan dikembalikan ke metode pembayaran asal melalui sistem iPaymu, dengan estimasi proses 3â€“14 hari kerja tergantung kebijakan bank/e-wallet/penyedia pembayaran terkait.</li>
                     <li>Untuk mengajukan refund atau komplain, hubungi admin melalui kontak yang tercantum di halaman Kontak dengan menyertakan Order ID.</li>
                 </ol>
             </div>
@@ -634,7 +679,7 @@ Cek Transaksi
                 <div class="pm-qty">
                     <span>Jumlah</span>
                     <div class="qty-control">
-                        <button id="pmQtyMinus" aria-label="Kurangi jumlah" type="button">−</button>
+                        <button id="pmQtyMinus" aria-label="Kurangi jumlah" type="button">âˆ’</button>
                         <input type="number" id="pmQtyValue" inputmode="numeric" min="1" max="99" value="1" aria-label="Jumlah item">
                         <button id="pmQtyPlus" aria-label="Tambah jumlah" type="button">+</button>
                     </div>
@@ -685,7 +730,7 @@ Cek Transaksi
             </label>
             <label>Kata Sandi
                 <div class="password-field">
-                    <input type="password" id="loginPassword" required minlength="4" placeholder="••••••••">
+                    <input type="password" id="loginPassword" required minlength="4" placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢">
                     <button type="button" class="toggle-password" data-target="loginPassword" aria-label="Tampilkan password"><i class="fa-solid fa-eye" aria-hidden="true"></i></button>
                 </div>
             </label>
@@ -849,7 +894,7 @@ Cek Transaksi
                     <strong><i class="fa-solid fa-user" aria-hidden="true"></i> Belanja tanpa akun</strong>
                     <p>
                         Kamu tetap bisa checkout tanpa daftar. Tapi tanpa akun, Order ID cuma
-                        ditampilkan sekali di halaman ini setelah bayar — gak tersimpan di
+                        ditampilkan sekali di halaman ini setelah bayar â€” gak tersimpan di
                         "Pesanan Saya". <button type="button" id="checkoutLoginLink">Login / Daftar dulu</button>
                         kalau mau riwayat pesanan otomatis tersimpan.
                     </p>
@@ -873,29 +918,8 @@ Cek Transaksi
             <h3>Pesanan Berhasil!</h3>
             <p id="checkoutSuccessMsg">Terima kasih, pesanan kamu sedang diproses.</p>
             
-            <div id="ratingCard" class="hidden" style="margin-top: 1.5rem; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 12px; padding: 1.5rem; text-align: center;">
-                <h4 style="margin-bottom: 0.5rem; font-size: 1.1rem; color: var(--text);">Bagaimana pengalaman belanja Anda di NexShop?</h4>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Masukan Anda membantu kami meningkatkan layanan.</p>
-                <div id="ratingStars" style="display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1rem;">
-                    <button type="button" class="rating-star" data-score="1" aria-label="Sangat mengecewakan" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;"><i class="fa-regular fa-star"></i></button>
-                    <button type="button" class="rating-star" data-score="2" aria-label="Kurang puas" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;"><i class="fa-regular fa-star"></i></button>
-                    <button type="button" class="rating-star" data-score="3" aria-label="Cukup" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;"><i class="fa-regular fa-star"></i></button>
-                    <button type="button" class="rating-star" data-score="4" aria-label="Puas" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;"><i class="fa-regular fa-star"></i></button>
-                    <button type="button" class="rating-star" data-score="5" aria-label="Sangat puas" style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;"><i class="fa-regular fa-star"></i></button>
-                </div>
-                <div id="ratingFormDetails" class="hidden">
-                    <textarea id="ratingComment" placeholder="Ceritakan pengalaman Anda (opsional)" maxlength="500" style="width: 100%; min-height: 80px; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--line); background: var(--bg-body); color: var(--text); margin-bottom: 0.5rem; resize: vertical; font-family: inherit; font-size: 0.95rem;"></textarea>
-                    <div style="text-align: right; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1rem;"><span id="ratingCharCount">0</span>/500</div>
-                    <div id="ratingError" class="hidden" style="color: var(--danger); font-size: 0.9rem; margin-bottom: 1rem;"></div>
-                    <div style="display: flex; gap: 0.5rem; justify-content: center;">
-                        <button type="button" class="btn-primary" id="btnSubmitRating" style="flex: 1;">Kirim Rating</button>
-                        <button type="button" class="btn-secondary" id="btnSkipRating" style="flex: 1;">Nanti saja</button>
-                    </div>
-                </div>
-                <div id="ratingSuccessMsg" class="hidden" style="color: var(--success); font-weight: 600; font-size: 1.1rem; margin-top: 1rem;">
-                    <i class="fa-solid fa-check-circle" style="margin-right: 0.5rem;"></i>Terima kasih atas penilaian Anda!
-                </div>
-            </div>
+            <!-- Rating card: konten diisi secara dinamis oleh renderRatingPrompt() di script.js -->
+            <div id="ratingCard" class="hidden" style="margin-top: 1.5rem; background: var(--bg-panel); border: 1px solid var(--line); border-radius: 12px; padding: 1.5rem; text-align: center;"></div>
 
             <button class="btn-primary" data-close="checkoutOverlay" style="margin-top: 1rem;">Selesai</button>
         </div>
@@ -975,14 +999,14 @@ Cek Transaksi
         <div class="nexbot-body" id="nexbotBody">
             <div class="nexbot-msg nexbot-msg--bot">
                 <div class="nexbot-msg-content" id="nexbotWelcomeContent">
-                    Halo 👋 Saya <strong>NexBot</strong>, asisten virtual resmi NexShop.<br><br>
+                    Halo ðŸ‘‹ Saya <strong>NexBot</strong>, asisten virtual resmi NexShop.<br><br>
                     Saya dapat membantu Anda mengenai:<br>
-                    🎮 Produk Game<br>
-                    💎 Topup Diamond<br>
-                    🎁 Voucher &amp; Diskon<br>
-                    💳 Pembayaran<br>
-                    📦 Status Pesanan<br>
-                    ❓ FAQ &amp; Bantuan
+                    ðŸŽ® Produk Game<br>
+                    ðŸ’Ž Topup Diamond<br>
+                    ðŸŽ Voucher &amp; Diskon<br>
+                    ðŸ’³ Pembayaran<br>
+                    ðŸ“¦ Status Pesanan<br>
+                    â“ FAQ &amp; Bantuan
                 </div>
             </div>
 

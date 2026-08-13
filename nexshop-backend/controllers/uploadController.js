@@ -8,10 +8,13 @@ const BUCKETS = {
     promo: "promo",
     logo: "logos",
     mascot: "mascots",
-    avatar: "avatars"
+    avatar: "avatars",
+    music: "music",
+    music_cover: "music"
 };
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const ALLOWED_AUDIO_MIME_TYPES = ["audio/mpeg", "audio/wav", "audio/ogg"];
 
 async function uploadImage(req, res) {
     try {
@@ -66,4 +69,60 @@ async function uploadImage(req, res) {
     }
 }
 
-module.exports = { uploadImage };
+async function uploadAudio(req, res) {
+    try {
+        if (!["admin", "staff"].includes(req.user.role)) {
+            return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+        }
+
+        if (!req.file) {
+            return res.status(400).json({ message: "File audio tidak ditemukan" });
+        }
+
+        if (!ALLOWED_AUDIO_MIME_TYPES.includes(req.file.mimetype)) {
+            return res.status(400).json({ message: "File harus berupa audio (MP3, WAV, atau OGG)" });
+        }
+        
+        // Batasan ukuran: 30MB untuk audio. Multer sudah block dari awal (dikonfigurasi di router), tapi kita check lagi.
+        if (req.file.size > 30 * 1024 * 1024) {
+            return res.status(400).json({ message: "Ukuran file audio maksimal 30MB" });
+        }
+
+        const bucket = BUCKETS.music;
+        
+        // Buat nama file unik (UUID + extension asli)
+        const crypto = require("crypto");
+        const extMap = {
+            "audio/mpeg": "mp3",
+            "audio/wav": "wav",
+            "audio/ogg": "ogg"
+        };
+        const ext = extMap[req.file.mimetype] || "mp3";
+        const fileName = `${crypto.randomUUID()}.${ext}`;
+
+        const { error } = await supabase.storage
+            .from(bucket)
+            .upload(fileName, req.file.buffer, {
+                contentType: req.file.mimetype,
+                cacheControl: "31536000",
+                upsert: false
+            });
+
+        if (error) throw error;
+
+        const { data } = supabase.storage.from(bucket).getPublicUrl(fileName);
+
+        res.json({
+            url: data.publicUrl,
+            mimeType: req.file.mimetype,
+            originalBytes: req.file.size
+        });
+    } catch (err) {
+        console.error("Upload audio error:", err.message, err.statusCode || "", err);
+        res.status(500).json({
+            message: process.env.NODE_ENV === "production" ? "Terjadi kesalahan pada server saat upload audio" : (err.message || "Server Error")
+        });
+    }
+}
+
+module.exports = { uploadImage, uploadAudio };

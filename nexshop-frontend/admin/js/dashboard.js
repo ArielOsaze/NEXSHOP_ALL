@@ -24,6 +24,7 @@ let usersLoaded = false;
 let promoLoaded = false;
 let settingsLoaded = false;
 let ratingsLoaded = false;
+let musicPlayerLoaded = false;
 let currentUser = null;
 
 async function loadCurrentUser() {
@@ -359,6 +360,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); ratingsLoaded = true; }
         if (view === "settings" && !settingsLoaded) loadSettings();
         if (view === "stats" && !statsLoaded) loadStats();
+        if (view === "musicplayer" && !musicPlayerLoaded) { loadMusicList(); musicPlayerLoaded = true; }
         if (view === "topSpenders") loadAdminTopSpenders();
     });
 });
@@ -388,6 +390,7 @@ function switchView(view) {
     if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); ratingsLoaded = true; }
     if (view === "settings" && !settingsLoaded) loadSettings();
     if (view === "stats" && !statsLoaded) loadStats();
+    if (view === "musicplayer" && !musicPlayerLoaded) { loadMusicList(); musicPlayerLoaded = true; }
     if (view === "aimgmt") { loadKnowledgeBase(); loadMultiAiStatus(); loadMultiAiLogs(); startAiHealthCheckTimer(); }
     if (view === "topSpenders") loadAdminTopSpenders();
 }
@@ -5006,5 +5009,205 @@ async function loadAdminRatings(page = 1) {
 
 function changeRatingPage(dir) {
     loadAdminRatings(currentRatingPage + dir);
+}
+
+// ================================
+// Music Player Management
+// ================================
+
+let musicList = [];
+const musicModalEl = document.getElementById("musicModal");
+let musicModal = null;
+if (musicModalEl) {
+    musicModal = new bootstrap.Modal(musicModalEl);
+}
+
+const musicAudioInput = document.getElementById("musicAudioInput");
+const musicAudioPreview = document.getElementById("musicAudioPreview");
+const musicAudioElement = document.getElementById("musicAudioElement");
+const musicCoverInput = document.getElementById("musicCoverInput");
+const musicCoverPreview = document.getElementById("musicCoverPreview");
+
+if (musicAudioInput) {
+    musicAudioInput.addEventListener("change", () => {
+        const file = musicAudioInput.files[0];
+        if (!file) {
+            musicAudioPreview.classList.add("d-none");
+            musicAudioElement.src = "";
+            return;
+        }
+        musicAudioElement.src = URL.createObjectURL(file);
+        musicAudioPreview.classList.remove("d-none");
+    });
+}
+
+if (musicCoverInput) {
+    musicCoverInput.addEventListener("change", () => {
+        const file = musicCoverInput.files[0];
+        if (!file) {
+            musicCoverPreview.src = "";
+            musicCoverPreview.classList.add("d-none");
+            return;
+        }
+        musicCoverPreview.src = URL.createObjectURL(file);
+        musicCoverPreview.classList.remove("d-none");
+    });
+}
+
+if (musicModalEl) {
+    musicModalEl.addEventListener("hidden.bs.modal", () => {
+        document.getElementById("musicForm").reset();
+        musicAudioPreview.classList.add("d-none");
+        musicAudioElement.src = "";
+        musicCoverPreview.src = "";
+        musicCoverPreview.classList.add("d-none");
+        document.getElementById("musicError").textContent = "";
+    });
+}
+
+async function loadMusicList() {
+    const tbody = document.getElementById("musicList");
+    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>`;
+    
+    try {
+        const res = await apiFetch("/music/admin");
+        if (!res.ok) throw new Error("Gagal mengambil data lagu");
+        const json = await res.json();
+        
+        musicList = json.musicList;
+        document.getElementById("masterMusicToggle").checked = json.enabled;
+        
+        if (musicList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Belum ada lagu.</td></tr>`;
+            return;
+        }
+        
+        tbody.innerHTML = musicList.map((m) => `
+            <tr>
+                <td><img src="${escapeHtml(m.cover_url)}" style="width:50px;height:50px;object-fit:cover;border-radius:50%;"></td>
+                <td><strong>${escapeHtml(m.title)}</strong></td>
+                <td>
+                    <audio controls src="${escapeHtml(m.audio_url)}" style="height:32px; max-width:200px;"></audio>
+                </td>
+                <td>
+                    ${m.is_active 
+                        ? '<span class="badge bg-success"><i class="bi bi-play-circle"></i> Aktif Tampil</span>' 
+                        : '<span class="badge bg-secondary">Tidak Aktif</span>'}
+                </td>
+                <td>
+                    ${!m.is_active ? `<button class="btn btn-sm btn-outline-success me-1" onclick="setActiveMusic(${m.id})" title="Jadikan Lagu Aktif"><i class="bi bi-check-circle"></i></button>` : ''}
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteMusic(${m.id})" title="Hapus"><i class="bi bi-trash"></i></button>
+                </td>
+            </tr>
+        `).join("");
+        
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error: ${escapeHtml(e.message)}</td></tr>`;
+    }
+}
+
+function openMusicModal() {
+    musicModal.show();
+}
+
+async function saveMusic() {
+    const title = document.getElementById("musicTitle").value.trim();
+    const audioFile = musicAudioInput.files[0];
+    const coverFile = musicCoverInput.files[0];
+    const errorEl = document.getElementById("musicError");
+    
+    errorEl.textContent = "";
+    
+    if (!title || !audioFile || !coverFile) {
+        errorEl.textContent = "Judul, file audio, dan gambar cover wajib diisi!";
+        return;
+    }
+    
+    const saveBtn = document.getElementById("saveMusicBtn");
+    const originalHtml = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
+    
+    try {
+        // Upload audio
+        const audioData = new FormData();
+        audioData.append("audio", audioFile);
+        let audioUploadRes = await apiFetch("/upload/audio", { method: "POST", body: audioData });
+        let audioUploadJson = await audioUploadRes.json().catch(() => ({}));
+        if (!audioUploadRes.ok) throw new Error(audioUploadJson.message || "Gagal upload audio");
+        const audioUrl = audioUploadJson.url;
+
+        // Upload cover (using existing /upload/image with type=music_cover)
+        const coverData = new FormData();
+        coverData.append("image", coverFile);
+        let coverUploadRes = await apiFetch("/upload/image?type=music_cover", { method: "POST", body: coverData });
+        let coverUploadJson = await coverUploadRes.json().catch(() => ({}));
+        if (!coverUploadRes.ok) throw new Error(coverUploadJson.message || "Gagal upload gambar cover");
+        const coverUrl = coverUploadJson.url;
+
+        // Save to DB
+        const res = await apiFetch("/music", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title, audio_url: audioUrl, cover_url: coverUrl })
+        });
+        const json = await res.json().catch(() => ({}));
+        
+        if (!res.ok) throw new Error(json.message || "Gagal menyimpan lagu");
+        
+        musicModal.hide();
+        showToast("Lagu berhasil ditambahkan");
+        loadMusicList();
+        
+    } catch (e) {
+        errorEl.textContent = e.message;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalHtml;
+    }
+}
+
+async function setActiveMusic(id) {
+    if (!confirm("Aktifkan lagu ini untuk diputar di homepage?")) return;
+    try {
+        const res = await apiFetch(`/music/${id}/active`, { method: "PUT" });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.message || "Gagal mengaktifkan lagu");
+        showToast("Lagu aktif berhasil diperbarui");
+        loadMusicList();
+    } catch (e) {
+        showToast(e.message, true);
+    }
+}
+
+async function deleteMusic(id) {
+    if (!confirm("Hapus lagu ini permanen?")) return;
+    try {
+        const res = await apiFetch(`/music/${id}`, { method: "DELETE" });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.message || "Gagal menghapus lagu");
+        showToast("Lagu berhasil dihapus");
+        loadMusicList();
+    } catch (e) {
+        showToast(e.message, true);
+    }
+}
+
+async function toggleMasterMusicPlayer(enabled) {
+    try {
+        const res = await apiFetch("/music/toggle", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ enabled })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) {
+            document.getElementById("masterMusicToggle").checked = !enabled; // revert
+            throw new Error(json.message || "Gagal merubah status player");
+        }
+        showToast(`Music Player ${enabled ? 'diaktifkan' : 'dinonaktifkan'}`);
+    } catch (e) {
+        showToast(e.message, true);
+    }
 }
 

@@ -92,3 +92,34 @@ ALTER TABLE topup_orders
 ADD COLUMN IF NOT EXISTS locked_at TIMESTAMP WITH TIME ZONE NULL,
 ADD COLUMN IF NOT EXISTS lock_token VARCHAR(64) NULL,
 ADD COLUMN IF NOT EXISTS next_status_check_at TIMESTAMP WITH TIME ZONE NULL;
+
+-- 8. Fitur: Music Player (CD/DJ Record)
+-- Tambah pengaturan master toggle ke store_settings
+ALTER TABLE store_settings
+ADD COLUMN IF NOT EXISTS music_player_enabled BOOLEAN NOT NULL DEFAULT true;
+
+-- Tabel konfigurasi music player
+CREATE TABLE IF NOT EXISTS music_player (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    audio_url TEXT NOT NULL,
+    cover_url TEXT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Pastikan hanya ada SATU lagu yang aktif secara bersamaan
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_class c
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE c.relname = 'music_player_active_idx'
+        AND n.nspname = 'public'
+    ) THEN
+        CREATE UNIQUE INDEX music_player_active_idx 
+        ON music_player (is_active) 
+        WHERE is_active = true;
+    END IF;
+END $$;

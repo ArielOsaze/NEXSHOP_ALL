@@ -1483,7 +1483,7 @@ document.getElementById("checkoutForm").addEventListener("submit", async (e) => 
 
 async function showPaidOrderSuccess(orderData, isTopup) {
     if (isTopup || (orderData.status !== "paid" && orderData.status !== "sukses")) return;
-    
+
     const orderId = orderData.id || orderData.orderId || orderData.reference_id;
     const trackingNote = currentUser
         ? `Kamu bisa cek status di "Pesanan Saya".`
@@ -1504,151 +1504,185 @@ async function showPaidOrderSuccess(orderData, isTopup) {
     checkoutItems = null;
     checkoutSource = "cart";
 
-    // --- INISIALISASI RATING PENGALAMAN ---
-    // Delegasikan ke initRatingPrompt() agar logic bisa dipakai dari
-    // berbagai payment flow (direct, redirect, dll.) tanpa duplikasi.
-    await initRatingPrompt(orderData);
+    // Render rating ke dalam #ratingCard di success overlay
+    const ratingCard = document.getElementById("ratingCard");
+    if (ratingCard) {
+        await renderRatingPrompt(orderData, ratingCard);
+    }
 }
 
-// Inisialisasi prompt rating untuk order yang sudah lunas.
-// Bisa dipanggil dari mana saja (direct payment polling, redirect return,
-// track modal) asalkan checkoutOverlay & checkoutSuccess sudah aktif.
-//
-// Keamanan: hanya tampil jika backend memang menyatakan eligible.
-// Idempotency: dijaga oleh localStorage key per-orderId.
-async function initRatingPrompt(orderData) {
-    if (!orderData) return;
-    // Jangan tampilkan rating untuk topup — business rule: topup dinilai
-    // berbeda dan tidak memiliki rating card di checkout overlay.
+// ---------------------------------------------------------------------------
+// renderRatingPrompt(orderData, container)
+// ---------------------------------------------------------------------------
+// Fungsi reusable tunggal untuk seluruh lifecycle rating:
+//   • Selalu cek backend (source of truth — bukan localStorage)
+//   • Render UI ke container manapun (success overlay, track modal, dll.)
+//   • Cegah duplicate listener karena innerHTML di-reset setiap kali
+//   • Tampilkan "sudah dirating" jika backend menyatakan already_rated
+//   • Token diambil dari PUBLIC_TOKEN_STORAGE_KEY (bukan "token")
+// ---------------------------------------------------------------------------
+async function renderRatingPrompt(orderData, container) {
+    if (!container || !orderData) return;
+
+    // Topup tidak memiliki rating
+    if (orderData.type === "topup") return;
     const orderId = orderData.id || orderData.orderId || orderData.reference_id;
     if (!orderId) return;
 
-    // Guard idempotency: jangan munculkan lagi jika sudah pernah dilihat
-    const lsKey = `nexshop_rating_prompt_seen_${orderId}`;
-    if (localStorage.getItem(lsKey)) return;
+    // Hanya untuk order yang sudah dibayar
+    const isPaid = orderData.status === "paid" || orderData.status === "sukses";
+    if (!isPaid) return;
 
+    // Ambil token dengan key yang benar — seluruh app pakai PUBLIC_TOKEN_STORAGE_KEY
+    const headers = {};
+    const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    let eligibility;
     try {
-        // FIX Bug 1 & 3: gunakan PUBLIC_TOKEN_STORAGE_KEY ("nexshop-public-token")
-        // bukan "token" yang tidak pernah diset oleh sistem ini.
-        // Tanpa fix ini, user login mendapat 401 dari endpoint eligibility
-        // karena Authorization header kosong, dan rating tidak pernah muncul.
-        const headers = {};
-        const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
-        if (token) headers["Authorization"] = `Bearer ${token}`;
-        
-        const res = await fetch(`${API_BASE}/ratings/eligibility/${encodeURIComponent(orderId)}`, { headers });
+        const res = await fetch(
+            `${API_BASE}/ratings/eligibility/${encodeURIComponent(orderId)}`,
+            { headers }
+        );
         if (!res.ok) {
-            // Non-2xx: 401 (belum login), 403 (bukan pemilik order),
-            // 404 (order tidak ada), 500 — jangan tampilkan rating palsu.
+            // 401 = tidak login tapi order punya user_id
+            // 403 = bukan pemilik order
+            // 404 = order tidak ditemukan
+            // 500 = server error
+            // Jangan tampilkan rating palsu untuk semua kasus ini.
+            console.warn(`[Rating] eligibility HTTP ${res.status} untuk order ${orderId}`);
             return;
         }
-        const eligibility = await res.json();
-        if (!eligibility.eligible) return;
+        eligibility = await res.json();
+    } catch (err) {
+        console.error("[Rating] Gagal cek eligibility:", err);
+        return;
+    }
 
-        const ratingCard = document.getElementById("ratingCard");
-        if (!ratingCard) return; // guard: elemen tidak ada di DOM
+    // Buat uid unik supaya elemen dari berbagai container tidak bentrok
+    const uid = orderId.replace(/[^a-zA-Z0-9]/g, "");
 
-        // Tandai sudah ditampilkan sebelum manipulasi DOM supaya
-        // pemanggilan berulang tidak membuat duplicate listener.
-        localStorage.setItem(lsKey, "1");
+    if (!eligibility.eligible) {
+        if (eligibility.reason === "already_rated") {
+            // Tampilkan status "sudah dirating" agar user tahu
+            container.innerHTML = `
+                <div style="text-align:center;padding:0.75rem 0;color:var(--text-muted);font-size:0.95rem;">
+                    <i class="fa-solid fa-star-half-stroke" style="color:#facc15;margin-right:0.4rem;"></i>
+                    Rating sudah diberikan untuk pesanan ini. Terima kasih!
+                </div>`;
+            container.classList.remove("hidden");
+        }
+        // Untuk reason lain (order_not_paid dll.) tidak perlu tampilkan apapun
+        return;
+    }
 
-        // Reset state rating card (penting kalau overlay pernah dibuka sebelumnya)
-        document.getElementById("ratingStars").style.display = "";
-        document.getElementById("ratingFormDetails").classList.add("hidden");
-        document.getElementById("ratingSuccessMsg").classList.add("hidden");
-        document.getElementById("ratingError").classList.add("hidden");
-        document.getElementById("ratingComment").value = "";
-        document.getElementById("ratingCharCount").textContent = "0";
-        ratingCard.querySelectorAll("h4, p").forEach(el => el.classList.remove("hidden"));
-        ratingCard.querySelectorAll(".rating-star").forEach(s => {
-            s.innerHTML = '<i class="fa-regular fa-star"></i>';
-        });
+    // Inject HTML rating form sepenuhnya ke container
+    // (innerHTML di-reset sehingga tidak ada duplicate listener lama)
+    container.innerHTML = `
+        <h4 style="margin-bottom:0.5rem;font-size:1.05rem;color:var(--text);">⭐ Bagaimana pengalamanmu berbelanja di NexShop?</h4>
+        <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">Masukan kamu membantu kami meningkatkan layanan.</p>
+        <div id="rp_stars_${uid}" style="display:flex;justify-content:center;gap:0.5rem;margin-bottom:1rem;">
+            ${[1,2,3,4,5].map(n => `
+                <button type="button" class="rp-star" data-score="${n}" aria-label="Bintang ${n}"
+                    style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;padding:0.15rem;">
+                    <i class="fa-regular fa-star"></i>
+                </button>`).join("")}
+        </div>
+        <div id="rp_form_${uid}" class="hidden">
+            <textarea id="rp_txt_${uid}" placeholder="Ceritakan pengalamanmu (opsional)" maxlength="500"
+                style="width:100%;min-height:80px;padding:0.75rem;border-radius:8px;border:1px solid var(--line);
+                       background:var(--bg-body);color:var(--text);margin-bottom:0.5rem;
+                       resize:vertical;font-family:inherit;font-size:0.92rem;box-sizing:border-box;"></textarea>
+            <div style="text-align:right;color:var(--text-muted);font-size:0.8rem;margin-bottom:1rem;">
+                <span id="rp_cnt_${uid}">0</span>/500
+            </div>
+            <div id="rp_err_${uid}" class="hidden"
+                style="color:var(--danger);font-size:0.9rem;margin-bottom:1rem;"></div>
+            <div style="display:flex;gap:0.5rem;justify-content:center;">
+                <button type="button" id="rp_submit_${uid}" class="btn-primary" style="flex:1;">Kirim Rating</button>
+                <button type="button" id="rp_skip_${uid}" class="btn-secondary" style="flex:1;">Nanti saja</button>
+            </div>
+        </div>
+        <div id="rp_done_${uid}" class="hidden"
+            style="color:var(--success);font-weight:600;font-size:1.05rem;text-align:center;margin-top:1rem;">
+            <i class="fa-solid fa-check-circle" style="margin-right:0.5rem;"></i>Terima kasih atas penilaian Anda!
+        </div>
+    `;
+    container.classList.remove("hidden");
 
-        ratingCard.classList.remove("hidden");
+    // Pasang event handler — karena innerHTML sudah di-reset, tidak ada
+    // bahaya duplicate listener dari pemanggilan sebelumnya.
+    let selectedScore = 0;
+    const stars   = container.querySelectorAll(".rp-star");
+    const form    = document.getElementById(`rp_form_${uid}`);
+    const errDiv  = document.getElementById(`rp_err_${uid}`);
+    const txtArea = document.getElementById(`rp_txt_${uid}`);
+    const charCnt = document.getElementById(`rp_cnt_${uid}`);
+    const doneDiv = document.getElementById(`rp_done_${uid}`);
+    const starsWrap = document.getElementById(`rp_stars_${uid}`);
 
-        let selectedScore = 0;
-        const stars = ratingCard.querySelectorAll(".rating-star");
-        const formDetails = document.getElementById("ratingFormDetails");
-
-        // Pasang event handler bintang
-        stars.forEach(star => {
-            star.onclick = (e) => {
-                e.preventDefault();
-                selectedScore = parseInt(star.getAttribute("data-score"), 10);
-                stars.forEach(s => {
-                    const sScore = parseInt(s.getAttribute("data-score"), 10);
-                    s.innerHTML = sScore <= selectedScore
-                        ? '<i class="fa-solid fa-star" style="color:#facc15"></i>'
-                        : '<i class="fa-regular fa-star"></i>';
-                });
-                formDetails.classList.remove("hidden");
-                document.getElementById("ratingError").classList.add("hidden");
-            };
-        });
-
-        document.getElementById("ratingComment").oninput = function() {
-            document.getElementById("ratingCharCount").textContent = this.value.length;
+    stars.forEach(star => {
+        star.onclick = () => {
+            selectedScore = parseInt(star.dataset.score, 10);
+            stars.forEach(s => {
+                s.innerHTML = parseInt(s.dataset.score, 10) <= selectedScore
+                    ? '<i class="fa-solid fa-star" style="color:#facc15"></i>'
+                    : '<i class="fa-regular fa-star"></i>';
+            });
+            form.classList.remove("hidden");
+            errDiv.classList.add("hidden");
         };
+    });
 
-        document.getElementById("btnSkipRating").onclick = function() {
-            ratingCard.classList.add("hidden");
-        };
+    if (txtArea) txtArea.oninput = () => { if (charCnt) charCnt.textContent = txtArea.value.length; };
 
-        document.getElementById("btnSubmitRating").onclick = async function() {
-            const btn = this;
-            const errorDiv = document.getElementById("ratingError");
-            const comment = document.getElementById("ratingComment").value.trim();
+    const skipBtn = document.getElementById(`rp_skip_${uid}`);
+    if (skipBtn) skipBtn.onclick = () => { container.classList.add("hidden"); };
 
-            if (selectedScore < 1 || selectedScore > 5) {
-                errorDiv.textContent = "Pilih bintang terlebih dahulu.";
-                errorDiv.classList.remove("hidden");
+    const submitBtn = document.getElementById(`rp_submit_${uid}`);
+    if (submitBtn) {
+        submitBtn.onclick = async () => {
+            if (selectedScore < 1) {
+                errDiv.textContent = "Pilih bintang terlebih dahulu.";
+                errDiv.classList.remove("hidden");
                 return;
             }
-
-            btn.disabled = true;
-            btn.textContent = "Mengirim...";
-            errorDiv.classList.add("hidden");
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Mengirim...";
+            errDiv.classList.add("hidden");
 
             try {
-                // FIX Bug 3: gunakan token yang sama (PUBLIC_TOKEN_STORAGE_KEY)
-                // untuk submit, bukan closure `headers` lama yang dibangun
-                // dari key yang salah.
-                const submitHeaders = { "Content-Type": "application/json" };
-                const submitToken = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
-                if (submitToken) submitHeaders["Authorization"] = `Bearer ${submitToken}`;
+                const subHeaders = { "Content-Type": "application/json" };
+                const subToken = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+                if (subToken) subHeaders["Authorization"] = `Bearer ${subToken}`;
 
-                const submitRes = await fetch(`${API_BASE}/ratings`, {
+                const subRes = await fetch(`${API_BASE}/ratings`, {
                     method: "POST",
-                    headers: submitHeaders,
+                    headers: subHeaders,
                     body: JSON.stringify({
                         order_id: orderId,
                         score: selectedScore,
-                        comment: comment || undefined
+                        comment: txtArea?.value.trim() || undefined
                     })
                 });
 
-                if (!submitRes.ok) {
-                    const errData = await submitRes.json().catch(() => ({}));
+                if (!subRes.ok) {
+                    const errData = await subRes.json().catch(() => ({}));
                     throw new Error(errData.message || "Gagal mengirim rating");
                 }
 
-                // Tampilkan pesan sukses, sembunyikan form
-                document.getElementById("ratingStars").style.display = "none";
-                formDetails.classList.add("hidden");
-                ratingCard.querySelector("h4").classList.add("hidden");
-                ratingCard.querySelector("p").classList.add("hidden");
-                document.getElementById("ratingSuccessMsg").classList.remove("hidden");
+                // Tampilkan state sukses
+                if (starsWrap) starsWrap.style.display = "none";
+                form.classList.add("hidden");
+                doneDiv.classList.remove("hidden");
 
             } catch (err) {
-                errorDiv.textContent = err.message;
-                errorDiv.classList.remove("hidden");
-                btn.disabled = false;
-                btn.textContent = "Kirim Rating";
+                errDiv.textContent = err.message;
+                errDiv.classList.remove("hidden");
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Kirim Rating";
             }
         };
-
-    } catch(e) {
-        console.error("Gagal mengecek eligibility rating", e);
     }
 }
 
@@ -1992,6 +2026,15 @@ function renderTrackResult(data, options = {}) {
         `;
     }
 
+    // Rating slot: di-render setelah innerHTML supaya slot-nya bisa dicari via getElementById.
+    // Tambahkan placeholder ke innerHTML agar ada tempat untuk rating.
+    const isOrderType = data.type === "order";
+    const isPaidOrder = isOrderType && isPaid;
+    const ratingSlotId = isPaidOrder ? `rp_slot_${data.id.replace(/[^a-zA-Z0-9]/g, "")}` : "";
+    const ratingSlotHtml = isPaidOrder
+        ? `<div id="${ratingSlotId}" style="margin-top:1.5rem;"></div>`
+        : "";
+
     document.getElementById("trackResult").innerHTML = `
         <div class="track-status-badge ${cls}">${escapeHtml(label)}</div>
         <div class="row"><span>Order ID</span><span>${escapeHtml(data.id)}</span></div>
@@ -1999,33 +2042,38 @@ function renderTrackResult(data, options = {}) {
         ${itemsHtml}
         <div class="row total"><span>Total</span><span>${rupiah(data.total || 0)}</span></div>
         ${waCta}
+        ${ratingSlotHtml}
     `;
     document.getElementById("trackResult").classList.remove("hidden");
+
+    // Jika order sudah paid, minta renderRatingPrompt mengisi slot rating.
+    // Backend selalu menentukan eligibility — ini adalah satu-satunya source of truth.
+    // Dengan cara ini rating tersedia di Cek Transaksi kapan saja selama:
+    //   order = paid AND belum dirating
+    // Ini mengatasi semua skenario redirect/webhook-delay/refresh.
+    if (isPaidOrder) {
+        const slot = document.getElementById(ratingSlotId);
+        if (slot) renderRatingPrompt(data, slot); // async, tidak perlu ditunggu
+    }
 
     if (window.trackPollingTimer) clearTimeout(window.trackPollingTimer);
     if ((data.status === "pending" || data.status === "0") && document.getElementById("trackOverlay").classList.contains("active")) {
         window.trackPollingTimer = setTimeout(async () => {
             if (document.getElementById("trackOverlay").classList.contains("active")) {
-                const isTopup = data.id.toUpperCase().startsWith("TP");
-                const endpoint = isTopup ? `${API_BASE}/topup/track/${encodeURIComponent(data.id)}` : `${API_BASE}/orders/track/${encodeURIComponent(data.id)}`;
+                const isTopupPolled = data.id.toUpperCase().startsWith("TP");
+                const endpoint = isTopupPolled
+                    ? `${API_BASE}/topup/track/${encodeURIComponent(data.id)}`
+                    : `${API_BASE}/orders/track/${encodeURIComponent(data.id)}`;
                 try {
                     const res = await fetch(endpoint);
                     if (res.ok) {
                         const newData = await res.json();
                         if (newData.status === "paid" || newData.status === "sukses") {
                             toast("Pembayaran Berhasil!", "success");
-                            // BONUS FIX: ketika track modal sedang terbuka dan
-                            // status baru saja berubah ke paid, buka checkout
-                            // success overlay (dan inisialisasi rating) jika
-                            // ini adalah order reguler bukan topup. Track modal
-                            // akan ditutup secara implisit karena checkoutOverlay
-                            // dibuka oleh showPaidOrderSuccess.
-                            if (!isTopup) {
-                                closeOverlay("trackOverlay");
-                                showPaidOrderSuccess(newData, false);
-                                return; // jangan re-render track modal
-                            }
                         }
+                        // Re-render track modal — renderTrackResult sekarang sudah
+                        // menyertakan slot rating jika status paid, jadi tidak perlu
+                        // closeOverlay dan showPaidOrderSuccess dari sini.
                         renderTrackResult(newData, options);
                     }
                 } catch(e) {}
@@ -3405,15 +3453,21 @@ async function checkPaymentReturn() {
             } catch (e) { /* gak fatal, CTA WA cuma gak muncul kalau ini gagal */ }
         }
 
-        // FIX Bug 2: jika order sudah paid dan bukan topup, tampilkan
-        // success overlay (yang mengandung rating card) — sama seperti
-        // direct payment/popup polling. Sebelumnya hanya openTrackModalWithResult
-        // yang dipanggil sehingga showPaidOrderSuccess dan initRatingPrompt
-        // tidak pernah tereksekusi dari redirect flow.
+        // Jika order sudah paid saat redirect balik: tampilkan success overlay
+        // (checkout overlay) yang di dalamnya juga memanggil renderRatingPrompt.
+        //
+        // Jika setelah semua retry status masih pending (webhook iPaymu belum masuk):
+        // buka track modal via openTrackModalWithResult. renderTrackResult() sekarang
+        // sudah menyertakan slot rating untuk order paid, dan polling 5 detik di sana
+        // akan mendeteksi perubahan status → re-render dengan slot rating yang terisi.
+        // Ini membuat rating tetap muncul meskipun webhook lebih lambat dari 7 detik.
         const isPaidResult = data.status === "paid" || data.status === "sukses";
         if (!isTopup && isPaidResult) {
             showPaidOrderSuccess(data, false);
         } else {
+            // Untuk pending/failed: buka track modal
+            // renderTrackResult akan attach slot rating secara otomatis
+            // jika webhook berhasil mengubah status ke paid nanti
             openTrackModalWithResult(data, { fromPaymentReturn: true });
         }
     } catch (err) {
@@ -3939,7 +3993,8 @@ async function bootstrapApp() {
         loadTrustStats(),
         loadGamingNews(),
         loadLeaderboard(),
-        checkPaymentReturn()
+        checkPaymentReturn(),
+        initMusicPlayer()
     ]);
     // A stalled third-party/network request must not leave the page covered by
     // an indefinitely animated loader. Requests continue in the background.
@@ -4019,4 +4074,67 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+async function initMusicPlayer() {
+    try {
+        const response = await fetch(`${API_BASE}/music/public`);
+        if (!response.ok) return;
+        const data = await response.json();
+
+        const defaultMascot = document.getElementById("defaultMascot");
+        const musicPlayerUI = document.getElementById("musicPlayerUI");
+        
+        if (data.enabled && data.activeMusic) {
+            // Setup player UI
+            const musicCoverImg = document.getElementById("musicCoverImg");
+            const musicTitleText = document.getElementById("musicTitleText");
+            const heroAudioPlayer = document.getElementById("heroAudioPlayer");
+            const musicPlayBtn = document.getElementById("musicPlayBtn");
+            const musicPlayIcon = document.getElementById("musicPlayIcon");
+            const musicDisc = document.getElementById("musicDisc");
+            
+            if (musicCoverImg) musicCoverImg.src = data.activeMusic.cover_url || "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=500&auto=format&fit=crop";
+            if (musicTitleText) musicTitleText.textContent = data.activeMusic.title || "Unknown Title";
+            if (heroAudioPlayer) heroAudioPlayer.src = data.activeMusic.audio_url;
+
+            // Switch visibility
+            if (defaultMascot) {
+                defaultMascot.classList.add("opacity-0", "pointer-events-none");
+            }
+            if (musicPlayerUI) {
+                musicPlayerUI.classList.remove("opacity-0", "pointer-events-none");
+            }
+
+            let isPlaying = false;
+            
+            if (heroAudioPlayer) {
+                heroAudioPlayer.addEventListener("ended", () => {
+                    isPlaying = false;
+                    if (musicPlayIcon) musicPlayIcon.className = "fa-solid fa-play ml-0.5";
+                    if (musicDisc) musicDisc.classList.remove("animate-spin-slow");
+                });
+            }
+
+            if (musicPlayBtn && heroAudioPlayer) {
+                musicPlayBtn.addEventListener("click", () => {
+                    if (isPlaying) {
+                        heroAudioPlayer.pause();
+                        isPlaying = false;
+                        if (musicPlayIcon) musicPlayIcon.className = "fa-solid fa-play ml-0.5";
+                        if (musicDisc) musicDisc.classList.remove("animate-spin-slow");
+                    } else {
+                        heroAudioPlayer.play().catch(err => {
+                            console.error("Audio play failed:", err);
+                        });
+                        isPlaying = true;
+                        if (musicPlayIcon) musicPlayIcon.className = "fa-solid fa-pause";
+                        if (musicDisc) musicDisc.classList.add("animate-spin-slow");
+                    }
+                });
+            }
+        }
+    } catch (error) {
+        console.error("Failed to load music player:", error);
+    }
+}
 
