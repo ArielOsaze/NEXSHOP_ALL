@@ -754,15 +754,7 @@ async function loadArticle() {
 
     } catch (err) {
         console.error("NexShop News article fetch error:", err);
-        document.getElementById("articleMain").innerHTML = `
-            <div class="article-page" style="text-align:left; overflow-wrap:anywhere;">
-                <h3>DEBUG ERROR</h3>
-                <p><strong>Message:</strong> ${err.message}</p>
-                <p><strong>Stack:</strong> <pre>${err.stack || 'No stack'}</pre></p>
-                <p><strong>URL Target:</strong> ${API_BASE}/news/articles/${encodeURIComponent(SLUG)}</p>
-                <button onclick="window.location.reload()" class="tag-chip" style="margin-top:20px; cursor:pointer;">Coba Lagi (Reload)</button>
-            </div>
-        `;
+        renderError();
     }
 }
 

@@ -460,7 +460,9 @@
         if (pinEl) pinEl.checked = !!art.is_pinned;
 
         if (art.scheduled_at) {
-            const local = new Date(art.scheduled_at).toISOString().slice(0, 16);
+            const d = new Date(art.scheduled_at);
+            const pad = n => n.toString().padStart(2, '0');
+            const local = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
             setVal("editScheduledAt", local);
         } else {
             setVal("editScheduledAt", "");

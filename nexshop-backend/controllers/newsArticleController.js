@@ -385,7 +385,7 @@ exports.getPublicArticles = async (req, res) => {
 
         let query = supabase
             .from("news_articles")
-            .select("id, slug, title, excerpt, category, tags, author, published_at, updated_at, image_url, image_alt, is_featured, is_pinned, view_count, seo_title, seo_description, keywords", { count: "exact" })
+            .select("id, slug, title, excerpt, category, tags, author, published_at, updated_at, image_url, image_alt, is_featured, is_pinned, view_count, seo_title, seo_description, keywords, word_count", { count: "exact" })
             .eq("status", "published")
             .lte("published_at", now);
 
@@ -576,10 +576,12 @@ exports.createArticle = async (req, res) => {
         }
 
         const slug = await ensureUniqueSlug(baseSlug);
+        const words = String(validation.value.content || "").replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
 
         const row = {
             ...validation.value,
             slug,
+            word_count: words,
             status:    "draft",
             created_at: new Date().toISOString()
         };
@@ -645,10 +647,11 @@ exports.updateArticle = async (req, res) => {
                 slug = newBase ? await ensureUniqueSlug(newBase, id) : (existing && existing.slug) || "";
             }
         }
+        const words = String(validation.value.content || "").replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
 
         const { data, error } = await supabase
             .from("news_articles")
-            .update({ ...validation.value, slug })
+            .update({ ...validation.value, slug, word_count: words })
             .eq("id", id)
             .select()
             .single();
@@ -1030,47 +1033,5 @@ exports.runScheduledPublish = async () => {
     } catch (err) {
         console.error("[scheduled-publish] Unexpected error:", err);
         return 0;
-    }
-};
-
-/**
- * Bulk actions (publish, unpublish, delete)
- */
-exports.bulkArticleAction = async (req, res) => {
-    try {
-        const { ids, action } = req.body;
-        if (!Array.isArray(ids) || ids.length === 0) {
-            return res.status(400).json({ success: false, message: "Pilih setidaknya satu artikel" });
-        }
-        if (!["publish", "unpublish", "delete"].includes(action)) {
-            return res.status(400).json({ success: false, message: "Aksi tidak valid" });
-        }
-
-        const now = new Date().toISOString();
-
-        if (action === "publish") {
-            const { error } = await supabase
-                .from("news_articles")
-                .update({ status: "published", published_at: now, scheduled_at: null, updated_at: now })
-                .in("id", ids);
-            if (error) throw error;
-        } else if (action === "unpublish") {
-            const { error } = await supabase
-                .from("news_articles")
-                .update({ status: "draft", published_at: null, scheduled_at: null, updated_at: now })
-                .in("id", ids);
-            if (error) throw error;
-        } else if (action === "delete") {
-            const { error } = await supabase
-                .from("news_articles")
-                .delete()
-                .in("id", ids);
-            if (error) throw error;
-        }
-
-        return res.json({ success: true, message: `Berhasil menjalankan aksi '${action}' pada ${ids.length} artikel` });
-    } catch (err) {
-        console.error("bulkArticleAction error:", err);
-        return res.status(500).json({ success: false, message: "Server gagal memproses bulk action" });
     }
 };

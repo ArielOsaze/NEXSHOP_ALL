@@ -104,7 +104,16 @@ CREATE INDEX IF NOT EXISTS idx_news_sources_article_id
     ON news_sources (article_id);
 
 -- ---------------------------------------------------------------
--- 5. Verifikasi
+-- 5. Menambahkan kolom word_count (Bug #5)
+-- ---------------------------------------------------------------
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='news_articles' AND column_name='word_count') THEN
+        ALTER TABLE news_articles ADD COLUMN word_count INTEGER NOT NULL DEFAULT 0;
+    END IF;
+END $$;
+
+-- ---------------------------------------------------------------
+-- 6. Verifikasi
 -- ---------------------------------------------------------------
 DO $$ BEGIN
     RAISE NOTICE 'NexShop News migration selesai.';

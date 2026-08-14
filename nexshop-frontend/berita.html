@@ -578,11 +578,10 @@ function relativeDate(iso) {
     return d.toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" });
 }
 
-function readingTime(content) {
-    if (!content) return "1 mnt";
+function readingTime(wordCount) {
+    if (!wordCount || wordCount <= 0) return "1 mnt";
     const wpm   = 200;
-    const words = String(content).replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
-    const mins  = Math.max(1, Math.ceil(words / wpm));
+    const mins  = Math.max(1, Math.ceil(wordCount / wpm));
     return `${mins} mnt`;
 }
 
@@ -635,7 +634,7 @@ function renderHero(article) {
     if (!article) { hero.innerHTML = ""; return; }
 
     const path = articlePath(article.slug);
-    const rt   = readingTime(article.content);
+    const rt   = readingTime(article.word_count);
 
     hero.innerHTML = `
         <a href="${path}" class="hero-article" aria-label="Baca artikel: ${safeText(article.title, 120)}">
@@ -666,7 +665,7 @@ function renderHero(article) {
 // ── Article card ─────────────────────────────────────────────
 function renderCard(article) {
     const path = articlePath(article.slug);
-    const rt   = readingTime(article.content);
+    const rt   = readingTime(article.word_count);
     return `
         <a href="${path}" class="article-card" aria-label="Baca: ${safeText(article.title,120)}">
             <div class="card-img-wrap">
@@ -736,7 +735,7 @@ async function loadArticles(page = 1) {
         const meta     = json.meta || { page:1, total:0, total_pages:1 };
 
         // Hero: gunakan artikel pinned/featured atau artikel pertama
-        const hero = !currentCat
+        const hero = (!currentCat && page === 1)
             ? (articles.find(a => a.is_pinned) || articles.find(a => a.is_featured) || articles[0])
             : null;
 
@@ -816,6 +815,22 @@ function initCategoryFilter() {
 
 // ── Init ─────────────────────────────────────────────
 initCategoryFilter();
+
+const urlParams = new URLSearchParams(window.location.search);
+const qsCat = urlParams.get("cat");
+const validCats = ["Esports", "Gaming", "Xbox", "PlayStation", "PC", "Mobile", "Teknologi", "Update Game", "Industri Game"];
+
+if (qsCat && validCats.includes(qsCat)) {
+    currentCat = qsCat;
+    document.querySelectorAll(".cat-btn").forEach(b => {
+        b.classList.toggle("active", b.dataset.cat === currentCat);
+        b.setAttribute("aria-pressed", b.dataset.cat === currentCat ? "true" : "false");
+    });
+    document.querySelectorAll("#catNavLinks a[data-cat]").forEach(a => {
+        a.classList.toggle("active", (a.dataset.cat||"") === currentCat);
+    });
+}
+
 loadArticles(1);
 </script>
 </body>
