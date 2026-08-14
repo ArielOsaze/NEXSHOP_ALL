@@ -815,6 +815,7 @@ nav#mainNav.nav-scrolled {
 .discount-badge{
     background:rgba(239,68,68,.16); border:1px solid rgba(239,68,68,.3);
     color:var(--text-danger); align-self:flex-end; margin-bottom:2px;
+    padding:4px 8px; min-height:unset; line-height:1.2;
 }
 
 .card-actions{ display:flex; align-items:center; gap:8px; width:100%; }
@@ -1731,7 +1732,7 @@ input::placeholder{ color:var(--text-dim); }
     .price-block{ min-height:30px; }
     .price-main{ font-size:13.5px; }
     .price-strike{ font-size:10px; }
-    .discount-badge{ font-size:9.5px; padding:2px 5px; }
+    .discount-badge{ font-size:10px; padding:3px 7px; margin-bottom:3px; }
     .card-actions{ gap:6px; }
     .add-btn{ width:40px; height:40px; min-width:40px; border-radius:11px; font-size:13px; touch-action:manipulation; }
     .buy-btn{ min-height:40px; height:40px; border-radius:11px; font-size:12.5px; padding:0 12px; touch-action:manipulation; }
