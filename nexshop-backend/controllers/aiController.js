@@ -375,6 +375,28 @@ exports.deleteKnowledgeBase = async (req, res) => {
     return res.json({ message: "Knowledge berhasil dihapus" });
 };
 
+exports.refreshKnowledgeBase = async (req, res) => {
+    try {
+        const { exec } = require('child_process');
+        const path = require('path');
+        const scriptPath = path.join(__dirname, '../scripts/ingest-website.js');
+        
+        exec(`node "${scriptPath}" web`, (error, stdout, stderr) => {
+            if (error) {
+                console.error(`Ingestion Error: ${error.message}`);
+            }
+            console.log(`Ingestion Output: ${stdout}`);
+        });
+
+        return res.json({ 
+            success: true, 
+            message: "Knowledge base refresh sedang berjalan di background (Web Ingestion)." 
+        });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 // Rebuild only stable store facts. Existing knowledge is preserved so manually
 // authored, product-specific facts cannot be overwritten by an AI generator.
 exports.reseedKnowledgeBase = async (_req, res) => {
