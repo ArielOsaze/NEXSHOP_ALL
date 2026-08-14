@@ -156,7 +156,6 @@ function priceBlockHtml(p, size = "sm") {
                 <span class="price-strike ${size}">${rupiah(p.strike_price)}</span>
                 <span class="price-main ${size} is-discounted">${rupiah(p.price)}</span>
             </div>
-            <span class="discount-badge">-${discountPercent(p)}%</span>
         </div>
     `;
 }
