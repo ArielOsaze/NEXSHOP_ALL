@@ -27,9 +27,9 @@ function normalizeProviderId(idStr) {
 }
 
 const DEFAULT_SETTINGS = [
-    { id: "gemini", provider: "Google Gemini", model: "gemini-flash-latest", enabled: true, priority: 1 },
-    { id: "groq", provider: "Groq AI", model: "llama-3.3-70b-versatile", enabled: true, priority: 2 },
-    { id: "openrouter", provider: "OpenRouter", model: "meta-llama/llama-3.3-70b-instruct", enabled: true, priority: 3 }
+    { id: "groq", provider: "Groq AI", model: "llama-3.3-70b-versatile", enabled: true, priority: 1 },
+    { id: "gemini", provider: "Google Gemini", model: "gemini-flash-latest", enabled: false, priority: 2 },
+    { id: "openrouter", provider: "OpenRouter", model: "meta-llama/llama-3.3-70b-instruct", enabled: false, priority: 3 }
 ];
 
 let settingsCache = { data: null, ts: 0 };
@@ -249,21 +249,23 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
 
         latestStatusMap[pConfig.id] = {
             connected: false,
-            latency: res.latencyMs || 0,
+            latency: res.latencyMs,
             httpStatus: res.httpStatus || 500,
             lastChecked: new Date().toISOString()
         };
-        lastError = res.error || `Provider ${res.providerName} gagal merespons`;
-        console.warn(`🔄 Failover Triggered: ${pConfig.provider} gagal (${res.httpStatus}: ${res.error}). Mencoba provider berikutnya...`);
-    }
 
-    console.error(`❌ [AI PROVIDER MANAGER ERROR]: All providers failed. Last Error: ${lastError}\n===================================================================\n`);
+        lastError = res.error;
+        console.warn(`❌ Provider ${res.providerName || pConfig.provider} failed: ${res.error}`);
+        
+        // NexBot strictly requires no silent fallback (Force Groq)
+        break;
+    }
 
     return {
         success: false,
         reply: null,
         provider: null,
-        error: lastError || "Seluruh AI Provider gagal memberikan balasan."
+        error: lastError || "Semua AI Provider gagal merespons"
     };
 }
 

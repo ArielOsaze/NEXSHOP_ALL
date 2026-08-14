@@ -13,6 +13,7 @@ router.get("/quick/:action", aiChatLimiter, optionalAuthMiddleware, aiController
 // Admin Knowledge Base CRUD Endpoints
 router.get("/knowledge", authMiddleware, superAdminMiddleware, aiController.getKnowledgeBase);
 router.post("/knowledge", authMiddleware, superAdminMiddleware, aiController.createKnowledgeBase);
+router.post("/knowledge/refresh", authMiddleware, superAdminMiddleware, aiController.refreshKnowledgeBase);
 router.post("/knowledge/reseed", authMiddleware, superAdminMiddleware, aiController.reseedKnowledgeBase);
 router.post("/faq/generate", authMiddleware, superAdminMiddleware, aiController.generateProductFaqs);
 router.put("/knowledge/:id", authMiddleware, superAdminMiddleware, aiController.updateKnowledgeBase);

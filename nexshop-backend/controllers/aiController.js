@@ -35,9 +35,11 @@ async function logGeminiRequest({ userMessage, modelUsed, responseTimeMs, tokenU
 // migration, but it is not a writable pseudo-database: admin changes must be
 // persisted in Supabase or fail visibly.
 const BUILTIN_KNOWLEDGE = [
-    { id: "builtin-payment", title: "Metode Pembayaran", category: "Payment", keywords: "bayar pembayaran qris dana ovo gopay transfer bank va", content: "NexShop mendukung QRIS, e-wallet, Virtual Account bank, transfer bank, dan kartu kredit. Pilihan yang tersedia akan tampil saat Checkout.", priority: 5, status: "active" },
+    { id: "builtin-payment", title: "Metode Pembayaran", category: "Payment", keywords: "bayar pembayaran qris dana ovo gopay transfer bank va ipaymu", content: "Pembayaran NexShop diproses dengan aman menggunakan iPaymu sebagai payment gateway. Metode yang didukung meliputi QRIS, e-wallet (DANA, OVO, GoPay), Virtual Account, transfer bank, dan kartu kredit. Pilihan tersedia lengkap saat Checkout.", priority: 5, status: "active" },
+    { id: "builtin-escrow", title: "Mekanisme Escrow", category: "Trust", keywords: "escrow aman penipuan tahan dana garansi uang kembali", content: "NexShop menyediakan mekanisme escrow untuk transaksi yang mendukungnya. Untuk transaksi yang menggunakan mekanisme escrow NexShop, dana ditahan sesuai alur escrow sampai kondisi transaksi terpenuhi.", priority: 5, status: "active" },
+    { id: "builtin-legal", title: "Legalitas dan OSS", category: "Trust", keywords: "aman resmi legal penipu scam oss nib kbli terdaftar", content: "NexShop telah memiliki NIB dan terdaftar secara resmi melalui sistem OSS pemerintah. NIB NexShop adalah 1408260072494 dengan skala usaha mikro dan KBLI 60390. Untuk detail legalitas, kamu bisa melihat halaman Legalitas NexShop (nexshop.cloud/legalitas.html).", priority: 5, status: "active" },
     { id: "builtin-topup", title: "Cara Topup Diamond", category: "Guide", keywords: "cara topup diamond ml mlbb mobile legends free fire pubg", content: "Buka menu Topup, pilih game, masukkan User ID dan Zone ID bila diminta, pilih nominal, lalu selesaikan pembayaran. Pesanan diproses otomatis setelah pembayaran terkonfirmasi.", priority: 5, status: "active" },
-    { id: "builtin-refund", title: "Kebijakan Refund", category: "Policy", keywords: "refund pengembalian dana batal garansi", content: "Untuk kendala saldo atau item yang tidak masuk, siapkan Nomor Order ID dan hubungi Customer Service NexShop agar pesanan dapat diperiksa.", priority: 5, status: "active" }
+    { id: "builtin-refund", title: "Kebijakan Refund", category: "Policy", keywords: "refund pengembalian dana batal garansi", content: "Untuk kendala saldo atau item yang tidak masuk, siapkan Nomor Order ID dan hubungi Customer Service NexShop agar pesanan dapat diperiksa secara manual.", priority: 5, status: "active" }
 ];
 
 const QUICK_ACTIONS = {
@@ -57,20 +59,22 @@ function safeMessage(value) {
 }
 
 function knowledgeColumns() {
-    return "id,title,category,keywords,content,status,priority,updated_at";
+    return "id,title,category,keywords,content,status,priority,updated_at,source_url,source_title";
 }
 
 async function loadKnowledge(query) {
-    // The SQL RPC uses PostgreSQL full-text + pg_trgm as a candidate generator.
-    // A normal select remains compatible while an existing installation applies
-    // the migration for the first time; final ranking is always deterministic.
+    let dbKnowledge = [];
     try {
         const rpc = await supabase.rpc("search_nexbot_knowledge", { search_query: query.raw, result_limit: 80 });
-        if (!rpc.error && Array.isArray(rpc.data) && rpc.data.length) return rpc.data;
+        if (!rpc.error && Array.isArray(rpc.data) && rpc.data.length) dbKnowledge = rpc.data;
     } catch (_) { /* fall through to the compatible query */ }
-    const { data, error } = await supabase.from("knowledge_base").select(knowledgeColumns()).eq("status", "active").order("priority", { ascending: false }).limit(250);
-    if (error) return BUILTIN_KNOWLEDGE;
-    return data?.length ? data : BUILTIN_KNOWLEDGE;
+    
+    if (!dbKnowledge.length) {
+        const { data, error } = await supabase.from("knowledge_base").select(knowledgeColumns()).eq("status", "active").order("priority", { ascending: false }).limit(250);
+        if (!error && data?.length) dbKnowledge = data;
+    }
+    
+    return [...dbKnowledge, ...BUILTIN_KNOWLEDGE];
 }
 
 async function loadConversationMemory(sessionId, userId) {
@@ -235,7 +239,7 @@ async function answer(message, sessionId, user) {
     } else {
         const knowledgeText = result.selected.length ? buildKnowledgeResponse(result.selected) : "Belum ada informasi khusus untuk pertanyaan ini.";
         const systemPrompt = `Kamu adalah NexBot, asisten AI resmi dari toko game & e-commerce NexShop.
-Tugas kamu adalah menjawab pertanyaan pelanggan secara ramah, profesional, dan membantu dalam bahasa Indonesia.
+Tugas kamu adalah menjawab pertanyaan pelanggan secara ramah, profesional, dan membantu dalam bahasa Indonesia. Jangan terlalu formal.
 Gunakan FAKTA KNOWLEDGE BASE NEXSHOP di bawah ini sebagai sumber kebenaran utama:
 
 --- FAKTA KNOWLEDGE BASE ---
@@ -244,8 +248,9 @@ ${knowledgeText}
 
 Aturan menjawab:
 1. Jawab pertanyaan user berdasarkan Fakta Knowledge Base jika relevan.
-2. Jangan mengarang kebijakan pembayaran, cara topup, atau harga yang bertentangan dengan fakta di atas.
-3. Jawab singkat, jelas, dan ramah dengan format markdown yang rapi.`;
+2. Jika tidak ada knowledge yang relevan, JANGAN MENGARANG. Jawab persis seperti ini: "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kamu bisa menghubungi Customer Service NexShop untuk informasi lebih lanjut."
+3. Jangan mengklaim sesuatu sebagai fakta jika tidak ada sumber. Jangan membuat janji yang tidak didukung knowledge.
+4. Jawab singkat, jelas, dan ramah dengan format markdown yang rapi.`;
 
         const aiRes = await aiProviderManager.generateResponse({
             prompt: message,
@@ -256,6 +261,14 @@ Aturan menjawab:
 
         if (aiRes.success && aiRes.reply) {
             reply = aiRes.reply;
+            if (result.selected.length > 0) {
+                const uniqueSources = [...new Set(result.selected.map(item => item.source_title || item.title).filter(Boolean))];
+                if (uniqueSources.length === 1) {
+                    reply += `\n\n*Sumber: ${uniqueSources[0]}*`;
+                } else if (uniqueSources.length > 1) {
+                    reply += "\n\n*Sumber:\n" + uniqueSources.map(s => `- ${s}`).join("\n") + "*";
+                }
+            }
             source = aiRes.provider; // e.g. "gemini", "groq", "openrouter"
         } else {
             console.error("❌ AI Provider Manager failed for prompt:", message);
