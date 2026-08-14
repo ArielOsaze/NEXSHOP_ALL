@@ -7,6 +7,15 @@
 <meta name="description" content="Website game terlengkap untuk game, Game Pass, dan top up instan. Belanja aman, cepat, dan terpercaya.">
 <link rel="canonical" href="https://nexshop.cloud/">
 
+<!-- Fallback Router: Jika Nginx belum di-reload dan mengembalikan index.html untuk URL /berita/slug -->
+<script>
+    const path = window.location.pathname;
+    if (path.startsWith("/berita/") && path.length > 8) {
+        const slug = path.substring(8).replace(/\/$/, "");
+        window.location.replace("/berita-artikel.html?slug=" + encodeURIComponent(slug));
+    }
+</script>
+
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://nexshop.cloud/">
