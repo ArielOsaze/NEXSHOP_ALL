@@ -734,7 +734,7 @@ async function loadArticles(page = 1) {
             : articles;
 
         const grid = document.getElementById("articlesGrid");
-        if (!gridArticles.length) {
+        if (!gridArticles.length && !hero) {
             grid.innerHTML = `
                 <div class="state-block" style="grid-column:1/-1" role="status">
                     <div class="state-icon"><i class="fa-regular fa-newspaper" aria-hidden="true"></i></div>

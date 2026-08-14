@@ -448,13 +448,14 @@ exports.getPublicArticleBySlug = async (req, res) => {
             .order("created_at", { ascending: true });
 
         // Increment view_count secara atomic
-        await supabase.rpc("increment_news_view", { article_id_param: article.id }).catch(() => {
+        const { error: rpcError } = await supabase.rpc("increment_news_view", { article_id_param: article.id });
+        if (rpcError) {
             // Fallback jika RPC belum dibuat: update langsung
             supabase.from("news_articles")
                 .update({ view_count: (article.view_count || 0) + 1 })
                 .eq("id", article.id)
                 .then(() => {});
-        });
+        }
 
         // Related articles (same category, different slug, max 4)
         const { data: related } = await supabase
