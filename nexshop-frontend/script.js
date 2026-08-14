@@ -1755,32 +1755,31 @@ function renderGamingNews(items) {
         const category = String(item.category || "Gaming");
         
         return `
-            <a href="/berita/${encodeURIComponent(item.slug)}" class="group relative bg-white dark:bg-[#0e0e12] rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 hover:border-brand-indigo/50 transition-all duration-500 hover:shadow-2xl hover:shadow-brand-indigo/10 hover:-translate-y-2 cursor-pointer flex flex-col no-underline text-left">
-                <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                <div class="relative w-full aspect-[16/10] overflow-hidden">
-                    <img src="${escapeHtml(imageUrl)}" alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" loading="lazy" decoding="async">
-                    <div class="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0e0e12] via-transparent to-transparent opacity-90"></div>
+            <a href="/berita/${encodeURIComponent(item.slug)}" class="group relative bg-white dark:bg-[#0a0a0c] rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 hover:border-brand-indigo/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer flex flex-col no-underline text-left">
+                <div class="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <img src="${escapeHtml(imageUrl)}" alt="" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70"></div>
                     <div class="absolute bottom-3 left-4">
-                        <span class="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-widest bg-brand-indigo text-white backdrop-blur-sm shadow-sm">
+                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold uppercase tracking-wider bg-brand-indigo text-white shadow-sm">
                             ${escapeHtml(category)}
                         </span>
                     </div>
                 </div>
-                <div class="p-5 pt-3 flex flex-col flex-1 relative z-10">
-                    <div class="flex items-center gap-1.5 mb-2.5 text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide">
+                <div class="p-5 flex flex-col flex-1 relative z-10">
+                    <div class="flex items-center gap-2 mb-2 text-xs text-gray-500 dark:text-gray-400 font-medium">
                         <i class="fa-regular fa-calendar-alt"></i>
                         <span>${escapeHtml(formatNewsDate(item.published_at))}</span>
                     </div>
-                    <h4 class="text-[17px] font-bold text-gray-900 dark:text-white mb-2.5 line-clamp-2 group-hover:text-brand-indigo transition-colors leading-snug">
+                    <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-brand-indigo transition-colors leading-snug">
                         ${escapeHtml(item.title)}
                     </h4>
-                    <p class="text-[13px] text-gray-600 dark:text-gray-400 line-clamp-2 mb-5 leading-relaxed">
+                    <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-5 leading-relaxed">
                         ${escapeHtml(item.excerpt || item.title)}
                     </p>
-                    <div class="mt-auto flex items-center justify-between text-[13px] font-bold text-brand-indigo group-hover:text-brand-cyan transition-colors">
+                    <div class="mt-auto flex items-center justify-between text-sm font-bold text-brand-indigo group-hover:text-brand-cyan transition-colors">
                         <span>Baca Selengkapnya</span>
                         <div class="w-8 h-8 rounded-full bg-brand-indigo/10 flex items-center justify-center group-hover:bg-brand-indigo/20 transition-colors">
-                            <i class="fa-solid fa-arrow-right text-[11px]"></i>
+                            <i class="fa-solid fa-arrow-right text-xs"></i>
                         </div>
                     </div>
                 </div>
