@@ -527,80 +527,79 @@ Cek Transaksi
     .lg\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 }
 </style>
-<footer class="pt-16 pb-32 sm:pb-24 mt-20 border-t border-gray-200 dark:border-white/10 bg-transparent">
-    <div class="max-w-7xl mx-auto px-[clamp(12px,3vw,32px)]">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 mb-12">
+<footer class="nx-footer">
+    <div class="nx-footer__container">
+        <div class="nx-footer__grid">
             <!-- Brand -->
-            <div class="space-y-4">
-                <div class="font-extrabold text-2xl tracking-tighter text-gray-900 dark:text-white uppercase flex items-center gap-2">
-                    <img src="/images/nexshop-icon.svg" alt="NexShop Logo" class="w-8 h-8 rounded-lg bg-gradient-to-tr from-brand-indigo to-brand-cyan p-[1px]"> NexShop
+            <div>
+                <div class="nx-footer__brand-logo">
+                    <img src="/images/nexshop-icon.svg" alt="NexShop Logo" class="nx-footer__brand-icon"> NexShop
                 </div>
-                <p class="text-gray-500 dark:text-gray-400 text-sm font-medium leading-relaxed max-w-xs">
+                <p class="nx-footer__brand-desc">
                     Marketplace gaming digital terpercaya. Transaksi aman, proses cepat.
                 </p>
             </div>
             
             <!-- Layanan -->
             <div>
-                <h4 class="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Layanan</h4>
-                <ul class="space-y-3">
-                    <li><a href="#games" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium">Katalog Toko</a></li>
-                    <li><a href="#topup" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium">Flash Sale</a></li>
-                    <li><button type="button" id="trackOrderBtnFooter" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium">Cek Transaksi</button></li>
+                <h4 class="nx-footer__heading">Layanan</h4>
+                <ul class="nx-footer__link-list">
+                    <li><a href="#games" class="nx-footer__link">Katalog Toko</a></li>
+                    <li><a href="#topup" class="nx-footer__link">Flash Sale</a></li>
+                    <li><button type="button" id="trackOrderBtnFooter" class="nx-footer__link">Cek Transaksi</button></li>
                 </ul>
             </div>
             
             <!-- Bantuan -->
             <div>
-                <h4 class="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Bantuan</h4>
-                <ul class="space-y-3">
-                    <li><button type="button" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium" data-policy-tab="faq">FAQ</button></li>
-                    <li><button type="button" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium" data-policy-tab="terms">Terms of Service</button></li>
-                    <li><button type="button" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium" data-policy-tab="refund">Refund Policy</button></li>
-                    <li><button type="button" class="text-gray-500 hover:text-brand-indigo dark:text-gray-400 dark:hover:text-brand-cyan transition-colors text-sm font-medium" data-policy-tab="contact">Contact Us</button></li>
+                <h4 class="nx-footer__heading">Bantuan</h4>
+                <ul class="nx-footer__link-list">
+                    <li><button type="button" class="nx-footer__link" data-policy-tab="faq">FAQ</button></li>
+                    <li><button type="button" class="nx-footer__link" data-policy-tab="terms">Terms of Service</button></li>
+                    <li><button type="button" class="nx-footer__link" data-policy-tab="refund">Refund Policy</button></li>
+                    <li><button type="button" class="nx-footer__link" data-policy-tab="contact">Contact Us</button></li>
                 </ul>
             </div>
             
             <!-- Pembayaran Aman -->
             <div>
-                <h4 class="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Pembayaran Aman</h4>
-                <div class="flex flex-col gap-2 text-gray-500 dark:text-gray-400 font-medium text-sm">
-                    <span>QRIS</span>
-                    <span>E-Wallet</span>
-                    <span>Virtual Account</span>
-                    <span>Transfer Bank</span>
+                <h4 class="nx-footer__heading">Pembayaran Aman</h4>
+                <div class="nx-footer__link-list">
+                    <span class="nx-footer__link" style="cursor:default;">QRIS</span>
+                    <span class="nx-footer__link" style="cursor:default;">E-Wallet</span>
+                    <span class="nx-footer__link" style="cursor:default;">Virtual Account</span>
+                    <span class="nx-footer__link" style="cursor:default;">Transfer Bank</span>
                 </div>
             </div>
             
             <!-- Legalitas -->
-            <div>
-                <h4 class="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Legalitas</h4>
-                <div class="flex flex-col text-gray-500 dark:text-gray-400 font-medium text-sm">
-                    <div class="flex flex-col mb-3 leading-snug">
-                        <span class="font-bold text-gray-700 dark:text-gray-300">NexShop</span>
-                        <span class="text-xs">Usaha Mikro</span>
-                    </div>
-                    
-                    <div class="flex flex-col text-xs gap-1 mb-4">
-                        <span>NIB: 1408260072494</span>
-                        <span>KBLI 60390</span>
-                    </div>
-                    
-                    <div class="flex items-center mb-4 rounded-md border border-gray-200 dark:border-gray-700" style="gap:10px; padding:6px 10px; width:max-content; background:rgba(255,255,255,0.05);">
-                        <img src="/images/oss-logo.png" alt="OSS Logo" class="object-contain" style="height:24px; width:auto; border-radius:2px;">
-                        <span class="leading-tight font-bold text-gray-600 dark:text-gray-300" style="font-size:10px;">Terdaftar<br>melalui OSS</span>
-                    </div>
-
-                    <button type="button" data-policy-tab="legal" class="text-brand-indigo hover:text-brand-cyan transition-colors font-bold text-left inline-flex items-center gap-1.5 group w-max text-sm">
-                        Informasi Legalitas <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
-                    </button>
+            <div class="nx-footer__legal">
+                <h4 class="nx-footer__heading">Legalitas</h4>
+                
+                <div class="nx-footer__legal-name">
+                    <strong>NexShop</strong>
+                    <span>Usaha Mikro</span>
                 </div>
+                
+                <div class="nx-footer__legal-ids">
+                    <span>NIB: 1408260072494</span>
+                    <span>KBLI 60390</span>
+                </div>
+                
+                <div class="nx-footer__legal-oss">
+                    <img src="/images/oss-logo.png" alt="OSS Logo">
+                    <span>Terdaftar<br>melalui OSS</span>
+                </div>
+
+                <button type="button" data-policy-tab="legal" class="nx-footer__legal-link">
+                    Informasi Legalitas <i class="fa-solid fa-arrow-right"></i>
+                </button>
             </div>
         </div>
         
-        <div class="pt-8 border-t border-gray-200 dark:border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">&copy; 2026 NexShop. All Rights Reserved.</p>
-            <p class="text-gray-500 dark:text-gray-400 text-sm font-medium italic">Designed for Gamers.</p>
+        <div class="nx-footer__bottom">
+            <p>&copy; 2026 NexShop. All Rights Reserved.</p>
+            <p class="nx-footer__bottom-note">Berita dan informasi gaming original. Semua artikel merupakan karya editorial NexShop.</p>
         </div>
     </div>
 </footer>

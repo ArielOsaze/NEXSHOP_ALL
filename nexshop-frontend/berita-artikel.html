@@ -357,28 +357,56 @@
     </div>
 </main>
 
-<footer class="pt-16 pb-16 mt-20 border-t border-gray-200 dark:border-white/10 bg-transparent flex flex-col items-center text-center gap-8 px-[clamp(12px,3vw,32px)]">
-    <div class="flex flex-col items-center text-gray-500 dark:text-gray-400 font-medium text-sm">
-        <div class="flex flex-col items-center mb-3 leading-snug">
-            <span class="font-bold text-gray-700 dark:text-gray-300 text-lg">NexShop</span>
-            <span class="text-xs mt-1">Usaha Mikro</span>
+<footer class="nx-footer nx-footer--news">
+    <div class="nx-footer__container">
+        <div class="nx-footer__grid">
+            <!-- Brand -->
+            <div>
+                <div class="nx-footer__brand-logo">NEXSHOP NEWS</div>
+                <p class="nx-footer__brand-desc" style="text-transform: none; text-align: left;">
+                    Portal berita gaming dan esports original NexShop.
+                </p>
+            </div>
+            
+            <!-- Navigasi -->
+            <div>
+                <h4 class="nx-footer__heading" style="text-align: left;">Navigasi</h4>
+                <ul class="nx-footer__link-list" style="text-align: left;">
+                    <li><a href="/" class="nx-footer__link">Beranda</a></li>
+                    <li><a href="/berita" class="nx-footer__link">Berita</a></li>
+                </ul>
+            </div>
+            
+            <!-- Legalitas -->
+            <div class="nx-footer__legal" style="align-items: flex-start;">
+                <h4 class="nx-footer__heading">Legalitas</h4>
+                
+                <div class="nx-footer__legal-name" style="align-items: flex-start;">
+                    <strong>NexShop</strong>
+                    <span>Usaha Mikro</span>
+                </div>
+                
+                <div class="nx-footer__legal-ids" style="justify-content: flex-start; margin-bottom: 0.5rem;">
+                    <span>NIB: 1408260072494</span>
+                    <span class="dot"></span>
+                    <span>KBLI 60390</span>
+                </div>
+                
+                <div class="nx-footer__legal-oss">
+                    <img src="/images/oss-logo.png" alt="OSS Logo">
+                    <span>Terdaftar<br>melalui OSS</span>
+                </div>
+
+                <a href="/legalitas.html" class="nx-footer__legal-link">
+                    Informasi Legalitas <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
         </div>
         
-        <div class="flex flex-row items-center justify-center text-xs gap-4 mb-5">
-            <span>NIB: 1408260072494</span>
-            <span class="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-            <span>KBLI 60390</span>
+        <div class="nx-footer__bottom">
+            <p>&copy; 2026 NexShop. All Rights Reserved.</p>
+            <p class="nx-footer__bottom-note">Berita dan informasi gaming original. Semua artikel merupakan karya editorial NexShop.</p>
         </div>
-        
-        <div class="flex items-center mb-4 rounded-md border border-gray-200 dark:border-gray-700" style="gap:10px; padding:6px 10px; width:max-content; background:rgba(255,255,255,0.05);">
-            <img src="/images/oss-logo.png" alt="OSS Logo" class="object-contain" style="height:24px; width:auto; border-radius:2px;">
-            <span class="leading-tight font-bold text-gray-600 dark:text-gray-300 text-left" style="font-size:10px;">Terdaftar<br>melalui OSS</span>
-        </div>
-    </div>
-    
-    <div class="flex flex-col gap-2">
-        <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">&copy; 2026 NexShop. All Rights Reserved.</p>
-        <p class="text-gray-500 dark:text-gray-400 text-xs font-medium italic">Berita dan informasi gaming original. Semua artikel merupakan karya editorial NexShop.</p>
     </div>
 </footer>
 
