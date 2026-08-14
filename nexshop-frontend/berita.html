@@ -477,7 +477,10 @@
     </a>
 
     <ul class="news-nav-links" id="catNavLinks">
-        <li><a href="#" data-cat="" class="active">Semua</a></li>
+        <li><a href="/">Beranda</a></li>
+        <li><a href="/berita" class="active">Berita</a></li>
+        <li style="color:var(--line);margin:0 0.25rem;">|</li>
+        <li><a href="#" data-cat="">Semua</a></li>
         <li><a href="#" data-cat="Esports">Esports</a></li>
         <li><a href="#" data-cat="Gaming">Gaming</a></li>
         <li><a href="#" data-cat="Teknologi">Teknologi</a></li>
@@ -793,7 +796,7 @@ function initCategoryFilter() {
                 b.classList.toggle("active", b.dataset.cat === cat);
                 b.setAttribute("aria-pressed", b.dataset.cat === cat ? "true" : "false");
             });
-            document.querySelectorAll("#catNavLinks a").forEach(a => {
+            document.querySelectorAll("#catNavLinks a[data-cat]").forEach(a => {
                 a.classList.toggle("active", (a.dataset.cat||"") === cat);
             });
 
@@ -802,7 +805,7 @@ function initCategoryFilter() {
     });
 
     // Nav links
-    document.querySelectorAll("#catNavLinks a").forEach(a => {
+    document.querySelectorAll("#catNavLinks a[data-cat]").forEach(a => {
         a.addEventListener("click", e => {
             e.preventDefault();
             const cat = a.dataset.cat || "";

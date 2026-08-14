@@ -7,10 +7,12 @@
 <meta name="description" content="Website game terlengkap untuk game, Game Pass, dan top up instan. Belanja aman, cepat, dan terpercaya.">
 <link rel="canonical" href="https://nexshop.cloud/">
 
-<!-- Fallback Router: Jika Nginx belum di-reload dan mengembalikan index.html untuk URL /berita/slug -->
 <script>
+    // Fallback Router: Jika Nginx belum di-reload dan mengembalikan index.html untuk URL News
     const path = window.location.pathname;
-    if (path.startsWith("/berita/") && path.length > 8) {
+    if (path === "/berita" || path === "/berita/") {
+        window.location.replace("/berita.html");
+    } else if (path.startsWith("/berita/") && path.length > 8) {
         const slug = path.substring(8).replace(/\/$/, "");
         window.location.replace("/berita-artikel.html?slug=" + encodeURIComponent(slug));
     }
