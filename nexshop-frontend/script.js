@@ -504,7 +504,7 @@ function renderProducts() {
                     <div class="relative w-full aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#1a1533] to-[#0d1b2e] shrink-0">
                         <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 fallback-clear" loading="lazy" decoding="async">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/0 to-black/10 pointer-events-none"></div>
-                        ${(p.is_flash_sale || p.badge) ? `<div class="absolute top-2 left-2 flex flex-col gap-1">${p.is_flash_sale ? '<span class="bg-red-500 text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1 border border-white/10"><span class="material-symbols-outlined text-[8px] sm:text-[10px]">bolt</span> FLASH SALE</span>' : ""}${p.badge ? `<span class="bg-black/50 backdrop-blur-md text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full uppercase tracking-widest border border-white/10">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}
+                        ${(isFlashSaleActive(p) || p.badge) ? `<div class="absolute top-2 left-2 flex flex-col gap-1">${isFlashSaleActive(p) ? '<span class="bg-red-500 text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1 border border-white/10"><span class="material-symbols-outlined text-[8px] sm:text-[10px]">bolt</span> FLASH SALE</span>' : ""}${p.badge ? `<span class="bg-black/50 backdrop-blur-md text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full uppercase tracking-widest border border-white/10">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}
                     </div>
                     <div class="p-[clamp(6px,2vw,20px)] flex flex-col flex-1">
                         <div class="flex-1">
@@ -580,7 +580,7 @@ function openProductModal(id) {
     image.alt = p.name;
     
     const pmFlash = document.getElementById("pmFlashFlag");
-    if (pmFlash) pmFlash.classList.toggle("hidden", !p.is_flash_sale);
+    if (pmFlash) pmFlash.classList.toggle("hidden", !isFlashSaleActive(p));
     const pmBadge = document.getElementById("pmBadge");
     if (pmBadge) {
         pmBadge.textContent = p.badge || "";
