@@ -357,22 +357,29 @@
     </div>
 </main>
 
-<footer class="news-footer" role="contentinfo" style="display:flex; flex-direction:column; align-items:center; gap:2rem; padding: 3rem 1.5rem; text-align:center;">
-    <div style="display:flex; flex-direction:column; align-items:center; gap:0.75rem;">
-        <div style="font-size:0.75rem; color:var(--text-dim); line-height:1.6;">
-            <strong style="color:var(--text); font-size:0.85rem;">NexShop</strong> &nbsp;•&nbsp; Usaha Mikro<br>
-            NIB: 1408260072494 &nbsp;•&nbsp; KBLI 60390
+<footer class="pt-16 pb-16 mt-20 border-t border-gray-200 dark:border-white/10 bg-transparent flex flex-col items-center text-center gap-8 px-[clamp(12px,3vw,32px)]">
+    <div class="flex flex-col items-center text-gray-500 dark:text-gray-400 font-medium text-sm">
+        <div class="flex flex-col items-center mb-3 leading-snug">
+            <span class="font-bold text-gray-700 dark:text-gray-300 text-lg">NexShop</span>
+            <span class="text-xs mt-1">Usaha Mikro</span>
         </div>
-        <div style="display:flex; align-items:center; gap:0.5rem; margin-top:0.25rem;">
-            <img src="/images/oss-logo.png" alt="OSS Logo" style="height:24px; width:auto; border-radius:4px; background:#fff; padding:2px;">
-            <span style="font-size:0.65rem; color:var(--text-dim); line-height:1.2; text-align:left;">Terdaftar<br>melalui OSS</span>
+        
+        <div class="flex flex-row items-center justify-center text-xs gap-4 mb-5">
+            <span>NIB: 1408260072494</span>
+            <span class="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
+            <span>KBLI 60390</span>
+        </div>
+        
+        <div class="flex items-center mb-4 rounded-md border border-gray-200 dark:border-gray-700" style="gap:10px; padding:6px 10px; width:max-content; background:rgba(255,255,255,0.05);">
+            <img src="/images/oss-logo.png" alt="OSS Logo" class="object-contain" style="height:24px; width:auto; border-radius:2px;">
+            <span class="leading-tight font-bold text-gray-600 dark:text-gray-300 text-left" style="font-size:10px;">Terdaftar<br>melalui OSS</span>
         </div>
     </div>
     
-    <p style="margin:0; font-size:0.8rem; color:var(--text-dim);">
-        © 2026 <a href="/">NexShop</a> — Berita dan informasi gaming original.<br>
-        Semua artikel merupakan karya editorial NexShop.
-    </p>
+    <div class="flex flex-col gap-2">
+        <p class="text-gray-500 dark:text-gray-400 text-sm font-medium">&copy; 2026 NexShop. All Rights Reserved.</p>
+        <p class="text-gray-500 dark:text-gray-400 text-xs font-medium italic">Berita dan informasi gaming original. Semua artikel merupakan karya editorial NexShop.</p>
+    </div>
 </footer>
 
 <script>
