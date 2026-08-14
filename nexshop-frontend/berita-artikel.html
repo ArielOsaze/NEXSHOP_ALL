@@ -397,9 +397,9 @@ if (!SLUG) {
 }
 SLUG = SLUG || "";
 
-// Legacy URL fallback: Jika user membuka /berita-artikel.html?slug=xyz, redirect ke clean URL
+// Legacy URL fallback: Jika user membuka /berita-artikel.html?slug=xyz, ubah URL tanpa reload agar tidak terjadi loop dengan index.html jika Nginx belum di-reload
 if (window.location.pathname.endsWith("berita-artikel.html") && SLUG) {
-    window.location.replace(`/berita/${SLUG}`);
+    window.history.replaceState(null, "", `/berita/${SLUG}`);
 }
 
 // ── Helpers ─────────────────────────────────────────────
