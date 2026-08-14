@@ -518,9 +518,14 @@ Cek Transaksi
 
 </main>
 
+<style>
+@media (min-width: 1024px) {
+    .lg\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+</style>
 <footer class="pt-16 pb-32 sm:pb-24 mt-20 border-t border-gray-200 dark:border-white/10 bg-transparent">
     <div class="max-w-7xl mx-auto px-[clamp(12px,3vw,32px)]">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 mb-12">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8 mb-12">
             <!-- Brand -->
             <div class="space-y-4">
                 <div class="font-extrabold text-2xl tracking-tighter text-gray-900 dark:text-white uppercase flex items-center gap-2">
@@ -562,6 +567,26 @@ Cek Transaksi
                     <span>Transfer Bank</span>
                 </div>
             </div>
+            
+            <!-- Legalitas -->
+            <div>
+                <h4 class="font-bold text-gray-900 dark:text-white mb-4 uppercase tracking-wider text-sm">Legalitas</h4>
+                <div class="flex flex-col gap-1 text-gray-500 dark:text-gray-400 font-medium text-xs leading-relaxed">
+                    <span class="font-bold text-gray-700 dark:text-gray-300 text-sm">NexShop</span>
+                    <span>Usaha Mikro</span>
+                    <span class="mt-1">NIB: 1408260072494</span>
+                    <span>KBLI 60390</span>
+                    
+                    <div class="mt-3 flex items-center gap-3">
+                        <img src="/images/oss-logo-placeholder.svg" alt="OSS Logo" class="h-8 w-auto object-contain rounded">
+                        <span class="text-[10px] leading-tight">Terdaftar<br>melalui OSS</span>
+                    </div>
+
+                    <button type="button" data-policy-tab="legal" class="mt-4 text-brand-indigo hover:text-brand-cyan transition-colors font-bold text-left inline-flex items-center gap-1 group w-max">
+                        Informasi Legalitas <i class="fa-solid fa-arrow-right text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                    </button>
+                </div>
+            </div>
         </div>
         
         <div class="pt-8 border-t border-gray-200 dark:border-white/10 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -578,7 +603,8 @@ Cek Transaksi
             <button class="policy-tab active" data-policy-tab="faq">FAQ</button>
             <button class="policy-tab" data-policy-tab="terms">Syarat &amp; Ketentuan</button>
             <button class="policy-tab" data-policy-tab="refund">Kebijakan Refund</button>
-            <button class="policy-tab" data-policy-tab="contact">Kontak</button>
+            <button class="policy-tab" data-policy-tab="legal">Legalitas</button>
+            <button class="policy-tab" data-policy-tab="contact">Hubungi Kami</button>
         </div>
 
         <div class="policy-panel" id="policyFaq">
@@ -619,30 +645,53 @@ Cek Transaksi
             </div>
         </div>
 
-        <div class="policy-panel hidden" id="policyContact">
-            <h3>Kontak Kami</h3>
-            <ul class="policy-list contact-list">
-                <li class="contact-list-item">
-                    <span class="footer-social-icon icon-pin" aria-hidden="true"><i class="fa-solid fa-location-dot"></i></span>
-                    <span>Alamat: <span id="contactAddress">Jl. Siroto, Villa P4A, Pudakpayung, Banyumanik, Semarang</span></span>
-                </li>
-                <li class="contact-list-item">
-                    <span class="footer-social-icon icon-wa" aria-hidden="true"><i class="fa-brands fa-whatsapp"></i></span>
-                    <span>Telepon / WhatsApp: <a href="https://wa.me/6287792634063" id="contactWaLink" target="_blank" rel="noopener">0877-9263-4063</a></span>
-                </li>
-                <li class="contact-list-item" id="contactEmailItem">
-                    <span class="footer-social-icon icon-mail" aria-hidden="true"><i class="fa-solid fa-envelope"></i></span>
-                    <span>Email: <a href="mailto:nexshop.my.id@gmail.com" id="contactEmailLink">nexshop.my.id@gmail.com</a></span>
-                </li>
-                <li class="contact-list-item hidden" id="contactEmailItemSecondary">
-                    <span class="footer-social-icon icon-mail" aria-hidden="true"><i class="fa-solid fa-envelope"></i></span>
-                    <span>Email 2: <a href="mailto:" id="contactEmailLinkSecondary"></a></span>
-                </li>
-                <li class="contact-list-item">
-                    <span class="footer-social-icon icon-ig" aria-hidden="true"><i class="fa-brands fa-instagram"></i></span>
-                    <span>Instagram: <a href="https://www.instagram.com/nexshop_id" id="contactIgLink" target="_blank" rel="noopener">@nexshop_id</a></span>
-                </li>
-            </ul>
+        <!-- Kontak -->
+        <div id="policyContact" class="policy-content hidden">
+            <h3 id="contactTitle" style="margin-bottom:1rem;">Hubungi Kami</h3>
+            <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.9rem;">
+                <span>Telepon / WhatsApp: <a href="https://wa.me/6287792634063" id="contactWaLink" target="_blank" rel="noopener">0877-9263-4063</a></span>
+                <span style="color:var(--text-muted); font-size:0.8rem; margin-top:-0.3rem;">(Jam Kerja: 08.00 - 22.00 WIB)</span>
+                <span>Email: <a href="mailto:nexshop.my.id@gmail.com" id="contactEmailLink">nexshop.my.id@gmail.com</a></span>
+                <span style="color:var(--text-muted); font-size:0.8rem; margin-top:-0.3rem;">(Balasan maksimal 2x24 jam kerja)</span>
+                <span>Email 2: <a href="mailto:" id="contactEmailLinkSecondary"></a></span>
+                <span style="color:var(--text-muted); font-size:0.8rem; margin-top:-0.3rem;">(Balasan maksimal 2x24 jam kerja)</span>
+                <span>Instagram: <a href="https://www.instagram.com/nexshop_id" id="contactIgLink" target="_blank" rel="noopener">@nexshop_id</a></span>
+            </div>
+        </div>
+
+        <!-- Legalitas -->
+        <div id="policyLegal" class="policy-content hidden">
+            <h3 style="margin-bottom:1.5rem;">Informasi Legalitas</h3>
+            <div class="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+                <p>NexShop adalah platform layanan marketplace produk digital dan top up game yang terdaftar secara resmi di Indonesia melalui sistem <strong>Online Single Submission (OSS)</strong> yang diselenggarakan oleh Kementerian Investasi/BKPM.</p>
+                
+                <div class="bg-gray-50 dark:bg-gray-800/50 p-5 rounded-xl border border-gray-200 dark:border-gray-700 space-y-3">
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="font-bold text-gray-900 dark:text-white">Nama Usaha</div>
+                        <div class="col-span-2">NexShop</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="font-bold text-gray-900 dark:text-white">NIB</div>
+                        <div class="col-span-2 font-mono">1408260072494</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="font-bold text-gray-900 dark:text-white">Skala Usaha</div>
+                        <div class="col-span-2">Usaha Mikro</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="font-bold text-gray-900 dark:text-white">KBLI</div>
+                        <div class="col-span-2">60390 (Aktivitas Situs Jejaring Sosial dan Distribusi Konten Lainnya)</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div class="font-bold text-gray-900 dark:text-white">Status</div>
+                        <div class="col-span-2 text-green-600 dark:text-green-400 font-medium"><i class="fa-solid fa-check-circle mr-1"></i> Aktif & Terverifikasi</div>
+                    </div>
+                </div>
+
+                <p class="text-xs text-gray-500 mt-4 leading-relaxed">
+                    Seluruh kegiatan transaksi dan operasional layanan NexShop tunduk pada hukum yang berlaku di wilayah Republik Indonesia. Kami berkomitmen penuh dalam memberikan layanan yang aman, legal, dan mematuhi standar perundang-undangan.
+                </p>
+            </div>
         </div>
     </div>
 </div>

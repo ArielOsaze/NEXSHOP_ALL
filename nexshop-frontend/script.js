@@ -1695,6 +1695,9 @@ function openPolicy(tab) {
     document.getElementById("policyTerms").classList.toggle("hidden", tab !== "terms");
     document.getElementById("policyRefund").classList.toggle("hidden", tab !== "refund");
     document.getElementById("policyContact").classList.toggle("hidden", tab !== "contact");
+    if (document.getElementById("policyLegal")) {
+        document.getElementById("policyLegal").classList.toggle("hidden", tab !== "legal");
+    }
     openOverlay("policyOverlay");
 }
 
