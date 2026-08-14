@@ -374,9 +374,19 @@ const API_BASE = (() => {
     return "http://localhost:3000/api";
 })();
 
-// Baca slug dari query string
+// Baca slug dari URL
 const urlParams = new URLSearchParams(window.location.search);
-const SLUG = urlParams.get("slug") || "";
+let SLUG = urlParams.get("slug");
+if (!SLUG) {
+    const match = window.location.pathname.match(/\/berita\/([^/]+)/);
+    if (match) SLUG = match[1];
+}
+SLUG = SLUG || "";
+
+// Legacy URL fallback: Jika user membuka /berita-artikel.html?slug=xyz, replace ke clean URL tanpa reload (History API)
+if (window.location.pathname.endsWith("berita-artikel.html") && SLUG) {
+    window.history.replaceState(null, "", `/berita/${SLUG}`);
+}
 
 // ── Helpers ─────────────────────────────────────────────
 function safeText(str, maxLen) {
@@ -464,7 +474,40 @@ function updateSeo(article) {
     if (article.keywords && article.keywords.length) {
         schema.keywords = article.keywords.join(", ");
     }
-    document.getElementById("jsonLdScript").textContent = JSON.stringify(schema);
+    
+    // JSON-LD BreadcrumbList
+    const breadcrumbSchema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Beranda",
+                "item": base
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Berita",
+                "item": `${base}/berita`
+            },
+            {
+                "@type": "ListItem",
+                "position": 3,
+                "name": article.category || "Gaming",
+                "item": `${base}/berita?cat=${encodeURIComponent(article.category || "Gaming")}`
+            },
+            {
+                "@type": "ListItem",
+                "position": 4,
+                "name": article.title,
+                "item": canon
+            }
+        ]
+    };
+    
+    document.getElementById("jsonLdScript").textContent = JSON.stringify([schema, breadcrumbSchema]);
 }
 
 // ── Render article ─────────────────────────────────────────────
@@ -545,42 +588,44 @@ function renderArticle(article, related) {
 
     main.innerHTML = `
         <article class="article-page" itemscope itemtype="https://schema.org/NewsArticle">
+            
+            <header>
+                <!-- Breadcrumb -->
+                <nav aria-label="Breadcrumb">
+                    <ol class="breadcrumb-nav">
+                        <li><a href="/">Beranda</a></li>
+                        <li><a href="/berita">Berita</a></li>
+                        <li><a href="/berita?cat=${encodeURIComponent(article.category)}">${safeText(article.category,40)}</a></li>
+                        <li class="current" aria-current="page">${safeText(article.title, 60)}${article.title.length > 60 ? "…" : ""}</li>
+                    </ol>
+                </nav>
 
-            <!-- Breadcrumb -->
-            <nav aria-label="Breadcrumb">
-                <ol class="breadcrumb-nav">
-                    <li><a href="/">Beranda</a></li>
-                    <li><a href="/berita">Berita</a></li>
-                    <li><a href="/berita?cat=${encodeURIComponent(article.category)}">${safeText(article.category,40)}</a></li>
-                    <li class="current" aria-current="page">${safeText(article.title, 60)}${article.title.length > 60 ? "…" : ""}</li>
-                </ol>
-            </nav>
+                <!-- Category -->
+                <span class="article-cat-badge" itemprop="articleSection">${safeText(article.category,40)}</span>
 
-            <!-- Category -->
-            <span class="article-cat-badge" itemprop="articleSection">${safeText(article.category,40)}</span>
+                <!-- Title -->
+                <h1 class="article-h1" itemprop="headline">${safeText(article.title, 255)}</h1>
 
-            <!-- Title -->
-            <h1 class="article-h1" itemprop="headline">${safeText(article.title, 255)}</h1>
+                <!-- Excerpt -->
+                ${article.excerpt ? `<p class="article-excerpt-lead" itemprop="description">${safeText(article.excerpt, 500)}</p>` : ""}
 
-            <!-- Excerpt -->
-            ${article.excerpt ? `<p class="article-excerpt-lead" itemprop="description">${safeText(article.excerpt, 500)}</p>` : ""}
-
-            <!-- Meta -->
-            <div class="article-meta" aria-label="Informasi artikel">
-                <span itemprop="author" itemscope itemtype="https://schema.org/Person">
-                    <i class="fa-regular fa-user" aria-hidden="true"></i>
-                    <span itemprop="name">${safeText(article.author||"NexShop Editorial",80)}</span>
-                </span>
-                <span class="dot" aria-hidden="true"></span>
-                <time datetime="${article.published_at||""}" itemprop="datePublished">
-                    <i class="fa-regular fa-calendar" aria-hidden="true"></i>
-                    ${fullDate(article.published_at)}
-                </time>
-                <span class="dot" aria-hidden="true"></span>
-                <span><i class="fa-regular fa-clock" aria-hidden="true"></i> ${rt}</span>
-                ${article.view_count > 0 ? `<span><i class="fa-regular fa-eye" aria-hidden="true"></i> ${article.view_count} dilihat</span>` : ""}
-                ${updatedBadge}
-            </div>
+                <!-- Meta -->
+                <div class="article-meta" aria-label="Informasi artikel">
+                    <span itemprop="author" itemscope itemtype="https://schema.org/Person">
+                        <i class="fa-regular fa-user" aria-hidden="true"></i>
+                        <span itemprop="name">${safeText(article.author||"NexShop Editorial",80)}</span>
+                    </span>
+                    <span class="dot" aria-hidden="true"></span>
+                    <time datetime="${article.published_at||""}" itemprop="datePublished">
+                        <i class="fa-regular fa-calendar" aria-hidden="true"></i>
+                        ${fullDate(article.published_at)}
+                    </time>
+                    <span class="dot" aria-hidden="true"></span>
+                    <span><i class="fa-regular fa-clock" aria-hidden="true"></i> ${rt}</span>
+                    ${article.view_count > 0 ? `<span><i class="fa-regular fa-eye" aria-hidden="true"></i> ${article.view_count} dilihat</span>` : ""}
+                    ${updatedBadge}
+                </div>
+            </header>
 
             <!-- Hero image -->
             <div class="article-hero-img-wrap">

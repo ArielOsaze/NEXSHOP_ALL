@@ -36,6 +36,7 @@ const newsRoutes = require("./routes/newsRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const ratingRoutes = require("./routes/ratingRoutes");
 const musicRoutes = require("./routes/musicRoutes");
+const sitemapController = require("./controllers/sitemapController");
 const { startTopupStatusPoller } = require("./jobs/topupStatusPoller");
 const { startRetryPoller } = require("./jobs/notificationRetryPoller");
 const { startScheduledPublishPoller } = require("./jobs/scheduledPublishPoller");
@@ -122,6 +123,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // =========================
 // API Routes
 // =========================
+app.get("/api/sitemap", sitemapController.generateSitemap);
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);

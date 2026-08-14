@@ -1714,182 +1714,6 @@ function formatNewsDate(value) {
     }).format(date);
 }
 
-function newsSourceInitial(source) {
-    return String(source || "N").split(/\s+/).filter(Boolean).slice(0, 2).map((word) => word[0]).join("").toUpperCase() || "N";
-}
-
-let publicNewsEntries = [];
-let activeNewsIndex = -1;
-let previouslyFocusedNewsElement = null;
-let publicProductsForNews = null;
-
-function newsReadingTime(summary) {
-    return `${Math.max(1, Math.ceil(String(summary || "").trim().split(/\s+/).filter(Boolean).length / 200))} min read`;
-}
-
-function shortNewsSummary(summary) {
-    const words = String(summary || "").trim().split(/\s+/).filter(Boolean);
-    return `${words.slice(0, 28).join(" ")}${words.length > 28 ? "…" : ""}`;
-}
-
-function newsTags(item) {
-    const tags = Array.isArray(item.tags) ? item.tags.filter(Boolean) : [];
-    return tags.length ? tags.slice(0, 8) : [item.category || "Gaming"];
-}
-
-function newsDetailFeedback(button, message) {
-    if (!button) return;
-    const original = button.dataset.originalLabel || button.innerHTML;
-    button.dataset.originalLabel = original;
-    button.textContent = message;
-    setTimeout(() => { button.innerHTML = button.dataset.originalLabel; }, 1800);
-}
-
-function savedNewsBookmarks() {
-    try {
-        const saved = JSON.parse(localStorage.getItem("nexshop-news-bookmarks") || "[]");
-        return new Set(Array.isArray(saved) ? saved.map(Number).filter(Number.isFinite) : []);
-    } catch (err) {
-        return new Set();
-    }
-}
-
-function publisherMarkMarkup(item) {
-    const logo = safeUrl(item.publisher_logo_url);
-    const source = String(item.source || "Publisher");
-    return logo
-        ? `<img class="news-detail-publisher-logo" src="${escapeHtml(logo)}" alt="" loading="lazy" decoding="async">`
-        : `<span class="news-detail-publisher-initial" aria-hidden="true">${escapeHtml(newsSourceInitial(source))}</span>`;
-}
-
-function closeGamingNewsDetail() {
-    const modal = document.getElementById("newsDetailModal");
-    if (!modal || modal.classList.contains("hidden")) return;
-    modal.classList.add("hidden");
-    document.body.classList.remove("news-detail-open");
-    if (previouslyFocusedNewsElement) previouslyFocusedNewsElement.focus();
-}
-
-function renderNewsDetailProducts(item) {
-    const section = document.getElementById("newsDetailProductsSection");
-    const container = document.getElementById("newsDetailProducts");
-    if (!section || !container || !Array.isArray(publicProductsForNews)) return;
-    const keywords = [item.category, ...newsTags(item)].join(" ").toLocaleLowerCase("id-ID").split(/\s+/).filter((word) => word.length > 2);
-    const related = publicProductsForNews.filter((product) => {
-        const haystack = `${product.name || ""} ${product.category || ""} ${product.badge || ""}`.toLocaleLowerCase("id-ID");
-        return keywords.some((word) => haystack.includes(word));
-    }).slice(0, 3);
-    section.classList.toggle("hidden", !related.length);
-    container.innerHTML = related.map((product) => `<a href="#products" class="news-related-product" onclick="closeGamingNewsDetail()"><span>${escapeHtml(product.name || "NexShop Product")}</span><small>${escapeHtml(product.category || "Gaming")}</small></a>`).join("");
-}
-
-async function loadNewsRelatedProducts(item) {
-    try {
-        if (!publicProductsForNews) {
-            const response = await fetch(`${API_BASE}/products`);
-            publicProductsForNews = response.ok ? await response.json() : [];
-        }
-        renderNewsDetailProducts(item);
-    } catch (err) {
-        publicProductsForNews = [];
-        renderNewsDetailProducts(item);
-    }
-}
-
-function extractProperHighlights(summaryText, titleText) {
-    const raw = String(summaryText || "").trim();
-    if (!raw) return [titleText ? `Kabar utama seputar ${titleText}.` : "Informasi utama seputar industri gaming."];
-
-    const sentences = (raw.match(/[^.!?]+[.!?]+/g) || [raw])
-        .map((s) => s.trim().replace(/^[-•*]\s*/, ""))
-        .filter((s) => s.length >= 24 && !/^(berikut|dalam berita|sebagai model ai|ringkasan ini|menurut metadata|pembaca dapat|nexshop)/i.test(s));
-
-    if (!sentences.length) {
-        return [titleText ? `Pengumuman penting mengenai ${titleText}.` : "Perkembangan terbaru seputar game dan publisher."];
-    }
-    if (sentences.length <= 3) {
-        return sentences;
-    }
-
-    const highlights = [sentences[0]];
-    const midIdx = Math.floor(sentences.length / 2);
-    if (sentences[midIdx] && !highlights.includes(sentences[midIdx])) highlights.push(sentences[midIdx]);
-    const lastIdx = sentences.length - 1;
-    if (sentences[lastIdx] && !highlights.includes(sentences[lastIdx])) highlights.push(sentences[lastIdx]);
-
-    for (let i = 1; i < sentences.length && highlights.length < 3; i++) {
-        if (!highlights.includes(sentences[i])) highlights.push(sentences[i]);
-    }
-    return highlights;
-}
-
-function openGamingNewsDetail(id) {
-    const index = publicNewsEntries.findIndex((item) => Number(item.id) === Number(id));
-    const item = publicNewsEntries[index];
-    if (!item) return;
-    activeNewsIndex = index;
-    previouslyFocusedNewsElement = document.activeElement;
-    const modal = document.getElementById("newsDetailModal");
-    const imageUrl = safeUrl(item.image_url);
-    const sourceUrl = safeUrl(item.source_url);
-    if (!modal || !imageUrl || !sourceUrl) return;
-    document.getElementById("newsDetailImage").src = imageUrl;
-    document.getElementById("newsDetailImage").alt = item.title || "Gaming news";
-    document.getElementById("newsDetailCategory").textContent = item.category || "Gaming";
-    document.getElementById("newsDetailReadingTime").textContent = newsReadingTime(item.summary);
-    document.getElementById("newsDetailTitle").textContent = item.title || "";
-    document.getElementById("newsDetailPublisher").textContent = item.source || "Publisher";
-    document.getElementById("newsDetailDate").textContent = formatNewsDate(item.published_at);
-    document.getElementById("newsDetailPublisherMark").innerHTML = publisherMarkMarkup(item);
-    document.getElementById("newsDetailTags").innerHTML = newsTags(item).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
-    const rawSummary = String(item.summary || "").trim();
-    const paragraphs = rawSummary ? rawSummary.split(/\r?\n+/).map(p => p.trim()).filter(Boolean) : [];
-    document.getElementById("newsDetailSummary").innerHTML = paragraphs.length
-        ? paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join("")
-        : `<p>${escapeHtml(rawSummary)}</p>`;
-    document.getElementById("newsDetailHighlights").innerHTML = extractProperHighlights(item.summary, item.title)
-        .map((sentence) => `<li>${escapeHtml(sentence)}</li>`).join("");
-    document.getElementById("newsDetailGames").innerHTML = newsTags(item).map((tag) => `<span>${escapeHtml(tag)}</span>`).join("");
-    document.getElementById("newsDetailOriginal").href = sourceUrl;
-    document.getElementById("newsDetailPrevious").disabled = index <= 0;
-    document.getElementById("newsDetailNext").disabled = index >= publicNewsEntries.length - 1;
-    const saved = savedNewsBookmarks();
-    const bookmark = document.getElementById("newsDetailBookmark");
-    bookmark.setAttribute("aria-pressed", saved.has(Number(item.id)) ? "true" : "false");
-    bookmark.innerHTML = `<i class="${saved.has(Number(item.id)) ? "fa-solid" : "fa-regular"} fa-bookmark"></i> Bookmark`;
-    modal.classList.remove("hidden");
-    document.body.classList.add("news-detail-open");
-    modal.querySelector(".news-detail-shell").focus();
-    loadNewsRelatedProducts(item);
-}
-
-document.addEventListener("click", (event) => {
-    if (event.target.closest("[data-news-close]")) closeGamingNewsDetail();
-    if (event.target.closest("#newsDetailPrevious") && activeNewsIndex > 0) openGamingNewsDetail(publicNewsEntries[activeNewsIndex - 1].id);
-    if (event.target.closest("#newsDetailNext") && activeNewsIndex < publicNewsEntries.length - 1) openGamingNewsDetail(publicNewsEntries[activeNewsIndex + 1].id);
-    if (event.target.closest("#newsDetailCopy")) {
-        const button = event.target.closest("#newsDetailCopy");
-        const link = `${location.origin}${location.pathname}#news-${publicNewsEntries[activeNewsIndex]?.id}`;
-        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(() => newsDetailFeedback(button, "Link copied")).catch(() => newsDetailFeedback(button, "Copy failed"));
-        else window.prompt("Copy link berita ini:", link);
-    }
-    if (event.target.closest("#newsDetailShare")) {
-        const button = event.target.closest("#newsDetailShare");
-        const link = `${location.origin}${location.pathname}#news-${publicNewsEntries[activeNewsIndex]?.id}`;
-        if (navigator.share) navigator.share({ title: publicNewsEntries[activeNewsIndex]?.title, url: link }).catch(() => {});
-        else if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(link).then(() => newsDetailFeedback(button, "Link copied"));
-        else window.prompt("Copy link berita ini:", link);
-    }
-    if (event.target.closest("#newsDetailBookmark") && activeNewsIndex >= 0) {
-        const id = Number(publicNewsEntries[activeNewsIndex].id);
-        const saved = savedNewsBookmarks();
-        saved.has(id) ? saved.delete(id) : saved.add(id);
-        localStorage.setItem("nexshop-news-bookmarks", JSON.stringify([...saved]));
-        openGamingNewsDetail(id);
-    }
-});
-document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeGamingNewsDetail(); });
-
 function renderGamingNewsSkeleton() {
     const section = document.getElementById("news");
     const grid = document.getElementById("newsGrid");
@@ -1916,57 +1740,55 @@ function renderGamingNews(items) {
     const section = document.getElementById("news");
     const grid = document.getElementById("newsGrid");
     if (!section || !grid) return;
+    
     if (!Array.isArray(items) || !items.length) {
-        section.classList.add("hidden");
-        grid.replaceChildren();
+        section.classList.remove("hidden");
+        grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10 text-sm font-medium">Belum ada berita terbaru.</div>`;
         return;
     }
-    publicNewsEntries = items;
-    grid.innerHTML = items.map((item, index) => {
-        const imageUrl = safeUrl(item.image_url);
-        if (!imageUrl) return "";
-        const source = String(item.source || "Publisher");
-        const publisherLogoUrl = safeUrl(item.publisher_logo_url);
-        const publisherMark = publisherLogoUrl
-            ? `<img class="w-6 h-6 rounded-full fallback-remove" src="${escapeHtml(publisherLogoUrl)}" alt="" loading="lazy" decoding="async">`
-            : `<span class="w-6 h-6 rounded-full bg-brand-indigo/20 text-brand-indigo flex items-center justify-center text-[10px] font-bold" aria-hidden="true">${escapeHtml(newsSourceInitial(source))}</span>`;
+    
+    grid.innerHTML = items.map((item) => {
+        const imageUrl = safeUrl(item.image_url) || "/images/placeholder-news.jpg";
+        const category = String(item.category || "Gaming");
+        
         return `
-            <article class="group relative bg-white dark:bg-[#0a0a0c] rounded-2xl overflow-hidden border border-gray-200 dark:border-white/5 hover:border-brand-indigo/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer flex flex-col" onclick="openGamingNewsDetail(${Number(item.id)})">
+            <a href="/berita/${encodeURIComponent(item.slug)}" class="group relative bg-white dark:bg-[#0a0a0c] rounded-2xl overflow-hidden border border-gray-200 dark:border-white/5 hover:border-brand-indigo/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer flex flex-col no-underline text-left">
                 <div class="absolute inset-0 bg-gradient-to-b from-transparent to-brand-indigo/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
                 <div class="relative w-full aspect-video overflow-hidden">
                     <img src="${escapeHtml(imageUrl)}" alt="" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
-
                 </div>
                 <div class="p-6 flex flex-col flex-1 relative z-10">
                     <div class="flex items-center gap-2 mb-3">
-                        ${publisherMark}
-                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400">${escapeHtml(source)}</span>
+                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">${escapeHtml(category)}</span>
                         <span class="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600"></span>
-                        <span class="text-xs text-gray-400">${escapeHtml(newsReadingTime(item.summary))}</span>
+                        <span class="text-xs text-gray-400">${escapeHtml(formatNewsDate(item.published_at))}</span>
                     </div>
                     <h4 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-brand-indigo transition-colors leading-snug">
                         ${escapeHtml(item.title)}
                     </h4>
                     <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 mb-6 font-medium leading-relaxed">
-                        ${escapeHtml(shortNewsSummary(item.summary))}
+                        ${escapeHtml(item.excerpt || item.title)}
                     </p>
                     <div class="mt-auto flex items-center text-sm font-bold text-brand-indigo group-hover:text-brand-cyan transition-colors">
-                        View Summary <span class="material-symbols-outlined ml-1 text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                        Baca Selengkapnya <span class="material-symbols-outlined ml-1 text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span>
                     </div>
                 </div>
-            </article>
+            </a>
         `;
     }).join("");
-    section.classList.toggle("hidden", !grid.children.length);
+    section.classList.remove("hidden");
 }
 
 async function loadGamingNews() {
     renderGamingNewsSkeleton();
     try {
-        const res = await fetch(`${API_BASE}/news`);
+        const res = await fetch(`${API_BASE}/news/articles?category=Gaming&limit=6`);
         if (!res.ok) throw new Error("Gagal memuat berita game");
-        renderGamingNews(await res.json());
+        const json = await res.json();
+        const articles = Array.isArray(json.data) ? json.data.slice(0, 3) : [];
+        renderGamingNews(articles);
     } catch (err) {
+        console.error("loadGamingNews error:", err);
         renderGamingNews([]);
     }
 }

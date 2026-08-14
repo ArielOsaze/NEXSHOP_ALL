@@ -499,34 +499,14 @@ Cek Transaksi
             </div>
             <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter" id="newsTitle">Latest Gaming <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">News</span></h2>
         </div>
+        <a href="/berita" class="hidden md:flex items-center gap-2 text-brand-indigo hover:text-brand-cyan transition-colors font-bold group">
+            Lihat Semua Berita <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+        </a>
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="newsGrid" aria-live="polite"></div>
 </section>
 
-<!-- Detail tetap berada di NexShop; hanya tombol sumber asli yang membuka publisher. -->
-<div id="newsDetailModal" class="news-detail-modal hidden" role="dialog" aria-modal="true" aria-labelledby="newsDetailTitle">
-    <div class="news-detail-backdrop" data-news-close></div>
-    <article class="news-detail-shell" tabindex="-1">
-        <button class="news-detail-close" type="button" data-news-close aria-label="Tutup detail berita"><i class="fa-solid fa-xmark"></i></button>
-        <div class="news-detail-hero"><img id="newsDetailImage" src="" alt=""></div>
-        <div class="news-detail-content">
-            <div class="news-detail-kicker"><span id="newsDetailCategory"></span><span id="newsDetailReadingTime"></span></div>
-            <h2 id="newsDetailTitle"></h2>
-            <div class="news-detail-publisher"><span id="newsDetailPublisherMark"></span><div><strong id="newsDetailPublisher"></strong><span id="newsDetailDate"></span></div></div>
-            <div id="newsDetailTags" class="news-detail-tags" aria-label="Tag artikel"></div>
-            <div class="news-detail-summary"><h3>Ringkasan NexShop</h3><div id="newsDetailSummary"></div></div>
-            <section class="news-detail-highlights" aria-labelledby="newsHighlightsTitle"><h3 id="newsHighlightsTitle">Key Highlights</h3><ul id="newsDetailHighlights"></ul></section>
-            <section id="newsDetailGamesSection" class="news-detail-related" aria-labelledby="newsGamesTitle"><h3 id="newsGamesTitle">Related Games</h3><div id="newsDetailGames" class="news-related-chips"></div></section>
-            <section id="newsDetailProductsSection" class="news-detail-related hidden" aria-labelledby="newsProductsTitle"><h3 id="newsProductsTitle">Related NexShop Products</h3><div id="newsDetailProducts" class="news-related-products"></div></section>
-            <div class="news-detail-actions">
-                <a id="newsDetailOriginal" class="news-original-button" target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-arrow-up-right-from-square"></i> Read Original Article</a>
-                <button id="newsDetailShare" class="news-detail-action" type="button"><i class="fa-solid fa-share-nodes"></i> Share</button>
-                <button id="newsDetailCopy" class="news-detail-action" type="button"><i class="fa-regular fa-copy"></i> Copy Link</button>
-                <button id="newsDetailBookmark" class="news-detail-action" type="button" aria-pressed="false"><i class="fa-regular fa-bookmark"></i> Bookmark</button>
-            </div>
-            <nav class="news-detail-pagination" aria-label="Navigasi berita"><button id="newsDetailPrevious" type="button"><i class="fa-solid fa-arrow-left"></i><span>Previous Article</span></button><button id="newsDetailNext" type="button"><span>Next Article</span><i class="fa-solid fa-arrow-right"></i></button></nav>
-        </div>
-    </article>
+
 </main>
 
 <footer class="pt-16 pb-32 sm:pb-24 mt-20 border-t border-gray-200 dark:border-white/10 bg-transparent">
@@ -1037,6 +1017,6 @@ Cek Transaksi
 <!-- Toast container -->
 <div class="toast-container" id="toastContainer"></div>
 
-<script src="script.js?v=20260813-fix-undeclared-polling-vars"></script>
+<script src="script.js?v=20260814-editorial-news"></script>
 </body>
 </html>
