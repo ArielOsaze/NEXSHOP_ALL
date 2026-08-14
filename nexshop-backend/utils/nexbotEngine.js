@@ -2,7 +2,7 @@
 
 // The RAG rules live in this dependency-free module so that they can be tested
 // without a database or an external model.
-const STOP_WORDS = new Set(["aku", "saya", "yang", "dan", "atau", "untuk", "di", "ke", "dari", "itu", "ini", "dong", "ya", "yah", "nih", "sih", "tolong", "mau", "ingin", "dengan", "pada", "aja", "saja", "kalo", "kalau", "nya"]);
+const STOP_WORDS = new Set(["aku", "saya", "yang", "dan", "atau", "untuk", "di", "ke", "dari", "itu", "ini", "dong", "ya", "yah", "nih", "sih", "tolong", "mau", "ingin", "dengan", "pada", "aja", "saja", "kalo", "kalau", "nya", "apakah", "apa", "bagaimana", "mengapa", "kenapa", "kapan", "siapa", "ada", "punya", "pakai"]);
 
 const ALIASES = [
     { canonical: "xbox game pass", terms: ["xbox game pass", "gamepass", "game pass", "gamepas", "gampass", "xgp", "xbox pass"] },
@@ -31,13 +31,16 @@ const ENTITY_CATALOG = [
 ];
 
 const INTENTS = {
+    Trust: ["aman", "terpercaya", "penipu", "scam", "resmi"],
+    Legality: ["legal", "legalitas", "oss", "nib", "izin"],
+    Escrow: ["escrow", "tahan dana", "rekber"],
     Comparison: ["beda", "bedanya", "perbedaan", "banding", "vs", "versus", "lebih bagus", "pilih mana"],
     Definition: ["apa itu", "apa sih", "artinya", "maksud", "pengertian", "definisi", "jelaskan", "itu apa"],
     Guide: ["cara", "bagaimana", "panduan", "langkah", "tutorial", "aktivasi", "redeem", "gunakan"],
     Purchase: ["beli", "membeli", "pesan", "checkout", "order produk"],
     Pricing: ["harga", "berapa", "biaya", "mahal", "murah"],
     Recommendation: ["rekomendasi", "saran", "cocok", "bagus mana"],
-    Payment: ["bayar", "pembayaran", "payment", "qris", "dana", "ovo", "gopay", "transfer", "bank", "va"],
+    Payment: ["bayar", "pembayaran", "payment", "qris", "dana", "ovo", "gopay", "transfer", "bank", "va", "ipaymu"],
     Refund: ["refund", "batal", "uang kembali", "garansi", "komplain"],
     Order: ["status pesanan", "status order", "pesanan", "lacak", "tracking", "belum masuk"],
     TechnicalSupport: ["error", "gagal", "tidak bisa", "masalah", "kendala", "login", "otp"],
@@ -76,6 +79,18 @@ function similarity(left, right) { const a = trigrams(left); const b = trigrams(
 
 function inferKnowledgeIntent(item) {
     const text = `${item.title || ""} ${item.category || ""} ${item.keywords || ""}`.toLowerCase();
+    const cat = String(item.category || "").toLowerCase();
+    
+    // Explicit category safeguard so product/game guides aren't confused as generic Trust/Escrow
+    if (cat === "guide" || cat === "product" || cat === "news") {
+        if (/cara|panduan|langkah|tutorial|guide/.test(text)) return "Guide";
+        if (/aman|sharing|xbox/.test(text)) return "Guide";
+        return "GeneralQuestion";
+    }
+
+    if (/legal|oss|nib/.test(text)) return "Legality";
+    if (/escrow|tahan dana/.test(text)) return "Escrow";
+    if (/aman|terpercaya|scam|penipu|resmi/.test(text)) return "Trust";
     if (/perbedaan|\bvs\b|versus|comparison/.test(text)) return "Comparison";
     if (/cara|panduan|langkah|tutorial|guide/.test(text)) return "Guide";
     if (/beli|checkout|purchase/.test(text)) return "Purchase";
@@ -97,16 +112,37 @@ function scoreKnowledge(item, query, intent, entities) {
     const titleTokens = tokens.filter((token) => new RegExp(`\\b${escapeRegExp(token)}\\b`).test(title)).length;
     const entityMatches = entities.filter((entity) => title.includes(entity.toLowerCase()) || keywords.includes(entity.toLowerCase()) || content.includes(entity.toLowerCase())).length;
     const knowledgeIntent = inferKnowledgeIntent(item); const semantic = similarity(query.raw, `${title} ${keywords}`);
-    const intentScore = intent === knowledgeIntent ? 30 : (intent === "GeneralQuestion" || knowledgeIntent === "GeneralQuestion" ? 4 : -18);
+    
+    // Memberikan kelonggaran untuk intent yang serumpun (Trust, Legality, Escrow, Payment)
+    const related = {
+        Trust: ['Trust', 'Legality', 'Escrow'],
+        Legality: ['Trust', 'Legality'],
+        Escrow: ['Trust', 'Escrow', 'Payment'],
+        Payment: ['Payment', 'Escrow']
+    };
+    
+    const isStrictIntent = ["Trust", "Legality", "Payment", "Refund", "Escrow"].includes(intent);
+    let intentScore = -25;
+    
+    if (intent === knowledgeIntent) {
+        intentScore = 35;
+    } else if (related[intent] && related[intent].includes(knowledgeIntent)) {
+        intentScore = 15;
+    } else if (intent === "GeneralQuestion" || knowledgeIntent === "GeneralQuestion") {
+        intentScore = isStrictIntent ? -15 : 4;
+    }
+    
     return Math.round(intentScore + Math.min(32, entityMatches * 18) + Math.min(20, titleTokens * 8) + Math.min(12, matchedTokens * 3) + semantic * 20 + Math.min(6, Number(item.priority) || 0));
 }
+
+const MIN_KNOWLEDGE_SCORE = 15;
 
 function paragraphs(text) { return String(text || "").split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean); }
 function normalizedParagraph(text) { return text.toLowerCase().replace(/[^a-z0-9]/g, ""); }
 function deduplicateKnowledge(items) { const seen = new Set(); return items.map((item) => ({ ...item, content: paragraphs(item.content).filter((part) => { const key = normalizedParagraph(part); if (!key || seen.has(key)) return false; seen.add(key); return true; }).join("\n\n") })).filter((item) => item.content); }
 
 function rankKnowledge(items, query, intent, entities) {
-    const ranked = (items || []).filter((item) => item && item.status !== "inactive").map((item) => ({ ...item, score: scoreKnowledge(item, query, intent, entities) })).filter((item) => item.score > 8).sort((a, b) => b.score - a.score);
+    const ranked = (items || []).filter((item) => item && item.status !== "inactive").map((item) => ({ ...item, score: scoreKnowledge(item, query, intent, entities), knowledgeIntent: inferKnowledgeIntent(item) })).filter((item) => item.score > MIN_KNOWLEDGE_SCORE).sort((a, b) => b.score - a.score);
     if (!ranked.length) return [];
     const selected = [ranked[0]];
     for (const item of ranked.slice(1)) {
@@ -118,6 +154,13 @@ function rankKnowledge(items, query, intent, entities) {
     return deduplicateKnowledge(selected);
 }
 
-function buildKnowledgeResponse(items) { return items.map((item) => { const title = String(item.title || "").replace(/^(faq|panduan produk|panduan topup)\s*:\s*/i, "").trim(); return title ? `${title}\n\n${item.content}` : item.content; }).join("\n\n"); }
+function buildKnowledgeResponse(selected) {
+    return selected.map((item) => {
+        let content = item.content;
+        content = content.replace(/100%\s*(legal|aman)/gi, "$1").replace(/100%\s*legal\s*&\s*aman/gi, "legal dan aman");
+        const title = String(item.title || "Untitled"); const type = String(item.category || "General"); 
+        return `<<< NEXSHOP KNOWLEDGE >>>\nSOURCE TYPE: ${type}\nTITLE: ${title}\nCONTENT:\n${content}\n<<< END KNOWLEDGE >>>`;
+    }).join("\n\n");
+}
 
 module.exports = { normalizeQuery, detectIntent, detectEntities, rankKnowledge, buildKnowledgeResponse, deduplicateKnowledge, inferKnowledgeIntent };

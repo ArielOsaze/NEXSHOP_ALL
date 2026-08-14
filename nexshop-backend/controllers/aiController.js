@@ -237,48 +237,62 @@ async function answer(message, sessionId, user) {
         reply = await handleOrderLookup(message, user);
         source = "order_system";
     } else {
-        const knowledgeText = result.selected.length ? buildKnowledgeResponse(result.selected) : "Belum ada informasi khusus untuk pertanyaan ini.";
-        const systemPrompt = `Kamu adalah NexBot, asisten AI resmi dari toko game & e-commerce NexShop.
-Tugas kamu adalah menjawab pertanyaan pelanggan secara ramah, profesional, dan membantu dalam bahasa Indonesia. Jangan terlalu formal.
-Gunakan FAKTA KNOWLEDGE BASE NEXSHOP di bawah ini sebagai sumber kebenaran utama:
+        if (process.env.NODE_ENV !== "production") {
+            console.log("\n[AI RAG DEBUG]");
+            console.log("Query:", message);
+            console.log("Intent:", result.intent);
+            console.log("Selected Chunks:", result.selected.map(i => i.title).join(", ") || "None");
+        }
+
+        if (result.selected.length === 0) {
+            reply = unavailableReply();
+            source = "handoff";
+        } else {
+            const knowledgeText = buildKnowledgeResponse(result.selected);
+            const systemPrompt = `ROLE
+Kamu adalah NexBot, asisten AI resmi NexShop.
+
+MISSION
+Bantu customer memahami layanan NexShop berdasarkan informasi resmi NexShop.
+
+RULES
+1. Jawab HANYA berdasarkan fakta di knowledge base.
+2. Jika tidak ada knowledge yang relevan, JANGAN menjawab pertanyaan. Gunakan kalimat fallback wajib di bawah.
+3. Jangan mengubah dokumen legal menjadi jaminan hukum absolut.
+4. Gunakan bahasa yang objektif dan faktual, BUKAN bahasa marketing.
+5. DILARANG KERAS menggunakan klaim mutlak seperti "100% aman", "100% legal", atau "pasti terpercaya". Gunakan kata-kata objektif.
+6. Jawaban harus natural dalam Bahasa Indonesia dengan gaya Customer Service ("Ya, ...", "Untuk pembayaran, ...").
+7. Jangan menyebut istilah internal seperti database, RAG, chunk, embedding, retrieval, atau referensi sumber.
+8. Jawab dengan ringkas: 2-4 paragraf pendek, atau 1-3 kalimat untuk pertanyaan sederhana.
+9. Jangan menggunakan heading markdown yang berlebihan.
 
 --- FAKTA KNOWLEDGE BASE ---
 ${knowledgeText}
 ----------------------------
 
-Aturan menjawab:
-1. Jawab pertanyaan user berdasarkan Fakta Knowledge Base jika relevan.
-2. Jika tidak ada knowledge yang relevan, JANGAN MENGARANG. Jawab persis seperti ini: "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kamu bisa menghubungi Customer Service NexShop untuk informasi lebih lanjut."
-3. Jangan mengklaim sesuatu sebagai fakta jika tidak ada sumber. Jangan membuat janji yang tidak didukung knowledge.
-4. Jawab singkat, jelas, dan ramah dengan format markdown yang rapi.`;
+JIKA TIDAK ADA KNOWLEDGE RELEVAN:
+Jawab persis: "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kamu bisa menghubungi Customer Service NexShop untuk informasi lebih lanjut."`;
 
-        const aiRes = await aiProviderManager.generateResponse({
-            prompt: message,
-            systemPrompt,
-            userId: user?.id,
-            sessionId
-        });
+            const aiRes = await aiProviderManager.generateResponse({
+                prompt: message,
+                systemPrompt,
+                userId: user?.id,
+                sessionId
+            });
 
-        if (aiRes.success && aiRes.reply) {
-            reply = aiRes.reply;
-            if (result.selected.length > 0) {
-                const uniqueSources = [...new Set(result.selected.map(item => item.source_title || item.title).filter(Boolean))];
-                if (uniqueSources.length === 1) {
-                    reply += `\n\n*Sumber: ${uniqueSources[0]}*`;
-                } else if (uniqueSources.length > 1) {
-                    reply += "\n\n*Sumber:\n" + uniqueSources.map(s => `- ${s}`).join("\n") + "*";
-                }
-            }
-            source = aiRes.provider; // e.g. "gemini", "groq", "openrouter"
-        } else {
-            console.error("❌ AI Provider Manager failed for prompt:", message);
-            console.error("   Error details:", aiRes.error);
-            if (process.env.NODE_ENV !== "production") {
-                reply = `[Dev Mode AI Error]: ${aiRes.error || "Semua AI Provider gagal merespons"}`;
+            if (aiRes.success && aiRes.reply) {
+                reply = aiRes.reply;
+                source = aiRes.provider;
             } else {
-                reply = result.selected.length ? buildKnowledgeResponse(result.selected) : unavailableReply();
+                console.error("❌ AI Provider Manager failed for prompt:", message);
+                console.error("   Error details:", aiRes.error);
+                if (process.env.NODE_ENV !== "production") {
+                    reply = `[Dev Mode AI Error]: ${aiRes.error || "Semua AI Provider gagal merespons"}`;
+                } else {
+                    reply = unavailableReply();
+                }
+                source = "handoff";
             }
-            source = result.selected.length ? "knowledge" : "handoff";
         }
     }
 
