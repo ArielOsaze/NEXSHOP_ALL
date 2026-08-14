@@ -38,6 +38,7 @@ const ratingRoutes = require("./routes/ratingRoutes");
 const musicRoutes = require("./routes/musicRoutes");
 const { startTopupStatusPoller } = require("./jobs/topupStatusPoller");
 const { startRetryPoller } = require("./jobs/notificationRetryPoller");
+const { startScheduledPublishPoller } = require("./jobs/scheduledPublishPoller");
 
 const app = express();
 
@@ -197,4 +198,5 @@ app.listen(PORT, () => {
 
     startTopupStatusPoller();
     startRetryPoller();
+    startScheduledPublishPoller();
 });

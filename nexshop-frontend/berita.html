@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexShop News — Berita Gaming & Esports Terkini</title>
+<meta name="description" content="Berita gaming, esports, dan teknologi terkini dari NexShop. Liputan original seputar Xbox, PlayStation, PC Gaming, Mobile, dan dunia esports Indonesia.">
+<link rel="canonical" href="https://nexshop.cloud/berita">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://nexshop.cloud/berita">
+<meta property="og:title" content="NexShop News — Berita Gaming & Esports Terkini">
+<meta property="og:description" content="Berita gaming, esports, dan teknologi terkini dari NexShop. Liputan original seputar Xbox, PlayStation, PC Gaming, dan dunia esports Indonesia.">
+<meta property="og:image" content="https://nexshop.cloud/images/nexshop-og-v2.jpg">
+<meta property="og:site_name" content="NexShop">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="NexShop News — Berita Gaming & Esports Terkini">
+<meta name="twitter:description" content="Berita gaming dan esports terkini dari NexShop.">
+<meta name="twitter:image" content="https://nexshop.cloud/images/nexshop-og-v2.jpg">
+
+<!-- JSON-LD -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "NexShop News",
+  "description": "Berita gaming, esports, dan teknologi terkini dari NexShop",
+  "url": "https://nexshop.cloud/berita",
+  "publisher": {
+    "@type": "Organization",
+    "name": "NexShop",
+    "url": "https://nexshop.cloud",
+    "logo": { "@type": "ImageObject", "url": "https://nexshop.cloud/favicon.ico" }
+  }
+}
+</script>
+
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<script src="theme-init.js"></script>
+<link rel="stylesheet" href="style.css">
+<style>
+/* =============================
+   NexShop News — berita.html
+   Menggunakan CSS variables dari style.css
+   ============================= */
+
+/* Scrollbar */
+* { scrollbar-width: none; -ms-overflow-style: none; }
+::-webkit-scrollbar { display: none; }
+
+/* Nav */
+.news-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--nav-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--line);
+    padding: 0 clamp(1rem, 4vw, 3rem);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    gap: 1rem;
+}
+.news-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--text);
+}
+.news-nav-brand .nx-accent { color: var(--violet); }
+.news-nav-brand .nx-news {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: rgba(139,92,246,.12);
+    border: 1px solid rgba(139,92,246,.25);
+    padding: 2px 6px;
+    border-radius: 4px;
+    align-self: flex-end;
+    margin-bottom: 2px;
+}
+.news-nav-links {
+    display: flex;
+    gap: 0.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.news-nav-links a {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.35rem 0.7rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.18s;
+}
+.news-nav-links a:hover,
+.news-nav-links a.active {
+    color: var(--text);
+    background: var(--bg-panel-2);
+}
+.news-nav-back {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    transition: all 0.18s;
+}
+.news-nav-back:hover { color: var(--text); border-color: var(--violet); }
+
+/* ── Main container ─────────────────────────── */
+.news-main {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem);
+}
+
+/* ── Category filter ─────────────────────────── */
+.cat-filter-wrap {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--line);
+}
+.cat-btn {
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 0.02em;
+}
+.cat-btn:hover { border-color: var(--violet); color: var(--text); }
+.cat-btn.active {
+    background: var(--violet);
+    border-color: var(--violet);
+    color: #fff;
+}
+
+/* ── Hero article ─────────────────────────── */
+.hero-article {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 2.5rem;
+    min-height: 380px;
+    transition: border-color 0.2s;
+}
+.hero-article:hover { border-color: rgba(139,92,246,.45); }
+.hero-img-wrap {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-panel-2);
+}
+.hero-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+.hero-article:hover .hero-img-wrap img { transform: scale(1.03); }
+.hero-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 4rem;
+    color: var(--text-dim);
+    background: linear-gradient(135deg, var(--bg-panel-2), var(--bg-panel-3));
+}
+.hero-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem 2rem 2rem 1rem;
+}
+.article-cat-badge {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    background: rgba(139,92,246,.15);
+    color: var(--violet);
+    border: 1px solid rgba(139,92,246,.25);
+    margin-bottom: 0.75rem;
+}
+.hero-body h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: clamp(1.3rem, 2.5vw, 1.75rem);
+    font-weight: 800;
+    line-height: 1.25;
+    color: var(--text);
+    margin-bottom: 0.75rem;
+    text-decoration: none;
+    display: block;
+}
+.hero-body h2 a {
+    color: inherit;
+    text-decoration: none;
+}
+.hero-body h2 a:hover { color: var(--violet); }
+.hero-excerpt {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.article-meta-line {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+.article-meta-line .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-dim); }
+.reading-time { display: flex; align-items: center; gap: 0.3rem; }
+
+/* ── Article grid ─────────────────────────── */
+.news-grid-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+}
+.news-grid-header h3 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.news-grid-header h3::before {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 18px;
+    background: var(--violet);
+    border-radius: 2px;
+}
+
+.articles-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+/* ── Article card ─────────────────────────── */
+.article-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.article-card:hover {
+    border-color: rgba(139,92,246,.45);
+    transform: translateY(-2px);
+    box-shadow: var(--glow-violet);
+}
+.card-img-wrap {
+    position: relative;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    background: var(--bg-panel-2);
+    flex-shrink: 0;
+}
+.card-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+    display: block;
+}
+.article-card:hover .card-img-wrap img { transform: scale(1.04); }
+.card-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: var(--text-dim);
+    background: linear-gradient(135deg, var(--bg-panel-2), var(--bg-panel-3));
+}
+.card-img-badge {
+    position: absolute;
+    top: 0.6rem;
+    left: 0.6rem;
+}
+.card-body-content {
+    padding: 1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+.card-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.card-excerpt {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.55;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.card-meta {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--line);
+}
+
+/* ── Pagination ─────────────────────────── */
+.pagination-wrap {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+}
+.page-btn {
+    padding: 0.45rem 0.9rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    background: var(--bg-panel);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: 'Inter', sans-serif;
+}
+.page-btn:hover { border-color: var(--violet); color: var(--text); }
+.page-btn.active { background: var(--violet); border-color: var(--violet); color: #fff; }
+.page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* ── Empty / Loading states ─────────────────────────── */
+.state-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+.state-block .state-icon { font-size: 3rem; opacity: 0.35; }
+.state-block h4 { font-family: 'Sora', sans-serif; font-size: 1.1rem; color: var(--text); margin: 0; }
+.state-block p { font-size: 0.85rem; margin: 0; }
+
+/* Skeleton loader */
+.skeleton {
+    background: linear-gradient(90deg, var(--bg-panel-2) 25%, var(--bg-panel-3) 50%, var(--bg-panel-2) 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s infinite;
+    border-radius: 6px;
+}
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+.skeleton-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+.skeleton-img { aspect-ratio: 16/9; }
+.skeleton-body { padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.skeleton-line { height: 12px; }
+.skeleton-line.lg { height: 16px; }
+.skeleton-line.sm { height: 10px; width: 50%; }
+
+/* ── Featured badge ─────────────────────────── */
+.featured-ring {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--violet), var(--cyan));
+}
+
+/* ── Footer nav ─────────────────────────── */
+.news-footer {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    border-top: 1px solid var(--line);
+    margin-top: 3rem;
+}
+.news-footer a { color: var(--violet); text-decoration: none; }
+.news-footer a:hover { text-decoration: underline; }
+
+/* ── Responsive ─────────────────────────── */
+@media (max-width: 768px) {
+    .hero-article { grid-template-columns: 1fr; min-height: auto; }
+    .hero-img-wrap { height: 220px; }
+    .hero-body { padding: 1.25rem; }
+    .news-nav-links { display: none; }
+    .articles-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+    .hero-img-wrap { height: 180px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="news-nav" role="navigation" aria-label="Navigasi NexShop News">
+    <a href="/berita" class="news-nav-brand" aria-label="NexShop News - Halaman Utama Berita">
+        <span>Nex<span class="nx-accent">Shop</span></span>
+        <span class="nx-news">News</span>
+    </a>
+
+    <ul class="news-nav-links" id="catNavLinks">
+        <li><a href="#" data-cat="" class="active">Semua</a></li>
+        <li><a href="#" data-cat="Esports">Esports</a></li>
+        <li><a href="#" data-cat="Gaming">Gaming</a></li>
+        <li><a href="#" data-cat="Teknologi">Teknologi</a></li>
+        <li><a href="#" data-cat="Xbox">Xbox</a></li>
+        <li><a href="#" data-cat="PlayStation">PlayStation</a></li>
+    </ul>
+
+    <a href="/" class="news-nav-back" aria-label="Kembali ke toko NexShop">
+        <i class="fa-solid fa-store" aria-hidden="true"></i>
+        <span>Ke Toko</span>
+    </a>
+</nav>
+
+<!-- Main content -->
+<main class="news-main" id="main-content">
+
+    <!-- Category filter chips -->
+    <div class="cat-filter-wrap" role="group" aria-label="Filter kategori berita" id="catFilterWrap">
+        <button class="cat-btn active" data-cat="" aria-pressed="true">Semua</button>
+        <button class="cat-btn" data-cat="Esports" aria-pressed="false">Esports</button>
+        <button class="cat-btn" data-cat="Gaming" aria-pressed="false">Gaming</button>
+        <button class="cat-btn" data-cat="Xbox" aria-pressed="false">Xbox</button>
+        <button class="cat-btn" data-cat="PlayStation" aria-pressed="false">PlayStation</button>
+        <button class="cat-btn" data-cat="PC" aria-pressed="false">PC</button>
+        <button class="cat-btn" data-cat="Mobile" aria-pressed="false">Mobile</button>
+        <button class="cat-btn" data-cat="Teknologi" aria-pressed="false">Teknologi</button>
+        <button class="cat-btn" data-cat="Update Game" aria-pressed="false">Update Game</button>
+        <button class="cat-btn" data-cat="Industri Game" aria-pressed="false">Industri Game</button>
+    </div>
+
+    <!-- Hero article -->
+    <section id="heroSection" aria-label="Artikel utama" aria-live="polite"></section>
+
+    <!-- Latest articles grid -->
+    <section id="latestSection" aria-label="Artikel terbaru">
+        <div class="news-grid-header">
+            <h3>Artikel Terbaru</h3>
+            <span id="totalCount" style="font-size:0.78rem; color: var(--text-dim);"></span>
+        </div>
+        <div class="articles-grid" id="articlesGrid" aria-live="polite"></div>
+        <div class="pagination-wrap" id="paginationWrap" aria-label="Navigasi halaman"></div>
+    </section>
+
+</main>
+
+<footer class="news-footer" role="contentinfo">
+    <p>
+        © 2024 <a href="/">NexShop</a> — Berita dan informasi gaming original.
+        Semua artikel merupakan karya editorial NexShop.
+    </p>
+</footer>
+
+<script>
+// ──────────────────────────────────────────────────────────────
+// NexShop News — berita.html client-side logic
+// ──────────────────────────────────────────────────────────────
+const API_BASE = (() => {
+    const hostname = window.location.hostname;
+    if (hostname === "nexshop.cloud" || hostname === "www.nexshop.cloud") {
+        return "https://api.nexshop.cloud/api";
+    }
+    return "http://localhost:3000/api";
+})();
+
+const NEWS_API = `${API_BASE}/news/articles`;
+const PAGE_SIZE = 12;
+
+let currentPage    = 1;
+let currentCat     = "";
+let totalPages     = 1;
+let heroRendered   = false;
+let isFetching     = false;
+
+// ── Helpers ─────────────────────────────────────────────
+function relativeDate(iso) {
+    if (!iso) return "";
+    const d    = new Date(iso);
+    const now  = new Date();
+    const diff = Math.floor((now - d) / 1000);
+    if (diff < 60)    return "baru saja";
+    if (diff < 3600)  return `${Math.floor(diff/60)} menit lalu`;
+    if (diff < 86400) return `${Math.floor(diff/3600)} jam lalu`;
+    if (diff < 604800)return `${Math.floor(diff/86400)} hari lalu`;
+    return d.toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" });
+}
+
+function readingTime(content) {
+    if (!content) return "1 mnt";
+    const wpm   = 200;
+    const words = String(content).replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
+    const mins  = Math.max(1, Math.ceil(words / wpm));
+    return `${mins} mnt`;
+}
+
+function safeText(str, maxLen) {
+    if (!str) return "";
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML.slice(0, maxLen || 9999);
+}
+
+function articlePath(slug) {
+    return `/berita-artikel.html?slug=${encodeURIComponent(slug)}`;
+}
+
+function imgOrPlaceholder(imageUrl, alt, icon = "fa-gamepad") {
+    if (imageUrl) {
+        return `<img src="${safeText(imageUrl,500)}" alt="${safeText(alt||'',120)}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\\'card-img-placeholder\\'><i class=\\'fa-solid ${icon}\\' aria-hidden=\\'true\\'></i></div>'">`;
+    }
+    return `<div class="card-img-placeholder"><i class="fa-solid ${icon}" aria-hidden="true"></i></div>`;
+}
+
+function categoryIcon(cat) {
+    const map = {
+        "Esports": "fa-trophy", "Gaming": "fa-gamepad", "Xbox": "fa-xbox",
+        "PlayStation": "fa-playstation", "PC": "fa-computer", "Mobile": "fa-mobile-screen",
+        "Teknologi": "fa-microchip", "Update Game": "fa-rotate", "Industri Game": "fa-building",
+        "Berita": "fa-newspaper"
+    };
+    return map[cat] || "fa-newspaper";
+}
+
+// ── Skeleton loader ─────────────────────────────────────────────
+function renderSkeletons(count = 6) {
+    const grid = document.getElementById("articlesGrid");
+    grid.innerHTML = Array.from({ length: count }, () => `
+        <div class="skeleton-card" aria-hidden="true">
+            <div class="skeleton skeleton-img"></div>
+            <div class="skeleton-body">
+                <div class="skeleton skeleton-line lg"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line sm"></div>
+            </div>
+        </div>
+    `).join("");
+}
+
+// ── Hero render ─────────────────────────────────────────────
+function renderHero(article) {
+    const hero = document.getElementById("heroSection");
+    if (!article) { hero.innerHTML = ""; return; }
+
+    const path = articlePath(article.slug);
+    const rt   = readingTime(article.content);
+
+    hero.innerHTML = `
+        <a href="${path}" class="hero-article" aria-label="Baca artikel: ${safeText(article.title, 120)}">
+            ${article.is_featured ? '<div class="featured-ring"></div>' : ""}
+            <div class="hero-img-wrap">
+                ${article.image_url
+                    ? `<img src="${safeText(article.image_url,500)}" alt="${safeText(article.image_alt||article.title||'',120)}" loading="eager" onerror="this.parentNode.innerHTML='<div class=\\"hero-img-placeholder\\"><i class=\\"fa-solid fa-gamepad\\" aria-hidden=\\"true\\"></i></div>'">`
+                    : `<div class="hero-img-placeholder"><i class="fa-solid ${categoryIcon(article.category)}" aria-hidden="true"></i></div>`
+                }
+            </div>
+            <div class="hero-body">
+                <span class="article-cat-badge">${safeText(article.category,40)}</span>
+                <h2><span>${safeText(article.title,200)}</span></h2>
+                ${article.excerpt ? `<p class="hero-excerpt">${safeText(article.excerpt,300)}</p>` : ""}
+                <div class="article-meta-line">
+                    <i class="fa-regular fa-user" aria-hidden="true"></i>
+                    <span>${safeText(article.author||"NexShop Editorial",60)}</span>
+                    <span class="dot" aria-hidden="true"></span>
+                    <time datetime="${article.published_at||""}">${relativeDate(article.published_at)}</time>
+                    <span class="dot" aria-hidden="true"></span>
+                    <span class="reading-time"><i class="fa-regular fa-clock" aria-hidden="true"></i> ${rt}</span>
+                </div>
+            </div>
+        </a>
+    `;
+}
+
+// ── Article card ─────────────────────────────────────────────
+function renderCard(article) {
+    const path = articlePath(article.slug);
+    const rt   = readingTime(article.content);
+    return `
+        <a href="${path}" class="article-card" aria-label="Baca: ${safeText(article.title,120)}">
+            <div class="card-img-wrap">
+                ${imgOrPlaceholder(article.image_url, article.image_alt||article.title, categoryIcon(article.category))}
+                <div class="card-img-badge">
+                    <span class="article-cat-badge">${safeText(article.category,40)}</span>
+                </div>
+                ${article.is_featured ? '<div class="featured-ring"></div>' : ""}
+            </div>
+            <div class="card-body-content">
+                <div class="card-title">${safeText(article.title,200)}</div>
+                ${article.excerpt ? `<div class="card-excerpt">${safeText(article.excerpt,200)}</div>` : ""}
+                <div class="card-meta">
+                    <time datetime="${article.published_at||""}">${relativeDate(article.published_at)}</time>
+                    <span class="dot" aria-hidden="true" style="width:3px;height:3px;border-radius:50%;background:var(--text-dim)"></span>
+                    <span><i class="fa-regular fa-clock" aria-hidden="true"></i> ${rt}</span>
+                    ${article.view_count > 0 ? `<span style="margin-left:auto"><i class="fa-regular fa-eye" aria-hidden="true"></i> ${article.view_count}</span>` : ""}
+                </div>
+            </div>
+        </a>
+    `;
+}
+
+// ── Pagination ─────────────────────────────────────────────
+function renderPagination(meta) {
+    const wrap = document.getElementById("paginationWrap");
+    const { page, total_pages } = meta;
+    if (total_pages <= 1) { wrap.innerHTML = ""; return; }
+
+    let html = "";
+
+    html += `<button class="page-btn" ${page <= 1 ? "disabled" : ""} onclick="goToPage(${page-1})" aria-label="Halaman sebelumnya">
+                <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+             </button>`;
+
+    for (let i = Math.max(1, page-2); i <= Math.min(total_pages, page+2); i++) {
+        html += `<button class="page-btn ${i===page?"active":""}" onclick="goToPage(${i})" aria-label="Halaman ${i}" ${i===page?'aria-current="page"':""}>
+                    ${i}
+                 </button>`;
+    }
+
+    html += `<button class="page-btn" ${page >= total_pages ? "disabled" : ""} onclick="goToPage(${page+1})" aria-label="Halaman berikutnya">
+                <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+             </button>`;
+
+    wrap.innerHTML = html;
+}
+
+// ── Fetch & render ─────────────────────────────────────────────
+async function loadArticles(page = 1) {
+    if (isFetching) return;
+    isFetching = true;
+
+    currentPage = page;
+    renderSkeletons();
+    document.getElementById("paginationWrap").innerHTML = "";
+
+    const params = new URLSearchParams({ page, limit: PAGE_SIZE });
+    if (currentCat) params.set("category", currentCat);
+
+    try {
+        const res  = await fetch(`${NEWS_API}?${params.toString()}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+
+        const articles = json.data || [];
+        const meta     = json.meta || { page:1, total:0, total_pages:1 };
+
+        // Hero: gunakan artikel pinned/featured atau artikel pertama
+        const hero = !currentCat
+            ? (articles.find(a => a.is_pinned) || articles.find(a => a.is_featured) || articles[0])
+            : null;
+
+        renderHero(hero || null);
+
+        // Grid: jika ada hero, skip dari grid
+        const gridArticles = hero
+            ? articles.filter(a => a.slug !== hero.slug)
+            : articles;
+
+        const grid = document.getElementById("articlesGrid");
+        if (!gridArticles.length) {
+            grid.innerHTML = `
+                <div class="state-block" style="grid-column:1/-1" role="status">
+                    <div class="state-icon"><i class="fa-regular fa-newspaper" aria-hidden="true"></i></div>
+                    <h4>Belum ada artikel</h4>
+                    <p>${currentCat ? `Tidak ada artikel di kategori "${safeText(currentCat,40)}" saat ini.` : "Belum ada artikel yang dipublikasikan."}</p>
+                </div>`;
+            document.getElementById("paginationWrap").innerHTML = "";
+            document.getElementById("totalCount").textContent = "";
+        } else {
+            grid.innerHTML = gridArticles.map(renderCard).join("");
+            document.getElementById("totalCount").textContent = `${meta.total} artikel`;
+            totalPages = meta.total_pages;
+            renderPagination(meta);
+        }
+
+    } catch (err) {
+        document.getElementById("articlesGrid").innerHTML = `
+            <div class="state-block" style="grid-column:1/-1" role="alert">
+                <div class="state-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
+                <h4>Gagal memuat artikel</h4>
+                <p>Periksa koneksi internet atau coba beberapa saat lagi.</p>
+                <button class="cat-btn" onclick="loadArticles(1)" style="margin-top:0.5rem">Coba Lagi</button>
+            </div>`;
+        console.error("NexShop News fetch error:", err);
+    } finally {
+        isFetching = false;
+    }
+}
+
+function goToPage(page) {
+    if (page < 1 || page > totalPages) return;
+    loadArticles(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+// ── Category filter ─────────────────────────────────────────────
+function initCategoryFilter() {
+    document.querySelectorAll(".cat-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            const cat = btn.dataset.cat || "";
+            if (cat === currentCat) return;
+            currentCat = cat;
+
+            document.querySelectorAll(".cat-btn").forEach(b => {
+                b.classList.toggle("active", b.dataset.cat === cat);
+                b.setAttribute("aria-pressed", b.dataset.cat === cat ? "true" : "false");
+            });
+            document.querySelectorAll("#catNavLinks a").forEach(a => {
+                a.classList.toggle("active", (a.dataset.cat||"") === cat);
+            });
+
+            loadArticles(1);
+        });
+    });
+
+    // Nav links
+    document.querySelectorAll("#catNavLinks a").forEach(a => {
+        a.addEventListener("click", e => {
+            e.preventDefault();
+            const cat = a.dataset.cat || "";
+            document.querySelector(`.cat-btn[data-cat="${cat}"]`)?.click();
+        });
+    });
+}
+
+// ── Init ─────────────────────────────────────────────
+initCategoryFilter();
+loadArticles(1);
+</script>
+</body>
+</html>

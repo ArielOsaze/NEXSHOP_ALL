@@ -34,6 +34,7 @@
         <li class="nav-item"><a class="nav-link" href="#" data-view="users"><i class="bi bi-people me-2"></i>Users</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="promo"><i class="bi bi-megaphone me-2"></i>Promo</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="news"><i class="bi bi-newspaper me-2"></i>Gaming News</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="editorial"><i class="bi bi-pen-fill me-2"></i>NexShop News</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="promocodes"><i class="bi bi-ticket-perforated me-2"></i>Kode Promo</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="ratings"><i class="bi bi-star me-2"></i>Rating</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
@@ -653,6 +654,385 @@
         </div>
     </div>
 </section>
+
+<!-- ===== NexShop News Editorial ===== -->
+<section id="view-editorial" class="view-section d-none">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2><i class="bi bi-newspaper text-violet me-2"></i>NexShop News</h2>
+            <p class="text-muted mb-0">Kelola artikel editorial original NexShop — tulis, jadwalkan, dan publikasikan.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="/berita" target="_blank" class="btn btn-outline-light btn-sm"><i class="bi bi-box-arrow-up-right me-1"></i>Preview Publik</a>
+            <button class="btn btn-success text-nowrap" onclick="editorialOpenCreate()"><i class="bi bi-plus-circle me-1"></i>Tulis Artikel</button>
+        </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="row g-3 mb-4" id="editorialStatsRow">
+        <div class="col-6 col-md-3">
+            <div class="stats-card h-100">
+                <div class="stats-icon"><i class="bi bi-file-text text-primary"></i></div>
+                <div class="stats-value mt-2" id="editStatTotal">—</div>
+                <div class="stats-label text-muted">Total Artikel</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stats-card h-100">
+                <div class="stats-icon"><i class="bi bi-send-check text-success"></i></div>
+                <div class="stats-value mt-2" id="editStatPublished">—</div>
+                <div class="stats-label text-muted">Dipublikasikan</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stats-card h-100">
+                <div class="stats-icon"><i class="bi bi-pencil-square" style="color:var(--warning)"></i></div>
+                <div class="stats-value mt-2" id="editStatDraft">—</div>
+                <div class="stats-label text-muted">Draft</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stats-card h-100">
+                <div class="stats-icon"><i class="bi bi-calendar-event" style="color:var(--cyan)"></i></div>
+                <div class="stats-value mt-2" id="editStatScheduled">—</div>
+                <div class="stats-label text-muted">Terjadwal</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & search toolbar -->
+    <div class="card bg-panel border-line mb-3">
+        <div class="card-body">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label text-muted small mb-1">Cari Artikel</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="search" class="form-control" id="editSearchInput" placeholder="Judul atau kutipan..." oninput="editorialDebouncedLoad()">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-muted small mb-1">Status</label>
+                    <select class="form-select" id="editStatusFilter" onchange="editorialLoadArticles(1)">
+                        <option value="">Semua</option>
+                        <option value="published">Dipublikasikan</option>
+                        <option value="draft">Draft</option>
+                        <option value="scheduled">Terjadwal</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label text-muted small mb-1">Kategori</label>
+                    <select class="form-select" id="editCategoryFilter" onchange="editorialLoadArticles(1)">
+                        <option value="">Semua</option>
+                        <option>Esports</option>
+                        <option>Gaming</option>
+                        <option>Xbox</option>
+                        <option>PlayStation</option>
+                        <option>PC</option>
+                        <option>Mobile</option>
+                        <option>Teknologi</option>
+                        <option>Update Game</option>
+                        <option>Industri Game</option>
+                        <option>Berita</option>
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex align-items-end gap-2">
+                    <button class="btn btn-outline-light btn-sm" onclick="editorialLoadArticles(1)"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+                    <span class="text-muted small" id="editorialCountLabel"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk action bar -->
+    <div id="editBulkBar" class="d-flex align-items-center gap-2 mb-3 px-3 py-2 rounded d-none" style="background:var(--bg-panel);border:1px solid var(--line);">
+        <span id="editBulkCount" class="small text-muted me-1">0 dipilih</span>
+        <button class="btn btn-outline-success btn-sm" onclick="editorialBulkAction('publish')"><i class="bi bi-send-check me-1"></i>Publish</button>
+        <button class="btn btn-outline-secondary btn-sm" onclick="editorialBulkAction('unpublish')"><i class="bi bi-file-earmark me-1"></i>Draft</button>
+        <button class="btn btn-outline-danger btn-sm" onclick="editorialBulkAction('delete')"><i class="bi bi-trash me-1"></i>Hapus</button>
+    </div>
+
+    <!-- Articles table -->
+    <div class="card bg-panel border-line">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 admin-table">
+                <thead>
+                    <tr>
+                        <th style="width:36px;"><input type="checkbox" id="editSelectAll" onchange="editorialToggleAll(this.checked)" class="form-check-input"></th>
+                        <th>Artikel</th>
+                        <th>Kategori</th>
+                        <th>Penulis</th>
+                        <th>Status</th>
+                        <th>Tanggal</th>
+                        <th>Views</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="editorialTableBody">
+                    <tr><td colspan="8" class="text-center text-muted py-4">Memuat artikel...</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer border-line d-flex justify-content-between align-items-center">
+            <span class="text-muted small" id="editPageInfo"></span>
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-secondary" id="editPrevBtn" onclick="editorialChangePage(-1)" disabled>Prev</button>
+                <button class="btn btn-sm btn-outline-secondary" id="editNextBtn" onclick="editorialChangePage(1)" disabled>Next</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Modal: Tulis/Edit Artikel Editorial ===== -->
+<div class="modal fade" id="editorialModal" tabindex="-1" aria-labelledby="editorialModalTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable" style="max-width:min(1100px,97vw)">
+        <div class="modal-content shadow-lg">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="editorialModalTitle">
+                    <i class="bi bi-newspaper me-2 text-violet"></i>
+                    <span id="editorialModalTitleText">Tulis Artikel Baru</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body p-4">
+                <input type="hidden" id="editArticleId">
+
+                <!-- Tabs -->
+                <ul class="nav nav-tabs mb-4" id="editorialTabs">
+                    <li class="nav-item"><button class="nav-link active" data-editorial-tab="content"><i class="bi bi-file-text me-1"></i>Konten</button></li>
+                    <li class="nav-item"><button class="nav-link" data-editorial-tab="meta"><i class="bi bi-card-list me-1"></i>Meta & SEO</button></li>
+                    <li class="nav-item"><button class="nav-link" data-editorial-tab="sources"><i class="bi bi-link-45deg me-1"></i>Sumber Riset</button></li>
+                    <li class="nav-item"><button class="nav-link" data-editorial-tab="publish"><i class="bi bi-send me-1"></i>Publish</button></li>
+                </ul>
+
+                <!-- Tab: Konten -->
+                <div id="editorialTabContent" class="editorial-tab-pane">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label" for="editTitle">Judul Artikel <span class="text-danger">*</span></label>
+                            <input id="editTitle" class="form-control form-control-lg" placeholder="Judul original artikel NexShop News..." maxlength="255" required oninput="editorialAutoSlug()">
+                            <div class="form-text">Judul ini adalah judul original — bukan judul dari sumber manapun.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="editSlug">Slug URL</label>
+                            <div class="input-group">
+                                <span class="input-group-text text-muted" style="font-size:0.78rem;">/berita/</span>
+                                <input id="editSlug" class="form-control font-monospace" placeholder="di-generate-otomatis" maxlength="100" oninput="editorialSlugManual()">
+                            </div>
+                            <div class="form-text">Otomatis dari judul, bisa diedit manual. Hanya lowercase, angka, dan hyphen.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="editCategory">Kategori <span class="text-danger">*</span></label>
+                            <select id="editCategory" class="form-select" required>
+                                <option value="Gaming">Gaming</option>
+                                <option value="Esports">Esports</option>
+                                <option value="Xbox">Xbox</option>
+                                <option value="PlayStation">PlayStation</option>
+                                <option value="PC">PC</option>
+                                <option value="Mobile">Mobile</option>
+                                <option value="Teknologi">Teknologi</option>
+                                <option value="Update Game">Update Game</option>
+                                <option value="Industri Game">Industri Game</option>
+                                <option value="Berita">Berita</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="editAuthor">Penulis</label>
+                            <input id="editAuthor" class="form-control" value="NexShop Editorial" maxlength="120">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="editExcerpt">Kutipan (Excerpt) <span class="text-muted small">maks. 500 karakter</span></label>
+                            <textarea id="editExcerpt" class="form-control" rows="3" maxlength="500" placeholder="Deskripsi singkat yang muncul di list artikel dan SEO..."></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Konten Artikel</label>
+                            <div class="small text-warning mb-2">
+                                <i class="bi bi-shield-check me-1"></i>
+                                Tulis artikel ORIGINAL NexShop. Jangan copy-paste dari sumber. Sumber hanya untuk referensi riset di tab "Sumber Riset".
+                            </div>
+                            <!-- Toolbar Quill-like manual -->
+                            <div id="editContentToolbar" class="d-flex flex-wrap gap-1 p-2 rounded-top border" style="background:var(--bg-panel-2);border-color:var(--line)!important;">
+                                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" onclick="editFmt('bold')" title="Bold"><i class="bi bi-type-bold"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" onclick="editFmt('italic')" title="Italic"><i class="bi bi-type-italic"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" onclick="editFmt('underline')" title="Underline"><i class="bi bi-type-underline"></i></button>
+                                <div class="vr mx-1"></div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" onclick="editInsertBlock('h2')" title="Heading 2">H2</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" onclick="editInsertBlock('h3')" title="Heading 3">H3</button>
+                                <div class="vr mx-1"></div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" onclick="editFmt('insertUnorderedList')" title="Bullet list"><i class="bi bi-list-ul"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" onclick="editFmt('insertOrderedList')" title="Numbered list"><i class="bi bi-list-ol"></i></button>
+                                <div class="vr mx-1"></div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" onclick="editInsertBlock('blockquote')" title="Blockquote"><i class="bi bi-blockquote-left"></i></button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" onclick="editInsertHr()" title="Garis pemisah"><i class="bi bi-hr"></i></button>
+                                <div class="vr mx-1"></div>
+                                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1" onclick="editInsertLink()" title="Tambah link"><i class="bi bi-link-45deg"></i></button>
+                            </div>
+                            <div
+                                id="editContentEditor"
+                                contenteditable="true"
+                                class="form-control"
+                                style="min-height:350px;border-radius:0 0 var(--radius-sm) var(--radius-sm);border-top:none;overflow-y:auto;font-size:0.95rem;line-height:1.75;"
+                                aria-label="Editor konten artikel"
+                                aria-multiline="true"
+                                spellcheck="true"
+                            ></div>
+                            <div class="form-text d-flex justify-content: space-between">
+                                <span>Gunakan format yang memudahkan pembaca. Minimal 100 kata untuk artikel yang solid.</span>
+                                <span id="editWordCount" class="ms-auto text-muted">0 kata</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Meta & SEO -->
+                <div id="editorialTabMeta" class="editorial-tab-pane d-none">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="alert alert-secondary border-0 p-3" style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2)!important;">
+                                <i class="bi bi-image me-1 text-violet"></i>
+                                <strong>Gambar Utama (image_url)</strong> — Masukkan URL HTTPS gambar secara manual.
+                                Gambar tidak pernah diunduh/discrape otomatis.
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="editImageUrl">URL Gambar Utama (HTTPS)</label>
+                            <input id="editImageUrl" class="form-control font-monospace" type="url" placeholder="https://..." oninput="editorialPreviewImage()">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="editImageAlt">Alt Text Gambar</label>
+                            <input id="editImageAlt" class="form-control" maxlength="255" placeholder="Deskripsi gambar untuk screen reader & SEO">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="editImageCredit">Credit Gambar</label>
+                            <input id="editImageCredit" class="form-control" maxlength="120" placeholder="Nama fotografer / sumber gambar">
+                        </div>
+                        <div class="col-12" id="editImagePreviewWrap" style="display:none;">
+                            <label class="form-label text-muted small">Preview Gambar</label>
+                            <img id="editImagePreview" src="" alt="Preview" class="img-fluid rounded" style="max-height:200px;object-fit:cover;">
+                        </div>
+
+                        <div class="col-12"><hr class="my-1"></div>
+
+                        <div class="col-12">
+                            <label class="form-label" for="editTags">Tags <span class="text-muted small">(pisah dengan koma, maks. 10)</span></label>
+                            <input id="editTags" class="form-control" maxlength="500" placeholder="mobile legends, esports, update patch">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="editKeywords">Keywords SEO <span class="text-muted small">(pisah dengan koma, maks. 15)</span></label>
+                            <input id="editKeywords" class="form-control" maxlength="800" placeholder="kata kunci untuk mesin pencari">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="editSeoTitle">SEO Title <span class="text-muted small">(maks. 70 karakter)</span></label>
+                            <input id="editSeoTitle" class="form-control" maxlength="70" placeholder="Biarkan kosong untuk pakai judul artikel">
+                            <div class="form-text"><span id="editSeoTitleCount">0</span>/70 karakter</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="editSeoDesc">SEO Description <span class="text-muted small">(maks. 160 karakter)</span></label>
+                            <textarea id="editSeoDesc" class="form-control" rows="2" maxlength="160" placeholder="Biarkan kosong untuk pakai excerpt"></textarea>
+                            <div class="form-text"><span id="editSeoDescCount">0</span>/160 karakter</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Sumber Riset -->
+                <div id="editorialTabSources" class="editorial-tab-pane d-none">
+                    <div class="alert alert-secondary border-0 mb-4 p-3" style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.2)!important;">
+                        <i class="bi bi-info-circle me-1 text-violet"></i>
+                        <strong>Sumber hanya untuk referensi internal.</strong> URL dan nama sumber bisa ditampilkan di bawah artikel sebagai kredit riset.
+                        Catatan internal (notes) hanya terlihat di sini — tidak pernah tampil ke publik.
+                        <br><strong>PENTING:</strong> Isi artikel di tab Konten harus merupakan tulisan ORIGINAL NexShop — bukan rewrite atau paraphrase dari sumber.
+                    </div>
+
+                    <div id="editSourcesList" class="d-flex flex-column gap-2 mb-3">
+                        <p class="text-muted small text-center py-3" id="editSourcesEmpty">Simpan artikel terlebih dahulu, lalu tambah sumber di sini.</p>
+                    </div>
+
+                    <div class="card bg-panel border-line p-3" id="editAddSourceForm">
+                        <h6 class="mb-3 fw-semibold">Tambah Sumber Baru</h6>
+                        <div class="row g-2">
+                            <div class="col-md-4">
+                                <input id="addSourceName" class="form-control form-control-sm" maxlength="120" placeholder="Nama media (mis. IGN, Kotaku)">
+                            </div>
+                            <div class="col-md-8">
+                                <input id="addSourceUrl" type="url" class="form-control form-control-sm font-monospace" placeholder="https://... (URL artikel sumber)">
+                            </div>
+                            <div class="col-md-6">
+                                <input id="addSourceTitle" class="form-control form-control-sm" maxlength="255" placeholder="Judul artikel sumber (opsional)">
+                            </div>
+                            <div class="col-md-6">
+                                <input id="addSourceDate" type="date" class="form-control form-control-sm" title="Tanggal terbit artikel sumber">
+                            </div>
+                            <div class="col-12">
+                                <textarea id="addSourceNotes" class="form-control form-control-sm" rows="2" maxlength="2000" placeholder="Catatan internal editor — tidak tampil ke publik (opsional)"></textarea>
+                            </div>
+                            <div class="col-12">
+                                <button class="btn btn-sm btn-primary" onclick="editorialAddSource()"><i class="bi bi-plus me-1"></i>Tambah Sumber</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab: Publish -->
+                <div id="editorialTabPublish" class="editorial-tab-pane d-none">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Status Artikel</label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="editStatus" id="statusDraft" value="draft" checked>
+                                    <label class="form-check-label" for="statusDraft">
+                                        <i class="bi bi-pencil-square text-warning me-1"></i>Draft (tidak tampil ke publik)
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-text mt-2">Setelah disimpan sebagai draft, gunakan tombol Publish atau jadwalkan di bawah.</div>
+                        </div>
+
+                        <div class="col-12"><hr></div>
+
+                        <div class="col-md-6">
+                            <label class="form-label" for="editScheduledAt">Jadwalkan Publikasi</label>
+                            <input id="editScheduledAt" type="datetime-local" class="form-control">
+                            <div class="form-text">Biarkan kosong jika ingin publish manual. Artikel akan auto-publish pada waktu yang ditentukan.</div>
+                        </div>
+
+                        <div class="col-12"><hr></div>
+
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="editIsFeatured" role="switch">
+                                <label class="form-check-label" for="editIsFeatured">Artikel Featured <span class="text-muted small">(tampil di hero)</span></label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="editIsPinned" role="switch">
+                                <label class="form-check-label" for="editIsPinned">Pin Artikel <span class="text-muted small">(prioritas teratas)</span></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-danger small mt-3 mb-0" id="editorialError"></p>
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between flex-wrap gap-2">
+                <div class="d-flex gap-2 flex-wrap" id="editorialPublishActions" style="display:none!important;">
+                    <!-- Publish actions shown when editing existing published/draft article -->
+                </div>
+                <div class="ms-auto d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-outline-success" id="editorialSaveDraftBtn" onclick="editorialSave('draft')">
+                        <i class="bi bi-floppy me-1"></i>Simpan Draft
+                    </button>
+                    <button type="button" class="btn btn-success" id="editorialPublishBtn" onclick="editorialSave('publish')">
+                        <i class="bi bi-send-check me-1"></i>Simpan & Publish
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- ===== Kode Promo view ===== -->
 <section id="view-promocodes" class="view-section d-none">
@@ -2295,6 +2675,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="js/dashboard.js?v=20260812-otp-security"></script>
+<script src="js/editorial.js?v=20260814-news"></script>
 
 </body>
 </html>
