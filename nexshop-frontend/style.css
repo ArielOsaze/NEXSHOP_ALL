@@ -2357,12 +2357,9 @@ html:not(.dark) .home-glass-badge {
     animation-name: testimonial-scroll-right;
     animation-duration: 40s;
 }
-/* Pause seluruh marquee saat kursor di atasnya (atau saat salah satu card
-   difokus via keyboard) -- biar bisa dibaca tanpa dikejar animasi. */
-.testimonial-marquee:hover .testimonial-track,
-.testimonial-marquee:focus-within .testimonial-track {
-    animation-play-state: paused;
-}
+/* Marquee jalan terus tanpa pernah berhenti -- termasuk saat card di-tap/
+   diklik/di-hover (sengaja TIDAK pakai animation-play-state:paused di sini,
+   beda dari kebiasaan marquee pada umumnya, sesuai permintaan). */
 
 @keyframes testimonial-scroll-left {
     from { transform: translateX(0); }
@@ -2382,6 +2379,18 @@ html:not(.dark) .home-glass-badge {
     flex-direction: column;
     gap: 0.75rem;
     padding: 1.5rem;
+    cursor: pointer;
+    transition: transform .3s ease, box-shadow .3s ease;
+}
+/* Kartu yang diklik membesar jadi sorotan -- marquee TETAP jalan (tidak
+   di-pause), scale ini murni transform di kartu itu sendiri, terpisah dari
+   animation translateX yang jalan di .testimonial-track (parent-nya), jadi
+   dua-duanya bisa jalan bareng tanpa saling override. Klik kartu yang sama
+   lagi (atau kartu lain) -> class ini di-toggle lewat JS. */
+.testimonial-card--active {
+    transform: scale(1.08);
+    z-index: 5;
+    box-shadow: 0 20px 45px -12px rgba(139, 92, 246, .45);
 }
 .testimonial-card__stars {
     color: #facc15;

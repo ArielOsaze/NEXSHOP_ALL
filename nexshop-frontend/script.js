@@ -1913,6 +1913,28 @@ function renderTestimonials(items) {
     section.classList.remove("hidden");
 }
 
+// Klik salah satu kartu testimoni -> kartu itu membesar (jadi sorotan),
+// yang lain tetap ukuran normal, marquee TETAP jalan (tidak di-pause).
+// Klik kartu yang sama lagi -> mengecil balik ke normal. Klik kartu lain
+// saat ada yang lagi membesar -> yang lama otomatis mengecil, yang baru
+// membesar (cuma 1 kartu aktif dalam satu waktu).
+// Pakai event delegation di #testimonialMarquee (bukan pasang listener per
+// kartu) supaya tetap jalan walau kartu-nya di-render ulang oleh
+// renderTestimonials/loadTestimonials.
+(function setupTestimonialCardExpand() {
+    const marquee = document.getElementById("testimonialMarquee");
+    if (!marquee) return;
+
+    marquee.addEventListener("click", (e) => {
+        const card = e.target.closest(".testimonial-card");
+        if (!card || !marquee.contains(card)) return;
+
+        const wasActive = card.classList.contains("testimonial-card--active");
+        marquee.querySelectorAll(".testimonial-card--active").forEach(c => c.classList.remove("testimonial-card--active"));
+        if (!wasActive) card.classList.add("testimonial-card--active");
+    });
+})();
+
 async function loadTestimonials() {
     try {
         const res = await fetch(`${API_BASE}/ratings/public/testimonials?limit=20`);
