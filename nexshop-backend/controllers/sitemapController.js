@@ -30,7 +30,11 @@ exports.generateSitemap = async (req, res) => {
 
         // Articles
         if (articles && articles.length > 0) {
+            const seenSlugs = new Set();
             for (const article of articles) {
+                if (seenSlugs.has(article.slug)) continue;
+                seenSlugs.add(article.slug);
+
                 const lastmod = article.updated_at || article.published_at || today;
                 xml += `  <url>\n`;
                 xml += `    <loc>${baseUrl}/berita/${article.slug}</loc>\n`;

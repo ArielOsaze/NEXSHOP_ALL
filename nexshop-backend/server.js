@@ -37,6 +37,7 @@ const aiRoutes = require("./routes/aiRoutes");
 const ratingRoutes = require("./routes/ratingRoutes");
 const musicRoutes = require("./routes/musicRoutes");
 const sitemapController = require("./controllers/sitemapController");
+const ssrController = require("./controllers/ssrController");
 const { startTopupStatusPoller } = require("./jobs/topupStatusPoller");
 const { startRetryPoller } = require("./jobs/notificationRetryPoller");
 const { startScheduledPublishPoller } = require("./jobs/scheduledPublishPoller");
@@ -158,11 +159,13 @@ app.get("/profile", authMiddleware, (req, res) => {
 });
 
 // =========================
-// Home
+// Home & SSR
 // =========================
 app.get("/", (req, res) => {
     res.send("Backend NexShop Berjalan");
 });
+
+app.get("/berita/:slug", ssrController.renderArticle);
 
 // =========================
 // 404 Handler
