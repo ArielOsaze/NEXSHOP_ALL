@@ -2391,7 +2391,7 @@ html:not(.dark) .home-glass-badge {
     /* Durasi lumayan (500ms) + easing "overshoot" (sedikit lewat lalu balik)
        biar kelihatan jelas kalau ini animasi membesar beneran, bukan
        loncat instan -- bukan cuma transisi generic ease yang halus/samar. */
-    transition: transform .5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .5s ease;
+    transition: transform .5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .5s ease, margin .5s cubic-bezier(0.34, 1.56, 0.64, 1);
     will-change: transform;
 }
 /* Kartu yang diklik membesar jadi sorotan -- marquee di-pause (lihat
@@ -2400,10 +2400,16 @@ html:not(.dark) .home-glass-badge {
    .testimonial-track (parent-nya), jadi transisi scale-nya jalan mulus
    walau parent-nya lagi diam. Angka scale sengaja dibikin cukup besar
    (1.22x) supaya bedanya kelihatan jelas dibanding kartu lain, bukan cuma
-   sedikit lebih gede. */
+   sedikit lebih gede.
+   `margin` di sini SENGAJA ditambahin (bukan cuma transform) -- transform
+   scale doang gak ngubah ruang yang dialokasikan flexbox buat elemen ini,
+   jadi kartu tetangga gak ikut ke-geser dan malah numpuk/tempelan sama
+   kartu yang membesar. Margin ekstra ini "mendorong" tetangganya di
+   flexbox supaya ngasih ruang, jadi kelihatan neighbournya beneran ngingkir. */
 .testimonial-card--active {
     transform: scale(1.22);
     z-index: 5;
+    margin: 0 2.2rem;
     box-shadow: 0 25px 60px -12px rgba(139, 92, 246, .55);
 }
 .testimonial-card__stars {
@@ -2475,5 +2481,5 @@ html:not(.dark) .home-glass-badge {
     /* Layar kecil lebih sempit -- scale sebesar di desktop (1.22x) bikin
        kartu jadi kegedean/nabrak kartu tetangga. Dikecilin ke 1.1x biar
        tetap kerasa "membesar jadi sorotan" tapi proporsional sama layarnya. */
-    .testimonial-card--active { transform: scale(1.1); }
+    .testimonial-card--active { transform: scale(1.1); margin: 0 0.9rem; }
 }
