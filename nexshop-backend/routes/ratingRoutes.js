@@ -20,4 +20,11 @@ router.post("/topup", optionalAuthMiddleware, ratingController.submitTopupRating
 // sengaja TIDAK pakai middleware auth apa pun, endpoint ini publik.
 router.get("/public/testimonials", ratingController.getPublicTestimonials);
 
+// FEATURE: CRUD testimoni kustom (Admin Dashboard) -- lihat komentar di
+// ratingController.js. Semua route di bawah wajib admin.
+router.get("/admin/custom", authMiddleware, adminMiddleware, ratingController.getAdminCustomTestimonials);
+router.post("/admin/custom", authMiddleware, adminMiddleware, ratingController.createCustomTestimonial);
+router.put("/admin/custom/:id", authMiddleware, adminMiddleware, ratingController.updateCustomTestimonial);
+router.delete("/admin/custom/:id", authMiddleware, adminMiddleware, ratingController.deleteCustomTestimonial);
+
 module.exports = router;

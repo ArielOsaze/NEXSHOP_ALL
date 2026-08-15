@@ -1848,6 +1848,12 @@ function testimonialInitials(name) {
 function testimonialCardHtml(item) {
     const score = Math.max(1, Math.min(5, parseInt(item.score, 10) || 5));
     const stars = "★".repeat(score) + "☆".repeat(5 - score);
+    // Testimoni kustom (dibuat admin dari dashboard) bisa punya foto profil
+    // asli (item.avatar) -- kalau ada, tampilkan foto itu; kalau tidak
+    // (rating asli dari pembeli), fallback ke inisial seperti sebelumnya.
+    const avatarHtml = item.avatar
+        ? `<img class="testimonial-card__avatar" src="${escapeHtml(item.avatar)}" alt="" loading="lazy">`
+        : `<div class="testimonial-card__avatar" aria-hidden="true">${escapeHtml(testimonialInitials(item.name))}</div>`;
     // .home-glass-card = design system glassmorphism yang sama dipakai kartu
     // News/Produk di halaman ini -- supaya kartu testimoni konsisten visual,
     // bukan gaya kartu baru sendiri.
@@ -1856,7 +1862,7 @@ function testimonialCardHtml(item) {
             <div class="testimonial-card__stars" aria-label="${score} dari 5 bintang">${stars}</div>
             <p class="testimonial-card__comment">${escapeHtml(item.comment || "")}</p>
             <div class="testimonial-card__footer">
-                <div class="testimonial-card__avatar" aria-hidden="true">${escapeHtml(testimonialInitials(item.name))}</div>
+                ${avatarHtml}
                 <div class="testimonial-card__meta">
                     <div class="testimonial-card__name">${escapeHtml(item.name || "Pembeli NexShop")}</div>
                     <div class="testimonial-card__context">${escapeHtml(item.context || "")}</div>

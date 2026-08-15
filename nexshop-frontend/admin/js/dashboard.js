@@ -357,7 +357,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         if (view === "news" && !newsLoaded) loadNews();
         if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
         if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
-        if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); ratingsLoaded = true; }
+        if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); loadCustomTestimonials(); ratingsLoaded = true; }
         if (view === "settings" && !settingsLoaded) loadSettings();
         if (view === "stats" && !statsLoaded) loadStats();
         if (view === "musicplayer" && !musicPlayerLoaded) { loadMusicList(); musicPlayerLoaded = true; }
@@ -387,7 +387,7 @@ function switchView(view) {
     if (view === "news" && !newsLoaded) loadNews();
     if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
     if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
-    if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); ratingsLoaded = true; }
+    if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); loadCustomTestimonials(); ratingsLoaded = true; }
     if (view === "settings" && !settingsLoaded) loadSettings();
     if (view === "stats" && !statsLoaded) loadStats();
     if (view === "musicplayer" && !musicPlayerLoaded) { loadMusicList(); musicPlayerLoaded = true; }
@@ -5009,6 +5009,198 @@ async function loadAdminRatings(page = 1) {
 
 function changeRatingPage(dir) {
     loadAdminRatings(currentRatingPage + dir);
+}
+
+// ================================
+// Testimoni Kustom (Homepage "Apa Kata Mereka")
+// ================================
+let customTestimonials = [];
+const customTestimonialModalEl = document.getElementById("customTestimonialModal");
+let customTestimonialModal = null;
+if (customTestimonialModalEl) {
+    customTestimonialModal = new bootstrap.Modal(customTestimonialModalEl);
+}
+
+const ctAvatarInput = document.getElementById("ctAvatarInput");
+const ctAvatarPreview = document.getElementById("ctAvatarPreview");
+
+if (ctAvatarInput) {
+    ctAvatarInput.addEventListener("change", () => {
+        const file = ctAvatarInput.files[0];
+        if (!file) {
+            ctAvatarPreview.classList.add("d-none");
+            ctAvatarPreview.src = "";
+            return;
+        }
+        ctAvatarPreview.src = URL.createObjectURL(file);
+        ctAvatarPreview.classList.remove("d-none");
+    });
+}
+
+if (customTestimonialModalEl) {
+    customTestimonialModalEl.addEventListener("hidden.bs.modal", () => {
+        document.getElementById("ctId").value = "";
+        document.getElementById("ctName").value = "";
+        document.getElementById("ctScore").value = "5";
+        document.getElementById("ctProductName").value = "";
+        document.getElementById("ctComment").value = "";
+        document.getElementById("ctIsActive").checked = true;
+        document.getElementById("ctError").textContent = "";
+        ctAvatarInput.value = "";
+        ctAvatarPreview.src = "";
+        ctAvatarPreview.classList.add("d-none");
+    });
+}
+
+async function loadCustomTestimonials() {
+    const tbody = document.getElementById("customTestimonialsTbody");
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>`;
+
+    try {
+        const res = await apiFetch("/ratings/admin/custom");
+        const json = await res.json().catch(() => ([]));
+        if (!res.ok) throw new Error(json.message || "Gagal mengambil testimoni kustom");
+
+        customTestimonials = Array.isArray(json) ? json : [];
+
+        if (customTestimonials.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted">Belum ada testimoni kustom. Klik "Tambah Testimoni" untuk membuat.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = customTestimonials.map(t => {
+            const stars = "★".repeat(t.score) + "☆".repeat(5 - t.score);
+            const avatarHtml = t.avatar_url
+                ? `<img src="${escapeHtml(t.avatar_url)}" style="width:40px;height:40px;object-fit:cover;border-radius:50%;">`
+                : `<div class="d-flex align-items-center justify-content-center rounded-circle bg-secondary text-white" style="width:40px;height:40px;font-size:.75rem;">${escapeHtml((t.name || "?").charAt(0).toUpperCase())}</div>`;
+            const statusBadge = t.is_active
+                ? `<span class="badge bg-success">Aktif</span>`
+                : `<span class="badge bg-secondary">Nonaktif</span>`;
+
+            return `
+                <tr>
+                    <td>${avatarHtml}</td>
+                    <td><strong>${escapeHtml(t.name)}</strong></td>
+                    <td class="text-warning text-nowrap">${stars}</td>
+                    <td>${escapeHtml(t.product_name || "-")}</td>
+                    <td style="max-width:260px;">${escapeHtml(t.comment)}</td>
+                    <td>${statusBadge}</td>
+                    <td class="text-nowrap">
+                        <button class="btn btn-sm btn-outline-warning me-1" onclick="editCustomTestimonial(${t.id})" title="Edit"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteCustomTestimonial(${t.id})" title="Hapus"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`;
+        }).join("");
+
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error: ${escapeHtml(e.message)}</td></tr>`;
+    }
+}
+
+function openCustomTestimonialModal() {
+    document.getElementById("customTestimonialModalTitle").innerHTML = `<i class="bi bi-chat-square-quote me-2"></i>Tambah Testimoni`;
+    customTestimonialModal.show();
+}
+
+function editCustomTestimonial(id) {
+    const t = customTestimonials.find(x => x.id === id);
+    if (!t) return;
+
+    document.getElementById("ctId").value = t.id;
+    document.getElementById("ctName").value = t.name || "";
+    document.getElementById("ctScore").value = String(t.score || 5);
+    document.getElementById("ctProductName").value = t.product_name || "";
+    document.getElementById("ctComment").value = t.comment || "";
+    document.getElementById("ctIsActive").checked = !!t.is_active;
+
+    if (t.avatar_url) {
+        ctAvatarPreview.src = t.avatar_url;
+        ctAvatarPreview.classList.remove("d-none");
+    }
+
+    document.getElementById("customTestimonialModalTitle").innerHTML = `<i class="bi bi-chat-square-quote me-2"></i>Edit Testimoni`;
+    customTestimonialModal.show();
+}
+
+async function saveCustomTestimonial() {
+    const id = document.getElementById("ctId").value;
+    const name = document.getElementById("ctName").value.trim();
+    const score = parseInt(document.getElementById("ctScore").value, 10);
+    const productName = document.getElementById("ctProductName").value.trim();
+    const comment = document.getElementById("ctComment").value.trim();
+    const isActive = document.getElementById("ctIsActive").checked;
+    const avatarFile = ctAvatarInput.files[0];
+    const errorEl = document.getElementById("ctError");
+
+    errorEl.textContent = "";
+
+    if (!name) { errorEl.textContent = "Nama wajib diisi."; return; }
+    if (!comment) { errorEl.textContent = "Isi testimoni wajib diisi."; return; }
+
+    const saveBtn = document.getElementById("saveCustomTestimonialBtn");
+    const originalHtml = saveBtn.innerHTML;
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
+
+    try {
+        let avatarUrl;
+        if (id) {
+            const existing = customTestimonials.find(t => t.id == id);
+            avatarUrl = existing ? existing.avatar_url : null;
+        }
+
+        if (avatarFile) {
+            const formData = new FormData();
+            formData.append("image", avatarFile);
+            const uploadRes = await apiFetch("/upload/image?type=avatar", { method: "POST", body: formData });
+            const uploadJson = await uploadRes.json().catch(() => ({}));
+            if (!uploadRes.ok) throw new Error(uploadJson.message || "Gagal upload foto profil");
+            avatarUrl = uploadJson.url;
+        }
+
+        const payload = {
+            name,
+            score,
+            product_name: productName,
+            comment,
+            is_active: isActive,
+            avatar_url: avatarUrl || null
+        };
+
+        const endpoint = id ? `/ratings/admin/custom/${id}` : "/ratings/admin/custom";
+        const method = id ? "PUT" : "POST";
+
+        const res = await apiFetch(endpoint, {
+            method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.message || "Gagal menyimpan testimoni");
+
+        customTestimonialModal.hide();
+        showToast(id ? "Testimoni berhasil diupdate" : "Testimoni berhasil ditambahkan");
+        loadCustomTestimonials();
+
+    } catch (e) {
+        errorEl.textContent = e.message;
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalHtml;
+    }
+}
+
+async function deleteCustomTestimonial(id) {
+    if (!confirm("Hapus testimoni ini permanen?")) return;
+    try {
+        const res = await apiFetch(`/ratings/admin/custom/${id}`, { method: "DELETE" });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json.message || "Gagal menghapus testimoni");
+        showToast("Testimoni berhasil dihapus");
+        loadCustomTestimonials();
+    } catch (e) {
+        showToast(e.message, true);
+    }
 }
 
 // ================================

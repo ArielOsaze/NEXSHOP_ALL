@@ -494,6 +494,22 @@ exports.getPublicTestimonials = async (req, res) => {
         const limitParam = parseInt(req.query.limit, 10);
         const limit = Number.isInteger(limitParam) && limitParam > 0 && limitParam <= 50 ? limitParam : 20;
 
+        // Testimoni kustom (diatur manual dari admin dashboard) -- ambil
+        // duluan supaya bisa digabung sama rating asli di bawah. Kalau
+        // tabelnya belum di-migrate (42P01), skip aja, jangan gagalkan
+        // seluruh endpoint.
+        const { data: customTestimonials, error: customErr } = await supabase
+            .from("custom_testimonials")
+            .select("id, name, avatar_url, score, product_name, comment, display_order, created_at")
+            .eq("is_active", true)
+            .order("display_order", { ascending: true })
+            .order("created_at", { ascending: false })
+            .limit(limit);
+
+        if (customErr && customErr.code !== "42P01") {
+            console.error("[Testimonials] custom_testimonials query gagal:", customErr);
+        }
+
         const { data: orderRatings, error: orderRatingsErr } = await supabase
             .from("order_ratings")
             .select("id, score, comment, created_at, orders ( recipient_name, items )")
@@ -536,6 +552,19 @@ exports.getPublicTestimonials = async (req, res) => {
         }
 
         const combined = [
+            // Testimoni kustom dulu -- ini yang sengaja dikurasi/dibuat admin,
+            // jadi diprioritaskan tampil duluan (sort di bawah pakai flag
+            // _pinned supaya urutannya tetap di depan sebelum rating asli).
+            ...(customTestimonials || []).map(r => ({
+                score: r.score,
+                comment: r.comment,
+                name: r.name || "Pembeli NexShop",
+                context: r.product_name || "Produk NexShop",
+                avatar: r.avatar_url || null,
+                created_at: r.created_at,
+                _pinned: true,
+                _order: r.display_order ?? 0
+            })),
             ...orderList.map(r => {
                 const firstItemId = Array.isArray(r.orders?.items) ? r.orders.items[0]?.id : null;
                 return {
@@ -543,7 +572,9 @@ exports.getPublicTestimonials = async (req, res) => {
                     comment: r.comment,
                     name: maskPublicName(r.orders?.recipient_name) || "Pembeli NexShop",
                     context: firstItemId ? (productNameMap[String(firstItemId)] || "Produk NexShop") : "Produk NexShop",
-                    created_at: r.created_at
+                    avatar: null,
+                    created_at: r.created_at,
+                    _pinned: false
                 };
             }),
             ...(topupRatings || []).map(r => ({
@@ -551,16 +582,181 @@ exports.getPublicTestimonials = async (req, res) => {
                 comment: r.comment,
                 name: maskPublicName(r.display_name) || "Pembeli Topup",
                 context: r.topup_orders?.nama_produk || "Topup Game",
-                created_at: r.created_at
+                avatar: null,
+                created_at: r.created_at,
+                _pinned: false
             }))
         ]
             .filter(r => r.comment && r.comment.trim().length > 0)
-            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-            .slice(0, limit);
+            .sort((a, b) => {
+                if (a._pinned !== b._pinned) return a._pinned ? -1 : 1;
+                if (a._pinned && b._pinned) return (a._order ?? 0) - (b._order ?? 0);
+                return new Date(b.created_at) - new Date(a.created_at);
+            })
+            .slice(0, limit)
+            .map(({ _pinned, _order, ...rest }) => rest);
 
         res.json(combined);
     } catch (e) {
         console.error(e);
         res.status(500).json({ message: "Gagal mengambil testimoni." });
+    }
+};
+
+// ============================================================================
+// FEATURE: CRUD Testimoni Kustom (Admin Dashboard) -- lihat komentar &
+// migrations/003_create_custom_testimonials.sql. Admin bisa bikin testimoni
+// "Apa Kata Mereka" secara manual: nama, rating bintang, foto profil (avatar_url
+// diisi hasil upload lewat POST /api/upload?type=avatar yang sudah ada), dan
+// nama produk yang dibeli. Dipakai untuk mengisi/mengkurasi section testimoni
+// homepage tanpa bergantung sepenuhnya pada rating asli dari pembeli.
+// ============================================================================
+
+function validateCustomTestimonialBody(body, { partial = false } = {}) {
+    const out = {};
+    const errors = [];
+
+    if (!partial || body.name !== undefined) {
+        const name = String(body.name || "").trim();
+        if (!name) errors.push("Nama wajib diisi.");
+        else if (name.length > 80) errors.push("Nama maksimal 80 karakter.");
+        out.name = name;
+    }
+
+    if (!partial || body.score !== undefined) {
+        const score = parseInt(body.score, 10);
+        if (!Number.isInteger(score) || score < 1 || score > 5) errors.push("Rating harus angka 1 sampai 5.");
+        out.score = score;
+    }
+
+    if (!partial || body.comment !== undefined) {
+        const comment = String(body.comment || "").trim();
+        if (!comment) errors.push("Isi testimoni wajib diisi.");
+        else if (comment.length > 300) errors.push("Isi testimoni maksimal 300 karakter.");
+        out.comment = comment;
+    }
+
+    if (!partial || body.product_name !== undefined) {
+        out.product_name = String(body.product_name || "").trim().slice(0, 100) || null;
+    }
+
+    if (!partial || body.avatar_url !== undefined) {
+        const avatarUrl = String(body.avatar_url || "").trim();
+        out.avatar_url = avatarUrl || null;
+    }
+
+    if (!partial || body.is_active !== undefined) {
+        out.is_active = body.is_active === undefined ? true : Boolean(body.is_active);
+    }
+
+    if (!partial || body.display_order !== undefined) {
+        const order = parseInt(body.display_order, 10);
+        out.display_order = Number.isInteger(order) ? order : 0;
+    }
+
+    return { out, errors };
+}
+
+exports.getAdminCustomTestimonials = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from("custom_testimonials")
+            .select("*")
+            .order("display_order", { ascending: true })
+            .order("created_at", { ascending: false });
+
+        if (error) {
+            if (error.code === "42P01") {
+                return res.status(500).json({
+                    message: "Fitur testimoni kustom belum di-setup di database (tabel custom_testimonials belum ada). Jalankan migrations/003_create_custom_testimonials.sql."
+                });
+            }
+            console.error(error);
+            return res.status(500).json({ message: "Gagal mengambil data testimoni kustom." });
+        }
+
+        res.json(data || []);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: "Terjadi kesalahan server." });
+    }
+};
+
+exports.createCustomTestimonial = async (req, res) => {
+    try {
+        const { out, errors } = validateCustomTestimonialBody(req.body, { partial: false });
+        if (errors.length) return res.status(400).json({ message: errors[0] });
+
+        const { data, error } = await supabase
+            .from("custom_testimonials")
+            .insert([out])
+            .select()
+            .single();
+
+        if (error) {
+            if (error.code === "42P01") {
+                return res.status(500).json({
+                    message: "Fitur testimoni kustom belum di-setup di database (tabel custom_testimonials belum ada). Jalankan migrations/003_create_custom_testimonials.sql."
+                });
+            }
+            console.error(error);
+            return res.status(500).json({ message: "Gagal menyimpan testimoni." });
+        }
+
+        res.status(201).json(data);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: "Terjadi kesalahan server." });
+    }
+};
+
+exports.updateCustomTestimonial = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { out, errors } = validateCustomTestimonialBody(req.body, { partial: true });
+        if (errors.length) return res.status(400).json({ message: errors[0] });
+
+        if (Object.keys(out).length === 0) {
+            return res.status(400).json({ message: "Tidak ada perubahan untuk disimpan." });
+        }
+        out.updated_at = new Date().toISOString();
+
+        const { data, error } = await supabase
+            .from("custom_testimonials")
+            .update(out)
+            .eq("id", id)
+            .select()
+            .maybeSingle();
+
+        if (error) {
+            console.error(error);
+            return res.status(500).json({ message: "Gagal mengupdate testimoni." });
+        }
+        if (!data) return res.status(404).json({ message: "Testimoni tidak ditemukan." });
+
+        res.json(data);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: "Terjadi kesalahan server." });
+    }
+};
+
+exports.deleteCustomTestimonial = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { error } = await supabase
+            .from("custom_testimonials")
+            .delete()
+            .eq("id", id);
+
+        if (error) {
+            console.error(error);
+            return res.status(500).json({ message: "Gagal menghapus testimoni." });
+        }
+
+        res.json({ message: "Testimoni berhasil dihapus." });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: "Terjadi kesalahan server." });
     }
 };

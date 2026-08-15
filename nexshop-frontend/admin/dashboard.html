@@ -1176,7 +1176,97 @@
             </div>
         </div>
     </div>
+
+    <!-- Testimoni Kustom -- testimoni "Apa Kata Mereka" homepage yang diatur
+         penuh manual dari sini: nama, rating, foto profil, produk yang dibeli. -->
+    <div class="card bg-panel border-line mt-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <div>
+                    <h5 class="mb-1"><i class="bi bi-chat-square-quote me-2"></i>Testimoni Kustom (Homepage)</h5>
+                    <p class="text-muted small mb-0">Testimoni "Apa Kata Mereka" yang diatur manual di sini akan tampil duluan di homepage, sebelum ulasan asli pembeli.</p>
+                </div>
+                <button class="btn btn-primary" onclick="openCustomTestimonialModal()"><i class="bi bi-plus-lg me-1"></i>Tambah Testimoni</button>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 admin-table">
+                    <thead>
+                        <tr>
+                            <th>Foto</th>
+                            <th>Nama</th>
+                            <th>Rating</th>
+                            <th>Produk</th>
+                            <th>Isi Testimoni</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="customTestimonialsTbody">
+                        <!-- Dimuat via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </section>
+
+<!-- Modal: Tambah/Edit Testimoni Kustom -->
+<div class="modal fade" id="customTestimonialModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-panel">
+            <div class="modal-header border-line">
+                <h5 class="modal-title" id="customTestimonialModalTitle"><i class="bi bi-chat-square-quote me-2"></i>Tambah Testimoni</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="ctId">
+                <div class="text-center mb-3">
+                    <img id="ctAvatarPreview" src="" class="d-none rounded-circle mb-2" style="width:80px;height:80px;object-fit:cover;">
+                    <div class="d-flex justify-content-center">
+                        <label class="btn btn-outline-secondary btn-sm mb-0">
+                            <i class="bi bi-camera me-1"></i>Foto Profil
+                            <input type="file" id="ctAvatarInput" accept="image/*" class="d-none">
+                        </label>
+                    </div>
+                    <div class="form-text">Opsional -- kalau kosong, akan ditampilkan inisial nama.</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Nama Pembeli</label>
+                    <input type="text" class="form-control" id="ctName" placeholder="Contoh: Budi S.">
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Rating</label>
+                        <select class="form-select" id="ctScore">
+                            <option value="5">★★★★★ (5)</option>
+                            <option value="4">★★★★☆ (4)</option>
+                            <option value="3">★★★☆☆ (3)</option>
+                            <option value="2">★★☆☆☆ (2)</option>
+                            <option value="1">★☆☆☆☆ (1)</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Produk Dibeli</label>
+                        <input type="text" class="form-control" id="ctProductName" placeholder="Contoh: 5 Diamonds">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Isi Testimoni</label>
+                    <textarea class="form-control" id="ctComment" rows="3" maxlength="300" placeholder="Contoh: Gampang, ga ribet topup langsung masuk"></textarea>
+                </div>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="ctIsActive" checked>
+                    <label class="form-check-label" for="ctIsActive">Tampilkan di homepage</label>
+                </div>
+                <div class="text-danger small mt-2" id="ctError"></div>
+            </div>
+            <div class="modal-footer border-line">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" id="saveCustomTestimonialBtn" onclick="saveCustomTestimonial()">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- ===== Settings view ===== -->
 <section id="view-settings" class="view-section d-none">

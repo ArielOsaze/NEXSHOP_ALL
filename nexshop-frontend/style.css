@@ -2417,6 +2417,7 @@ html:not(.dark) .home-glass-badge {
     color: #fff;
     font-weight: 700;
     font-size: 0.85rem;
+    object-fit: cover;
 }
 .testimonial-card__meta { min-width: 0; }
 .testimonial-card__name {
