@@ -507,6 +507,18 @@ exports.submitTopupRating = async (req, res) => {
 // ============================================================================
 exports.getPublicTestimonials = async (req, res) => {
     try {
+        // Testimoni ini sering berubah (admin nambah/edit testimoni kustom
+        // kapan aja dari dashboard) -- header di bawah maksa browser DAN
+        // CDN/proxy di depan server (Cloudflare, dsb) supaya SELALU ambil
+        // response fresh dari server ini, gak pernah nyimpen/nyajiin versi
+        // lama dari cache. Tanpa ini, testimoni yang baru diedit/dihapus di
+        // admin bisa tetap keliatan versi lama di homepage sampai cache-nya
+        // expired sendiri atau di-purge manual.
+        res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+        res.set("Pragma", "no-cache");
+        res.set("Expires", "0");
+        res.set("Surrogate-Control", "no-store"); // dihormati sebagian besar CDN (termasuk Cloudflare) sebagai sinyal "jangan cache ini di edge"
+
         const limitParam = parseInt(req.query.limit, 10);
         const limit = Number.isInteger(limitParam) && limitParam > 0 && limitParam <= 50 ? limitParam : 20;
 

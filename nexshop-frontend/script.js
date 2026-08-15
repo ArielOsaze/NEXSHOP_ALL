@@ -1913,11 +1913,12 @@ function renderTestimonials(items) {
     section.classList.remove("hidden");
 }
 
-// Klik salah satu kartu testimoni -> kartu itu membesar (jadi sorotan),
-// yang lain tetap ukuran normal, marquee TETAP jalan (tidak di-pause).
-// Klik kartu yang sama lagi -> mengecil balik ke normal. Klik kartu lain
-// saat ada yang lagi membesar -> yang lama otomatis mengecil, yang baru
-// membesar (cuma 1 kartu aktif dalam satu waktu).
+// Klik salah satu kartu testimoni -> animasi geser (marquee) BERHENTI dulu,
+// dan kartu yang diklik membesar jadi sorotan (yang lain tetap normal).
+// Klik kartu yang sama lagi -> animasi geser lanjut lagi, kartu itu
+// mengecil balik ke normal. Klik kartu lain saat ada yang lagi aktif ->
+// yang lama otomatis mengecil, yang baru gantian membesar, animasi tetap
+// berhenti (belum resume) selama masih ada kartu yang aktif.
 // Pakai event delegation di #testimonialMarquee (bukan pasang listener per
 // kartu) supaya tetap jalan walau kartu-nya di-render ulang oleh
 // renderTestimonials/loadTestimonials.
@@ -1931,7 +1932,13 @@ function renderTestimonials(items) {
 
         const wasActive = card.classList.contains("testimonial-card--active");
         marquee.querySelectorAll(".testimonial-card--active").forEach(c => c.classList.remove("testimonial-card--active"));
-        if (!wasActive) card.classList.add("testimonial-card--active");
+
+        if (!wasActive) {
+            card.classList.add("testimonial-card--active");
+            marquee.classList.add("is-paused"); // hentikan animasi geser
+        } else {
+            marquee.classList.remove("is-paused"); // lanjutkan animasi geser
+        }
     });
 })();
 

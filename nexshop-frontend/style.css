@@ -2357,9 +2357,12 @@ html:not(.dark) .home-glass-badge {
     animation-name: testimonial-scroll-right;
     animation-duration: 40s;
 }
-/* Marquee jalan terus tanpa pernah berhenti -- termasuk saat card di-tap/
-   diklik/di-hover (sengaja TIDAK pakai animation-play-state:paused di sini,
-   beda dari kebiasaan marquee pada umumnya, sesuai permintaan). */
+/* Marquee jalan terus secara default. Berhenti hanya saat ada kartu yang
+   lagi diklik/membesar (class .is-paused ditambahkan lewat JS di
+   setupTestimonialCardExpand -- lihat script.js), bukan cuma karena hover. */
+.testimonial-marquee.is-paused .testimonial-track {
+    animation-play-state: paused;
+}
 
 @keyframes testimonial-scroll-left {
     from { transform: translateX(0); }
