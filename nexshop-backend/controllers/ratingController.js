@@ -14,6 +14,22 @@ function maskPublicName(fullName) {
     return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
 }
 
+// ============================================================================
+// Helper: bersihkan nama produk buat konteks testimoni publik. Nama produk
+// di katalog internal (tabel `products`) sering ditulis lengkap dengan
+// rincian bonus buat ditampilkan di halaman produk, misal
+// "5 Diamonds (5 + 0 Bonus)" -- bagus buat listing produk, tapi berantakan
+// kalau ditampilkan di kartu testimoni ("Erick — 5 Diamonds (5 + 0 Bonus)").
+// Buang bagian kurung di akhir nama supaya jadi "5 Diamonds" saja, konsisten
+// sama testimoni topup yang sudah rapi (topup_orders.nama_produk dari
+// TokoVoucher, misal "874 Diamond MLBB").
+// ============================================================================
+function cleanProductContextName(name) {
+    const raw = String(name || "").trim();
+    if (!raw) return null;
+    return raw.replace(/\s*\([^)]*\)\s*$/, "").trim() || raw;
+}
+
 exports.checkEligibility = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -571,7 +587,7 @@ exports.getPublicTestimonials = async (req, res) => {
                     score: r.score,
                     comment: r.comment,
                     name: maskPublicName(r.orders?.recipient_name) || "Pembeli NexShop",
-                    context: firstItemId ? (productNameMap[String(firstItemId)] || "Produk NexShop") : "Produk NexShop",
+                    context: firstItemId ? (cleanProductContextName(productNameMap[String(firstItemId)]) || "Produk NexShop") : "Produk NexShop",
                     avatar: null,
                     created_at: r.created_at,
                     _pinned: false
