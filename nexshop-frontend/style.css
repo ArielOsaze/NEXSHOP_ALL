@@ -2344,6 +2344,10 @@ html:not(.dark) .home-glass-badge {
     flex-direction: column;
     gap: 1.25rem;
     overflow: hidden;
+    /* Padding vertikal biar kartu yang membesar (scale 1.22x saat diklik)
+       gak kepotong sama overflow:hidden di container ini -- tanpa ini,
+       kartu di baris paling atas/bawah bisa "terpotong" pas membesar. */
+    padding: 1.5rem 0;
     -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
     mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
 }
@@ -2383,17 +2387,24 @@ html:not(.dark) .home-glass-badge {
     gap: 0.75rem;
     padding: 1.5rem;
     cursor: pointer;
-    transition: transform .3s ease, box-shadow .3s ease;
+    transform: scale(1);
+    /* Durasi lumayan (500ms) + easing "overshoot" (sedikit lewat lalu balik)
+       biar kelihatan jelas kalau ini animasi membesar beneran, bukan
+       loncat instan -- bukan cuma transisi generic ease yang halus/samar. */
+    transition: transform .5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .5s ease;
+    will-change: transform;
 }
-/* Kartu yang diklik membesar jadi sorotan -- marquee TETAP jalan (tidak
-   di-pause), scale ini murni transform di kartu itu sendiri, terpisah dari
-   animation translateX yang jalan di .testimonial-track (parent-nya), jadi
-   dua-duanya bisa jalan bareng tanpa saling override. Klik kartu yang sama
-   lagi (atau kartu lain) -> class ini di-toggle lewat JS. */
+/* Kartu yang diklik membesar jadi sorotan -- marquee di-pause (lihat
+   .testimonial-marquee.is-paused di bawah), scale ini murni transform di
+   kartu itu sendiri, terpisah dari animation translateX yang jalan di
+   .testimonial-track (parent-nya), jadi transisi scale-nya jalan mulus
+   walau parent-nya lagi diam. Angka scale sengaja dibikin cukup besar
+   (1.22x) supaya bedanya kelihatan jelas dibanding kartu lain, bukan cuma
+   sedikit lebih gede. */
 .testimonial-card--active {
-    transform: scale(1.08);
+    transform: scale(1.22);
     z-index: 5;
-    box-shadow: 0 20px 45px -12px rgba(139, 92, 246, .45);
+    box-shadow: 0 25px 60px -12px rgba(139, 92, 246, .55);
 }
 .testimonial-card__stars {
     color: #facc15;
@@ -2461,4 +2472,8 @@ html:not(.dark) .home-glass-badge {
 
 @media (max-width: 640px) {
     .testimonial-card { width: 260px; padding: 1.15rem; }
+    /* Layar kecil lebih sempit -- scale sebesar di desktop (1.22x) bikin
+       kartu jadi kegedean/nabrak kartu tetangga. Dikecilin ke 1.1x biar
+       tetap kerasa "membesar jadi sorotan" tapi proporsional sama layarnya. */
+    .testimonial-card--active { transform: scale(1.1); }
 }
