@@ -2570,7 +2570,7 @@ function renderTopupGameGrid() {
         return `
         <div class="topup-game-card group relative home-glass-card rounded-xl sm:rounded-2xl p-[clamp(6px,2vw,16px)] flex flex-col justify-between transition-all duration-300" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
             <div>
-                <div class="relative w-full aspect-[4/5] rounded-xl sm:rounded-2xl overflow-hidden mb-2 sm:mb-4 bg-transparent">
+                <div class="relative w-full aspect-square rounded-xl sm:rounded-2xl overflow-hidden mb-2 sm:mb-4 bg-transparent">
                     ${g.logo ? `
                     <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700">
                     ` : `
