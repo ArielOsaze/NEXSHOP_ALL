@@ -338,7 +338,39 @@ exports.getMyOrders = async (req, res) => {
             return res.status(500).json({ message: "Database Error" });
         }
 
-        res.json(data);
+        // FEATURE (audit Agustus 2026): "Riwayat Saya" sebelumnya tidak
+        // pernah kasih tahu order mana yang sudah/belum dirating -- padahal
+        // fitur rating-via-riwayat (mirip Shopee: "Beri Nilai" di kartu
+        // pesanan) SUDAH bisa secara teknis (klik item -> tab Cek Transaksi
+        // -> form rating muncul kalau eligible), tapi user tidak tahu order
+        // mana yang perlu dinilai tanpa klik satu-satu. Tambahkan flag
+        // `has_rating` di sini (1 query tambahan, bukan N+1 per order) biar
+        // frontend bisa nampilin badge "Beri Rating" / "Sudah Dinilai"
+        // langsung di daftar riwayat.
+        const paidOrderIds = (data || [])
+            .filter(o => o.status === "paid")
+            .map(o => o.id);
+
+        let ratedOrderIds = new Set();
+        if (paidOrderIds.length > 0) {
+            const { data: ratings, error: ratingErr } = await supabase
+                .from("order_ratings")
+                .select("order_id")
+                .in("order_id", paidOrderIds);
+            if (!ratingErr && ratings) {
+                ratedOrderIds = new Set(ratings.map(r => r.order_id));
+            }
+            // Kalau query rating gagal, jangan sampai gagalkan seluruh
+            // request riwayat -- cukup skip flag has_rating (frontend akan
+            // treat sebagai unknown/tidak tampilkan badge untuk order itu).
+        }
+
+        const withRatingFlag = (data || []).map(o => ({
+            ...o,
+            has_rating: o.status === "paid" ? ratedOrderIds.has(o.id) : null
+        }));
+
+        res.json(withRatingFlag);
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error" });

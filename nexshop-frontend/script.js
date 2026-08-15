@@ -247,6 +247,12 @@ function closeOverlay(id) {
         window.trackPollingTimer = null;
     }
 
+    // Tutup lewat backdrop click / Escape juga harus menghentikan polling
+    // status pembayaran, sama seperti tombol X-nya (lihat stopIpaymuPolling).
+    if (id === "directPaymentOverlay" || id === "paymentWaitingOverlay") {
+        stopIpaymuPolling();
+    }
+
     if (!document.querySelector(".overlay.active")) {
         document.body.style.overflow = "";
         if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
@@ -1609,16 +1615,27 @@ async function renderRatingPrompt(orderData, container) {
     `;
     container.classList.remove("hidden");
 
-    // Pasang event handler — karena innerHTML sudah di-reset, tidak ada
-    // bahaya duplicate listener dari pemanggilan sebelumnya.
+    // ADDITIONAL BUG FIX (audit): baris-baris di bawah sebelumnya memakai
+    // document.getElementById(`rp_xxx_${uid}`) -- pencarian GLOBAL di
+    // seluruh dokumen. uid dibuat dari orderId, jadi kalau order yang SAMA
+    // sedang ditampilkan di DUA tempat sekaligus (mis. popup sukses
+    // checkout MASIH terbuka, lalu user juga membuka "Cek Transaksi" dan
+    // memasukkan Order ID yang sama), akan ada dua elemen dengan id
+    // "rp_form_<uid>" dkk di DOM secara bersamaan.
+    // document.getElementById() hanya mengembalikan elemen PERTAMA yang
+    // match -- jadi form/tombol di modal kedua bisa salah sasaran
+    // memanipulasi elemen milik modal pertama (klik bintang di satu modal
+    // bisa membuka form rating di modal yang lain). Diganti jadi
+    // container.querySelector(...) supaya lookup selalu scoped ke
+    // container ini saja, terlepas dari duplikasi id di tempat lain.
     let selectedScore = 0;
     const stars   = container.querySelectorAll(".rp-star");
-    const form    = document.getElementById(`rp_form_${uid}`);
-    const errDiv  = document.getElementById(`rp_err_${uid}`);
-    const txtArea = document.getElementById(`rp_txt_${uid}`);
-    const charCnt = document.getElementById(`rp_cnt_${uid}`);
-    const doneDiv = document.getElementById(`rp_done_${uid}`);
-    const starsWrap = document.getElementById(`rp_stars_${uid}`);
+    const form    = container.querySelector(`#rp_form_${uid}`);
+    const errDiv  = container.querySelector(`#rp_err_${uid}`);
+    const txtArea = container.querySelector(`#rp_txt_${uid}`);
+    const charCnt = container.querySelector(`#rp_cnt_${uid}`);
+    const doneDiv = container.querySelector(`#rp_done_${uid}`);
+    const starsWrap = container.querySelector(`#rp_stars_${uid}`);
 
     stars.forEach(star => {
         star.onclick = () => {
@@ -1635,10 +1652,10 @@ async function renderRatingPrompt(orderData, container) {
 
     if (txtArea) txtArea.oninput = () => { if (charCnt) charCnt.textContent = txtArea.value.length; };
 
-    const skipBtn = document.getElementById(`rp_skip_${uid}`);
+    const skipBtn = container.querySelector(`#rp_skip_${uid}`);
     if (skipBtn) skipBtn.onclick = () => { container.classList.add("hidden"); };
 
-    const submitBtn = document.getElementById(`rp_submit_${uid}`);
+    const submitBtn = container.querySelector(`#rp_submit_${uid}`);
     if (submitBtn) {
         submitBtn.onclick = async () => {
             if (selectedScore < 1) {
@@ -1998,11 +2015,12 @@ async function loadMyTransactions() {
 
         const merged = [
             ...(Array.isArray(orders) ? orders : []).map(o => ({
-                id: o.id, type: "order", status: o.status, total: o.total, created_at: o.created_at
+                id: o.id, type: "order", status: o.status, total: o.total,
+                created_at: o.created_at, has_rating: o.has_rating
             })),
             ...(Array.isArray(topups) ? topups : []).map(t => ({
                 id: t.id, type: "topup", status: t.status, total: t.harga,
-                label: t.nama_produk, created_at: t.created_at
+                label: t.nama_produk, created_at: t.created_at, has_rating: null
             }))
         ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -2015,11 +2033,26 @@ async function loadMyTransactions() {
             const label = STATUS_LABEL[t.status] || t.status;
             const cls = STATUS_CLASS[t.status] || "info";
             const tanggal = t.created_at ? new Date(t.created_at).toLocaleDateString("id-ID") : "-";
+            const isPaid = t.status === "paid" || t.status === "sukses";
+
+            // FEATURE (mirip Shopee): pesanan produk yang sudah dibayar dan
+            // belum dinilai dapat badge "Beri Rating" yang jelas kelihatan,
+            // supaya user tahu tanpa harus klik satu-satu order untuk cek.
+            // has_rating cuma ada untuk type "order" (topup tidak didukung
+            // rating -- lihat renderRatingPrompt).
+            let ratingBadge = "";
+            if (t.type === "order" && isPaid && t.has_rating === false) {
+                ratingBadge = `<span class="track-mine-rating-badge needed"><i class="fa-regular fa-star" aria-hidden="true"></i> Beri Rating</span>`;
+            } else if (t.type === "order" && isPaid && t.has_rating === true) {
+                ratingBadge = `<span class="track-mine-rating-badge done"><i class="fa-solid fa-star" aria-hidden="true"></i> Sudah Dinilai</span>`;
+            }
+
             return `
                 <button type="button" class="track-mine-item" data-order-id="${escapeHtml(t.id)}">
                     <div>
                         <div class="track-mine-id">${escapeHtml(t.id)}</div>
                         <div class="track-mine-sub">${escapeHtml(t.label || (t.type === "topup" ? "Topup" : "Pesanan Produk"))} · ${tanggal}</div>
+                        ${ratingBadge}
                     </div>
                     <div class="track-mine-right">
                         <span class="track-status-badge ${cls}">${escapeHtml(label)}</span>
@@ -2378,6 +2411,36 @@ const TOPUP_POPULAR_SHORTCUTS = [
 //    not defined" padahal sebenarnya bukan masalah koneksi sama sekali.
 let ipaymuPollingTimeout = null;
 let ipaymuPollingController = null;
+// Referensi window.open() dari openIpaymuPopup(), disimpan di sini (bukan cuma
+// di closure lokal) supaya bisa ditutup dari stopIpaymuPolling() ketika modal
+// ditutup lewat jalur lain (klik backdrop / tombol Escape), bukan cuma lewat
+// tombol X-nya sendiri.
+let ipaymuActivePopupWindow = null;
+
+// ROOT CAUSE FIX: sebelumnya logic "stop polling status pembayaran" cuma
+// dipasang di handler tombol X (dpCloseBtn / paymentWaitingCloseBtn). Modal
+// directPaymentOverlay & paymentWaitingOverlay sama-sama pakai class
+// ".overlay", yang juga bisa ditutup lewat klik area backdrop atau tombol
+// Escape (lihat listener global ov.addEventListener("click", ...) dan
+// keydown Escape) -- keduanya memanggil closeOverlay(id) LANGSUNG tanpa lewat
+// handleClose(), sehingga polling (ipaymuPollingTimeout/Controller) tetap
+// hidup di background walau modalnya sudah kelihatan tertutup. Fungsi ini
+// dipanggil dari closeOverlay() supaya SEMUA jalur penutupan (tombol X,
+// backdrop click, Escape) benar-benar menghentikan polling yang sedang
+// berjalan untuk transaksi tersebut.
+function stopIpaymuPolling() {
+    if (ipaymuPollingTimeout) { clearTimeout(ipaymuPollingTimeout); ipaymuPollingTimeout = null; }
+    if (ipaymuPollingController) { ipaymuPollingController.abort(); ipaymuPollingController = null; }
+    if (ipaymuActivePopupWindow && !ipaymuActivePopupWindow.closed) {
+        ipaymuActivePopupWindow.close();
+    }
+    ipaymuActivePopupWindow = null;
+
+    const checkoutBtn = document.getElementById("checkoutForm")?.querySelector('button[type="submit"]');
+    if (checkoutBtn) { checkoutBtn.disabled = false; checkoutBtn.textContent = "Bayar Sekarang"; }
+    const twNextBtn = document.getElementById("twNextBtn");
+    if (twNextBtn) { twNextBtn.disabled = false; twNextBtn.textContent = "Bayar Sekarang"; }
+}
 
 let twState = {
     kategori: null,
@@ -3101,17 +3164,17 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
     const handleClose = () => {
         closeOverlay("directPaymentOverlay");
 
-        // Reset button states
-        const checkoutBtn = document.getElementById("checkoutForm")?.querySelector('button[type="submit"]');
-        if (checkoutBtn) {
-            checkoutBtn.disabled = false;
-            checkoutBtn.textContent = "Bayar Sekarang";
-        }
-        const twNextBtn = document.getElementById("twNextBtn");
-        if (twNextBtn) {
-            twNextBtn.disabled = false;
-            twNextBtn.textContent = "Bayar Sekarang";
-        }
+        // ROOT CAUSE FIX (bug: popup rating/order muncul lagi setelah ditutup X):
+        // handleClose() sebelumnya TIDAK pernah menghentikan polling
+        // (ipaymuPollingTimeout / ipaymuPollingController) seperti yang sudah
+        // dilakukan di openIpaymuPopup(). Akibatnya walaupun modal QRIS/VA sudah
+        // ditutup lewat tombol X, poll() di bawah tetap jalan tiap 3 detik di
+        // background. Begitu status order berubah jadi "paid", poll() akan tetap
+        // memanggil showPaidOrderSuccess() -> openOverlay("checkoutOverlay") dan
+        // memaksa popup sukses/rating muncul lagi walau user sudah menutupnya.
+        // stopIpaymuPolling() (dipanggil juga dari closeOverlay() untuk jalur
+        // backdrop-click/Escape) menutup celah itu di semua jalur penutupan.
+        stopIpaymuPolling();
     };
     
     const newCloseBtn = closeBtn.cloneNode(true);
@@ -3124,6 +3187,11 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
 
     if (ipaymuPollingTimeout) clearTimeout(ipaymuPollingTimeout);
     if (ipaymuPollingController) ipaymuPollingController.abort();
+    // Flow "direct" (QRIS/VA) tidak membuka popup window iPaymu, jadi
+    // pastikan tidak ada referensi popup basi (mis. dari flow "redirect"
+    // sebelumnya) yang masih menggantung.
+    if (ipaymuActivePopupWindow && !ipaymuActivePopupWindow.closed) ipaymuActivePopupWindow.close();
+    ipaymuActivePopupWindow = null;
     ipaymuPollingController = new AbortController();
 
     const poll = async () => {
@@ -3134,7 +3202,21 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
             if (res.ok) {
                 const data = await res.json();
                 if (data.status === "paid" || data.status === "sukses") {
-                    handleClose();
+                    // ROOT CAUSE FIX (loop tiada henti): sebelumnya tidak ada
+                    // `return` di sini, jadi walaupun status "paid" sudah
+                    // terdeteksi dan popup sukses/rating sudah ditampilkan,
+                    // eksekusi tetap lanjut ke `setTimeout(poll, 3000)` di
+                    // bawah. 3 detik kemudian poll() jalan lagi, status masih
+                    // "paid", dan showPaidOrderSuccess() / openOverlay
+                    // dipanggil LAGI -- begitu terus setiap 3 detik selamanya,
+                    // walau modal sudah ditutup manual oleh user. Transaksi ini
+                    // sudah selesai (paid), jadi hentikan polling & langsung
+                    // keluar tanpa menjadwalkan poll berikutnya.
+                    // Order sudah lunas -- transaksi ini selesai. Hentikan polling
+                    // SEBELUM melakukan apa pun lagi supaya tidak ada jendela waktu
+                    // di mana ipaymuPollingTimeout masih terjadwal.
+                    stopIpaymuPolling();
+                    closeOverlay("directPaymentOverlay");
                     if (isTopup) {
                         document.getElementById("twStep3Error").textContent = "";
                         closeGameDetail();
@@ -3143,6 +3225,7 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
                     } else {
                         showPaidOrderSuccess(data, isTopup);
                     }
+                    return;
                 }
             }
         } catch(e) {
@@ -3162,6 +3245,11 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
     const top = (window.screen.height / 2) - (h / 2);
     const popup = window.open(paymentUrl, "iPaymuCheckout", `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
     
+    // Simpan referensi popup window secara global supaya stopIpaymuPolling()
+    // (dipanggil dari closeOverlay() saat user menutup lewat backdrop/Escape)
+    // juga bisa menutup jendela iPaymu ini, bukan cuma lewat tombol X.
+    ipaymuActivePopupWindow = popup;
+
     document.getElementById("paymentWaitingOverlay").style.display = "flex";
     
     // FIX (Bug 4): clone closeBtn dulu sebelum tambah listener baru, sama
@@ -3173,25 +3261,13 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
     oldCloseBtn.parentNode.replaceChild(closeBtn, oldCloseBtn);
 
     const handleClose = () => {
-        if (popup && !popup.closed) popup.close();
         document.getElementById("paymentWaitingOverlay").style.display = "none";
-        
-        if (ipaymuPollingTimeout) clearTimeout(ipaymuPollingTimeout);
-        if (ipaymuPollingController) ipaymuPollingController.abort();
-        
+        // ROOT CAUSE FIX (bug: popup muncul lagi setelah ditutup X): pakai
+        // stopIpaymuPolling() terpusat (lihat komentar di deklarasinya) supaya
+        // popup window ditutup, timer dibersihkan, dan controller di-abort,
+        // konsisten dengan jalur backdrop-click/Escape lewat closeOverlay().
+        stopIpaymuPolling();
         closeBtn.removeEventListener("click", handleClose);
-        
-        // Reset button states
-        const checkoutBtn = document.getElementById("checkoutForm")?.querySelector('button[type="submit"]');
-        if (checkoutBtn) {
-            checkoutBtn.disabled = false;
-            checkoutBtn.textContent = "Bayar Sekarang";
-        }
-        const twNextBtn = document.getElementById("twNextBtn");
-        if (twNextBtn) {
-            twNextBtn.disabled = false;
-            twNextBtn.textContent = "Bayar Sekarang";
-        }
     };
     closeBtn.addEventListener("click", handleClose);
 
@@ -3215,6 +3291,15 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
             if (res.ok) {
                 const data = await res.json();
                 if (data.status === "paid" || data.status === "sukses") {
+                    // ROOT CAUSE FIX (loop tiada henti / popup muncul lagi
+                    // setelah ditutup): sama seperti bug di showDirectPaymentModal,
+                    // sebelumnya tidak ada `return` di sini. handleClose() berhenti
+                    // polling untuk sesaat, tapi eksekusi tetap jatuh ke
+                    // `setTimeout(poll, 3000)` di akhir fungsi, jadi poll() jalan
+                    // lagi 3 detik kemudian, status masih "paid", dan
+                    // showPaidOrderSuccess() dipanggil ULANG -- popup sukses/rating
+                    // jadi muncul berkali-kali walau sudah ditutup. Transaksi sudah
+                    // selesai, jadi stop di sini.
                     handleClose();
                     
                     if (isTopup) {
@@ -3225,6 +3310,7 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
                     } else {
                         showPaidOrderSuccess(data, isTopup);
                     }
+                    return;
                 }
             }
         } catch(e) {
