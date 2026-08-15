@@ -506,10 +506,10 @@ function renderProducts() {
             }
         } else {
             grid.innerHTML = data.map(p => `
-                <article class="group relative home-glass-card rounded-2xl sm:rounded-3xl flex flex-col h-full" data-product-card data-id="${p.id}" tabindex="0">
-                    <div class="relative w-full aspect-[4/3] rounded-t-2xl sm:rounded-t-3xl overflow-hidden bg-transparent shrink-0">
-                        <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 fallback-clear" loading="lazy" decoding="async">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 pointer-events-none"></div>
+                <article class="group relative rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer home-glass-surface hover:border-brand-cyan/40 transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-brand-indigo/20 flex flex-col h-full" data-product-card data-id="${p.id}" tabindex="0">
+                    <div class="relative w-full aspect-[4/3] overflow-hidden bg-gradient-to-br from-[#1a1533] to-[#0d1b2e] shrink-0">
+                        <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 fallback-clear" loading="lazy" decoding="async">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/0 to-black/10 pointer-events-none"></div>
                         ${(isFlashSaleActive(p) || p.badge) ? `<div class="absolute top-2 left-2 flex flex-col gap-1">${isFlashSaleActive(p) ? '<span class="bg-red-500 text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1 border border-white/10"><span class="material-symbols-outlined text-[8px] sm:text-[10px]">bolt</span> FLASH SALE</span>' : ""}${p.badge ? `<span class="bg-black/50 backdrop-blur-md text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full uppercase tracking-widest border border-white/10">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}
                     </div>
                     <div class="p-[clamp(6px,2vw,20px)] flex flex-col flex-1">
@@ -1771,12 +1771,12 @@ function renderGamingNews(items) {
         const category = String(item.category || "Gaming");
         
         return `
-            <a href="/berita/${encodeURIComponent(item.slug)}" class="group relative home-glass-card rounded-2xl overflow-hidden flex flex-col no-underline text-left transition-all duration-300">
-                <div class="relative w-full aspect-video overflow-hidden bg-transparent">
-                    <img src="${escapeHtml(imageUrl)}" alt="" class="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700" loading="lazy" decoding="async">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none"></div>
-                    <div class="absolute bottom-3 left-4 z-10">
-                        <span class="home-glass-badge">
+            <a href="/berita/${encodeURIComponent(item.slug)}" class="group relative home-glass-surface rounded-2xl overflow-hidden hover:border-brand-indigo/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-2 cursor-pointer flex flex-col no-underline text-left">
+                <div class="relative w-full aspect-video overflow-hidden bg-gray-100 dark:bg-gray-800">
+                    <img src="${escapeHtml(imageUrl)}" alt="" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" loading="lazy" decoding="async">
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70"></div>
+                    <div class="absolute bottom-3 left-4">
+                        <span class="inline-flex items-center px-2 py-1 rounded text-xs font-bold uppercase tracking-wider bg-brand-indigo text-white shadow-sm">
                             ${escapeHtml(category)}
                         </span>
                     </div>
@@ -2568,18 +2568,19 @@ function renderTopupGameGrid() {
         const minPrice = prices.length ? Math.min(...prices) : null;
         const logoUrl = g.logo ? escapeHtml(safeUrl(g.logo)) : "";
         return `
-        <div class="topup-game-card group relative home-glass-card rounded-xl sm:rounded-2xl p-[clamp(6px,2vw,16px)] flex flex-col justify-between transition-all duration-300" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
+        <div class="topup-game-card group relative home-glass-surface rounded-xl sm:rounded-2xl p-[clamp(6px,2vw,16px)] hover:border-brand-indigo/50 dark:hover:border-brand-cyan/50 transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 sm:hover:-translate-y-2 cursor-pointer flex flex-col justify-between" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-brand-indigo/5 dark:to-brand-cyan/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl sm:rounded-2xl pointer-events-none"></div>
             <div>
-                <div class="relative w-full aspect-square rounded-xl sm:rounded-2xl overflow-hidden mb-2 sm:mb-4 bg-transparent">
+                <div class="relative w-full aspect-square rounded-xl sm:rounded-2xl overflow-hidden mb-2 sm:mb-4 bg-gradient-to-br from-[#1a1533] to-[#0d1b2e]">
                     ${g.logo ? `
-                    <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700">
+                    <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
                     ` : `
-                    <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/20 to-brand-cyan/20"></div>
+                    <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/30 to-brand-cyan/30"></div>
                     <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-3xl sm:text-5xl text-white/50">sports_esports</span>
+                        <span class="material-symbols-outlined text-3xl sm:text-5xl text-white/70">sports_esports</span>
                     </div>
                     `}
-                    <span class="absolute top-2 left-2 home-glass-badge !text-[9px] !px-2 !py-0.5 !shadow-sm">INSTAN</span>
+                    <span class="absolute top-1 sm:top-2 left-1 sm:left-2 px-1 sm:px-2 py-0.5 sm:py-1 rounded bg-brand-indigo/80 backdrop-blur-md text-white text-[8px] sm:text-[10px] font-bold shadow-lg">INSTAN</span>
                 </div>
                 <h4 class="text-[clamp(0.65rem,2.2vw,0.85rem)] leading-tight font-bold text-gray-900 dark:text-white line-clamp-2 mb-1 sm:mb-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors" title="${escapeHtml(g.kategori)}">${escapeHtml(g.kategori)}</h4>
                 <div class="flex items-center gap-1 text-[clamp(0.55rem,1.7vw,0.75rem)] text-gray-500 dark:text-gray-400 mb-2 sm:mb-4 font-medium">
