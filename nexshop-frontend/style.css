@@ -1,5 +1,5 @@
-/* =========================================================
-   NexShop — theme tokens
+﻿/* =========================================================
+   NexShop â€” theme tokens
    Display: Sora (headings, brand)
    Body: Inter (body, UI elements)
    Accent/numeric: Space Grotesk (badges, stat-like numbers)
@@ -139,7 +139,7 @@ html, body, *, ::-webkit-scrollbar {
 
 *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-/* Only suppress outlines for mouse/touch — preserve keyboard accessibility */
+/* Only suppress outlines for mouse/touch â€” preserve keyboard accessibility */
 :focus:not(:focus-visible){ outline:none; }
 :focus-visible{ outline:2px solid var(--violet); outline-offset:3px; border-radius:6px; box-shadow:0 0 0 4px rgba(139,92,246,.18); transition:outline-offset .12s ease, box-shadow .12s ease; }
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{ outline:2px solid var(--violet); outline-offset:3px; box-shadow:0 0 0 4px rgba(139,92,246,.18); }
@@ -188,7 +188,7 @@ h1,h2,h3,h4{
     line-height:1.2;
 }
 
-/* Custom slim scrollbar — restored for desktop usability */
+/* Custom slim scrollbar â€” restored for desktop usability */
 @media (hover: hover) and (pointer: fine) {
     html{ scrollbar-width:thin; scrollbar-color:var(--scroll-thumb) transparent; }
     ::-webkit-scrollbar{ width:6px; height:6px; }
@@ -486,7 +486,7 @@ nav#mainNav.nav-scrolled {
     content:""; position:absolute; inset:0;
     background:var(--hero-overlay);
 }
-/* Slide "gambar penuh" — buat banner yang tulisannya udah baked-in di
+/* Slide "gambar penuh" â€” buat banner yang tulisannya udah baked-in di
    gambarnya sendiri. Gak di-crop (contain, bukan cover) dan gak ada overlay
    gelap penutup, biar gambarnya keliatan utuh persis kayak aslinya. */
 .hero-slide.full-image{ background-size:contain; background-position:center; background-repeat:no-repeat; background-color:var(--bg-void-2); }
@@ -538,7 +538,7 @@ nav#mainNav.nav-scrolled {
 .hero-dot{ width:10px; height:10px; border-radius:999px; background:rgba(255,255,255,.26); transition:.2s; }
 .hero-dot.active{ background:var(--cyan); width:24px; box-shadow:0 0 16px rgba(34,211,238,.28); }
 
-/* Trust bar — stat singkat + badge kepercayaan, tampil di antara hero &
+/* Trust bar â€” stat singkat + badge kepercayaan, tampil di antara hero &
    katalog biar area itu gak kosong dan langsung nunjukin toko udah "hidup". */
 .trust-bar{
     max-width:1180px; margin:12px auto 0; padding:0 20px 10px; position:relative; z-index:2;
@@ -756,7 +756,7 @@ nav#mainNav.nav-scrolled {
     .card:hover .buy-btn{ transform:translateY(-1px); box-shadow:0 10px 26px rgba(139,92,246,.38),0 0 18px rgba(34,211,238,.12); }
 }
 
-/* Badge overlay — absolute layer inside card-img, never influences image dimensions */
+/* Badge overlay â€” absolute layer inside card-img, never influences image dimensions */
 .card-badges{ position:absolute; z-index:3; inset:12px 12px auto; display:flex; align-items:flex-start; justify-content:space-between; gap:8px; pointer-events:none; }
 .card-badges__start,.card-badges__end{ display:flex; min-width:0; }
 .card-badges__end{ margin-left:auto; }
@@ -1032,7 +1032,7 @@ nav#mainNav.nav-scrolled {
 }
 .tw-check-icon{ font-weight:900; }
 
-/* Step 2 — nominal grid */
+/* Step 2 â€” nominal grid */
 .tw-product-grid{ display:flex; flex-direction:column; gap:22px; }
 .tw-product-group-heading{
     font-family:'Sora',sans-serif; font-size:14px; font-weight:700; letter-spacing:.04em; text-transform:uppercase;
@@ -1062,7 +1062,7 @@ nav#mainNav.nav-scrolled {
 }
 .tw-product-card.selected .tw-product-check{ opacity:1; transform:scale(1); }
 
-/* Step 3 — payment method cards */
+/* Step 3 â€” payment method cards */
 .tw-payment-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:14px; }
 .tw-payment-card{
     position:relative; display:flex; align-items:center; gap:14px; background:var(--bg-panel-2);
@@ -1082,7 +1082,7 @@ nav#mainNav.nav-scrolled {
 }
 .tw-payment-card.selected .tw-payment-check{ opacity:1; transform:scale(1); }
 
-/* Step 4 — order summary */
+/* Step 4 â€” order summary */
 .tw-summary{ display:flex; flex-direction:column; gap:0; margin-bottom:18px; }
 .tw-summary-row{
     display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 0;
@@ -1322,7 +1322,7 @@ nav#mainNav.nav-scrolled {
 .faq-item summary{ padding:14px 16px; cursor:pointer; font-weight:600; font-size:14px; color:var(--text); list-style:none; }
 .faq-item summary::-webkit-details-marker{ display:none; }
 .faq-item summary::before{ content:"+"; color:var(--text-violet); margin-right:10px; font-weight:700; }
-.faq-item[open] summary::before{ content:"−"; }
+.faq-item[open] summary::before{ content:"âˆ’"; }
 .faq-item p{ padding:0 16px 14px; color:var(--text-muted); font-size:13.5px; margin:0; }
 .faq-empty{ color:var(--text-muted); font-size:13.5px; }
 
@@ -1358,7 +1358,7 @@ nav#mainNav.nav-scrolled {
 .pm-benefits span{ min-width:0; display:flex; flex-direction:column; line-height:1.28; gap:2px; }
 .pm-benefits strong{ font-size:11.5px; color:var(--text); }
 .pm-benefits small{ color:var(--text-muted); font-size:10.5px; }
-/* Purchase panel — price + quantity + CTA grouped visually */
+/* Purchase panel â€” price + quantity + CTA grouped visually */
 .pm-price{ font-family:'Inter',sans-serif; font-weight:700; font-size:26px; color:var(--text); margin:0 0 16px; padding:18px; border:1px solid color-mix(in srgb,var(--violet) 22%,var(--line)); border-radius:16px; background:linear-gradient(155deg,rgba(139,92,246,.06),rgba(34,211,238,.04),rgba(139,92,246,.03)); display:flex; flex-direction:column; align-items:flex-start; gap:8px; }
 .pm-price .price-sale-row{ width:100%; gap:10px; align-items:center; }
 .pm-price .price-now{ font-size:26px; }
@@ -1674,7 +1674,7 @@ input::placeholder{ color:var(--text-dim); }
     .hero-arrow-right{ right:10px; left:auto; }
     .hero-dots{ left:50%; bottom:14px; transform:translateX(-50%); z-index:5; }
 
-    /* Product modal — stack vertically on mobile */
+    /* Product modal â€” stack vertically on mobile */
     .product-modal-body{
         grid-template-columns:1fr; gap:22px; max-height:none;
     }
@@ -1794,7 +1794,7 @@ input::placeholder{ color:var(--text-dim); }
 @media(max-width:480px){
     .pm-actions{ grid-template-columns:1fr; }
     .pm-qty{ margin-bottom:14px; }
-    /* Footer contact — single column on very small screens */
+    /* Footer contact â€” single column on very small screens */
     .footer-contact{ grid-template-columns:1fr !important; max-width:100% !important; }
     .footer-social-link{ min-height:70px; }
 }
@@ -2266,21 +2266,62 @@ input::placeholder{ color:var(--text-dim); }
     }
 }
 
-/* --- SAFEMODE HOMEPAGE GLASS SURFACE --- */
-.dark .home-glass-surface,
-[data-theme="dark"] .home-glass-surface,
-:root:not([data-theme="light"]) .home-glass-surface {
-    background: rgba(12, 18, 35, 0.45) !important;
-    backdrop-filter: blur(16px) saturate(120%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.10) !important;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.20) !important;
+/* --- HOMEPAGE GLASSMORPHISM --- */
+html.dark .home-glass-card {
+    background: rgba(12, 18, 35, 0.45);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+html.dark .home-glass-card:hover {
+    background: rgba(12, 18, 35, 0.55);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+html:not(.dark) .home-glass-card {
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+html:not(.dark) .home-glass-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    border-color: rgba(139, 92, 246, 0.3);
 }
 
-[data-theme="light"] .home-glass-surface {
-    background: rgba(255, 255, 255, 0.65) !important;
-    backdrop-filter: blur(16px) saturate(120%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
-    border: 1px solid rgba(0, 0, 0, 0.10) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05) !important;
+html.dark .home-glass-badge {
+    display: inline-flex;
+    width: fit-content;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(139, 92, 246, 0.12);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: rgba(216, 180, 254, 0.95);
+    border: 1px solid rgba(167, 139, 250, 0.22);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
+html:not(.dark) .home-glass-badge {
+    display: inline-flex;
+    width: fit-content;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(139, 92, 246, 0.1);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--violet-2);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
