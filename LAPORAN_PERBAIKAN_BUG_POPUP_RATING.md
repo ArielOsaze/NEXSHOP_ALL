@@ -344,3 +344,212 @@ staging sebelum deploy ke production, terutama skenario #1–#6b dan #13–#14.
 
 Semua perubahan disertai komentar `ROOT CAUSE FIX` / `BUG FIX` / `FEATURE`
 langsung di kode agar mudah ditelusuri di masa depan.
+
+---
+
+# Sesi Lanjutan — Topup Rating, Testimoni "Apa Kata Mereka", & SSR/Sitemap
+
+## Konteks penting
+Sesi ini bekerja di atas **snapshot repo yang berbeda** dari sesi sebelumnya
+di atas — ini adalah repo git asli yang terhubung ke GitHub (`ArielOsaze/
+NEXSHOP_ALL`) dan sudah berkembang independen (redesign UI glassmorphism,
+perbaikan flash-sale, dll — commit yang tidak pernah terlihat di sesi
+sebelumnya). Sebelum menulis kode apa pun, dilakukan audit ulang dan
+dikonfirmasi: **fix loop popup, fix middleware JWT, fix ID-collision rating,
+fix mojibake, dan badge rating "Riwayat Saya" untuk order SUDAH diterapkan**
+di repo ini (identik dengan yang didokumentasikan di bagian atas laporan
+ini). **SSR meta-tag per-artikel dan sitemap dinamis JUGA sudah dibangun**
+secara independen (`ssrController.js`, `sitemapController.js`, nginx sudah
+di-proxy dengan benar) — tapi ditemukan beberapa bug nyata di situ yang
+diperbaiki di sesi ini (lihat §7).
+
+Yang BELUM ada dan dikerjakan di sesi ini: **rating untuk topup**, section
+**testimoni "Apa Kata Mereka"**, dan **perbaikan bug SSR/sitemap**.
+
+## 5. Fitur: Rating untuk Topup
+
+Sebelumnya topup memang **tidak punya rating sama sekali** — dikonfirmasi
+by design (bukan bug): `order_ratings` ber-FK ke tabel `orders` saja,
+`ratingController.js` cuma query ke situ, frontend eksplisit
+`if (orderData.type === "topup") return;`. User minta ini ditambahkan
+(seperti Shopee — bisa rating produk maupun topup).
+
+**Implementasi** (paritas penuh dengan rating produk):
+- **Migration baru**: `nexshop-backend/migrations/002_create_topup_ratings.sql`
+  — tabel `topup_ratings` terpisah (bukan reuse `order_ratings`, supaya
+  tidak perlu ubah constraint FK tabel lama yang berisiko ke data existing).
+  Kolom tambahan `display_name` (opsional) karena checkout topup **tidak
+  pernah** mengumpulkan nama pembeli sama sekali — beda dari order yang
+  sudah punya `recipient_name`.
+  **⚠️ HARUS dijalankan manual di Supabase SQL Editor** — saya tidak
+  punya akses/kredensial ke database, jadi tidak bisa menjalankannya
+  sendiri. Endpoint topup-rating akan mengembalikan pesan error yang jelas
+  ("belum di-setup") sampai migration ini dijalankan, bukan 500 mentah.
+- **Backend** (`ratingController.js`): `checkTopupEligibility`,
+  `submitTopupRating` — logic identik dengan versi order (cek status
+  `"sukses"`, ownership kalau order match user login, cegah rating ganda),
+  cuma target tabelnya `topup_orders`/`topup_ratings`.
+- **Routes** (`ratingRoutes.js`): `GET /api/ratings/topup/eligibility/:orderId`,
+  `POST /api/ratings/topup`.
+- **Backend** (`topupController.js`, `getMyOrders`): tambah flag
+  `has_rating` (query batch, sama pola dengan `orderController.getMyOrders`
+  yang sudah ada sebelumnya untuk order).
+- **Frontend** (`renderRatingPrompt` di `script.js`): sekarang bercabang
+  `isTopup` — pilih endpoint eligibility/submit yang benar, dan untuk topup
+  menampilkan field "Nama kamu (opsional)" tambahan di form (karena tidak
+  ada nama asli yang bisa dipakai).
+- **Frontend** (`renderTrackResult`): gate slot rating yang sebelumnya
+  `data.type === "order"` dilonggarkan jadi berlaku untuk **semua** type
+  yang sudah lunas (`isPaid`) — jadi rating topup otomatis muncul di popup
+  "Cek Transaksi" setelah pembayaran topup sukses, sama seperti order.
+- **Frontend** (`loadMyTransactions`): badge "Beri Rating"/"Sudah Dinilai"
+  di "Riwayat Saya" tidak lagi di-gate ke `type === "order"` — berlaku untuk
+  topup juga.
+
+## 6. Fitur: Testimoni "Apa Kata Mereka"
+
+Section baru di homepage, tepat di bawah Gaming News, menampilkan rating
+tinggi (skor ≥4) yang punya komentar — **BUKAN** carousel klik-geser seperti
+`#promoCarouselInner` yang sudah ada, tapi **marquee dua baris arah
+berlawanan yang scroll otomatis tanpa henti**, pola yang dipakai website
+besar (Stripe/Linear/Vercel dkk) untuk social proof.
+
+- **Backend** (`ratingController.js`, `getPublicTestimonials`, endpoint
+  publik `GET /api/ratings/public/testimonials`): gabungan `order_ratings`
+  + `topup_ratings`, cuma skor≥4 dan ada komentar teks. Nama pembeli
+  **disamarkan** ("Budi Santoso" → "Budi S.") — tidak pernah expose nama
+  lengkap/email/no. HP/Order ID ke publik.
+  **⚠️ Catatan moderasi**: TIDAK ada tahap approval admin — begitu rating
+  masuk dengan skor tinggi + komentar, langsung tampil publik. Kalau nanti
+  butuh kurasi (misal ada komentar kurang pantas meski skornya tinggi),
+  perlu ditambah kolom `is_featured` + toggle UI admin — sengaja tidak
+  dibangun sekarang (di luar cakupan yang diminta), tapi ini limitasi nyata
+  yang perlu diketahui sebelum production.
+- **Frontend**: section baru `#testimonials` di `index.html`, kartu pakai
+  class `.home-glass-card` yang **sudah ada** di codebase ini (design
+  system glassmorphism yang sama dipakai kartu News/Produk) — supaya
+  visualnya konsisten dengan redesign UI yang sudah berjalan, bukan bikin
+  gaya kartu baru sendiri.
+- **CSS** (`style.css`): `.testimonial-marquee`/`.testimonial-track` dengan
+  `@keyframes` dua arah, `mask-image` fade di tepi, **pause saat di-hover**,
+  dan **menghormati `prefers-reduced-motion`** (animasi dimatikan, diganti
+  scroll horizontal manual supaya konten tetap terjangkau).
+- **JS** (`script.js`): `loadTestimonials()`/`renderTestimonials()` —
+  section tetap `hidden` kalau tidak ada testimoni sama sekali (beda dari
+  `#news` yang selalu tampil dengan pesan kosong). Konten tiap baris
+  diduplikasi 2x supaya animasi `translateX(-50%)` loop mulus tanpa
+  "patahan".
+
+## 7. Perbaikan Bug di SSR (`/berita/:slug`) & Sitemap
+
+Infrastruktur SSR meta-tag dan sitemap dinamis **sudah dibangun** sebelum
+sesi ini (kemungkinan lewat sesi Claude Code terpisah) — nginx sudah benar
+di-proxy (`/berita/:slug` dan `/sitemap.xml` → backend Express, bukan file
+statis lagi). Diaudit dan ditemukan 4 bug nyata, semua diperbaiki:
+
+1. **Halaman 404 artikel jadi fragmen HTML polos** (`ssrController.js`):
+   sebelumnya `res.send("<h1>404 - Not Found</h1>...")` — tanpa
+   `<html>/<head>/<body>`, tanpa CSS, tanpa navigasi situs sama sekali.
+   Kalau ada yang share link artikel yang salah/terhapus, dapat halaman
+   rusak. **Fix**: tetap kirim template `berita-artikel.html` yang sama
+   (JS di halaman itu sendiri tetap menampilkan state "tidak ditemukan"
+   miliknya sendiri, tidak ada perubahan perilaku untuk user asli), cuma
+   title/description-nya diganti generik + status HTTP 404 tetap benar.
+2. **Error database asli diperlakukan sama dengan "artikel tidak ada"**:
+   sebelumnya `error || !article` → selalu 404, padahal error koneksi DB
+   bukan berarti artikelnya tidak ada. **Fix**: dibedakan — error server
+   asli → 200 + kirim template apa adanya (fallback aman, JS halaman tetap
+   bisa fetch sendiri), genuinely not-found (query sukses, kosong) → 404 +
+   meta generik.
+3. **`sitemapController.js` hardcode `baseUrl = "https://nexshop.cloud"`**,
+   tidak konsisten dengan `ssrController.js` yang benar pakai
+   `process.env.FRONTEND_URL`. Kalau domain situs berbeda antara staging &
+   production, sitemap akan terus menunjuk domain yang salah. **Fix**:
+   disamakan, pakai `FRONTEND_URL` juga.
+4. **Slug artikel tidak di-escape XML** di `<loc>` sitemap. Slug memang
+   sudah disanitasi (`[a-z0-9-]` saja) saat dibuat jadi risikonya rendah,
+   tapi tetap ditambahkan `escapeXml()` sebagai defense-in-depth untuk baris
+   data lama yang mungkin belum tersanitasi.
+5. **File statis `nexshop-frontend/sitemap.xml`** (isinya cuma homepage,
+   beku/tidak pernah update) **dihapus** — dikonfirmasi dulu tidak ada
+   referensi apa pun ke file ini di seluruh repo, dan nginx (`location =
+   /sitemap.xml { proxy_pass ...backend... }`, exact-match, prioritas
+   tertinggi) **selalu** proxy ke endpoint dinamis di production, jadi file
+   statis ini cuma bangkai yang membingungkan (bisa menyesatkan kalau ada
+   yang testing frontend secara statis tanpa nginx).
+
+`robots.txt` sudah benar menunjuk ke `/sitemap.xml` (yang di-proxy nginx ke
+endpoint dinamis) — tidak perlu diubah.
+
+## 8. Regression Test (Sesi Lanjutan)
+
+Semua di `regtest/`, dijalankan & PASS di sesi ini:
+- `sim4_ratingbadge.js` — diperbarui, 8 kasus (4 order + 4 topup, termasuk
+  yang baru: topup sukses belum/sudah rating).
+- `sim7_testimonial_rows.js` — 9 kasus split/pad/duplikasi baris marquee,
+  termasuk edge case 1 testimoni saja (pastikan tidak infinite loop).
+- `sim8_ssr_sitemap_fixes.js` — 10 kasus: escapeXml, halaman 404 tetap
+  pakai template utuh (bukan fragmen polos), konsistensi baseUrl.
+- Seluruh 9 script logic (`sim.js` s/d `sim8_*.js`) dijalankan ulang
+  sebagai satu batch — semua PASS.
+- `node -c` (syntax check) di seluruh file backend (controllers/, routes/,
+  middleware/) dan `nexshop-frontend/script.js` — semua lolos.
+
+**Yang TIDAK dijalankan**: `regtest/test_ssr.js` (integration test yang
+konek ke Supabase asli & insert/delete baris dummy) — sengaja tidak
+dijalankan dari sesi ini karena saya tidak punya akses ke database
+production kamu, dan tidak semestinya menjalankan test yang menulis ke DB
+production tanpa izin eksplisit meski ada cleanup di akhir test. Logic yang
+diubah di `ssrController.js`/`sitemapController.js` sudah diverifikasi
+kompatibel dengan asersi test tersebut lewat pembacaan kode manual (lihat
+komentar di `sim8_ssr_sitemap_fixes.js`) — jalankan `node regtest/
+test_ssr.js` sendiri di environment staging untuk verifikasi end-to-end
+sebelum production.
+
+## 9. File yang Diubah/Ditambah (Sesi Lanjutan)
+- **Baru**: `nexshop-backend/migrations/002_create_topup_ratings.sql`
+  (⚠️ jalankan manual di Supabase)
+- `nexshop-backend/controllers/ratingController.js` — tambah
+  `checkTopupEligibility`, `submitTopupRating`, `getPublicTestimonials`,
+  `maskPublicName`
+- `nexshop-backend/routes/ratingRoutes.js` — tambah 3 route baru
+- `nexshop-backend/controllers/topupController.js` — `getMyOrders`
+  tambah flag `has_rating`
+- `nexshop-backend/controllers/ssrController.js` — fix 404 & error handling
+  (§7.1–7.2), baca file jadi async
+- `nexshop-backend/controllers/sitemapController.js` — fix baseUrl &
+  XML escaping (§7.3–7.4)
+- `nexshop-backend/.env.example` — dokumentasi `FRONTEND_DIST_PATH`
+  (opsional, ada default otomatis)
+- **Dihapus**: `nexshop-frontend/sitemap.xml` (§7.5)
+- `nexshop-frontend/script.js` — `renderRatingPrompt`, `renderTrackResult`,
+  `loadMyTransactions` (topup rating); `loadTestimonials`,
+  `renderTestimonials`, `testimonialCardHtml`, `testimonialInitials`
+  (testimoni), dipanggil dari init sequence
+- `nexshop-frontend/index.html` — section baru `#testimonials`
+- `nexshop-frontend/style.css` — CSS marquee testimoni
+- `AGENTS.md` — dokumentasi `regtest/` dan kewajiban migration manual
+- `regtest/sim4_ratingbadge.js` — diperbarui (topup)
+- **Baru**: `regtest/sim7_testimonial_rows.js`,
+  `regtest/sim8_ssr_sitemap_fixes.js`
+- `regtest/README.md` — diperbarui, termasuk peringatan soal `test_ssr.js`
+
+## 10. Checklist Sebelum Production
+1. **Jalankan `nexshop-backend/migrations/002_create_topup_ratings.sql`**
+   di Supabase SQL Editor — tanpa ini, endpoint rating topup akan gagal.
+2. Jalankan `node regtest/test_ssr.js` di staging (bukan production) untuk
+   verifikasi end-to-end SSR/sitemap dengan data asli.
+3. Uji share link artikel (`/berita/:slug`) ke WhatsApp/Telegram/Facebook —
+   preview harus menampilkan judul & gambar artikel yang sebenarnya, bukan
+   generic homepage.
+4. Cek `https://nexshop.cloud/sitemap.xml` langsung di browser — harus
+   XML dinamis berisi semua artikel, bukan cuma homepage.
+5. Uji alur rating topup end-to-end: checkout topup → sukses → form rating
+   muncul di popup "Cek Transaksi" → submit → cek muncul di "Apa Kata
+   Mereka" (kalau skor≥4 & ada komentar) dan badge "Sudah Dinilai" di
+   "Riwayat Saya".
+6. Deploy ulang backend (route baru butuh restart proses Node/PM2) dan
+   pastikan `nginx-nexshop.conf` yang aktif di server memang sudah versi
+   yang proxy `/berita/:slug` & `/sitemap.xml` ke backend (tidak perlu
+   diubah lagi di sesi ini — sudah benar — tapi konfirmasi versi yang
+   ter-deploy memang yang ini).

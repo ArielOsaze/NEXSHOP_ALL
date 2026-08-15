@@ -10,7 +10,23 @@ This repository is a small fullstack project with:
 - Change to `nexshop-backend/`.
 - Install dependencies with `npm install`.
 - Start the backend with `npm start`.
-- There are no automated tests in this repo.
+- There are no automated tests in this repo, but `regtest/` at the project
+  root has standalone logic-verification scripts (`node regtest/simN_*.js`)
+  covering payment-popup polling, rating eligibility badges, SSR/sitemap
+  fixes, etc. Most need no dependencies or DB access. The exception is
+  `regtest/test_ssr.js`, which is a real integration test that connects to
+  the live Supabase DB and inserts/deletes a throwaway article row — only
+  run it against a non-production database.
+
+## Database migrations
+- `nexshop-backend/migrations/*.sql` are NOT run automatically — there is no
+  migration runner in this project. Apply each file manually in the
+  Supabase SQL Editor before the feature that depends on it will work.
+- `002_create_topup_ratings.sql` must be run before the topup-rating
+  endpoints (`/api/ratings/topup/*`) will work; until then they fail with a
+  friendly "belum di-setup" message rather than a raw 500, but they don't
+  work.
+
 
 ## Important conventions
 - Backend uses CommonJS modules and `type: commonjs` in `nexshop-backend/package.json`.

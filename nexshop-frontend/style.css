@@ -2325,3 +2325,127 @@ html:not(.dark) .home-glass-badge {
     border: 1px solid rgba(139, 92, 246, 0.2);
 }
 
+
+/* ==========================================================================
+   TESTIMONIAL MARQUEE ("Apa Kata Mereka" -- section homepage di bawah
+   Gaming News). Auto-scroll tak berujung, DUA baris arah berlawanan --
+   pola yang biasa dipakai website besar (Stripe/Linear/Vercel dkk) untuk
+   social proof. SENGAJA BUKAN carousel klik-geser seperti
+   #promoCarouselInner yang sudah ada di halaman ini (itu discrete/manual,
+   ini kontinu/otomatis).
+   Konten tiap baris di-duplikasi 2x oleh JS (lihat renderTestimonials di
+   script.js) supaya translateX(-50%) bisa loop mulus tanpa "patahan" di
+   titik sambung. Kartu pakai .home-glass-card (design system glassmorphism
+   yang sudah ada di section News/Produk) supaya visualnya konsisten,
+   bukan bikin gaya kartu baru sendiri.
+   ========================================================================== */
+.testimonial-marquee {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+}
+.testimonial-track {
+    display: flex;
+    gap: 1.25rem;
+    width: max-content;
+    animation: testimonial-scroll-left 46s linear infinite;
+}
+.testimonial-track--reverse {
+    animation-name: testimonial-scroll-right;
+    animation-duration: 40s;
+}
+/* Pause seluruh marquee saat kursor di atasnya (atau saat salah satu card
+   difokus via keyboard) -- biar bisa dibaca tanpa dikejar animasi. */
+.testimonial-marquee:hover .testimonial-track,
+.testimonial-marquee:focus-within .testimonial-track {
+    animation-play-state: paused;
+}
+
+@keyframes testimonial-scroll-left {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+@keyframes testimonial-scroll-right {
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0); }
+}
+
+/* .home-glass-card (di atas) sudah kasih background/blur/border/shadow --
+   di sini cuma tambahin layout & ukuran spesifik buat kartu testimoni. */
+.testimonial-card {
+    flex: 0 0 auto;
+    width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.5rem;
+}
+.testimonial-card__stars {
+    color: #facc15;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+}
+.testimonial-card__comment {
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.testimonial-card__footer {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(127,127,127,.15);
+}
+.testimonial-card__avatar {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 999px;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--violet), var(--violet-2));
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+.testimonial-card__meta { min-width: 0; }
+.testimonial-card__name {
+    font-weight: 700;
+    font-size: 0.83rem;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.testimonial-card__context {
+    font-size: 0.73rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Hormati prefers-reduced-motion: matikan animasi otomatis, ganti jadi
+   scroll horizontal manual supaya konten tetap bisa diakses (bukan cuma
+   berhenti total dan nyembunyiin separuh testimoni di luar viewport). */
+@media (prefers-reduced-motion: reduce) {
+    .testimonial-track {
+        animation: none !important;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 640px) {
+    .testimonial-card { width: 260px; padding: 1.15rem; }
+}

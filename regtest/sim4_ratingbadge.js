@@ -1,8 +1,10 @@
 // Regression test: logic pemilihan badge rating di daftar "Riwayat Saya"
+// (Diperbarui Agustus 2026: topup sekarang JUGA didukung rating, jadi badge
+// tidak lagi di-gate ke type === "order" saja -- cukup isPaid + has_rating.)
 function pickBadge(t) {
     const isPaid = t.status === "paid" || t.status === "sukses";
-    if (t.type === "order" && isPaid && t.has_rating === false) return "needed";
-    if (t.type === "order" && isPaid && t.has_rating === true) return "done";
+    if (isPaid && t.has_rating === false) return "needed";
+    if (isPaid && t.has_rating === true) return "done";
     return "none";
 }
 
@@ -11,8 +13,10 @@ const cases = [
     { name: "order paid, sudah rating", input: { type: "order", status: "paid", has_rating: true }, expect: "done" },
     { name: "order pending", input: { type: "order", status: "pending", has_rating: null }, expect: "none" },
     { name: "order failed", input: { type: "order", status: "failed", has_rating: null }, expect: "none" },
-    { name: "topup sukses (topup gak boleh dpt badge rating)", input: { type: "topup", status: "sukses", has_rating: null }, expect: "none" },
+    { name: "topup sukses, belum rating (FITUR BARU)", input: { type: "topup", status: "sukses", has_rating: false }, expect: "needed" },
+    { name: "topup sukses, sudah rating (FITUR BARU)", input: { type: "topup", status: "sukses", has_rating: true }, expect: "done" },
     { name: "topup pending", input: { type: "topup", status: "pending", has_rating: null }, expect: "none" },
+    { name: "topup gagal", input: { type: "topup", status: "gagal", has_rating: null }, expect: "none" },
 ];
 
 let allPass = true;

@@ -1595,7 +1595,35 @@ exports.getMyOrders = async (req, res) => {
             .order("created_at", { ascending: false });
 
         if (error) return res.status(500).json({ message: "Database Error" });
-        res.json(data);
+
+        // FEATURE: sama seperti orderController.getMyOrders, sertakan flag
+        // has_rating supaya "Riwayat Saya" bisa nampilin badge "Beri Rating"
+        // untuk topup juga (lihat topup_ratings di ratingController.js).
+        const successOrderIds = (data || [])
+            .filter(o => o.status === "sukses")
+            .map(o => o.id);
+
+        let ratedOrderIds = new Set();
+        if (successOrderIds.length > 0) {
+            const { data: ratings, error: ratingErr } = await supabase
+                .from("topup_ratings")
+                .select("order_id")
+                .in("order_id", successOrderIds);
+            if (!ratingErr && ratings) {
+                ratedOrderIds = new Set(ratings.map(r => r.order_id));
+            }
+            // Kalau tabel topup_ratings belum di-migrate (42P01) atau query
+            // gagal karena sebab lain, jangan sampai gagalkan seluruh
+            // riwayat topup -- cukup skip flag has_rating (frontend akan
+            // treat sebagai unknown/tidak tampilkan badge untuk item itu).
+        }
+
+        const withRatingFlag = (data || []).map(o => ({
+            ...o,
+            has_rating: o.status === "sukses" ? ratedOrderIds.has(o.id) : null
+        }));
+
+        res.json(withRatingFlag);
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }

@@ -1529,8 +1529,12 @@ async function showPaidOrderSuccess(orderData, isTopup) {
 async function renderRatingPrompt(orderData, container) {
     if (!container || !orderData) return;
 
-    // Topup tidak memiliki rating
-    if (orderData.type === "topup") return;
+    // FEATURE (Agustus 2026): topup sekarang juga bisa dirating (lihat
+    // topup_ratings di ratingController.js) -- sebelumnya fungsi ini
+    // langsung `return` untuk type "topup". isTopup dipakai di bawah untuk
+    // milih endpoint eligibility/submit yang benar (order vs topup pakai
+    // tabel & rute backend yang beda).
+    const isTopup = orderData.type === "topup";
     const orderId = orderData.id || orderData.orderId || orderData.reference_id;
     if (!orderId) return;
 
@@ -1543,12 +1547,13 @@ async function renderRatingPrompt(orderData, container) {
     const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
     if (token) headers["Authorization"] = `Bearer ${token}`;
 
+    const eligibilityUrl = isTopup
+        ? `${API_BASE}/ratings/topup/eligibility/${encodeURIComponent(orderId)}`
+        : `${API_BASE}/ratings/eligibility/${encodeURIComponent(orderId)}`;
+
     let eligibility;
     try {
-        const res = await fetch(
-            `${API_BASE}/ratings/eligibility/${encodeURIComponent(orderId)}`,
-            { headers }
-        );
+        const res = await fetch(eligibilityUrl, { headers });
         if (!res.ok) {
             // 401 = tidak login tapi order punya user_id
             // 403 = bukan pemilik order
@@ -1594,6 +1599,13 @@ async function renderRatingPrompt(orderData, container) {
                 </button>`).join("")}
         </div>
         <div id="rp_form_${uid}" class="hidden">
+            ${isTopup ? `
+            <input id="rp_name_${uid}" type="text" maxlength="60"
+                placeholder="Nama kamu (opsional, tampil di testimoni)"
+                style="width:100%;padding:0.65rem 0.75rem;border-radius:8px;border:1px solid var(--line);
+                       background:var(--bg-body);color:var(--text);margin-bottom:0.6rem;
+                       font-family:inherit;font-size:0.92rem;box-sizing:border-box;">
+            ` : ""}
             <textarea id="rp_txt_${uid}" placeholder="Ceritakan pengalamanmu (opsional)" maxlength="500"
                 style="width:100%;min-height:80px;padding:0.75rem;border-radius:8px;border:1px solid var(--line);
                        background:var(--bg-body);color:var(--text);margin-bottom:0.5rem;
@@ -1655,6 +1667,7 @@ async function renderRatingPrompt(orderData, container) {
     const skipBtn = container.querySelector(`#rp_skip_${uid}`);
     if (skipBtn) skipBtn.onclick = () => { container.classList.add("hidden"); };
 
+    const nameInput = isTopup ? container.querySelector(`#rp_name_${uid}`) : null;
     const submitBtn = container.querySelector(`#rp_submit_${uid}`);
     if (submitBtn) {
         submitBtn.onclick = async () => {
@@ -1672,14 +1685,18 @@ async function renderRatingPrompt(orderData, container) {
                 const subToken = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
                 if (subToken) subHeaders["Authorization"] = `Bearer ${subToken}`;
 
-                const subRes = await fetch(`${API_BASE}/ratings`, {
+                const submitUrl = isTopup ? `${API_BASE}/ratings/topup` : `${API_BASE}/ratings`;
+                const submitBody = {
+                    order_id: orderId,
+                    score: selectedScore,
+                    comment: txtArea?.value.trim() || undefined
+                };
+                if (isTopup) submitBody.display_name = nameInput?.value.trim() || undefined;
+
+                const subRes = await fetch(submitUrl, {
                     method: "POST",
                     headers: subHeaders,
-                    body: JSON.stringify({
-                        order_id: orderId,
-                        score: selectedScore,
-                        comment: txtArea?.value.trim() || undefined
-                    })
+                    body: JSON.stringify(submitBody)
                 });
 
                 if (!subRes.ok) {
@@ -1819,6 +1836,89 @@ async function loadGamingNews() {
     }
 }
 
+/* ---------- FEATURE: "Apa Kata Mereka" testimonial marquee ---------- */
+// Ambil inisial buat avatar bulat (mis. "Budi S." -> "BS", "Pembeli Topup" -> "P").
+function testimonialInitials(name) {
+    const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "?";
+    if (parts.length === 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function testimonialCardHtml(item) {
+    const score = Math.max(1, Math.min(5, parseInt(item.score, 10) || 5));
+    const stars = "★".repeat(score) + "☆".repeat(5 - score);
+    // .home-glass-card = design system glassmorphism yang sama dipakai kartu
+    // News/Produk di halaman ini -- supaya kartu testimoni konsisten visual,
+    // bukan gaya kartu baru sendiri.
+    return `
+        <div class="testimonial-card home-glass-card rounded-2xl" tabindex="0">
+            <div class="testimonial-card__stars" aria-label="${score} dari 5 bintang">${stars}</div>
+            <p class="testimonial-card__comment">${escapeHtml(item.comment || "")}</p>
+            <div class="testimonial-card__footer">
+                <div class="testimonial-card__avatar" aria-hidden="true">${escapeHtml(testimonialInitials(item.name))}</div>
+                <div class="testimonial-card__meta">
+                    <div class="testimonial-card__name">${escapeHtml(item.name || "Pembeli NexShop")}</div>
+                    <div class="testimonial-card__context">${escapeHtml(item.context || "")}</div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function renderTestimonials(items) {
+    const section = document.getElementById("testimonials");
+    const row1 = document.getElementById("testimonialRow1");
+    const row2 = document.getElementById("testimonialRow2");
+    if (!section || !row1 || !row2) return;
+
+    // Tidak ada testimoni sama sekali -> section tetap hidden (bukan
+    // ditampilkan kosong/skeleton kosong). Beda dari #news yang selalu
+    // nampilin section (dengan pesan "belum ada berita") -- testimoni
+    // kosong lebih baik tidak usah muncul sama sekali daripada terlihat sepi.
+    if (!Array.isArray(items) || items.length === 0) {
+        section.classList.add("hidden");
+        return;
+    }
+
+    // Split jadi 2 baris (ganjil/genap) supaya dua baris kelihatan beda
+    // walau sumber datanya sama, lalu tiap baris DIDUPLIKASI 2x (bukan cuma
+    // dirender sekali) -- ini kuncinya biar animasi translateX(-50%) di CSS
+    // looping mulus tanpa "patahan" begitu sampai ujung.
+    const row1Items = items.filter((_, i) => i % 2 === 0);
+    const row2Items = items.filter((_, i) => i % 2 === 1);
+
+    // Baris butuh minimal beberapa card supaya lebar totalnya cukup buat
+    // animasi looping terasa "penuh" (bukan cuma 1-2 card doang yang keulang).
+    // Kalau testimoni yang eligible dikit banget, ulang list itu sendiri
+    // dulu sebelum diduplikasi buat animasi.
+    const padRow = (arr) => {
+        if (arr.length === 0) return items; // fallback: baris kosong isi dari gabungan semua
+        let padded = [...arr];
+        while (padded.length < 6) padded = padded.concat(arr);
+        return padded;
+    };
+
+    const finalRow1 = padRow(row1Items.length ? row1Items : items);
+    const finalRow2 = padRow(row2Items.length ? row2Items : items);
+
+    row1.innerHTML = finalRow1.map(testimonialCardHtml).join("") + finalRow1.map(testimonialCardHtml).join("");
+    row2.innerHTML = finalRow2.map(testimonialCardHtml).join("") + finalRow2.map(testimonialCardHtml).join("");
+
+    section.classList.remove("hidden");
+}
+
+async function loadTestimonials() {
+    try {
+        const res = await fetch(`${API_BASE}/ratings/public/testimonials?limit=20`);
+        if (!res.ok) throw new Error("Gagal memuat testimoni");
+        const items = await res.json();
+        renderTestimonials(Array.isArray(items) ? items : []);
+    } catch (err) {
+        console.error("loadTestimonials error:", err);
+        renderTestimonials([]);
+    }
+}
+
 /* ---------- Cek Transaksi (tab publik, cek status via Order ID) ---------- */
 const STATUS_LABEL = {
     paid: "Dibayar — Diproses", sukses: "Sukses", processing: "Diproses",
@@ -1876,10 +1976,13 @@ function renderTrackResult(data, options = {}) {
 
     // Rating slot: di-render setelah innerHTML supaya slot-nya bisa dicari via getElementById.
     // Tambahkan placeholder ke innerHTML agar ada tempat untuk rating.
-    const isOrderType = data.type === "order";
-    const isPaidOrder = isOrderType && isPaid;
-    const ratingSlotId = isPaidOrder ? `rp_slot_${data.id.replace(/[^a-zA-Z0-9]/g, "")}` : "";
-    const ratingSlotHtml = isPaidOrder
+    // FEATURE (Agustus 2026): sebelumnya di-gate `data.type === "order"` doang
+    // (topup tidak dapat slot rating sama sekali). Topup sekarang juga bisa
+    // dirating (lihat topup_ratings di ratingController.js & renderRatingPrompt
+    // yang sudah menangani isTopup) -- jadi gate ini dilonggarkan ke SEMUA
+    // type yang sudah lunas, bukan cuma "order".
+    const ratingSlotId = isPaid ? `rp_slot_${data.id.replace(/[^a-zA-Z0-9]/g, "")}` : "";
+    const ratingSlotHtml = isPaid
         ? `<div id="${ratingSlotId}" style="margin-top:1.5rem;"></div>`
         : "";
 
@@ -1897,9 +2000,9 @@ function renderTrackResult(data, options = {}) {
     // Jika order sudah paid, minta renderRatingPrompt mengisi slot rating.
     // Backend selalu menentukan eligibility — ini adalah satu-satunya source of truth.
     // Dengan cara ini rating tersedia di Cek Transaksi kapan saja selama:
-    //   order = paid AND belum dirating
+    //   order/topup = lunas AND belum dirating
     // Ini mengatasi semua skenario redirect/webhook-delay/refresh.
-    if (isPaidOrder) {
+    if (isPaid) {
         const slot = document.getElementById(ratingSlotId);
         if (slot) renderRatingPrompt(data, slot); // async, tidak perlu ditunggu
     }
@@ -2020,7 +2123,11 @@ async function loadMyTransactions() {
             })),
             ...(Array.isArray(topups) ? topups : []).map(t => ({
                 id: t.id, type: "topup", status: t.status, total: t.harga,
-                label: t.nama_produk, created_at: t.created_at, has_rating: null
+                label: t.nama_produk, created_at: t.created_at,
+                // FEATURE (Agustus 2026): topup sekarang juga dirating --
+                // topupController.getMyOrders sudah menyertakan has_rating,
+                // sebelumnya di-hardcode null di sini (rating topup belum ada).
+                has_rating: t.has_rating
             }))
         ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
@@ -2035,15 +2142,14 @@ async function loadMyTransactions() {
             const tanggal = t.created_at ? new Date(t.created_at).toLocaleDateString("id-ID") : "-";
             const isPaid = t.status === "paid" || t.status === "sukses";
 
-            // FEATURE (mirip Shopee): pesanan produk yang sudah dibayar dan
-            // belum dinilai dapat badge "Beri Rating" yang jelas kelihatan,
-            // supaya user tahu tanpa harus klik satu-satu order untuk cek.
-            // has_rating cuma ada untuk type "order" (topup tidak didukung
-            // rating -- lihat renderRatingPrompt).
+            // FEATURE (mirip Shopee): pesanan (produk maupun topup) yang
+            // sudah dibayar dan belum dinilai dapat badge "Beri Rating" yang
+            // jelas kelihatan, supaya user tahu tanpa harus klik satu-satu
+            // order untuk cek.
             let ratingBadge = "";
-            if (t.type === "order" && isPaid && t.has_rating === false) {
+            if (isPaid && t.has_rating === false) {
                 ratingBadge = `<span class="track-mine-rating-badge needed"><i class="fa-regular fa-star" aria-hidden="true"></i> Beri Rating</span>`;
-            } else if (t.type === "order" && isPaid && t.has_rating === true) {
+            } else if (isPaid && t.has_rating === true) {
                 ratingBadge = `<span class="track-mine-rating-badge done"><i class="fa-solid fa-star" aria-hidden="true"></i> Sudah Dinilai</span>`;
             }
 
@@ -3913,6 +4019,7 @@ async function bootstrapApp() {
         loadTopupProducts(),
         loadTrustStats(),
         loadGamingNews(),
+        loadTestimonials(),
         loadLeaderboard(),
         checkPaymentReturn(),
         initMusicPlayer()

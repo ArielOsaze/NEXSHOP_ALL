@@ -1,5 +1,19 @@
 const supabase = require("../config/db");
 
+// ============================================================================
+// Helper: sembunyikan nama asli pembeli untuk tampilan publik (testimoni).
+// "Budi Santoso" -> "Budi S." ; nama satu kata dibiarkan apa adanya (sudah
+// cukup umum/tidak identifiable sendirian). Tidak pernah menampilkan nomor
+// HP/email/Order ID di testimoni publik.
+// ============================================================================
+function maskPublicName(fullName) {
+    const name = String(fullName || "").trim();
+    if (!name) return null;
+    const parts = name.split(/\s+/);
+    if (parts.length === 1) return parts[0];
+    return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
+}
+
 exports.checkEligibility = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -299,5 +313,254 @@ exports.getAdminRatingSummary = async (req, res) => {
     } catch (e) {
         console.error(e);
         return res.status(500).json({ message: "Terjadi kesalahan server." });
+    }
+};
+
+// ============================================================================
+// FEATURE: Rating untuk topup (Agustus 2026) — sebelumnya cuma order produk
+// yang bisa dirating (order_ratings ber-FK ke tabel `orders`). Topup dapat
+// tabel terpisah `topup_ratings` (lihat migrations/002_create_topup_ratings.sql)
+// supaya tidak perlu ubah constraint tabel order_ratings yang sudah ada.
+// Logic-nya sengaja dibuat mirip persis checkEligibility/submitRating di atas
+// (paritas fitur), bedanya: cek ke topup_orders (status "sukses", bukan
+// "paid") dan terima display_name opsional (topup checkout tidak pernah
+// mengumpulkan nama pembeli sama sekali).
+// ============================================================================
+
+exports.checkTopupEligibility = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        if (!orderId) {
+            return res.status(400).json({ message: "Order ID wajib diisi." });
+        }
+
+        const { data: order, error: orderErr } = await supabase
+            .from("topup_orders")
+            .select("id, status, user_id")
+            .eq("id", orderId)
+            .maybeSingle();
+
+        if (orderErr) {
+            return res.status(500).json({ message: "Gagal memverifikasi pesanan." });
+        }
+        if (!order) {
+            return res.status(404).json({ message: "Pesanan tidak ditemukan." });
+        }
+        if (order.status !== "sukses") {
+            return res.json({ eligible: false, reason: "order_not_paid" });
+        }
+
+        if (order.user_id !== null) {
+            if (!req.user) {
+                return res.status(401).json({
+                    message: "Silakan login untuk memberi rating pada pesanan ini."
+                });
+            }
+            if (String(req.user.id) !== String(order.user_id)) {
+                return res.status(403).json({
+                    message: "Kamu tidak berhak memberi rating untuk pesanan ini."
+                });
+            }
+        }
+
+        const { data: existingRating, error: ratingErr } = await supabase
+            .from("topup_ratings")
+            .select("id")
+            .eq("order_id", order.id)
+            .maybeSingle();
+
+        if (ratingErr) {
+            // Kode 42P01 = tabel belum ada (migration belum dijalankan).
+            // Beri pesan yang jelas ketimbang 500 generik.
+            if (ratingErr.code === "42P01") {
+                return res.status(500).json({
+                    message: "Fitur rating topup belum di-setup di database (tabel topup_ratings belum ada)."
+                });
+            }
+            return res.status(500).json({ message: "Gagal memverifikasi status rating." });
+        }
+
+        if (existingRating) {
+            return res.json({ eligible: false, reason: "already_rated" });
+        }
+
+        return res.json({ eligible: true, reason: null });
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json({ message: "Terjadi kesalahan server." });
+    }
+};
+
+exports.submitTopupRating = async (req, res) => {
+    try {
+        const { order_id, score, comment, display_name } = req.body;
+        if (!order_id) return res.status(400).json({ message: "Order ID wajib diisi." });
+
+        if (!Number.isInteger(score) || score < 1 || score > 5) {
+            return res.status(400).json({ message: "Score harus berupa angka 1 sampai 5." });
+        }
+
+        let finalComment = null;
+        if (typeof comment === "string") {
+            finalComment = comment.trim();
+            if (finalComment.length > 500) {
+                return res.status(400).json({ message: "Komentar maksimal 500 karakter." });
+            }
+            if (finalComment === "") finalComment = null;
+        }
+
+        let finalDisplayName = null;
+        if (typeof display_name === "string") {
+            finalDisplayName = display_name.trim().slice(0, 60);
+            if (finalDisplayName === "") finalDisplayName = null;
+        }
+
+        const { data: order, error: orderErr } = await supabase
+            .from("topup_orders")
+            .select("id, status, user_id")
+            .eq("id", order_id)
+            .maybeSingle();
+
+        if (orderErr) return res.status(500).json({ message: "Gagal memverifikasi pesanan." });
+        if (!order) return res.status(404).json({ message: "Pesanan tidak ditemukan." });
+
+        if (order.status !== "sukses") {
+            return res.status(400).json({ message: "Hanya pesanan berstatus sukses yang dapat dinilai." });
+        }
+
+        if (order.user_id !== null) {
+            if (!req.user) {
+                return res.status(401).json({
+                    message: "Silakan login untuk memberi rating pada pesanan ini."
+                });
+            }
+            if (String(req.user.id) !== String(order.user_id)) {
+                return res.status(403).json({
+                    message: "Kamu tidak berhak memberi rating untuk pesanan ini."
+                });
+            }
+        }
+
+        const { error: insertErr } = await supabase
+            .from("topup_ratings")
+            .insert([{
+                order_id: order.id,
+                user_id: order.user_id,
+                score,
+                comment: finalComment,
+                display_name: finalDisplayName
+            }]);
+
+        if (insertErr) {
+            if (insertErr.code === "23505") {
+                return res.status(409).json({ message: "Rating untuk order ini sudah pernah dikirim." });
+            }
+            if (insertErr.code === "42P01") {
+                return res.status(500).json({
+                    message: "Fitur rating topup belum di-setup di database (tabel topup_ratings belum ada)."
+                });
+            }
+            console.error(insertErr);
+            return res.status(500).json({ message: "Gagal menyimpan rating." });
+        }
+
+        return res.status(201).json({ message: "Terima kasih atas penilaian Anda!" });
+    } catch (e) {
+        console.error(e);
+        return res.status(500).json({ message: "Terjadi kesalahan server." });
+    }
+};
+
+// ============================================================================
+// FEATURE: Testimoni publik ("Apa Kata Mereka") — dipakai section homepage,
+// TIDAK butuh login (publik). Gabungan rating produk (order_ratings) + rating
+// topup (topup_ratings), cuma yang score tinggi (>=4) DAN ada komentar teks
+// (rating tanpa komentar tidak berguna sebagai testimoni). Nama pembeli
+// disamarkan (lihat maskPublicName) -- tidak pernah expose nama lengkap,
+// email, no. HP, atau Order ID ke publik.
+//
+// CATATAN MODERASI (penting dibaca sebelum production): endpoint ini
+// otomatis mempublikasikan SEMUA rating skor>=4 berkomentar begitu masuk --
+// TIDAK ada tahap approval admin. Kalau nanti butuh kontrol kurasi (misal
+// ada komentar yang tidak pantas meski skornya tinggi), tambahkan kolom
+// `is_featured boolean default false` di kedua tabel rating + UI toggle di
+// admin dashboard, lalu tambahkan `.eq("is_featured", true)` di query bawah.
+// Saya sengaja TIDAK membangun itu sekarang karena butuh UI admin baru
+// (di luar cakupan yang diminta) -- tapi ini limitasi nyata yang perlu tim
+// tahu, bukan cuma catatan implementasi.
+// ============================================================================
+exports.getPublicTestimonials = async (req, res) => {
+    try {
+        const limitParam = parseInt(req.query.limit, 10);
+        const limit = Number.isInteger(limitParam) && limitParam > 0 && limitParam <= 50 ? limitParam : 20;
+
+        const { data: orderRatings, error: orderRatingsErr } = await supabase
+            .from("order_ratings")
+            .select("id, score, comment, created_at, orders ( recipient_name, items )")
+            .gte("score", 4)
+            .not("comment", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(limit);
+
+        if (orderRatingsErr) {
+            console.error("[Testimonials] order_ratings query gagal:", orderRatingsErr);
+        }
+
+        const { data: topupRatings, error: topupRatingsErr } = await supabase
+            .from("topup_ratings")
+            .select("id, score, comment, display_name, created_at, topup_orders ( nama_produk )")
+            .gte("score", 4)
+            .not("comment", "is", null)
+            .order("created_at", { ascending: false })
+            .limit(limit);
+
+        if (topupRatingsErr && topupRatingsErr.code !== "42P01") {
+            // 42P01 = tabel topup_ratings belum di-migrate. Jangan gagalkan
+            // seluruh testimoni cuma karena itu -- cukup skip bagian topup,
+            // testimoni order tetap tampil.
+            console.error("[Testimonials] topup_ratings query gagal:", topupRatingsErr);
+        }
+
+        const orderList = orderRatings || [];
+        const firstProductIds = orderList
+            .map(r => (Array.isArray(r.orders?.items) ? r.orders.items[0]?.id : null))
+            .filter(Boolean);
+
+        let productNameMap = {};
+        if (firstProductIds.length) {
+            const { data: products } = await supabase
+                .from("products")
+                .select("id, name")
+                .in("id", firstProductIds);
+            (products || []).forEach(p => { productNameMap[String(p.id)] = p.name; });
+        }
+
+        const combined = [
+            ...orderList.map(r => {
+                const firstItemId = Array.isArray(r.orders?.items) ? r.orders.items[0]?.id : null;
+                return {
+                    score: r.score,
+                    comment: r.comment,
+                    name: maskPublicName(r.orders?.recipient_name) || "Pembeli NexShop",
+                    context: firstItemId ? (productNameMap[String(firstItemId)] || "Produk NexShop") : "Produk NexShop",
+                    created_at: r.created_at
+                };
+            }),
+            ...(topupRatings || []).map(r => ({
+                score: r.score,
+                comment: r.comment,
+                name: maskPublicName(r.display_name) || "Pembeli Topup",
+                context: r.topup_orders?.nama_produk || "Topup Game",
+                created_at: r.created_at
+            }))
+        ]
+            .filter(r => r.comment && r.comment.trim().length > 0)
+            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+            .slice(0, limit);
+
+        res.json(combined);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ message: "Gagal mengambil testimoni." });
     }
 };
