@@ -1762,7 +1762,7 @@ function renderGamingNewsSkeleton() {
     const grid = document.getElementById("newsGrid");
     if (!section || !grid) return;
     section.classList.remove("hidden");
-    grid.innerHTML = Array.from({ length: 3 }, () => `
+    grid.innerHTML = Array.from({ length: 9 }, () => `
         <article class="bg-white dark:bg-[#0a0a0c] rounded-2xl overflow-hidden border border-gray-200 dark:border-white/5 flex flex-col" aria-label="Memuat berita">
             <div class="w-full aspect-video bg-gray-200 dark:bg-white/5 animate-pulse"></div>
             <div class="p-6 flex flex-col flex-1 gap-4">
@@ -1839,10 +1839,11 @@ async function loadGamingNews() {
         // portal berita (berita.html gak filter kategori sama sekali).
         // Section ini judulnya "Latest Gaming News" buat toko game secara
         // umum, jadi sekarang ambil artikel terbaru lintas semua kategori.
-        const res = await fetch(`${API_BASE}/news/articles?limit=6`);
+        // Tampil 9 (grid 3 kolom penuh), bukan 3 lagi -- request user.
+        const res = await fetch(`${API_BASE}/news/articles?limit=9`);
         if (!res.ok) throw new Error("Gagal memuat berita game");
         const json = await res.json();
-        const articles = Array.isArray(json.data) ? json.data.slice(0, 3) : [];
+        const articles = Array.isArray(json.data) ? json.data.slice(0, 9) : [];
         renderGamingNews(articles);
     } catch (err) {
         console.error("loadGamingNews error:", err);
