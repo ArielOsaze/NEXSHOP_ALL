@@ -309,15 +309,25 @@ exports.getLeaderboard = async (req, res) => {
             supabase.from("top_spenders").select("*").eq("is_active", true)
         ]);
 
-        const manualSpenders = (manualRes.data || []).map(m => ({
-            id: 'manual_' + m.id,
-            name: m.display_name,
-            total_spent: Number(m.total_spending || 0),
-            avatar_url: m.avatar_url,
-            badge: m.badge,
-            rank: m.rank,
-            is_manual: true
-        }));
+        if (manualRes.error) {
+            console.warn("getLeaderboard: gagal ambil top_spenders:", manualRes.error.message || manualRes.error);
+        }
+
+        const manualSpenders = (manualRes.data || [])
+            // Baris tanpa display_name (mis. diinsert manual lewat SQL Editor,
+            // bukan lewat endpoint addTopSpender yang mewajibkan field ini)
+            // dulu bikin m.name.toLowerCase() di bawah throw TypeError dan
+            // menjatuhkan seluruh request -- sekarang di-skip dengan aman.
+            .filter(m => typeof m.display_name === "string" && m.display_name.trim() !== "")
+            .map(m => ({
+                id: 'manual_' + m.id,
+                name: m.display_name,
+                total_spent: Number(m.total_spending || 0),
+                avatar_url: m.avatar_url,
+                badge: m.badge,
+                rank: Number.isFinite(Number(m.rank)) ? Number(m.rank) : 99,
+                is_manual: true
+            }));
 
         const spenders = new Map();
         function addSpend(id, email, name, amount) {
