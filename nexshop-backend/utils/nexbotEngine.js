@@ -123,7 +123,7 @@ function scoreKnowledge(item, query, intent, entities) {
     
     const isStrictIntent = ["Trust", "Legality", "Payment", "Refund", "Escrow"].includes(intent);
     let intentScore = -25;
-    
+
     if (intent === knowledgeIntent) {
         intentScore = 35;
     } else if (related[intent] && related[intent].includes(knowledgeIntent)) {
@@ -131,11 +131,31 @@ function scoreKnowledge(item, query, intent, entities) {
     } else if (intent === "GeneralQuestion" || knowledgeIntent === "GeneralQuestion") {
         intentScore = isStrictIntent ? -15 : 4;
     }
-    
+
+    // Kalau entity-nya cocok kuat (mis. pertanyaan jelas soal "Mobile
+    // Legends" dan item ini emang soal Mobile Legends), jangan biarin
+    // penalti mismatch-intent (-25) menenggelamkan item yang sebenarnya
+    // sangat relevan cuma karena diklasifikasi ke intent yang beda.
+    // Sebelumnya ini bisa bikin detail knowledge soal produk/game yang
+    // ditanya malah gak pernah sampai ke AI.
+    const entityMatchCount = entityMatches;
+    if (intentScore < 0 && entityMatchCount > 0) {
+        intentScore = Math.max(intentScore, -5);
+    }
+
     return Math.round(intentScore + Math.min(32, entityMatches * 18) + Math.min(20, titleTokens * 8) + Math.min(12, matchedTokens * 3) + semantic * 20 + Math.min(6, Number(item.priority) || 0));
 }
 
-const MIN_KNOWLEDGE_SCORE = 15;
+// Sebelumnya cuma 15 -- terlalu ketat, banyak knowledge yang relevan tapi
+// skornya pas-pasan (mis. cuma match keyword tanpa match intent persis)
+// jadi kebuang dan gak pernah dibaca AI sama sekali.
+const MIN_KNOWLEDGE_SCORE = 8;
+
+// Sebelumnya hard-cap di 3 -- apapun topiknya, AI cuma pernah dikasih
+// maksimal 3 potongan knowledge. Dinaikkan supaya pertanyaan yang butuh
+// banyak detail (mis. soal satu game/produk yang informasinya kepecah di
+// beberapa entri knowledge_base) bisa kebaca semua, bukan cuma 3 teratas.
+const MAX_SELECTED_KNOWLEDGE = 10;
 
 function paragraphs(text) { return String(text || "").split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean); }
 function normalizedParagraph(text) { return text.toLowerCase().replace(/[^a-z0-9]/g, ""); }
@@ -146,10 +166,34 @@ function rankKnowledge(items, query, intent, entities) {
     if (!ranked.length) return [];
     const selected = [ranked[0]];
     for (const item of ranked.slice(1)) {
-        if (selected.length >= 3) break;
+        if (selected.length >= MAX_SELECTED_KNOWLEDGE) break;
         const sameEntity = entities.some((entity) => `${item.title} ${item.keywords}`.toLowerCase().includes(entity.toLowerCase()));
         const comparison = intent === "Comparison" && item.score >= ranked[0].score - 18;
-        if (sameEntity || comparison) selected.push(item);
+        // Backfill tambahan: item lain yang skornya masih relatif dekat sama
+        // skor tertinggi (bukan cuma yang match entity/comparison persis)
+        // tetap ikut diloloskan, supaya detail-detail terkait yang skornya
+        // sedikit di bawah item #1 gak otomatis kebuang.
+        const closeScore = item.score >= ranked[0].score - 12;
+        if (sameEntity || comparison || closeScore) selected.push(item);
+    }
+    // Guarantee tambahan: SEMUA knowledge aktif yang judul/keyword-nya
+    // eksplisit menyebut salah satu entity yang terdeteksi di pertanyaan
+    // pengguna wajib ikut (selama masih di bawah MAX_SELECTED_KNOWLEDGE),
+    // walau skornya sendiri gak masuk top ranking -- ini yang bikin "detail
+    // terkecil" soal produk/game yang ditanya user tetap kebaca, bukan cuma
+    // ringkasan paling umum soal topik itu.
+    if (entities.length && selected.length < MAX_SELECTED_KNOWLEDGE) {
+        const selectedIds = new Set(selected.map((item) => item.id));
+        for (const item of ranked) {
+            if (selected.length >= MAX_SELECTED_KNOWLEDGE) break;
+            if (selectedIds.has(item.id)) continue;
+            const haystack = `${item.title} ${item.keywords}`.toLowerCase();
+            const matchesEntity = entities.some((entity) => haystack.includes(entity.toLowerCase()));
+            if (matchesEntity) {
+                selected.push(item);
+                selectedIds.add(item.id);
+            }
+        }
     }
     return deduplicateKnowledge(selected);
 }
