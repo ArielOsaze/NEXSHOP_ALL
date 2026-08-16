@@ -77,8 +77,10 @@ const DANGEROUS_EVENTS    = /\bon\w+\s*=/i;
 function sanitizeHtml(raw) {
     if (!raw || typeof raw !== "string") return "";
 
+    let html = removeGeminiCitations(raw);
+
     // 1. Hapus seluruh script, style, iframe, object, embed beserta isinya
-    let html = raw
+    html = html
         .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
         .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
         .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "")
@@ -173,6 +175,12 @@ function escapeAttr(value) {
         .replace(/'/g, "&#x27;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
+}
+
+function removeGeminiCitations(text) {
+    if (!text || typeof text !== "string") return text;
+    // Menghapus tag sitasi Gemini yang menggunakan Private Use Area Unicode
+    return text.replace(/\uE200cite[^\uE201]*\uE201/g, "");
 }
 
 // ─────────────────────────────────────────────
@@ -336,9 +344,9 @@ function publicArticleShape(article, sources = []) {
     return {
         id:              article.id,
         slug:            article.slug,
-        title:           article.title,
-        excerpt:         article.excerpt || null,
-        content:         article.content || "",
+        title:           removeGeminiCitations(article.title),
+        excerpt:         removeGeminiCitations(article.excerpt || null),
+        content:         removeGeminiCitations(article.content || ""),
         category:        article.category,
         tags:            article.tags || [],
         author:          article.author,
@@ -347,8 +355,8 @@ function publicArticleShape(article, sources = []) {
         image_url:       article.image_url || null,
         image_alt:       article.image_alt || null,
         image_credit:    article.image_credit || null,
-        seo_title:       article.seo_title || null,
-        seo_description: article.seo_description || null,
+        seo_title:       removeGeminiCitations(article.seo_title || null),
+        seo_description: removeGeminiCitations(article.seo_description || null),
         keywords:        article.keywords || [],
         is_featured:     article.is_featured,
         is_pinned:       article.is_pinned,
@@ -403,9 +411,17 @@ exports.getPublicArticles = async (req, res) => {
         const { data, error, count } = await query;
         if (error) return dbError(res, error, "Gagal memuat artikel berita");
 
+        const cleanedData = (data || []).map(a => ({
+            ...a,
+            title: removeGeminiCitations(a.title),
+            excerpt: removeGeminiCitations(a.excerpt || null),
+            seo_title: removeGeminiCitations(a.seo_title || null),
+            seo_description: removeGeminiCitations(a.seo_description || null)
+        }));
+
         return res.json({
             success: true,
-            data:  data || [],
+            data:  cleanedData,
             meta:  { page, limit, total: count || 0, total_pages: Math.ceil((count || 0) / limit) }
         });
     } catch (err) {
@@ -510,9 +526,15 @@ exports.getAllArticles = async (req, res) => {
         const { data, error, count } = await query;
         if (error) return dbError(res, error, "Gagal memuat daftar artikel");
 
+        const cleanedData = (data || []).map(a => ({
+            ...a,
+            title: removeGeminiCitations(a.title),
+            excerpt: removeGeminiCitations(a.excerpt || null)
+        }));
+
         return res.json({
             success: true,
-            data:    data || [],
+            data:    cleanedData,
             meta:    { page, limit, total: count || 0, total_pages: Math.ceil((count || 0) / limit) }
         });
     } catch (err) {
@@ -548,7 +570,16 @@ exports.getArticleById = async (req, res) => {
             .eq("article_id", id)
             .order("created_at", { ascending: true });
 
-        return res.json({ success: true, data: { ...article, sources: sources || [] } });
+        const cleanedArticle = {
+            ...article,
+            title: removeGeminiCitations(article.title),
+            excerpt: removeGeminiCitations(article.excerpt || null),
+            content: removeGeminiCitations(article.content || ""),
+            seo_title: removeGeminiCitations(article.seo_title || null),
+            seo_description: removeGeminiCitations(article.seo_description || null)
+        };
+
+        return res.json({ success: true, data: { ...cleanedArticle, sources: sources || [] } });
     } catch (err) {
         console.error("getArticleById error:", err);
         return res.status(500).json({ success: false, message: "Server gagal memuat artikel" });

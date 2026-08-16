@@ -15,6 +15,12 @@ function escapeHtml(unsafe) {
          .replace(/'/g, "&#039;");
 }
 
+// Menghapus tag sitasi internal Gemini
+function removeGeminiCitations(text) {
+    if (!text || typeof text !== "string") return text;
+    return text.replace(/\uE200cite[^\uE201]*\uE201/g, "");
+}
+
 // BUG FIX (audit Agustus 2026): sebelumnya kalau artikel tidak ditemukan,
 // server langsung kirim `res.send("<h1>404 - Not Found</h1>...")` -- fragmen
 // HTML mentah tanpa <html>/<head>/<body>, tanpa CSS, tanpa navigasi sama
@@ -106,14 +112,14 @@ exports.renderArticle = async (req, res) => {
         imageUrl = `${baseUrl}${imageUrl}`;
     }
 
-    const safeTitle = escapeHtml(`${article.title} - NexShop News`);
-    const safeDesc = escapeHtml(article.excerpt || "Berita gaming dari NexShop News.");
+    const safeTitle = escapeHtml(removeGeminiCitations(`${article.title} - NexShop News`));
+    const safeDesc = escapeHtml(removeGeminiCitations(article.excerpt || "Berita gaming dari NexShop News."));
     const safeImage = escapeHtml(imageUrl);
     const safeUrl = escapeHtml(canonicalUrl);
     const safePublished = escapeHtml(article.published_at || "");
     const safeModified = escapeHtml(article.updated_at || "");
-    const safeAuthor = escapeHtml(article.author || "");
-    const safeSection = escapeHtml(article.category || "Gaming");
+    const safeAuthor = escapeHtml(removeGeminiCitations(article.author || ""));
+    const safeSection = escapeHtml(removeGeminiCitations(article.category || "Gaming"));
 
     // Inject meta tags menggunakan Regex replacement pada template asli
 
