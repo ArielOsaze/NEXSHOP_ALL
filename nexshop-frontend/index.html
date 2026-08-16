@@ -620,6 +620,25 @@ Cek Transaksi
         </div>
     </div>
 </footer>
+<!-- Testimonial Spotlight: muncul BESAR & DI TENGAH LAYAR saat kartu
+     testimoni diklik. Pakai sistem .overlay/.modal yang sama dipakai
+     modal-modal lain di project ini (bukan bikin overlay sendiri) --
+     itu juga kenapa markup-nya HARUS di sini (di luar <main>/.reveal-up),
+     bukan nested di dalam <section id="testimonials">: .reveal-up
+     nge-set animation ... forwards, dan fill-mode forwards itu bikin
+     transform akhirnya (translateY(0) scale(1)) NEMPEL permanen di
+     section itu -- transform apapun di ancestor (walau keliatan "netral")
+     bikin ancestor itu jadi containing block buat position:fixed, jadi
+     overlay-nya bakal ke-jebak di dalam box section itu (bukan viewport
+     asli) kalau ditaruh di dalam sana. Isinya di-clone dari kartu yang
+     diklik lewat setupTestimonialSpotlight di script.js. -->
+<div class="overlay" id="testimonialSpotlightOverlay">
+    <div class="modal testimonial-spotlight-modal" id="testimonialSpotlightModal" role="dialog" aria-modal="true" aria-label="Detail testimoni">
+        <button class="modal-close" data-close="testimonialSpotlightOverlay" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+        <div class="testimonial-spotlight-modal__body" id="testimonialSpotlightBody"></div>
+    </div>
+</div>
+
 <!-- FAQ / Terms / Refund / Kontak Modal -->
 <div class="overlay" id="policyOverlay">
     <div class="modal policy-modal" role="dialog" aria-modal="true" aria-labelledby="policyTitle">

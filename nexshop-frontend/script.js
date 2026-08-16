@@ -1913,32 +1913,79 @@ function renderTestimonials(items) {
     section.classList.remove("hidden");
 }
 
-// Klik salah satu kartu testimoni -> animasi geser (marquee) BERHENTI dulu,
-// dan kartu yang diklik membesar jadi sorotan (yang lain tetap normal).
-// Klik kartu yang sama lagi -> animasi geser lanjut lagi, kartu itu
-// mengecil balik ke normal. Klik kartu lain saat ada yang lagi aktif ->
-// yang lama otomatis mengecil, yang baru gantian membesar, animasi tetap
-// berhenti (belum resume) selama masih ada kartu yang aktif.
+// Klik salah satu kartu testimoni -> overlay "spotlight" muncul BESAR DI
+// TENGAH LAYAR nampilin testimoni itu (bukan scale kartu aslinya di
+// tempat seperti sebelumnya -- lihat komentar panjang di CSS
+// .testimonial-card & .testimonial-spotlight kenapa pendekatan lama
+// diganti: dulu transform scale-nya ketimpa sama .home-glass-card:hover
+// yang specificity-nya lebih tinggi, jadi animasinya cuma keliatan kalau
+// cursor dijauhin dulu, dan mentok di mobile karena :hover nyangkut abis
+// tap; scale itu juga bikin kartu nabrak baris satunya).
+// Marquee auto-scroll di-pause selama overlay terbuka. Klik kartu lain
+// saat overlay masih terbuka -> konten overlay langsung ganti ke
+// testimoni yang baru diklik. Tutup lewat: klik backdrop, tombol close,
+// tombol Escape, atau klik kartu sumber yang sama lagi.
 // Pakai event delegation di #testimonialMarquee (bukan pasang listener per
 // kartu) supaya tetap jalan walau kartu-nya di-render ulang oleh
 // renderTestimonials/loadTestimonials.
-(function setupTestimonialCardExpand() {
+(function setupTestimonialSpotlight() {
     const marquee = document.getElementById("testimonialMarquee");
-    if (!marquee) return;
+    const overlay = document.getElementById("testimonialSpotlightOverlay");
+    const spotlightBody = document.getElementById("testimonialSpotlightBody");
+    if (!marquee || !overlay || !spotlightBody) return;
+
+    let sourceCard = null;
+
+    function clearSourceHighlight() {
+        if (sourceCard) sourceCard.classList.remove("testimonial-card--active");
+        sourceCard = null;
+    }
+
+    // Overlay-nya dibuka/ditutup lewat openOverlay()/closeOverlay() yang
+    // sudah ada (lihat definisinya di atas) -- gratis dapet focus-trap,
+    // body-scroll-lock, Escape-to-close, & klik backdrop-to-close yang
+    // udah dipakai modal lain di project ini, gak perlu nulis ulang.
+    // Yang testimonial-spesifik cuma: isi overlay, ring highlight di
+    // kartu sumber, & pause/resume marquee -- makanya dipantau lewat
+    // MutationObserver di class "active" overlay ini (bukan nimpa
+    // closeOverlay), jadi tetap "nyambung" mau ditutup lewat cara apapun
+    // (tombol X, klik backdrop, ataupun Escape).
+    const observer = new MutationObserver(() => {
+        if (!overlay.classList.contains("active")) {
+            clearSourceHighlight();
+            marquee.classList.remove("is-paused");
+        }
+    });
+    observer.observe(overlay, { attributes: true, attributeFilter: ["class"] });
+
+    function openSpotlight(card) {
+        const reopeningSame = sourceCard === card && overlay.classList.contains("active");
+        if (reopeningSame) {
+            closeOverlay("testimonialSpotlightOverlay");
+            return;
+        }
+        clearSourceHighlight();
+        sourceCard = card;
+        card.classList.add("testimonial-card--active");
+        spotlightBody.innerHTML = card.innerHTML;
+        marquee.classList.add("is-paused"); // hentikan animasi geser selagi overlay kebuka
+        openOverlay("testimonialSpotlightOverlay");
+    }
 
     marquee.addEventListener("click", (e) => {
         const card = e.target.closest(".testimonial-card");
         if (!card || !marquee.contains(card)) return;
+        openSpotlight(card);
+    });
 
-        const wasActive = card.classList.contains("testimonial-card--active");
-        marquee.querySelectorAll(".testimonial-card--active").forEach(c => c.classList.remove("testimonial-card--active"));
-
-        if (!wasActive) {
-            card.classList.add("testimonial-card--active");
-            marquee.classList.add("is-paused"); // hentikan animasi geser
-        } else {
-            marquee.classList.remove("is-paused"); // lanjutkan animasi geser
-        }
+    // Kartu punya tabindex="0" (aksesibilitas) -- Enter/Space di kartu yang
+    // lagi fokus keyboard juga buka spotlight, konsisten sama klik mouse.
+    marquee.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        const card = e.target.closest(".testimonial-card");
+        if (!card || !marquee.contains(card)) return;
+        e.preventDefault();
+        openSpotlight(card);
     });
 })();
 

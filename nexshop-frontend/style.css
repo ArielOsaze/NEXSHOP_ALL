@@ -2344,9 +2344,7 @@ html:not(.dark) .home-glass-badge {
     flex-direction: column;
     gap: 1.25rem;
     overflow: hidden;
-    /* Padding vertikal biar kartu yang membesar (scale 1.22x saat diklik)
-       gak kepotong sama overflow:hidden di container ini -- tanpa ini,
-       kartu di baris paling atas/bawah bisa "terpotong" pas membesar. */
+    /* Padding vertikal buat napas visual antara marquee & konten sekitarnya. */
     padding: 1.5rem 0;
     -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
     mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
@@ -2361,9 +2359,9 @@ html:not(.dark) .home-glass-badge {
     animation-name: testimonial-scroll-right;
     animation-duration: 40s;
 }
-/* Marquee jalan terus secara default. Berhenti hanya saat ada kartu yang
-   lagi diklik/membesar (class .is-paused ditambahkan lewat JS di
-   setupTestimonialCardExpand -- lihat script.js), bukan cuma karena hover. */
+/* Marquee jalan terus secara default. Berhenti hanya selama overlay
+   spotlight testimoni lagi kebuka (class .is-paused ditambahkan lewat JS
+   di setupTestimonialSpotlight -- lihat script.js), bukan cuma karena hover. */
 .testimonial-marquee.is-paused .testimonial-track {
     animation-play-state: paused;
 }
@@ -2387,30 +2385,29 @@ html:not(.dark) .home-glass-badge {
     gap: 0.75rem;
     padding: 1.5rem;
     cursor: pointer;
-    transform: scale(1);
-    /* Durasi lumayan (500ms) + easing "overshoot" (sedikit lewat lalu balik)
-       biar kelihatan jelas kalau ini animasi membesar beneran, bukan
-       loncat instan -- bukan cuma transisi generic ease yang halus/samar. */
-    transition: transform .5s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow .5s ease, margin .5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    will-change: transform;
+    transition: box-shadow .3s ease;
+    /* CATATAN (bug lama, sudah diperbaiki): kartu ini dulu punya
+       transform: scale(1.22) sendiri buat efek "membesar" pas diklik.
+       Masalahnya .home-glass-card:hover (di atas) JUGA nyetel transform
+       (translateY(-3px)) dengan selector yang lebih spesifik
+       (html.dark .home-glass-card:hover), jadi transform hover itu SELALU
+       menang & nimpa scale-nya selama cursor/tap masih di atas kartu --
+       makanya animasi cuma keliatan kalau cursor dijauhin dulu, dan di
+       mobile (yang :hover-nya "nyangkut" abis di-tap) malah keliatan
+       kayak gak membesar sama sekali. Scale itu juga bikin kartu nabrak
+       baris satunya krn cuma tinggi row-nya doang yang gak nambah ruang.
+       Solusi sekarang: klik kartu TIDAK lagi men-scale kartu di row ini.
+       Pembesarannya dipindah ke overlay .testimonial-spotlight yang
+       muncul di tengah layar (lihat CSS & JS spotlight di bawah) --
+       jadi "besar & ketengah" beneran, di semua breakpoint, tanpa
+       rebutan sama hover style ataupun nabrak baris tetangga. Kartu di
+       row ini cuma dikasih ring highlight ringan (bukan transform) biar
+       kelihatan kartu mana yang lagi jadi sumber overlay. */
+    will-change: box-shadow;
 }
-/* Kartu yang diklik membesar jadi sorotan -- marquee di-pause (lihat
-   .testimonial-marquee.is-paused di bawah), scale ini murni transform di
-   kartu itu sendiri, terpisah dari animation translateX yang jalan di
-   .testimonial-track (parent-nya), jadi transisi scale-nya jalan mulus
-   walau parent-nya lagi diam. Angka scale sengaja dibikin cukup besar
-   (1.22x) supaya bedanya kelihatan jelas dibanding kartu lain, bukan cuma
-   sedikit lebih gede.
-   `margin` di sini SENGAJA ditambahin (bukan cuma transform) -- transform
-   scale doang gak ngubah ruang yang dialokasikan flexbox buat elemen ini,
-   jadi kartu tetangga gak ikut ke-geser dan malah numpuk/tempelan sama
-   kartu yang membesar. Margin ekstra ini "mendorong" tetangganya di
-   flexbox supaya ngasih ruang, jadi kelihatan neighbournya beneran ngingkir. */
 .testimonial-card--active {
-    transform: scale(1.22);
     z-index: 5;
-    margin: 0 2.2rem;
-    box-shadow: 0 25px 60px -12px rgba(139, 92, 246, .55);
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, .85), 0 20px 45px -12px rgba(139, 92, 246, .45);
 }
 .testimonial-card__stars {
     color: #facc15;
@@ -2478,8 +2475,33 @@ html:not(.dark) .home-glass-badge {
 
 @media (max-width: 640px) {
     .testimonial-card { width: 260px; padding: 1.15rem; }
-    /* Layar kecil lebih sempit -- scale sebesar di desktop (1.22x) bikin
-       kartu jadi kegedean/nabrak kartu tetangga. Dikecilin ke 1.1x biar
-       tetap kerasa "membesar jadi sorotan" tapi proporsional sama layarnya. */
-    .testimonial-card--active { transform: scale(1.1); margin: 0 0.9rem; }
 }
+
+/* ==========================================================================
+   TESTIMONIAL SPOTLIGHT -- muncul BESAR & DI TENGAH LAYAR saat kartu
+   testimoni diklik. Numpang di sistem .overlay/.modal yang sudah ada
+   (lihat "OVERLAYS / MODALS" di atas -- dipakai policy/product/auth modal
+   dkk) alih-alih bikin overlay sendiri dari nol: sudah teruji, dan yang
+   lebih penting markupnya otomatis ditaruh di luar <main>/.reveal-up
+   (lihat komentar di index.html) jadi position:fixed-nya beneran relatif
+   ke viewport, bukan ke ancestor tertentu. Konten kartu di-clone
+   (innerHTML) ke sini lewat JS (setupTestimonialSpotlight di script.js).
+   Di sini cuma override ukuran modal generik + typography konten yang
+   di-clone (mis. comment gak perlu di-clamp 4 baris lagi karena ruangnya
+   cukup) -- bukan nulis ulang overlay/posisi/animasinya. */
+.testimonial-spotlight-modal { max-width: 480px; }
+.testimonial-spotlight-modal__body {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+}
+.testimonial-spotlight-modal__body .testimonial-card__stars { font-size: 1.15rem; }
+.testimonial-spotlight-modal__body .testimonial-card__comment {
+    font-size: 1.05rem;
+    line-height: 1.7;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+}
+.testimonial-spotlight-modal__body .testimonial-card__avatar { width: 2.75rem; height: 2.75rem; font-size: 1rem; }
+.testimonial-spotlight-modal__body .testimonial-card__name { font-size: .95rem; white-space: normal; }
+.testimonial-spotlight-modal__body .testimonial-card__context { font-size: .82rem; white-space: normal; }
