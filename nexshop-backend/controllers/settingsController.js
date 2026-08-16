@@ -33,11 +33,11 @@ exports.getStoreSettingsPublic = async (req, res) => {
         const data = await getStoreSettings();
         // API publik sengaja hanya mengirim field storefront yang aman.
         const publicSettings = (({
-            store_name, tagline, contact_whatsapp, contact_email, contact_phone, address,
+            store_name, tagline, contact_whatsapp, contact_email, contact_phone, contact_instagram, address,
             logo_url, faq, terms_content, refund_content, trust_bar_enabled,
             trust_bar_orders_offset, trust_bar_games_offset, event_mascot,
             ticker_text, ticker_speed_seconds
-        }) => ({ store_name, tagline, contact_whatsapp, contact_email, contact_phone, address,
+        }) => ({ store_name, tagline, contact_whatsapp, contact_email, contact_phone, contact_instagram, address,
             logo_url, faq, terms_content, refund_content, trust_bar_enabled,
             trust_bar_orders_offset, trust_bar_games_offset, event_mascot,
             ticker_text, ticker_speed_seconds }))(data);

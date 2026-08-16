@@ -1580,6 +1580,7 @@ async function loadSettings() {
             document.getElementById("storeWhatsapp").value = store.contact_whatsapp || "";
             document.getElementById("storePhone").value = store.contact_phone || "";
             document.getElementById("storeEmail").value = store.contact_email || "";
+            document.getElementById("storeInstagram").value = store.contact_instagram || "";
             document.getElementById("storeAddress").value = store.address || "";
             document.getElementById("storeTrustBar").checked = store.trust_bar_enabled !== false;
             document.getElementById("storeTrustOrdersOffset").value = store.trust_bar_orders_offset || 0;
@@ -1733,6 +1734,7 @@ async function saveStoreSettings() {
             contact_whatsapp: document.getElementById("storeWhatsapp").value.trim(),
             contact_phone: document.getElementById("storePhone").value.trim(),
             contact_email: document.getElementById("storeEmail").value.trim(),
+            contact_instagram: document.getElementById("storeInstagram").value.trim(),
             address: document.getElementById("storeAddress").value.trim(),
             trust_bar_enabled: document.getElementById("storeTrustBar").checked,
             trust_bar_orders_offset: parseInt(document.getElementById("storeTrustOrdersOffset").value, 10) || 0,

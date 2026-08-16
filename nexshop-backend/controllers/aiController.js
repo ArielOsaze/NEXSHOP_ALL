@@ -38,6 +38,12 @@ const BUILTIN_KNOWLEDGE = [
     { id: "builtin-payment", title: "Metode Pembayaran", category: "Payment", keywords: "bayar pembayaran qris dana ovo gopay transfer bank va ipaymu", content: "Pembayaran NexShop diproses dengan aman menggunakan iPaymu sebagai payment gateway. Metode yang didukung meliputi QRIS, e-wallet (DANA, OVO, GoPay), Virtual Account, transfer bank, dan kartu kredit. Pilihan tersedia lengkap saat Checkout.", priority: 5, status: "active" },
     { id: "builtin-escrow", title: "Mekanisme Escrow", category: "Trust", keywords: "escrow aman penipuan tahan dana garansi uang kembali", content: "NexShop menyediakan mekanisme escrow untuk transaksi yang mendukungnya. Untuk transaksi yang menggunakan mekanisme escrow NexShop, dana ditahan sesuai alur escrow sampai kondisi transaksi terpenuhi.", priority: 5, status: "active" },
     { id: "builtin-legal", title: "Legalitas dan OSS", category: "Trust", keywords: "aman resmi legal penipu scam oss nib kbli terdaftar", content: "NexShop telah memiliki NIB dan terdaftar secara resmi melalui sistem OSS pemerintah. NIB NexShop adalah 1408260072494 dengan skala usaha mikro dan KBLI 60390. Untuk detail legalitas, kamu bisa melihat halaman Legalitas NexShop (nexshop.cloud/legalitas.html).", priority: 5, status: "active" },
+    // Jawaban langsung buat pertanyaan umum "apakah NexShop aman/terpercaya?".
+    // Sebelumnya pertanyaan ini cuma nyantol ke chunk Escrow & Legalitas yang
+    // terpisah (skor lemah, ~27 masing-masing) jadi sinyalnya kurang kuat dan
+    // model sering ragu lalu jatuh ke kalimat fallback. Chunk ini menyatukan
+    // poin-poin trust jadi satu fakta yang match kuat ke intent "Trust".
+    { id: "builtin-trust", title: "Keamanan Bertransaksi di NexShop", category: "Trust", keywords: "aman terpercaya keamanan transaksi kepercayaan", content: "NexShop terdaftar resmi di sistem OSS pemerintah dengan NIB 1408260072494, menggunakan mekanisme escrow untuk transaksi yang mendukungnya, dan memproses pembayaran melalui iPaymu sebagai payment gateway resmi. Kombinasi ini yang jadi dasar keamanan bertransaksi di NexShop.", priority: 6, status: "active" },
     { id: "builtin-topup", title: "Cara Topup Diamond", category: "Guide", keywords: "cara topup diamond ml mlbb mobile legends free fire pubg", content: "Buka menu Topup, pilih game, masukkan User ID dan Zone ID bila diminta, pilih nominal, lalu selesaikan pembayaran. Pesanan diproses otomatis setelah pembayaran terkonfirmasi.", priority: 5, status: "active" },
     { id: "builtin-produk", title: "Cara Membeli Produk", category: "Guide", keywords: "cara membeli produk beli produk checkout keranjang cart pesan barang", content: "Buka menu Produk, pilih item yang kamu inginkan, klik Beli atau tambahkan ke keranjang. Lanjutkan ke Checkout, isi data penerima (nama, kontak, alamat/ID sesuai jenis produk), pilih metode pembayaran, lalu selesaikan pembayaran. Pesanan diproses otomatis setelah pembayaran terkonfirmasi dan status pesanan bisa dicek lewat menu Cek Transaksi.", priority: 5, status: "active" },
     { id: "builtin-refund", title: "Kebijakan Refund", category: "Policy", keywords: "refund pengembalian dana batal garansi", content: "Untuk kendala saldo atau item yang tidak masuk, siapkan Nomor Order ID dan hubungi Customer Service NexShop agar pesanan dapat diperiksa secara manual.", priority: 5, status: "active" }
@@ -266,8 +272,63 @@ async function saveAnalytics({ query, intent, entities, selected, source, failed
     try { await supabase.from("ai_query_analytics").insert(payload); } catch (_) { /* analytics is non-blocking */ }
 }
 
+// ============================================================================
+// FEATURE: "Hubungi Customer Service" -- SENGAJA dijawab langsung dari
+// store_settings (BUKAN dilempar ke LLM/knowledge base), supaya nomor
+// WhatsApp/email/Instagram yang dikirim NexBot SELALU sama persis dengan
+// yang ditampilkan di halaman Contact Us. Kalau ini lewat LLM, ada risiko
+// model salah kutip nomor lama dari knowledge yang belum di-update, atau
+// malah bilang "tidak tersedia" walau datanya sebenarnya ada.
+// ============================================================================
+
+function isContactQuery(rawMessage) {
+    const t = String(rawMessage || "").toLowerCase();
+    return /(hubungi|kontak|contact)\s*(cs|customer service|admin|kami)?|customer service|hubungi\s*cs|nomor\s*(wa|whatsapp|admin|cs)|sosmed|social\s*media|instagram|hubungi\s*admin/.test(t);
+}
+
+async function handleContactQuery() {
+    const settings = await getStoreSettings();
+    const lines = [];
+
+    if (settings.contact_whatsapp) {
+        const cleanWa = String(settings.contact_whatsapp).replace(/\D/g, "");
+        const label = settings.contact_phone || settings.contact_whatsapp;
+        lines.push(`- WhatsApp: [${label}](https://wa.me/${cleanWa})`);
+    }
+    if (settings.contact_email) {
+        const emails = String(settings.contact_email).split(",").map((e) => e.trim()).filter(Boolean).slice(0, 2);
+        emails.forEach((email) => lines.push(`- Email: ${email}`));
+    }
+    if (settings.contact_instagram) {
+        const handle = String(settings.contact_instagram).replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/$/, "");
+        lines.push(`- Instagram: [@${handle.replace(/^@/, "")}](https://www.instagram.com/${handle.replace(/^@/, "")})`);
+    }
+
+    if (!lines.length) return unavailableReply();
+
+    return `Kamu bisa menghubungi Customer Service NexShop resmi lewat channel berikut:\n\n${lines.join("\n")}\n\nSemua channel di atas sama persis dengan yang tercantum di halaman Kontak NexShop.`;
+}
+
 function unavailableReply() {
     return "Maaf, informasi untuk pertanyaan tersebut belum tersedia. Agar kami dapat membantu dengan tepat, silakan hubungi Customer Service NexShop dengan detail pertanyaan atau Nomor Order ID Anda.";
+}
+
+// Kalimat fallback yang di-hardcode di systemPrompt (JIKA BAGIAN "FAKTA
+// KNOWLEDGE BASE" KOSONG). Kadang model tetap menempelkan kalimat ini di
+// belakang jawaban asli walau sudah dikasih fakta relevan (retrieval sudah
+// selected.length > 0) -- hasilnya jawaban jadi kontradiktif/pecah 2 "pesan"
+// di UI. Karena kita SUDAH TAHU ada fakta relevan, kalimat fallback yang
+// nyasar itu aman dibuang tanpa mengubah makna jawaban asli.
+const STRAY_FALLBACK_TEXT = "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kamu bisa menghubungi Customer Service NexShop untuk informasi lebih lanjut.";
+
+function stripStrayFallback(reply, hasKnowledge) {
+    const trimmed = String(reply || "").trim();
+    if (!hasKnowledge || trimmed === STRAY_FALLBACK_TEXT) return trimmed;
+    if (trimmed.includes(STRAY_FALLBACK_TEXT)) {
+        const cleaned = trimmed.split(STRAY_FALLBACK_TEXT).join("").replace(/\n{3,}/g, "\n\n").trim();
+        return cleaned || trimmed;
+    }
+    return trimmed;
 }
 
 async function handleOrderLookup(message, user) {
@@ -354,10 +415,14 @@ async function answer(message, sessionId, user) {
 
     let reply = "";
     let source = "knowledge";
-    const isBudgetQuery = isBudgetQuestion(message);
-    const isOrderQuery = !isBudgetQuery && (result.intent === "Order" || /\b(NX[A-F0-9]{10,30}|TP[A-F0-9]{10,30})\b/i.test(message) || /status pesanan|lacak|pesanan saya/i.test(message));
+    const isContact = isContactQuery(message);
+    const isBudgetQuery = !isContact && isBudgetQuestion(message);
+    const isOrderQuery = !isContact && !isBudgetQuery && (result.intent === "Order" || /\b(NX[A-F0-9]{10,30}|TP[A-F0-9]{10,30})\b/i.test(message) || /status pesanan|lacak|pesanan saya/i.test(message));
 
-    if (isBudgetQuery) {
+    if (isContact) {
+        reply = await handleContactQuery();
+        source = "contact_info";
+    } else if (isBudgetQuery) {
         reply = await handleBudgetQuery(message);
         source = "price_calculator";
     } else if (isOrderQuery) {
@@ -380,25 +445,29 @@ async function answer(message, sessionId, user) {
 Kamu adalah NexBot, asisten AI resmi NexShop.
 
 MISSION
-Bantu customer memahami layanan NexShop berdasarkan informasi resmi NexShop.
+Bantu customer memahami layanan NexShop berdasarkan informasi resmi NexShop di bawah.
 
 RULES
-1. Jawab HANYA berdasarkan fakta di knowledge base.
-2. Jika tidak ada knowledge yang relevan, JANGAN menjawab pertanyaan. Gunakan kalimat fallback wajib di bawah.
+1. Jawab HANYA berdasarkan fakta di "FAKTA KNOWLEDGE BASE" di bawah. Fakta-fakta itu sudah dipilih sistem karena relevan dengan pertanyaan customer -- TUGASMU MERANGKAI JAWABAN DARI FAKTA TERSEBUT, BUKAN menilai ulang apakah fakta itu relevan atau tidak. Selama ada minimal satu fakta di bawah, kamu WAJIB menjawab pakai fakta itu, jangan menolak.
+2. Kalimat fallback di paling bawah HANYA dipakai kalau bagian "FAKTA KNOWLEDGE BASE" benar-benar KOSONG. Jangan pernah menggabungkan kalimat fallback dengan jawaban lain dalam respons yang sama -- pilih salah satu saja.
 3. Jangan mengubah dokumen legal menjadi jaminan hukum absolut.
 4. Gunakan bahasa yang objektif dan faktual, BUKAN bahasa marketing.
-5. DILARANG KERAS menggunakan klaim mutlak seperti "100% aman", "100% legal", atau "pasti terpercaya". Gunakan kata-kata objektif.
+5. DILARANG KERAS menggunakan klaim mutlak seperti "100% aman", "100% legal", atau "pasti terpercaya". Gunakan kata-kata objektif (mis. "terdaftar resmi", "menggunakan mekanisme escrow untuk transaksi yang mendukungnya").
 6. Jawaban harus natural dalam Bahasa Indonesia dengan gaya Customer Service ("Ya, ...", "Untuk pembayaran, ...").
 7. Jangan menyebut istilah internal seperti database, RAG, chunk, embedding, retrieval, atau referensi sumber.
-8. Jawab dengan ringkas: 2-4 paragraf pendek, atau 1-3 kalimat untuk pertanyaan sederhana.
+8. FORMAT WAJIB -- ini penting, jangan tulis semua fakta jadi satu paragraf panjang:
+   - Pisahkan tiap topik/ide jadi paragraf sendiri, dengan BARIS KOSONG (enter dua kali) di antar paragraf.
+   - Kalau jawaban berisi beberapa poin, langkah, atau daftar (mis. daftar metode pembayaran, langkah-langkah beli produk, rincian nomor legal), tulis sebagai bullet list dengan format "- " di awal tiap baris, satu poin per baris. Jangan digabung koma dalam satu kalimat.
+   - Struktur ideal: 1 kalimat pembuka singkat, lalu bullet list kalau relevan, lalu kalau perlu 1 kalimat penutup singkat.
+   - Ringkas tapi jangan sampai satu paragraf berisi lebih dari 2 kalimat.
 9. Jangan menggunakan heading markdown yang berlebihan.
 
 --- FAKTA KNOWLEDGE BASE ---
 ${knowledgeText}
 ----------------------------
 
-JIKA TIDAK ADA KNOWLEDGE RELEVAN:
-Jawab persis: "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kamu bisa menghubungi Customer Service NexShop untuk informasi lebih lanjut."`;
+JIKA BAGIAN "FAKTA KNOWLEDGE BASE" DI ATAS KOSONG (tidak ada fakta sama sekali):
+Jawab persis kalimat ini SAJA, tanpa tambahan apapun: "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kamu bisa menghubungi Customer Service NexShop untuk informasi lebih lanjut."`;
 
             const aiRes = await aiProviderManager.generateResponse({
                 prompt: message,
@@ -408,7 +477,7 @@ Jawab persis: "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kam
             });
 
             if (aiRes.success && aiRes.reply) {
-                reply = aiRes.reply;
+                reply = stripStrayFallback(aiRes.reply, result.selected.length > 0);
                 source = aiRes.provider;
             } else {
                 console.error("❌ AI Provider Manager failed for prompt:", message);
@@ -428,7 +497,7 @@ Jawab persis: "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kam
         saveConversation({ userId: user?.id, sessionId, role: "user", message, intent: result.intent, knowledgeIds }),
         saveConversation({ userId: user?.id, sessionId, role: "assistant", message: reply, intent: result.intent, knowledgeIds }),
         updateUserMemory(user, result.query, result.intent, result.entities),
-        saveAnalytics({ ...result, source, failed: !result.selected.length && !["order_system", "price_calculator"].includes(source) && !["gemini", "groq", "openrouter"].includes(source), user, sessionId })
+        saveAnalytics({ ...result, source, failed: !result.selected.length && !["order_system", "price_calculator", "contact_info"].includes(source) && !["gemini", "groq", "openrouter"].includes(source), user, sessionId })
     ]);
     return { reply, source, handoff: source === "handoff", intent: result.intent, entities: result.entities, knowledgeIds };
 }

@@ -2420,6 +2420,15 @@ async function loadStoreSettings() {
             }
         }
         if (s.contact_email) updateContactEmailLinks(s.contact_email);
+        if (s.contact_instagram) {
+            const handle = String(s.contact_instagram).replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/$/, "").replace(/^@/, "");
+            const igUrl = `https://www.instagram.com/${handle}`;
+            const igLink = document.getElementById("contactIgLink");
+            if (igLink) {
+                igLink.href = igUrl;
+                igLink.textContent = `@${handle}`;
+            }
+        }
         if (s.address) {
             const footerAddress = document.getElementById("footerAddress");
             if (footerAddress) {
@@ -3729,7 +3738,11 @@ function parseMarkdownToHtml(text) {
     clean = clean.replace(/📌/g, "");
 
     const escapeInline = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    // Cuma izinin skema http(s) di link markdown [teks](url) supaya NexBot bisa
+    // kirim link asli yang bisa diklik (mis. link WhatsApp/Instagram CS) tanpa
+    // buka celah XSS lewat skema lain (javascript:, data:, dst).
     const inlineFormat = (s) => escapeInline(s)
+        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
         .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
         .replace(/\*(.*?)\*/g, "<em>$1</em>");
 
@@ -3934,8 +3947,13 @@ function appendNexBotMessage(text, sender, cards = [], handoff = false) {
     }
 
     if (handoff) {
+        // Ambil nomor WA dari store_settings (sumber yang sama dengan halaman
+        // Kontak), bukan nomor yang di-hardcode -- supaya kalau admin ganti
+        // nomor CS lewat dashboard, tombol ini otomatis ikut ter-update.
+        const waDigits = (cachedStoreSettings?.contact_whatsapp || "6287792634063").replace(/\D/g, "");
+        const waHref = `https://wa.me/${waDigits}?text=${encodeURIComponent("Halo Admin NexShop, saya butuh bantuan")}`;
         html += `<div style="margin-top:8px;">
-            <a href="https://wa.me/6287792634063?text=Halo%20Admin%20NexShop,%20saya%20butuh%20bantuan" target="_blank" class="nexbot-pill" style="display:inline-flex; align-items:center; gap:4px; text-decoration:none; background:#25D366; color:#fff;">
+            <a href="${waHref}" target="_blank" class="nexbot-pill" style="display:inline-flex; align-items:center; gap:4px; text-decoration:none; background:#25D366; color:#fff;">
                 <i class="fa-brands fa-whatsapp"></i> Hubungi CS WhatsApp
             </a>
         </div>`;

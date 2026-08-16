@@ -1843,6 +1843,8 @@ input::placeholder{ color:var(--text-dim); }
 
 .nexbot-msg-content strong{ font-weight:700; color:var(--cyan); }
 :root[data-theme="light"] .nexbot-msg-content strong{ color:var(--violet); }
+.nexbot-msg-content a{ color:var(--cyan); font-weight:600; text-decoration:underline; text-underline-offset:2px; }
+:root[data-theme="light"] .nexbot-msg-content a{ color:var(--violet); }
 .nexbot-msg-content p{ margin:0 0 8px; }
 .nexbot-msg-content p:last-child{ margin-bottom:0; }
 .nexbot-msg-content ul, .nexbot-msg-content ol{ margin:2px 0 8px 18px; padding:0; }
