@@ -22,6 +22,9 @@
 
 const supabase = require("../config/db");
 const { notify } = require("../config/notify");
+const { marked } = require("marked");
+
+marked.use({ breaks: true, gfm: true });
 
 // ─────────────────────────────────────────────
 // Konstanta
@@ -52,9 +55,10 @@ const ADMIN_PAGE_SIZE      = 20;
 // HTML Sanitizer — whitelist tag & atribut
 // ─────────────────────────────────────────────
 const ALLOWED_TAGS = new Set([
-    "p", "h2", "h3", "h4", "strong", "em", "u", "s", "del", "ins",
+    "p", "h1", "h2", "h3", "h4", "h5", "h6", "strong", "em", "u", "s", "del", "ins",
     "blockquote", "ol", "ul", "li", "a", "img", "br", "hr",
-    "figure", "figcaption", "span", "code", "pre"
+    "figure", "figcaption", "span", "code", "pre", "div",
+    "table", "thead", "tbody", "tr", "th", "td"
 ]);
 
 // Atribut yang diizinkan per tag
@@ -62,6 +66,8 @@ const ALLOWED_ATTRS = {
     a:   ["href", "title", "rel", "target"],
     img: ["src", "alt", "title", "width", "height", "loading"],
     blockquote: ["cite"],
+    th: ["align", "colspan", "rowspan"],
+    td: ["align", "colspan", "rowspan"],
     "*": ["class"]   // class global diizinkan untuk styling
 };
 
@@ -78,6 +84,10 @@ function sanitizeHtml(raw) {
     if (!raw || typeof raw !== "string") return "";
 
     let html = removeGeminiCitations(raw);
+
+    // Wrap tables in responsive div before sanitizing, so the tags are recognized
+    html = html.replace(/<table/gi, '<div class="table-responsive"><table');
+    html = html.replace(/<\/table>/gi, '</table></div>');
 
     // 1. Hapus seluruh script, style, iframe, object, embed beserta isinya
     html = html
@@ -179,8 +189,10 @@ function escapeAttr(value) {
 
 function removeGeminiCitations(text) {
     if (!text || typeof text !== "string") return text;
-    // Menghapus tag sitasi Gemini yang menggunakan Private Use Area Unicode
-    return text.replace(/\uE200cite[^\uE201]*\uE201/g, "");
+    // Menghapus tag sitasi Gemini yang menggunakan Private Use Area Unicode dan Lenticular Bracket
+    return text
+        .replace(/\uE200cite[^\uE201]*\uE201/g, "")
+        .replace(/【(?:cite|turn)[^】]*】/g, "");
 }
 
 // ─────────────────────────────────────────────
@@ -259,7 +271,12 @@ function validateArticlePayload(body, isCreate = true) {
     if (!title) errors.push("Judul artikel wajib diisi");
 
     const excerpt = trimText(body.excerpt, MAX_EXCERPT_LEN);
-    const content = sanitizeHtml(trimText(body.content || "", MAX_CONTENT_LEN));
+    
+    // Convert Markdown to HTML before sanitizing
+    const rawContent = trimText(body.content || "", MAX_CONTENT_LEN);
+    const htmlContent = marked.parse(rawContent);
+    const content = sanitizeHtml(htmlContent);
+
     const author  = trimText(body.author || "NexShop Editorial", MAX_AUTHOR_LEN) || "NexShop Editorial";
 
     const categoryInput = trimText(body.category || "Gaming", 80);
@@ -1065,4 +1082,10 @@ exports.runScheduledPublish = async () => {
         console.error("[scheduled-publish] Unexpected error:", err);
         return 0;
     }
+};
+
+// Export internal functions for regression testing
+exports._test = {
+    sanitizeHtml,
+    removeGeminiCitations
 };

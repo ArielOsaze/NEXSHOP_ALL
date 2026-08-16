@@ -15,10 +15,11 @@ function escapeHtml(unsafe) {
          .replace(/'/g, "&#039;");
 }
 
-// Menghapus tag sitasi internal Gemini
 function removeGeminiCitations(text) {
     if (!text || typeof text !== "string") return text;
-    return text.replace(/\uE200cite[^\uE201]*\uE201/g, "");
+    return text
+        .replace(/\uE200cite[^\uE201]*\uE201/g, "")
+        .replace(/【(?:cite|turn)[^】]*】/g, "");
 }
 
 // BUG FIX (audit Agustus 2026): sebelumnya kalau artikel tidak ditemukan,

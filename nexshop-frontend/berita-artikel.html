@@ -203,6 +203,16 @@
     border: none; border-top: 1px solid var(--line); margin: 2rem 0;
 }
 
+/* Tables */
+.article-body table { width: 100%; border-collapse: collapse; margin: 0; }
+.article-body th, .article-body td { padding: 0.75rem; border: 1px solid var(--line); text-align: left; }
+.article-body th { background: var(--bg-panel-2); font-weight: 700; color: var(--text); }
+.table-responsive { width: 100%; overflow-x: auto; margin: 1.5rem 0; border-radius: var(--radius-sm); border: 1px solid var(--line); }
+.table-responsive table { border: none; }
+.table-responsive th, .table-responsive td { border: none; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
+.table-responsive th:last-child, .table-responsive td:last-child { border-right: none; }
+.table-responsive tr:last-child td { border-bottom: none; }
+
 /* Tags */
 .tags-section { margin-bottom: 2rem; }
 .tags-section h4 {
