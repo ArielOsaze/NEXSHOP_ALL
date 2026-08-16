@@ -1832,7 +1832,14 @@ function renderGamingNews(items) {
 async function loadGamingNews() {
     renderGamingNewsSkeleton();
     try {
-        const res = await fetch(`${API_BASE}/news/articles?category=Gaming&limit=6`);
+        // Dulu di-filter category=Gaming doang -- tapi ARTICLE_CATEGORIES ada
+        // 10 kategori (Esports, Gaming, Xbox, PlayStation, PC, Mobile, dst),
+        // jadi artikel yang ditag selain persis "Gaming" (mis. Esports) gak
+        // pernah muncul di sini walau sudah published & tampil normal di
+        // portal berita (berita.html gak filter kategori sama sekali).
+        // Section ini judulnya "Latest Gaming News" buat toko game secara
+        // umum, jadi sekarang ambil artikel terbaru lintas semua kategori.
+        const res = await fetch(`${API_BASE}/news/articles?limit=6`);
         if (!res.ok) throw new Error("Gagal memuat berita game");
         const json = await res.json();
         const articles = Array.isArray(json.data) ? json.data.slice(0, 3) : [];
