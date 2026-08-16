@@ -1606,6 +1606,11 @@ async function renderRatingPrompt(orderData, container) {
                        background:var(--bg-body);color:var(--text);margin-bottom:0.6rem;
                        font-family:inherit;font-size:0.92rem;box-sizing:border-box;">
             ` : ""}
+            <label style="display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.75rem;
+                   font-size:0.85rem;color:var(--text-muted);cursor:pointer;">
+                <input type="checkbox" id="rp_showname_${uid}" style="margin-top:0.2rem;flex-shrink:0;">
+                <span>Tampilkan nama saya apa adanya di testimoni publik. Jika tidak dicentang, nama akan otomatis disensor (contoh: "Budi S.").</span>
+            </label>
             <textarea id="rp_txt_${uid}" placeholder="Ceritakan pengalamanmu (opsional)" maxlength="500"
                 style="width:100%;min-height:80px;padding:0.75rem;border-radius:8px;border:1px solid var(--line);
                        background:var(--bg-body);color:var(--text);margin-bottom:0.5rem;
@@ -1668,6 +1673,7 @@ async function renderRatingPrompt(orderData, container) {
     if (skipBtn) skipBtn.onclick = () => { container.classList.add("hidden"); };
 
     const nameInput = isTopup ? container.querySelector(`#rp_name_${uid}`) : null;
+    const showNameInput = container.querySelector(`#rp_showname_${uid}`);
     const submitBtn = container.querySelector(`#rp_submit_${uid}`);
     if (submitBtn) {
         submitBtn.onclick = async () => {
@@ -1689,7 +1695,8 @@ async function renderRatingPrompt(orderData, container) {
                 const submitBody = {
                     order_id: orderId,
                     score: selectedScore,
-                    comment: txtArea?.value.trim() || undefined
+                    comment: txtArea?.value.trim() || undefined,
+                    show_name: !!showNameInput?.checked
                 };
                 if (isTopup) submitBody.display_name = nameInput?.value.trim() || undefined;
 

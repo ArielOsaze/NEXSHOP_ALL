@@ -30,6 +30,32 @@ function cleanProductContextName(name) {
     return raw.replace(/\s*\([^)]*\)\s*$/, "").trim() || raw;
 }
 
+// ============================================================================
+// Helper: whitelist nama untuk mode "tampilkan nama apa adanya" (show_name).
+// Beda sama maskPublicName -- ini dipakai buat mem-verifikasi nama SEBELUM
+// ditampilkan mentah ke publik, karena sumbernya tidak selalu terpercaya:
+// - topup_ratings.display_name: diketik BEBAS oleh pembeli sendiri saat
+//   submit rating, bisa saja (sengaja/tidak sengaja) diisi nomor HP, email,
+//   link promo/spam, atau teks aneh -- bukan cuma nama.
+// - orders.recipient_name: diisi saat checkout, juga tidak divalidasi
+//   sebagai "nama orang" secara ketat.
+// Kalau show_name=true tapi nilainya gagal whitelist ini, backend TIDAK
+// meloloskannya ke publik -- fallback paksa ke maskPublicName() seolah-olah
+// pembeli tidak mencentang show_name. Whitelist: huruf (termasuk aksen),
+// spasi, apostrof, tanda hubung, titik saja -- tolak kalau ada angka, "@",
+// atau pola link (http/www).
+// ============================================================================
+function sanitizePublicName(rawName) {
+    const name = String(rawName || "").trim();
+    if (!name) return null;
+    if (name.length > 60) return null;
+    if (/\d/.test(name)) return null;                 // nomor HP/PIN dll
+    if (/@/.test(name)) return null;                   // email
+    if (/(https?:\/\/|www\.)/i.test(name)) return null; // link/spam
+    if (!/^[\p{L}\p{M}\s.'-]+$/u.test(name)) return null; // whitelist karakter
+    return name;
+}
+
 exports.checkEligibility = async (req, res) => {
     try {
         const { orderId } = req.params;
@@ -112,6 +138,12 @@ exports.submitRating = async (req, res) => {
             if (finalComment === "") finalComment = null;
         }
 
+        // Preferensi pembeli: tampilkan nama asli apa adanya di testimoni
+        // publik (true) atau tetap disamarkan lewat maskPublicName (false,
+        // default). Default false supaya privasi tetap aman kalau frontend
+        // lupa mengirim field ini.
+        const finalShowName = req.body.show_name === true;
+
         // 1. Ambil order
         const { data: order, error: orderErr } = await supabase
             .from("orders")
@@ -150,7 +182,8 @@ exports.submitRating = async (req, res) => {
                 order_id: order.id,
                 user_id: order.user_id,
                 score,
-                comment: finalComment
+                comment: finalComment,
+                show_name: finalShowName
             }]);
 
         if (insertErr) {
@@ -431,6 +464,20 @@ exports.submitTopupRating = async (req, res) => {
             if (finalDisplayName === "") finalDisplayName = null;
         }
 
+        // Sama seperti submitRating: preferensi pembeli tampilkan nama asli
+        // atau disamarkan (default false = disamarkan).
+        const finalShowName = req.body.show_name === true;
+
+        // Kalau pembeli minta nama ditampilkan apa adanya, validasi di titik
+        // input juga (bukan cuma di getPublicTestimonials) -- supaya dapat
+        // pesan error yang jelas kalau ternyata isiannya bukan nama (nomor
+        // HP/email/link), bukan diam-diam disensor tanpa mereka sadari.
+        if (finalShowName && finalDisplayName && !sanitizePublicName(finalDisplayName)) {
+            return res.status(400).json({
+                message: "Nama tidak valid untuk ditampilkan publik (hanya huruf, spasi, tanda hubung/apostrof). Jangan isi nomor HP, email, atau link."
+            });
+        }
+
         const { data: order, error: orderErr } = await supabase
             .from("topup_orders")
             .select("id, status, user_id")
@@ -464,7 +511,8 @@ exports.submitTopupRating = async (req, res) => {
                 user_id: order.user_id,
                 score,
                 comment: finalComment,
-                display_name: finalDisplayName
+                display_name: finalDisplayName,
+                show_name: finalShowName
             }]);
 
         if (insertErr) {
@@ -540,7 +588,7 @@ exports.getPublicTestimonials = async (req, res) => {
 
         const { data: orderRatings, error: orderRatingsErr } = await supabase
             .from("order_ratings")
-            .select("id, score, comment, created_at, orders ( recipient_name, items )")
+            .select("id, score, comment, created_at, show_name, orders ( recipient_name, items )")
             .gte("score", 4)
             .not("comment", "is", null)
             .order("created_at", { ascending: false })
@@ -552,7 +600,7 @@ exports.getPublicTestimonials = async (req, res) => {
 
         const { data: topupRatings, error: topupRatingsErr } = await supabase
             .from("topup_ratings")
-            .select("id, score, comment, display_name, created_at, topup_orders ( nama_produk )")
+            .select("id, score, comment, display_name, show_name, created_at, topup_orders ( nama_produk )")
             .gte("score", 4)
             .not("comment", "is", null)
             .order("created_at", { ascending: false })
@@ -586,8 +634,13 @@ exports.getPublicTestimonials = async (req, res) => {
             ...(customTestimonials || []).map(r => ({
                 score: r.score,
                 comment: r.comment,
+                // Testimoni kustom diinput manual oleh admin -- nama admin
+                // yang ketik dianggap sudah sengaja dan tidak disamarkan.
+                // Nama produk tetap dilewatkan cleanProductContextName()
+                // supaya konsisten kalau admin menempel nama mentah dari
+                // katalog internal (mis. "5 Diamonds (5 + 0 Bonus)").
                 name: r.name || "Pembeli NexShop",
-                context: r.product_name || "Produk NexShop",
+                context: cleanProductContextName(r.product_name) || "Produk NexShop",
                 avatar: r.avatar_url || null,
                 created_at: r.created_at,
                 _pinned: true,
@@ -598,7 +651,14 @@ exports.getPublicTestimonials = async (req, res) => {
                 return {
                     score: r.score,
                     comment: r.comment,
-                    name: maskPublicName(r.orders?.recipient_name) || "Pembeli NexShop",
+                    // show_name: pilihan eksplisit pembeli saat submit rating.
+                    // true = tampilkan nama asli apa adanya, TAPI harus lolos
+                    // sanitizePublicName() dulu -- kalau tidak lolos (mis.
+                    // ternyata isinya nomor HP), backend paksa fallback ke
+                    // versi disamarkan, bukan meloloskannya ke publik.
+                    name: (r.show_name && sanitizePublicName(r.orders?.recipient_name))
+                        || maskPublicName(r.orders?.recipient_name)
+                        || "Pembeli NexShop",
                     context: firstItemId ? (cleanProductContextName(productNameMap[String(firstItemId)]) || "Produk NexShop") : "Produk NexShop",
                     avatar: null,
                     created_at: r.created_at,
@@ -608,8 +668,10 @@ exports.getPublicTestimonials = async (req, res) => {
             ...(topupRatings || []).map(r => ({
                 score: r.score,
                 comment: r.comment,
-                name: maskPublicName(r.display_name) || "Pembeli Topup",
-                context: r.topup_orders?.nama_produk || "Topup Game",
+                name: (r.show_name && sanitizePublicName(r.display_name))
+                    || maskPublicName(r.display_name)
+                    || "Pembeli Topup",
+                context: cleanProductContextName(r.topup_orders?.nama_produk) || "Topup Game",
                 avatar: null,
                 created_at: r.created_at,
                 _pinned: false
