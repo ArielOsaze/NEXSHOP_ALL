@@ -3728,28 +3728,52 @@ function parseMarkdownToHtml(text) {
     clean = clean.replace(/FAQ:\s*/gi, "");
     clean = clean.replace(/📌/g, "");
 
-    let html = clean
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+    const escapeInline = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const inlineFormat = (s) => escapeInline(s)
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/\*(.*?)\*/g, "<em>$1</em>");
 
-    // Hapus heading hashes dan jadikan bold (misal: ### Judul)
-    html = html.replace(/^#+\s+(.*)/gm, "<strong>$1</strong>");
+    // Pecah jadi blok-blok (paragraf/list/heading) alih-alih cuma ganti \n
+    // jadi <br> mentah -- supaya bullet & list bernomor bener-bener jadi
+    // elemen <ul>/<ol><li> (CSS list spacing di style.css baru kepakai kalau
+    // strukturnya beneran <li>, bukan teks "• ..." biasa).
+    const lines = clean.replace(/\r\n/g, "\n").split("\n");
+    const blocks = [];
+    let forceNewBlock = false;
+    for (const rawLine of lines) {
+        const line = rawLine.trim();
+        if (!line) { forceNewBlock = true; continue; } // baris kosong = paksa mulai blok baru (paragraf/list baru)
+        const headingMatch = line.match(/^#+\s+(.*)/);
+        if (headingMatch) { blocks.push({ type: "heading", text: headingMatch[1] }); forceNewBlock = false; continue; }
+        const bulletMatch = line.match(/^(?:•|-|\*)\s+(.*)/);
+        if (bulletMatch) {
+            const last = blocks[blocks.length - 1];
+            if (!forceNewBlock && last && last.type === "ul") last.items.push(bulletMatch[1]);
+            else blocks.push({ type: "ul", items: [bulletMatch[1]] });
+            forceNewBlock = false;
+            continue;
+        }
+        const numberedMatch = line.match(/^\d+[.)]\s+(.*)/);
+        if (numberedMatch) {
+            const last = blocks[blocks.length - 1];
+            if (!forceNewBlock && last && last.type === "ol") last.items.push(numberedMatch[1]);
+            else blocks.push({ type: "ol", items: [numberedMatch[1]] });
+            forceNewBlock = false;
+            continue;
+        }
+        const last = blocks[blocks.length - 1];
+        if (!forceNewBlock && last && last.type === "p") last.lines.push(line);
+        else blocks.push({ type: "p", lines: [line] });
+        forceNewBlock = false;
+    }
 
-    // Format bold
-    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-    
-    // Format bullets (- atau • atau *) sebelum italic agar tidak bertabrakan
-    html = html.replace(/(?:^|\n)(?:•|-|\*)\s+(.*)/g, "\n• $1");
-
-    // Format italic
-    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
-
-    // Replace ganti baris ganda dan tunggal
-    html = html.replace(/\n\n/g, "<br><br>").replace(/\n/g, "<br>");
-    
-    // Cleanup <br> berlebih di awal akibat replace baris pertama
-    html = html.replace(/^(?:<br>)+/, "");
+    let html = "";
+    for (const block of blocks) {
+        if (block.type === "heading") html += `<p><strong>${inlineFormat(block.text)}</strong></p>`;
+        else if (block.type === "ul") html += `<ul>${block.items.map((i) => `<li>${inlineFormat(i)}</li>`).join("")}</ul>`;
+        else if (block.type === "ol") html += `<ol>${block.items.map((i) => `<li>${inlineFormat(i)}</li>`).join("")}</ol>`;
+        else if (block.type === "p") html += `<p>${block.lines.map(inlineFormat).join("<br>")}</p>`;
+    }
 
     return html.trim();
 }

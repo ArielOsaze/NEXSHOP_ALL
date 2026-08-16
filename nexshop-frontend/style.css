@@ -1843,7 +1843,10 @@ input::placeholder{ color:var(--text-dim); }
 
 .nexbot-msg-content strong{ font-weight:700; color:var(--cyan); }
 :root[data-theme="light"] .nexbot-msg-content strong{ color:var(--violet); }
-.nexbot-msg-content ul, .nexbot-msg-content ol{ margin:6px 0 6px 18px; padding:0; }
+.nexbot-msg-content p{ margin:0 0 8px; }
+.nexbot-msg-content p:last-child{ margin-bottom:0; }
+.nexbot-msg-content ul, .nexbot-msg-content ol{ margin:2px 0 8px 18px; padding:0; }
+.nexbot-msg-content ul:last-child, .nexbot-msg-content ol:last-child{ margin-bottom:0; }
 .nexbot-msg-content li{ margin-bottom:3px; }
 
 .nexbot-card-suggest{ background:var(--bg-panel); border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-top:8px; display:flex; align-items:center; justify-content:space-between; font-size:12px; box-shadow:0 4px 12px rgba(0,0,0,0.15); transition:transform 0.15s; }

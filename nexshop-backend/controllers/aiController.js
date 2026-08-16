@@ -39,6 +39,7 @@ const BUILTIN_KNOWLEDGE = [
     { id: "builtin-escrow", title: "Mekanisme Escrow", category: "Trust", keywords: "escrow aman penipuan tahan dana garansi uang kembali", content: "NexShop menyediakan mekanisme escrow untuk transaksi yang mendukungnya. Untuk transaksi yang menggunakan mekanisme escrow NexShop, dana ditahan sesuai alur escrow sampai kondisi transaksi terpenuhi.", priority: 5, status: "active" },
     { id: "builtin-legal", title: "Legalitas dan OSS", category: "Trust", keywords: "aman resmi legal penipu scam oss nib kbli terdaftar", content: "NexShop telah memiliki NIB dan terdaftar secara resmi melalui sistem OSS pemerintah. NIB NexShop adalah 1408260072494 dengan skala usaha mikro dan KBLI 60390. Untuk detail legalitas, kamu bisa melihat halaman Legalitas NexShop (nexshop.cloud/legalitas.html).", priority: 5, status: "active" },
     { id: "builtin-topup", title: "Cara Topup Diamond", category: "Guide", keywords: "cara topup diamond ml mlbb mobile legends free fire pubg", content: "Buka menu Topup, pilih game, masukkan User ID dan Zone ID bila diminta, pilih nominal, lalu selesaikan pembayaran. Pesanan diproses otomatis setelah pembayaran terkonfirmasi.", priority: 5, status: "active" },
+    { id: "builtin-produk", title: "Cara Membeli Produk", category: "Guide", keywords: "cara membeli produk beli produk checkout keranjang cart pesan barang", content: "Buka menu Produk, pilih item yang kamu inginkan, klik Beli atau tambahkan ke keranjang. Lanjutkan ke Checkout, isi data penerima (nama, kontak, alamat/ID sesuai jenis produk), pilih metode pembayaran, lalu selesaikan pembayaran. Pesanan diproses otomatis setelah pembayaran terkonfirmasi dan status pesanan bisa dicek lewat menu Cek Transaksi.", priority: 5, status: "active" },
     { id: "builtin-refund", title: "Kebijakan Refund", category: "Policy", keywords: "refund pengembalian dana batal garansi", content: "Untuk kendala saldo atau item yang tidak masuk, siapkan Nomor Order ID dan hubungi Customer Service NexShop agar pesanan dapat diperiksa secara manual.", priority: 5, status: "active" }
 ];
 
@@ -48,6 +49,128 @@ const QUICK_ACTIONS = {
     order: "Status Pesanan Saya",
     faq: "FAQ NexShop"
 };
+
+// ============================================================================
+// FEATURE: Rekomendasi budget topup (mis. "aku punya uang 10.000 mau beli
+// diamond bisa dapat berapa"). Ini SENGAJA dijawab pakai query harga asli
+// dari topup_products, BUKAN dilempar ke Groq -- karena AI (apalagi model
+// kecil) gampang salah hitung / ngarang nominal harga. Dengan begini
+// jawabannya selalu akurat sesuai daftar harga yang beneran aktif di web.
+// ============================================================================
+
+// Peta nama entity (dari ENTITY_CATALOG nexbotEngine, yang alias-nya sudah
+// dijaga pakai word-boundary regex -- "ml"/"ff" dsb gak nyasar match ke kata
+// lain) ke potongan nama kategori di topup_products.
+const BUDGET_ENTITY_TO_CATEGORY = {
+    "Mobile Legends": "Mobile Legends",
+    "Free Fire": "Free Fire",
+    "PUBG Mobile": "PUBG"
+};
+
+function detectBudgetGameCategory(rawMessage) {
+    const entities = detectEntities(normalizeQuery(rawMessage));
+    for (const entity of entities) {
+        if (BUDGET_ENTITY_TO_CATEGORY[entity]) return BUDGET_ENTITY_TO_CATEGORY[entity];
+    }
+    // Default: sebut "diamond" tanpa nama game spesifik -> asumsikan Mobile
+    // Legends (istilah "diamond" paling umum dipakai buat ML di Indonesia).
+    if (/\bdiamond\b|\bdiamon\b/.test(String(rawMessage || "").toLowerCase())) return "Mobile Legends";
+    return null;
+}
+
+// Parse nominal uang gaya Indonesia: "10.000", "10000", "10rb", "10 ribu",
+// "50k", "1jt", "1 juta".
+function parseIndonesianAmount(rawMessage) {
+    const t = String(rawMessage || "").toLowerCase();
+    const suffixMatch = t.match(/(\d+(?:[.,]\d+)?)\s*(ribu|rb|k|juta|jt)\b/);
+    if (suffixMatch) {
+        const base = parseFloat(suffixMatch[1].replace(",", "."));
+        const unit = suffixMatch[2];
+        if (!Number.isFinite(base)) return null;
+        return Math.round(unit === "juta" || unit === "jt" ? base * 1000000 : base * 1000);
+    }
+    const plainMatch = t.match(/\b(\d{1,3}(?:\.\d{3})+|\d{4,9})\b/);
+    if (plainMatch) {
+        const value = parseInt(plainMatch[1].replace(/\./g, ""), 10);
+        return Number.isFinite(value) ? value : null;
+    }
+    return null;
+}
+
+function isBudgetQuestion(rawMessage) {
+    const t = String(rawMessage || "").toLowerCase();
+    const mentionsMoney = /\b(uang|budget|dana|duit|modal)\b/.test(t) || /\d+\s*(ribu|rb|k|juta|jt)\b/.test(t);
+    const asksAfford = /(dapat berapa|dpt berapa|dapet berapa|bisa (dapat|dapet|dpt|beli)|cukup\s*(ga|gak|nggak|tidak)?|beli apa aja|dapat apa)/.test(t);
+    return mentionsMoney && asksAfford;
+}
+
+async function handleBudgetQuery(message) {
+    const budget = parseIndonesianAmount(message);
+    const categoryLike = detectBudgetGameCategory(message);
+
+    if (!budget) {
+        return "Boleh sebutkan nominal budget kamu (mis. \"budget 20.000\" atau \"punya uang 50rb\") supaya aku bisa carikan paket diamond yang pas?";
+    }
+    if (!categoryLike) {
+        return `Budget Rp${budget.toLocaleString("id-ID")} mau dipakai buat topup game apa ya? (mis. Mobile Legends, Free Fire, PUBG Mobile)`;
+    }
+
+    const { data: withinBudget } = await supabase
+        .from("topup_products")
+        .select("nama, harga_jual, kategori, kode_produk")
+        .eq("is_active", true)
+        .ilike("kategori", `%${categoryLike}%`)
+        .lte("harga_jual", budget)
+        .order("harga_jual", { ascending: false })
+        .limit(5);
+
+    const clean = (withinBudget || []).filter((p) => !isForeignBudgetProduct(p.kode_produk));
+
+    if (!clean.length) {
+        const { data: cheapest } = await supabase
+            .from("topup_products")
+            .select("nama, harga_jual")
+            .eq("is_active", true)
+            .ilike("kategori", `%${categoryLike}%`)
+            .order("harga_jual", { ascending: true })
+            .limit(1);
+        const min = cheapest?.[0];
+        if (min) {
+            return `Untuk ${categoryLike}, budget Rp${budget.toLocaleString("id-ID")} belum cukup nih. Paket termurah yang tersedia saat ini **${min.nama}** seharga **Rp${Number(min.harga_jual).toLocaleString("id-ID")}**. Kamu bisa cek daftar lengkap harganya di menu Topup ya.`;
+        }
+        return unavailableReply();
+    }
+
+    const best = clean[0];
+    const others = clean.slice(1);
+
+    const { data: nextTierRows } = await supabase
+        .from("topup_products")
+        .select("nama, harga_jual")
+        .eq("is_active", true)
+        .ilike("kategori", `%${categoryLike}%`)
+        .gt("harga_jual", budget)
+        .order("harga_jual", { ascending: true })
+        .limit(1);
+    const nextTier = nextTierRows?.[0];
+
+    let reply = `Dengan budget Rp${budget.toLocaleString("id-ID")} untuk ${categoryLike}, paket yang paling pas kamu dapat: **${best.nama}** seharga **Rp${Number(best.harga_jual).toLocaleString("id-ID")}**.`;
+    if (others.length) {
+        reply += `\n\nOpsi lain yang juga muat di budget kamu:\n${others.map((p) => `• ${p.nama} — Rp${Number(p.harga_jual).toLocaleString("id-ID")}`).join("\n")}`;
+    }
+    if (nextTier) {
+        const gap = Number(nextTier.harga_jual) - budget;
+        reply += `\n\nKalau nambah sekitar Rp${gap.toLocaleString("id-ID")} lagi (jadi Rp${Number(nextTier.harga_jual).toLocaleString("id-ID")}), kamu bisa dapat **${nextTier.nama}** yang lebih besar.`;
+    }
+    return reply;
+}
+
+// Filter kasar region luar Indonesia -- sama prinsipnya kayak isForeignProduct
+// di topupController.js, dibuat versi ringan di sini biar aiController gak
+// perlu require seluruh topupController hanya buat 1 fungsi ini.
+function isForeignBudgetProduct(kodeProduk) {
+    return /(PH|SG|MY|TH|VN|GLOBAL)$/i.test(String(kodeProduk || "").trim());
+}
 
 function safeSessionId(value) {
     const fallback = `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -231,9 +354,13 @@ async function answer(message, sessionId, user) {
 
     let reply = "";
     let source = "knowledge";
-    const isOrderQuery = result.intent === "Order" || /\b(NX[A-F0-9]{10,30}|TP[A-F0-9]{10,30})\b/i.test(message) || /status pesanan|lacak|pesanan saya/i.test(message);
+    const isBudgetQuery = isBudgetQuestion(message);
+    const isOrderQuery = !isBudgetQuery && (result.intent === "Order" || /\b(NX[A-F0-9]{10,30}|TP[A-F0-9]{10,30})\b/i.test(message) || /status pesanan|lacak|pesanan saya/i.test(message));
 
-    if (isOrderQuery) {
+    if (isBudgetQuery) {
+        reply = await handleBudgetQuery(message);
+        source = "price_calculator";
+    } else if (isOrderQuery) {
         reply = await handleOrderLookup(message, user);
         source = "order_system";
     } else {
@@ -301,7 +428,7 @@ Jawab persis: "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kam
         saveConversation({ userId: user?.id, sessionId, role: "user", message, intent: result.intent, knowledgeIds }),
         saveConversation({ userId: user?.id, sessionId, role: "assistant", message: reply, intent: result.intent, knowledgeIds }),
         updateUserMemory(user, result.query, result.intent, result.entities),
-        saveAnalytics({ ...result, source, failed: !result.selected.length && source !== "order_system" && !["gemini", "groq", "openrouter"].includes(source), user, sessionId })
+        saveAnalytics({ ...result, source, failed: !result.selected.length && !["order_system", "price_calculator"].includes(source) && !["gemini", "groq", "openrouter"].includes(source), user, sessionId })
     ]);
     return { reply, source, handoff: source === "handoff", intent: result.intent, entities: result.entities, knowledgeIds };
 }
