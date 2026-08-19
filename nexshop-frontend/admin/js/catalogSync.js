@@ -286,6 +286,7 @@ async function bulkToggleOperator(opId, activate) {
 
         const result = await apiFetch('/topup/admin/toggle-operator', {
             method: 'POST',
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 

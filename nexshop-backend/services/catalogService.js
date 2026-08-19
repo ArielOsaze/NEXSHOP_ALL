@@ -153,7 +153,7 @@ exports.syncFullCatalog = async (triggerType = 'manual') => {
         let stats = { added: 0, updated: 0, foreign: 0, missing: 0 };
         
         // Fetch existing codes to distinguish add vs update
-        const { data: existingData } = await supabase.from("topup_products").select("kode_produk, source_raw_hash, auto_managed, manual_image_override, operator_logo");
+        const { data: existingData } = await supabase.from("topup_products").select("kode_produk, source_raw_hash, auto_managed, manual_image_override, operator_logo, is_active, item_icon");
         const existingMap = new Map();
         if (existingData) {
             existingData.forEach(p => existingMap.set(p.kode_produk, p));
@@ -225,7 +225,16 @@ exports.syncFullCatalog = async (triggerType = 'manual') => {
             
             if (existing) {
                 stats.updated++;
-                // If it exists but auto_managed is true, we can just upsert
+                // If it exists but auto_managed is true, we can just upsert.
+                // BUT normalizeProduct() always defaults is_active:false and
+                // item_icon:null (those defaults are only correct for BRAND
+                // NEW products). Without this override, every sync run
+                // (including the hourly auto-poller) would silently reset
+                // is_active back to false and wipe item_icon for every
+                // already-synced product -- undoing whatever the admin had
+                // activated/set. Preserve both from the existing row instead.
+                normalized.is_active = existing.is_active;
+                normalized.item_icon = existing.item_icon;
             } else {
                 stats.added++;
             }
