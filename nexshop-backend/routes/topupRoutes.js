@@ -8,6 +8,10 @@ const optionalAuthMiddleware = require("../middleware/optionalAuthMiddleware");
 const { checkNicknameLimiter } = require("../middleware/rateLimiter");
 
 // Publik
+
+// Public Full Catalog for One Stop Solution
+router.get("/public-catalog", topupController.getPublicCatalog);
+
 router.get("/products", topupController.getProducts);
 router.post("/check-nickname", checkNicknameLimiter, topupController.checkNicknameHandler); // publik — cek akun sebelum checkout
 router.post("/validate-promo", topupController.validatePromo); // publik — tombol "Terapkan" kode promo di halaman topup
@@ -41,6 +45,12 @@ router.delete("/admin/products", authMiddleware, adminMiddleware, topupControlle
 router.put("/admin/category-logo", authMiddleware, adminMiddleware, topupController.updateCategoryLogo); // set logo game utk 1 kategori sekaligus
 router.get("/admin/orders", authMiddleware, adminMiddleware, topupController.getAllOrders);
 router.get("/admin/balance", authMiddleware, adminMiddleware, topupController.getBalance);
+router.post("/admin/sync-full", authMiddleware, adminMiddleware, topupController.syncFullCatalog);
+router.get("/admin/sync-status", authMiddleware, adminMiddleware, topupController.getSyncStatus);
+router.get("/admin/catalog-summary", authMiddleware, adminMiddleware, topupController.getCatalogSummary);
+router.get("/admin/category-map", authMiddleware, adminMiddleware, topupController.getCategoryMap);
+router.put("/admin/category-map", authMiddleware, adminMiddleware, topupController.updateCategoryMap);
+router.post("/admin/toggle-operator", authMiddleware, adminMiddleware, topupController.toggleOperator);
 router.get("/status/:id", authMiddleware, adminMiddleware, topupController.checkStatus);
 
 // Webhooks — SENGAJA tanpa authMiddleware (dipanggil server iPaymu/TokoVoucher),

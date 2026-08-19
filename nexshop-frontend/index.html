@@ -212,6 +212,7 @@
 <a class="text-sm font-bold text-gray-900 dark:text-white relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-indigo after:scale-x-100 transition-all truncate" href="#games">Katalog</a>
 <a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-cyan after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left truncate" href="#topup">Topup Diamond</a>
 <a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-indigo after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left truncate" href="/berita">Portal Berita</a>
+<a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-cyan after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left truncate" href="#" id="headerOneStopBtn">One Stop Solution</a>
 <a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-amber-400 after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left truncate" href="#leaderboardSection">Top Spenders</a>
 <button type="button" class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors truncate" id="trackOrderBtn">Cek Transaksi</button>
 </div>
@@ -242,6 +243,7 @@
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="#games" id="menuKatalogBtn">Katalog</a>
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="#topup" id="menuTopupBtn">Topup Diamond</a>
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="/berita">Portal Berita</a>
+            <a class="text-lg font-bold text-gray-900 dark:text-white" href="#" id="menuOneStopBtn">One Stop Solution</a>
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="#leaderboardSection" id="menuLeaderboardBtn">Top Spenders</a>
             <button type="button" class="text-left text-lg font-bold text-gray-900 dark:text-white" id="menuTrackBtn">Cek Transaksi</button>
         </div>
@@ -392,6 +394,39 @@ Cek Transaksi
     </div>
     <div class="category-filter flex gap-2 mb-8 overflow-x-auto pb-4 hide-scrollbar" id="categoryFilter"></div>
     <div class="card-grid grid grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-[clamp(6px,1.5vw,16px)]" id="cardGrid"></div>
+</section>
+
+<!-- One Stop Solution (Full Catalog) -->
+<section class="reveal-up delay-200 hidden pb-24" id="view-onestop">
+    <div class="flex flex-col items-center justify-center mb-12 text-center pt-32">
+        <div class="flex items-center gap-2 mb-3">
+            <span class="w-8 h-[2px] bg-brand-cyan"></span>
+            <span class="text-brand-cyan font-bold uppercase tracking-widest text-sm">One Stop Solution</span>
+            <span class="w-8 h-[2px] bg-brand-cyan"></span>
+        </div>
+        <h2 class="text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tighter">Katalog <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">Lengkap</span></h2>
+        <p class="text-gray-500 dark:text-gray-400 mt-3 max-w-lg mx-auto">Semua produk game, pulsa, dan tagihan dalam satu tempat.</p>
+    </div>
+
+    <!-- Categories nav -->
+    <div class="mb-8 overflow-x-auto pb-4 hide-scrollbar">
+        <div class="flex gap-2 justify-center min-w-max px-4" id="oneStopCategoryNav">
+            <!-- Populated via JS -->
+        </div>
+    </div>
+
+    <!-- Search Box -->
+    <div class="max-w-xl mx-auto mb-10 px-4">
+        <div class="relative catalog-search-wrap">
+            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+            <input type="text" id="oneStopSearchInput" placeholder="Cari operator atau produk..." class="w-full pl-12 pr-4 py-3 bg-white dark:bg-[#0a0a0c] border border-gray-200 dark:border-white/10 rounded-xl focus:border-brand-indigo dark:focus:border-brand-cyan outline-none transition-colors text-gray-900 dark:text-white font-medium" />
+        </div>
+    </div>
+
+    <!-- Operator Grid -->
+    <div class="grid grid-cols-2 min-[480px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-[clamp(8px,1.5vw,20px)] px-[clamp(10px,3vw,32px)]" id="oneStopOperatorGrid">
+        <!-- Populated via JS -->
+    </div>
 </section>
 
 <!-- Topup Detail (halaman penuh, bukan modal) -->

@@ -41,6 +41,7 @@ const ssrController = require("./controllers/ssrController");
 const { startTopupStatusPoller } = require("./jobs/topupStatusPoller");
 const { startRetryPoller } = require("./jobs/notificationRetryPoller");
 const { startScheduledPublishPoller } = require("./jobs/scheduledPublishPoller");
+const { startCatalogSyncPoller } = require("./jobs/catalogSyncPoller");
 
 const app = express();
 
@@ -204,4 +205,5 @@ app.listen(PORT, () => {
     startTopupStatusPoller();
     startRetryPoller();
     startScheduledPublishPoller();
+    startCatalogSyncPoller();
 });

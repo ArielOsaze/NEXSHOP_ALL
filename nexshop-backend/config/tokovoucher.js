@@ -68,6 +68,43 @@ async function getFullCatalog() {
     return data;
 }
 
+// Hierarchical API Fallbacks untuk sinkronisasi katalog
+async function getCategories() {
+    const { memberCode, secret } = await getCreds();
+    const signature = buildDefaultSignature(memberCode, secret);
+    const { data } = await api.get(`/member/produk/category/list`, {
+        params: { member_code: memberCode, signature }
+    });
+    return data;
+}
+
+async function getOperators(categoryId) {
+    const { memberCode, secret } = await getCreds();
+    const signature = buildDefaultSignature(memberCode, secret);
+    const { data } = await api.get(`/member/produk/operator/list`, {
+        params: { member_code: memberCode, signature, id_kategori: categoryId }
+    });
+    return data;
+}
+
+async function getJenisProduk(operatorId) {
+    const { memberCode, secret } = await getCreds();
+    const signature = buildDefaultSignature(memberCode, secret);
+    const { data } = await api.get(`/member/produk/jenis/list`, {
+        params: { member_code: memberCode, signature, id_operator: operatorId }
+    });
+    return data;
+}
+
+async function getProdukList(jenisId) {
+    const { memberCode, secret } = await getCreds();
+    const signature = buildDefaultSignature(memberCode, secret);
+    const { data } = await api.get(`/member/produk/list`, {
+        params: { member_code: memberCode, signature, id_jenis: jenisId }
+    });
+    return data;
+}
+
 // Eksekusi transaksi topup (dipanggil setelah pembayaran iPaymu berhasil)
 //
 // PENTING: tujuan & server_id dikirim sebagai parameter TERPISAH ke TokoVoucher
@@ -127,6 +164,10 @@ module.exports = {
     checkBalance,
     searchProducts,
     getFullCatalog,
+    getCategories,
+    getOperators,
+    getJenisProduk,
+    getProdukList,
     createTransaction,
     checkStatus,
     verifyWebhookSignature
