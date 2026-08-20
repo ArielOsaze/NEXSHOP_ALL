@@ -118,8 +118,7 @@ function hitungMarkupWajar(hargaBeli) {
 // muncul sebagai "game card" di grid Topup Diamond, bukan di Marketplace.
 // ===========================================================
 const TOPUP_GAME_CATEGORIES = new Set([
-    "gaming",
-    "voucher game"
+    "gaming"
 ]);
 
 function isTopupGameCategory(nexshopCategoryName) {

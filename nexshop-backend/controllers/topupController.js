@@ -520,18 +520,40 @@ exports.checkNicknameHandler = async (req, res) => {
 
 exports.getProducts = async (req, res) => {
     try {
-        const { data, error } = await supabase
-            .from("topup_products")
-            .select("*")
-            .eq("is_active", true)
-            .order("kategori", { ascending: true })
-            .order("sort_order", { ascending: true })
-            .order("harga_jual", { ascending: true });
+        let allData = [];
+        let page = 0;
+        const pageSize = 1000;
+        
+        while (true) {
+            const { data, error } = await supabase
+                .from("topup_products")
+                .select("*")
+                .eq("is_active", true)
+                .order("kategori", { ascending: true })
+                .order("sort_order", { ascending: true })
+                .order("harga_jual", { ascending: true })
+                .range(page * pageSize, (page + 1) * pageSize - 1);
 
-        if (error) {
-            console.log(error);
-            return res.status(500).json({ message: "Database Error" });
+            if (error) {
+                console.log(error);
+                return res.status(500).json({ message: "Database Error" });
+            }
+            
+            if (!data || data.length === 0) break;
+            
+            // DYNAMIC PRICING: if harga_jual is 0, calculate dynamically using backend markup rules.
+            data.forEach(p => {
+                if (!p.harga_jual || p.harga_jual === 0) {
+                    p.harga_jual = hitungMarkupWajar(p.harga_beli || 0);
+                }
+            });
+            
+            allData.push(...data);
+            if (data.length < pageSize) break;
+            page++;
         }
+        
+        const data = allData;
 
         // Jaga-jaga (defense in depth): walaupun sync sekarang udah nolak produk
         // region luar Indonesia dari awal, baris LAMA yang kesimpen sebelum filter
@@ -1201,13 +1223,18 @@ exports.create = async (req, res) => {
     try {
         const { data: product, error: prodErr } = await supabase
             .from("topup_products")
-            .select("*")
+            .select("nama, kode_produk, harga_beli, harga_jual, butuh_server_id")
             .eq("kode_produk", kode_produk)
             .eq("is_active", true)
             .maybeSingle();
 
         if (prodErr || !product) {
             return res.status(404).json({ message: "Produk topup tidak ditemukan atau tidak aktif" });
+        }
+        
+        // DYNAMIC PRICING: if harga_jual is 0, calculate dynamically using backend markup rules.
+        if (!product.harga_jual || product.harga_jual === 0) {
+            product.harga_jual = hitungMarkupWajar(product.harga_beli || 0);
         }
 
         if (product.butuh_server_id && !server_id) {
@@ -1404,13 +1431,18 @@ exports.validatePromo = async (req, res) => {
     try {
         const { data: product, error: prodErr } = await supabase
             .from("topup_products")
-            .select("kode_produk, harga_jual")
+            .select("kode_produk, harga_beli, harga_jual")
             .eq("kode_produk", kode_produk)
             .eq("is_active", true)
             .maybeSingle();
 
         if (prodErr || !product) {
             return res.status(404).json({ valid: false, message: "Produk topup tidak ditemukan" });
+        }
+        
+        // DYNAMIC PRICING: if harga_jual is 0, calculate dynamically using backend markup rules.
+        if (!product.harga_jual || product.harga_jual === 0) {
+            product.harga_jual = hitungMarkupWajar(product.harga_beli || 0);
         }
 
         const cartItems = [{ id: product.kode_produk, price: product.harga_jual, quantity: 1 }];
@@ -2240,12 +2272,37 @@ function cleanProductName(name) {
 
 exports.getPublicCatalog = async (req, res) => {
     try {
-        const { data, error } = await supabase.from("topup_products")
-            .select("id, nama, kode_produk, kategori, source_category_name, source_operator_id, source_operator_name, harga_jual, butuh_server_id, source_status, operator_logo, item_icon, manual_category_override, manual_name_override")
-            .eq("is_active", true)
-            .order("kategori")
-            .order("harga_jual");
-        if (error) throw error;
+        // Kita filter kategori "Gaming" di database agar tidak memakan limit 1000 baris.
+        // Produk yang ada override manual dengan kategori selain Gaming tetap akan termuat.
+        let allData = [];
+        let page = 0;
+        const pageSize = 1000;
+        
+        while (true) {
+            const { data, error } = await supabase.from("topup_products")
+                .select("id, nama, kode_produk, kategori, source_category_name, source_operator_id, source_operator_name, harga_beli, harga_jual, butuh_server_id, source_status, operator_logo, item_icon, manual_category_override, manual_name_override")
+                .eq("is_active", true)
+                .neq("kategori", "Gaming")
+                .order("kategori")
+                .order("harga_jual")
+                .range(page * pageSize, (page + 1) * pageSize - 1);
+            if (error) throw error;
+            
+            if (!data || data.length === 0) break;
+            
+            // DYNAMIC PRICING: if harga_jual is 0, calculate dynamically using backend markup rules.
+            data.forEach(p => {
+                if (!p.harga_jual || p.harga_jual === 0) {
+                    p.harga_jual = hitungMarkupWajar(p.harga_beli || 0);
+                }
+            });
+            
+            allData.push(...data);
+            if (data.length < pageSize) break;
+            page++;
+        }
+        
+        const data = allData;
         
         // Fetch category map
         const { data: mapData, error: mapErr } = await supabase.from("topup_category_map").select("*");
@@ -2274,13 +2331,14 @@ exports.getPublicCatalog = async (req, res) => {
             }
 
             // Katalog ini KHUSUS feed Marketplace/One Stop Solution --
-            // kategori game (Gaming/Voucher Game) punya etalase sendiri di
+            // kategori game (Topup Game) punya etalase sendiri di
             // Topup Diamond (lihat getProducts) dan gak boleh dobel nongol
             // di sini.
             if (isTopupGameCategory(displayCategory)) return;
             
             // Operator Mapping Logic (Use explicit operator name, fallback to legacy kategori)
             const displayOperator = p.source_operator_name || p.kategori || "Unknown";
+            const operatorId = p.source_operator_id || displayOperator;
             
             // If there's a manual_name_override, we shouldn't "clean" it. Otherwise apply standard cleaning.
             if (p.manual_name_override) {
@@ -2304,15 +2362,16 @@ exports.getPublicCatalog = async (req, res) => {
             }
             
             const opMap = catalogMap.get(displayCategory);
-            if (!opMap.has(displayOperator)) {
-                opMap.set(displayOperator, {
+            if (!opMap.has(operatorId)) {
+                opMap.set(operatorId, {
+                    id: operatorId,
                     operator: displayOperator,
                     operator_logo: opLogo || null,
                     products: []
                 });
             }
             
-            opMap.get(displayOperator).products.push(p);
+            opMap.get(operatorId).products.push(p);
         });
         
         // Convert Maps to Arrays

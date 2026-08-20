@@ -382,15 +382,7 @@ body { font-family: 'Plus Jakarta Sans', sans-serif; }
 </footer>
 
 <script>
-// ──────────────────────────────────────────────────────────────
 // NexShop Marketplace — marketplace.html client-side logic
-// Halaman ini SENGAJA gak punya form checkout sendiri -- pas produk
-// dipilih, user diarahin balik ke "/" (index.html) bawa query
-// ?market=<operator>&buy=<kode produk opsional> yang otomatis membuka
-// flow checkout yang SAMA persis kayak grid Topup Diamond biasa (lihat
-// openMarketplaceCheckoutFromQuery() di script.js). Ini biar logic
-// pembayaran cuma ada SATU tempat, gak dobel/gampang out-of-sync.
-// ──────────────────────────────────────────────────────────────
 const API_BASE = (() => {
     const hostname = window.location.hostname;
     if (hostname === "nexshop.cloud" || hostname === "www.nexshop.cloud") {
@@ -466,12 +458,182 @@ function matchesQuery(text, tokens) {
     return tokens.every((t) => lower.includes(t));
 }
 
-function goToCheckout(operatorName, kodeProduk) {
-    const params = new URLSearchParams();
-    params.set("market", operatorName);
-    if (kodeProduk) params.set("buy", kodeProduk);
-    window.location.href = "/?" + params.toString();
+// NEW: Open specific operator detail within the Marketplace page
+function openMarketplaceDetail(operatorId) {
+    let operatorObj = null;
+    let operatorCategory = "";
+
+    // Find the operator in catalog
+    for (const catObj of catalog) {
+        const found = catObj.operators.find(op => String(op.id) === String(operatorId));
+        if (found) {
+            operatorObj = found;
+            operatorCategory = catObj.category;
+            break;
+        }
+    }
+
+    if (!operatorObj) return;
+
+    document.getElementById("marketGrid").classList.add("hidden");
+    document.getElementById("catFilterWrap").classList.add("hidden");
+    document.querySelector(".mkt-search-wrap").parentElement.classList.add("hidden");
+    document.getElementById("totalCount").parentElement.classList.add("hidden");
+    
+    const detailContainer = document.getElementById("marketplaceDetail");
+    detailContainer.classList.remove("hidden");
+
+    const fallbackIcon = `<i class="fa-solid fa-shop"></i>`;
+    const imgHtml = operatorObj.operator_logo
+        ? `<img src="${safeUrl(operatorObj.operator_logo)}" alt="${escapeHtml(operatorObj.operator)}" onerror="this.outerHTML='${fallbackIcon}'" loading="lazy">`
+        : fallbackIcon;
+
+    document.getElementById("mktDetailHeader").innerHTML = `
+        <div class="mkt-detail-icon">${imgHtml}</div>
+        <div class="mkt-detail-info">
+            <div class="mkt-detail-cat">${escapeHtml(operatorCategory)}</div>
+            <h2>${escapeHtml(operatorObj.operator)}</h2>
+        </div>
+    `;
+
+    let productsHtml = "";
+    operatorObj.products.forEach(p => {
+        const harga = p.harga_jual !== undefined && p.harga_jual !== null ? rupiah(p.harga_jual) : "Harga tidak tersedia";
+        const btnHtml = p.harga_jual !== undefined && p.harga_jual !== null
+            ? `<button class="mkt-buy-btn" data-id="${p.id}" data-kode="${escapeHtml(p.kode_produk)}" data-nama="${escapeHtml(p.nama)}" data-harga="${p.harga_jual}" data-server="${p.butuh_server_id ? 'true' : 'false'}">Beli</button>`
+            : `<button class="mkt-buy-btn mkt-buy-btn--disabled" disabled>Tidak Tersedia</button>`;
+            
+        productsHtml += `
+            <div class="mkt-product-row">
+                <div class="mkt-product-name">${escapeHtml(p.nama)}</div>
+                <div class="mkt-product-action">
+                    <span class="mkt-product-price">${harga}</span>
+                    ${btnHtml}
+                </div>
+            </div>
+        `;
+    });
+
+    document.getElementById("mktDetailProducts").innerHTML = productsHtml;
+
+    // Attach buy events
+    document.getElementById("mktDetailProducts").querySelectorAll(".mkt-buy-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            openMarketplaceCheckout({
+                id: btn.dataset.id,
+                kode_produk: btn.dataset.kode,
+                nama: btn.dataset.nama,
+                harga_jual: parseInt(btn.dataset.harga, 10),
+                butuh_server_id: btn.dataset.server === "true",
+                kategori: operatorCategory,
+                operator: operatorObj.operator,
+                qty: 1
+            });
+        });
+    });
 }
+
+function closeMarketplaceDetail() {
+    document.getElementById("marketplaceDetail").classList.add("hidden");
+    document.getElementById("marketGrid").classList.remove("hidden");
+    document.getElementById("catFilterWrap").classList.remove("hidden");
+    document.querySelector(".mkt-search-wrap").parentElement.classList.remove("hidden");
+    document.getElementById("totalCount").parentElement.classList.remove("hidden");
+}
+
+let currentMktCheckoutProduct = null;
+
+function openMarketplaceCheckout(product) {
+    currentMktCheckoutProduct = product;
+    
+    document.getElementById("mktCheckoutOpName").textContent = product.operator;
+    document.getElementById("mktCheckoutProdName").value = product.nama;
+    document.getElementById("mktCheckoutPrice").textContent = rupiah(product.harga_jual);
+    
+    document.getElementById("mktCheckoutTarget").value = "";
+    document.getElementById("mktCheckoutServer").value = "";
+    document.getElementById("mktCheckoutError").textContent = "";
+    document.getElementById("mktCheckoutSubmitBtn").disabled = false;
+    document.getElementById("mktCheckoutSubmitBtn").textContent = "Bayar";
+
+    if (product.kategori.toLowerCase() === "gaming" || product.kategori.toLowerCase() === "voucher game") {
+        document.getElementById("mktCheckoutTargetLabel").textContent = "Player ID / User ID";
+        document.getElementById("mktCheckoutTarget").placeholder = "Masukkan Player ID";
+        if (product.butuh_server_id) {
+            document.getElementById("mktCheckoutServerGroup").classList.remove("hidden");
+            document.getElementById("mktCheckoutServer").required = true;
+        } else {
+            document.getElementById("mktCheckoutServerGroup").classList.add("hidden");
+            document.getElementById("mktCheckoutServer").required = false;
+        }
+    } else {
+        document.getElementById("mktCheckoutTargetLabel").textContent = "Nomor Handphone / Tujuan";
+        document.getElementById("mktCheckoutTarget").placeholder = "0812xxxxxxx";
+        document.getElementById("mktCheckoutServerGroup").classList.add("hidden");
+        document.getElementById("mktCheckoutServer").required = false;
+    }
+
+    document.getElementById("mktCheckoutOverlay").classList.add("is-visible");
+}
+
+function closeMarketplaceCheckout() {
+    document.getElementById("mktCheckoutOverlay").classList.remove("is-visible");
+    currentMktCheckoutProduct = null;
+}
+
+document.getElementById("mktCheckoutPaymentMethod").addEventListener("change", (e) => {
+    if (e.target.value === "va") {
+        document.getElementById("mktCheckoutVaGroup").classList.remove("hidden");
+    } else {
+        document.getElementById("mktCheckoutVaGroup").classList.add("hidden");
+    }
+});
+
+document.getElementById("mktCheckoutForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!currentMktCheckoutProduct) return;
+
+    const btn = document.getElementById("mktCheckoutSubmitBtn");
+    const errEl = document.getElementById("mktCheckoutError");
+    btn.disabled = true;
+    btn.textContent = "Memproses...";
+    errEl.textContent = "";
+
+    try {
+        const payload = {
+            kode_produk: currentMktCheckoutProduct.kode_produk,
+            tujuan: document.getElementById("mktCheckoutTarget").value,
+            server_id: currentMktCheckoutProduct.butuh_server_id ? document.getElementById("mktCheckoutServer").value : undefined,
+            payment_method: document.getElementById("mktCheckoutPaymentMethod").value,
+            payment_channel: document.getElementById("mktCheckoutPaymentMethod").value === "va" ? document.getElementById("mktCheckoutVaBank").value : undefined
+        };
+
+        const res = await fetch(`${API_BASE}/topup`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        let data;
+        try {
+            data = await res.json();
+        } catch (e) {
+            throw new Error("Gagal terhubung ke server pembayaran.");
+        }
+
+        if (!res.ok) throw new Error(data.message || "Gagal membuat transaksi");
+
+        if (data.payment_url) {
+            window.location.href = data.payment_url;
+        } else {
+            throw new Error("URL Pembayaran tidak ditemukan");
+        }
+    } catch (err) {
+        errEl.textContent = err.message;
+        btn.disabled = false;
+        btn.textContent = "Bayar";
+    }
+});
 
 function renderGrid() {
     const grid = document.getElementById("marketGrid");
@@ -502,7 +664,7 @@ function renderGrid() {
                         if (minPrice === null || p.harga_jual < minPrice) minPrice = p.harga_jual;
                     }
                 });
-                const opDataAttr = encodeURIComponent(op.operator);
+                const opDataAttr = encodeURIComponent(op.id || op.operator);
                 categoryHtml += `
                     <div class="market-card" data-operator="${opDataAttr}">
                         <div class="market-card-icon">${imgHtml}</div>
@@ -513,21 +675,17 @@ function renderGrid() {
                 `;
             } else if (tokens.length > 0) {
                 const matchedProducts = op.products.filter((p) => matchesQuery(p.nama, tokens));
-                matchedProducts.forEach((p) => {
+                if (matchedProducts.length > 0) {
                     matchCount++;
-                    const opDataAttr = encodeURIComponent(op.operator);
-                    const prodDataAttr = encodeURIComponent(p.kode_produk);
+                    const opDataAttr = encodeURIComponent(op.id || op.operator);
                     categoryHtml += `
-                        <div class="market-card market-card--product" data-operator="${opDataAttr}" data-product="${prodDataAttr}">
+                        <div class="market-card" data-operator="${opDataAttr}">
                             <div class="market-card-icon">${imgHtml}</div>
-                            <div>
-                                <div class="mkt-product-op">${escapeHtml(op.operator)}</div>
-                                <h4>${escapeHtml(p.nama)}</h4>
-                                <div class="mkt-price">${rupiah(p.harga_jual)}</div>
-                            </div>
+                            <h4>${escapeHtml(op.operator)}</h4>
+                            <div class="mkt-count">${matchedProducts.length} Produk Cocok</div>
                         </div>
                     `;
-                });
+                }
             }
         });
 
@@ -558,9 +716,8 @@ function renderGrid() {
     grid.querySelectorAll(".market-card").forEach((card) => {
         card.addEventListener("click", () => {
             const operatorName = decodeURIComponent(card.dataset.operator || "");
-            const productId = card.dataset.product ? decodeURIComponent(card.dataset.product) : null;
             if (!operatorName) return;
-            goToCheckout(operatorName, productId);
+            openMarketplaceDetail(operatorName);
         });
     });
 }
