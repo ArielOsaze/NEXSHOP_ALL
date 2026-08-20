@@ -2840,6 +2840,15 @@ function openGameDetail(kategori, overrideGame = null, returnView = 'grid', pres
         returnView: returnView
     };
 
+    // Kalau dibuka dari kartu produk spesifik (mis. dari grid One
+    // Stop/Marketplace yang nge-klik satu denom langsung, bukan cuma
+    // pilih operator), langsung preselect produknya di sini -- sebelumnya
+    // parameter ini gak pernah dipakai jadi user tetap harus milih ulang
+    // manual walau udah klik produk yang spesifik.
+    if (preselectProductId) {
+        twState.product = twState.products.find(p => p.kode_produk === preselectProductId) || null;
+    }
+
     document.getElementById("twLogo").src = safeUrl(game.logo, "images/nexshop-icon.svg");
     document.getElementById("twLogo").alt = game.kategori;
     document.getElementById("twGameName").textContent = game.kategori;
@@ -2892,6 +2901,13 @@ function openGameDetail(kategori, overrideGame = null, returnView = 'grid', pres
 }
 
 function closeGameDetail() {
+    // Kalau checkout ini dibuka dari halaman Marketplace terpisah, balikin
+    // ke sana lagi waktu ditutup -- bukan nyangkut di section Topup Diamond
+    // di homepage (yang gak ada hubungannya sama alur belanja user).
+    if (twState && twState.returnView === "marketplace") {
+        window.location.href = "/marketplace";
+        return;
+    }
     document.getElementById("topupDetail").classList.add("hidden");
     document.getElementById("topup").classList.remove("hidden");
     window.scrollTo({ top: document.getElementById("topup").offsetTop - 90, behavior: "smooth" });
@@ -4538,6 +4554,53 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
+// ===========================================================
+// BRIDGE dari Marketplace (halaman terpisah /marketplace.html) -- halaman
+// itu cuma nampilin katalog & sengaja GAK punya form checkout sendiri
+// (checkout tetap di satu tempat aja di sini biar logic pembayaran gak
+// dobel/gampang out-of-sync). Waktu user klik "Beli" di Marketplace, dia
+// diarahin balik ke sini bawa query ?market=<nama operator>&buy=<kode
+// produk opsional>, lalu di sini dibuka flow checkout yang SAMA persis
+// kayak yang dipakai grid Topup biasa.
+// ===========================================================
+async function openMarketplaceCheckoutFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const marketOperator = params.get("market");
+    if (!marketOperator) return;
+
+    const buyProductId = params.get("buy");
+
+    // Bersihin query string dari address bar biar gak kebuka ulang kalau
+    // user nge-refresh atau pencet tombol back setelah ini.
+    window.history.replaceState({}, "", window.location.pathname);
+
+    try {
+        if (!oneStopCatalog.length) {
+            const response = await fetch(`${API_BASE}/topup/public-catalog`);
+            if (!response.ok) throw new Error("Gagal mengambil katalog.");
+            const data = await response.json();
+            oneStopCatalog = Array.isArray(data) ? data : [];
+        }
+
+        let foundOp = null;
+        for (const categoryObj of oneStopCatalog) {
+            foundOp = categoryObj.operators.find(o => o.operator === marketOperator);
+            if (foundOp) break;
+        }
+        if (!foundOp) return;
+
+        const fakeGame = {
+            kategori: foundOp.operator,
+            logo: foundOp.operator_logo,
+            products: foundOp.products
+        };
+        openGameDetail(foundOp.operator, fakeGame, "marketplace", buyProductId);
+    } catch (err) {
+        console.error("Gagal membuka produk dari Marketplace:", err);
+    }
+}
+document.addEventListener("DOMContentLoaded", openMarketplaceCheckoutFromQuery);
+
 function openOneStopView(e) {
     if (e) e.preventDefault();
     
@@ -4568,16 +4631,8 @@ function closeOneStopView() {
     document.getElementById("topupDetail").classList.add("hidden");
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    const headerBtn = document.getElementById("headerOneStopBtn");
-    if (headerBtn) headerBtn.addEventListener("click", openOneStopView);
-    
-    const menuBtn = document.getElementById("menuOneStopBtn");
-    if (menuBtn) {
-        menuBtn.addEventListener("click", (e) => {
-            openOneStopView(e);
-            const mobileMenuOverlay = document.getElementById('mobileMenuOverlay');
-            if (mobileMenuOverlay) mobileMenuOverlay.classList.remove('active');
-        });
-    }
-});
+// CATATAN: #headerOneStopBtn & #menuOneStopBtn sekarang <a href="/marketplace">
+// link navigasi BENERAN ke halaman terpisah marketplace.html -- bukan lagi
+// toggle section tersembunyi di halaman ini (openOneStopView/closeOneStopView
+// & section #view-onestop di bawah ini jadi gak kepakai lagi, sengaja
+// dibiarin dulu -- gak ganggu, bisa dibersihin belakangan).

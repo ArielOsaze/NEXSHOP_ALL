@@ -22,7 +22,8 @@ const {
     bulatkanKeAtas,
     MARKUP_TIERS,
     MARKUP_CAP_ABSOLUT,
-    AUTO_MARKUP_ROUND
+    AUTO_MARKUP_ROUND,
+    isTopupGameCategory
 } = require("../utils/topupHelpers");
 
 const IPAYMU_PAYMENT_METHODS = Object.freeze({
@@ -537,7 +538,13 @@ exports.getProducts = async (req, res) => {
         // ini ada masih mungkin nyangkut di DB. Disaring lagi di sini biar toko
         // publik gak PERNAH nampilin produk region luar Indonesia.
         const indoOnly = (data || []).filter((p) => !isForeignProduct(p.kategori, p.kode_produk));
-        res.json(indoOnly);
+
+        // Endpoint ini KHUSUS feed grid "Topup Diamond" (game) -- kategori
+        // non-game (E-Wallet, PLN, Pulsa, dst) punya etalase sendiri di
+        // Marketplace/One Stop Solution (lihat getPublicCatalog) dan gak
+        // boleh ikut nongol di sini walaupun admin aktifin.
+        const gameOnly = indoOnly.filter((p) => isTopupGameCategory(p.kategori));
+        res.json(gameOnly);
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error" });
@@ -2265,6 +2272,12 @@ exports.getPublicCatalog = async (req, res) => {
             } else {
                 displayCategory = "Lainnya";
             }
+
+            // Katalog ini KHUSUS feed Marketplace/One Stop Solution --
+            // kategori game (Gaming/Voucher Game) punya etalase sendiri di
+            // Topup Diamond (lihat getProducts) dan gak boleh dobel nongol
+            // di sini.
+            if (isTopupGameCategory(displayCategory)) return;
             
             // Operator Mapping Logic (Use explicit operator name, fallback to legacy kategori)
             const displayOperator = p.source_operator_name || p.kategori || "Unknown";

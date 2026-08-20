@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marketplace — E-Wallet, Pulsa, Tagihan &amp; PPOB | NexShop</title>
+<meta name="description" content="Isi ulang E-Wallet (DANA, OVO, GoPay, ShopeePay), beli pulsa &amp; paket data, bayar PLN &amp; tagihan, semua dalam satu marketplace NexShop. Proses instan, aman, dan terpercaya.">
+<link rel="canonical" href="https://nexshop.cloud/marketplace">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://nexshop.cloud/marketplace">
+<meta property="og:title" content="Marketplace — E-Wallet, Pulsa, Tagihan & PPOB | NexShop">
+<meta property="og:description" content="Isi ulang E-Wallet, beli pulsa & paket data, bayar PLN & tagihan, semua dalam satu marketplace NexShop.">
+<meta property="og:image" content="https://nexshop.cloud/images/nexshop-og-v2.jpg">
+<meta property="og:site_name" content="NexShop">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Marketplace — E-Wallet, Pulsa, Tagihan & PPOB | NexShop">
+<meta name="twitter:description" content="Isi ulang E-Wallet, beli pulsa & paket data, bayar PLN & tagihan, semua dalam satu marketplace NexShop.">
+<meta name="twitter:image" content="https://nexshop.cloud/images/nexshop-og-v2.jpg">
+
+<!-- JSON-LD -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "NexShop Marketplace",
+  "description": "E-Wallet, Pulsa, Paket Data, Tagihan, dan PPOB lainnya dalam satu tempat",
+  "url": "https://nexshop.cloud/marketplace",
+  "publisher": {
+    "@type": "Organization",
+    "name": "NexShop",
+    "url": "https://nexshop.cloud",
+    "logo": { "@type": "ImageObject", "url": "https://nexshop.cloud/favicon.ico" }
+  }
+}
+</script>
+
+<link rel="icon" type="image/x-icon" href="/favicon.ico">
+<link rel="manifest" href="/manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<script src="/theme-init.js"></script>
+<link rel="stylesheet" href="/style.css">
+<style>
+/* =============================
+   NexShop Marketplace — marketplace.html
+   Menggunakan CSS variables dari style.css (pola sama kayak berita.html)
+   ============================= */
+
+* { scrollbar-width: none; -ms-overflow-style: none; }
+::-webkit-scrollbar { display: none; }
+
+body { font-family: 'Plus Jakarta Sans', sans-serif; }
+
+/* ── Nav ─────────────────────────── */
+.mkt-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--nav-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--line);
+    padding: 0 clamp(1rem, 4vw, 3rem);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    gap: 1rem;
+}
+.mkt-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--text);
+    white-space: nowrap;
+}
+.mkt-nav-brand .nx-accent { color: var(--violet); }
+.mkt-nav-brand .nx-tag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: rgba(34, 211, 238, .12);
+    border: 1px solid rgba(34, 211, 238, .25);
+    padding: 2px 6px;
+    border-radius: 4px;
+    align-self: flex-end;
+    margin-bottom: 2px;
+}
+.mkt-nav-links { display: flex; gap: 0.25rem; list-style: none; margin: 0; padding: 0; }
+.mkt-nav-links a {
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.35rem 0.7rem;
+    border-radius: var(--radius-sm);
+    transition: all 0.18s;
+    white-space: nowrap;
+}
+.mkt-nav-links a:hover, .mkt-nav-links a.active { color: var(--text); background: var(--bg-panel-2); }
+.mkt-nav-back {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--line);
+    transition: all 0.18s;
+    white-space: nowrap;
+}
+.mkt-nav-back:hover { color: var(--text); border-color: var(--violet); }
+
+@media (max-width: 768px) { .mkt-nav-links { display: none; } }
+
+/* ── Main / Hero ─────────────────────────── */
+.mkt-main { max-width: 1280px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem); }
+
+.mkt-hero { margin-bottom: 2rem; }
+.mkt-hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--cyan);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    margin-bottom: 0.6rem;
+}
+.mkt-hero h1 {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    font-size: clamp(1.5rem, 4vw, 2.25rem);
+    color: var(--text);
+    margin: 0 0 0.5rem;
+    letter-spacing: -0.02em;
+}
+.mkt-hero p { color: var(--text-muted); font-size: 0.95rem; max-width: 640px; margin: 0 0 1.5rem; line-height: 1.6; }
+
+.mkt-search-wrap { position: relative; max-width: 480px; }
+.mkt-search-wrap i {
+    position: absolute; left: 1rem; top: 50%; transform: translateY(-50%);
+    color: var(--text-dim); font-size: 0.9rem;
+}
+.mkt-search-wrap input {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 2.6rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background: var(--bg-panel);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.18s;
+}
+.mkt-search-wrap input:focus { border-color: var(--violet); }
+.mkt-search-wrap input::placeholder { color: var(--text-dim); }
+
+/* ── Category filter (dipola dari berita.html) ─────────────────────────── */
+.cat-filter-wrap {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin: 1.5rem 0 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--line);
+}
+.cat-btn {
+    padding: 0.45rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: 0.02em;
+}
+.cat-btn:hover { border-color: rgba(139, 92, 246, 0.4); color: var(--text); background: rgba(139, 92, 246, 0.05); }
+.cat-btn.active { background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.4); color: var(--violet); box-shadow: 0 0 15px rgba(139, 92, 246, 0.1); }
+
+/* ── Grid header ─────────────────────────── */
+.mkt-grid-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1.25rem; }
+.mkt-grid-header h3 { font-family: 'Sora', sans-serif; font-size: 1.05rem; font-weight: 700; color: var(--text); margin: 0; }
+.mkt-grid-header span { font-size: 0.78rem; color: var(--text-dim); }
+
+.mkt-category-heading {
+    grid-column: 1 / -1;
+    margin-top: 1.5rem;
+    margin-bottom: 0.25rem;
+    font-family: 'Sora', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.mkt-category-heading:first-child { margin-top: 0; }
+.mkt-category-bar { width: 2.5rem; height: 3px; background: var(--cyan); border-radius: 2px; margin: 0.35rem 0 1rem; }
+
+/* ── Product/operator grid ─────────────────────────── */
+.market-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+.market-card {
+    background: rgba(18, 23, 41, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius);
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+.market-card:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(139, 92, 246, 0.1);
+}
+.market-card-icon {
+    width: 56px; height: 56px;
+    border-radius: 16px;
+    background: var(--bg-panel-2);
+    border: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+.market-card-icon img { width: 100%; height: 100%; object-fit: contain; padding: 8px; }
+.market-card-icon i { font-size: 1.4rem; color: var(--text-dim); }
+.market-card h4 { font-size: 0.85rem; font-weight: 700; color: var(--text); margin: 0 0 0.2rem; line-height: 1.3; }
+.market-card .mkt-count { font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.6rem; }
+.market-card .mkt-price {
+    margin-top: auto;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--cyan);
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--line);
+    width: 100%;
+}
+
+/* Kartu produk spesifik (hasil pencarian) -- beda dari kartu operator */
+.market-card--product { flex-direction: row; align-items: center; text-align: left; gap: 0.75rem; }
+.market-card--product .market-card-icon { width: 44px; height: 44px; margin-bottom: 0; flex-shrink: 0; border-radius: 12px; }
+.market-card--product .mkt-product-op { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--violet); margin-bottom: 0.15rem; }
+.market-card--product .mkt-price { border-top: none; padding-top: 0.3rem; margin-top: 0.3rem; color: var(--text); font-size: 0.8rem; }
+
+.mkt-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--text-muted);
+}
+.mkt-empty i { font-size: 2.2rem; color: var(--text-dim); margin-bottom: 1rem; display: block; }
+.mkt-empty h3 { color: var(--text); font-size: 1.05rem; margin: 0 0 0.4rem; }
+.mkt-empty p { font-size: 0.85rem; max-width: 380px; margin: 0 auto; }
+
+.mkt-skeleton { background: var(--bg-panel-2); border-radius: var(--radius); animation: mktPulse 1.4s ease-in-out infinite; }
+@keyframes mktPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+@media (max-width: 480px) {
+    .market-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 0.75rem; }
+    .market-card { padding: 0.85rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="mkt-nav" role="navigation" aria-label="Navigasi NexShop Marketplace">
+    <a href="/marketplace" class="mkt-nav-brand" aria-label="NexShop Marketplace - Halaman Utama">
+        <span>Nex<span class="nx-accent">Shop</span></span>
+        <span class="nx-tag">Marketplace</span>
+    </a>
+
+    <ul class="mkt-nav-links" id="catNavLinks">
+        <li><a href="/">Beranda</a></li>
+        <li><a href="/marketplace" class="active">Marketplace</a></li>
+        <li><a href="/#topup">Topup Diamond</a></li>
+        <li><a href="/berita">Portal Berita</a></li>
+    </ul>
+
+    <a href="/" class="mkt-nav-back" aria-label="Kembali ke toko NexShop">
+        <i class="fa-solid fa-store" aria-hidden="true"></i>
+        <span>Ke Toko</span>
+    </a>
+</nav>
+
+<!-- Main content -->
+<main class="mkt-main" id="main-content">
+    <section class="mkt-hero">
+        <div class="mkt-hero-tag"><i class="fa-solid fa-bolt"></i> One Stop Solution</div>
+        <h1>Semua kebutuhan digital, satu marketplace.</h1>
+        <p>Isi ulang E-Wallet, beli pulsa &amp; paket data, bayar PLN &amp; tagihan lainnya — diproses instan, aman, dan terpercaya lewat NexShop.</p>
+        <div class="mkt-search-wrap">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="mktSearchInput" placeholder="Cari DANA, OVO, PLN, pulsa, tagihan...">
+        </div>
+    </section>
+
+    <div class="cat-filter-wrap" id="catFilterWrap"></div>
+
+    <section>
+        <div class="mkt-grid-header">
+            <h3>Semua Layanan</h3>
+            <span id="totalCount"></span>
+        </div>
+        <div class="market-grid" id="marketGrid" aria-live="polite"></div>
+    </section>
+</main>
+
+<footer class="nx-footer nx-footer--market">
+    <div class="nx-footer__container">
+        <div class="nx-footer__grid">
+            <div>
+                <div class="nx-footer__brand-logo">NEXSHOP MARKETPLACE</div>
+                <p class="nx-footer__brand-desc" style="text-transform: none; text-align: left;">
+                    E-Wallet, Pulsa, Paket Data, Tagihan, dan PPOB lainnya dalam satu tempat.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="nx-footer__heading" style="text-align: left;">Navigasi</h4>
+                <ul class="nx-footer__link-list" style="text-align: left;">
+                    <li><a href="/" class="nx-footer__link">Beranda</a></li>
+                    <li><a href="/marketplace" class="nx-footer__link">Marketplace</a></li>
+                    <li><a href="/#topup" class="nx-footer__link">Topup Diamond</a></li>
+                    <li><a href="/berita" class="nx-footer__link">Portal Berita</a></li>
+                </ul>
+            </div>
+
+            <div class="nx-footer__legal" style="align-items: flex-start;">
+                <h4 class="nx-footer__heading">Legalitas</h4>
+                <div class="nx-footer__legal-name">
+                    <strong>NexShop</strong>
+                    <span>&middot;</span>
+                    <span>Usaha Mikro</span>
+                </div>
+                <div class="nx-footer__legal-ids">
+                    <span>NIB 1408260072494</span>
+                    <span>KBLI 60390</span>
+                </div>
+                <div class="nx-footer__legal-oss">
+                    <img src="/images/oss-logo.png" alt="OSS Logo">
+                    <span>Terdaftar melalui OSS</span>
+                </div>
+                <a href="/legalitas.html" class="nx-footer__legal-link">
+                    Informasi legalitas <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="nx-footer__bottom">
+            <p>&copy; 2026 NexShop. All Rights Reserved.</p>
+            <p class="nx-footer__bottom-note">Harga dan ketersediaan produk dapat berubah sewaktu-waktu tanpa pemberitahuan.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+// ──────────────────────────────────────────────────────────────
+// NexShop Marketplace — marketplace.html client-side logic
+// Halaman ini SENGAJA gak punya form checkout sendiri -- pas produk
+// dipilih, user diarahin balik ke "/" (index.html) bawa query
+// ?market=<operator>&buy=<kode produk opsional> yang otomatis membuka
+// flow checkout yang SAMA persis kayak grid Topup Diamond biasa (lihat
+// openMarketplaceCheckoutFromQuery() di script.js). Ini biar logic
+// pembayaran cuma ada SATU tempat, gak dobel/gampang out-of-sync.
+// ──────────────────────────────────────────────────────────────
+const API_BASE = (() => {
+    const hostname = window.location.hostname;
+    if (hostname === "nexshop.cloud" || hostname === "www.nexshop.cloud") {
+        return "https://nexshop.cloud/api";
+    }
+    return "http://localhost:3000/api";
+})();
+
+const rupiah = (n) => "Rp" + (Number(n) || 0).toLocaleString("id-ID");
+
+let catalog = [];
+let activeCategory = "";
+let searchQuery = "";
+
+function safeUrl(url, fallback = "") {
+    if (!url || typeof url !== "string") return fallback;
+    if (/^https?:\/\//i.test(url) || url.startsWith("/")) return url;
+    return fallback;
+}
+function escapeHtml(str) {
+    return String(str || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+async function loadCatalog() {
+    const grid = document.getElementById("marketGrid");
+    grid.innerHTML = Array(12).fill(`
+        <div class="market-card" aria-hidden="true">
+            <div class="mkt-skeleton" style="width:56px;height:56px;border-radius:16px;margin-bottom:0.75rem;"></div>
+            <div class="mkt-skeleton" style="width:80%;height:12px;border-radius:6px;margin-bottom:0.4rem;"></div>
+            <div class="mkt-skeleton" style="width:50%;height:10px;border-radius:6px;"></div>
+        </div>
+    `).join("");
+
+    try {
+        const res = await fetch(`${API_BASE}/topup/public-catalog`);
+        if (!res.ok) throw new Error("Gagal mengambil katalog.");
+        const data = await res.json();
+        catalog = Array.isArray(data) ? data : [];
+        renderCategoryChips();
+        renderGrid();
+    } catch (err) {
+        console.error("Gagal memuat katalog marketplace:", err);
+        grid.innerHTML = `
+            <div class="mkt-empty">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <h3>Gagal Memuat Katalog</h3>
+                <p>Silakan periksa koneksi internet kamu atau refresh halaman ini.</p>
+            </div>
+        `;
+    }
+}
+
+function renderCategoryChips() {
+    const wrap = document.getElementById("catFilterWrap");
+    const categories = catalog.map((c) => c.category);
+    const chips = [{ label: "Semua", value: "" }, ...categories.map((c) => ({ label: c, value: c }))];
+    wrap.innerHTML = chips.map((c) => `
+        <button type="button" class="cat-btn ${activeCategory === c.value ? "active" : ""}" data-cat="${escapeHtml(c.value)}">${escapeHtml(c.label)}</button>
+    `).join("");
+    wrap.querySelectorAll(".cat-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+            activeCategory = btn.dataset.cat;
+            renderCategoryChips();
+            renderGrid();
+        });
+    });
+}
+
+function matchesQuery(text, tokens) {
+    if (!tokens.length) return true;
+    if (!text) return false;
+    const lower = text.toLowerCase();
+    return tokens.every((t) => lower.includes(t));
+}
+
+function goToCheckout(operatorName, kodeProduk) {
+    const params = new URLSearchParams();
+    params.set("market", operatorName);
+    if (kodeProduk) params.set("buy", kodeProduk);
+    window.location.href = "/?" + params.toString();
+}
+
+function renderGrid() {
+    const grid = document.getElementById("marketGrid");
+    const totalCount = document.getElementById("totalCount");
+    const tokens = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
+
+    let html = "";
+    let matchCount = 0;
+
+    catalog.forEach((categoryObj) => {
+        if (activeCategory && categoryObj.category !== activeCategory) return;
+
+        let categoryHtml = "";
+
+        categoryObj.operators.forEach((op) => {
+            const matchCategory = matchesQuery(categoryObj.category, tokens);
+            const matchOperator = matchesQuery(op.operator, tokens);
+            const fallbackIcon = `<i class="fa-solid fa-shop"></i>`;
+            const imgHtml = op.operator_logo
+                ? `<img src="${safeUrl(op.operator_logo)}" alt="${escapeHtml(op.operator)}" onerror="this.outerHTML='${fallbackIcon}'" loading="lazy">`
+                : fallbackIcon;
+
+            if (matchCategory || matchOperator) {
+                matchCount++;
+                let minPrice = null;
+                op.products.forEach((p) => {
+                    if (p.harga_jual !== undefined && p.harga_jual !== null) {
+                        if (minPrice === null || p.harga_jual < minPrice) minPrice = p.harga_jual;
+                    }
+                });
+                const opDataAttr = encodeURIComponent(op.operator);
+                categoryHtml += `
+                    <div class="market-card" data-operator="${opDataAttr}">
+                        <div class="market-card-icon">${imgHtml}</div>
+                        <h4>${escapeHtml(op.operator)}</h4>
+                        <div class="mkt-count">${op.products.length} Produk</div>
+                        <div class="mkt-price">${minPrice !== null ? "Mulai " + rupiah(minPrice) : ""}</div>
+                    </div>
+                `;
+            } else if (tokens.length > 0) {
+                const matchedProducts = op.products.filter((p) => matchesQuery(p.nama, tokens));
+                matchedProducts.forEach((p) => {
+                    matchCount++;
+                    const opDataAttr = encodeURIComponent(op.operator);
+                    const prodDataAttr = encodeURIComponent(p.kode_produk);
+                    categoryHtml += `
+                        <div class="market-card market-card--product" data-operator="${opDataAttr}" data-product="${prodDataAttr}">
+                            <div class="market-card-icon">${imgHtml}</div>
+                            <div>
+                                <div class="mkt-product-op">${escapeHtml(op.operator)}</div>
+                                <h4>${escapeHtml(p.nama)}</h4>
+                                <div class="mkt-price">${rupiah(p.harga_jual)}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        });
+
+        if (categoryHtml) {
+            if (!activeCategory && tokens.length === 0) {
+                html += `
+                    <div class="mkt-category-heading">${escapeHtml(categoryObj.category)}</div>
+                    <div class="mkt-category-bar"></div>
+                `;
+            }
+            html += categoryHtml;
+        }
+    });
+
+    if (matchCount === 0) {
+        html = `
+            <div class="mkt-empty">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <h3>Layanan yang kamu cari belum ada</h3>
+                <p>Coba kata kunci lain atau pilih kategori yang tersedia di atas.</p>
+            </div>
+        `;
+    }
+
+    grid.innerHTML = html;
+    totalCount.textContent = matchCount ? `${matchCount} layanan` : "";
+
+    grid.querySelectorAll(".market-card").forEach((card) => {
+        card.addEventListener("click", () => {
+            const operatorName = decodeURIComponent(card.dataset.operator || "");
+            const productId = card.dataset.product ? decodeURIComponent(card.dataset.product) : null;
+            if (!operatorName) return;
+            goToCheckout(operatorName, productId);
+        });
+    });
+}
+
+document.getElementById("mktSearchInput").addEventListener("input", (e) => {
+    searchQuery = e.target.value;
+    renderGrid();
+});
+
+document.addEventListener("DOMContentLoaded", loadCatalog);
+</script>
+</body>
+</html>

@@ -104,6 +104,28 @@ function hitungMarkupWajar(hargaBeli) {
     return bulatkanKeAtas(jual, AUTO_MARKUP_ROUND);
 }
 
+// ===========================================================
+// KLASIFIKASI SECTION -- kategori NexShop (nexshop_category_name di
+// topup_category_map, disimpan sebagai topup_products.kategori) dipisah
+// ke 2 "etalase" publik yang GAK BOLEH nyampur:
+//   - Topup Diamond (game)          -> cuma kategori game
+//   - One Stop Solution/Marketplace -> sisanya (E-Wallet, PLN, Pulsa,
+//                                       Paket Data, Tagihan, Hiburan, dll)
+// SEBELUM ini ditambahin, endpoint publik getProducts() (feed Topup
+// Diamond) dan getPublicCatalog() (feed Marketplace) sama-sama narik
+// SEMUA produk aktif tanpa peduli kategori -- jadi produk yang admin
+// aktifin di kategori non-game (misal DANA/E-Wallet) malah ikut numpuk
+// muncul sebagai "game card" di grid Topup Diamond, bukan di Marketplace.
+// ===========================================================
+const TOPUP_GAME_CATEGORIES = new Set([
+    "gaming",
+    "voucher game"
+]);
+
+function isTopupGameCategory(nexshopCategoryName) {
+    return TOPUP_GAME_CATEGORIES.has(String(nexshopCategoryName || "").trim().toLowerCase());
+}
+
 module.exports = {
     FOREIGN_REGION_KATEGORI,
     FOREIGN_REGION_CODE_PATTERNS,
@@ -114,5 +136,7 @@ module.exports = {
     MARKUP_CAP_ABSOLUT,
     AUTO_MARKUP_ROUND,
     bulatkanKeAtas,
-    hitungMarkupWajar
+    hitungMarkupWajar,
+    TOPUP_GAME_CATEGORIES,
+    isTopupGameCategory
 };

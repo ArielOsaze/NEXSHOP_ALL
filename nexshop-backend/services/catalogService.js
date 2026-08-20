@@ -153,7 +153,15 @@ exports.syncFullCatalog = async (triggerType = 'manual') => {
         let stats = { added: 0, updated: 0, foreign: 0, missing: 0 };
         
         // Fetch existing codes to distinguish add vs update
-        const { data: existingData } = await supabase.from("topup_products").select("kode_produk, source_raw_hash, auto_managed, manual_image_override, operator_logo, is_active, item_icon");
+        const { data: existingData, error: existingErr } = await supabase.from("topup_products").select("kode_produk, source_raw_hash, auto_managed, manual_image_override, operator_logo, is_active, item_icon");
+        // CRITICAL: if this fails (e.g. Supabase network blip), existingData
+        // would be null/undefined and every product below would look "new" --
+        // wiping is_active back to false for the ENTIRE catalog via upsert.
+        // Abort the whole sync instead of silently treating "couldn't check"
+        // as "nothing exists yet".
+        if (existingErr) {
+            throw new Error("Gagal mengambil data produk existing sebelum sync, sync dibatalkan untuk mencegah reset status aktif: " + existingErr.message);
+        }
         const existingMap = new Map();
         if (existingData) {
             existingData.forEach(p => existingMap.set(p.kode_produk, p));
