@@ -651,9 +651,9 @@ function renderGrid() {
         categoryObj.operators.forEach((op) => {
             const matchCategory = matchesQuery(categoryObj.category, tokens);
             const matchOperator = matchesQuery(op.operator, tokens);
-            const fallbackIcon = `<i class="fa-solid fa-shop"></i>`;
+            const fallbackIcon = `<i class='fa-solid fa-shop'></i>`;
             const imgHtml = op.operator_logo
-                ? `<img src="${safeUrl(op.operator_logo)}" alt="${escapeHtml(op.operator)}" onerror="this.outerHTML='${fallbackIcon}'" loading="lazy">`
+                ? `<img src="${safeUrl(op.operator_logo)}" alt="${escapeHtml(op.operator)}" onerror="this.outerHTML=&quot;${fallbackIcon}&quot;" loading="lazy">`
                 : fallbackIcon;
 
             if (matchCategory || matchOperator) {
