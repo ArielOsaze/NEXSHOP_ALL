@@ -177,22 +177,27 @@ exports.updateProduct = async (req, res) => {
       is_active,
     } = req.body;
 
+    const payload = {};
+    if (name !== undefined) payload.name = name;
+    if (price !== undefined) payload.price = price;
+    if (image !== undefined) payload.image = image;
+    if (badge !== undefined) payload.badge = badge;
+    if (rating !== undefined) payload.rating = rating;
+    if (sold !== undefined) payload.sold = sold;
+    if (description !== undefined) payload.description = description;
+    if (category !== undefined) payload.category = category;
+    if (strike_price !== undefined) payload.strike_price = strike_price || null;
+    if (is_flash_sale !== undefined) payload.is_flash_sale = !!is_flash_sale;
+    if (is_active !== undefined) payload.is_active = !!is_active;
+    if (sort_order !== undefined && sort_order !== null && sort_order !== "") payload.sort_order = sort_order;
+
+    if (Object.keys(payload).length === 0) {
+      return res.status(400).json({ message: "Tidak ada field yang diupdate" });
+    }
+
     const { data, error } = await supabase
       .from("products")
-      .update({
-        name,
-        price,
-        image,
-        badge,
-        rating,
-        sold,
-        description,
-        category,
-        strike_price: strike_price || null,
-        is_flash_sale: !!is_flash_sale,
-        ...(is_active !== undefined ? { is_active: !!is_active } : {}),
-        ...(sort_order === undefined || sort_order === null || sort_order === "" ? {} : { sort_order }),
-      })
+      .update(payload)
       .eq("id", id)
       .select();
 

@@ -2908,6 +2908,20 @@ function closeGameDetail() {
         window.location.href = "/marketplace";
         return;
     }
+    if (twState && twState.returnView === "onestop") {
+        document.getElementById("topupDetail").classList.add("hidden");
+        document.getElementById("topup").classList.remove("hidden");
+        const oneStopView = document.getElementById("view-onestop");
+        if (oneStopView && !oneStopView.classList.contains("hidden")) {
+            // Already visible
+        } else if (oneStopView) {
+            if (typeof openOneStopView === "function") {
+                openOneStopView();
+            }
+        }
+        window.scrollTo({ top: document.getElementById("topup").offsetTop - 90, behavior: "smooth" });
+        return;
+    }
     document.getElementById("topupDetail").classList.add("hidden");
     document.getElementById("topup").classList.remove("hidden");
     window.scrollTo({ top: document.getElementById("topup").offsetTop - 90, behavior: "smooth" });

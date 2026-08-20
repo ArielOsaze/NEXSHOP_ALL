@@ -152,20 +152,41 @@ exports.syncFullCatalog = async (triggerType = 'manual') => {
         const now = new Date().toISOString();
         let stats = { added: 0, updated: 0, foreign: 0, missing: 0 };
         
+        // Upstream API safety check: if the API returns an unusually small catalog, abort to prevent mass deactivations.
+        if (rawProducts.length < 5000) {
+            throw new Error(`Upstream API returned only ${rawProducts.length} products. This is suspiciously small (expected ~11000). Aborting sync to prevent mass deactivations.`);
+        }
+
         // Fetch existing codes to distinguish add vs update
-        const { data: existingData, error: existingErr } = await supabase.from("topup_products").select("kode_produk, source_raw_hash, auto_managed, manual_image_override, operator_logo, is_active, item_icon");
-        // CRITICAL: if this fails (e.g. Supabase network blip), existingData
-        // would be null/undefined and every product below would look "new" --
-        // wiping is_active back to false for the ENTIRE catalog via upsert.
-        // Abort the whole sync instead of silently treating "couldn't check"
-        // as "nothing exists yet".
-        if (existingErr) {
-            throw new Error("Gagal mengambil data produk existing sebelum sync, sync dibatalkan untuk mencegah reset status aktif: " + existingErr.message);
+        // Use pagination since Supabase defaults to a 1000-row limit per select query.
+        let allExistingData = [];
+        let from = 0;
+        const pageSize = 1000;
+        let fetchMore = true;
+
+        while (fetchMore) {
+            const { data, error } = await supabase
+                .from("topup_products")
+                .select("kode_produk, source_raw_hash, auto_managed, manual_image_override, operator_logo, is_active, item_icon")
+                .range(from, from + pageSize - 1);
+                
+            if (error) {
+                throw new Error("Gagal mengambil data produk existing (paginasi " + from + ") sebelum sync, sync dibatalkan: " + error.message);
+            }
+            
+            if (data && data.length > 0) {
+                allExistingData.push(...data);
+                from += pageSize;
+                if (data.length < pageSize) {
+                    fetchMore = false; // Last page reached
+                }
+            } else {
+                fetchMore = false;
+            }
         }
+
         const existingMap = new Map();
-        if (existingData) {
-            existingData.forEach(p => existingMap.set(p.kode_produk, p));
-        }
+        allExistingData.forEach(p => existingMap.set(p.kode_produk, p));
 
         const activeBatchCodes = new Set();
         
