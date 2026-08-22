@@ -17,6 +17,8 @@
         window.location.replace("/berita-artikel.html?slug=" + encodeURIComponent(slug));
     } else if (path === "/marketplace" || path === "/marketplace/" || path === "/one-stop" || path === "/one-stop/") {
         window.location.replace("/marketplace.html" + window.location.search);
+    } else if (path === "/reseller" || path === "/reseller/") {
+        window.location.replace("/reseller.html" + window.location.search);
     }
 </script>
 
@@ -215,6 +217,7 @@
 <a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-cyan after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left truncate" href="#topup">Topup Diamond</a>
 <a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-indigo after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left truncate" href="/berita">Portal Berita</a>
 <a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-cyan after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left truncate" href="/marketplace" id="headerOneStopBtn">Marketplace</a>
+<a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-indigo after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left truncate" href="/reseller">Reseller</a>
 <a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-amber-400 after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left truncate" href="#leaderboardSection">Top Spenders</a>
 <button type="button" class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors truncate" id="trackOrderBtn">Cek Transaksi</button>
 </div>
@@ -246,6 +249,7 @@
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="#topup" id="menuTopupBtn">Topup Diamond</a>
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="/berita">Portal Berita</a>
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="/marketplace" id="menuOneStopBtn">Marketplace</a>
+            <a class="text-lg font-bold text-gray-900 dark:text-white" href="/reseller">Reseller</a>
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="#leaderboardSection" id="menuLeaderboardBtn">Top Spenders</a>
             <button type="button" class="text-left text-lg font-bold text-gray-900 dark:text-white" id="menuTrackBtn">Cek Transaksi</button>
         </div>
@@ -1123,15 +1127,22 @@ Cek Transaksi
 
         <div class="nexbot-body" id="nexbotBody">
             <div class="nexbot-msg nexbot-msg--bot">
+                <div class="nexbot-msg-meta">
+                    <span class="nexbot-msg-avatar" aria-hidden="true"><i class="fa-solid fa-robot"></i></span>
+                    <span class="nexbot-msg-name">NexBot</span>
+                    <span class="nexbot-msg-time">Online</span>
+                </div>
                 <div class="nexbot-msg-content" id="nexbotWelcomeContent">
-                    Halo ðŸ‘‹ Saya <strong>NexBot</strong>, asisten virtual resmi NexShop.<br><br>
-                    Saya dapat membantu Anda mengenai:<br>
-                    ðŸŽ® Produk Game<br>
-                    ðŸ’Ž Topup Diamond<br>
-                    ðŸŽ Voucher &amp; Diskon<br>
-                    ðŸ’³ Pembayaran<br>
-                    ðŸ“¦ Status Pesanan<br>
-                    â“ FAQ &amp; Bantuan
+                    <p>Halo 👋 Saya <strong>NexBot</strong>, asisten virtual resmi NexShop.</p>
+                    <p>Saya bisa bantu soal:</p>
+                    <ul class="nexbot-emoji-list">
+                        <li><span class="nexbot-emoji-icon" aria-hidden="true">🎮</span><span>Produk Game</span></li>
+                        <li><span class="nexbot-emoji-icon" aria-hidden="true">💎</span><span>Topup Diamond</span></li>
+                        <li><span class="nexbot-emoji-icon" aria-hidden="true">🎁</span><span>Voucher &amp; Diskon</span></li>
+                        <li><span class="nexbot-emoji-icon" aria-hidden="true">💳</span><span>Pembayaran</span></li>
+                        <li><span class="nexbot-emoji-icon" aria-hidden="true">📦</span><span>Status Pesanan</span></li>
+                        <li><span class="nexbot-emoji-icon" aria-hidden="true">❓</span><span>Bantuan &amp; Kebijakan</span></li>
+                    </ul>
                 </div>
             </div>
 
@@ -1159,6 +1170,7 @@ Cek Transaksi
 <!-- Toast container -->
 <div class="toast-container" id="toastContainer"></div>
 
+<script src="/nexbot.js?v=20260823-nexbot"></script>
 <script src="/script.js?v=20260816-testi-expand"></script>
 </body>
 </html>

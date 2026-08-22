@@ -1,9 +1,6 @@
-module.exports = (req, res, next) => {
-    if (!req.user || req.user.role !== "admin") {
-        return res.status(403).json({
-            success: false,
-            message: "Akses ditolak, khusus Super Admin"
-        });
-    }
-    next();
-};
+const { buildAdminGuard } = require("./adminSession");
+
+// Aksi paling sensitif (API key, hapus user, ubah settings toko): khusus
+// Super Admin. Sama seperti adminMiddleware, role dicek ulang ke database
+// dan sesi idle ikut ditegakkan di server.
+module.exports = buildAdminGuard(["admin"], "Akses ditolak, khusus Super Admin", "SUPERADMIN_REQUIRED");

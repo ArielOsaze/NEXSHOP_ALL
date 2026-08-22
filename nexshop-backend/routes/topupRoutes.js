@@ -5,16 +5,21 @@ const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 const optionalAuthMiddleware = require("../middleware/optionalAuthMiddleware");
 
-const { checkNicknameLimiter } = require("../middleware/rateLimiter");
+const { checkNicknameLimiter, inquiryLimiter } = require("../middleware/rateLimiter");
 
 // Publik
 
 // Public Full Catalog for One Stop Solution
-router.get("/public-catalog", topupController.getPublicCatalog);
+// optionalAuth: guest lihat harga normal, reseller yang login langsung
+// lihat harga resellernya (dihitung di server, lihat resellerService).
+router.get("/public-catalog", optionalAuthMiddleware, topupController.getPublicCatalog);
 
-router.get("/products", topupController.getProducts);
+router.get("/products", optionalAuthMiddleware, topupController.getProducts);
 router.post("/check-nickname", checkNicknameLimiter, topupController.checkNicknameHandler); // publik — cek akun sebelum checkout
 router.post("/validate-promo", topupController.validatePromo); // publik — tombol "Terapkan" kode promo di halaman topup
+// Publik tapi di-rate-limit KETAT: tiap cek tagihan motong saldo TokoVoucher
+// kita, walaupun customer-nya gak jadi bayar.
+router.post("/inquiry-pascabayar", inquiryLimiter, topupController.inquiryPascabayarHandler); // publik — tombol "Cek Tagihan" di checkout Marketplace
 
 // Checkout — boleh guest atau login, sama seperti /api/orders
 router.post("/", optionalAuthMiddleware, topupController.create);

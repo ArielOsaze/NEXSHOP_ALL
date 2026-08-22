@@ -45,856 +45,34 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <script src="/theme-init.js"></script>
     <link rel="stylesheet" href="/style.css">
-    <style>
-        /* =============================
-   NexShop Marketplace — marketplace.html
-   Menggunakan CSS variables dari style.css (pola sama kayak berita.html)
-   ============================= */
-
-        * {
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-
-        ::-webkit-scrollbar {
-            display: none;
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        /* ── Nav ─────────────────────────── */
-        .mkt-nav {
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            background: var(--nav-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--line);
-            padding: 0 clamp(1rem, 4vw, 3rem);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 60px;
-            gap: 1rem;
-        }
-
-        .mkt-nav-brand {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            text-decoration: none;
-            font-family: 'Sora', sans-serif;
-            font-weight: 700;
-            font-size: 1.15rem;
-            color: var(--text);
-            white-space: nowrap;
-        }
-
-        .mkt-nav-brand .nx-accent {
-            color: var(--violet);
-        }
-
-        .mkt-nav-brand .nx-tag {
-            font-size: 0.65rem;
-            font-weight: 600;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            background: rgba(34, 211, 238, .12);
-            border: 1px solid rgba(34, 211, 238, .25);
-            padding: 2px 6px;
-            border-radius: 4px;
-            align-self: flex-end;
-            margin-bottom: 2px;
-        }
-
-        .mkt-nav-links {
-            display: flex;
-            gap: 0.25rem;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .mkt-nav-links a {
-            text-decoration: none;
-            color: var(--text-muted);
-            font-size: 0.82rem;
-            font-weight: 500;
-            padding: 0.35rem 0.7rem;
-            border-radius: var(--radius-sm);
-            transition: all 0.18s;
-            white-space: nowrap;
-        }
-
-        .mkt-nav-links a:hover,
-        .mkt-nav-links a.active {
-            color: var(--text);
-            background: var(--bg-panel-2);
-        }
-
-        .mkt-nav-back {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            text-decoration: none;
-            color: var(--text-muted);
-            font-size: 0.82rem;
-            font-weight: 500;
-            padding: 0.3rem 0.7rem;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--line);
-            transition: all 0.18s;
-            white-space: nowrap;
-        }
-
-        .mkt-nav-back:hover {
-            color: var(--text);
-            border-color: var(--violet);
-        }
-
-        @media (max-width: 768px) {
-            .mkt-nav-links {
-                display: none;
-            }
-        }
-
-        /* ── Main / Hero ─────────────────────────── */
-        .mkt-main {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem);
-        }
-
-        .mkt-hero {
-            margin-bottom: 2rem;
-        }
-
-        .mkt-hero-tag {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            color: var(--cyan);
-            font-size: 0.75rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.14em;
-            margin-bottom: 0.6rem;
-        }
-
-        .mkt-hero h1 {
-            font-family: 'Sora', sans-serif;
-            font-weight: 800;
-            font-size: clamp(1.5rem, 4vw, 2.25rem);
-            color: var(--text);
-            margin: 0 0 0.5rem;
-            letter-spacing: -0.02em;
-        }
-
-        .mkt-hero p {
-            color: var(--text-muted);
-            font-size: 0.95rem;
-            max-width: 640px;
-            margin: 0 0 1.5rem;
-            line-height: 1.6;
-        }
-
-        .mkt-search-wrap {
-            position: relative;
-            max-width: 480px;
-        }
-
-        .mkt-search-wrap i {
-            position: absolute;
-            left: 1rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-dim);
-            font-size: 0.9rem;
-        }
-
-        .mkt-search-wrap input {
-            width: 100%;
-            padding: 0.85rem 1rem 0.85rem 2.6rem;
-            border-radius: var(--radius);
-            border: 1px solid var(--line);
-            background: var(--bg-panel);
-            color: var(--text);
-            font-family: inherit;
-            font-size: 0.9rem;
-            outline: none;
-            transition: border-color 0.18s;
-        }
-
-        .mkt-search-wrap input:focus {
-            border-color: var(--violet);
-        }
-
-        .mkt-search-wrap input::placeholder {
-            color: var(--text-dim);
-        }
-
-        /* ── Category filter (dipola dari berita.html) ─────────────────────────── */
-        .cat-filter-wrap {
-            display: flex;
-            gap: 0.6rem;
-            flex-wrap: wrap;
-            margin: 1.5rem 0 2rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--line);
-        }
-
-        .cat-btn {
-            padding: 0.45rem 1rem;
-            border-radius: 999px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            color: var(--text-muted);
-            font-size: 0.82rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            letter-spacing: 0.02em;
-        }
-
-        .cat-btn:hover {
-            border-color: rgba(139, 92, 246, 0.4);
-            color: var(--text);
-            background: rgba(139, 92, 246, 0.05);
-        }
-
-        .cat-btn.active {
-            background: rgba(139, 92, 246, 0.15);
-            border-color: rgba(139, 92, 246, 0.4);
-            color: var(--violet);
-            box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
-        }
-
-        /* ── Grid header ─────────────────────────── */
-        .mkt-grid-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 1.25rem;
-        }
-
-        .mkt-grid-header h3 {
-            font-family: 'Sora', sans-serif;
-            font-size: 1.05rem;
-            font-weight: 700;
-            color: var(--text);
-            margin: 0;
-        }
-
-        .mkt-grid-header span {
-            font-size: 0.78rem;
-            color: var(--text-dim);
-        }
-
-        .mkt-category-heading {
-            grid-column: 1 / -1;
-            margin-top: 1.5rem;
-            margin-bottom: 0.25rem;
-            font-family: 'Sora', sans-serif;
-            font-size: 0.95rem;
-            font-weight: 800;
-            color: var(--text);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .mkt-category-heading:first-child {
-            margin-top: 0;
-        }
-
-        .mkt-category-bar {
-            width: 2.5rem;
-            height: 3px;
-            background: var(--cyan);
-            border-radius: 2px;
-            margin: 0.35rem 0 1rem;
-        }
-
-        /* ── Product/operator grid ─────────────────────────── */
-        .market-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 1rem;
-        }
-
-        .market-card {
-            background: rgba(18, 23, 41, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: var(--radius);
-            padding: 1.1rem;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            text-align: left;
-            cursor: pointer;
-            transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
-        }
-
-        .market-card:hover {
-            border-color: rgba(139, 92, 246, 0.4);
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), 0 0 20px rgba(139, 92, 246, 0.1);
-        }
-
-        .market-card-icon {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            background: var(--bg-panel-2);
-            border: 1px solid var(--line);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 0.75rem;
-            overflow: hidden;
-        }
-
-        .market-card-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            padding: 8px;
-        }
-
-        .market-card-icon i {
-            font-size: 1.4rem;
-            color: var(--text-dim);
-        }
-
-        .market-card h4 {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--text);
-            margin: 0 0 0.2rem;
-            line-height: 1.3;
-        }
-
-        .market-card .mkt-count {
-            font-size: 0.7rem;
-            color: var(--text-dim);
-            margin-bottom: 0.6rem;
-        }
-
-        .market-card .mkt-price {
-            margin-top: auto;
-            font-size: 0.72rem;
-            font-weight: 700;
-            color: var(--cyan);
-            padding-top: 0.6rem;
-            border-top: 1px solid var(--line);
-            width: 100%;
-        }
-
-        /* Kartu produk spesifik (hasil pencarian) -- beda dari kartu operator */
-        .market-card--product {
-            flex-direction: row;
-            align-items: center;
-            text-align: left;
-            gap: 0.75rem;
-        }
-
-        .market-card--product .market-card-icon {
-            width: 44px;
-            height: 44px;
-            margin-bottom: 0;
-            flex-shrink: 0;
-            border-radius: 12px;
-        }
-
-        .market-card--product .mkt-product-op {
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--violet);
-            margin-bottom: 0.15rem;
-        }
-
-        .market-card--product .mkt-price {
-            border-top: none;
-            padding-top: 0.3rem;
-            margin-top: 0.3rem;
-            color: var(--text);
-            font-size: 0.8rem;
-        }
-
-        .mkt-empty {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 4rem 1rem;
-            color: var(--text-muted);
-        }
-
-        .mkt-empty i {
-            font-size: 2.2rem;
-            color: var(--text-dim);
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        .mkt-empty h3 {
-            color: var(--text);
-            font-size: 1.05rem;
-            margin: 0 0 0.4rem;
-        }
-
-        .mkt-empty p {
-            font-size: 0.85rem;
-            max-width: 380px;
-            margin: 0 auto;
-        }
-
-        .mkt-skeleton {
-            background: var(--bg-panel-2);
-            border-radius: var(--radius);
-            animation: mktPulse 1.4s ease-in-out infinite;
-        }
-
-        @keyframes mktPulse {
-
-            0%,
-            100% {
-                opacity: 0.5;
-            }
-
-            50% {
-                opacity: 1;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .market-grid {
-                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-                gap: 0.75rem;
-            }
-
-            .market-card {
-                padding: 0.85rem;
-            }
-        }
-
-        /* ── Operator detail (daftar produk) ─────────────────────────── */
-        .mkt-detail-back {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 1.5rem;
-            padding: 0.5rem 0.9rem;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--line);
-            background: transparent;
-            cursor: pointer;
-            transition: all 0.18s;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        .mkt-detail-back:hover {
-            color: var(--text);
-            border-color: var(--violet);
-        }
-
-        .mkt-detail-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding-bottom: 1.5rem;
-            margin-bottom: 1.5rem;
-            border-bottom: 1px solid var(--line);
-        }
-
-        .mkt-detail-icon {
-            width: 64px;
-            height: 64px;
-            border-radius: 18px;
-            flex-shrink: 0;
-            background: var(--bg-panel-2);
-            border: 1px solid var(--line);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-
-        .mkt-detail-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            padding: 10px;
-        }
-
-        .mkt-detail-icon i {
-            font-size: 1.6rem;
-            color: var(--text-dim);
-        }
-
-        .mkt-detail-cat {
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--cyan);
-            margin-bottom: 0.2rem;
-        }
-
-        .mkt-detail-info h2 {
-            font-family: 'Sora', sans-serif;
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: var(--text);
-            margin: 0;
-        }
-
-        .mkt-detail-products {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-        }
-
-        .mkt-product-row {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 1rem;
-            padding: 0.9rem 1.1rem;
-            border-radius: var(--radius);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            background: rgba(18, 23, 41, 0.5);
-            transition: border-color 0.18s;
-        }
-
-        .mkt-product-row:hover {
-            border-color: rgba(139, 92, 246, 0.3);
-        }
-
-        .mkt-product-name {
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: var(--text);
-        }
-
-        .mkt-product-action {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            flex-shrink: 0;
-        }
-
-        .mkt-product-price {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: var(--cyan);
-            white-space: nowrap;
-        }
-
-        .mkt-buy-btn {
-            padding: 0.5rem 1.1rem;
-            border-radius: 999px;
-            border: none;
-            cursor: pointer;
-            background: linear-gradient(135deg, var(--violet), var(--violet-2, var(--violet)));
-            color: #fff;
-            font-weight: 700;
-            font-size: 0.8rem;
-            transition: transform 0.15s, box-shadow 0.15s;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            white-space: nowrap;
-        }
-
-        .mkt-buy-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 18px rgba(139, 92, 246, 0.35);
-        }
-
-        .mkt-buy-btn--disabled {
-            background: var(--bg-panel-2);
-            color: var(--text-dim);
-            cursor: not-allowed;
-        }
-
-        .mkt-buy-btn--disabled:hover {
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* ── Checkout / payment overlays ─────────────────────────── */
-        .mkt-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 2000;
-            background: rgba(6, 8, 16, 0.72);
-            backdrop-filter: blur(6px);
-            -webkit-backdrop-filter: blur(6px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px 16px;
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            transition: opacity 0.22s, visibility 0s linear 0.22s;
-            overflow-y: auto;
-        }
-
-        .mkt-overlay.is-visible {
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-            transition-delay: 0s;
-        }
-
-        .mkt-modal {
-            background: var(--bg-panel, #12172c);
-            border: 1px solid var(--line);
-            border-radius: var(--radius);
-            max-width: 440px;
-            width: 100%;
-            max-height: 88vh;
-            overflow-y: auto;
-            padding: 1.75rem;
-            position: relative;
-            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
-        }
-
-        .mkt-modal-close {
-            position: absolute;
-            top: 14px;
-            right: 14px;
-            width: 34px;
-            height: 34px;
-            border-radius: 10px;
-            background: var(--bg-panel-2);
-            color: var(--text);
-            border: 1px solid var(--line);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .mkt-modal-close:hover {
-            background: var(--danger, #ef4444);
-            color: #fff;
-            border-color: transparent;
-        }
-
-        .mkt-checkout-summary {
-            margin-bottom: 1.25rem;
-            padding-right: 2rem;
-        }
-
-        .mkt-checkout-op {
-            font-size: 0.72rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            color: var(--violet);
-        }
-
-        .mkt-checkout-summary h3 {
-            font-family: 'Sora', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text);
-            margin: 0.2rem 0;
-        }
-
-        .mkt-checkout-price {
-            font-size: 1rem;
-            font-weight: 800;
-            color: var(--cyan);
-        }
-
-        #mktCheckoutForm {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        #mktCheckoutForm label {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            font-weight: 600;
-        }
-
-        #mktCheckoutForm input,
-        #mktCheckoutForm select {
-            font-family: inherit;
-            background: var(--bg-panel-2);
-            border: 1px solid var(--line);
-            border-radius: var(--radius-sm);
-            padding: 0.7rem 0.9rem;
-            color: var(--text);
-            font-size: 0.88rem;
-        }
-
-        #mktCheckoutForm input:focus,
-        #mktCheckoutForm select:focus {
-            outline: none;
-            border-color: var(--violet);
-        }
-
-        .mkt-optional {
-            font-weight: 400;
-            color: var(--text-dim);
-            text-transform: none;
-            letter-spacing: 0;
-        }
-
-        .mkt-checkout-error {
-            color: #ef4444;
-            font-size: 0.78rem;
-            min-height: 14px;
-            margin: 0;
-        }
-
-        .mkt-btn-primary {
-            width: 100%;
-            padding: 0.85rem;
-            border-radius: 999px;
-            border: none;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.9rem;
-            color: #fff;
-            background: linear-gradient(135deg, var(--violet), var(--violet-2, var(--violet)));
-            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
-            transition: transform 0.18s;
-        }
-
-        .mkt-btn-primary:hover {
-            transform: translateY(-1px);
-        }
-
-        .mkt-btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .mkt-btn-secondary {
-            width: 100%;
-            padding: 0.7rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.8rem;
-            color: var(--text);
-            background: var(--bg-panel-2);
-            border: 1px solid var(--line);
-            margin-top: 0.75rem;
-            transition: 0.2s;
-        }
-
-        .mkt-btn-secondary:hover {
-            border-color: var(--cyan);
-            color: var(--cyan);
-        }
-
-        #mktPaymentTitle {
-            font-family: 'Sora', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--text);
-            margin: 0 0 1rem;
-            padding-right: 2rem;
-        }
-
-        .mkt-payment-block {
-            text-align: center;
-            margin-bottom: 1.25rem;
-        }
-
-        .mkt-payment-hint {
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            margin: 0 0 0.9rem;
-        }
-
-        .mkt-payment-qr {
-            display: inline-block;
-            padding: 0.6rem;
-            background: #fff;
-            border-radius: 10px;
-        }
-
-        .mkt-payment-va-number {
-            font-family: 'Sora', sans-serif;
-            font-size: 1.3rem;
-            font-weight: 800;
-            color: var(--cyan);
-            letter-spacing: 0.04em;
-            padding: 0.9rem;
-            background: var(--bg-panel-2);
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--line);
-        }
-
-        .mkt-payment-meta {
-            background: var(--bg-panel-2);
-            border: 1px solid var(--line);
-            border-radius: 12px;
-            padding: 0.9rem 1rem;
-            font-size: 0.82rem;
-            margin-bottom: 1rem;
-        }
-
-        .mkt-payment-meta .row {
-            display: flex;
-            justify-content: space-between;
-            padding: 0.3rem 0;
-            color: var(--text-muted);
-        }
-
-        .mkt-payment-meta .row strong {
-            color: var(--text);
-        }
-
-        .mkt-payment-status {
-            text-align: center;
-            font-size: 0.82rem;
-            color: var(--text-muted);
-            margin: 0;
-        }
-
-        .mkt-payment-status.mkt-status-success {
-            color: var(--cyan);
-        }
-
-        .mkt-payment-status.mkt-status-failed {
-            color: #ef4444;
-        }
-    </style>
+    <link rel="stylesheet" href="/marketplace-theme.css?v=20260822-reseller">
 </head>
 
-<body>
+<body data-nexbot="auto">
+
+    <!-- Latar aurora + shader ringan. Murni dekoratif: kalau WebGL gak
+         tersedia atau user minta "reduce motion", gradient statis di CSS
+         yang kepakai dan halaman tetap normal. -->
+    <div class="mkt-bg-layer" aria-hidden="true">
+        <canvas id="mktShaderCanvas"></canvas>
+        <div class="mkt-bg-veil"></div>
+    </div>
 
     <!-- Navigation -->
     <nav class="mkt-nav" role="navigation" aria-label="Navigasi NexShop Marketplace">
         <a href="/marketplace" class="mkt-nav-brand" aria-label="NexShop Marketplace - Halaman Utama">
-            <span>Nex<span class="nx-accent">Shop</span></span>
+            <span class="mkt-brand-mark">
+                <img src="/images/nexshop-icon.svg" alt="NexShop" width="40" height="40">
+            </span>
+            <span class="mkt-brand-text">NexShop</span>
             <span class="nx-tag">Marketplace</span>
         </a>
 
@@ -903,45 +81,69 @@
             <li><a href="/marketplace" class="active">Marketplace</a></li>
             <li><a href="/#topup">Topup Diamond</a></li>
             <li><a href="/berita">Portal Berita</a></li>
+            <li><a href="/reseller.html">Reseller</a></li>
         </ul>
 
         <a href="/" class="mkt-nav-back" aria-label="Kembali ke toko NexShop">
-            <i class="fa-solid fa-store" aria-hidden="true"></i>
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_outward</span>
             <span>Ke Toko</span>
         </a>
     </nav>
 
     <!-- Main content -->
     <main class="mkt-main" id="main-content">
+        <!-- Muncul otomatis kalau katalog yang diterima berisi harga reseller -->
+        <div class="mkt-reseller-banner hidden" id="mktResellerBanner">
+            <span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span>
+            <div>
+                <strong>Harga reseller aktif</strong>
+                <p>Semua harga di halaman ini sudah termasuk potongan reseller kamu.</p>
+            </div>
+            <a href="/reseller.html">Detail program</a>
+        </div>
+
         <section class="mkt-hero">
-            <div class="mkt-hero-tag"><i class="fa-solid fa-bolt"></i> One Stop Solution</div>
-            <h1>Semua kebutuhan digital, satu marketplace.</h1>
-            <p>Isi ulang E-Wallet, beli pulsa &amp; paket data, bayar PLN &amp; tagihan lainnya — diproses instan, aman,
-                dan terpercaya lewat NexShop.</p>
+            <div class="mkt-hero-tag">
+                <span class="material-symbols-outlined" aria-hidden="true">bolt</span> One Stop Solution
+            </div>
+            <h1>Satu Platform, Ribuan Solusi Digital</h1>
+            <p>Isi ulang E-Wallet, beli pulsa &amp; paket data, bayar PLN &amp; tagihan lainnya &mdash; diproses instan,
+                aman, dan terpercaya lewat NexShop.</p>
             <div class="mkt-search-wrap">
-                <i class="fa-solid fa-magnifying-glass"></i>
+                <span class="material-symbols-outlined" aria-hidden="true">search</span>
                 <input type="text" id="mktSearchInput" placeholder="Cari DANA, OVO, PLN, pulsa, tagihan...">
             </div>
         </section>
 
-        <div class="cat-filter-wrap" id="catFilterWrap"></div>
+        <div class="mkt-columns">
+            <!-- Rail kiri: kategori layanan -->
+            <aside class="mkt-col-rail" id="mktRail">
+                <h2 class="mkt-section-title">Semua Layanan</h2>
+                <div class="cat-filter-wrap" id="catFilterWrap"></div>
+            </aside>
 
-        <section id="mktServicesSection">
-            <div class="mkt-grid-header">
-                <h3>Semua Layanan</h3>
-                <span id="totalCount"></span>
+            <!-- Kolom kanan: etalase operator / detail produk -->
+            <div class="mkt-col-main">
+                <section id="mktServicesSection">
+                    <div class="mkt-grid-header">
+                        <h3>Pilih Penyedia Layanan</h3>
+                        <span id="totalCount"></span>
+                    </div>
+                    <div class="market-grid" id="marketGrid" aria-live="polite"></div>
+                </section>
+
+                <!-- Detail operator: daftar produk dari 1 operator, dibuka dari kartu di grid -->
+                <section class="mkt-detail hidden" id="marketplaceDetail">
+                    <button type="button" class="mkt-detail-back" id="mktDetailBackBtn">
+                        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> Kembali ke
+                        Marketplace
+                    </button>
+                    <div class="mkt-detail-header" id="mktDetailHeader"></div>
+                    <div class="mkt-detail-products" id="mktDetailProducts"></div>
+                </section>
             </div>
-            <div class="market-grid" id="marketGrid" aria-live="polite"></div>
-        </section>
+        </div>
 
-        <!-- Detail operator: daftar produk dari 1 operator, dibuka dari kartu di grid -->
-        <section class="mkt-detail hidden" id="marketplaceDetail">
-            <button type="button" class="mkt-detail-back" id="mktDetailBackBtn">
-                <i class="fa-solid fa-arrow-left"></i> Kembali ke Marketplace
-            </button>
-            <div class="mkt-detail-header" id="mktDetailHeader"></div>
-            <div class="mkt-detail-products" id="mktDetailProducts"></div>
-        </section>
     </main>
 
     <footer class="nx-footer nx-footer--market">
@@ -980,7 +182,7 @@
                         <span>Terdaftar melalui OSS</span>
                     </div>
                     <a href="/legalitas.html" class="nx-footer__legal-link">
-                        Informasi legalitas <i class="fa-solid fa-arrow-right"></i>
+                        Informasi legalitas <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
                     </a>
                 </div>
             </div>
@@ -996,8 +198,9 @@
     <!-- Checkout Modal -->
     <div class="mkt-overlay" id="mktCheckoutOverlay">
         <div class="mkt-modal" role="dialog" aria-modal="true" aria-labelledby="mktCheckoutTitle">
-            <button type="button" class="mkt-modal-close" id="mktCheckoutCloseBtn" aria-label="Tutup"><i
-                    class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="mkt-modal-close" id="mktCheckoutCloseBtn" aria-label="Tutup">
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
             <div class="mkt-checkout-summary">
                 <span class="mkt-checkout-op" id="mktCheckoutOpName"></span>
                 <h3 id="mktCheckoutTitle"></h3>
@@ -1013,21 +216,53 @@
                         <input type="text" id="mktCheckoutServer" placeholder="Masukkan Server ID">
                     </label>
                 </div>
+                <!-- Cek Tagihan — cuma nongol buat produk pascabayar (flag
+                     cek_tagihan dari /topup/public-catalog) -->
+                <div id="mktCheckoutInquiryGroup" class="hidden">
+                    <button type="button" class="mkt-btn-secondary mkt-inquiry-btn" id="mktCheckoutInquiryBtn">
+                        <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span> Cek Tagihan
+                    </button>
+                    <div class="mkt-inquiry-result hidden" id="mktCheckoutInquiryResult"></div>
+                </div>
                 <label>Nomor HP Aktif (untuk notifikasi &amp; pembayaran)
                     <input type="tel" id="mktCheckoutPhone" required placeholder="08xxxxxxxxxx" pattern="0[0-9]{8,14}">
                 </label>
-                <label>Email <span class="mkt-optional">(opsional)</span>
+                <label><span>Email <span class="mkt-optional">(opsional)</span></span>
                     <input type="email" id="mktCheckoutEmail" placeholder="kamu@email.com">
                 </label>
-                <label>Metode Pembayaran
-                    <select id="mktCheckoutPaymentMethod" required>
-                        <option value="">Pilih metode pembayaran</option>
-                        <option value="qris">QRIS</option>
-                        <option value="va">Virtual Account</option>
-                        <option value="banktransfer">Transfer Bank</option>
-                        <option value="card">Kartu Kredit/Debit</option>
-                    </select>
-                </label>
+                <div class="mkt-pay-group">
+                    <div class="mkt-pay-label">Metode Pembayaran</div>
+                    <div class="mkt-pay-options" id="mktCheckoutPaymentMethod" role="radiogroup"
+                        aria-label="Metode Pembayaran">
+                        <label class="mkt-pay-option">
+                            <input type="radio" name="mktPaymentMethod" value="qris">
+                            <span class="mkt-pay-card">
+                                <span class="material-symbols-outlined" aria-hidden="true">qr_code_scanner</span> QRIS
+                            </span>
+                        </label>
+                        <label class="mkt-pay-option">
+                            <input type="radio" name="mktPaymentMethod" value="va">
+                            <span class="mkt-pay-card">
+                                <span class="material-symbols-outlined" aria-hidden="true">account_balance</span>
+                                Virtual Account
+                            </span>
+                        </label>
+                        <label class="mkt-pay-option">
+                            <input type="radio" name="mktPaymentMethod" value="banktransfer">
+                            <span class="mkt-pay-card">
+                                <span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span> Transfer
+                                Bank
+                            </span>
+                        </label>
+                        <label class="mkt-pay-option">
+                            <input type="radio" name="mktPaymentMethod" value="card">
+                            <span class="mkt-pay-card">
+                                <span class="material-symbols-outlined" aria-hidden="true">credit_card</span> Kartu
+                                Kredit/Debit
+                            </span>
+                        </label>
+                    </div>
+                </div>
                 <div id="mktCheckoutVaGroup" class="hidden">
                     <label>Pilih Bank
                         <select id="mktCheckoutVaBank">
@@ -1048,22 +283,25 @@
     <!-- Direct Payment Modal (QRIS / VA) -->
     <div class="mkt-overlay" id="mktPaymentOverlay">
         <div class="mkt-modal" role="dialog" aria-modal="true" aria-labelledby="mktPaymentTitle">
-            <button type="button" class="mkt-modal-close" id="mktPaymentCloseBtn" aria-label="Tutup"><i
-                    class="fa-solid fa-xmark"></i></button>
+            <button type="button" class="mkt-modal-close" id="mktPaymentCloseBtn" aria-label="Tutup">
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
             <h3 id="mktPaymentTitle">Selesaikan Pembayaran</h3>
 
             <div id="mktPaymentQrisWrap" class="hidden mkt-payment-block">
                 <p class="mkt-payment-hint">Scan QRIS ini pakai aplikasi E-Wallet atau M-Banking kamu.</p>
                 <div id="mktPaymentQr" class="mkt-payment-qr"></div>
-                <button type="button" class="mkt-btn-secondary" id="mktPaymentDownloadQrBtn"><i
-                        class="fa-solid fa-download"></i> Download QR</button>
+                <button type="button" class="mkt-btn-secondary" id="mktPaymentDownloadQrBtn">
+                    <span class="material-symbols-outlined" aria-hidden="true">download</span> Download QR
+                </button>
             </div>
 
             <div id="mktPaymentVaWrap" class="hidden mkt-payment-block">
                 <p class="mkt-payment-hint">Transfer ke nomor Virtual Account berikut:</p>
                 <div class="mkt-payment-va-number" id="mktPaymentVaNumber"></div>
-                <button type="button" class="mkt-btn-secondary" id="mktPaymentCopyVaBtn"><i
-                        class="fa-solid fa-copy"></i> Salin Nomor VA</button>
+                <button type="button" class="mkt-btn-secondary" id="mktPaymentCopyVaBtn">
+                    <span class="material-symbols-outlined" aria-hidden="true">content_copy</span> Salin Nomor VA
+                </button>
             </div>
 
             <div class="mkt-payment-meta">
@@ -1073,7 +311,7 @@
             </div>
 
             <p class="mkt-payment-status" id="mktPaymentStatus">
-                <i class="fa-solid fa-spinner fa-spin"></i> Menunggu pembayaran, jangan tutup halaman ini...
+                <span class="material-symbols-outlined mkt-spin" aria-hidden="true">progress_activity</span> Menunggu pembayaran, jangan tutup halaman ini...
             </p>
         </div>
     </div>
@@ -1115,17 +353,24 @@
     `).join("");
 
             try {
-                const res = await fetch(`${API_BASE}/topup/public-catalog`);
+                // Token ikut dikirim (kalau ada): server bakal balas harga
+                // reseller buat akun yang sudah disetujui. Guest tetap dapat
+                // harga normal karena endpoint-nya optional-auth.
+                const token = localStorage.getItem("nexshop-public-token") || localStorage.getItem("token");
+                const res = await fetch(`${API_BASE}/topup/public-catalog`, {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                });
                 if (!res.ok) throw new Error("Gagal mengambil katalog.");
                 const data = await res.json();
                 catalog = Array.isArray(data) ? data : [];
                 renderCategoryChips();
                 renderGrid();
+                renderResellerBanner();
             } catch (err) {
                 console.error("Gagal memuat katalog marketplace:", err);
                 grid.innerHTML = `
             <div class="mkt-empty">
-                <i class="fa-solid fa-triangle-exclamation"></i>
+                <span class="material-symbols-outlined" aria-hidden="true">warning</span>
                 <h3>Gagal Memuat Katalog</h3>
                 <p>Silakan periksa koneksi internet kamu atau refresh halaman ini.</p>
             </div>
@@ -1133,12 +378,35 @@
             }
         }
 
+        // Ikon Material per kategori. Kategorinya datang dari mapping admin
+        // (bisa berubah kapan saja), makanya dicocokin pakai kata kunci --
+        // kalau gak ada yang cocok, jatuh ke ikon umum, bukan kosong.
+        const CATEGORY_ICONS = [
+            { test: /e-?wallet|e-?money|dompet|saldo/i, icon: "account_balance_wallet" },
+            { test: /paket\s*data|voucher\s*data|internet/i, icon: "wifi" },
+            { test: /pulsa|telpon|sms/i, icon: "phone_iphone" },
+            { test: /pln|listrik|token/i, icon: "electric_bolt" },
+            { test: /tagihan|pascabayar|pdam|bpjs/i, icon: "receipt_long" },
+            { test: /game|voucher/i, icon: "sports_esports" },
+            { test: /hiburan|tv|streaming/i, icon: "live_tv" },
+            { test: /transfer|bank/i, icon: "swap_horiz" }
+        ];
+
+        function categoryIcon(name) {
+            if (!name) return "grid_view";
+            const found = CATEGORY_ICONS.find((c) => c.test.test(name));
+            return found ? found.icon : "apps";
+        }
+
         function renderCategoryChips() {
             const wrap = document.getElementById("catFilterWrap");
             const categories = catalog.map((c) => c.category);
             const chips = [{ label: "Semua", value: "" }, ...categories.map((c) => ({ label: c, value: c }))];
             wrap.innerHTML = chips.map((c) => `
-        <button type="button" class="cat-btn ${activeCategory === c.value ? "active" : ""}" data-cat="${escapeHtml(c.value)}">${escapeHtml(c.label)}</button>
+        <button type="button" class="cat-btn ${activeCategory === c.value ? "active" : ""}" data-cat="${escapeHtml(c.value)}">
+            <span class="cat-btn-icon"><span class="material-symbols-outlined is-filled" aria-hidden="true">${categoryIcon(c.value)}</span></span>
+            <span>${escapeHtml(c.label)}</span>
+        </button>
     `).join("");
             wrap.querySelectorAll(".cat-btn").forEach((btn) => {
                 btn.addEventListener("click", () => {
@@ -1147,6 +415,23 @@
                     renderGrid();
                 });
             });
+        }
+
+        // Harga normal yang dicoret, cuma kalau server nandain produk ini
+        // kena harga reseller.
+        function hargaCoretHtml(p) {
+            if (!p || !p.harga_reseller || !p.harga_normal || p.harga_normal <= p.harga_jual) return "";
+            return `<span class="mkt-price-normal">${rupiah(p.harga_normal)}</span>`;
+        }
+
+        // Banner "kamu login sebagai reseller" ditampilkan begitu ketahuan
+        // ada produk berharga reseller di katalog -- gak perlu request
+        // tambahan cuma buat nanya status.
+        function renderResellerBanner() {
+            const banner = document.getElementById("mktResellerBanner");
+            if (!banner) return;
+            const adaHargaReseller = catalog.some((c) => c.operators.some((op) => op.products.some((p) => p.harga_reseller)));
+            banner.classList.toggle("hidden", !adaHargaReseller);
         }
 
         function matchesQuery(text, tokens) {
@@ -1177,13 +462,14 @@
             if (!operatorObj) return;
 
             document.getElementById("mktServicesSection").classList.add("hidden");
-            document.getElementById("catFilterWrap").classList.add("hidden");
+            document.getElementById("mktRail").classList.add("hidden");
+            document.querySelector(".mkt-columns").classList.add("is-detail");
             document.querySelector(".mkt-hero").classList.add("hidden");
 
             const detailContainer = document.getElementById("marketplaceDetail");
             detailContainer.classList.remove("hidden");
 
-            const fallbackIcon = `<i class='fa-solid fa-shop'></i>`;
+            const fallbackIcon = `<span class='material-symbols-outlined' aria-hidden='true'>storefront</span>`;
             const imgHtml = operatorObj.operator_logo
                 ? `<img src="${safeUrl(operatorObj.operator_logo)}" alt="${escapeHtml(operatorObj.operator)}" onerror="this.outerHTML=&quot;${fallbackIcon}&quot;" loading="lazy">`
                 : fallbackIcon;
@@ -1200,14 +486,14 @@
             operatorObj.products.forEach(p => {
                 const harga = p.harga_jual !== undefined && p.harga_jual !== null ? rupiah(p.harga_jual) : "Harga tidak tersedia";
                 const btnHtml = p.harga_jual !== undefined && p.harga_jual !== null
-                    ? `<button type="button" class="mkt-buy-btn" data-id="${p.id}" data-kode="${escapeHtml(p.kode_produk)}" data-nama="${escapeHtml(p.nama)}" data-harga="${p.harga_jual}" data-server="${p.butuh_server_id ? 'true' : 'false'}">Beli</button>`
+                    ? `<button type="button" class="mkt-buy-btn" data-id="${p.id}" data-kode="${escapeHtml(p.kode_produk)}" data-nama="${escapeHtml(p.nama)}" data-harga="${p.harga_jual}" data-server="${p.butuh_server_id ? 'true' : 'false'}" data-cek-tagihan="${p.cek_tagihan ? 'true' : 'false'}">Beli</button>`
                     : `<button type="button" class="mkt-buy-btn mkt-buy-btn--disabled" disabled>Tidak Tersedia</button>`;
 
                 productsHtml += `
             <div class="mkt-product-row">
                 <div class="mkt-product-name">${escapeHtml(p.nama)}</div>
                 <div class="mkt-product-action">
-                    <span class="mkt-product-price">${harga}</span>
+                    <span class="mkt-product-price">${harga}${hargaCoretHtml(p)}</span>
                     ${btnHtml}
                 </div>
             </div>
@@ -1224,6 +510,7 @@
                         nama: btn.dataset.nama,
                         harga_jual: parseInt(btn.dataset.harga, 10),
                         butuh_server_id: btn.dataset.server === "true",
+                        cek_tagihan: btn.dataset.cekTagihan === "true",
                         kategori: operatorCategory,
                         operator: operatorObj.operator
                     });
@@ -1236,7 +523,8 @@
         function closeMarketplaceDetail() {
             document.getElementById("marketplaceDetail").classList.add("hidden");
             document.getElementById("mktServicesSection").classList.remove("hidden");
-            document.getElementById("catFilterWrap").classList.remove("hidden");
+            document.getElementById("mktRail").classList.remove("hidden");
+            document.querySelector(".mkt-columns").classList.remove("is-detail");
             document.querySelector(".mkt-hero").classList.remove("hidden");
         }
 
@@ -1256,12 +544,18 @@
             document.getElementById("mktCheckoutServer").value = "";
             document.getElementById("mktCheckoutPhone").value = "";
             document.getElementById("mktCheckoutEmail").value = "";
-            document.getElementById("mktCheckoutPaymentMethod").value = "";
+            document.querySelectorAll("input[name=\"mktPaymentMethod\"]").forEach((radio) => { radio.checked = false; });
             document.getElementById("mktCheckoutVaBank").value = "bca";
             document.getElementById("mktCheckoutVaGroup").classList.add("hidden");
             document.getElementById("mktCheckoutError").textContent = "";
             document.getElementById("mktCheckoutSubmitBtn").disabled = false;
             document.getElementById("mktCheckoutSubmitBtn").textContent = "Bayar";
+
+            // Tombol Cek Tagihan cuma buat produk pascabayar (PLN Pascabayar,
+            // PDAM, Telkom, dst) — TokoVoucher emang cuma nyediain inquiry
+            // buat kategori itu, produk prabayar gak ada tagihannya.
+            resetMarketplaceInquiry();
+            document.getElementById("mktCheckoutInquiryGroup").classList.toggle("hidden", !product.cek_tagihan);
 
             const isGame = product.kategori.toLowerCase() === "gaming" || product.kategori.toLowerCase() === "voucher game";
             if (isGame) {
@@ -1288,8 +582,94 @@
 
         document.getElementById("mktCheckoutCloseBtn").addEventListener("click", closeMarketplaceCheckout);
 
+        // Event "change" dari tiap radio naik ke container-nya, jadi satu
+        // listener di sini cukup buat semua pilihan metode pembayaran.
         document.getElementById("mktCheckoutPaymentMethod").addEventListener("change", (e) => {
             document.getElementById("mktCheckoutVaGroup").classList.toggle("hidden", e.target.value !== "va");
+        });
+
+        // ── Cek Tagihan (pascabayar) ─────────────────────────────────────
+        // Tiap panggilan inquiry ke TokoVoucher itu berbayar buat kita, jadi
+        // backend-nya di-rate-limit ketat (5x/menit per IP) dan tombol ini
+        // dikunci selama request jalan biar gak kepencet berkali-kali.
+        function resetMarketplaceInquiry() {
+            const result = document.getElementById("mktCheckoutInquiryResult");
+            result.classList.add("hidden");
+            result.classList.remove("is-error");
+            result.innerHTML = "";
+            const btn = document.getElementById("mktCheckoutInquiryBtn");
+            btn.disabled = false;
+            btn.innerHTML = `<span class="material-symbols-outlined" aria-hidden="true">receipt_long</span> Cek Tagihan`;
+        }
+
+        function showMarketplaceInquiryError(pesan) {
+            const result = document.getElementById("mktCheckoutInquiryResult");
+            result.classList.remove("hidden");
+            result.classList.add("is-error");
+            result.textContent = pesan;
+        }
+
+        document.getElementById("mktCheckoutInquiryBtn").addEventListener("click", async () => {
+            if (!currentMktCheckoutProduct) return;
+
+            const tujuan = document.getElementById("mktCheckoutTarget").value.trim();
+            if (!tujuan) {
+                showMarketplaceInquiryError("Isi dulu nomor/ID pelanggannya ya.");
+                return;
+            }
+
+            const btn = document.getElementById("mktCheckoutInquiryBtn");
+            const result = document.getElementById("mktCheckoutInquiryResult");
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" aria-hidden="true">progress_activity</span> Mengecek tagihan…`;
+            result.classList.add("hidden");
+            result.classList.remove("is-error");
+
+            try {
+                const res = await fetch(`${API_BASE}/topup/inquiry-pascabayar`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        kode_produk: currentMktCheckoutProduct.kode_produk,
+                        tujuan
+                    })
+                });
+
+                let data;
+                try {
+                    data = await res.json();
+                } catch (e) {
+                    throw new Error("Gagal terhubung ke layanan cek tagihan.");
+                }
+                if (!res.ok || !data.success) throw new Error(data.message || "Tagihan tidak ditemukan.");
+
+                const baris = [];
+                baris.push(`<div class="row"><span>Nama Pelanggan</span><strong>${escapeHtml(data.customer_name || "-")}</strong></div>`);
+                baris.push(`<div class="row"><span>No. Pelanggan</span><strong>${escapeHtml(data.customer_no || tujuan)}</strong></div>`);
+                if (data.tagihan !== null && data.tagihan !== undefined) {
+                    baris.push(`<div class="row"><span>Jumlah Tagihan</span><strong>${rupiah(data.tagihan)}</strong></div>`);
+                }
+                if (data.denda) {
+                    baris.push(`<div class="row"><span>Denda</span><strong>${rupiah(data.denda)}</strong></div>`);
+                }
+                if (data.periode) {
+                    baris.push(`<div class="row"><span>Periode</span><strong>${escapeHtml(data.periode)}</strong></div>`);
+                }
+                if (data.jatuh_tempo) {
+                    baris.push(`<div class="row"><span>Jatuh Tempo</span><strong>${escapeHtml(data.jatuh_tempo)}</strong></div>`);
+                }
+                if (data.keterangan) {
+                    baris.push(`<div class="row"><span>Keterangan</span><strong>${escapeHtml(data.keterangan)}</strong></div>`);
+                }
+
+                result.innerHTML = baris.join("");
+                result.classList.remove("hidden");
+            } catch (err) {
+                showMarketplaceInquiryError(err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined" aria-hidden="true">receipt_long</span> Cek Tagihan`;
+            }
         });
 
         document.getElementById("mktCheckoutForm").addEventListener("submit", async (e) => {
@@ -1298,7 +678,8 @@
 
             const btn = document.getElementById("mktCheckoutSubmitBtn");
             const errEl = document.getElementById("mktCheckoutError");
-            const paymentMethod = document.getElementById("mktCheckoutPaymentMethod").value;
+            const selectedPayment = document.querySelector("input[name=\"mktPaymentMethod\"]:checked");
+            const paymentMethod = selectedPayment ? selectedPayment.value : "";
 
             if (!paymentMethod) {
                 errEl.textContent = "Pilih metode pembayaran dulu ya.";
@@ -1361,7 +742,7 @@
             const statusEl = document.getElementById("mktPaymentStatus");
 
             statusEl.className = "mkt-payment-status";
-            statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menunggu pembayaran, jangan tutup halaman ini...`;
+            statusEl.innerHTML = `<span class="material-symbols-outlined mkt-spin" aria-hidden="true">progress_activity</span> Menunggu pembayaran, jangan tutup halaman ini...`;
 
             if (paymentData.qrContent) {
                 qrisWrap.classList.remove("hidden");
@@ -1402,7 +783,7 @@
                     navigator.clipboard.writeText(paymentData.paymentNo).then(() => {
                         const b = document.getElementById("mktPaymentCopyVaBtn");
                         const original = b.innerHTML;
-                        b.innerHTML = `<i class="fa-solid fa-check"></i> Disalin!`;
+                        b.innerHTML = `<span class="material-symbols-outlined" aria-hidden="true">check</span> Disalin!`;
                         setTimeout(() => { b.innerHTML = original; }, 2000);
                     });
                 };
@@ -1439,11 +820,11 @@
 
                         if (["processing", "sukses", "success"].includes(data.status)) {
                             statusEl.className = "mkt-payment-status mkt-status-success";
-                            statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Pembayaran diterima! Pesanan kamu sedang diproses.`;
+                            statusEl.innerHTML = `<span class="material-symbols-outlined" aria-hidden="true">check_circle</span> Pembayaran diterima! Pesanan kamu sedang diproses.`;
                             return; // stop polling
                         } else if (data.status === "failed") {
                             statusEl.className = "mkt-payment-status mkt-status-failed";
-                            statusEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Pembayaran gagal / kedaluwarsa.`;
+                            statusEl.innerHTML = `<span class="material-symbols-outlined" aria-hidden="true">cancel</span> Pembayaran gagal / kedaluwarsa.`;
                             return; // stop polling
                         }
                     }
@@ -1473,7 +854,7 @@
                     categoryObj.operators.forEach((op) => {
                         const matchCategory = matchesQuery(categoryObj.category, tokens);
                         const matchOperator = matchesQuery(op.operator, tokens);
-                        const fallbackIcon = `<i class='fa-solid fa-shop'></i>`;
+                        const fallbackIcon = `<span class='material-symbols-outlined' aria-hidden='true'>storefront</span>`;
                         const imgHtml = op.operator_logo
                             ? `<img src="${safeUrl(op.operator_logo)}" alt="${escapeHtml(op.operator)}" onerror="this.outerHTML=&quot;${fallbackIcon}&quot;" loading="lazy">`
                             : fallbackIcon;
@@ -1525,7 +906,7 @@
                 if (matchCount === 0) {
                     html = `
                 <div class="mkt-empty">
-                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
                     <h3>Layanan yang kamu cari belum ada</h3>
                     <p>Coba kata kunci lain atau pilih kategori yang tersedia di atas.</p>
                 </div>
@@ -1546,7 +927,7 @@
                 console.error("[MARKETPLACE RENDER ERROR]", err);
                 grid.innerHTML = `
             <div class="mkt-empty">
-                <i class="fa-solid fa-bug"></i>
+                <span class="material-symbols-outlined" aria-hidden="true">bug_report</span>
                 <h3>Error Rendering Grid</h3>
                 <p>${escapeHtml(err.message)}</p>
             </div>
@@ -1561,6 +942,124 @@
 
         document.addEventListener("DOMContentLoaded", loadCatalog);
     </script>
+    <!-- Latar shader (dekoratif). Semua kegagalan diabaikan diam-diam:
+         kalau WebGL gak ada, konteksnya hilang, atau user milih "reduce
+         motion", halaman tetap pakai gradient statis dari CSS. -->
+    <script>
+        (function initMarketplaceShader() {
+            const canvas = document.getElementById("mktShaderCanvas");
+            if (!canvas) return;
+
+            const hematGerak = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            if (hematGerak) return;
+
+            const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+            if (!gl) return;
+
+            // Buffer digambar pada resolusi separuh -- latar ini blur dan
+            // ketutup veil, jadi gak ada bedanya secara visual tapi jauh
+            // lebih ringan buat GPU/baterai.
+            function syncSize() {
+                const w = Math.max(Math.floor(canvas.clientWidth / 2), 1);
+                const h = Math.max(Math.floor(canvas.clientHeight / 2), 1);
+                if (canvas.width !== w || canvas.height !== h) {
+                    canvas.width = w;
+                    canvas.height = h;
+                }
+            }
+            if (typeof ResizeObserver !== "undefined") new ResizeObserver(syncSize).observe(canvas);
+            syncSize();
+
+            const vs = `attribute vec2 a_position;
+varying vec2 v_texCoord;
+void main() {
+  v_texCoord = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}`;
+
+            const fs = `precision mediump float;
+varying vec2 v_texCoord;
+uniform float u_time;
+
+void main() {
+    vec2 uv = v_texCoord;
+
+    vec3 color1 = vec3(0.02, 0.08, 0.14); // biru malam
+    vec3 color2 = vec3(0.05, 0.22, 0.40); // aksen biru
+    vec3 color3 = vec3(0.01, 0.04, 0.07); // permukaan paling gelap
+
+    float noise1 = sin(uv.x * 2.0 + u_time * 0.3) * 0.5 + 0.5;
+    float noise2 = cos(uv.y * 3.0 - u_time * 0.2) * 0.5 + 0.5;
+
+    vec3 finalColor = mix(color1, color2, noise1 * 0.3);
+    finalColor = mix(finalColor, color3, noise2 * 0.5);
+
+    float glow = 0.05 / length(uv - 0.5 + 0.1 * sin(u_time * 0.5));
+    finalColor += color2 * glow * 0.2;
+
+    gl_FragColor = vec4(finalColor, 1.0);
+}`;
+
+            function compile(type, src) {
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, src);
+                gl.compileShader(shader);
+                return gl.getShaderParameter(shader, gl.COMPILE_STATUS) ? shader : null;
+            }
+
+            const vertex = compile(gl.VERTEX_SHADER, vs);
+            const fragment = compile(gl.FRAGMENT_SHADER, fs);
+            if (!vertex || !fragment) return;
+
+            const program = gl.createProgram();
+            gl.attachShader(program, vertex);
+            gl.attachShader(program, fragment);
+            gl.linkProgram(program);
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) return;
+            gl.useProgram(program);
+
+            const buffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+            const pos = gl.getAttribLocation(program, "a_position");
+            gl.enableVertexAttribArray(pos);
+            gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+            const uTime = gl.getUniformLocation(program, "u_time");
+
+            let running = true;
+            let frame = null;
+
+            function render(t) {
+                if (!running) return;
+                if (typeof ResizeObserver === "undefined") syncSize();
+                gl.viewport(0, 0, canvas.width, canvas.height);
+                if (uTime) gl.uniform1f(uTime, t * 0.001);
+                gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                frame = requestAnimationFrame(render);
+            }
+
+            // Berhenti total pas tab gak kelihatan -- gak ada gunanya
+            // ngerender latar buat tab yang lagi disembunyiin.
+            document.addEventListener("visibilitychange", () => {
+                if (document.hidden) {
+                    running = false;
+                    if (frame) cancelAnimationFrame(frame);
+                } else if (!running) {
+                    running = true;
+                    frame = requestAnimationFrame(render);
+                }
+            });
+
+            canvas.addEventListener("webglcontextlost", (e) => {
+                e.preventDefault();
+                running = false;
+            });
+
+            frame = requestAnimationFrame(render);
+        })();
+    </script>
+    <!-- Asisten NexBot, modul yang sama dengan halaman utama -->
+    <script src="/nexbot.js?v=20260823-nexbot"></script>
 </body>
 
 </html>

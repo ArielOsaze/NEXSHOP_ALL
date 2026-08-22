@@ -7,6 +7,7 @@ const { sendUserWhatsApp } = require("../services/userWhatsAppService");
 const { normalizePhoneNumber } = require("../utils/phoneNumber");
 const { notify } = require("../config/notify");
 const { resetLoginLimiter, getBlockedLoginIps } = require("../middleware/rateLimiter");
+const { resetAdminSession } = require("../middleware/adminSession");
 
 const OTP_EXPIRY_MINUTES = 10;
 const RESET_TOKEN_EXPIRY_MINUTES = 30;
@@ -403,6 +404,11 @@ exports.login = async (req, res) => {
         );
 
         clearFailedLogin(email);
+
+        // Sesi admin yang lama (termasuk catatan idle-nya) dibuang begitu
+        // login baru sukses -- kalau nggak, admin yang barusan ke-logout
+        // otomatis karena idle bisa langsung ketolak lagi sama guard-nya.
+        resetAdminSession(user.id);
 
         res.json({
             message: "Login berhasil",

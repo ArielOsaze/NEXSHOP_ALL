@@ -24,10 +24,14 @@ const {
     MARKUP_CAP_ABSOLUT,
     AUTO_MARKUP_ROUND,
     isTopupGameCategory,
+    isGameProduct,
+    isPascabayarProduct,
     resolveNexshopCategory,
     resolveOperator
 } = require("../utils/topupHelpers");
 const { fetchAllRows } = require("../utils/supabasePaginate");
+const { getResellerContext } = require("../services/resellerService");
+const { hitungHargaReseller } = require("../utils/resellerPricing");
 
 const IPAYMU_PAYMENT_METHODS = Object.freeze({
     qris: "qris",
@@ -38,6 +42,28 @@ const IPAYMU_PAYMENT_METHODS = Object.freeze({
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
 const BACKEND_URL = (process.env.BACKEND_URL || "").replace(/\/$/, "");
+
+// ===========================================================
+// HARGA RESELLER
+// Dipakai di dua feed produk publik (Topup Diamond & Marketplace) DAN di
+// checkout. Titik hitungnya sengaja satu -- kalau harga yang tampil di toko
+// dan harga yang ditagih dihitung di tempat berbeda, cepat atau lambat
+// keduanya bakal beda angka.
+//
+// `harga_normal` ikut dikirim ke frontend supaya bisa ditampilkan sebagai
+// harga coret. `harga_beli` TIDAK pernah ikut keluar (lihat pembersihan
+// field di getProducts/getPublicCatalog) -- itu margin kita.
+// ===========================================================
+function terapkanHargaReseller(produkList, konteksReseller) {
+    if (!konteksReseller || !konteksReseller.isReseller) return produkList;
+    produkList.forEach((p) => {
+        const hasil = hitungHargaReseller(p.harga_jual, p.harga_beli, konteksReseller.discountPercent);
+        p.harga_normal = hasil.harga_normal;
+        p.harga_jual = hasil.harga;
+        p.harga_reseller = true;
+    });
+    return produkList;
+}
 
 function rupiahLog(n) {
     return "Rp" + Number(n).toLocaleString("id-ID");
@@ -245,57 +271,191 @@ function pilihSebaranLog(clustersAsc, cap) {
     return [...picked].sort((a, b) => a - b).map((idx) => clustersAsc[idx]);
 }
 
+// ===========================================================
+// AKTIVASI CERDAS — JALUR NON-GAME (etalase Marketplace/One Stop Solution:
+// Pulsa, Paket Data, E-Wallet, PLN, Tagihan, Voucher, dst)
+//
+// Kenapa butuh jalur SENDIRI: clustering di atas didesain buat produk
+// BERTINGKAT NOMINAL ala game (10/50/86 Diamond, Weekly Pass, dst) --
+// nominalnya sengaja dicluster pakai toleransi persen dan dipangkas pakai
+// cap + histori penjualan, karena satu game bisa punya puluhan nominal yang
+// belum tentu laku semua. Produk non-game GAK gitu: nominal pulsa/PLN/
+// e-wallet itu himpunan kecil yang pasti (5rb, 10rb, 20rb, ...) dan
+// SEMUANYA emang harus tayang. Yang perlu dibersihin cuma DUPLIKAT: satu
+// nominal yang sama sering muncul beberapa kali dari jalur supplier beda
+// dengan harga modal beda.
+//
+// Jadi aturannya: per operator + jenis produk, ambil "sidik jari" produk
+// (nominal kalau kebaca, kalau nggak ya nama yang udah dinormalisasi),
+// terus AKTIFKAN yang harga modalnya paling murah dan nonaktifin sisanya
+// yang identik. Gak ada cap, gak ada filter popularitas -- produk non-game
+// baru dari sync otomatis ikut aktif.
+// ===========================================================
+
+// Satuan yang nempel di angka tapi BUKAN nominal rupiah (kuota & durasi).
+const UNIT_BUKAN_NOMINAL = /(\d+(?:[.,]\d+)?\s*(gb|mb|kb|tb)\b)|(\d+\s*(hari|hr|jam|menit|mnt|bulan|bln)\b)/i;
+
+// Produk paket data/langganan (ada kuota/durasi di namanya) SENGAJA gak
+// di-dedupe pakai nominal: "3GB 30 Hari" dan "8GB 30 Hari" bisa kebetulan
+// harganya sama persis, dan kalau dianggap satu grup salah satunya bakal
+// dimatiin padahal SKU-nya beda. Buat produk kayak gini, sidik jarinya
+// balik ke nama.
+function namaPunyaSatuanKuota(nama) {
+    return UNIT_BUKAN_NOMINAL.test(String(nama || ""));
+}
+
+// Ambil nominal rupiah dari nama produk non-game:
+// "Telkomsel 10.000" -> 10000, "Pulsa Indosat 25rb" -> 25000,
+// "Token PLN 20K" -> 20000, "Saldo DANA 1jt" -> 1000000.
+// Return null kalau gak ada angka yang masuk akal sebagai nominal.
+function extractMarketplaceNominal(nama) {
+    const tokens = String(nama || "").toLowerCase().split(/[^a-z0-9.,]+/).filter(Boolean);
+    const SUFFIX_JUTA = /^(jt|juta)$/;
+    let best = null;
+
+    for (let i = 0; i < tokens.length; i++) {
+        const m = tokens[i].match(/^(\d+(?:[.,]\d+)*)(rb|ribu|k|jt|juta)?$/);
+        if (!m) continue;
+
+        const suffix = m[2] || (tokens[i + 1] && /^(rb|ribu|k|jt|juta)$/.test(tokens[i + 1]) ? tokens[i + 1] : "");
+        let n;
+        if (suffix) {
+            // "25rb" / "1,5jt" -> angka desimalnya dikali pengali satuan
+            const base = parseFloat(m[1].replace(/\.(?=\d{3}(\D|$))/g, "").replace(",", "."));
+            n = Math.round(base * (SUFFIX_JUTA.test(suffix) ? 1000000 : 1000));
+        } else {
+            n = parseInt(m[1].replace(/[.,]/g, ""), 10);
+        }
+
+        // Nominal produk non-game paling kecil di lapangan itu 1.000 --
+        // angka di bawah itu biasanya bagian nama (mis. "4G", "Kartu 3").
+        if (!Number.isFinite(n) || n < 1000) continue;
+        if (best === null || n > best) best = n;
+    }
+    return best;
+}
+
+// Nama produk yang udah dinormalisasi, dipakai sebagai sidik jari cadangan
+// kalau nominalnya gak kebaca (mis. "PLN Pascabayar", "PDAM Kota Bandung").
+function marketplaceNameSignature(nama) {
+    return String(nama || "")
+        .toLowerCase()
+        .replace(/\[(promo|new|baru)\]|\((promo|new|baru)\)/g, " ")
+        .replace(/[^a-z0-9]+/g, " ")
+        .trim();
+}
+
+function marketplaceSignature(nama) {
+    if (!namaPunyaSatuanKuota(nama)) {
+        const nominal = extractMarketplaceNominal(nama);
+        if (nominal !== null) return `nominal:${nominal}`;
+    }
+    return `nama:${marketplaceNameSignature(nama)}`;
+}
+
+// Produk game (bertingkat nominal) vs produk marketplace. Dicek dari
+// kategori NexShop hasil resolve DAN nama kategori asli TokoVoucher, biar
+// tetap kebaca walaupun mapping kategorinya belum di-set admin (fallback
+// DEFAULT_CATEGORY_MAP bisa ngasih "Topup Game", DB map ngasih "Gaming").
+const POLA_KATEGORI_GAME = /topup\s*game|^gaming$|^games?$/;
+
+function isGameTierProduct(p) {
+    const kategoriNexshop = String(p.nexshop_category || p.kategori || "").trim().toLowerCase();
+    const kategoriSumber = String(p.source_category_name || "").trim().toLowerCase();
+    return isTopupGameCategory(kategoriNexshop) || POLA_KATEGORI_GAME.test(kategoriNexshop) || POLA_KATEGORI_GAME.test(kategoriSumber);
+}
+
+const SMART_ACTIVATE_COLUMNS =
+    "id, kode_produk, nama, kategori, source_category_name, source_operator_id, source_operator_name, source_jenis_name, source_status, harga_beli, harga_jual, is_active, auto_managed, manual_category_override";
+
+// Pemenang dalam satu grup = harga modal PALING MURAH. Kalau modalnya sama
+// persis, dahulukan yang udah aktif (biar aksi ini idempoten, gak
+// bolak-balik ganti produk aktif tiap dijalanin), baru urut kode produk.
+function pilihPemenang(items) {
+    return [...items].sort((a, b) => {
+        const selisih = Number(a.harga_beli || 0) - Number(b.harga_beli || 0);
+        if (selisih !== 0) return selisih;
+        if (!!a.is_active !== !!b.is_active) return a.is_active ? -1 : 1;
+        return String(a.kode_produk || "").localeCompare(String(b.kode_produk || ""));
+    })[0];
+}
+
 exports.smartActivateProducts = async (req, res) => {
     if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
-    const { ids, maxAktifPerKategori } = req.body;
-    if (!Array.isArray(ids) || ids.length === 0) {
-        return res.status(400).json({ message: "ids wajib diisi (array)" });
+
+    const { ids, maxAktifPerKategori, applyToAll } = req.body;
+    // applyToAll = jalanin ke SELURUH katalog (tombol "Aktivasi Cerdas
+    // Semua" di dashboard), tanpa admin harus nyentang produk satu-satu.
+    const semuaProduk = applyToAll === true || applyToAll === "true";
+    if (!semuaProduk && (!Array.isArray(ids) || ids.length === 0)) {
+        return res.status(400).json({ message: "ids wajib diisi (array), atau kirim applyToAll: true buat seluruh katalog" });
     }
     const cap = Number(maxAktifPerKategori) > 0 ? Number(maxAktifPerKategori) : DEFAULT_MAX_AKTIF_PER_KATEGORI;
 
     try {
-        const { data: productsRaw, error: fetchErr } = await supabase
-            .from("topup_products")
-            .select("id, kode_produk, nama, kategori, harga_beli, is_active")
-            .in("id", ids);
-        if (fetchErr) return res.status(500).json({ message: "Gagal mengambil data produk" });
+        // loadAdminCatalog() udah ngurusin: paginasi (biar gak kepotong limit
+        // 1000 baris PostgREST), buang produk region luar Indonesia, dan
+        // resolve kategori NexShop + identitas operator per produk.
+        const catalog = await loadAdminCatalog(SMART_ACTIVATE_COLUMNS);
+        const wanted = semuaProduk ? null : new Set(ids.map(String));
+        const scope = semuaProduk ? catalog : catalog.filter((p) => wanted.has(String(p.id)));
+        const skippedForeignRegion = semuaProduk ? 0 : Math.max(ids.length - scope.length, 0);
 
-        // Aktivasi cerdas cuma buat produk region Indonesia -- kalaupun ada
-        // produk region luar yang kebetulan udah kesimpen dari sync lama
-        // (sebelum filter region ini ada), di sini dia dilewatin sama sekali.
-        const products = (productsRaw || []).filter((p) => !isForeignProduct(p.kategori, p.kode_produk));
-        const skippedForeignRegion = (productsRaw || []).length - products.length;
+        // Produk yang statusnya udah di-override manual admin (auto_managed =
+        // false) atau lagi dimatiin supplier gak disentuh sama sekali --
+        // konsisten sama applyToFilter/toggleOperator.
+        let skippedManual = 0;
+        let skippedSupplierOff = 0;
+        const kandidat = [];
+        scope.forEach((p) => {
+            if (p.source_status && p.source_status !== "active") return skippedSupplierOff++;
+            if (p.auto_managed === false) return skippedManual++;
+            kandidat.push(p);
+        });
 
-        const parsed = products.map((p) => ({ ...p, ...classifyProduct(p.nama) }));
+        const produkGame = kandidat.filter(isGameTierProduct);
+        const produkMarketplace = kandidat.filter((p) => !isGameTierProduct(p));
+
+        // id -> status aktif yang diinginkan
+        const target = new Map();
+
+        // ---------- JALUR 1: produk game (bertingkat nominal) ----------
+        const parsed = produkGame.map((p) => ({ ...p, ...classifyProduct(p.nama) }));
         const skipped = parsed.filter((p) => p.groupType === null);
         const groupable = parsed.filter((p) => p.groupType !== null);
 
-        // histori order sukses buat produk-produk ini, dipakai buat nentuin
-        // kelompok mana yang "beneran laku" per kategori
-        const kodeList = groupable.map((p) => p.kode_produk);
-        const { data: orderRows } = kodeList.length
-            ? await supabase.from("topup_orders").select("kode_produk").eq("status", "sukses").in("kode_produk", kodeList)
-            : { data: [] };
+        // Histori order sukses buat produk-produk ini, dipakai buat nentuin
+        // kelompok mana yang "beneran laku" per game.
+        const kodeSet = new Set(groupable.map((p) => p.kode_produk));
+        const orderRows = kodeSet.size
+            ? await fetchAllRows((from, to) =>
+                  supabase.from("topup_orders").select("kode_produk").eq("status", "sukses").range(from, to)
+              )
+            : [];
         const salesCount = {};
-        (orderRows || []).forEach((o) => {
+        orderRows.forEach((o) => {
+            if (!kodeSet.has(o.kode_produk)) return;
             salesCount[o.kode_produk] = (salesCount[o.kode_produk] || 0) + 1;
         });
 
-        const byKategori = {};
+        // Dikelompokkan per OPERATOR (= per game), bukan per kategori.
+        // Kategori NexShop nampung SEMUA game dalam satu ember ("Gaming"),
+        // jadi kalau dikelompokin per kategori, nominal 86 Diamond punya
+        // game A bisa nyampur/nendang nominal 86 punya game B, dan cap
+        // "maksimal N nominal aktif" kepakai buat seluruh game sekaligus.
+        const byGame = {};
         groupable.forEach((p) => {
-            const k = p.kategori || "(tanpa kategori)";
-            if (!byKategori[k]) byKategori[k] = [];
-            byKategori[k].push(p);
+            const k = p.operator_id || p.kategori || "(tanpa operator)";
+            if (!byGame[k]) byGame[k] = [];
+            byGame[k].push(p);
         });
 
-        const activateIds = [];
-        const deactivateIds = [];
         let filterPopularitasDipakai = false;
 
-        for (const kategori of Object.keys(byKategori)) {
-            const items = byKategori[kategori];
+        for (const game of Object.keys(byGame)) {
+            const items = byGame[game];
 
             // Pisah dulu per TYPE (diamond, weekly_pass, twilight_pass,
             // elite_pass, membership, dst) SEBELUM di-cluster. Ini krusial --
@@ -330,13 +490,13 @@ exports.smartActivateProducts = async (req, res) => {
             });
 
             let scored = groupsOfCluster.map((g) => {
-                const winner = [...g.items].sort((a, b) => Number(a.harga_beli) - Number(b.harga_beli))[0];
+                const winner = pilihPemenang(g.items);
                 const totalSales = g.items.reduce((sum, p) => sum + (salesCount[p.kode_produk] || 0), 0);
                 return { ...g, winner, totalSales };
             });
 
-            const kategoriPunyaHistori = scored.some((g) => g.totalSales > 0);
-            if (kategoriPunyaHistori) {
+            const gamePunyaHistori = scored.some((g) => g.totalSales > 0);
+            if (gamePunyaHistori) {
                 filterPopularitasDipakai = true;
                 scored = scored.filter((g) => g.totalSales > 0).sort((a, b) => b.totalSales - a.totalSales).slice(0, cap);
             } else {
@@ -349,60 +509,118 @@ exports.smartActivateProducts = async (req, res) => {
             }
 
             const winnerIds = new Set(scored.map((g) => g.winner.id));
-            items.forEach((p) => {
-                if (winnerIds.has(p.id)) activateIds.push(p.id);
-                else deactivateIds.push(p.id);
-            });
+            items.forEach((p) => target.set(p.id, winnerIds.has(p.id)));
         }
 
-        const beforeRows = [];
-        const afterRows = [];
-        const idsToUpdate = [];
-        [...activateIds.map((id) => [id, true]), ...deactivateIds.map((id) => [id, false])].forEach(([id, target]) => {
-            const prev = parsed.find((p) => p.id === id);
-            if (prev && !!prev.is_active !== target) {
-                beforeRows.push({ id, is_active: !!prev.is_active });
-                afterRows.push({ id, is_active: target });
-                idsToUpdate.push({ id, is_active: target });
-            }
+        // ---------- JALUR 2: produk non-game (Marketplace) ----------
+        // Kunci grup: operator + jenis produk + sidik jari nominal/nama.
+        // Jenis ikut masuk kunci biar "Pulsa Reguler 10rb" gak diadu sama
+        // "Pulsa Transfer 10rb" -- itu dua produk beda walau nominalnya sama.
+        const byMarketplaceGroup = new Map();
+        produkMarketplace.forEach((p) => {
+            const key = [
+                p.operator_id || p.kategori || "(tanpa operator)",
+                String(p.source_jenis_name || "").trim().toLowerCase(),
+                marketplaceSignature(p.nama)
+            ].join("||");
+            if (!byMarketplaceGroup.has(key)) byMarketplaceGroup.set(key, []);
+            byMarketplaceGroup.get(key).push(p);
         });
 
-        if (idsToUpdate.length > 0) {
-            const results = await Promise.all(
-                idsToUpdate.map((r) =>
-                    supabase.from("topup_products").update({ is_active: r.is_active, updated_at: new Date().toISOString() }).eq("id", r.id)
-                )
-            );
-            const failed = results.find((r) => r.error);
-            if (failed) return res.status(500).json({ message: "Gagal update status produk" });
+        let duplikatMarketplace = 0;
+        byMarketplaceGroup.forEach((items) => {
+            const winner = pilihPemenang(items);
+            duplikatMarketplace += items.length - 1;
+            items.forEach((p) => target.set(p.id, p.id === winner.id));
+        });
+
+        // ---------- Terapkan perubahan ----------
+        const beforeRows = [];
+        const afterRows = [];
+        let activated = 0;
+        let deactivated = 0;
+
+        kandidat.forEach((p) => {
+            if (!target.has(p.id)) return;
+            const aktif = target.get(p.id);
+            // Produk yang diaktifin tapi harga jualnya masih 0 gak boleh
+            // tayang tanpa harga -- isiin markup wajar sekalian.
+            const perluHarga = aktif && (!p.harga_jual || Number(p.harga_jual) <= 0);
+            if (!!p.is_active === aktif && !perluHarga) return;
+
+            const before = { id: p.id, is_active: !!p.is_active };
+            const after = { id: p.id, is_active: aktif };
+            if (perluHarga) {
+                before.harga_jual = p.harga_jual || 0;
+                after.harga_jual = hitungMarkupWajar(p.harga_beli || 0);
+            }
+            beforeRows.push(before);
+            afterRows.push(after);
+            if (aktif) activated++;
+            else deactivated++;
+        });
+
+        if (afterRows.length > 0) {
+            // Update dikelompokin per payload yang identik lalu di-chunk --
+            // 1 query per 200 produk, bukan 1 query per produk (mode
+            // applyToAll bisa nyentuh puluhan ribu baris sekaligus).
+            const groups = new Map();
+            afterRows.forEach((row) => {
+                const { id, ...payload } = row;
+                const key = JSON.stringify(payload);
+                if (!groups.has(key)) groups.set(key, { payload, ids: [] });
+                groups.get(key).ids.push(id);
+            });
+
+            const chunkSize = 200;
+            for (const { payload, ids: groupIds } of groups.values()) {
+                for (let i = 0; i < groupIds.length; i += chunkSize) {
+                    const { error } = await supabase
+                        .from("topup_products")
+                        .update({ ...payload, updated_at: new Date().toISOString() })
+                        .in("id", groupIds.slice(i, i + chunkSize));
+                    if (error) return res.status(500).json({ message: "Gagal update status produk" });
+                }
+            }
 
             await logAction({
                 action: "smart_activate",
-                label: `Aktivasi cerdas: ${idsToUpdate.filter((r) => r.is_active).length} aktif, ${idsToUpdate.filter((r) => !r.is_active).length} nonaktif`,
-                ids: idsToUpdate.map((r) => r.id),
+                label: `Aktivasi cerdas${semuaProduk ? " (semua produk)" : ""}: ${activated} aktif, ${deactivated} nonaktif`,
+                ids: afterRows.map((r) => r.id),
                 beforeRows,
                 afterRows,
                 adminEmail: req.user.email
             });
         }
 
+        const ringkasanJalur = `${produkGame.length} produk game, ${produkMarketplace.length} produk non-game`;
         notify(
             "product",
-            `🧠 ${req.user.email} menjalankan aktivasi cerdas: ${activateIds.length} aktif, ${deactivateIds.length} nonaktif dari ${groupable.length} produk (${skipped.length} dilewatin krn nama produk gak kebaca nominalnya)`
+            `🧠 ${req.user.email} menjalankan aktivasi cerdas${semuaProduk ? " ke SEMUA produk" : ""}: ${activated} diaktifkan, ${deactivated} dinonaktifkan (${ringkasanJalur})`
         );
+
         res.json({
-            message: `Aktivasi cerdas selesai: ${activateIds.length} produk diaktifkan, ${deactivateIds.length} dinonaktifkan${
-                skipped.length ? `, ${skipped.length} dilewatin (nominal diamond gak kebaca dari namanya)` : ""
-            }${skippedForeignRegion ? `, ${skippedForeignRegion} dilewatin (region luar Indonesia)` : ""}${
-                filterPopularitasDipakai ? "" : " — belum ada histori order sukses, jadi filter popularitas belum diterapkan"
+            message: `Aktivasi cerdas selesai: ${activated} produk diaktifkan, ${deactivated} dinonaktifkan (${ringkasanJalur})${
+                skipped.length ? `, ${skipped.length} produk game dilewatin (nominal gak kebaca dari namanya)` : ""
+            }${skippedManual ? `, ${skippedManual} dilindungi (status di-override manual)` : ""}${
+                skippedSupplierOff ? `, ${skippedSupplierOff} dilewatin (nonaktif di supplier)` : ""
+            }${skippedForeignRegion ? `, ${skippedForeignRegion} dilewatin (region luar Indonesia / gak ketemu)` : ""}${
+                produkGame.length && !filterPopularitasDipakai ? " — belum ada histori order sukses, jadi filter popularitas belum diterapkan" : ""
             }`,
-            activated: activateIds.length,
-            deactivated: deactivateIds.length,
+            activated,
+            deactivated,
             skipped: skipped.length,
+            skippedManual,
+            skippedSupplierOff,
             skippedForeignRegion,
-            popularityFilterApplied: filterPopularitasDipakai
+            gameProducts: produkGame.length,
+            marketplaceProducts: produkMarketplace.length,
+            marketplaceDuplicates: duplikatMarketplace,
+            popularityFilterApplied: filterPopularitasDipakai,
+            appliedToAll: semuaProduk
         });
     } catch (err) {
+        console.error("smartActivateProducts:", err.message);
         res.status(500).json({ message: "Server Error" });
     }
 };
@@ -521,8 +739,92 @@ exports.checkNicknameHandler = async (req, res) => {
     }
 };
 
+// ===========================================================
+// PUBLIK — CEK TAGIHAN (inquiry) produk PASCABAYAR
+//
+// Cuma kategori Pascabayar TokoVoucher yang punya inquiry (PLN Pascabayar,
+// PDAM, Telkom, BPJS, dst). Tiga hal yang WAJIB dijaga di sini:
+//
+// 1) Kategori produk DIVALIDASI ULANG DI SERVER lewat DB, bukan percaya
+//    flag yang dikirim client -- kalau nggak, orang bisa nembak endpoint
+//    ini pakai kode produk apa pun dan tiap tembakan tetap motong saldo.
+// 2) Endpoint ini di-rate-limit ketat (lihat inquiryLimiter di routes),
+//    karena tiap panggilan inquiry berbayar walau gak jadi transaksi.
+// 3) Field harga dari TokoVoucher (price/admin/selling_price/sisa_saldo)
+//    SENGAJA GAK diterusin ke customer. Harga yang berlaku tetap harga_jual
+//    yang diatur admin, dan saldo/margin kita bukan urusan client.
+// ===========================================================
+function angkaAman(nilai) {
+    const n = Number(nilai);
+    return Number.isFinite(n) ? n : null;
+}
+
+exports.inquiryPascabayarHandler = async (req, res) => {
+    const kodeProduk = String(req.body.kode_produk || "").trim();
+    const tujuan = String(req.body.tujuan || "").trim();
+
+    if (!kodeProduk || !tujuan) {
+        return res.status(400).json({ success: false, message: "kode_produk dan tujuan wajib diisi" });
+    }
+
+    try {
+        const { data: product, error } = await supabase
+            .from("topup_products")
+            .select("kode_produk, nama, is_active, source_status, source_category_id, source_category_name")
+            .eq("kode_produk", kodeProduk)
+            .maybeSingle();
+
+        if (error) {
+            return res.status(500).json({ success: false, message: "Gagal memeriksa produk" });
+        }
+        if (!product || !product.is_active || (product.source_status && product.source_status !== "active")) {
+            return res.status(404).json({ success: false, message: "Produk tidak ditemukan atau sedang tidak tersedia" });
+        }
+        if (!isPascabayarProduct(product)) {
+            return res.status(400).json({ success: false, message: "Produk ini bukan pascabayar, jadi gak ada tagihan yang bisa dicek." });
+        }
+
+        const refId = `INQ-${crypto.randomUUID()}`;
+        const result = await tokovoucher.inquiryPascabayar({
+            refId,
+            kodeProduk: product.kode_produk,
+            tujuan,
+            serverId: String(req.body.server_id || "").trim()
+        });
+
+        const status = String((result && result.status) || "").toLowerCase();
+        const sukses = status === "sukses" || status === "success" || status === "1";
+        if (!sukses) {
+            return res.status(422).json({
+                success: false,
+                message: (result && result.message) || "Tagihan tidak ditemukan. Cek lagi nomor/ID pelanggannya ya."
+            });
+        }
+
+        res.json({
+            success: true,
+            customer_name: result.customer_name || result.nama_pelanggan || null,
+            customer_no: result.customer_no || tujuan,
+            tagihan: angkaAman(result.tagihan),
+            denda: angkaAman(result.denda),
+            jumlah_bulan: angkaAman(result.jml_bulan),
+            periode: result.blnth || null,
+            jatuh_tempo: result.due_date || null,
+            keterangan: typeof result.data === "string" ? result.data : null,
+            message: result.message || null
+        });
+    } catch (err) {
+        console.error("inquiryPascabayar:", err.message);
+        res.status(502).json({ success: false, message: "Layanan cek tagihan lagi gak bisa dihubungi. Coba lagi sebentar." });
+    }
+};
+
 exports.getProducts = async (req, res) => {
     try {
+        // Endpoint ini publik tapi pakai optionalAuth: kalau yang minta
+        // ternyata reseller yang sudah disetujui, harga yang dikirim balik
+        // langsung harga resellernya (plus harga normal buat dicoret).
+        const konteksReseller = await getResellerContext(req.user && req.user.id);
         let allData = [];
         let page = 0;
         const pageSize = 1000;
@@ -551,6 +853,9 @@ exports.getProducts = async (req, res) => {
                 }
             });
             
+            terapkanHargaReseller(data, konteksReseller);
+            data.forEach((p) => { delete p.harga_beli; }); // margin internal, jangan bocor ke publik
+
             allData.push(...data);
             if (data.length < pageSize) break;
             page++;
@@ -568,7 +873,12 @@ exports.getProducts = async (req, res) => {
         // non-game (E-Wallet, PLN, Pulsa, dst) punya etalase sendiri di
         // Marketplace/One Stop Solution (lihat getPublicCatalog) dan gak
         // boleh ikut nongol di sini walaupun admin aktifin.
-        const gameOnly = indoOnly.filter((p) => isTopupGameCategory(p.kategori));
+        // Pakai pengenalan game yang luas (bukan cuma kategori "Gaming"):
+        // produk yang kategorinya kebaca "Topup Game"/"Voucher Game" juga
+        // milik etalase ini. Kalau di sini tetap sempit sementara
+        // Marketplace sudah menolak semua produk game, produk-produk itu
+        // malah hilang dari DUA etalase sekaligus.
+        const gameOnly = indoOnly.filter((p) => isGameProduct(p, p.kategori));
         res.json(gameOnly);
     } catch (err) {
         console.log(err);
@@ -1339,6 +1649,20 @@ exports.create = async (req, res) => {
             product.harga_jual = hitungMarkupWajar(product.harga_beli || 0);
         }
 
+        // HARGA RESELLER — dihitung ULANG di sini dari data DB, bukan dari
+        // apa pun yang dikirim frontend. Ditaruh SEBELUM promo & total
+        // dihitung, jadi semua turunannya (subtotal, item iPaymu, potongan
+        // promo) otomatis ikut harga reseller.
+        const konteksReseller = await getResellerContext(userId);
+        let hargaNormal = product.harga_jual;
+        let hematReseller = 0;
+        if (konteksReseller.isReseller) {
+            const hasil = hitungHargaReseller(product.harga_jual, product.harga_beli, konteksReseller.discountPercent);
+            hargaNormal = hasil.harga_normal;
+            hematReseller = hasil.hemat;
+            product.harga_jual = hasil.harga;
+        }
+
         if (product.butuh_server_id && !server_id) {
             return res.status(400).json({ message: "Server ID wajib diisi untuk produk ini" });
         }
@@ -1480,7 +1804,7 @@ exports.create = async (req, res) => {
 
         await supabase.from("topup_orders").update(updatePayload).eq("id", orderId);
 
-        notify("topup", `💎 Pesanan topup baru ${orderId}: ${product.nama} ke ${tujuan} senilai ${rupiahLog(total)}${appliedPromoCode ? ` (promo ${appliedPromoCode})` : ""}`);
+        notify("topup", `💎 Pesanan topup baru ${orderId}: ${product.nama} ke ${tujuan} senilai ${rupiahLog(total)}${appliedPromoCode ? ` (promo ${appliedPromoCode})` : ""}${konteksReseller.isReseller ? ` [reseller ${konteksReseller.tier.name} -${konteksReseller.discountPercent}%]` : ""}`);
 
         if (isDirect) {
             // Sama seperti di orderController: nominal yang ditampilkan harus
@@ -1493,6 +1817,9 @@ exports.create = async (req, res) => {
             res.status(201).json({
                 message: "Pesanan topup berhasil dibuat",
                 orderId,
+                reseller: konteksReseller.isReseller
+                    ? { tier: konteksReseller.tier.name, persen: konteksReseller.discountPercent, harga_normal: hargaNormal, hemat: hematReseller }
+                    : null,
                 flow: "direct",
                 paymentData: {
                     paymentNo: payment.paymentNo,
@@ -1508,6 +1835,9 @@ exports.create = async (req, res) => {
             res.status(201).json({
                 message: "Pesanan topup berhasil dibuat",
                 orderId,
+                reseller: konteksReseller.isReseller
+                    ? { tier: konteksReseller.tier.name, persen: konteksReseller.discountPercent, harga_normal: hargaNormal, hemat: hematReseller }
+                    : null,
                 flow: "redirect",
                 paymentUrl: payment.paymentUrl
             });
@@ -2513,6 +2843,8 @@ function cleanProductName(name) {
 
 exports.getPublicCatalog = async (req, res) => {
     try {
+        // Sama seperti getProducts: reseller yang login lihat harga miliknya.
+        const konteksReseller = await getResellerContext(req.user && req.user.id);
         // Kita filter kategori "Gaming" di database agar tidak memakan limit 1000 baris.
         // Produk yang ada override manual dengan kategori selain Gaming tetap akan termuat.
         let allData = [];
@@ -2521,7 +2853,7 @@ exports.getPublicCatalog = async (req, res) => {
         
         while (true) {
             const { data, error } = await supabase.from("topup_products")
-                .select("id, nama, kode_produk, kategori, source_category_name, source_operator_id, source_operator_name, harga_beli, harga_jual, butuh_server_id, source_status, operator_logo, item_icon, manual_category_override, manual_name_override")
+                .select("id, nama, kode_produk, kategori, source_category_id, source_category_name, source_operator_id, source_operator_name, harga_beli, harga_jual, butuh_server_id, source_status, operator_logo, item_icon, manual_category_override, manual_name_override")
                 .eq("is_active", true)
                 .neq("kategori", "Gaming")
                 .order("kategori")
@@ -2538,6 +2870,8 @@ exports.getPublicCatalog = async (req, res) => {
                 }
             });
             
+            terapkanHargaReseller(data, konteksReseller);
+
             allData.push(...data);
             if (data.length < pageSize) break;
             page++;
@@ -2571,11 +2905,16 @@ exports.getPublicCatalog = async (req, res) => {
                 displayCategory = "Lainnya";
             }
 
-            // Katalog ini KHUSUS feed Marketplace/One Stop Solution --
-            // kategori game (Topup Game) punya etalase sendiri di
-            // Topup Diamond (lihat getProducts) dan gak boleh dobel nongol
-            // di sini.
-            if (isTopupGameCategory(displayCategory)) return;
+            // Katalog ini KHUSUS feed Marketplace/One Stop Solution (PPOB:
+            // pulsa, data, e-wallet, PLN, tagihan). Produk game punya
+            // etalase sendiri di Topup Diamond (lihat getProducts).
+            //
+            // Dulu di sini cuma dicek isTopupGameCategory(displayCategory)
+            // yang caranya cuma kenal satu nama kategori ("Gaming"), jadi
+            // produk yang kategorinya kebaca "Topup Game"/"Voucher Game"
+            // (tergantung mapping admin & fallback DEFAULT_CATEGORY_MAP)
+            // tetap lolos dan nyasar ke Marketplace.
+            if (isGameProduct(p, displayCategory)) return;
             
             // Operator Mapping Logic (Use explicit operator name, fallback to legacy kategori)
             const displayOperator = p.source_operator_name || p.kategori || "Unknown";
@@ -2590,9 +2929,16 @@ exports.getPublicCatalog = async (req, res) => {
                 p.nama = cleanProductName(p.nama);
             }
             
+            // Produk pascabayar dapet flag "cek_tagihan" biar frontend bisa
+            // nampilin tombol Cek Tagihan. Yang dikirim cuma boolean-nya --
+            // id/nama kategori asli TokoVoucher tetap disembunyiin dari client.
+            p.cek_tagihan = isPascabayarProduct(p);
+
             // Cleanup unnecessary fields from payload
+            delete p.harga_beli; // harga modal = margin internal, jangan pernah keluar ke client
             delete p.manual_category_override;
             delete p.manual_name_override;
+            delete p.source_category_id;
             delete p.source_category_name;
             delete p.source_operator_name;
             delete p.source_operator_id;

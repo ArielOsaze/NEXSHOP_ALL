@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Program Reseller — Harga Khusus Topup &amp; PPOB | NexShop</title>
+    <meta name="description"
+        content="Daftar jadi reseller NexShop dan dapatkan harga khusus untuk topup game, e-wallet, pulsa, paket data, PLN, dan tagihan. Tanpa biaya pendaftaran.">
+    <link rel="canonical" href="https://nexshop.cloud/reseller">
+
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://nexshop.cloud/reseller">
+    <meta property="og:title" content="Program Reseller NexShop">
+    <meta property="og:description"
+        content="Harga khusus untuk topup game, e-wallet, pulsa, dan tagihan. Daftar gratis, tanpa minimum deposit.">
+    <meta property="og:image" content="https://nexshop.cloud/images/nexshop-og-v2.jpg">
+    <meta property="og:site_name" content="NexShop">
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script src="/theme-init.js"></script>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/marketplace-theme.css?v=20260822-reseller">
+
+    <style>
+        /* Halaman ini pakai tema yang sama dengan Marketplace
+           (marketplace-theme.css). Di bawah cuma komponen yang khusus ada di
+           halaman reseller: tabel tingkatan, langkah pendaftaran, dan form. */
+        .rs-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .rs-section-head {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .rs-section-head h2 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: clamp(1.4rem, 3vw, 1.9rem);
+            font-weight: 700;
+            margin: 0;
+            color: var(--mkt-text);
+        }
+
+        .rs-section-head p {
+            margin: 0;
+            max-width: 38rem;
+            font-size: 0.92rem;
+            line-height: 1.7;
+            color: var(--mkt-text-dim);
+        }
+
+        .rs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 1rem;
+        }
+
+        .rs-card {
+            padding: 1.4rem;
+            border-radius: var(--mkt-radius);
+            background: var(--mkt-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--mkt-line);
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .rs-card-icon {
+            width: 2.75rem;
+            height: 2.75rem;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(34, 211, 238, 0.1);
+            color: var(--mkt-secondary);
+        }
+
+        .rs-card h3 {
+            margin: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--mkt-text);
+        }
+
+        .rs-card p {
+            margin: 0;
+            font-size: 0.85rem;
+            line-height: 1.65;
+            color: var(--mkt-text-dim);
+        }
+
+        /* ── Tingkatan reseller ─────────────────────────── */
+        .rs-tier {
+            position: relative;
+            padding: 1.6rem 1.4rem;
+            border-radius: var(--mkt-radius);
+            background: var(--mkt-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--mkt-line);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            text-align: center;
+        }
+
+        .rs-tier--sorot {
+            border-color: rgba(139, 92, 246, 0.5);
+            background: rgba(139, 92, 246, 0.07);
+        }
+
+        .rs-tier-name {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--mkt-text);
+        }
+
+        .rs-tier-percent {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 2.4rem;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--mkt-primary);
+        }
+
+        .rs-tier-percent span {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--mkt-text-dim);
+        }
+
+        .rs-tier p {
+            margin: 0;
+            font-size: 0.82rem;
+            line-height: 1.6;
+            color: var(--mkt-text-dim);
+        }
+
+        /* ── Langkah ────────────────────────────────────── */
+        .rs-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            counter-reset: langkah;
+        }
+
+        .rs-step {
+            padding: 1.3rem;
+            border-radius: var(--mkt-radius);
+            background: var(--mkt-surface-2);
+            border: 1px solid var(--mkt-line);
+        }
+
+        .rs-step::before {
+            counter-increment: langkah;
+            content: counter(langkah);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 2rem;
+            height: 2rem;
+            margin-bottom: 0.75rem;
+            border-radius: 999px;
+            background: var(--mkt-primary-strong);
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .rs-step h3 {
+            margin: 0 0 0.35rem;
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--mkt-text);
+        }
+
+        .rs-step p {
+            margin: 0;
+            font-size: 0.84rem;
+            line-height: 1.6;
+            color: var(--mkt-text-dim);
+        }
+
+        /* ── Form & status ──────────────────────────────── */
+        .rs-panel {
+            max-width: 44rem;
+            width: 100%;
+            margin: 0 auto;
+            padding: 1.75rem;
+            border-radius: var(--mkt-radius);
+            background: var(--mkt-glass-solid);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--mkt-line-strong);
+            box-shadow: var(--mkt-shadow);
+        }
+
+        .rs-panel h2 {
+            margin: 0 0 0.35rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--mkt-text);
+        }
+
+        .rs-panel > p {
+            margin: 0 0 1.25rem;
+            font-size: 0.86rem;
+            color: var(--mkt-text-dim);
+        }
+
+        .rs-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .rs-form-row {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .rs-form label {
+            display: flex;
+            flex-direction: column;
+            gap: 0.45rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            color: var(--mkt-text-dim);
+        }
+
+        .rs-form input,
+        .rs-form select,
+        .rs-form textarea {
+            width: 100%;
+            padding: 0.8rem 0.95rem;
+            border-radius: var(--mkt-radius-sm);
+            border: 1px solid var(--mkt-line);
+            background: var(--mkt-surface-2);
+            color: var(--mkt-text);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 400;
+            outline: none;
+            transition: border-color 0.18s, box-shadow 0.18s;
+        }
+
+        .rs-form textarea {
+            min-height: 5.5rem;
+            resize: vertical;
+        }
+
+        .rs-form input:focus,
+        .rs-form select:focus,
+        .rs-form textarea:focus {
+            border-color: var(--mkt-primary);
+            box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+        }
+
+        .rs-form-note {
+            font-size: 0.75rem;
+            color: var(--mkt-text-muted);
+            margin: 0;
+        }
+
+        .rs-alert {
+            display: flex;
+            gap: 0.85rem;
+            align-items: flex-start;
+            padding: 1rem 1.1rem;
+            border-radius: var(--mkt-radius-sm);
+            border: 1px solid var(--mkt-line);
+            background: var(--mkt-surface-2);
+            font-size: 0.86rem;
+            line-height: 1.6;
+            color: var(--mkt-text-dim);
+        }
+
+        .rs-alert strong {
+            color: var(--mkt-text);
+        }
+
+        .rs-alert .material-symbols-outlined {
+            flex: 0 0 auto;
+            color: var(--mkt-secondary);
+        }
+
+        .rs-alert--sukses {
+            border-color: rgba(34, 211, 238, 0.45);
+        }
+
+        .rs-alert--tunggu {
+            border-color: rgba(240, 57, 154, 0.45);
+        }
+
+        .rs-alert--tunggu .material-symbols-outlined {
+            color: var(--mkt-tertiary);
+        }
+
+        .rs-alert--gagal {
+            border-color: rgba(248, 113, 113, 0.45);
+            color: #f87171;
+        }
+
+        .rs-alert--gagal .material-symbols-outlined {
+            color: #f87171;
+        }
+
+        .rs-status-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.85rem;
+        }
+
+        .rs-status-meta span {
+            font-size: 0.72rem;
+            padding: 4px 10px;
+            border-radius: 999px;
+            background: var(--mkt-surface-3);
+            border: 1px solid var(--mkt-line);
+            color: var(--mkt-text-dim);
+        }
+
+        .rs-faq {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+            max-width: 44rem;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .rs-faq details {
+            padding: 1rem 1.15rem;
+            border-radius: var(--mkt-radius-sm);
+            background: var(--mkt-surface-2);
+            border: 1px solid var(--mkt-line);
+        }
+
+        .rs-faq summary {
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--mkt-text);
+            list-style: none;
+        }
+
+        .rs-faq summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .rs-faq p {
+            margin: 0.7rem 0 0;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            color: var(--mkt-text-dim);
+        }
+
+        @media (max-width: 640px) {
+            .rs-form-row {
+                grid-template-columns: minmax(0, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body data-nexbot="auto">
+
+    <div class="mkt-bg-layer" aria-hidden="true">
+        <div class="mkt-bg-veil"></div>
+    </div>
+
+    <nav class="mkt-nav" role="navigation" aria-label="Navigasi NexShop">
+        <a href="/" class="mkt-nav-brand" aria-label="NexShop - Halaman Utama">
+            <span class="mkt-brand-mark">
+                <img src="/images/nexshop-icon.svg" alt="NexShop" width="40" height="40">
+            </span>
+            <span class="mkt-brand-text">NexShop</span>
+            <span class="nx-tag">Reseller</span>
+        </a>
+
+        <ul class="mkt-nav-links">
+            <li><a href="/">Beranda</a></li>
+            <li><a href="/marketplace">Marketplace</a></li>
+            <li><a href="/#topup">Topup Diamond</a></li>
+            <li><a href="/berita">Portal Berita</a></li>
+            <li><a href="/reseller.html" class="active">Reseller</a></li>
+        </ul>
+
+        <a href="/" class="mkt-nav-back" aria-label="Kembali ke toko NexShop">
+            <span class="material-symbols-outlined" aria-hidden="true">arrow_outward</span>
+            <span>Ke Toko</span>
+        </a>
+    </nav>
+
+    <main class="mkt-main" id="main-content">
+        <section class="mkt-hero">
+            <div class="mkt-hero-tag">
+                <span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span> Program Reseller
+            </div>
+            <h1>Jual Ulang Produk NexShop dengan Harga Khusus</h1>
+            <p>Daftar sekali, lalu setiap pembelian topup game, e-wallet, pulsa, paket data, PLN, dan tagihan otomatis
+                pakai harga reseller kamu. Gratis, tanpa minimum deposit.</p>
+            <a href="#form-daftar" class="mkt-nav-back" style="margin-top:0.5rem;">
+                <span class="material-symbols-outlined" aria-hidden="true">how_to_reg</span>
+                <span>Daftar Sekarang</span>
+            </a>
+        </section>
+
+        <!-- Keuntungan -->
+        <section class="rs-section">
+            <div class="rs-section-head">
+                <h2>Kenapa jadi reseller NexShop?</h2>
+                <p>Potongan harga langsung menempel di akun kamu — bukan kode promo yang harus diketik ulang tiap
+                    transaksi.</p>
+            </div>
+            <div class="rs-grid">
+                <article class="rs-card">
+                    <div class="rs-card-icon"><span class="material-symbols-outlined" aria-hidden="true">sell</span>
+                    </div>
+                    <h3>Harga otomatis</h3>
+                    <p>Begitu disetujui, harga di seluruh katalog langsung berubah jadi harga reseller saat kamu login.
+                        Gak ada kode yang perlu dimasukkan manual.</p>
+                </article>
+                <article class="rs-card">
+                    <div class="rs-card-icon"><span class="material-symbols-outlined" aria-hidden="true">bolt</span>
+                    </div>
+                    <h3>Proses tetap instan</h3>
+                    <p>Produk diproses lewat jalur yang sama dengan pembelian biasa, jadi kecepatannya gak berubah cuma
+                        karena harganya lebih murah.</p>
+                </article>
+                <article class="rs-card">
+                    <div class="rs-card-icon"><span class="material-symbols-outlined"
+                            aria-hidden="true">payments</span></div>
+                    <h3>Tanpa deposit</h3>
+                    <p>Bayar per transaksi seperti biasa (QRIS, Virtual Account, transfer bank). Gak perlu titip saldo
+                        dulu di awal.</p>
+                </article>
+                <article class="rs-card">
+                    <div class="rs-card-icon"><span class="material-symbols-outlined"
+                            aria-hidden="true">support_agent</span></div>
+                    <h3>Jalur bantuan khusus</h3>
+                    <p>Kendala transaksi reseller ditangani lewat WhatsApp yang kamu daftarkan, jadi gak perlu antre di
+                        jalur umum.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Tingkatan -->
+        <section class="rs-section">
+            <div class="rs-section-head">
+                <h2>Tingkatan &amp; potongan harga</h2>
+                <p>Tingkat awal ditentukan admin saat pengajuan disetujui, lalu bisa dinaikkan seiring volume transaksi
+                    kamu.</p>
+            </div>
+            <div class="rs-grid" id="rsTierGrid">
+                <div class="mkt-skeleton"></div>
+                <div class="mkt-skeleton"></div>
+                <div class="mkt-skeleton"></div>
+            </div>
+            <p class="rs-form-note" style="text-align:center;">Potongan dihitung dari harga jual normal tiap produk.
+                Untuk produk bermargin sangat tipis (mis. pulsa &amp; tagihan), potongan menyesuaikan otomatis agar
+                harga tetap wajar.</p>
+        </section>
+
+        <!-- Cara kerja -->
+        <section class="rs-section">
+            <div class="rs-section-head">
+                <h2>Cara daftarnya</h2>
+            </div>
+            <div class="rs-steps">
+                <article class="rs-step">
+                    <h3>Punya akun NexShop</h3>
+                    <p>Daftar akun biasa dan verifikasi email kamu. Pengajuan reseller dikaitkan ke akun itu.</p>
+                </article>
+                <article class="rs-step">
+                    <h3>Isi formulir</h3>
+                    <p>Lengkapi nama, nomor WhatsApp aktif, dan gambaran singkat jualan kamu di formulir bawah.</p>
+                </article>
+                <article class="rs-step">
+                    <h3>Tunggu peninjauan</h3>
+                    <p>Admin meninjau maksimal 1x24 jam dan menghubungi lewat WhatsApp. Setelah disetujui, harga
+                        resellermu langsung aktif.</p>
+                </article>
+            </div>
+        </section>
+
+        <!-- Formulir -->
+        <section class="rs-section" id="form-daftar">
+            <div class="rs-panel">
+                <h2>Formulir pendaftaran reseller</h2>
+                <p>Data ini cuma dipakai untuk verifikasi dan menghubungi kamu.</p>
+
+                <div id="rsStatusBox"></div>
+
+                <form class="rs-form" id="rsForm">
+                    <div class="rs-form-row">
+                        <label>Nama Lengkap
+                            <input type="text" id="rsFullname" required maxlength="120" placeholder="Nama sesuai identitas">
+                        </label>
+                        <label>Nomor WhatsApp
+                            <input type="tel" id="rsWhatsapp" required placeholder="08xxxxxxxxxx" pattern="[0-9+ -]{9,20}">
+                        </label>
+                    </div>
+                    <div class="rs-form-row">
+                        <label><span>Nama Toko / Brand <span class="mkt-optional">(opsional)</span></span>
+                            <input type="text" id="rsStoreName" maxlength="120" placeholder="mis. Kios Digital Andi">
+                        </label>
+                        <label>Jualan lewat mana?
+                            <select id="rsChannel">
+                                <option value="">Pilih kanal utama</option>
+                                <option value="WhatsApp">WhatsApp</option>
+                                <option value="Instagram / TikTok">Instagram / TikTok</option>
+                                <option value="Marketplace (Shopee/Tokopedia)">Marketplace (Shopee/Tokopedia)</option>
+                                <option value="Website / Aplikasi sendiri">Website / Aplikasi sendiri</option>
+                                <option value="Toko fisik / konter">Toko fisik / konter</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </label>
+                    </div>
+                    <label>Perkiraan transaksi per bulan
+                        <select id="rsMonthly">
+                            <option value="">Pilih perkiraan</option>
+                            <option value="< 50 transaksi">Kurang dari 50 transaksi</option>
+                            <option value="50-200 transaksi">50 - 200 transaksi</option>
+                            <option value="200-1000 transaksi">200 - 1.000 transaksi</option>
+                            <option value="> 1000 transaksi">Lebih dari 1.000 transaksi</option>
+                        </select>
+                    </label>
+                    <label><span>Catatan tambahan <span class="mkt-optional">(opsional)</span></span>
+                        <textarea id="rsNote" maxlength="500"
+                            placeholder="Ceritakan singkat soal jualan kamu, atau produk yang paling sering dibeli."></textarea>
+                    </label>
+                    <p class="mkt-checkout-error" id="rsError"></p>
+                    <button type="submit" class="mkt-btn-primary" id="rsSubmitBtn">Kirim Pengajuan</button>
+                    <p class="rs-form-note">Dengan mengirim formulir ini kamu setuju dihubungi admin NexShop lewat
+                        WhatsApp untuk verifikasi.</p>
+                </form>
+            </div>
+        </section>
+
+        <!-- FAQ -->
+        <section class="rs-section">
+            <div class="rs-section-head">
+                <h2>Pertanyaan yang sering muncul</h2>
+            </div>
+            <div class="rs-faq">
+                <details>
+                    <summary>Apakah ada biaya pendaftaran?</summary>
+                    <p>Tidak ada. Pendaftaran gratis dan tidak ada biaya bulanan. Kamu tetap membayar per transaksi
+                        seperti pembeli biasa, hanya dengan harga yang lebih rendah.</p>
+                </details>
+                <details>
+                    <summary>Berapa lama proses peninjauannya?</summary>
+                    <p>Maksimal 1x24 jam pada hari kerja. Admin menghubungi lewat nomor WhatsApp yang kamu daftarkan,
+                        jadi pastikan nomornya aktif.</p>
+                </details>
+                <details>
+                    <summary>Apakah semua produk dapat potongan yang sama?</summary>
+                    <p>Potongan dihitung dari harga jual normal tiap produk. Untuk produk yang margin normalnya sangat
+                        tipis, potongan menyesuaikan otomatis supaya harga tetap masuk akal — jadi persentase yang benar-benar
+                        kamu terima di produk itu bisa sedikit lebih kecil.</p>
+                </details>
+                <details>
+                    <summary>Bisakah status reseller dicabut?</summary>
+                    <p>Bisa, kalau ditemukan penyalahgunaan (mis. transaksi mencurigakan atau pelanggaran ketentuan
+                        layanan). Admin akan memberi tahu lewat WhatsApp sebelum status dibekukan.</p>
+                </details>
+                <details>
+                    <summary>Bisakah harga reseller digabung dengan kode promo?</summary>
+                    <p>Bisa, selama kode promonya masih berlaku. Potongan reseller dihitung lebih dulu, lalu kode promo
+                        dipotong dari harga tersebut.</p>
+                </details>
+            </div>
+        </section>
+    </main>
+
+    <footer class="nx-footer nx-footer--market">
+        <div class="nx-footer__container">
+            <div class="nx-footer__grid">
+                <div>
+                    <div class="nx-footer__brand-logo">NEXSHOP RESELLER</div>
+                    <p class="nx-footer__brand-desc" style="text-transform: none; text-align: left;">
+                        Harga khusus untuk topup game, e-wallet, pulsa, paket data, dan tagihan.
+                    </p>
+                </div>
+
+                <div>
+                    <h4 class="nx-footer__heading" style="text-align: left;">Navigasi</h4>
+                    <ul class="nx-footer__link-list" style="text-align: left;">
+                        <li><a href="/" class="nx-footer__link">Beranda</a></li>
+                        <li><a href="/marketplace" class="nx-footer__link">Marketplace</a></li>
+                        <li><a href="/#topup" class="nx-footer__link">Topup Diamond</a></li>
+                        <li><a href="/berita" class="nx-footer__link">Portal Berita</a></li>
+                    </ul>
+                </div>
+
+                <div class="nx-footer__legal" style="align-items: flex-start;">
+                    <h4 class="nx-footer__heading">Legalitas</h4>
+                    <div class="nx-footer__legal-name">
+                        <strong>NexShop</strong>
+                        <span>&middot;</span>
+                        <span>Usaha Mikro</span>
+                    </div>
+                    <div class="nx-footer__legal-ids">
+                        <span>NIB 1408260072494</span>
+                        <span>KBLI 60390</span>
+                    </div>
+                    <a href="/legalitas.html" class="nx-footer__legal-link">
+                        Informasi legalitas <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nx-footer__bottom">
+                <p>&copy; 2026 NexShop. All Rights Reserved.</p>
+                <p class="nx-footer__bottom-note">Potongan harga reseller mengikuti tingkatan yang berlaku dan dapat
+                    berubah sewaktu-waktu.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const API_BASE = (() => {
+            const host = window.location.hostname;
+            if (host === "localhost" || host === "127.0.0.1") {
+                return window.location.port === "3000" ? "/api" : "http://localhost:3000/api";
+            }
+            return window.location.protocol.startsWith("http") ? "/api" : "https://nexshop.cloud/api";
+        })();
+
+        const PUBLIC_TOKEN_STORAGE_KEY = "nexshop-public-token";
+
+        function escapeHtml(str) {
+            return String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+        }
+
+        function getToken() {
+            return localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) || localStorage.getItem("token");
+        }
+
+        // ── Tingkatan reseller ───────────────────────────────────────────
+        // Tingkatan diambil dari server (bukan di-hardcode di HTML) supaya
+        // begitu admin ubah persen diskon di dashboard, halaman ini ikut
+        // berubah tanpa perlu deploy ulang.
+        async function loadTiers() {
+            const grid = document.getElementById("rsTierGrid");
+            try {
+                const res = await fetch(`${API_BASE}/reseller/tiers`);
+                if (!res.ok) throw new Error("gagal");
+                const tiers = await res.json();
+
+                if (!Array.isArray(tiers) || tiers.length === 0) {
+                    grid.innerHTML = `<p class="rs-form-note" style="grid-column:1/-1;text-align:center;">Tingkatan reseller belum diumumkan. Hubungi admin untuk informasi terbaru.</p>`;
+                    return;
+                }
+
+                const tertinggi = Math.max(...tiers.map((t) => Number(t.discount_percent) || 0));
+                grid.innerHTML = tiers.map((t) => {
+                    const persen = Number(t.discount_percent) || 0;
+                    const sorot = persen === tertinggi && tiers.length > 1;
+                    return `
+                        <article class="rs-tier ${sorot ? "rs-tier--sorot" : ""}">
+                            <div class="rs-tier-name">${escapeHtml(t.name)}</div>
+                            <div class="rs-tier-percent">${String(persen).replace(".", ",")}<span>% off</span></div>
+                            <p>${escapeHtml(t.description || "Potongan berlaku otomatis di seluruh katalog.")}</p>
+                        </article>
+                    `;
+                }).join("");
+            } catch (err) {
+                grid.innerHTML = `<p class="rs-form-note" style="grid-column:1/-1;text-align:center;">Gagal memuat tingkatan reseller. Coba muat ulang halaman.</p>`;
+            }
+        }
+
+        // ── Status pengajuan milik user ──────────────────────────────────
+        function tampilkanStatus(html, jenis = "") {
+            const box = document.getElementById("rsStatusBox");
+            box.innerHTML = html
+                ? `<div class="rs-alert ${jenis}" style="margin-bottom:1.25rem;">${html}</div>`
+                : "";
+        }
+
+        function kunciForm(alasanTombol) {
+            const form = document.getElementById("rsForm");
+            form.querySelectorAll("input, select, textarea, button").forEach((el) => { el.disabled = true; });
+            const btn = document.getElementById("rsSubmitBtn");
+            if (alasanTombol) btn.textContent = alasanTombol;
+        }
+
+        async function loadMyStatus() {
+            const token = getToken();
+
+            if (!token) {
+                tampilkanStatus(
+                    `<span class="material-symbols-outlined" aria-hidden="true">login</span>
+                     <div><strong>Masuk dulu ke akun NexShop</strong><br>
+                     Pengajuan reseller dikaitkan ke akunmu. <a href="/login.html">Masuk atau daftar di sini</a>, lalu kembali ke halaman ini.</div>`
+                );
+                kunciForm("Masuk dulu untuk mendaftar");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/me`, { headers: { Authorization: `Bearer ${token}` } });
+                if (res.status === 401) {
+                    tampilkanStatus(
+                        `<span class="material-symbols-outlined" aria-hidden="true">login</span>
+                         <div><strong>Sesi kamu sudah berakhir</strong><br><a href="/login.html">Masuk lagi</a> untuk melanjutkan pendaftaran.</div>`
+                    );
+                    kunciForm("Masuk dulu untuk mendaftar");
+                    return;
+                }
+
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) {
+                    // Termasuk kasus migration belum dijalankan (503).
+                    tampilkanStatus(
+                        `<span class="material-symbols-outlined" aria-hidden="true">info</span>
+                         <div>${escapeHtml(data.message || "Status reseller belum bisa dimuat.")}</div>`,
+                        "rs-alert--tunggu"
+                    );
+                    return;
+                }
+
+                // Prefill dari profil akun biar user gak ngetik ulang
+                if (data.profil) {
+                    const nama = document.getElementById("rsFullname");
+                    const wa = document.getElementById("rsWhatsapp");
+                    if (!nama.value) nama.value = data.profil.fullname || "";
+                    if (!wa.value) wa.value = data.profil.phone || "";
+                }
+
+                if (data.status === "approved" && data.tier) {
+                    tampilkanStatus(
+                        `<span class="material-symbols-outlined" aria-hidden="true">verified</span>
+                         <div><strong>Kamu sudah jadi reseller ${escapeHtml(data.tier.name)}</strong><br>
+                         Potongan ${String(data.tier.discount_percent).replace(".", ",")}% otomatis berlaku di
+                         <a href="/marketplace">Marketplace</a> dan <a href="/#topup">Topup Diamond</a> selama kamu login.
+                         <div class="rs-status-meta"><span>Tier ${escapeHtml(data.tier.name)}</span><span>Diskon ${String(data.tier.discount_percent).replace(".", ",")}%</span></div></div>`,
+                        "rs-alert--sukses"
+                    );
+                    kunciForm("Sudah terdaftar sebagai reseller");
+                    return;
+                }
+
+                if (data.status === "pending") {
+                    tampilkanStatus(
+                        `<span class="material-symbols-outlined" aria-hidden="true">hourglass_top</span>
+                         <div><strong>Pengajuan kamu sedang ditinjau</strong><br>
+                         Admin bakal menghubungi lewat WhatsApp maksimal 1x24 jam.</div>`,
+                        "rs-alert--tunggu"
+                    );
+                    kunciForm("Pengajuan sedang ditinjau");
+                    return;
+                }
+
+                if (data.status === "suspended") {
+                    tampilkanStatus(
+                        `<span class="material-symbols-outlined" aria-hidden="true">block</span>
+                         <div><strong>Status reseller kamu sedang dibekukan</strong><br>
+                         Hubungi Customer Service NexShop untuk penjelasan lebih lanjut.</div>`,
+                        "rs-alert--gagal"
+                    );
+                    kunciForm("Hubungi Customer Service");
+                    return;
+                }
+
+                if (data.status === "rejected") {
+                    const catatan = data.pengajuan_terakhir && data.pengajuan_terakhir.admin_note;
+                    tampilkanStatus(
+                        `<span class="material-symbols-outlined" aria-hidden="true">info</span>
+                         <div><strong>Pengajuan sebelumnya belum disetujui</strong><br>
+                         ${catatan ? "Catatan admin: " + escapeHtml(catatan) + "<br>" : ""}Kamu masih boleh mengirim pengajuan baru dengan data yang lebih lengkap.</div>`,
+                        "rs-alert--tunggu"
+                    );
+                }
+            } catch (err) {
+                // Diamkan: form tetap bisa dipakai, error sebenarnya bakal
+                // muncul saat submit kalau memang ada masalah.
+            }
+        }
+
+        // ── Kirim pengajuan ──────────────────────────────────────────────
+        document.getElementById("rsForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const token = getToken();
+            const errEl = document.getElementById("rsError");
+            const btn = document.getElementById("rsSubmitBtn");
+            errEl.textContent = "";
+
+            if (!token) {
+                errEl.textContent = "Kamu perlu masuk ke akun NexShop dulu.";
+                return;
+            }
+
+            const payload = {
+                fullname: document.getElementById("rsFullname").value.trim(),
+                whatsapp: document.getElementById("rsWhatsapp").value.trim(),
+                store_name: document.getElementById("rsStoreName").value.trim(),
+                channel: document.getElementById("rsChannel").value,
+                monthly_estimate: document.getElementById("rsMonthly").value,
+                note: document.getElementById("rsNote").value.trim()
+            };
+
+            btn.disabled = true;
+            btn.textContent = "Mengirim...";
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/apply`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || "Gagal mengirim pengajuan");
+
+                tampilkanStatus(
+                    `<span class="material-symbols-outlined" aria-hidden="true">task_alt</span>
+                     <div><strong>Pengajuan terkirim!</strong><br>${escapeHtml(data.message || "")}</div>`,
+                    "rs-alert--sukses"
+                );
+                kunciForm("Pengajuan sedang ditinjau");
+                window.scrollTo({ top: document.getElementById("form-daftar").offsetTop - 120, behavior: "smooth" });
+            } catch (err) {
+                errEl.textContent = err.message;
+                btn.disabled = false;
+                btn.textContent = "Kirim Pengajuan";
+            }
+        });
+
+        loadTiers();
+        loadMyStatus();
+    </script>
+    <script src="/nexbot.js?v=20260823-nexbot"></script>
+</body>
+
+</html>

@@ -125,4 +125,26 @@ const checkNicknameLimiter = rateLimit({
     message: { message: "Terlalu banyak percobaan cek akun. Silakan tunggu sebentar." }
 });
 
-module.exports = { loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter };
+// Cek Tagihan (inquiry pascabayar) — dibatasi JAUH lebih ketat dari cek
+// nickname: tiap panggilan inquiry ke TokoVoucher itu berbayar (motong
+// saldo deposit kita), jadi satu IP yang nge-spam tombol "Cek Tagihan"
+// beneran bikin saldo kekuras walaupun gak ada transaksi sama sekali.
+const inquiryLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 menit
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak permintaan cek tagihan. Tunggu sebentar ya." }
+});
+
+// Pendaftaran reseller — cegah satu orang spam kirim pengajuan berkali-kali
+// (tiap pengajuan bikin notifikasi ke admin + WhatsApp).
+const resellerApplyLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak percobaan pendaftaran reseller. Coba lagi nanti." }
+});
+
+module.exports = { loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter };

@@ -1,0 +1,1480 @@
+/* =============================================================
+   Tema Marketplace NexShop — dipakai bareng oleh marketplace.html dan
+   reseller.html. Dulu CSS ini nempel inline di marketplace.html; dipisah
+   ke sini supaya halaman reseller pakai bahasa visual yang PERSIS sama
+   tanpa nyalin-nempel ratusan baris (dan biar sekali ubah, dua halaman
+   ikut berubah).
+
+   WAJIB di-link SESUDAH /style.css, karena token di sini sengaja nimpa
+   variabel global buat halaman-halaman ini saja.
+   ============================================================= */
+/* =============================================================
+   NexShop Marketplace — tampilan "glass / aurora"
+   Palet, skala tipografi, dan bentuk komponennya ngikutin desain
+   marketplace yang baru: permukaan gelap kebiruan (#051424), kartu kaca
+   transparan, aksen ungu lembut (#d0bcff) + cyan (#5de6ff).
+
+   Token di bawah SENGAJA nimpa variabel dari style.css cuma di halaman ini,
+   jadi komponen bersama (mis. footer .nx-footer*) tetap ikut warna baru
+   tanpa perlu di-fork.
+   ============================================================= */
+
+:root {
+    /* Palet DIAMBIL DARI NexShop utama (style.css), bukan palet lain --
+       supaya Marketplace kelihatan satu keluarga sama halaman utama:
+       ungu #8B5CF6, cyan #22D3EE, latar #080B14, panel #121729/#1A2038. */
+    --mkt-bg: #080B14;
+    --mkt-bg-deep: #060810;
+    --mkt-surface: #121729;
+    --mkt-surface-2: #1A2038;
+    --mkt-surface-3: #212949;
+    --mkt-surface-4: #2A3357;
+    --mkt-primary: #8B5CF6;
+    --mkt-primary-soft: #A78BFA;
+    --mkt-primary-strong: #6D28D9;
+    --mkt-secondary: #22D3EE;
+    --mkt-tertiary: #F0399A;
+    --mkt-text: #EDEFF7;
+    --mkt-text-dim: #B7BEDC;
+    --mkt-text-muted: #8891B0;
+    --mkt-line: #242c4a;
+    --mkt-line-strong: rgba(139, 92, 246, 0.35);
+    --mkt-glass: rgba(26, 32, 56, 0.55);
+    --mkt-glass-solid: rgba(18, 23, 41, 0.96);
+    --mkt-radius: 16px;
+    --mkt-radius-sm: 10px;
+    --mkt-shadow: 0 8px 32px rgba(0, 0, 0, 0.37);
+
+    /* Alias buat komponen bersama dari style.css */
+    --bg: var(--mkt-bg);
+    --bg-panel: var(--mkt-surface);
+    --bg-panel-2: var(--mkt-surface-2);
+    --nav-bg: rgba(8, 11, 20, 0.75);
+    --line: var(--mkt-line);
+    --text: var(--mkt-text);
+    --text-dim: var(--mkt-text-dim);
+    --text-muted: var(--mkt-text-muted);
+    --violet: var(--mkt-primary);
+    --violet-2: var(--mkt-primary-strong);
+    --cyan: var(--mkt-secondary);
+    --radius: var(--mkt-radius);
+    --radius-sm: var(--mkt-radius-sm);
+}
+
+/* Tema terang mengikuti mode terang NexShop utama. */
+:root[data-theme="light"] {
+    --mkt-bg: #F4F0FC;
+    --mkt-bg-deep: #EAE4F8;
+    --mkt-surface: #FFFFFF;
+    --mkt-surface-2: #F6F3FD;
+    --mkt-surface-3: #ECE6FA;
+    --mkt-surface-4: #DED5F5;
+    --mkt-primary: #6D28D9;
+    --mkt-primary-soft: #7C3AED;
+    --mkt-primary-strong: #6D28D9;
+    --mkt-secondary: #0E9BB5;
+    --mkt-text: #150E27;
+    --mkt-text-dim: #3F3A55;
+    --mkt-text-muted: #6B6784;
+    --mkt-line: rgba(21, 14, 39, 0.1);
+    --mkt-line-strong: rgba(109, 40, 217, 0.28);
+    --mkt-glass: rgba(255, 255, 255, 0.75);
+    --mkt-glass-solid: rgba(255, 255, 255, 0.97);
+    --mkt-shadow: 0 8px 32px rgba(21, 14, 39, 0.1);
+    --nav-bg: rgba(255, 255, 255, 0.8);
+}
+
+* {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
+body {
+    font-family: 'Inter', 'Plus Jakarta Sans', system-ui, sans-serif;
+    background: var(--mkt-bg);
+    color: var(--mkt-text);
+    margin: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    line-height: 1;
+    user-select: none;
+}
+
+.material-symbols-outlined.is-filled {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ── Latar animasi ───────────────────────────────────────────── */
+.mkt-bg-layer {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    background:
+        radial-gradient(90rem 60rem at 15% -10%, rgba(139, 92, 246, 0.22), transparent 60%),
+        radial-gradient(70rem 50rem at 95% 10%, rgba(34, 211, 238, 0.14), transparent 55%),
+        var(--mkt-bg);
+}
+
+.mkt-bg-layer canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.mkt-bg-veil {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(5, 20, 36, 0.45), rgba(5, 20, 36, 0.82));
+}
+
+:root[data-theme="light"] .mkt-bg-veil {
+    background: linear-gradient(180deg, rgba(244, 246, 251, 0.72), rgba(244, 246, 251, 0.94));
+}
+
+/* ── Kartu kaca (dipakai ulang di banyak komponen) ───────────── */
+.glass-card {
+    background: var(--mkt-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--mkt-line);
+    border-top-color: var(--mkt-line-strong);
+    box-shadow: var(--mkt-shadow);
+}
+
+/* ── Nav melayang ────────────────────────────────────────────── */
+.mkt-nav {
+    position: fixed;
+    top: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(92%, 1200px);
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 1.1rem;
+    border-radius: var(--mkt-radius);
+    background: var(--nav-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--mkt-line);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.mkt-nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--mkt-text);
+    white-space: nowrap;
+}
+
+/* Logo NexShop asli, dibingkai gradien seperti di nav halaman utama --
+   sebelumnya di sini cuma ikon generik "storefront", jadi identitas
+   NexShop-nya hilang. */
+.mkt-brand-mark {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    padding: 1px;
+    border-radius: 12px;
+    background: linear-gradient(to top right, var(--mkt-primary), var(--mkt-secondary));
+    display: flex;
+    transition: transform 0.5s;
+}
+
+.mkt-nav-brand:hover .mkt-brand-mark {
+    transform: rotate(90deg);
+}
+
+.mkt-brand-mark img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 11px;
+    background: var(--mkt-bg);
+}
+
+.mkt-brand-text {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    color: var(--mkt-text);
+}
+
+.mkt-nav-brand .nx-accent {
+    color: var(--mkt-primary);
+}
+
+.mkt-nav-brand .nx-tag {
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mkt-secondary);
+    background: rgba(34, 211, 238, 0.12);
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    padding: 3px 8px;
+    border-radius: 999px;
+}
+
+.mkt-nav-links {
+    display: flex;
+    gap: 0.15rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.mkt-nav-links a {
+    text-decoration: none;
+    color: var(--mkt-text-dim);
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 0.5rem 0.85rem;
+    border-radius: var(--mkt-radius-sm);
+    transition: color 0.18s, background 0.18s;
+}
+
+.mkt-nav-links a:hover {
+    color: var(--mkt-text);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.mkt-nav-links a.active {
+    color: var(--mkt-primary);
+    font-weight: 700;
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.mkt-nav-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #fff;
+    background: var(--mkt-primary-strong);
+    padding: 0.55rem 1.1rem;
+    border-radius: var(--mkt-radius-sm);
+    transition: filter 0.18s, transform 0.18s;
+}
+
+.mkt-nav-back:hover {
+    filter: brightness(1.1);
+}
+
+.mkt-nav-back:active {
+    transform: scale(0.97);
+}
+
+/* ── Layout utama ────────────────────────────────────────────── */
+.mkt-main {
+    position: relative;
+    z-index: 1;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 7.5rem clamp(1rem, 4vw, 3rem) 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 3.5rem;
+}
+
+/* ── Hero ────────────────────────────────────────────────────── */
+.mkt-hero {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.mkt-hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    color: var(--mkt-primary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.mkt-hero-tag .material-symbols-outlined {
+    font-size: 1rem;
+}
+
+.mkt-hero h1 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: clamp(2rem, 5vw, 3rem);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    font-weight: 700;
+    margin: 0;
+    max-width: 56rem;
+    color: var(--mkt-text);
+}
+
+.mkt-hero p {
+    font-size: clamp(0.95rem, 1.6vw, 1.125rem);
+    line-height: 1.65;
+    color: var(--mkt-text-dim);
+    max-width: 42rem;
+    margin: 0;
+}
+
+/* ── Pencarian ───────────────────────────────────────────────── */
+.mkt-search-wrap {
+    position: relative;
+    width: 100%;
+    max-width: 34rem;
+    margin-top: 0.5rem;
+}
+
+.mkt-search-wrap .material-symbols-outlined {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--mkt-text-muted);
+    font-size: 1.2rem;
+    pointer-events: none;
+}
+
+.mkt-search-wrap input {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 2.9rem;
+    border-radius: var(--mkt-radius-sm);
+    border: 1px solid var(--mkt-line);
+    background: var(--mkt-glass-solid);
+    color: var(--mkt-text);
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.mkt-search-wrap input::placeholder {
+    color: var(--mkt-text-muted);
+}
+
+.mkt-search-wrap input:focus {
+    border-color: var(--mkt-primary);
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+/* ── Dua kolom: rail layanan + etalase ───────────────────────── */
+.mkt-columns {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.mkt-columns.is-detail {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.mkt-col-rail {
+    position: sticky;
+    top: 6.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.mkt-col-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    min-width: 0;
+}
+
+.mkt-section-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.5rem;
+    line-height: 1.35;
+    font-weight: 600;
+    color: var(--mkt-text);
+    margin: 0;
+}
+
+/* ── Kartu kategori (rail kiri) ──────────────────────────────── */
+.cat-filter-wrap {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.cat-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.4rem 0.75rem;
+    border-radius: var(--mkt-radius);
+    background: var(--mkt-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--mkt-line);
+    color: var(--mkt-text);
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+
+.cat-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
+.cat-btn:active {
+    transform: scale(0.98);
+}
+
+.cat-btn-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(34, 211, 238, 0.1);
+    color: var(--mkt-secondary);
+    transition: background 0.2s;
+}
+
+.cat-btn-icon .material-symbols-outlined {
+    font-size: 1.5rem;
+}
+
+.cat-btn:hover .cat-btn-icon {
+    background: rgba(34, 211, 238, 0.2);
+}
+
+.cat-btn.active {
+    border-color: rgba(139, 92, 246, 0.55);
+    background: rgba(139, 92, 246, 0.07);
+    color: var(--mkt-primary);
+    font-weight: 700;
+}
+
+.cat-btn.active .cat-btn-icon {
+    background: rgba(139, 92, 246, 0.2);
+    color: var(--mkt-primary);
+}
+
+/* ── Header etalase + grid operator ──────────────────────────── */
+.mkt-grid-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.mkt-grid-header h3 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--mkt-text);
+    margin: 0;
+}
+
+.mkt-grid-header span {
+    font-size: 0.78rem;
+    color: var(--mkt-text-muted);
+}
+
+.market-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.85rem;
+}
+
+.mkt-category-heading {
+    grid-column: 1 / -1;
+    margin-top: 1.25rem;
+    margin-bottom: 0.25rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--mkt-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.mkt-category-heading:first-child {
+    margin-top: 0;
+}
+
+.mkt-category-bar {
+    /* WAJIB spanning full row. Elemen ini anak langsung .market-grid
+       (grid auto-fill), jadi tanpa grid-column dia ngisi kolom 1 di baris
+       berikutnya dan nendang kartu produk pertama ke kolom 2 -- kelihatannya
+       kayak grid "mulai dari tengah". */
+    grid-column: 1 / -1;
+    width: 2.5rem;
+    height: 3px;
+    background: linear-gradient(90deg, var(--mkt-primary), var(--mkt-secondary));
+    border-radius: 2px;
+    margin: 0.35rem 0 0.85rem;
+}
+
+.market-card {
+    background: var(--mkt-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--mkt-line);
+    border-radius: var(--mkt-radius);
+    padding: 1.1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.2s, background 0.2s;
+}
+
+.market-card:hover {
+    border-color: rgba(139, 92, 246, 0.45);
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-3px);
+}
+
+.market-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: var(--mkt-surface-3);
+    border: 1px solid var(--mkt-line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: var(--mkt-secondary);
+}
+
+.market-card-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6px;
+}
+
+.market-card h4 {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--mkt-text);
+    line-height: 1.35;
+}
+
+.mkt-count,
+.mkt-price {
+    font-size: 0.72rem;
+    color: var(--mkt-text-muted);
+}
+
+.mkt-price {
+    color: var(--mkt-secondary);
+    font-weight: 600;
+}
+
+.mkt-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--mkt-text-muted);
+}
+
+.mkt-empty .material-symbols-outlined {
+    font-size: 2.5rem;
+    color: var(--mkt-primary);
+    opacity: 0.6;
+}
+
+.mkt-empty h3 {
+    margin: 0.75rem 0 0.35rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1rem;
+    color: var(--mkt-text);
+}
+
+.mkt-empty p {
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.mkt-skeleton {
+    height: 118px;
+    border-radius: var(--mkt-radius);
+    background: linear-gradient(90deg, var(--mkt-surface-2) 25%, var(--mkt-surface-3) 37%, var(--mkt-surface-2) 63%);
+    background-size: 400% 100%;
+    animation: mkt-shimmer 1.4s ease infinite;
+}
+
+@keyframes mkt-shimmer {
+    0% { background-position: 100% 50%; }
+    100% { background-position: 0 50%; }
+}
+
+/* ── Detail operator ─────────────────────────────────────────── */
+.mkt-detail {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.mkt-detail-back {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: none;
+    border: none;
+    color: var(--mkt-text-muted);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0.35rem 0;
+    transition: color 0.18s;
+}
+
+.mkt-detail-back:hover {
+    color: var(--mkt-primary);
+}
+
+.mkt-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: var(--mkt-radius);
+    background: var(--mkt-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--mkt-line);
+}
+
+.mkt-detail-icon {
+    width: 60px;
+    height: 60px;
+    flex: 0 0 auto;
+    border-radius: 16px;
+    background: var(--mkt-surface-3);
+    border: 1px solid var(--mkt-line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    color: var(--mkt-secondary);
+    font-size: 1.4rem;
+}
+
+.mkt-detail-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 8px;
+}
+
+.mkt-detail-cat {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mkt-secondary);
+}
+
+.mkt-detail-info h2 {
+    margin: 0.2rem 0 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--mkt-text);
+}
+
+.mkt-detail-products {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.mkt-product-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 1.1rem;
+    border-radius: var(--mkt-radius-sm);
+    background: var(--mkt-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--mkt-line);
+    transition: border-color 0.18s, background 0.18s;
+}
+
+.mkt-product-row:hover {
+    border-color: rgba(139, 92, 246, 0.35);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.mkt-product-name {
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--mkt-text);
+    min-width: 0;
+}
+
+.mkt-product-action {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    flex: 0 0 auto;
+}
+
+.mkt-price-normal {
+    margin-left: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--mkt-text-muted);
+    text-decoration: line-through;
+    opacity: 0.8;
+}
+
+.mkt-reseller-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1.2rem;
+    border-radius: var(--mkt-radius);
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.14), rgba(34, 211, 238, 0.1));
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.mkt-reseller-banner .material-symbols-outlined {
+    font-size: 1.6rem;
+    color: var(--mkt-primary);
+}
+
+.mkt-reseller-banner strong {
+    font-size: 0.88rem;
+    color: var(--mkt-text);
+}
+
+.mkt-reseller-banner p {
+    margin: 0.15rem 0 0;
+    font-size: 0.78rem;
+    color: var(--mkt-text-dim);
+}
+
+.mkt-reseller-banner a {
+    margin-left: auto;
+    flex: 0 0 auto;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--mkt-primary);
+    text-decoration: none;
+}
+
+.mkt-reseller-banner a:hover {
+    text-decoration: underline;
+}
+
+.mkt-product-price {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--mkt-secondary);
+    white-space: nowrap;
+}
+
+.mkt-buy-btn {
+    padding: 0.5rem 1.1rem;
+    border-radius: var(--mkt-radius-sm);
+    border: none;
+    background: var(--mkt-primary-strong);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.18s, transform 0.15s;
+}
+
+.mkt-buy-btn:hover {
+    filter: brightness(1.12);
+}
+
+.mkt-buy-btn:active {
+    transform: scale(0.97);
+}
+
+.mkt-buy-btn--disabled,
+.mkt-buy-btn--disabled:hover {
+    background: var(--mkt-surface-4);
+    color: var(--mkt-text-muted);
+    cursor: not-allowed;
+    filter: none;
+}
+
+/* ── Modal (checkout & pembayaran) ───────────────────────────── */
+.mkt-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+    background: rgba(1, 8, 18, 0.72);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.mkt-overlay.is-visible {
+    display: flex;
+}
+
+.mkt-modal {
+    position: relative;
+    width: 100%;
+    max-width: 30rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 1.75rem;
+    border-radius: var(--mkt-radius);
+    background: var(--mkt-glass-solid);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--mkt-line-strong);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+    animation: mkt-modal-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes mkt-modal-in {
+    from { opacity: 0; transform: translateY(14px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+.mkt-modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    border: none;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--mkt-text-muted);
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+}
+
+.mkt-modal-close:hover {
+    color: var(--mkt-text);
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.mkt-checkout-summary {
+    padding-bottom: 1.1rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--mkt-line);
+}
+
+.mkt-checkout-op {
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mkt-secondary);
+}
+
+.mkt-checkout-summary h3 {
+    margin: 0.35rem 0 0.5rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--mkt-text);
+    padding-right: 2rem;
+}
+
+.mkt-checkout-price {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--mkt-primary);
+}
+
+#mktCheckoutForm {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#mktCheckoutForm label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--mkt-text-dim);
+}
+
+#mktCheckoutForm input,
+#mktCheckoutForm select {
+    width: 100%;
+    padding: 0.8rem 0.95rem;
+    border-radius: var(--mkt-radius-sm);
+    border: 1px solid var(--mkt-line);
+    background: var(--mkt-surface-2);
+    color: var(--mkt-text);
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 400;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+#mktCheckoutForm input::placeholder {
+    color: var(--mkt-text-muted);
+}
+
+#mktCheckoutForm input:focus,
+#mktCheckoutForm select:focus {
+    border-color: var(--mkt-primary);
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+.mkt-optional {
+    font-weight: 500;
+    color: var(--mkt-text-muted);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* Pilihan metode pembayaran ala kartu */
+.mkt-pay-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--mkt-text-dim);
+    margin-bottom: 0.55rem;
+}
+
+.mkt-pay-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+}
+
+.mkt-pay-option {
+    position: relative;
+    cursor: pointer;
+}
+
+.mkt-pay-option input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.mkt-pay-card {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.8rem 0.85rem;
+    border-radius: var(--mkt-radius-sm);
+    background: var(--mkt-surface-2);
+    border: 1px solid var(--mkt-line);
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--mkt-text);
+    transition: border-color 0.18s, background 0.18s;
+}
+
+.mkt-pay-card .material-symbols-outlined {
+    font-size: 1.25rem;
+    color: var(--mkt-secondary);
+}
+
+.mkt-pay-option:hover .mkt-pay-card {
+    border-color: var(--mkt-line-strong);
+}
+
+.mkt-pay-option input:checked + .mkt-pay-card {
+    border-color: var(--mkt-primary);
+    background: rgba(139, 92, 246, 0.08);
+}
+
+.mkt-pay-option input:focus-visible + .mkt-pay-card {
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.35);
+}
+
+.mkt-btn-primary {
+    width: 100%;
+    padding: 0.9rem;
+    border-radius: var(--mkt-radius-sm);
+    border: none;
+    background: var(--mkt-primary-strong);
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 10px 24px rgba(139, 92, 246, 0.28);
+    transition: filter 0.18s, transform 0.15s;
+}
+
+.mkt-btn-primary:hover:not(:disabled) {
+    filter: brightness(1.12);
+}
+
+.mkt-btn-primary:active:not(:disabled) {
+    transform: scale(0.985);
+}
+
+.mkt-btn-primary:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.mkt-btn-secondary {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: var(--mkt-radius-sm);
+    cursor: pointer;
+    font-family: inherit;
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--mkt-text);
+    background: var(--mkt-surface-3);
+    border: 1px solid var(--mkt-line);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: border-color 0.18s, color 0.18s;
+}
+
+.mkt-btn-secondary:hover {
+    border-color: var(--mkt-secondary);
+    color: var(--mkt-secondary);
+}
+
+.mkt-checkout-error {
+    color: #f87171;
+    font-size: 0.78rem;
+    min-height: 14px;
+    margin: 0;
+}
+
+/* ── Cek Tagihan (pascabayar) ────────────────────────────────── */
+.mkt-spin {
+    animation: mkt-rotate 1s linear infinite;
+}
+
+@keyframes mkt-rotate {
+    to { transform: rotate(360deg); }
+}
+
+.mkt-inquiry-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.mkt-inquiry-result {
+    margin-top: 0.65rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--mkt-radius-sm);
+    background: var(--mkt-surface-2);
+    border: 1px solid var(--mkt-line);
+    font-size: 0.78rem;
+    color: var(--mkt-text-dim);
+}
+
+.mkt-inquiry-result.is-error {
+    border-color: rgba(248, 113, 113, 0.5);
+    color: #f87171;
+}
+
+.mkt-inquiry-result .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.9rem;
+    padding: 0.2rem 0;
+}
+
+.mkt-inquiry-result .row strong {
+    color: var(--mkt-text);
+    text-align: right;
+}
+
+/* ── Modal pembayaran ────────────────────────────────────────── */
+#mktPaymentTitle {
+    margin: 0 2rem 1.1rem 0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--mkt-text);
+}
+
+.mkt-payment-block {
+    text-align: center;
+    margin-bottom: 1.25rem;
+}
+
+.mkt-payment-hint {
+    font-size: 0.8rem;
+    color: var(--mkt-text-muted);
+    margin: 0 0 0.85rem;
+}
+
+.mkt-payment-qr {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.9rem;
+    background: #fff;
+    border-radius: var(--mkt-radius-sm);
+    margin-bottom: 0.85rem;
+}
+
+.mkt-payment-qr img,
+.mkt-payment-qr canvas {
+    max-width: 100%;
+    height: auto;
+}
+
+.mkt-payment-va-number {
+    font-family: 'Plus Jakarta Sans', monospace;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--mkt-primary);
+    padding: 0.85rem;
+    border-radius: var(--mkt-radius-sm);
+    background: var(--mkt-surface-2);
+    border: 1px dashed var(--mkt-line-strong);
+    margin-bottom: 0.85rem;
+    word-break: break-all;
+}
+
+.mkt-payment-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-radius: var(--mkt-radius-sm);
+    background: var(--mkt-surface-2);
+    border: 1px solid var(--mkt-line);
+    font-size: 0.8rem;
+    color: var(--mkt-text-muted);
+}
+
+.mkt-payment-meta .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.mkt-payment-meta strong {
+    color: var(--mkt-text);
+    text-align: right;
+    word-break: break-all;
+}
+
+.mkt-payment-status .material-symbols-outlined,
+.mkt-btn-secondary .material-symbols-outlined,
+.mkt-btn-primary .material-symbols-outlined,
+.mkt-detail-back .material-symbols-outlined,
+.nx-footer__legal-link .material-symbols-outlined {
+    font-size: 1.1rem;
+    vertical-align: -0.2em;
+}
+
+.mkt-payment-status {
+    margin: 1rem 0 0;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--mkt-text-muted);
+}
+
+.mkt-payment-status.mkt-status-success {
+    color: var(--mkt-secondary);
+}
+
+.mkt-payment-status.mkt-status-failed {
+    color: #f87171;
+}
+
+/* ── Footer ──────────────────────────────────────────────────── */
+.nx-footer--market {
+    position: relative;
+    z-index: 1;
+    background: var(--mkt-bg-deep);
+    border-top: 1px solid var(--mkt-line);
+    padding: 3.5rem clamp(1rem, 4vw, 3rem);
+    margin-top: 2rem;
+}
+
+.nx-footer__container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.nx-footer__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 2rem;
+}
+
+.nx-footer__brand-logo {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--mkt-primary);
+    margin-bottom: 0.75rem;
+}
+
+.nx-footer__brand-desc {
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--mkt-text-muted);
+    margin: 0;
+}
+
+.nx-footer__heading {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--mkt-text-dim);
+    margin: 0 0 0.85rem;
+}
+
+.nx-footer__link-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.nx-footer__link {
+    text-decoration: none;
+    font-size: 0.85rem;
+    color: var(--mkt-text-muted);
+    transition: color 0.18s;
+}
+
+.nx-footer__link:hover {
+    color: var(--mkt-secondary);
+}
+
+.nx-footer__legal {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.nx-footer__legal-name {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--mkt-text);
+}
+
+.nx-footer__legal-ids {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.nx-footer__legal-ids span {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+    border-radius: 999px;
+    background: var(--mkt-surface-3);
+    border: 1px solid var(--mkt-line);
+    color: var(--mkt-text-muted);
+}
+
+.nx-footer__legal-oss {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    color: var(--mkt-text-muted);
+}
+
+.nx-footer__legal-oss img {
+    height: 22px;
+    width: auto;
+}
+
+.nx-footer__legal-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--mkt-primary);
+    text-decoration: none;
+}
+
+.nx-footer__legal-link:hover {
+    text-decoration: underline;
+}
+
+.nx-footer__bottom {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--mkt-line);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.nx-footer__bottom p {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--mkt-text-muted);
+}
+
+.nx-footer__bottom-note {
+    opacity: 0.75;
+}
+
+/* ── Responsif ───────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .mkt-columns {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .mkt-col-rail {
+        position: static;
+    }
+
+    .cat-filter-wrap {
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .mkt-nav {
+        top: 0.6rem;
+        width: calc(100% - 1.2rem);
+        padding: 0.6rem 0.85rem;
+    }
+
+    /* Link nav tetap ada di mobile (jangan disembunyiin -- ini satu-satunya
+       jalan pindah halaman di sini), cuma dijadiin baris yang bisa digeser. */
+    .mkt-nav {
+        flex-wrap: wrap;
+        row-gap: 0.5rem;
+    }
+
+    .mkt-nav-links {
+        order: 3;
+        width: 100%;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 2px;
+    }
+
+    .mkt-nav-links a {
+        white-space: nowrap;
+        padding: 0.4rem 0.65rem;
+        font-size: 0.78rem;
+    }
+
+    .mkt-nav-brand {
+        font-size: 1rem;
+    }
+
+    .mkt-nav-brand .nx-tag {
+        display: none;
+    }
+
+    .mkt-main {
+        padding-top: 8.5rem;
+        gap: 2.5rem;
+    }
+
+    .market-grid {
+        grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    }
+
+    .mkt-pay-options {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .mkt-modal {
+        padding: 1.35rem;
+        max-height: 92vh;
+    }
+
+    .mkt-product-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.7rem;
+    }
+
+    .mkt-product-action {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+    }
+}

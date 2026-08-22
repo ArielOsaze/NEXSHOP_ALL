@@ -131,6 +131,53 @@ async function createTransaction({ refId, kodeProduk, tujuan, serverId }) {
     return data;
 }
 
+// ===========================================================
+// CEK TAGIHAN (INQUIRY) PASCABAYAR
+//
+// TokoVoucher cuma nyediain inquiry buat produk kategori PASCABAYAR
+// (PLN Pascabayar, PDAM, Telkom/IndiHome, BPJS, dst) -- BUKAN buat semua
+// produk. Endpoint & signature-nya juga beda sendiri dari endpoint lain:
+//   POST /v1/pascabayar-inq  (body JSON)
+//   signature = md5(ref_id:member_code:secret)
+// Bandingin sama buildRefSignature() di atas yang urutannya
+// md5(member_code:secret:ref_id) -- jangan ketuker.
+//
+// Host default ngikut dokumentasi resmi (api.tokovoucher.id). Kalau akun
+// TokoVoucher-nya diarahkan ke host lain (mis. base .net yang dipakai
+// endpoint lain di file ini), tinggal set env TOKOVOUCHER_PASCABAYAR_URL
+// tanpa ubah kode.
+// ===========================================================
+const PASCABAYAR_BASE_URL = (process.env.TOKOVOUCHER_PASCABAYAR_URL || "https://api.tokovoucher.id").replace(/\/$/, "");
+
+const pascabayarApi = axios.create({
+    baseURL: PASCABAYAR_BASE_URL,
+    httpsAgent: new https.Agent({ family: 4 }),
+    timeout: 30000
+});
+
+function buildInquirySignature(refId, memberCode, secret) {
+    return md5(`${refId}:${memberCode}:${secret}`);
+}
+
+// PENTING: tiap panggilan inquiry MOTONG SALDO TokoVoucher kita (biaya cek
+// tagihan), jadi endpoint yang manggil fungsi ini wajib di-rate-limit dan
+// gak boleh kebuka buat dipanggil beruntun dari client.
+async function inquiryPascabayar({ refId, kodeProduk, tujuan, serverId }) {
+    const { memberCode, secret } = await getCreds();
+    const payload = {
+        ref_id: refId,
+        produk: kodeProduk,
+        tujuan,
+        server_id: serverId || "",
+        member_code: memberCode,
+        signature: buildInquirySignature(refId, memberCode, secret)
+    };
+    const { data } = await pascabayarApi.post(`/v1/pascabayar-inq`, payload, {
+        headers: { "Content-Type": "application/json" }
+    });
+    return data;
+}
+
 // Cek status transaksi yang sudah pernah dibuat (buat retry/polling manual)
 async function checkStatus(refId) {
     const { memberCode, secret } = await getCreds();
@@ -170,5 +217,6 @@ module.exports = {
     getProdukList,
     createTransaction,
     checkStatus,
+    inquiryPascabayar,
     verifyWebhookSignature
 };

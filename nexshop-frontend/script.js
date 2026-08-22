@@ -2671,10 +2671,30 @@ let twState = {
     promo: null // { code, discount } -- diisi kalau kode promo berhasil diterapkan di step Ringkasan
 };
 
+// ===========================================================
+// HARGA RESELLER DI SISI TOKO
+//
+// Feed produk (/topup/products & /topup/public-catalog) sekarang
+// optional-auth: kalau token user ikut dikirim DAN user itu reseller yang
+// sudah disetujui, server balas harga reseller + `harga_normal` buat
+// dicoret. Diskonnya dihitung di server, jadi frontend cuma nampilin.
+// ===========================================================
+function publicAuthHeaders() {
+    const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) || localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+// Harga coret + label hemat, cuma muncul kalau server nandain produknya
+// kena harga reseller.
+function hargaResellerHtml(p, kelasCoret = "tw-price-normal") {
+    if (!p || !p.harga_reseller || !p.harga_normal || p.harga_normal <= p.harga_jual) return "";
+    return `<span class="${kelasCoret}">${rupiah(p.harga_normal)}</span>`;
+}
+
 async function loadTopupProducts() {
     renderTopupGameSkeleton();
     try {
-        const res = await fetch(`${API_BASE}/topup/products`);
+        const res = await fetch(`${API_BASE}/topup/products`, { headers: publicAuthHeaders() });
         if (!res.ok) { renderTopupGameGrid(); return; }
         TOPUP_PRODUCTS = await res.json();
         buildTopupGames();
@@ -3103,7 +3123,7 @@ function renderTwProductCard(p) {
         <div class="tw-product-card ${twState.product && twState.product.kode_produk === p.kode_produk ? "selected" : ""}" data-kode="${escapeHtml(p.kode_produk)}">
             ${p.item_icon ? `<img class="tw-product-icon" src="${escapeHtml(safeUrl(p.item_icon))}" alt="${escapeHtml(p.nama)}" loading="lazy">` : `<span class="diamond-icon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>`}
             <h5>${escapeHtml(p.nama)}</h5>
-            <div class="tw-product-price">${rupiah(p.harga_jual)}</div>
+            <div class="tw-product-price">${rupiah(p.harga_jual)}${hargaResellerHtml(p)}</div>
             <span class="tw-product-check"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
         </div>
     `;
@@ -3777,255 +3797,12 @@ function initMobileMenu() {
 }
 
 /* ---------- NexBot AI Floating Chatbot ---------- */
-function parseMarkdownToHtml(text) {
-    if (!text) return "";
-    let clean = String(text);
-
-    // Hapus frasa meta AI & Database
-    clean = clean.replace(/Berikut informasi resmi dari Knowledge Base NexShop[^\n]*/gi, "");
-    clean = clean.replace(/Knowledge Base NexShop/gi, "NexShop");
-    clean = clean.replace(/Knowledge Base/gi, "");
-    clean = clean.replace(/Database/gi, "");
-    clean = clean.replace(/AI Reference/gi, "");
-    clean = clean.replace(/FAQ:\s*/gi, "");
-    clean = clean.replace(/📌/g, "");
-
-    const escapeInline = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    // Cuma izinin skema http(s) di link markdown [teks](url) supaya NexBot bisa
-    // kirim link asli yang bisa diklik (mis. link WhatsApp/Instagram CS) tanpa
-    // buka celah XSS lewat skema lain (javascript:, data:, dst).
-    const inlineFormat = (s) => escapeInline(s)
-        .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
-        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-        .replace(/\*(.*?)\*/g, "<em>$1</em>");
-
-    // Pecah jadi blok-blok (paragraf/list/heading) alih-alih cuma ganti \n
-    // jadi <br> mentah -- supaya bullet & list bernomor bener-bener jadi
-    // elemen <ul>/<ol><li> (CSS list spacing di style.css baru kepakai kalau
-    // strukturnya beneran <li>, bukan teks "• ..." biasa).
-    const lines = clean.replace(/\r\n/g, "\n").split("\n");
-    const blocks = [];
-    let forceNewBlock = false;
-    for (const rawLine of lines) {
-        const line = rawLine.trim();
-        if (!line) { forceNewBlock = true; continue; } // baris kosong = paksa mulai blok baru (paragraf/list baru)
-        const headingMatch = line.match(/^#+\s+(.*)/);
-        if (headingMatch) { blocks.push({ type: "heading", text: headingMatch[1] }); forceNewBlock = false; continue; }
-        const bulletMatch = line.match(/^(?:•|-|\*)\s+(.*)/);
-        if (bulletMatch) {
-            const last = blocks[blocks.length - 1];
-            if (!forceNewBlock && last && last.type === "ul") last.items.push(bulletMatch[1]);
-            else blocks.push({ type: "ul", items: [bulletMatch[1]] });
-            forceNewBlock = false;
-            continue;
-        }
-        const numberedMatch = line.match(/^\d+[.)]\s+(.*)/);
-        if (numberedMatch) {
-            const last = blocks[blocks.length - 1];
-            if (!forceNewBlock && last && last.type === "ol") last.items.push(numberedMatch[1]);
-            else blocks.push({ type: "ol", items: [numberedMatch[1]] });
-            forceNewBlock = false;
-            continue;
-        }
-        const last = blocks[blocks.length - 1];
-        if (!forceNewBlock && last && last.type === "p") last.lines.push(line);
-        else blocks.push({ type: "p", lines: [line] });
-        forceNewBlock = false;
-    }
-
-    let html = "";
-    for (const block of blocks) {
-        if (block.type === "heading") html += `<p><strong>${inlineFormat(block.text)}</strong></p>`;
-        else if (block.type === "ul") html += `<ul>${block.items.map((i) => `<li>${inlineFormat(i)}</li>`).join("")}</ul>`;
-        else if (block.type === "ol") html += `<ol>${block.items.map((i) => `<li>${inlineFormat(i)}</li>`).join("")}</ol>`;
-        else if (block.type === "p") html += `<p>${block.lines.map(inlineFormat).join("<br>")}</p>`;
-    }
-
-    return html.trim();
-}
-
-function updateNexBotGreeting() {
-    const welcomeEl = document.getElementById("nexbotWelcomeContent");
-    if (!welcomeEl) return;
-
-    let userName = "";
-    if (typeof currentUser !== "undefined" && currentUser && (currentUser.name || currentUser.fullname)) {
-        userName = currentUser.name || currentUser.fullname;
-    } else {
-        const storedUser = localStorage.getItem("user");
-        if (storedUser) {
-            try {
-                const parsed = JSON.parse(storedUser);
-                userName = parsed.name || parsed.fullname || "";
-            } catch (e) {}
-        }
-    }
-
-    const nameClean = userName.trim().split(" ")[0];
-    const greetingText = nameClean
-        ? `Halo ${escapeHtml(nameClean)} 👋<br>Selamat datang kembali di <strong>NexShop</strong>.<br><br>Saya <strong>NexBot</strong>, asisten virtual Anda. Ada yang bisa saya bantu hari ini?<br><br>🎮 Produk Game<br>💎 Topup Diamond<br>🎁 Voucher &amp; Diskon<br>💳 Pembayaran<br>📦 Status Pesanan<br>❓ FAQ &amp; Bantuan`
-        : `Halo 👋<br>Saya <strong>NexBot</strong>, asisten virtual resmi NexShop.<br><br>Saya dapat membantu Anda mengenai:<br>🎮 Produk Game<br>💎 Topup Diamond<br>🎁 Voucher &amp; Diskon<br>💳 Pembayaran<br>📦 Status Pesanan<br>❓ FAQ &amp; Bantuan`;
-
-    welcomeEl.innerHTML = greetingText;
-}
-
-/* NexBot Local State Management (Isolated from Global App State) */
-const nexbotState = {
-    loading: false,
-    history: []
-};
-
-function initNexBotChat() {
-    const floatBtn = document.getElementById("nexbotFloatBtn");
-    const closeBtn = document.getElementById("nexbotCloseBtn");
-    const windowEl = document.getElementById("nexbotWindow");
-    const form = document.getElementById("nexbotForm");
-    const input = document.getElementById("nexbotInput");
-    const body = document.getElementById("nexbotBody");
-    const sendBtn = document.getElementById("nexbotSendBtn");
-
-    if (!floatBtn || !windowEl || !form) return;
-
-    floatBtn.addEventListener("click", () => {
-        if (windowEl.classList.contains("hidden")) {
-            floatBtn.classList.add("expanding");
-            setTimeout(() => {
-                windowEl.classList.remove("hidden");
-                floatBtn.classList.add("hidden");
-                floatBtn.classList.remove("expanding");
-                updateNexBotGreeting();
-                input.focus();
-            }, 250);
-        }
-    });
-
-    closeBtn.addEventListener("click", () => {
-        windowEl.classList.add("closing");
-        setTimeout(() => {
-            windowEl.classList.add("hidden");
-            windowEl.classList.remove("closing");
-            floatBtn.classList.remove("hidden");
-        }, 200);
-    });
-
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const text = input.value.trim();
-        if (!text || nexbotState.loading) return;
-
-        // Activate isolated chat loading state (DO NOT TRIGGER GLOBAL WEBSITE LOADING)
-        nexbotState.loading = true;
-        if (sendBtn) sendBtn.disabled = true;
-
-        appendNexBotMessage(text, "user");
-        input.value = "";
-
-        // Record user query in conversation memory
-        nexbotState.history.push({ role: "user", text });
-
-        const typingEl = appendNexBotTyping();
-        body.scrollTop = body.scrollHeight;
-
-        try {
-            const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) || localStorage.getItem("token");
-            const headers = { "Content-Type": "application/json" };
-            if (token) headers["Authorization"] = `Bearer ${token}`;
-
-            let sessionId = localStorage.getItem("nexbot_session_id");
-            if (!sessionId) {
-                sessionId = "sess-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
-                localStorage.setItem("nexbot_session_id", sessionId);
-            }
-
-            const res = await nativeFetch(`${API_BASE}/ai/chat`, {
-                method: "POST",
-                headers,
-                body: JSON.stringify({
-                    message: text,
-                    session_id: sessionId,
-                    history: nexbotState.history.slice(-6)
-                })
-            });
-
-            const data = await res.json().catch(() => ({}));
-            typingEl.remove();
-
-            if (!res.ok) {
-                appendNexBotMessage(data.message || "Maaf, terjadi kendala koneksi.", "bot");
-                return;
-            }
-
-            const replyText = data.reply || "Maaf, tidak ada tanggapan.";
-            appendNexBotMessage(replyText, "bot", data.cards, data.handoff);
-
-            // Record bot response in conversation memory
-            nexbotState.history.push({ role: "model", text: replyText });
-
-        } catch (err) {
-            typingEl.remove();
-            appendNexBotMessage("Maaf, terjadi masalah pada jaringan.", "bot");
-        } finally {
-            nexbotState.loading = false;
-            if (sendBtn) sendBtn.disabled = false;
-        }
-    });
-}
-
-function sendNexBotQuick(query) {
-    const input = document.getElementById("nexbotInput");
-    const form = document.getElementById("nexbotForm");
-    if (input && form) {
-        input.value = query;
-        form.dispatchEvent(new Event("submit"));
-    }
-}
-
-function appendNexBotMessage(text, sender, cards = [], handoff = false) {
-    const body = document.getElementById("nexbotBody");
-    if (!body) return;
-
-    const msgDiv = document.createElement("div");
-    msgDiv.className = `nexbot-msg nexbot-msg--${sender}`;
-
-    const formattedContent = sender === "user" ? escapeHtml(text) : parseMarkdownToHtml(text);
-    let html = `<div class="nexbot-msg-content">${formattedContent}</div>`;
-
-    if (cards && cards.length > 0) {
-        cards.forEach(c => {
-            html += `<div class="nexbot-card-suggest">
-                <div><strong>${escapeHtml(c.title || '')}</strong><br><small class="text-muted">${escapeHtml(c.price || c.desc || '')}</small></div>
-                <a href="${c.url || '#'}" class="nexbot-pill" style="margin:0; text-decoration:none;">Lihat</a>
-            </div>`;
-        });
-    }
-
-    if (handoff) {
-        // Ambil nomor WA dari store_settings (sumber yang sama dengan halaman
-        // Kontak), bukan nomor yang di-hardcode -- supaya kalau admin ganti
-        // nomor CS lewat dashboard, tombol ini otomatis ikut ter-update.
-        const waDigits = (cachedStoreSettings?.contact_whatsapp || "6287792634063").replace(/\D/g, "");
-        const waHref = `https://wa.me/${waDigits}?text=${encodeURIComponent("Halo Admin NexShop, saya butuh bantuan")}`;
-        html += `<div style="margin-top:8px;">
-            <a href="${waHref}" target="_blank" class="nexbot-pill" style="display:inline-flex; align-items:center; gap:4px; text-decoration:none; background:#25D366; color:#fff;">
-                <i class="fa-brands fa-whatsapp"></i> Hubungi CS WhatsApp
-            </a>
-        </div>`;
-    }
-
-    msgDiv.innerHTML = html;
-    body.appendChild(msgDiv);
-    body.scrollTop = body.scrollHeight;
-}
-
-function appendNexBotTyping() {
-    const body = document.getElementById("nexbotBody");
-    const div = document.createElement("div");
-    div.className = "nexbot-msg nexbot-msg--bot";
-    div.innerHTML = `<div class="nexbot-msg-content text-muted"><em><i class="fa-solid fa-spinner fa-spin me-1"></i> NexBot sedang mengetik...</em></div>`;
-    body.appendChild(div);
-    return div;
-}
-
+// ===========================================================
+// NexBot dipindah ke /nexbot.js supaya bisa dipakai bareng sama
+// halaman lain (Marketplace), bukan cuma halaman utama. Fungsi
+// initNexBotChat(), updateNexBotGreeting(), dan sendNexBotQuick()
+// tetap tersedia sebagai global dari file itu.
+// ===========================================================
 
 async function loadLeaderboard() {
     try {
@@ -4377,7 +4154,7 @@ async function loadOneStopCatalog() {
     `).join("");
 
     try {
-        const response = await fetch(`${API_BASE}/topup/public-catalog`);
+        const response = await fetch(`${API_BASE}/topup/public-catalog`, { headers: publicAuthHeaders() });
         if (!response.ok) throw new Error("Gagal mengambil katalog.");
         const data = await response.json();
         
@@ -4508,7 +4285,7 @@ function renderOneStopOperators() {
                                     </div>
                                 </div>
                                 <div class="mt-auto w-full pt-3 border-t border-gray-200 dark:border-white/10 flex justify-between items-center relative z-10">
-                                    <div class="font-bold text-gray-900 dark:text-white">${rupiah(p.harga_jual)}</div>
+                                    <div class="font-bold text-gray-900 dark:text-white">${rupiah(p.harga_jual)}${hargaResellerHtml(p, "tw-price-normal")}</div>
                                     <div class="w-6 h-6 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-600 dark:text-gray-300 group-hover:bg-brand-indigo group-hover:text-white transition-colors shrink-0">
                                         <span class="material-symbols-outlined text-sm">arrow_forward</span>
                                     </div>
@@ -4604,7 +4381,7 @@ async function openMarketplaceCheckoutFromQuery() {
 
     try {
         if (!oneStopCatalog.length) {
-            const response = await fetch(`${API_BASE}/topup/public-catalog`);
+            const response = await fetch(`${API_BASE}/topup/public-catalog`, { headers: publicAuthHeaders() });
             if (!response.ok) throw new Error("Gagal mengambil katalog.");
             const data = await response.json();
             oneStopCatalog = Array.isArray(data) ? data : [];

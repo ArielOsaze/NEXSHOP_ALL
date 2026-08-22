@@ -698,3 +698,58 @@ main{
     .setup-step .card-body{ padding:1rem; }
     .bulk-filter-actions .btn{ flex:1 1 100%; }
 }
+
+/* ===================================================================
+   GERBANG AKSES ADMIN + PERINGATAN SESI IDLE
+   Overlay-nya sengaja "menutup penuh" dan cuma dibuka lewat JS setelah
+   role + Security PIN terverifikasi ke server. z-index-nya di bawah modal
+   Bootstrap (1055) supaya modal PIN tetap bisa muncul di atasnya.
+   =================================================================== */
+.admin-gate{
+    position:fixed; inset:0; z-index:1040;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+    background:rgba(3,7,18,0.92);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+}
+.admin-gate.is-open{ display:none; }
+.admin-gate-card{
+    width:100%; max-width:360px;
+    text-align:center;
+    padding:32px 26px;
+    border-radius:18px;
+    background:var(--bg-panel, #0f172a);
+    border:1px solid var(--line, rgba(255,255,255,.12));
+    box-shadow:0 24px 60px rgba(0,0,0,.55);
+}
+.admin-gate-logo{
+    width:56px; height:56px; margin:0 auto 16px;
+    display:flex; align-items:center; justify-content:center;
+    border-radius:16px; font-size:24px; color:#fff;
+    background:linear-gradient(135deg,#8b5cf6,#22d3ee);
+}
+.admin-gate-title{ font-weight:700; margin-bottom:6px; }
+.admin-gate-status{
+    font-size:.875rem; margin:0;
+    color:var(--text-muted, #94a3b8);
+    display:flex; align-items:center; justify-content:center; gap:2px;
+    min-height:24px;
+}
+.admin-gate-status.is-error{ color:#f87171; }
+.admin-gate-actions{ display:flex; gap:8px; justify-content:center; margin-top:18px; }
+.admin-gate-note{
+    margin:18px 0 0; font-size:.75rem;
+    color:var(--text-muted, #94a3b8); opacity:.8;
+}
+
+.admin-idle-warning{
+    position:fixed; left:50%; bottom:24px; transform:translateX(-50%);
+    z-index:1035;
+    display:flex; align-items:center; gap:12px;
+    padding:10px 16px; border-radius:14px;
+    background:#b45309; color:#fff;
+    font-size:.85rem; font-weight:600;
+    box-shadow:0 12px 30px rgba(0,0,0,.4);
+}
+.admin-idle-warning .btn{ font-weight:700; }

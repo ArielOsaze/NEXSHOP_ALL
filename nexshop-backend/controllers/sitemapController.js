@@ -49,6 +49,10 @@ exports.generateSitemap = async (req, res) => {
         // News Index
         xml += `  <url>\n    <loc>${escapeXml(baseUrl)}/berita</loc>\n    <lastmod>${today}</lastmod>\n  </url>\n`;
 
+        // Marketplace & program reseller — halaman statis yang layak diindeks
+        xml += `  <url>\n    <loc>${escapeXml(baseUrl)}/marketplace</loc>\n    <lastmod>${today}</lastmod>\n  </url>\n`;
+        xml += `  <url>\n    <loc>${escapeXml(baseUrl)}/reseller</loc>\n    <lastmod>${today}</lastmod>\n  </url>\n`;
+
         // Articles
         if (articles && articles.length > 0) {
             const seenSlugs = new Set();

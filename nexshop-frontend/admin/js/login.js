@@ -8,11 +8,19 @@ if (localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)) {
     window.location.href = "dashboard.html";
 }
 
-if (localStorage.getItem("nexshop_admin_logout_reason") === "idle") {
+// Pesan kenapa sesi sebelumnya berakhir — disimpen dashboard sebelum
+// redirect ke sini, biar admin gak bingung kenapa tiba-tiba ke-logout.
+const ADMIN_LOGOUT_REASONS = {
+    idle: "Kamu otomatis di-logout karena tidak ada aktivitas selama 5 menit. Silakan login kembali.",
+    forbidden: "Akun ini tidak (lagi) punya akses admin/staff. Hubungi Super Admin kalau ini keliru.",
+    expired: "Sesi kamu sudah berakhir. Silakan login kembali."
+};
+
+const lastLogoutReason = localStorage.getItem("nexshop_admin_logout_reason");
+if (lastLogoutReason && ADMIN_LOGOUT_REASONS[lastLogoutReason]) {
     localStorage.removeItem("nexshop_admin_logout_reason");
     window.addEventListener("DOMContentLoaded", () => {
-        document.getElementById("loginError").textContent =
-            "Kamu otomatis di-logout karena tidak ada aktivitas selama 15 menit. Silakan login kembali.";
+        document.getElementById("loginError").textContent = ADMIN_LOGOUT_REASONS[lastLogoutReason];
     });
 }
 

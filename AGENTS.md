@@ -26,6 +26,15 @@ This repository is a small fullstack project with:
   endpoints (`/api/ratings/topup/*`) will work; until then they fail with a
   friendly "belum di-setup" message rather than a raw 500, but they don't
   work.
+- `008_create_reseller.sql` must be run before the reseller program
+  (`/api/reseller/*`, the `/reseller` page, and the Reseller panel in the
+  admin dashboard) will work. Same pattern as the ratings migration: until
+  it is applied, those endpoints answer 503 with
+  `code: "RESELLER_NOT_SETUP"` and the UI shows a setup notice instead of
+  crashing. Reseller pricing is derived at request time from
+  `reseller_tiers.discount_percent` (see `utils/resellerPricing.js`); it is
+  never stored per product, and it is floored so a reseller price can never
+  drop below cost + 1% margin.
 
 
 ## Important conventions

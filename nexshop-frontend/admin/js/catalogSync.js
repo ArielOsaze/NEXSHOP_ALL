@@ -83,7 +83,8 @@ function setSyncChip(variant, html) {
 
 async function checkSyncStatus() {
     try {
-        const res = await apiFetch("/topup/admin/sync-status");
+        // polling tiap 3 detik selama sync -> latar, bukan aktivitas admin
+        const res = await apiFetch("/topup/admin/sync-status", { background: true });
         if (!res.ok) return;
         const data = await res.json();
 
@@ -388,7 +389,7 @@ function updateTopupSelectedCount() {
 }
 
 // ===========================================================
-// Panel aksi massal berbasis filter (langkah 3)
+// Panel aksi massal berbasis filter (langkah 4)
 // ===========================================================
 function renderBulkFilterPanel() {
     const summary = el("bulkFilterSummary");
@@ -403,7 +404,7 @@ function renderBulkFilterPanel() {
     if (!summary) return;
 
     if (!hasFilter) {
-        summary.textContent = "Pilih kategori dulu di langkah 2 — aksi massal sengaja dikunci supaya gak kena ke seluruh katalog.";
+        summary.textContent = "Pilih kategori dulu di langkah 3 — aksi massal sengaja dikunci supaya gak kena ke seluruh katalog.";
         return;
     }
 

@@ -14,6 +14,42 @@
 </head>
 <body>
 
+<!-- ===================================================================
+     GERBANG AKSES DASHBOARD
+     Overlay ini tampil DULUAN (sebelum JS jalan) dan baru dibuka setelah
+     server mengonfirmasi role admin/staff DAN Security PIN diverifikasi.
+     Semua pemanggilan data di dashboard.js nunggu gerbang ini kebuka,
+     jadi isi dashboard gak pernah ke-load sebelum identitasnya kebukti.
+     =================================================================== -->
+<div id="adminGateOverlay" class="admin-gate">
+    <div class="admin-gate-card">
+        <div class="admin-gate-logo"><i class="bi bi-shield-lock-fill"></i></div>
+        <h5 class="admin-gate-title">Area Admin NexShop</h5>
+        <p class="admin-gate-status" id="adminGateStatus">
+            <span class="spinner-border spinner-border-sm me-2"></span>Memverifikasi akses…
+        </p>
+        <div class="admin-gate-actions d-none" id="adminGateActions">
+            <button type="button" class="btn btn-primary btn-sm" onclick="retryAdminGate()">
+                <i class="bi bi-arrow-clockwise me-1"></i> Coba lagi
+            </button>
+            <button type="button" class="btn btn-outline-warning btn-sm d-none" id="adminGateSkip" onclick="lewatiGerbangPin()">
+                Masuk tanpa PIN
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="logoutAdminNow()">
+                Keluar
+            </button>
+        </div>
+        <p class="admin-gate-note">Sesi otomatis berakhir setelah 5 menit tanpa aktivitas.</p>
+    </div>
+</div>
+
+<!-- Peringatan sebelum sesi idle berakhir -->
+<div id="adminIdleWarning" class="admin-idle-warning d-none" role="alert">
+    <i class="bi bi-clock-history"></i>
+    <span>Sesi berakhir dalam <strong id="adminIdleCountdown">60</strong> detik karena tidak ada aktivitas.</span>
+    <button type="button" class="btn btn-sm btn-light" onclick="keepAdminSessionAlive()">Tetap masuk</button>
+</div>
+
 <div class="d-flex app-shell">
 
 <div class="mobile-backdrop" id="mobileBackdrop"></div>
@@ -32,6 +68,7 @@
         <li class="nav-item"><a class="nav-link" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Topup TokoVoucher</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="topSpenders"><i class="bi bi-trophy me-2"></i>Top Spenders (HoF)</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="users"><i class="bi bi-people me-2"></i>Users</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="reseller"><i class="bi bi-people-fill me-2"></i>Reseller</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="promo"><i class="bi bi-megaphone me-2"></i>Promo</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="news"><i class="bi bi-newspaper me-2"></i>Gaming News</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="editorial"><i class="bi bi-pen-fill me-2"></i>NexShop News</a></li>
@@ -422,6 +459,28 @@
 
         <div id="catalogManagerArea">
 
+            <!-- LANGKAH 2 — Aktivasi cerdas ke seluruh katalog -->
+            <div class="card shadow-sm mb-3 setup-step">
+                <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="step-badge">2</span>
+                        <div>
+                            <h6 class="mb-1 fw-bold">Aktivasi Cerdas Semua Produk</h6>
+                            <p class="text-muted small mb-0">
+                                Sekali klik buat seluruh katalog: produk game dipilih per nominal (varian termurah menang),
+                                produk non-game (Pulsa/PLN/E-Wallet/Tagihan) dibersihin dari duplikat lalu diaktifkan.
+                                Produk yang statusnya udah kamu atur manual tetap dilindungi, dan aksinya bisa di-undo.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <button class="btn btn-primary" onclick="smartActivateAllTopup()" id="btnSmartActivateAll">
+                            <i class="bi bi-magic me-1"></i> Aktivasi Cerdas Semua
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- Ringkasan katalog -->
             <div class="row g-3 mb-3">
                 <div class="col-12 col-xl-6">
@@ -479,14 +538,14 @@
                 </div>
             </div>
 
-            <!-- LANGKAH 2 — Pilih produk yang mau di-setup -->
+            <!-- LANGKAH 3 — Pilih produk yang mau di-setup -->
             <div class="card shadow-sm mb-3 setup-step">
                 <div class="card-body">
                     <div class="d-flex align-items-center gap-3 mb-3">
-                        <span class="step-badge">2</span>
+                        <span class="step-badge">3</span>
                         <div>
                             <h6 class="mb-1 fw-bold">Pilih Produk yang Mau Diatur</h6>
-                            <p class="text-muted small mb-0">Persempit dulu pakai kategori dan game/operator, baru atur massal di langkah 3.</p>
+                            <p class="text-muted small mb-0">Persempit dulu pakai kategori dan game/operator, baru atur massal di langkah 4.</p>
                         </div>
                     </div>
 
@@ -524,14 +583,14 @@
                 </div>
             </div>
 
-            <!-- LANGKAH 3 — Terapkan ke semua hasil filter -->
+            <!-- LANGKAH 4 — Terapkan ke semua hasil filter -->
             <div class="card shadow-sm mb-3 setup-step" id="bulkFilterCard">
                 <div class="card-body">
                     <div class="d-flex align-items-start gap-3 mb-3 flex-wrap">
-                        <span class="step-badge">3</span>
+                        <span class="step-badge">4</span>
                         <div class="flex-grow-1">
                             <h6 class="mb-1 fw-bold">Terapkan ke Semua Hasil Filter</h6>
-                            <p class="text-muted small mb-0" id="bulkFilterSummary">Pilih kategori dulu di langkah 2.</p>
+                            <p class="text-muted small mb-0" id="bulkFilterSummary">Pilih kategori dulu di langkah 3.</p>
                         </div>
                         <div class="d-flex gap-1">
                             <button class="btn btn-outline-secondary btn-sm" id="topupUndoBtn" onclick="undoTopupAction()" disabled title="Undo">
@@ -753,6 +812,145 @@
 </section>
 
 <!-- ===== Promo view ===== -->
+<!-- ===================== RESELLER ===================== -->
+<section id="view-reseller" class="view-section d-none">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <div>
+            <h4 class="mb-1 fw-bold"><i class="bi bi-people-fill me-2"></i>Program Reseller</h4>
+            <p class="text-muted small mb-0">Tinjau pengajuan, atur tingkatan, dan kelola reseller aktif.</p>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" onclick="loadResellerAll()">
+            <i class="bi bi-arrow-clockwise me-1"></i> Muat ulang
+        </button>
+    </div>
+
+    <div id="resellerSetupWarning" class="alert alert-warning d-none">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <span id="resellerSetupWarningText"></span>
+    </div>
+
+    <!-- Ringkasan -->
+    <div class="row g-3 mb-3">
+        <div class="col-6 col-lg-3">
+            <div class="card shadow-sm h-100 stat-card">
+                <div class="card-body">
+                    <h6 class="stat-card-title">MENUNGGU TINJAUAN</h6>
+                    <div class="stat-card-value" id="rsStatPending">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card shadow-sm h-100 stat-card">
+                <div class="card-body">
+                    <h6 class="stat-card-title">RESELLER AKTIF</h6>
+                    <div class="stat-card-value" id="rsStatAktif">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card shadow-sm h-100 stat-card">
+                <div class="card-body">
+                    <h6 class="stat-card-title">DIBEKUKAN</h6>
+                    <div class="stat-card-value" id="rsStatBeku">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card shadow-sm h-100 stat-card">
+                <div class="card-body">
+                    <h6 class="stat-card-title">DISKON TERTINGGI</h6>
+                    <div class="stat-card-value" id="rsStatDiskon">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pengaturan tingkatan -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <h6 class="fw-bold mb-1">Tingkatan &amp; Potongan Harga</h6>
+            <p class="text-muted small mb-3">
+                Persen ini dipakai server buat menghitung harga reseller dari harga jual normal tiap produk.
+                Harga reseller otomatis dijaga supaya tetap di atas harga modal, jadi produk bermargin tipis
+                gak akan kejual rugi walau persennya dinaikkan.
+            </p>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Tingkatan</th>
+                            <th style="width:140px;">Diskon (%)</th>
+                            <th>Keterangan</th>
+                            <th style="width:110px;">Reseller</th>
+                            <th style="width:120px;">Status</th>
+                            <th style="width:110px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="resellerTiersBody">
+                        <tr><td colspan="6" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pengajuan -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <h6 class="fw-bold mb-0">Pengajuan Reseller</h6>
+                <select class="form-select form-select-sm w-auto" id="resellerAppFilter" onchange="loadResellerApplications()">
+                    <option value="pending">Menunggu tinjauan</option>
+                    <option value="approved">Disetujui</option>
+                    <option value="rejected">Ditolak</option>
+                    <option value="">Semua</option>
+                </select>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Pemohon</th>
+                            <th>Kontak</th>
+                            <th>Jualan</th>
+                            <th>Catatan</th>
+                            <th>Tanggal</th>
+                            <th style="width:240px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resellerAppBody">
+                        <tr><td colspan="6" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reseller aktif -->
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h6 class="fw-bold mb-3">Reseller Terdaftar</h6>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Nama</th>
+                            <th>Email</th>
+                            <th style="width:170px;">Tingkatan</th>
+                            <th>Sejak</th>
+                            <th style="width:120px;">Status</th>
+                            <th style="width:210px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resellerListBody">
+                        <tr><td colspan="6" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section id="view-promo" class="view-section d-none">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
@@ -2882,6 +3080,7 @@
 <script src="js/dashboard.js?v=20260822-catalog"></script>
 <script src="js/editorial.js?v=20260822-catalog"></script>
 <script src="js/catalogSync.js?v=20260822-catalog"></script>
+<script src="js/reseller.js?v=20260823-reseller"></script>
 
 </body>
 </html>

@@ -125,6 +125,35 @@ function isTopupGameCategory(nexshopCategoryName) {
     return TOPUP_GAME_CATEGORIES.has(String(nexshopCategoryName || "").trim().toLowerCase());
 }
 
+// Pengenalan produk game yang LEBIH LUAS dari isTopupGameCategory.
+//
+// Kenapa perlu: TOPUP_GAME_CATEGORIES cuma tahu satu nama ("gaming"),
+// padahal nama kategori yang beneran nyampe ke produk beda-beda tergantung
+// mapping admin dan fallback DEFAULT_CATEGORY_MAP di catalogService
+// ("Topup Game", "Games", "Voucher Game"). Akibatnya produk game yang
+// kategorinya kebaca sebagai "Topup Game"/"Voucher Game" LOLOS dari filter
+// dan nyasar ke etalase Marketplace, padahal Marketplace khusus produk
+// non-game (PPOB: pulsa, data, e-wallet, PLN, tagihan).
+const POLA_KATEGORI_GAME = /topup\s*game|^gaming$|^games?$|voucher\s*game|game\s*voucher/i;
+
+function isGameCategoryName(nama) {
+    const n = String(nama || "").trim().toLowerCase();
+    if (!n) return false;
+    return isTopupGameCategory(n) || POLA_KATEGORI_GAME.test(n);
+}
+
+// Dicek dari kategori tampilan (hasil mapping), kategori tersimpan, DAN
+// nama kategori asli TokoVoucher -- cukup satu yang kebaca game, produknya
+// dianggap game.
+function isGameProduct(product, displayCategory) {
+    if (!product) return isGameCategoryName(displayCategory);
+    return (
+        isGameCategoryName(displayCategory) ||
+        isGameCategoryName(product.kategori) ||
+        isGameCategoryName(product.source_category_name)
+    );
+}
+
 // ===========================================================
 // RESOLUSI KATEGORI — SATU sumber kebenaran buat "produk ini masuk
 // kategori NexShop yang mana". Sebelumnya logika ini di-copy-paste di 3
@@ -146,6 +175,23 @@ function resolveNexshopCategory(product, categoryMap) {
 
     if (product.manual_category_override) return product.kategori || "Lainnya";
     return lookup(product.source_category_name) || lookup(product.kategori) || "Lainnya";
+}
+
+// ===========================================================
+// PRODUK PASCABAYAR — satu-satunya kategori TokoVoucher yang punya endpoint
+// "cek tagihan" (inquiry). Kategori Pascabayar di TokoVoucher id-nya 13,
+// tapi id itu bisa aja berubah/beda per akun, makanya nama kategori asli
+// ikut dicek sebagai cadangan. SENGAJA gak ngecek kategori NexShop
+// ("Tagihan"), karena kategori itu juga nampung produk TV prabayar yang
+// GAK bisa di-inquiry.
+// ===========================================================
+const PASCABAYAR_CATEGORY_ID = "13";
+
+function isPascabayarProduct(product) {
+    if (!product) return false;
+    const categoryId = product.source_category_id;
+    if (categoryId !== null && categoryId !== undefined && String(categoryId).trim() === PASCABAYAR_CATEGORY_ID) return true;
+    return /pascabayar/i.test(String(product.source_category_name || ""));
 }
 
 // Identitas operator/game yang STABIL. Produk lama hasil sync jadul gak
@@ -170,6 +216,11 @@ module.exports = {
     hitungMarkupWajar,
     TOPUP_GAME_CATEGORIES,
     isTopupGameCategory,
+    POLA_KATEGORI_GAME,
+    isGameCategoryName,
+    isGameProduct,
+    PASCABAYAR_CATEGORY_ID,
+    isPascabayarProduct,
     resolveNexshopCategory,
     resolveOperator
 };

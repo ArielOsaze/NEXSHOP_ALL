@@ -107,19 +107,34 @@ function showToast(message, isError = false) {
 // Central fetch wrapper: always attaches the token and handles expired sessions
 // in one place, instead of every function repeating Authorization headers.
 async function apiFetch(path, options = {}) {
-    const res = await fetch(`${API_BASE}${path}`, {
-        ...options,
-        headers: {
-            ...(options.headers || {}),
-            Authorization: "Bearer " + token
-        }
-    });
+    // background: true -> request polling latar (notifikasi, status sync).
+    //   Ditandai ke server lewat header supaya TIDAK dihitung sebagai
+    //   aktivitas admin -- kalau dihitung, sesi idle gak akan pernah habis.
+    // bypassGate: true -> khusus permintaan milik gerbang akses itu sendiri
+    //   (verifikasi role & Security PIN), biar gak nunggu dirinya sendiri.
+    const { background = false, bypassGate = false, ...fetchOptions } = options;
 
-    if (res.status === 401 && res.headers.get("X-Admin-Pin-Error") !== "1") {
-        localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
-        showToast("Sesi kamu berakhir, silakan login kembali.", true);
-        setTimeout(() => window.location.href = "login.html", 1200);
-        throw new Error("unauthorized");
+    if (!adminGateOpen && !bypassGate) await adminGateReady;
+
+    const headers = {
+        ...(fetchOptions.headers || {}),
+        Authorization: "Bearer " + token
+    };
+    if (background) headers["X-Admin-Background"] = "1";
+
+    const res = await fetch(`${API_BASE}${path}`, { ...fetchOptions, headers });
+
+    if ((res.status === 401 || res.status === 403) && res.headers.get("X-Admin-Pin-Error") !== "1") {
+        const info = await res.clone().json().catch(() => ({}));
+        if (info.code === "ADMIN_IDLE_TIMEOUT") return forceAdminLogout("idle");
+        if (info.code === "ADMIN_ACCESS_REVOKED") return forceAdminLogout("forbidden");
+
+        if (res.status === 401) {
+            localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+            showToast("Sesi kamu berakhir, silakan login kembali.", true);
+            setTimeout(() => window.location.href = "login.html", 1200);
+            throw new Error("unauthorized");
+        }
     }
 
     return res;
@@ -130,7 +145,7 @@ function adminPinModalInstance() {
 }
 
 async function getAdminPinStatus() {
-    const res = await apiFetch("/settings/security-pin");
+    const res = await apiFetch("/settings/security-pin", { bypassGate: true });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.message || "Gagal memeriksa Security PIN Admin");
     return data;
@@ -140,16 +155,36 @@ function requestAdminPin(setup, purpose = "melanjutkan tindakan sensitif ini") {
     document.getElementById("adminPinModalTitle").textContent = setup ? "Buat Security PIN Admin" : "Security PIN Admin";
     document.getElementById("adminPinHelp").textContent = setup
         ? "Buat PIN 6 digit terpisah dari password login. PIN ini wajib untuk membuka atau mengubah konfigurasi sensitif."
-        : `Masukkan Security PIN 6 digit untuk ${purpose}. PIN hanya berlaku untuk tindakan ini.`;
+        : `Masukkan Security PIN 6 digit untuk ${purpose}.${
+              purpose && purpose.includes("dashboard") ? "" : " PIN hanya berlaku untuk tindakan ini."
+          }`;
     document.getElementById("adminPinConfirmation").classList.toggle("d-none", !setup);
     document.getElementById("adminPinSubmit").textContent = setup ? "Simpan Security PIN" : "Verifikasi PIN";
     document.getElementById("adminPinInput").value = "";
     document.getElementById("adminPinConfirmation").value = "";
     document.getElementById("adminPinError").textContent = "";
     document.getElementById("adminPinModal").dataset.mode = setup ? "setup" : "verify";
-    adminPinModalInstance().show();
-    setTimeout(() => document.getElementById("adminPinInput").focus(), 150);
-    return new Promise((resolve, reject) => { adminPinResolver = { resolve, reject }; });
+    // BUG FIX: dulu show() dipanggil langsung. Kalau modal yang sebelumnya
+    // BARU SAJA di-hide (mis. alur "buat PIN" lalu langsung "verifikasi
+    // PIN"), event hidden.bs.modal dari modal lama baru sampai SETELAH
+    // resolver baru dipasang -- handler-nya lalu me-REJECT permintaan yang
+    // baru, jadi gerbang dashboard nyangkut di "verifikasi dibatalkan"
+    // padahal user gak membatalkan apa pun. Sekarang tunggu sampai modal
+    // benar-benar tertutup dulu, baru dibuka lagi.
+    const modalEl = document.getElementById("adminPinModal");
+    const promise = new Promise((resolve, reject) => { adminPinResolver = { resolve, reject }; });
+
+    if (modalEl.classList.contains("show")) {
+        modalEl.addEventListener("hidden.bs.modal", () => {
+            adminPinModalInstance().show();
+            setTimeout(() => document.getElementById("adminPinInput").focus(), 150);
+        }, { once: true });
+    } else {
+        adminPinModalInstance().show();
+        setTimeout(() => document.getElementById("adminPinInput").focus(), 150);
+    }
+
+    return promise;
 }
 
 async function withAdminPin(action, purpose) {
@@ -176,7 +211,7 @@ async function submitAdminPin() {
     button.disabled = true;
     try {
         const res = await apiFetch(`/settings/security-pin/${setup ? "setup" : "verify"}`, {
-            method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(setup ? { pin, confirmation } : { pin })
+            method: "POST", bypassGate: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify(setup ? { pin, confirmation } : { pin })
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Security PIN tidak dapat diverifikasi");
@@ -192,12 +227,220 @@ async function submitAdminPin() {
     }
 }
 
+// ===========================================================
+// GERBANG AKSES + SESI IDLE DASHBOARD ADMIN
+//
+// Punya token di localStorage TIDAK otomatis berarti boleh masuk. Sebelum
+// gerbang ini kebuka:
+//   1. role user diambil ULANG dari server (/settings/me) dan harus
+//      admin/staff -- bukan cuma ngandelin isi token;
+//   2. Security PIN 6 digit wajib diverifikasi ke server (kalau belum
+//      pernah dibuat, admin dipaksa bikin dulu).
+//
+// Selama gerbang belum kebuka, apiFetch() nahan SEMUA permintaan data, jadi
+// isi dashboard gak pernah ke-load apalagi kelihatan di layar.
+//
+// Sesi juga berakhir otomatis setelah 5 menit tanpa aktivitas. Timer di sini
+// cuma sisi tampilan; batas yang sebenarnya ditegakkan server (lihat
+// middleware/adminSession.js), jadi gak bisa dilewatin dengan mematikan JS.
+// ===========================================================
+const ADMIN_IDLE_LIMIT_MS = 5 * 60 * 1000;
+const ADMIN_IDLE_WARNING_MS = 60 * 1000; // peringatan 1 menit sebelum habis
+const ADMIN_LAST_ACTIVITY_KEY = "nexshop_admin_last_activity";
+
+let adminGateOpen = false;
+let openAdminGate;
+const adminGateReady = new Promise((resolve) => {
+    openAdminGate = resolve;
+});
+
+function setAdminGateStatus(html, isError = false) {
+    const el = document.getElementById("adminGateStatus");
+    if (!el) return;
+    el.innerHTML = html;
+    el.classList.toggle("is-error", isError);
+    const actions = document.getElementById("adminGateActions");
+    if (actions) actions.classList.toggle("d-none", !isError);
+}
+
+function forceAdminLogout(reason = "expired") {
+    localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+    localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY);
+    if (reason !== "manual") localStorage.setItem("nexshop_admin_logout_reason", reason);
+    window.location.replace("login.html");
+    // Dilempar biar pemanggilnya berhenti; semua caller udah nge-handle
+    // pesan "unauthorized" sebagai kondisi diam (gak nampilin toast error).
+    throw new Error("unauthorized");
+}
+
+async function bootAdminGate() {
+    setAdminGateStatus(`<span class="spinner-border spinner-border-sm me-2"></span>Memverifikasi akses…`);
+
+    let me = null;
+    try {
+        const res = await apiFetch("/settings/me", { bypassGate: true });
+        if (res.status === 401 || res.status === 403) return forceAdminLogout("expired");
+        if (!res.ok) throw new Error("Gagal memverifikasi akun");
+        me = await res.json();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        setAdminGateStatus("Gagal menghubungi server. Periksa koneksi lalu coba lagi.", true);
+        return;
+    }
+
+    if (!me || !["admin", "staff"].includes(me.role)) {
+        return forceAdminLogout("forbidden");
+    }
+    currentUser = me;
+
+    // ── Security PIN ────────────────────────────────────────────────────
+    // Gerbang PIN JANGAN sampai bikin admin ke-lock permanen. Kalau
+    // subsistem PIN-nya sendiri lagi bermasalah (mis. kolom
+    // security_pin_hash belum ada karena migration Security PIN belum
+    // dijalankan), dashboard tetap boleh dibuka setelah role terverifikasi
+    // -- endpoint sensitif TETAP minta PIN satu per satu di server, jadi
+    // gak ada penurunan keamanan yang berarti.
+    let statusPin = null;
+    try {
+        statusPin = await getAdminPinStatus();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        tampilkanLewatiPin(`Security PIN tidak bisa diperiksa: ${err.message}`);
+        return;
+    }
+
+    try {
+        if (!statusPin.configured) {
+            setAdminGateStatus("Security PIN belum dibuat. Buat PIN 6 digit dulu untuk membuka dashboard.");
+            // Berhasil membuat PIN = identitas sudah terbukti di sesi ini,
+            // jadi gak perlu langsung disuruh mengetik PIN yang sama lagi.
+            await requestAdminPin(true, "mengaktifkan Security PIN dashboard");
+        } else {
+            setAdminGateStatus("Masukkan Security PIN untuk membuka dashboard.");
+            await requestAdminPin(false, "membuka dashboard admin");
+        }
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        setAdminGateStatus(`${escapeHtml(err.message || "Verifikasi Security PIN dibatalkan")}. Dashboard tetap terkunci.`, true);
+        return;
+    }
+
+    unlockAdminDashboard();
+}
+
+function retryAdminGate() {
+    document.getElementById("adminGateSkip")?.classList.add("d-none");
+    bootAdminGate();
+}
+
+// Ditampilkan HANYA kalau pemeriksaan Security PIN sendiri gagal (bukan
+// karena PIN salah). Role admin/staff-nya sudah terverifikasi ke server
+// sebelum tombol ini muncul, dan semua endpoint sensitif tetap minta PIN
+// per aksi -- jadi ini pintu darurat, bukan bypass keamanan.
+function tampilkanLewatiPin(pesan) {
+    setAdminGateStatus(escapeHtml(pesan), true);
+    const skip = document.getElementById("adminGateSkip");
+    if (skip) skip.classList.remove("d-none");
+}
+
+function lewatiGerbangPin() {
+    showToast("Masuk tanpa Security PIN. Aksi sensitif tetap minta PIN.", true);
+    unlockAdminDashboard();
+}
+
+function unlockAdminDashboard() {
+    adminGateOpen = true;
+    const overlay = document.getElementById("adminGateOverlay");
+    if (overlay) overlay.classList.add("is-open");
+    markAdminActivity();
+    openAdminGate();
+}
+
+// ── Sesi idle ────────────────────────────────────────────────────────────
+let adminIdleTimer = null;
+let adminIdleWarnTimer = null;
+let adminIdleCountdownTimer = null;
+
+function hideAdminIdleWarning() {
+    const el = document.getElementById("adminIdleWarning");
+    if (el) el.classList.add("d-none");
+    if (adminIdleCountdownTimer) {
+        clearInterval(adminIdleCountdownTimer);
+        adminIdleCountdownTimer = null;
+    }
+}
+
+function showAdminIdleWarning() {
+    const el = document.getElementById("adminIdleWarning");
+    if (!el) return;
+    el.classList.remove("d-none");
+
+    let sisa = Math.round(ADMIN_IDLE_WARNING_MS / 1000);
+    const label = document.getElementById("adminIdleCountdown");
+    if (label) label.textContent = String(sisa);
+    if (adminIdleCountdownTimer) clearInterval(adminIdleCountdownTimer);
+    adminIdleCountdownTimer = setInterval(() => {
+        sisa -= 1;
+        if (label) label.textContent = String(Math.max(sisa, 0));
+        if (sisa <= 0) clearInterval(adminIdleCountdownTimer);
+    }, 1000);
+}
+
+function markAdminActivity() {
+    if (!adminGateOpen) return;
+    try {
+        localStorage.setItem(ADMIN_LAST_ACTIVITY_KEY, String(Date.now()));
+    } catch (e) { /* localStorage penuh/diblokir — timer tetap jalan */ }
+
+    hideAdminIdleWarning();
+    if (adminIdleTimer) clearTimeout(adminIdleTimer);
+    if (adminIdleWarnTimer) clearTimeout(adminIdleWarnTimer);
+
+    adminIdleWarnTimer = setTimeout(showAdminIdleWarning, ADMIN_IDLE_LIMIT_MS - ADMIN_IDLE_WARNING_MS);
+    adminIdleTimer = setTimeout(() => forceAdminLogout("idle"), ADMIN_IDLE_LIMIT_MS);
+}
+
+function keepAdminSessionAlive() {
+    markAdminActivity();
+    // Sekalian "sentuh" server biar hitungan idle di sana ikut ke-reset.
+    apiFetch("/settings/me").catch(() => {});
+}
+
+// Tab yang disembunyiin bikin setTimeout diperlambat browser, jadi pas tab
+// balik aktif kita cek ulang pakai timestamp — bukan cuma ngandelin timer.
+function checkAdminIdleOnFocus() {
+    if (!adminGateOpen) return;
+    const last = Number(localStorage.getItem(ADMIN_LAST_ACTIVITY_KEY) || 0);
+    if (last && Date.now() - last > ADMIN_IDLE_LIMIT_MS) forceAdminLogout("idle");
+    else markAdminActivity();
+}
+
+["mousedown", "keydown", "scroll", "touchstart", "click"].forEach((evt) => {
+    document.addEventListener(evt, markAdminActivity, { passive: true });
+});
+document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) checkAdminIdleOnFocus();
+});
+window.addEventListener("focus", checkAdminIdleOnFocus);
+
+bootAdminGate();
+
 document.getElementById("adminPinModal").addEventListener("hidden.bs.modal", () => {
     document.getElementById("adminPinInput").value = "";
     document.getElementById("adminPinConfirmation").value = "";
-    if (adminPinResolver) {
-        adminPinResolver.reject(new Error("Verifikasi Security PIN dibatalkan"));
-        adminPinResolver = null;
+    // Modal ditutup TANPA submit = user membatalkan. Kalau penutupan ini
+    // justru bagian dari alur "buka lagi" (lihat requestAdminPin), modal
+    // bakal langsung tampil lagi di tick berikutnya, jadi pembatalannya
+    // ditunda sesaat dan dibatalkan sendiri kalau modalnya muncul lagi.
+    const resolver = adminPinResolver;
+    if (resolver) {
+        setTimeout(() => {
+            const modalEl = document.getElementById("adminPinModal");
+            if (adminPinResolver === resolver && !modalEl.classList.contains("show")) {
+                adminPinResolver = null;
+                resolver.reject(new Error("Verifikasi Security PIN dibatalkan"));
+            }
+        }, 250);
     }
     hideRevealedSecrets();
 });
@@ -361,6 +604,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         if (view === "stats" && !statsLoaded) loadStats();
         if (view === "musicplayer" && !musicPlayerLoaded) { loadMusicList(); musicPlayerLoaded = true; }
         if (view === "topSpenders") loadAdminTopSpenders();
+        if (view === "reseller" && !resellerLoaded) loadResellerAll();
     });
 });
 
@@ -392,6 +636,7 @@ function switchView(view) {
     if (view === "musicplayer" && !musicPlayerLoaded) { loadMusicList(); musicPlayerLoaded = true; }
     if (view === "aimgmt") { loadKnowledgeBase(); loadMultiAiStatus(); loadMultiAiLogs(); startAiHealthCheckTimer(); }
     if (view === "topSpenders") loadAdminTopSpenders();
+    if (view === "reseller" && !resellerLoaded) loadResellerAll();
 }
 
 function openProductModal() {
@@ -2197,6 +2442,54 @@ async function bulkSmartActivateTopup() {
     }
 }
 
+// Aktivasi cerdas SATU KLIK ke seluruh katalog (tombol "Aktivasi Cerdas
+// Semua" di langkah 2). Backend-nya fungsi yang sama kayak versi produk
+// terpilih di atas — cuma dikasih applyToAll: true, terus dia sendiri yang
+// misahin jalur produk game (dedupe per nominal + cap/popularitas) sama
+// produk non-game Marketplace (dedupe duplikat, sisanya diaktifkan).
+async function smartActivateAllTopup() {
+    if (
+        !confirm(
+            "Jalankan aktivasi cerdas ke SELURUH katalog?\n\n" +
+                "• Produk game: cuma varian termurah per nominal yang aktif\n" +
+                "• Produk non-game (Pulsa/PLN/E-Wallet/Tagihan): duplikat dimatiin, sisanya diaktifkan\n" +
+                "• Produk yang statusnya udah diatur manual tetap dilindungi\n\n" +
+                "Aksi ini bisa di-undo."
+        )
+    )
+        return;
+
+    const btn = document.getElementById("btnSmartActivateAll");
+    const labelAsli = btn ? btn.innerHTML : "";
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Memproses…`;
+    }
+
+    try {
+        const res = await apiFetch("/topup/admin/products/smart-activate", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ applyToAll: true })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menjalankan aktivasi cerdas");
+
+        showToast(data.message || "Aktivasi cerdas selesai");
+        topupSelectedIds.clear();
+        loadTopupProducts();
+        if (typeof loadCatalogSummary === "function") loadCatalogSummary();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = labelAsli;
+        }
+    }
+}
+
 async function bulkDeleteTopupSelected() {
     if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
     if (!confirm(`Yakin hapus ${topupSelectedIds.size} produk terpilih? (bisa di-undo lewat tombol Undo kalau salah pencet)`)) return;
@@ -2222,7 +2515,9 @@ async function bulkDeleteTopupSelected() {
 let topupAutoRefreshTimer = null;
 let isFetchingTopupOrders = false;
 
-async function loadTopupOrders() {
+// autoRefresh = dipanggil timer 1 detik, bukan aksi admin -> ditandai
+// sebagai polling latar biar sesi idle tetap bisa berakhir sendiri.
+async function loadTopupOrders(autoRefresh = false) {
     if (isFetchingTopupOrders) return;
     isFetchingTopupOrders = true;
 
@@ -2232,7 +2527,7 @@ async function loadTopupOrders() {
     }
 
     try {
-        const res = await apiFetch("/topup/admin/orders");
+        const res = await apiFetch("/topup/admin/orders", { background: autoRefresh });
         if (!res.ok) throw new Error("Gagal mengambil data pesanan topup");
 
         topupOrders = await res.json();
@@ -2254,7 +2549,7 @@ async function loadTopupOrders() {
     clearTimeout(topupAutoRefreshTimer);
     const isTopupTabActive = currentView === "topup" && document.getElementById("topupTabOrders") && !document.getElementById("topupTabOrders").classList.contains("d-none");
     if (isTopupTabActive && document.visibilityState === "visible") {
-        topupAutoRefreshTimer = setTimeout(loadTopupOrders, 1000);
+        topupAutoRefreshTimer = setTimeout(() => loadTopupOrders(true), 1000);
     }
 }
 
@@ -2610,7 +2905,17 @@ function renderPromoCodes() {
 
 function logout() {
     localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+    localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY);
     window.location.href = "login.html";
+}
+
+// Dipakai tombol "Keluar" di overlay gerbang — forceAdminLogout sengaja
+// melempar error buat menghentikan pemanggilnya (apiFetch), jadi di sini
+// ditelan supaya gak jadi error liar di handler klik.
+function logoutAdminNow() {
+    try {
+        forceAdminLogout("manual");
+    } catch (e) { /* redirect sudah jalan */ }
 }
 
 // ================================
@@ -2631,7 +2936,7 @@ let latestNotifications = [];
 
 async function loadNotifications() {
     try {
-        const res = await apiFetch("/notifications");
+        const res = await apiFetch("/notifications", { background: true });
         if (!res.ok) return;
         const data = await res.json();
         latestNotifications = data.notifications || [];
@@ -2722,26 +3027,9 @@ if (markAllReadBtn) {
 loadNotifications();
 setInterval(loadNotifications, 30000); // polling tiap 30 detik
 
-// ================================
-// Auto-logout kalau admin idle terlalu lama (keamanan — biar sesi gak
-// nyantol lama-lama dan disalahgunakan orang lain yang pakai komputer ini)
-// ================================
-const IDLE_LIMIT_MS = 15 * 60 * 1000; // 15 menit
-let idleTimer = null;
-
-function resetIdleTimer() {
-    if (idleTimer) clearTimeout(idleTimer);
-    idleTimer = setTimeout(() => {
-        localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
-        localStorage.setItem("nexshop_admin_logout_reason", "idle");
-        window.location.href = "login.html";
-    }, IDLE_LIMIT_MS);
-}
-
-["mousemove", "mousedown", "keydown", "scroll", "touchstart", "click"].forEach(evt => {
-    document.addEventListener(evt, resetIdleTimer, { passive: true });
-});
-resetIdleTimer();
+// Auto-logout idle + gerbang akses dashboard sekarang ditangani di blok
+// "GERBANG AKSES + SESI IDLE DASHBOARD ADMIN" di atas (batas 5 menit,
+// ditegakkan juga oleh server lewat middleware/adminSession.js).
 
 // ================================
 loadProducts();
@@ -3873,7 +4161,7 @@ function startAiHealthCheckTimer() {
 
 async function loadMultiAiStatus() {
     try {
-        const res = await apiFetch("/admin/ai/status");
+        const res = await apiFetch("/admin/ai/status", { background: true });
         if (!res.ok) return;
         const data = await res.json().catch(() => ({}));
         currentMultiAiData = data;

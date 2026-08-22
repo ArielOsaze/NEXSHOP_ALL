@@ -28,6 +28,7 @@ const promoRoutes = require("./routes/promoRoutes");
 const authMiddleware = require("./middleware/authMiddleware");
 const uploadRoutes = require("./routes/uploadRoutes");
 const topupRoutes = require("./routes/topupRoutes");
+const resellerRoutes = require("./routes/resellerRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
 const promoCodeRoutes = require("./routes/promoCodeRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
@@ -124,7 +125,7 @@ const WEBHOOK_PATHS = ["/orders/notification", "/topup/notification", "/topup/to
 
 // Dicek relatif terhadap mount point "/api" (req.path di dalam middleware
 // yang dipasang di app.use("/api", ...) udah dipotong prefix-nya).
-const ADMIN_API_PREFIXES = ["/admin", "/topup/admin", "/stats/overview", "/stats/export-orders", "/stats/system-health", "/settings"];
+const ADMIN_API_PREFIXES = ["/admin", "/topup/admin", "/reseller/admin", "/stats/overview", "/stats/export-orders", "/stats/system-health", "/settings"];
 
 function isAdminApiPath(path) {
     return ADMIN_API_PREFIXES.some((prefix) => path === prefix || path.startsWith(prefix + "/"));
@@ -166,6 +167,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/promo", promoRoutes);
 app.use("/api/topup", topupRoutes);
+app.use("/api/reseller", resellerRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/promo-codes", promoCodeRoutes);
 app.use("/api/notifications", notificationRoutes);
