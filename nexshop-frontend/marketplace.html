@@ -488,6 +488,404 @@
                 padding: 0.85rem;
             }
         }
+
+        /* ── Operator detail (daftar produk) ─────────────────────────── */
+        .mkt-detail-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            padding: 0.5rem 0.9rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--line);
+            background: transparent;
+            cursor: pointer;
+            transition: all 0.18s;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        .mkt-detail-back:hover {
+            color: var(--text);
+            border-color: var(--violet);
+        }
+
+        .mkt-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .mkt-detail-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 18px;
+            flex-shrink: 0;
+            background: var(--bg-panel-2);
+            border: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .mkt-detail-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 10px;
+        }
+
+        .mkt-detail-icon i {
+            font-size: 1.6rem;
+            color: var(--text-dim);
+        }
+
+        .mkt-detail-cat {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--cyan);
+            margin-bottom: 0.2rem;
+        }
+
+        .mkt-detail-info h2 {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .mkt-detail-products {
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .mkt-product-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.9rem 1.1rem;
+            border-radius: var(--radius);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(18, 23, 41, 0.5);
+            transition: border-color 0.18s;
+        }
+
+        .mkt-product-row:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        .mkt-product-name {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        .mkt-product-action {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        .mkt-product-price {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--cyan);
+            white-space: nowrap;
+        }
+
+        .mkt-buy-btn {
+            padding: 0.5rem 1.1rem;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--violet), var(--violet-2, var(--violet)));
+            color: #fff;
+            font-weight: 700;
+            font-size: 0.8rem;
+            transition: transform 0.15s, box-shadow 0.15s;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            white-space: nowrap;
+        }
+
+        .mkt-buy-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(139, 92, 246, 0.35);
+        }
+
+        .mkt-buy-btn--disabled {
+            background: var(--bg-panel-2);
+            color: var(--text-dim);
+            cursor: not-allowed;
+        }
+
+        .mkt-buy-btn--disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* ── Checkout / payment overlays ─────────────────────────── */
+        .mkt-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 2000;
+            background: rgba(6, 8, 16, 0.72);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 16px;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.22s, visibility 0s linear 0.22s;
+            overflow-y: auto;
+        }
+
+        .mkt-overlay.is-visible {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transition-delay: 0s;
+        }
+
+        .mkt-modal {
+            background: var(--bg-panel, #12172c);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            max-width: 440px;
+            width: 100%;
+            max-height: 88vh;
+            overflow-y: auto;
+            padding: 1.75rem;
+            position: relative;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .mkt-modal-close {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: var(--bg-panel-2);
+            color: var(--text);
+            border: 1px solid var(--line);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .mkt-modal-close:hover {
+            background: var(--danger, #ef4444);
+            color: #fff;
+            border-color: transparent;
+        }
+
+        .mkt-checkout-summary {
+            margin-bottom: 1.25rem;
+            padding-right: 2rem;
+        }
+
+        .mkt-checkout-op {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--violet);
+        }
+
+        .mkt-checkout-summary h3 {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0.2rem 0;
+        }
+
+        .mkt-checkout-price {
+            font-size: 1rem;
+            font-weight: 800;
+            color: var(--cyan);
+        }
+
+        #mktCheckoutForm {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        #mktCheckoutForm label {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        #mktCheckoutForm input,
+        #mktCheckoutForm select {
+            font-family: inherit;
+            background: var(--bg-panel-2);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            padding: 0.7rem 0.9rem;
+            color: var(--text);
+            font-size: 0.88rem;
+        }
+
+        #mktCheckoutForm input:focus,
+        #mktCheckoutForm select:focus {
+            outline: none;
+            border-color: var(--violet);
+        }
+
+        .mkt-optional {
+            font-weight: 400;
+            color: var(--text-dim);
+            text-transform: none;
+            letter-spacing: 0;
+        }
+
+        .mkt-checkout-error {
+            color: #ef4444;
+            font-size: 0.78rem;
+            min-height: 14px;
+            margin: 0;
+        }
+
+        .mkt-btn-primary {
+            width: 100%;
+            padding: 0.85rem;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #fff;
+            background: linear-gradient(135deg, var(--violet), var(--violet-2, var(--violet)));
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+            transition: transform 0.18s;
+        }
+
+        .mkt-btn-primary:hover {
+            transform: translateY(-1px);
+        }
+
+        .mkt-btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .mkt-btn-secondary {
+            width: 100%;
+            padding: 0.7rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--text);
+            background: var(--bg-panel-2);
+            border: 1px solid var(--line);
+            margin-top: 0.75rem;
+            transition: 0.2s;
+        }
+
+        .mkt-btn-secondary:hover {
+            border-color: var(--cyan);
+            color: var(--cyan);
+        }
+
+        #mktPaymentTitle {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text);
+            margin: 0 0 1rem;
+            padding-right: 2rem;
+        }
+
+        .mkt-payment-block {
+            text-align: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .mkt-payment-hint {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: 0 0 0.9rem;
+        }
+
+        .mkt-payment-qr {
+            display: inline-block;
+            padding: 0.6rem;
+            background: #fff;
+            border-radius: 10px;
+        }
+
+        .mkt-payment-va-number {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--cyan);
+            letter-spacing: 0.04em;
+            padding: 0.9rem;
+            background: var(--bg-panel-2);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--line);
+        }
+
+        .mkt-payment-meta {
+            background: var(--bg-panel-2);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 0.9rem 1rem;
+            font-size: 0.82rem;
+            margin-bottom: 1rem;
+        }
+
+        .mkt-payment-meta .row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.3rem 0;
+            color: var(--text-muted);
+        }
+
+        .mkt-payment-meta .row strong {
+            color: var(--text);
+        }
+
+        .mkt-payment-status {
+            text-align: center;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        .mkt-payment-status.mkt-status-success {
+            color: var(--cyan);
+        }
+
+        .mkt-payment-status.mkt-status-failed {
+            color: #ef4444;
+        }
     </style>
 </head>
 
@@ -528,12 +926,21 @@
 
         <div class="cat-filter-wrap" id="catFilterWrap"></div>
 
-        <section>
+        <section id="mktServicesSection">
             <div class="mkt-grid-header">
                 <h3>Semua Layanan</h3>
                 <span id="totalCount"></span>
             </div>
             <div class="market-grid" id="marketGrid" aria-live="polite"></div>
+        </section>
+
+        <!-- Detail operator: daftar produk dari 1 operator, dibuka dari kartu di grid -->
+        <section class="mkt-detail hidden" id="marketplaceDetail">
+            <button type="button" class="mkt-detail-back" id="mktDetailBackBtn">
+                <i class="fa-solid fa-arrow-left"></i> Kembali ke Marketplace
+            </button>
+            <div class="mkt-detail-header" id="mktDetailHeader"></div>
+            <div class="mkt-detail-products" id="mktDetailProducts"></div>
         </section>
     </main>
 
@@ -586,6 +993,92 @@
         </div>
     </footer>
 
+    <!-- Checkout Modal -->
+    <div class="mkt-overlay" id="mktCheckoutOverlay">
+        <div class="mkt-modal" role="dialog" aria-modal="true" aria-labelledby="mktCheckoutTitle">
+            <button type="button" class="mkt-modal-close" id="mktCheckoutCloseBtn" aria-label="Tutup"><i
+                    class="fa-solid fa-xmark"></i></button>
+            <div class="mkt-checkout-summary">
+                <span class="mkt-checkout-op" id="mktCheckoutOpName"></span>
+                <h3 id="mktCheckoutTitle"></h3>
+                <div class="mkt-checkout-price" id="mktCheckoutPrice"></div>
+            </div>
+            <form id="mktCheckoutForm">
+                <label id="mktCheckoutTargetLabelWrap">
+                    <span id="mktCheckoutTargetLabel">Nomor Handphone / Tujuan</span>
+                    <input type="text" id="mktCheckoutTarget" required placeholder="0812xxxxxxx">
+                </label>
+                <div id="mktCheckoutServerGroup" class="hidden">
+                    <label>Server ID
+                        <input type="text" id="mktCheckoutServer" placeholder="Masukkan Server ID">
+                    </label>
+                </div>
+                <label>Nomor HP Aktif (untuk notifikasi &amp; pembayaran)
+                    <input type="tel" id="mktCheckoutPhone" required placeholder="08xxxxxxxxxx" pattern="0[0-9]{8,14}">
+                </label>
+                <label>Email <span class="mkt-optional">(opsional)</span>
+                    <input type="email" id="mktCheckoutEmail" placeholder="kamu@email.com">
+                </label>
+                <label>Metode Pembayaran
+                    <select id="mktCheckoutPaymentMethod" required>
+                        <option value="">Pilih metode pembayaran</option>
+                        <option value="qris">QRIS</option>
+                        <option value="va">Virtual Account</option>
+                        <option value="banktransfer">Transfer Bank</option>
+                        <option value="card">Kartu Kredit/Debit</option>
+                    </select>
+                </label>
+                <div id="mktCheckoutVaGroup" class="hidden">
+                    <label>Pilih Bank
+                        <select id="mktCheckoutVaBank">
+                            <option value="bca">BCA</option>
+                            <option value="bni">BNI</option>
+                            <option value="mandiri">Mandiri</option>
+                            <option value="bri">BRI</option>
+                            <option value="cimb">CIMB Niaga</option>
+                        </select>
+                    </label>
+                </div>
+                <p class="mkt-checkout-error" id="mktCheckoutError"></p>
+                <button type="submit" class="mkt-btn-primary" id="mktCheckoutSubmitBtn">Bayar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Direct Payment Modal (QRIS / VA) -->
+    <div class="mkt-overlay" id="mktPaymentOverlay">
+        <div class="mkt-modal" role="dialog" aria-modal="true" aria-labelledby="mktPaymentTitle">
+            <button type="button" class="mkt-modal-close" id="mktPaymentCloseBtn" aria-label="Tutup"><i
+                    class="fa-solid fa-xmark"></i></button>
+            <h3 id="mktPaymentTitle">Selesaikan Pembayaran</h3>
+
+            <div id="mktPaymentQrisWrap" class="hidden mkt-payment-block">
+                <p class="mkt-payment-hint">Scan QRIS ini pakai aplikasi E-Wallet atau M-Banking kamu.</p>
+                <div id="mktPaymentQr" class="mkt-payment-qr"></div>
+                <button type="button" class="mkt-btn-secondary" id="mktPaymentDownloadQrBtn"><i
+                        class="fa-solid fa-download"></i> Download QR</button>
+            </div>
+
+            <div id="mktPaymentVaWrap" class="hidden mkt-payment-block">
+                <p class="mkt-payment-hint">Transfer ke nomor Virtual Account berikut:</p>
+                <div class="mkt-payment-va-number" id="mktPaymentVaNumber"></div>
+                <button type="button" class="mkt-btn-secondary" id="mktPaymentCopyVaBtn"><i
+                        class="fa-solid fa-copy"></i> Salin Nomor VA</button>
+            </div>
+
+            <div class="mkt-payment-meta">
+                <div class="row"><span>Total Bayar</span><strong id="mktPaymentAmount"></strong></div>
+                <div class="row"><span>Kedaluwarsa</span><strong id="mktPaymentExpired"></strong></div>
+                <div class="row"><span>Order ID</span><strong id="mktPaymentOrderId"></strong></div>
+            </div>
+
+            <p class="mkt-payment-status" id="mktPaymentStatus">
+                <i class="fa-solid fa-spinner fa-spin"></i> Menunggu pembayaran, jangan tutup halaman ini...
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script>
         // NexShop Marketplace — marketplace.html client-side logic
         const API_BASE = (() => {
@@ -663,34 +1156,304 @@
             return tokens.every((t) => lower.includes(t));
         }
 
-        // Klik kartu operator di Marketplace -> arahin ke halaman utama bawa
-        // query ?market=<nama operator>, di sana script.js (openMarketplaceCheckoutFromQuery)
-        // yang bakal buka flow checkout LENGKAP (pilih produk, bayar, dll) yang
-        // sama persis kayak Topup Diamond biasa.
-        //
-        // CATATAN: sebelumnya di sini ada kode yang coba bikin detail view +
-        // form checkout SENDIRI di halaman ini (openMarketplaceCheckout, dst),
-        // padahal elemen HTML-nya (#marketplaceDetail, #mktCheckoutOverlay, dll)
-        // emang sengaja gak pernah dibikin -- makanya klik kartu produk jadi
-        // gak ngapa-ngapain (element-nya null -> script error) dan grid/filter/
-        // hero section yang udah kadung di-hidden() gak pernah dimunculin balik,
-        // jadi halaman keliatan kosong/nge-center di tengah. Fungsi ini gantiin
-        // itu semua dengan cara yang emang sesuai desainnya (lihat komentar
-        // BRIDGE dari Marketplace di script.js).
+        // Marketplace punya alur checkout + pembayaran sendiri (gak lagi redirect
+        // ke halaman utama) -- pakai endpoint yang sama (POST /api/topup) dengan
+        // yang dipakai grid Topup Diamond biasa, cuma UI/formnya terpisah biar
+        // halaman Marketplace bisa berdiri sendiri.
+
         function openMarketplaceDetail(operatorId) {
             let operatorObj = null;
+            let operatorCategory = "";
 
             for (const catObj of catalog) {
                 const found = catObj.operators.find(op => String(op.id) === String(operatorId));
                 if (found) {
                     operatorObj = found;
+                    operatorCategory = catObj.category;
                     break;
                 }
             }
 
             if (!operatorObj) return;
 
-            window.location.href = `/?market=${encodeURIComponent(operatorObj.operator)}`;
+            document.getElementById("mktServicesSection").classList.add("hidden");
+            document.getElementById("catFilterWrap").classList.add("hidden");
+            document.querySelector(".mkt-hero").classList.add("hidden");
+
+            const detailContainer = document.getElementById("marketplaceDetail");
+            detailContainer.classList.remove("hidden");
+
+            const fallbackIcon = `<i class="fa-solid fa-shop"></i>`;
+            const imgHtml = operatorObj.operator_logo
+                ? `<img src="${safeUrl(operatorObj.operator_logo)}" alt="${escapeHtml(operatorObj.operator)}" onerror="this.outerHTML='${fallbackIcon}'" loading="lazy">`
+                : fallbackIcon;
+
+            document.getElementById("mktDetailHeader").innerHTML = `
+        <div class="mkt-detail-icon">${imgHtml}</div>
+        <div class="mkt-detail-info">
+            <div class="mkt-detail-cat">${escapeHtml(operatorCategory)}</div>
+            <h2>${escapeHtml(operatorObj.operator)}</h2>
+        </div>
+    `;
+
+            let productsHtml = "";
+            operatorObj.products.forEach(p => {
+                const harga = p.harga_jual !== undefined && p.harga_jual !== null ? rupiah(p.harga_jual) : "Harga tidak tersedia";
+                const btnHtml = p.harga_jual !== undefined && p.harga_jual !== null
+                    ? `<button type="button" class="mkt-buy-btn" data-id="${p.id}" data-kode="${escapeHtml(p.kode_produk)}" data-nama="${escapeHtml(p.nama)}" data-harga="${p.harga_jual}" data-server="${p.butuh_server_id ? 'true' : 'false'}">Beli</button>`
+                    : `<button type="button" class="mkt-buy-btn mkt-buy-btn--disabled" disabled>Tidak Tersedia</button>`;
+
+                productsHtml += `
+            <div class="mkt-product-row">
+                <div class="mkt-product-name">${escapeHtml(p.nama)}</div>
+                <div class="mkt-product-action">
+                    <span class="mkt-product-price">${harga}</span>
+                    ${btnHtml}
+                </div>
+            </div>
+        `;
+            });
+
+            document.getElementById("mktDetailProducts").innerHTML = productsHtml;
+
+            document.getElementById("mktDetailProducts").querySelectorAll(".mkt-buy-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    openMarketplaceCheckout({
+                        id: btn.dataset.id,
+                        kode_produk: btn.dataset.kode,
+                        nama: btn.dataset.nama,
+                        harga_jual: parseInt(btn.dataset.harga, 10),
+                        butuh_server_id: btn.dataset.server === "true",
+                        kategori: operatorCategory,
+                        operator: operatorObj.operator
+                    });
+                });
+            });
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function closeMarketplaceDetail() {
+            document.getElementById("marketplaceDetail").classList.add("hidden");
+            document.getElementById("mktServicesSection").classList.remove("hidden");
+            document.getElementById("catFilterWrap").classList.remove("hidden");
+            document.querySelector(".mkt-hero").classList.remove("hidden");
+        }
+
+        document.getElementById("mktDetailBackBtn").addEventListener("click", closeMarketplaceDetail);
+
+        // ── Checkout ─────────────────────────────────────────────────────
+        let currentMktCheckoutProduct = null;
+
+        function openMarketplaceCheckout(product) {
+            currentMktCheckoutProduct = product;
+
+            document.getElementById("mktCheckoutOpName").textContent = product.operator;
+            document.getElementById("mktCheckoutTitle").textContent = product.nama;
+            document.getElementById("mktCheckoutPrice").textContent = rupiah(product.harga_jual);
+
+            document.getElementById("mktCheckoutTarget").value = "";
+            document.getElementById("mktCheckoutServer").value = "";
+            document.getElementById("mktCheckoutPhone").value = "";
+            document.getElementById("mktCheckoutEmail").value = "";
+            document.getElementById("mktCheckoutPaymentMethod").value = "";
+            document.getElementById("mktCheckoutVaBank").value = "bca";
+            document.getElementById("mktCheckoutVaGroup").classList.add("hidden");
+            document.getElementById("mktCheckoutError").textContent = "";
+            document.getElementById("mktCheckoutSubmitBtn").disabled = false;
+            document.getElementById("mktCheckoutSubmitBtn").textContent = "Bayar";
+
+            const isGame = product.kategori.toLowerCase() === "gaming" || product.kategori.toLowerCase() === "voucher game";
+            if (isGame) {
+                document.getElementById("mktCheckoutTargetLabel").textContent = "Player ID / User ID";
+                document.getElementById("mktCheckoutTarget").placeholder = "Masukkan Player ID";
+                if (product.butuh_server_id) {
+                    document.getElementById("mktCheckoutServerGroup").classList.remove("hidden");
+                } else {
+                    document.getElementById("mktCheckoutServerGroup").classList.add("hidden");
+                }
+            } else {
+                document.getElementById("mktCheckoutTargetLabel").textContent = "Nomor Handphone / Tujuan";
+                document.getElementById("mktCheckoutTarget").placeholder = "0812xxxxxxx";
+                document.getElementById("mktCheckoutServerGroup").classList.add("hidden");
+            }
+
+            document.getElementById("mktCheckoutOverlay").classList.add("is-visible");
+        }
+
+        function closeMarketplaceCheckout() {
+            document.getElementById("mktCheckoutOverlay").classList.remove("is-visible");
+            currentMktCheckoutProduct = null;
+        }
+
+        document.getElementById("mktCheckoutCloseBtn").addEventListener("click", closeMarketplaceCheckout);
+
+        document.getElementById("mktCheckoutPaymentMethod").addEventListener("change", (e) => {
+            document.getElementById("mktCheckoutVaGroup").classList.toggle("hidden", e.target.value !== "va");
+        });
+
+        document.getElementById("mktCheckoutForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            if (!currentMktCheckoutProduct) return;
+
+            const btn = document.getElementById("mktCheckoutSubmitBtn");
+            const errEl = document.getElementById("mktCheckoutError");
+            const paymentMethod = document.getElementById("mktCheckoutPaymentMethod").value;
+
+            if (!paymentMethod) {
+                errEl.textContent = "Pilih metode pembayaran dulu ya.";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "Memproses...";
+            errEl.textContent = "";
+
+            try {
+                const payload = {
+                    kode_produk: currentMktCheckoutProduct.kode_produk,
+                    tujuan: document.getElementById("mktCheckoutTarget").value,
+                    server_id: currentMktCheckoutProduct.butuh_server_id ? document.getElementById("mktCheckoutServer").value : undefined,
+                    recipient_phone: document.getElementById("mktCheckoutPhone").value,
+                    recipient_email: document.getElementById("mktCheckoutEmail").value || undefined,
+                    payment_method: paymentMethod,
+                    payment_channel: paymentMethod === "va" ? document.getElementById("mktCheckoutVaBank").value : undefined
+                };
+
+                const res = await fetch(`${API_BASE}/topup`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                let data;
+                try {
+                    data = await res.json();
+                } catch (e) {
+                    throw new Error("Gagal terhubung ke server pembayaran.");
+                }
+
+                if (!res.ok) throw new Error(data.message || "Gagal membuat transaksi");
+
+                closeMarketplaceCheckout();
+
+                if (data.flow === "direct" && data.paymentData) {
+                    showMarketplacePaymentModal(data.paymentData, data.orderId);
+                } else if (data.paymentUrl) {
+                    window.location.href = data.paymentUrl;
+                } else {
+                    throw new Error("Data pembayaran tidak ditemukan");
+                }
+            } catch (err) {
+                errEl.textContent = err.message;
+                btn.disabled = false;
+                btn.textContent = "Bayar";
+            }
+        });
+
+        // ── Pembayaran langsung (QRIS / VA) + polling status ────────────────
+        let mktStatusPollTimer = null;
+
+        function showMarketplacePaymentModal(paymentData, orderId) {
+            const qrisWrap = document.getElementById("mktPaymentQrisWrap");
+            const vaWrap = document.getElementById("mktPaymentVaWrap");
+            const qrDiv = document.getElementById("mktPaymentQr");
+            const statusEl = document.getElementById("mktPaymentStatus");
+
+            statusEl.className = "mkt-payment-status";
+            statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Menunggu pembayaran, jangan tutup halaman ini...`;
+
+            if (paymentData.qrContent) {
+                qrisWrap.classList.remove("hidden");
+                vaWrap.classList.add("hidden");
+                qrDiv.innerHTML = "";
+                if (typeof QRCode !== "undefined") {
+                    new QRCode(qrDiv, {
+                        text: paymentData.qrContent,
+                        width: 200,
+                        height: 200,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } else {
+                    qrDiv.innerHTML = "<p>QR Code gagal dimuat.</p>";
+                }
+
+                const downloadBtn = document.getElementById("mktPaymentDownloadQrBtn");
+                downloadBtn.onclick = () => {
+                    const canvas = qrDiv.querySelector("canvas");
+                    const img = qrDiv.querySelector("img");
+                    const dataUrl = canvas ? canvas.toDataURL("image/png") : (img ? img.src : null);
+                    if (!dataUrl) return;
+                    const link = document.createElement("a");
+                    link.href = dataUrl;
+                    link.download = `QRIS-Nexshop-${orderId}.png`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                };
+            } else if (paymentData.paymentNo) {
+                vaWrap.classList.remove("hidden");
+                qrisWrap.classList.add("hidden");
+                document.getElementById("mktPaymentVaNumber").textContent = paymentData.paymentNo;
+
+                document.getElementById("mktPaymentCopyVaBtn").onclick = () => {
+                    navigator.clipboard.writeText(paymentData.paymentNo).then(() => {
+                        const b = document.getElementById("mktPaymentCopyVaBtn");
+                        const original = b.innerHTML;
+                        b.innerHTML = `<i class="fa-solid fa-check"></i> Disalin!`;
+                        setTimeout(() => { b.innerHTML = original; }, 2000);
+                    });
+                };
+            }
+
+            document.getElementById("mktPaymentAmount").textContent = rupiah(paymentData.amount || 0);
+            document.getElementById("mktPaymentExpired").textContent = paymentData.expired || "-";
+            document.getElementById("mktPaymentOrderId").textContent = orderId;
+
+            document.getElementById("mktPaymentOverlay").classList.add("is-visible");
+
+            startMarketplaceStatusPolling(orderId);
+        }
+
+        function closeMarketplacePaymentModal() {
+            document.getElementById("mktPaymentOverlay").classList.remove("is-visible");
+            if (mktStatusPollTimer) {
+                clearTimeout(mktStatusPollTimer);
+                mktStatusPollTimer = null;
+            }
+        }
+
+        document.getElementById("mktPaymentCloseBtn").addEventListener("click", closeMarketplacePaymentModal);
+
+        function startMarketplaceStatusPolling(orderId) {
+            if (mktStatusPollTimer) clearTimeout(mktStatusPollTimer);
+
+            const poll = async () => {
+                try {
+                    const res = await fetch(`${API_BASE}/topup/public-status/${encodeURIComponent(orderId)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const statusEl = document.getElementById("mktPaymentStatus");
+
+                        if (["processing", "sukses", "success"].includes(data.status)) {
+                            statusEl.className = "mkt-payment-status mkt-status-success";
+                            statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Pembayaran diterima! Pesanan kamu sedang diproses.`;
+                            return; // stop polling
+                        } else if (data.status === "failed") {
+                            statusEl.className = "mkt-payment-status mkt-status-failed";
+                            statusEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Pembayaran gagal / kedaluwarsa.`;
+                            return; // stop polling
+                        }
+                    }
+                } catch (err) {
+                    console.error("Gagal cek status pembayaran:", err);
+                }
+                mktStatusPollTimer = setTimeout(poll, 4000);
+            };
+
+            mktStatusPollTimer = setTimeout(poll, 4000);
         }
 
         function renderGrid() {
