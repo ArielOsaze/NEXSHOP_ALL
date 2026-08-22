@@ -340,8 +340,8 @@
             padding: 1.1rem;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            text-align: center;
+            align-items: flex-start;
+            text-align: left;
             cursor: pointer;
             transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
         }
@@ -1183,9 +1183,9 @@
             const detailContainer = document.getElementById("marketplaceDetail");
             detailContainer.classList.remove("hidden");
 
-            const fallbackIcon = `<i class="fa-solid fa-shop"></i>`;
+            const fallbackIcon = `<i class='fa-solid fa-shop'></i>`;
             const imgHtml = operatorObj.operator_logo
-                ? `<img src="${safeUrl(operatorObj.operator_logo)}" alt="${escapeHtml(operatorObj.operator)}" onerror="this.outerHTML='${fallbackIcon}'" loading="lazy">`
+                ? `<img src="${safeUrl(operatorObj.operator_logo)}" alt="${escapeHtml(operatorObj.operator)}" onerror="this.outerHTML=&quot;${fallbackIcon}&quot;" loading="lazy">`
                 : fallbackIcon;
 
             document.getElementById("mktDetailHeader").innerHTML = `
