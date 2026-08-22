@@ -11,7 +11,7 @@ if (localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)) {
 // Pesan kenapa sesi sebelumnya berakhir — disimpen dashboard sebelum
 // redirect ke sini, biar admin gak bingung kenapa tiba-tiba ke-logout.
 const ADMIN_LOGOUT_REASONS = {
-    idle: "Kamu otomatis di-logout karena tidak ada aktivitas selama 5 menit. Silakan login kembali.",
+    idle: "Kamu otomatis di-logout karena tidak ada aktivitas selama 15 menit. Silakan login kembali.",
     forbidden: "Akun ini tidak (lagi) punya akses admin/staff. Hubungi Super Admin kalau ini keliru.",
     expired: "Sesi kamu sudah berakhir. Silakan login kembali."
 };

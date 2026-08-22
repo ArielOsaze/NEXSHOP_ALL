@@ -240,11 +240,11 @@ async function submitAdminPin() {
 // Selama gerbang belum kebuka, apiFetch() nahan SEMUA permintaan data, jadi
 // isi dashboard gak pernah ke-load apalagi kelihatan di layar.
 //
-// Sesi juga berakhir otomatis setelah 5 menit tanpa aktivitas. Timer di sini
+// Sesi juga berakhir otomatis setelah 15 menit tanpa aktivitas. Timer di sini
 // cuma sisi tampilan; batas yang sebenarnya ditegakkan server (lihat
 // middleware/adminSession.js), jadi gak bisa dilewatin dengan mematikan JS.
 // ===========================================================
-const ADMIN_IDLE_LIMIT_MS = 5 * 60 * 1000;
+const ADMIN_IDLE_LIMIT_MS = 15 * 60 * 1000;
 const ADMIN_IDLE_WARNING_MS = 60 * 1000; // peringatan 1 menit sebelum habis
 const ADMIN_LAST_ACTIVITY_KEY = "nexshop_admin_last_activity";
 
@@ -3028,7 +3028,7 @@ loadNotifications();
 setInterval(loadNotifications, 30000); // polling tiap 30 detik
 
 // Auto-logout idle + gerbang akses dashboard sekarang ditangani di blok
-// "GERBANG AKSES + SESI IDLE DASHBOARD ADMIN" di atas (batas 5 menit,
+// "GERBANG AKSES + SESI IDLE DASHBOARD ADMIN" di atas (batas 15 menit,
 // ditegakkan juga oleh server lewat middleware/adminSession.js).
 
 // ================================

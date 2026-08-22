@@ -29,7 +29,7 @@ const supabase = require("../config/db");
 // nanti di-scale ke banyak worker, pindahin dua Map di bawah ke Redis/DB.
 // ===========================================================
 
-const ADMIN_IDLE_LIMIT_MS = Number(process.env.ADMIN_IDLE_LIMIT_MS || 5 * 60 * 1000);
+const ADMIN_IDLE_LIMIT_MS = Number(process.env.ADMIN_IDLE_LIMIT_MS || 15 * 60 * 1000);
 const ROLE_CACHE_TTL_MS = 60 * 1000;
 
 const roleCache = new Map(); // userId -> { role, blacklisted, at }
