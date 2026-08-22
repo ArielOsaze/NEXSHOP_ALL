@@ -97,6 +97,14 @@ app.use(cors({
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: false, limit: "100kb" }));
 
+// Batas 300/15 menit kekecilan buat dashboard admin: satu sesi kerja di tab
+// Topup aja (polling status sync tiap 3 detik + muat ulang tabel tiap habis
+// aksi massal) gampang nembus 300 request, dan begitu kena limit SEMUA
+// panel dashboard serempak nampilin "gagal mengambil data" -- kelihatan
+// kayak backend-nya rusak padahal cuma kena rate limit sendiri.
+//
+// Endpoint /api/admin/* dikasih jatah sendiri yang lebih longgar; endpoint
+// publik tetap 300 seperti semula.
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 300,
@@ -105,8 +113,33 @@ const apiLimiter = rateLimit({
     message: { message: "Terlalu banyak permintaan. Coba lagi beberapa menit." },
     // Hanya webhook provider yang dikecualikan. Pengecekan substring lama
     // membuat setiap endpoint dengan kata "notification" ikut melewati limit.
-    skip: (req) => ["/orders/notification", "/topup/notification", "/topup/tokovoucher-webhook"].includes(req.path)
+    // Rute admin juga dilewat di sini karena udah dijaga adminApiLimiter --
+    // kalau enggak, request dashboard kehitung DUA KALI (di limiter admin
+    // DAN di limiter publik) dan tetap mentok di 300.
+    skip: (req) =>
+        WEBHOOK_PATHS.includes(req.path) || isAdminApiPath(req.path)
 });
+
+const WEBHOOK_PATHS = ["/orders/notification", "/topup/notification", "/topup/tokovoucher-webhook"];
+
+// Dicek relatif terhadap mount point "/api" (req.path di dalam middleware
+// yang dipasang di app.use("/api", ...) udah dipotong prefix-nya).
+const ADMIN_API_PREFIXES = ["/admin", "/topup/admin", "/stats/overview", "/stats/export-orders", "/stats/system-health", "/settings"];
+
+function isAdminApiPath(path) {
+    return ADMIN_API_PREFIXES.some((prefix) => path === prefix || path.startsWith(prefix + "/"));
+}
+
+const adminApiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 2000,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak permintaan dari dashboard. Tunggu sebentar lalu muat ulang." }
+});
+// Limiter admin dipasang duluan; limiter publik di bawahnya sengaja
+// nge-skip rute yang sama supaya gak dobel hitung.
+app.use("/api", (req, res, next) => (isAdminApiPath(req.path) ? adminApiLimiter(req, res, next) : next()));
 app.use("/api", apiLimiter);
 
 // Jaga-jaga: kalau ada request PUT/POST yang body-nya kosong/gak ke-parse
@@ -202,8 +235,15 @@ app.listen(PORT, () => {
     console.log(`🗄️ Database     : Supabase`);
     console.log("=================================");
 
-    startTopupStatusPoller();
-    startRetryPoller();
-    startScheduledPublishPoller();
-    startCatalogSyncPoller();
+    // Poller latar hanya nyala kalau ENABLE_POLLERS=1. Default mati supaya
+    // menjalankan backend secara lokal tidak memicu notifikasi/payment/sync
+    // ke provider live. Set ENABLE_POLLERS=1 di production untuk mengaktifkan.
+    if (process.env.ENABLE_POLLERS === "1") {
+        startTopupStatusPoller();
+        startRetryPoller();
+        startScheduledPublishPoller();
+        startCatalogSyncPoller();
+    } else {
+        console.log("⏸️  Background pollers dimatikan (set ENABLE_POLLERS=1 untuk mengaktifkan)");
+    }
 });

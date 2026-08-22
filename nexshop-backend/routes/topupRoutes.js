@@ -51,6 +51,7 @@ router.get("/admin/catalog-summary", authMiddleware, adminMiddleware, topupContr
 router.get("/admin/category-map", authMiddleware, adminMiddleware, topupController.getCategoryMap);
 router.put("/admin/category-map", authMiddleware, adminMiddleware, topupController.updateCategoryMap);
 router.post("/admin/toggle-operator", authMiddleware, adminMiddleware, topupController.toggleOperator);
+router.post("/admin/products/apply-filter", authMiddleware, adminMiddleware, topupController.applyToFilter); // terapin aksi ke semua produk yang cocok filter (tanpa centang manual)
 router.get("/status/:id", authMiddleware, adminMiddleware, topupController.checkStatus);
 
 // Webhooks — SENGAJA tanpa authMiddleware (dipanggil server iPaymu/TokoVoucher),

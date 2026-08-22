@@ -9,8 +9,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20260812-otp-security">
-<script src="../theme-init.js"></script>
+<link rel="stylesheet" href="css/style.css?v=20260822-catalog">
+<script src="../theme-init.js?v=20260822-catalog"></script>
 </head>
 <body>
 
@@ -29,7 +29,7 @@
         <li class="nav-item"><a class="nav-link" href="#" data-view="products"><i class="bi bi-box-seam me-2"></i>Produk</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="stats"><i class="bi bi-graph-up me-2"></i>Statistik Penjualan</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="orders"><i class="bi bi-cart me-2"></i>Orders</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Topup Diamond</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Topup TokoVoucher</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="topSpenders"><i class="bi bi-trophy me-2"></i>Top Spenders (HoF)</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="users"><i class="bi bi-people me-2"></i>Users</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="promo"><i class="bi bi-megaphone me-2"></i>Promo</a></li>
@@ -98,7 +98,7 @@
         </div>
         <div class="dashboard-quick-actions">
             <button class="btn btn-outline-secondary btn-sm" onclick="openProductModal()"><i class="bi bi-plus-circle me-1"></i> Tambah Produk</button>
-            <button class="btn btn-outline-secondary btn-sm" onclick="switchView('topup')"><i class="bi bi-gem me-1"></i> Topup Diamond</button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="switchView('topup')"><i class="bi bi-gem me-1"></i> Topup TokoVoucher</button>
             <button class="btn btn-outline-secondary btn-sm" onclick="openPromoModal()"><i class="bi bi-megaphone me-1"></i> Buat Slide</button>
             <button class="btn btn-outline-secondary btn-sm" onclick="openPromoCodeModal()"><i class="bi bi-ticket-perforated me-1"></i> Buat Kode Promo</button>
         </div>
@@ -264,7 +264,7 @@
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
             <h2>Statistik Penjualan</h2>
-            <p class="text-muted mb-0">Omzet &amp; performa penjualan — produk biasa + topup diamond</p>
+            <p class="text-muted mb-0">Omzet &amp; performa penjualan — produk biasa + topup TokoVoucher</p>
         </div>
         <button onclick="loadStats()" class="btn btn-primary btn-sm"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
     </div>
@@ -284,7 +284,7 @@
         </div>
         <div class="col-lg-3 col-sm-6">
             <div class="card shadow-sm accent-card accent-magenta"><div class="card-body">
-                <small>Omzet Topup Diamond</small>
+                <small>Omzet Topup TokoVoucher</small>
                 <h2 id="statRevenueTopup">Rp 0</h2>
             </div></div>
         </div>
@@ -298,7 +298,7 @@
 
     <div class="card shadow-sm mb-4">
         <div class="card-header"><h5 class="mb-0">Tren Omzet 30 Hari Terakhir</h5></div>
-        <div class="card-body"><canvas id="statRevenueChart" height="90"></canvas></div>
+        <div class="card-body"><div style="position:relative;height:300px;"><canvas id="statRevenueChart"></canvas></div></div>
     </div>
 
     <div class="row g-3 mb-4">
@@ -367,11 +367,11 @@
     </div>
 </section>
 
-<!-- ===== Topup Diamond view ===== -->
+<!-- ===== Topup TokoVoucher view ===== -->
 <section id="view-topup" class="view-section d-none">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h2>Topup Diamond</h2>
+            <h2>Topup TokoVoucher</h2>
             <p class="text-muted mb-0">Kelola produk topup dari TokoVoucher &amp; pantau pesanan masuk</p>
         </div>
         <div class="d-flex gap-2">
@@ -386,86 +386,92 @@
 
     <!-- Produk tab (Katalog) -->
     <div id="topupTabProducts">
-        <!-- Dashboard Header Actions -->
-        <div class="card shadow-sm mb-4">
+
+        <!-- LANGKAH 1 — Sinkronisasi katalog -->
+        <div class="card shadow-sm mb-3 setup-step">
             <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div>
-                    <h5 class="mb-1 fw-bold">Sinkronisasi Katalog</h5>
-                    <p class="text-muted small mb-0">Impor seluruh katalog produk TokoVoucher secara otomatis.</p>
-                </div>
                 <div class="d-flex align-items-center gap-3">
-                    <div id="syncStatusIndicator" class="badge bg-secondary-subtle text-secondary border">Belum ada info</div>
+                    <span class="step-badge">1</span>
+                    <div>
+                        <h6 class="mb-1 fw-bold">Tarik Katalog TokoVoucher</h6>
+                        <p class="text-muted small mb-0">Impor seluruh produk dari TokoVoucher ke katalog NexShop.</p>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <span id="syncStatusIndicator" class="badge rounded-pill status-chip">Belum ada info</span>
                     <button class="btn btn-primary" onclick="syncFullCatalog()" id="btnSyncFull">
-                        <i class="bi bi-cloud-arrow-down"></i> Sync Semua Produk
+                        <i class="bi bi-cloud-arrow-down me-1"></i> Sync Katalog
                     </button>
-                    <button class="btn btn-outline-secondary" onclick="openCategoryMapModal()">
-                        <i class="bi bi-diagram-3"></i> Mapping Kategori
+                    <button class="btn btn-outline-secondary" onclick="openCategoryMapModal()" title="Atur kategori TokoVoucher jadi kategori NexShop">
+                        <i class="bi bi-diagram-3"></i>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Sync Progress Overlay -->
-        <div id="syncProgressOverlay" class="d-none">
-            <div class="card shadow border-primary">
-                <div class="card-body text-center py-5">
+        <!-- Overlay progres sync -->
+        <div id="syncProgressOverlay" class="d-none mb-3">
+            <div class="card shadow-sm border-primary">
+                <div class="card-body text-center py-4">
                     <div class="spinner-border text-primary mb-3" role="status"></div>
-                    <h5 class="fw-bold">Sedang Menyinkronkan Katalog...</h5>
-                    <p class="text-muted mb-0" id="syncProgressText">Mohon tunggu, ini bisa memakan waktu hingga beberapa menit. Jangan tutup halaman ini.</p>
+                    <h6 class="fw-bold mb-1">Sedang menyinkronkan katalog…</h6>
+                    <p class="text-muted small mb-0" id="syncProgressText">Bisa makan waktu beberapa menit. Jangan tutup halaman ini.</p>
                 </div>
             </div>
         </div>
 
         <div id="catalogManagerArea">
-            <!-- Global Stats -->
-            <div class="row g-3 mb-4" id="catalogGlobalStats">
+
+            <!-- Ringkasan katalog -->
+            <div class="row g-3 mb-3">
                 <div class="col-12 col-xl-6">
-                    <div class="card shadow-sm h-100 border-start border-4 border-primary">
+                    <div class="card shadow-sm h-100 stat-card stat-card-primary">
                         <div class="card-body">
-                            <h6 class="text-muted fw-bold mb-3" style="font-size:0.75rem; letter-spacing:1px;">CURRENT CATALOG</h6>
+                            <h6 class="stat-card-title">KATALOG SAAT INI</h6>
                             <div class="row g-2 text-center">
                                 <div class="col">
-                                    <div class="h4 fw-bold mb-0" id="statCatTotal">-</div>
-                                    <div class="small text-muted">Total Produk</div>
+                                    <div class="h4 fw-bold mb-0" id="statCatTotal">–</div>
+                                    <div class="small text-muted">Total</div>
                                 </div>
                                 <div class="col border-start">
-                                    <div class="h4 fw-bold text-success mb-0" id="statCatActive">-</div>
+                                    <div class="h4 fw-bold text-success mb-0" id="statCatActive">–</div>
                                     <div class="small text-muted">Aktif</div>
                                 </div>
                                 <div class="col border-start">
-                                    <div class="h4 fw-bold text-secondary mb-0" id="statCatInactive">-</div>
+                                    <div class="h4 fw-bold text-secondary mb-0" id="statCatInactive">–</div>
                                     <div class="small text-muted">Nonaktif</div>
                                 </div>
                                 <div class="col border-start">
-                                    <div class="h4 fw-bold text-danger mb-0" id="statCatForeign">-</div>
-                                    <div class="small text-muted">Foreign</div>
+                                    <div class="h4 fw-bold text-danger mb-0" id="statCatForeign">–</div>
+                                    <div class="small text-muted">Region Luar</div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 col-xl-6">
-                    <div class="card shadow-sm h-100 border-start border-4 border-info">
+                    <div class="card shadow-sm h-100 stat-card stat-card-info">
                         <div class="card-body">
-                            <h6 class="text-muted fw-bold mb-3 d-flex justify-content-between align-items-center" style="font-size:0.75rem; letter-spacing:1px;">
-                                LAST SYNC <span id="statSyncTime" class="text-info text-lowercase fw-normal">Belum ada data</span>
+                            <h6 class="stat-card-title d-flex justify-content-between align-items-center gap-2">
+                                <span>SYNC TERAKHIR</span>
+                                <span id="statSyncTime" class="stat-card-time">Belum ada data</span>
                             </h6>
                             <div class="row g-2 text-center">
                                 <div class="col">
-                                    <div class="h4 fw-bold mb-0" id="statSyncFound">-</div>
-                                    <div class="small text-muted">Fetched</div>
+                                    <div class="h4 fw-bold mb-0" id="statSyncFound">–</div>
+                                    <div class="small text-muted">Ditarik</div>
                                 </div>
                                 <div class="col border-start">
-                                    <div class="h4 fw-bold text-success mb-0" id="statSyncAdded">-</div>
-                                    <div class="small text-muted">Added</div>
+                                    <div class="h4 fw-bold text-success mb-0" id="statSyncAdded">–</div>
+                                    <div class="small text-muted">Baru</div>
                                 </div>
                                 <div class="col border-start">
-                                    <div class="h4 fw-bold text-primary mb-0" id="statSyncUpdated">-</div>
-                                    <div class="small text-muted">Updated</div>
+                                    <div class="h4 fw-bold text-primary mb-0" id="statSyncUpdated">–</div>
+                                    <div class="small text-muted">Update</div>
                                 </div>
                                 <div class="col border-start">
-                                    <div class="h4 fw-bold text-warning mb-0" id="statSyncForeign">-</div>
-                                    <div class="small text-muted">Skipped</div>
+                                    <div class="h4 fw-bold text-warning mb-0" id="statSyncForeign">–</div>
+                                    <div class="small text-muted">Dilewati</div>
                                 </div>
                             </div>
                         </div>
@@ -473,137 +479,169 @@
                 </div>
             </div>
 
-            <div class="row">
-                <!-- Sidebar: Search, Filter, Category, Operator -->
-                <div class="col-12 col-xl-3 mb-4">
-                    <!-- Operator Search -->
-                    <h6 class="fw-bold mb-2">Search</h6>
-                    <div class="mb-3">
-                        <div class="position-relative">
-                            <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left:10px;"></i>
-                            <input type="text" id="operatorSearchInput" class="form-control form-control-sm ps-4" placeholder="Mobile Legends / DANA..." autocomplete="off">
+            <!-- LANGKAH 2 — Pilih produk yang mau di-setup -->
+            <div class="card shadow-sm mb-3 setup-step">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="step-badge">2</span>
+                        <div>
+                            <h6 class="mb-1 fw-bold">Pilih Produk yang Mau Diatur</h6>
+                            <p class="text-muted small mb-0">Persempit dulu pakai kategori dan game/operator, baru atur massal di langkah 3.</p>
                         </div>
                     </div>
 
-                    <!-- Operator Filter -->
-                    <h6 class="fw-bold mb-2">Filter</h6>
-                    <div class="mb-3">
-                        <div class="btn-group w-100" role="group" id="operatorStateFilterGroup">
-                            <input type="radio" class="btn-check" name="op_state_filter" id="op_filter_semua" autocomplete="off" value="Semua" checked>
-                            <label class="btn btn-outline-secondary btn-sm" for="op_filter_semua" style="font-size: 0.75rem;">Semua</label>
+                    <div class="row g-2 catalog-filter-bar">
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label class="form-label small text-muted mb-1" for="catalogCategorySelect">Kategori</label>
+                            <select class="form-select form-select-sm" id="catalogCategorySelect">
+                                <option value="">Memuat…</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-3">
+                            <label class="form-label small text-muted mb-1" for="catalogOperatorSelect">Game / Operator</label>
+                            <select class="form-select form-select-sm" id="catalogOperatorSelect">
+                                <option value="">Semua operator</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-2">
+                            <label class="form-label small text-muted mb-1" for="catalogStatusSelect">Status</label>
+                            <select class="form-select form-select-sm" id="catalogStatusSelect">
+                                <option value="">Semua</option>
+                                <option value="active">Aktif</option>
+                                <option value="inactive">Nonaktif</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-md-6 col-xl-4">
+                            <label class="form-label small text-muted mb-1" for="topupSearchInput">Cari produk</label>
+                            <div class="d-flex gap-2">
+                                <input type="text" id="topupSearchInput" class="form-control form-control-sm" placeholder="Nama produk / kode…" autocomplete="off">
+                                <button onclick="loadTopupProducts()" class="btn btn-outline-secondary btn-sm flex-shrink-0" title="Muat ulang">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                            <input type="radio" class="btn-check" name="op_state_filter" id="op_filter_on" autocomplete="off" value="ON">
-                            <label class="btn btn-outline-success btn-sm" for="op_filter_on" style="font-size: 0.75rem;">ON</label>
-
-                            <input type="radio" class="btn-check" name="op_state_filter" id="op_filter_off" autocomplete="off" value="OFF">
-                            <label class="btn btn-outline-secondary btn-sm" for="op_filter_off" style="font-size: 0.75rem;">OFF</label>
-
-                            <input type="radio" class="btn-check" name="op_state_filter" id="op_filter_mixed" autocomplete="off" value="MIXED">
-                            <label class="btn btn-outline-warning btn-sm" for="op_filter_mixed" style="font-size: 0.75rem;">MIXED</label>
+            <!-- LANGKAH 3 — Terapkan ke semua hasil filter -->
+            <div class="card shadow-sm mb-3 setup-step" id="bulkFilterCard">
+                <div class="card-body">
+                    <div class="d-flex align-items-start gap-3 mb-3 flex-wrap">
+                        <span class="step-badge">3</span>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1 fw-bold">Terapkan ke Semua Hasil Filter</h6>
+                            <p class="text-muted small mb-0" id="bulkFilterSummary">Pilih kategori dulu di langkah 2.</p>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-outline-secondary btn-sm" id="topupUndoBtn" onclick="undoTopupAction()" disabled title="Undo">
+                                <i class="bi bi-arrow-counterclockwise"></i>
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" id="topupRedoBtn" onclick="redoTopupAction()" disabled title="Redo">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Category Navigation -->
-                    <h6 class="fw-bold mb-2">Category</h6>
-                    <div class="catalog-nav-wrapper mb-3">
-                        <div class="catalog-nav d-flex gap-2 overflow-auto pb-2 hide-scrollbar flex-xl-wrap" id="catalogCategoryNav">
-                            <!-- Loaded via JS -->
+                    <div class="d-flex flex-wrap gap-2 bulk-filter-actions">
+                        <button class="btn btn-success btn-sm" onclick="applyToFilter('activate')" disabled>
+                            <i class="bi bi-check-circle me-1"></i> Aktifkan Semua
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="applyToFilter('deactivate')" disabled>
+                            <i class="bi bi-slash-circle me-1"></i> Nonaktifkan Semua
+                        </button>
+                        <button class="btn btn-warning btn-sm" onclick="applyToFilter('auto-markup')" disabled>
+                            <i class="bi bi-cash-coin me-1"></i> Hitung Harga Jual Otomatis
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="applyToFilter('server-id-on')" disabled>
+                            <i class="bi bi-person-vcard me-1"></i> Butuh Server ID
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="applyToFilter('server-id-off')" disabled>
+                            <i class="bi bi-person-x me-1"></i> Tanpa Server ID
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabel produk -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <h6 class="mb-0 fw-bold" id="productTableHeader">Daftar Produk</h6>
+                    <span class="text-muted small" id="topupTableNote"></span>
+                </div>
+
+                <!-- Aksi buat produk yang dicentang manual -->
+                <div class="topup-bulk-bar" id="topupBulkBar">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 pt-2">
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" id="topupSelectAll">
+                            <label class="form-check-label fw-medium small" for="topupSelectAll">Pilih semua yang tampil</label>
                         </div>
+                        <span class="text-muted fw-bold small" id="topupSelectedCount">0 dipilih</span>
                     </div>
 
-                    <!-- Operator/Game List -->
-                    <h6 class="fw-bold mb-3">Operator</h6>
-                    <div class="operator-list d-flex flex-column gap-2" id="catalogOperatorList">
-                        <div class="text-muted small">Pilih kategori di atas...</div>
+                    <div class="d-flex flex-wrap align-items-end gap-3 px-3 pb-3 pt-2">
+                        <div>
+                            <div class="bulk-label">Status</div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-success" onclick="bulkSetTopupStatus(true)" title="Aktifkan terpilih"><i class="bi bi-check-lg"></i></button>
+                                <button class="btn btn-outline-secondary" onclick="bulkSetTopupStatus(false)" title="Nonaktifkan terpilih"><i class="bi bi-dash-circle"></i></button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="bulk-label">Server ID</div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-info" onclick="bulkSetTopupButuhServerId(true)" title="Butuh Server ID"><i class="bi bi-person-check"></i></button>
+                                <button class="btn btn-outline-secondary" onclick="bulkSetTopupButuhServerId(false)" title="Tanpa Server ID"><i class="bi bi-person-x"></i></button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="bulk-label">Markup Harga</div>
+                            <div class="input-group input-group-sm" style="width: 190px;">
+                                <select id="topupBulkMarkupType" class="form-select" style="max-width:62px;">
+                                    <option value="percent">%</option>
+                                    <option value="nominal">Rp</option>
+                                </select>
+                                <input type="number" id="topupBulkMarkupValue" class="form-control" placeholder="Nilai">
+                                <button class="btn btn-warning" onclick="bulkMarkupTopupPrice()" title="Terapkan markup"><i class="bi bi-check2"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="ms-auto">
+                            <div class="bulk-label text-end">Otomatisasi</div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-success" onclick="bulkAutoMarkupTopupPrice()" title="Harga jual otomatis (tabel tier)"><i class="bi bi-lightning-charge"></i></button>
+                                <button class="btn btn-outline-info" onclick="bulkSmartActivateTopup()" title="Aktivasi cerdas"><i class="bi bi-magic"></i></button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Product Table -->
-                <div class="col-12 col-xl-9">
-                    <div class="card shadow-sm">
-                        <div class="card-header bg-transparent d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <div class="d-flex align-items-center gap-3">
-                                <h6 class="mb-0 fw-bold" id="productTableHeader">Daftar Produk</h6>
-                                <div id="operatorBulkToggleArea" class="d-none">
-                                    <!-- Populated by JS -->
-                                </div>
-                            </div>
-                            
-                            <div class="d-flex gap-2 flex-wrap align-items-center">
-                                <div class="position-relative">
-                                    <i class="bi bi-search position-absolute top-50 translate-middle-y text-muted" style="left:10px;"></i>
-                                    <input type="text" id="topupSearchInput" class="form-control form-control-sm ps-4" style="width:200px;" placeholder="Cari nama produk..." autocomplete="off">
-                                </div>
-                                <button onclick="loadTopupProducts()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise"></i></button>
-                            </div>
-                        </div>
+                <div class="table-responsive topup-table-scroll">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="sticky-top">
+                        <tr>
+                            <th style="width:36px;"></th>
+                            <th>Produk</th>
+                            <th class="text-nowrap">Modal</th>
+                            <th class="text-nowrap">Jual</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-end">Aksi</th>
+                        </tr>
+                        </thead>
+                        <tbody id="topupProducts">
+                            <tr><td colspan="6" class="text-center text-muted py-5">Memuat produk…</td></tr>
+                        </tbody>
+                    </table>
+                </div>
 
-                        <!-- Bulk Action Bar -->
-                        <div class="border-bottom topup-bulk-bar bg-light" id="topupBulkBar">
-                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 pt-2">
-                                <div class="form-check mb-0">
-                                    <input class="form-check-input" type="checkbox" id="topupSelectAll">
-                                    <label class="form-check-label fw-medium small" for="topupSelectAll">Pilih semua</label>
-                                </div>
-                                <span class="text-muted fw-bold small" id="topupSelectedCount">0 dipilih</span>
-                            </div>
-
-                            <div class="d-flex flex-wrap align-items-end gap-3 px-3 pb-3 pt-2">
-                                <div>
-                                    <div class="text-muted small mb-1" style="font-size: 0.7rem;">Status</div>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-success" onclick="bulkSetTopupStatus(true)"><i class="bi bi-check-lg"></i></button>
-                                        <button class="btn btn-outline-secondary" onclick="bulkSetTopupStatus(false)"><i class="bi bi-dash-circle"></i></button>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div class="text-muted small mb-1" style="font-size: 0.7rem;">Server ID</div>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-info" onclick="bulkSetTopupButuhServerId(true)" title="Butuh Server ID"><i class="bi bi-person-check"></i></button>
-                                        <button class="btn btn-outline-secondary" onclick="bulkSetTopupButuhServerId(false)" title="Tanpa Server ID"><i class="bi bi-person-x"></i></button>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div class="text-muted small mb-1" style="font-size: 0.7rem;">Harga</div>
-                                    <div class="input-group input-group-sm">
-                                        <select id="topupBulkMarkupType" class="form-select border-warning-subtle" style="max-width:55px; padding-left:0.4rem; padding-right:1rem;">
-                                            <option value="percent">%</option>
-                                            <option value="nominal">Rp</option>
-                                        </select>
-                                        <input type="number" id="topupBulkMarkupValue" class="form-control border-warning-subtle" placeholder="Nilai" style="max-width:70px;">
-                                        <button class="btn btn-warning" onclick="bulkMarkupTopupPrice()"><i class="bi bi-check2"></i></button>
-                                    </div>
-                                </div>
-
-                                <div class="ms-auto d-flex gap-2">
-                                    <div>
-                                        <div class="text-muted small mb-1 text-end" style="font-size: 0.7rem;">Otomatisasi</div>
-                                        <button class="btn btn-outline-success btn-sm" onclick="bulkAutoMarkupTopupPrice()" title="Auto Markup (Tabel Tiers)"><i class="bi bi-lightning-charge"></i></button>
-                                        <button class="btn btn-outline-info btn-sm" onclick="bulkSmartActivateTopup()" title="Aktivasi Cerdas"><i class="bi bi-magic"></i></button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
-                            <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
-                                <thead class="table-light sticky-top">
-                                <tr>
-                                    <th style="width:36px;"></th>
-                                    <th>Produk</th>
-                                    <th>Modal</th>
-                                    <th>Jual</th>
-                                    <th class="text-center">Status</th>
-                                    <th class="text-end">Aksi</th>
-                                </tr>
-                                </thead>
-                                <tbody id="topupProducts">
-                                    <tr><td colspan="6" class="text-center text-muted py-5">Memuat produk...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
+                <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2 d-none" id="topupPagerBar">
+                    <span class="text-muted small" id="topupPagerInfo"></span>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" id="topupPrevPage" onclick="changeCatalogPage(-1)"><i class="bi bi-chevron-left"></i> Sebelumnya</button>
+                        <button class="btn btn-outline-secondary" id="topupNextPage" onclick="changeCatalogPage(1)">Berikutnya <i class="bi bi-chevron-right"></i></button>
                     </div>
                 </div>
             </div>
@@ -1931,7 +1969,7 @@
 
                     <div class="mb-3">
                         <small class="text-muted d-block" style="font-size: 0.72rem;">Model AI Aktif</small>
-                        <span id="model_groq" class="badge bg-dark-subtle border fw-semibold" style="color: var(--magenta); border-color: var(--line) !important;">llama-3.3-70b-versatile</span>
+                        <span id="model_groq" class="badge bg-dark-subtle border fw-semibold" style="color: var(--magenta); border-color: var(--line) !important;">openai/gpt-oss-20b</span>
                     </div>
 
                     <!-- Metrics Grid -->
@@ -1970,7 +2008,7 @@
                         <button class="btn btn-primary btn-sm fw-semibold" onclick="testSingleAiProvider('groq')">
                             <i class="bi bi-lightning-charge me-1"></i> Test Connection
                         </button>
-                        <button class="btn btn-outline-light btn-sm" onclick="openApiKeyModal('groq', 'Groq AI', 'llama-3.3-70b-versatile')">
+                        <button class="btn btn-outline-light btn-sm" onclick="openApiKeyModal('groq', 'Groq AI', 'openai/gpt-oss-20b')">
                             <i class="bi bi-sliders me-1"></i> Kelola Key & Model
                         </button>
                     </div>
@@ -2472,57 +2510,6 @@
 </div>
 
 <!-- Topup Product Edit Modal -->
-<div class="modal fade" id="topupProductModal" tabindex="-1">
-<div class="modal-dialog">
-<div class="modal-content">
-    <div class="modal-header">
-        <h5 class="modal-title"><i class="bi bi-gem me-2"></i>Edit Produk Topup</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
-    </div>
-    <div class="modal-body">
-        <form id="topupProductForm" class="row g-3">
-            <div class="col-12">
-                <label class="form-label">Nama Produk</label>
-                <input id="tpEditNama" class="form-control">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Kategori</label>
-                <input id="tpEditKategori" class="form-control">
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Harga Modal</label>
-                <input id="tpEditHargaBeli" class="form-control" disabled>
-            </div>
-            <div class="col-12">
-                <label class="form-label">Harga Jual</label>
-                <input id="tpEditHargaJual" type="number" min="0" class="form-control">
-            </div>
-            <div class="col-12">
-                <label class="form-label">Icon Diamond (khusus item ini)</label>
-                <input type="file" id="tpEditIconInput" class="form-control" accept="image/*">
-                <img id="tpEditIconPreview" src="" class="img-thumbnail mt-2 d-none" style="max-height:70px;">
-            </div>
-            <div class="col-12">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="tpEditButuhServerId">
-                    <label class="form-check-label" for="tpEditButuhServerId">Butuh Server ID</label>
-                </div>
-            </div>
-            <div class="col-12">
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" id="tpEditIsActive">
-                    <label class="form-check-label" for="tpEditIsActive">Aktif (tampil di toko)</label>
-                </div>
-            </div>
-        </form>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-        <button type="button" class="btn btn-success" onclick="saveTopupProduct()"><i class="bi bi-floppy"></i> Simpan</button>
-    </div>
-</div>
-</div>
-</div>
 
 <!-- Riwayat & Statistik Pelanggan Modal -->
 <div class="modal fade" id="userDetailModal" tabindex="-1">
@@ -2892,9 +2879,9 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="js/dashboard.js?v=20260812-otp-security"></script>
-<script src="js/editorial.js?v=20260814-news"></script>
-<script src="js/catalogSync.js"></script>
+<script src="js/dashboard.js?v=20260822-catalog"></script>
+<script src="js/editorial.js?v=20260822-catalog"></script>
+<script src="js/catalogSync.js?v=20260822-catalog"></script>
 
 </body>
 </html>

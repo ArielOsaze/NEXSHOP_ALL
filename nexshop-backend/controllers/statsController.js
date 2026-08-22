@@ -1,17 +1,44 @@
 const supabase = require("../config/db");
 const { getStoreSettings, getApiKeys, DEFAULT_GEMINI_MODEL, callGeminiWithFallback } = require("../config/settings");
 const axios = require("axios");
+const { fetchAllRows } = require("../utils/supabasePaginate");
 
 // Status yang dianggap "sukses/terbayar" di masing-masing tabel — dipakai
 // buat hitung omzet asli (bukan sekadar jumlah order yang dibuat).
 const SUCCESS_ORDER_STATUS = "paid";
 const SUCCESS_TOPUP_STATUS = "sukses";
 
+// ===========================================================
+// ZONA WAKTU — toko ini jualan di Indonesia, jadi "hari" di grafik omzet
+// HARUS hari WIB (UTC+7), bukan hari UTC. Sebelumnya semua bucket dihitung
+// pakai toISOString() yang selalu UTC: order yang masuk jam 00:00–06:59
+// WIB kecatat sebagai omzet HARI KEMARIN, dan omzet "hari ini" selalu
+// kelihatan lebih kecil dari yang sebenarnya sampai lewat jam 7 pagi.
+// ===========================================================
+const WIB_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+// Geser timestamp ke "jam dinding WIB" lalu ambil bagian tanggalnya, jadi
+// slice(0,10) menghasilkan tanggal WIB, bukan tanggal UTC.
+function toWibParts(dateStr) {
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return null;
+    return new Date(d.getTime() + WIB_OFFSET_MS).toISOString();
+}
+
 function dayKey(dateStr) {
-    return new Date(dateStr).toISOString().slice(0, 10);
+    const wib = toWibParts(dateStr);
+    return wib ? wib.slice(0, 10) : null;
 }
 function monthKey(dateStr) {
-    return new Date(dateStr).toISOString().slice(0, 7);
+    const wib = toWibParts(dateStr);
+    return wib ? wib.slice(0, 7) : null;
+}
+
+// "Sekarang" dalam jam dinding WIB — dipakai buat bikin deret 30 hari /
+// 12 bulan terakhir supaya label sumbu-X-nya sinkron sama dayKey di atas
+// (dan gak ikut-ikutan geser kalau server-nya di-deploy di zona lain).
+function nowInWib() {
+    return new Date(Date.now() + WIB_OFFSET_MS);
 }
 
 // ADMIN — ringkasan statistik penjualan gabungan (produk biasa + topup diamond):
@@ -22,19 +49,23 @@ exports.getOverview = async (req, res) => {
     }
 
     try {
-        const [ordersRes, topupRes, topupProductsRes] = await Promise.all([
-            supabase.from("orders").select("id, total, status, items, created_at"),
-            supabase.from("topup_orders").select("id, harga, status, kode_produk, nama_produk, created_at"),
-            supabase.from("topup_products").select("kode_produk, kategori")
+        // Paginasi WAJIB di sini: Supabase motong SELECT di 1000 baris tanpa
+        // error. Tanpa ini, begitu order lewat 1000 omzetnya diam-diam salah,
+        // dan peta kode->kategori cuma kebaca 1000 dari 11.000+ produk (jadi
+        // hampir semua order topup jatuh ke kategori "Lainnya").
+        const [orders, topupOrders, topupProducts] = await Promise.all([
+            fetchAllRows((from, to) =>
+                supabase.from("orders").select("id, total, status, items, created_at").range(from, to)
+            ),
+            fetchAllRows((from, to) =>
+                supabase.from("topup_orders").select("id, harga, status, kode_produk, nama_produk, created_at").range(from, to)
+            ),
+            fetchAllRows((from, to) =>
+                supabase.from("topup_products").select("kode_produk, kategori").range(from, to)
+            )
         ]);
 
-        if (ordersRes.error || topupRes.error || topupProductsRes.error) {
-            return res.status(500).json({ message: "Gagal mengambil data statistik" });
-        }
-
-        const orders = ordersRes.data || [];
-        const topupOrders = topupRes.data || [];
-        const kodeToKategori = new Map((topupProductsRes.data || []).map(p => [p.kode_produk, p.kategori || "Lainnya"]));
+        const kodeToKategori = new Map(topupProducts.map(p => [p.kode_produk, p.kategori || "Lainnya"]));
 
         const paidOrders = orders.filter(o => o.status === SUCCESS_ORDER_STATUS);
         const paidTopups = topupOrders.filter(t => t.status === SUCCESS_TOPUP_STATUS);
@@ -52,22 +83,27 @@ exports.getOverview = async (req, res) => {
         const monthMap = new Map();
         function addRevenue(dateStr, amount) {
             const dk = dayKey(dateStr), mk = monthKey(dateStr);
+            if (!dk || !mk) return; // created_at kosong/rusak — jangan bikin bucket "Invalid Date"
             dayMap.set(dk, (dayMap.get(dk) || 0) + amount);
             monthMap.set(mk, (monthMap.get(mk) || 0) + amount);
         }
         paidOrders.forEach(o => addRevenue(o.created_at, Number(o.total || 0)));
         paidTopups.forEach(t => addRevenue(t.created_at, Number(t.harga || 0)));
 
-        const today = new Date();
+        // Deret tanggal dibangun pakai getUTC* dari objek yang udah digeser ke
+        // WIB, jadi hasilnya konsisten sama dayKey/monthKey di atas apa pun
+        // zona waktu server-nya.
+        const todayWib = nowInWib();
         const revenueByDay = [];
         for (let i = 29; i >= 0; i--) {
-            const d = new Date(today); d.setDate(d.getDate() - i);
+            const d = new Date(todayWib);
+            d.setUTCDate(d.getUTCDate() - i);
             const key = d.toISOString().slice(0, 10);
             revenueByDay.push({ date: key, revenue: dayMap.get(key) || 0 });
         }
         const revenueByMonth = [];
         for (let i = 11; i >= 0; i--) {
-            const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+            const d = new Date(Date.UTC(todayWib.getUTCFullYear(), todayWib.getUTCMonth() - i, 1));
             const key = d.toISOString().slice(0, 7);
             revenueByMonth.push({ month: key, revenue: monthMap.get(key) || 0 });
         }
@@ -122,21 +158,27 @@ exports.exportOrders = async (req, res) => {
     }
 
     try {
-        const [ordersRes, topupRes] = await Promise.all([
-            supabase.from("orders").select("id, recipient_name, recipient_email, total, status, items, created_at").order("created_at", { ascending: false }),
-            supabase.from("topup_orders").select("id, recipient_email, harga, status, nama_produk, tujuan, server_id, created_at").order("created_at", { ascending: false })
+        // Paginasi supaya laporan CSV gak diam-diam kepotong di 1000 baris.
+        const [ordersData, topupData] = await Promise.all([
+            fetchAllRows((from, to) =>
+                supabase.from("orders")
+                    .select("id, recipient_name, recipient_email, total, status, items, created_at")
+                    .order("created_at", { ascending: false })
+                    .range(from, to)
+            ),
+            fetchAllRows((from, to) =>
+                supabase.from("topup_orders")
+                    .select("id, recipient_email, harga, status, nama_produk, tujuan, server_id, created_at")
+                    .order("created_at", { ascending: false })
+                    .range(from, to)
+            )
         ]);
-
-        if (ordersRes.error || topupRes.error) {
-            console.error("Export orders query error:", ordersRes.error || topupRes.error);
-            return res.status(500).json({ message: "Gagal mengekspor data pesanan" });
-        }
 
         const rows = [
             ["ID Transaksi", "Jenis", "Tanggal", "Nama Pembeli", "Email", "Item / Game", "Total (IDR)", "Status"]
         ];
 
-        (ordersRes.data || []).forEach(o => {
+        ordersData.forEach(o => {
             const itemNames = (o.items || []).map(i => `${i.name || 'Produk'} (x${i.qty || 1})`).join("; ");
             rows.push([
                 `ORD-${o.id}`,
@@ -150,7 +192,7 @@ exports.exportOrders = async (req, res) => {
             ]);
         });
 
-        (topupRes.data || []).forEach(t => {
+        topupData.forEach(t => {
             const userTarget = t.tujuan + (t.server_id ? ` (${t.server_id})` : "");
             rows.push([
                 `TOP-${t.id}`,

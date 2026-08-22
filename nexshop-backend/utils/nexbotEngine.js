@@ -49,7 +49,75 @@ const INTENTS = {
 
 function escapeRegExp(value) { return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
 
-function tokenize(text) { return [...new Set(String(text || "").toLowerCase().split(/\s+/).filter((token) => token.length > 1 && !STOP_WORDS.has(token)))]; }
+// Customer Indonesia hampir selalu nempelin klitik ke kata benda:
+// "topupnya", "harganya", "caranya", "produknya". Tanpa dipotong, token
+// "topupnya" GAK PERNAH match ke knowledge yang nulis "topup" (regex-nya
+// pakai word-boundary), jadi pertanyaan sehari-hari kayak "topupnya lama
+// gak" nyari ke knowledge yang salah total.
+const CLITIC_SUFFIXES = ["nya", "lah", "kah", "pun", "ku", "mu"];
+
+function stripClitic(token) {
+    for (const suffix of CLITIC_SUFFIXES) {
+        if (token.length > suffix.length + 2 && token.endsWith(suffix)) return token.slice(0, -suffix.length);
+    }
+    return token;
+}
+
+function tokenize(text) {
+    const tokens = String(text || "").toLowerCase().split(/\s+/)
+        .map((token) => stripClitic(token))
+        .filter((token) => token.length > 1 && !STOP_WORDS.has(token));
+    return [...new Set(tokens)];
+}
+
+// Bahasa Indonesia itu bahasa berimbuhan: customer nulis "beli", knowledge
+// nulis "membeli"; customer nulis "aman", knowledge nulis "keamanan". Regex
+// word-boundary polos GAK PERNAH nyambungin dua bentuk itu, jadi pertanyaan
+// sederhana kayak "kalau saya beli sekarang kapan masuknya" nol match dan
+// NexBot langsung jawab "informasi belum tersedia".
+//
+// Toleransi imbuhan cuma dipakai buat token >= 4 huruf, supaya token pendek
+// (mis. "ml", "ff", "va") gak jadi kebanyakan false positive.
+const PREFIX_PATTERN = "(?:me|mem|men|meng|meny|di|ter|ber|pe|pem|pen|peng|ke)?";
+const SUFFIX_PATTERN = "(?:nya|lah|kah|pun|ku|mu|kan|an|i)?";
+const CLITIC_ONLY_PATTERN = "(?:nya|lah|kah|pun|ku|mu)?";
+
+function tokenMatches(token, haystack) {
+    const escaped = escapeRegExp(token);
+    if (token.length < 4) {
+        return new RegExp(`\\b${escaped}${CLITIC_ONLY_PATTERN}\\b`).test(haystack);
+    }
+    return new RegExp(`\\b${PREFIX_PATTERN}${escaped}${SUFFIX_PATTERN}\\b`).test(haystack);
+}
+
+// Semua ejaan/alias yang dikenal buat sebuah entity. Nyocokin entity cuma
+// lewat nama kanoniknya bikin artikel "Apa Perbedaan Game Pass Private dan
+// Game Pass Sharing?" GAK ke-anggep ngomongin "Xbox Game Pass Private" --
+// judulnya kan gak nulis kata "Xbox". Padahal justru itu artikel yang
+// paling menjawab pertanyaan "apa bedanya private sama sharing".
+function entityTerms(name) {
+    const entry = ENTITY_CATALOG.find((candidate) => candidate.name === name);
+    const terms = entry ? entry.terms : [];
+    return [...new Set([name.toLowerCase(), ...terms.map((term) => term.toLowerCase())])];
+}
+
+function entityMentioned(name, haystack) {
+    return entityTerms(name).some((term) => new RegExp(`\\b${escapeRegExp(term)}\\b`).test(haystack));
+}
+
+// Buat MEMBEDAKAN varian produk (Sharing vs Private), alias satu kata yang
+// generik kayak "sharing" atau "private" gak bisa dipercaya: blok keyword
+// di knowledge_base sering nyantumin dua-duanya sekaligus, jadi artikel
+// Private ikut ke-anggep artikel Sharing. Yang dipakai cuma nama kanonik +
+// alias yang terdiri dari beberapa kata ("game pass sharing").
+function distinctiveEntityTerms(name) {
+    const terms = entityTerms(name).filter((term) => term.includes(" ") || term === name.toLowerCase());
+    return terms.length ? terms : [name.toLowerCase()];
+}
+
+function entityDistinctlyMentioned(name, haystack) {
+    return distinctiveEntityTerms(name).some((term) => new RegExp(`\\b${escapeRegExp(term)}\\b`).test(haystack));
+}
 
 function normalizeQuery(input) {
     let text = String(input || "").normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -77,6 +145,18 @@ function detectEntities(normalized, additionalEntities = []) {
 function trigrams(text) { const value = `  ${String(text || "").toLowerCase()}  `; const result = new Set(); for (let i = 0; i < value.length - 2; i += 1) result.add(value.slice(i, i + 3)); return result; }
 function similarity(left, right) { const a = trigrams(left); const b = trigrams(right); if (!a.size || !b.size) return 0; let common = 0; a.forEach((part) => { if (b.has(part)) common += 1; }); return common / (a.size + b.size - common); }
 
+// Sinyal yang beneran nunjukin sebuah artikel ngomongin KEPERCAYAAN TOKO,
+// bukan sekadar kebetulan ngandung kata "aman".
+const STORE_TRUST_PATTERN = /nexshop|legalitas|legal|oss|nib|escrow|rekber|terpercaya|penipu|scam|izin usaha|kbli/;
+
+// Artikel yang cakupannya satu produk/game tertentu. Judul kayak "Apakah
+// Progress Game Aman pada Game Pass Sharing?" itu PANDUAN PRODUK -- tapi
+// sebelumnya keklasifikasi sebagai intent "Trust" cuma gara-gara ada kata
+// "aman" di judulnya. Akibatnya, tiap pertanyaan "NexShop aman gak?" dapat
+// bonus intent penuh (+35) buat artikel Xbox yang gak nyambung sama sekali,
+// dan artikel itu ikut dikirim ke AI sebagai "fakta" soal keamanan toko.
+const PRODUCT_SCOPED_PATTERN = /game ?pass|gamepass|xbox|steam|mobile legends|free fire|pubg|valorant|nintendo|playstation|genshin|roblox|forza|magic chess|mlbb/;
+
 function inferKnowledgeIntent(item) {
     const text = `${item.title || ""} ${item.category || ""} ${item.keywords || ""}`.toLowerCase();
     const cat = String(item.category || "").toLowerCase();
@@ -85,6 +165,16 @@ function inferKnowledgeIntent(item) {
     if (cat === "guide" || cat === "product" || cat === "news") {
         if (/cara|panduan|langkah|tutorial|guide/.test(text)) return "Guide";
         if (/aman|sharing|xbox/.test(text)) return "Guide";
+        return "GeneralQuestion";
+    }
+
+    // Artikel yang scope-nya satu produk gak boleh diklaim sebagai artikel
+    // trust/legalitas toko, kecuali dia emang nyebut sinyal toko-nya.
+    if (PRODUCT_SCOPED_PATTERN.test(text) && !STORE_TRUST_PATTERN.test(text)) {
+        if (/cara|panduan|langkah|tutorial|guide|redeem|aktivasi/.test(text)) return "Guide";
+        if (/perbedaan|\bvs\b|versus|comparison/.test(text)) return "Comparison";
+        if (/harga|pricing/.test(text)) return "Pricing";
+        if (/apa itu|pengertian|definisi|faq/.test(text)) return "Definition";
         return "GeneralQuestion";
     }
 
@@ -105,22 +195,61 @@ function inferKnowledgeIntent(item) {
     return "GeneralQuestion";
 }
 
+// Entity yang PALING SPESIFIK di antara yang terdeteksi. Kalau user nanya
+// "Xbox Game Pass Sharing", detektor juga ikut ngasih "Xbox Game Pass" yang
+// lebih umum. Tanpa dibedain, SEMUA artikel Game Pass (termasuk yang
+// Private) dapat kredit entity penuh dan ikut kekirim ke AI -- itu yang
+// bikin NexBot nyampur-nyampur fakta Private ke jawaban soal Sharing.
+function specificEntities(entities) {
+    return entities.filter(
+        (entity) => !entities.some((other) => other !== entity && other.toLowerCase().includes(entity.toLowerCase()))
+    );
+}
+
 function scoreKnowledge(item, query, intent, entities) {
-    const title = String(item.title || "").toLowerCase(); const keywords = String(item.keywords || "").toLowerCase(); const content = String(item.content || "").toLowerCase(); const haystack = `${title} ${keywords} ${content}`;
+    const title = String(item.title || "").toLowerCase();
+    const keywords = String(item.keywords || "").toLowerCase();
+    const content = String(item.content || "").toLowerCase();
+    const haystack = `${title} ${keywords} ${content}`;
+    const label = `${title} ${keywords}`;
     const tokens = query.tokens;
-    const matchedTokens = tokens.filter((token) => new RegExp(`\\b${escapeRegExp(token)}\\b`).test(haystack)).length;
-    const titleTokens = tokens.filter((token) => new RegExp(`\\b${escapeRegExp(token)}\\b`).test(title)).length;
-    const entityMatches = entities.filter((entity) => title.includes(entity.toLowerCase()) || keywords.includes(entity.toLowerCase()) || content.includes(entity.toLowerCase())).length;
-    const knowledgeIntent = inferKnowledgeIntent(item); const semantic = similarity(query.raw, `${title} ${keywords}`);
-    
-    // Memberikan kelonggaran untuk intent yang serumpun (Trust, Legality, Escrow, Payment)
+
+    const matchedTokens = tokens.filter((token) => tokenMatches(token, haystack)).length;
+    const titleTokens = tokens.filter((token) => tokenMatches(token, title)).length;
+    const entityMatches = entities.filter((entity) => entityMentioned(entity, haystack)).length;
+
+    // Entity spesifik dihitung cuma dari judul + keyword (bukan isi), supaya
+    // artikel yang kebetulan NYINGGUNG produk lain di badan teksnya gak
+    // ke-anggep sebagai artikel tentang produk itu.
+    const narrow = specificEntities(entities);
+    const specificMatches = narrow.filter((entity) => entityDistinctlyMentioned(entity, label)).length;
+
+    const knowledgeIntent = inferKnowledgeIntent(item);
+    const semantic = similarity(query.raw, label);
+
+    // Kekerabatan antar-intent. Sebelumnya cuma 4 intent yang punya kerabat,
+    // jadi 11 intent sisanya kena penalti mismatch penuh (-25) walau
+    // pasangannya jelas nyambung -- pertanyaan ber-intent "Purchase" ketemu
+    // artikel ber-intent "Guide" ("Cara Membeli Produk") langsung dibuang,
+    // dan NexBot jawab "informasi belum tersedia" buat pertanyaan sepele
+    // kayak "kalau saya beli sekarang kapan masuknya ya".
     const related = {
-        Trust: ['Trust', 'Legality', 'Escrow'],
-        Legality: ['Trust', 'Legality'],
-        Escrow: ['Trust', 'Escrow', 'Payment'],
-        Payment: ['Payment', 'Escrow']
+        Trust: ["Trust", "Legality", "Escrow"],
+        Legality: ["Trust", "Legality"],
+        Escrow: ["Trust", "Escrow", "Payment"],
+        Payment: ["Payment", "Escrow", "Purchase"],
+        Purchase: ["Purchase", "Guide", "Payment", "Pricing"],
+        Guide: ["Guide", "Purchase", "Definition", "TechnicalSupport"],
+        Pricing: ["Pricing", "Purchase", "Promotion", "Guide"],
+        Promotion: ["Promotion", "Pricing"],
+        Definition: ["Definition", "Comparison", "Guide"],
+        Comparison: ["Comparison", "Definition"],
+        Recommendation: ["Recommendation", "Pricing", "Purchase", "Comparison"],
+        Order: ["Order", "TechnicalSupport", "Refund"],
+        Refund: ["Refund", "Order", "TechnicalSupport"],
+        TechnicalSupport: ["TechnicalSupport", "Guide", "Order"]
     };
-    
+
     const isStrictIntent = ["Trust", "Legality", "Payment", "Refund", "Escrow"].includes(intent);
     let intentScore = -25;
 
@@ -136,65 +265,87 @@ function scoreKnowledge(item, query, intent, entities) {
     // Legends" dan item ini emang soal Mobile Legends), jangan biarin
     // penalti mismatch-intent (-25) menenggelamkan item yang sebenarnya
     // sangat relevan cuma karena diklasifikasi ke intent yang beda.
-    // Sebelumnya ini bisa bikin detail knowledge soal produk/game yang
-    // ditanya malah gak pernah sampai ke AI.
-    const entityMatchCount = entityMatches;
-    if (intentScore < 0 && entityMatchCount > 0) {
+    if (intentScore < 0 && entityMatches > 0) {
         intentScore = Math.max(intentScore, -5);
     }
 
-    return Math.round(intentScore + Math.min(32, entityMatches * 18) + Math.min(20, titleTokens * 8) + Math.min(12, matchedTokens * 3) + semantic * 20 + Math.min(6, Number(item.priority) || 0));
+    const score = Math.round(
+        intentScore +
+        Math.min(32, entityMatches * 18) +
+        specificMatches * 12 +
+        Math.min(20, titleTokens * 8) +
+        Math.min(12, matchedTokens * 3) +
+        semantic * 20 +
+        Math.min(6, Number(item.priority) || 0)
+    );
+
+    // BUKTI — sebuah knowledge cuma boleh jadi kandidat kalau dia beneran
+    // nyerempet isi pertanyaannya. Tanpa gerbang ini, bonus intent doang
+    // udah cukup buat ngelolosin entri yang nol hubungannya: pertanyaan
+    // "topupnya lama gak" sempat ngirim "Hall of Fame", "Latest Gaming
+    // News", dan artikel berita MPL ke AI sebagai fakta.
+    const hasEvidence = entityMatches > 0 || titleTokens > 0 || matchedTokens >= 2 || semantic >= 0.34;
+
+    return { score, hasEvidence, specificMatches, entityMatches, knowledgeIntent };
 }
 
-// Sebelumnya cuma 15 -- terlalu ketat, banyak knowledge yang relevan tapi
-// skornya pas-pasan (mis. cuma match keyword tanpa match intent persis)
-// jadi kebuang dan gak pernah dibaca AI sama sekali.
-const MIN_KNOWLEDGE_SCORE = 8;
+// Ambang MUTLAK: di bawah ini item dianggap kebetulan doang. Dari data
+// nyata knowledge_base NexShop, hit yang beneran relevan skornya 45-115,
+// sedangkan noise nyangkut di 38-48 -- makanya ambang mutlak aja gak cukup,
+// harus dibarengin ambang RELATIF di bawah.
+const MIN_KNOWLEDGE_SCORE = 18;
 
-// Sebelumnya hard-cap di 3 -- apapun topiknya, AI cuma pernah dikasih
-// maksimal 3 potongan knowledge. Dinaikkan supaya pertanyaan yang butuh
-// banyak detail (mis. soal satu game/produk yang informasinya kepecah di
-// beberapa entri knowledge_base) bisa kebaca semua, bukan cuma 3 teratas.
-const MAX_SELECTED_KNOWLEDGE = 10;
+// Ambang RELATIF terhadap hit terbaik. Ini yang beneran motong ekor noise:
+// kalau kandidat teratas skornya 115, item skor 40 jelas bukan jawaban
+// pertanyaan yang sama. Sebelumnya seleksi pakai "selisih <= 12 dari top"
+// yang justru kebalik -- pas hit teratas lemah (mis. 42), SEMUA noise di
+// sekitarnya ikut keangkut.
+const RELATIVE_SCORE_RATIO = 0.55;
+
+// Dulu 3 (kekurangan konteks), lalu dinaikin ke 10 (kebanyakan noise: satu
+// pertanyaan soal Game Pass Sharing ngirim 10 chunk yang isinya kecampur
+// Private, Essentials, dan durasi paket lain -- model kecil jadi nyampur
+// fakta). 6 cukup buat nutup topik tanpa nenggelamin jawabannya.
+const MAX_SELECTED_KNOWLEDGE = 6;
+
+// Di bawah skor ini, kandidat terbaik pun cuma "nyerempet" — jumlah chunk
+// yang dikirim dipangkas biar model gak dikasih tumpukan tebakan.
+const LOW_CONFIDENCE_SCORE = 35;
 
 function paragraphs(text) { return String(text || "").split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean); }
 function normalizedParagraph(text) { return text.toLowerCase().replace(/[^a-z0-9]/g, ""); }
 function deduplicateKnowledge(items) { const seen = new Set(); return items.map((item) => ({ ...item, content: paragraphs(item.content).filter((part) => { const key = normalizedParagraph(part); if (!key || seen.has(key)) return false; seen.add(key); return true; }).join("\n\n") })).filter((item) => item.content); }
 
 function rankKnowledge(items, query, intent, entities) {
-    const ranked = (items || []).filter((item) => item && item.status !== "inactive").map((item) => ({ ...item, score: scoreKnowledge(item, query, intent, entities), knowledgeIntent: inferKnowledgeIntent(item) })).filter((item) => item.score > MIN_KNOWLEDGE_SCORE).sort((a, b) => b.score - a.score);
+    const ranked = (items || [])
+        .filter((item) => item && item.status !== "inactive")
+        .map((item) => {
+            const detail = scoreKnowledge(item, query, intent, entities);
+            return { ...item, ...detail };
+        })
+        // Gerbang bukti dulu, baru ambang skor mutlak.
+        .filter((item) => item.hasEvidence && item.score >= MIN_KNOWLEDGE_SCORE)
+        .sort((a, b) => b.score - a.score);
+
     if (!ranked.length) return [];
-    const selected = [ranked[0]];
-    for (const item of ranked.slice(1)) {
-        if (selected.length >= MAX_SELECTED_KNOWLEDGE) break;
-        const sameEntity = entities.some((entity) => `${item.title} ${item.keywords}`.toLowerCase().includes(entity.toLowerCase()));
-        const comparison = intent === "Comparison" && item.score >= ranked[0].score - 18;
-        // Backfill tambahan: item lain yang skornya masih relatif dekat sama
-        // skor tertinggi (bukan cuma yang match entity/comparison persis)
-        // tetap ikut diloloskan, supaya detail-detail terkait yang skornya
-        // sedikit di bawah item #1 gak otomatis kebuang.
-        const closeScore = item.score >= ranked[0].score - 12;
-        if (sameEntity || comparison || closeScore) selected.push(item);
+
+    // Kalau pertanyaannya nyebut produk spesifik (mis. "Game Pass Sharing"),
+    // buang varian lain yang cuma nyangkut lewat nama produk induknya.
+    const narrow = specificEntities(entities);
+    let pool = ranked;
+    if (narrow.length) {
+        const onTopic = ranked.filter((item) => item.specificMatches > 0);
+        if (onTopic.length) pool = onTopic;
     }
-    // Guarantee tambahan: SEMUA knowledge aktif yang judul/keyword-nya
-    // eksplisit menyebut salah satu entity yang terdeteksi di pertanyaan
-    // pengguna wajib ikut (selama masih di bawah MAX_SELECTED_KNOWLEDGE),
-    // walau skornya sendiri gak masuk top ranking -- ini yang bikin "detail
-    // terkecil" soal produk/game yang ditanya user tetap kebaca, bukan cuma
-    // ringkasan paling umum soal topik itu.
-    if (entities.length && selected.length < MAX_SELECTED_KNOWLEDGE) {
-        const selectedIds = new Set(selected.map((item) => item.id));
-        for (const item of ranked) {
-            if (selected.length >= MAX_SELECTED_KNOWLEDGE) break;
-            if (selectedIds.has(item.id)) continue;
-            const haystack = `${item.title} ${item.keywords}`.toLowerCase();
-            const matchesEntity = entities.some((entity) => haystack.includes(entity.toLowerCase()));
-            if (matchesEntity) {
-                selected.push(item);
-                selectedIds.add(item.id);
-            }
-        }
-    }
+
+    const floor = Math.max(MIN_KNOWLEDGE_SCORE, pool[0].score * RELATIVE_SCORE_RATIO);
+
+    // Kalau hit terbaiknya sendiri lemah, retrieval-nya lagi nebak. Ngirim 6
+    // tebakan sekaligus ke model cuma bikin jawabannya ngambang -- lebih
+    // baik kasih 2 kandidat terkuat aja.
+    const cap = pool[0].score < LOW_CONFIDENCE_SCORE ? 2 : MAX_SELECTED_KNOWLEDGE;
+    const selected = pool.filter((item) => item.score >= floor).slice(0, cap);
+
     return deduplicateKnowledge(selected);
 }
 
@@ -207,4 +358,4 @@ function buildKnowledgeResponse(selected) {
     }).join("\n\n");
 }
 
-module.exports = { normalizeQuery, detectIntent, detectEntities, rankKnowledge, buildKnowledgeResponse, deduplicateKnowledge, inferKnowledgeIntent };
+module.exports = { normalizeQuery, detectIntent, detectEntities, rankKnowledge, buildKnowledgeResponse, deduplicateKnowledge, inferKnowledgeIntent, scoreKnowledge, specificEntities, tokenize, stripClitic, MAX_SELECTED_KNOWLEDGE };

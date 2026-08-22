@@ -74,9 +74,8 @@ let editingPromoId = null;
 let currentPromoImage = "";
 let currentPromoMobileImage = "";
 
-const topupProductModalEl = document.getElementById("topupProductModal");
-const topupProductModal = new bootstrap.Modal(topupProductModalEl);
-let editingTopupProductId = null;
+// Modal "Edit Produk Topup" versi lama sudah diganti drawer di
+// js/catalogSync.js (openProductDrawer), jadi elemen + state-nya dibuang.
 let topupProducts = [];
 let topupOrders = [];
 let productSearchQuery = "";
@@ -356,7 +355,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         if (view === "promo" && !promoLoaded) loadPromo();
         if (view === "news" && !newsLoaded) loadNews();
         if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
-        if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
+        if (view === "topup") { window.initTopupCatalog?.(); loadTvBalance(); }
         if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); loadCustomTestimonials(); ratingsLoaded = true; }
         if (view === "settings" && !settingsLoaded) loadSettings();
         if (view === "stats" && !statsLoaded) loadStats();
@@ -386,7 +385,7 @@ function switchView(view) {
     if (view === "promo" && !promoLoaded) loadPromo();
     if (view === "news" && !newsLoaded) loadNews();
     if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
-    if (view === "topup" && !topupProductsLoaded) { loadTopupProducts(); loadTvBalance(); }
+    if (view === "topup") { window.initTopupCatalog?.(); loadTvBalance(); }
     if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); loadCustomTestimonials(); ratingsLoaded = true; }
     if (view === "settings" && !settingsLoaded) loadSettings();
     if (view === "stats" && !statsLoaded) loadStats();
@@ -1956,7 +1955,7 @@ async function testFonnteWhatsApp() {
 }
 
 // ================================
-// Topup Diamond (TokoVoucher)
+// Topup TokoVoucher
 // ================================
 
 document.querySelectorAll("#topupTabs [data-topup-tab]").forEach(btn => {
@@ -1989,44 +1988,13 @@ async function loadTvBalance() {
     }
 }
 
-async function syncTopupProducts() {
-    const kode = document.getElementById("tvSyncKode").value.trim();
-    if (!kode) {
-        showToast("Masukkan kode/prefix produk dulu, mis. ML", true);
-        return;
-    }
-    try {
-        const res = await apiFetch(`/topup/admin/sync?kode=${encodeURIComponent(kode)}`);
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal sync produk");
+// Katalog produk topup sekarang SEPENUHNYA dipegang js/catalogSync.js
+// (window.loadTopupProducts + renderProductTable). Yang tinggal di sini
+// cuma state seleksi dan aksi massal yang dipanggil dari toolbar.
 
-        showToast(data.message || "Produk berhasil disinkronkan");
-        loadTopupProducts();
-    } catch (err) {
-        if (err.message === "unauthorized") return;
-        showToast(err.message, true);
-    }
-}
-
-async function loadTopupProducts() {
-    const tbody = document.getElementById("topupProducts");
-    tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat data...</td></tr>`;
-
-    try {
-        const res = await apiFetch("/topup/admin/products");
-        if (!res.ok) throw new Error("Gagal mengambil data produk topup");
-
-        topupProducts = await res.json();
-        topupProductsLoaded = true;
-        renderTopupKategoriControls();
-        renderKategoriToggleList();
-        renderTopupProducts();
-        refreshTopupUndoRedoButtons();
-    } catch (err) {
-        if (err.message === "unauthorized") return;
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center text-danger py-4">${escapeHtml(err.message)}</td></tr>`;
-    }
-}
+// State seleksi checkbox produk topup — dipakai bareng sama catalogSync.js.
+let topupSelectedIds = new Set();
+let topupSearchQuery = "";
 
 // Cek ke backend aksi apa yang bisa di-undo/redo saat ini, terus
 // enable/disable + kasih tooltip di tombol Undo/Redo sesuai itu.
@@ -2078,22 +2046,6 @@ async function redoTopupAction() {
     }
 }
 
-// State buat filter kategori & pencarian nama & seleksi checkbox produk topup
-let topupKategoriFilter = "";
-let topupSearchQuery = "";
-let topupSelectedIds = new Set();
-
-function getFilteredTopupProducts() {
-    let list = topupKategoriFilter
-        ? topupProducts.filter(p => (p.kategori || "Lainnya") === topupKategoriFilter)
-        : topupProducts;
-    if (topupSearchQuery) {
-        const q = topupSearchQuery.toLowerCase();
-        list = list.filter(p => String(p.nama || "").toLowerCase().includes(q));
-    }
-    return list;
-}
-
 // Bungkus bagian nama produk yang cocok sama kata pencarian pake <mark>,
 // biar admin gampang lihat kenapa produk itu nongol pas ngetik "weekly".
 function highlightSearchMatch(nama) {
@@ -2103,238 +2055,6 @@ function highlightSearchMatch(nama) {
     return safe.replace(new RegExp(`(${q})`, "ig"), "<mark>$1</mark>");
 }
 
-// Kelompokkan per kategori, produk AKTIF ditaruh paling atas di tiap kategori
-// (biar admin gampang lihat mana yang lagi tayang di toko), lalu urut harga.
-function groupTopupProductsByKategori(list) {
-    const map = new Map();
-    list.forEach(p => {
-        const key = p.kategori || "Lainnya";
-        if (!map.has(key)) map.set(key, []);
-        map.get(key).push(p);
-    });
-    [...map.values()].forEach(arr => {
-        arr.sort((a, b) => {
-            if (!!a.is_active !== !!b.is_active) return a.is_active ? -1 : 1;
-            return Number(a.harga_jual) - Number(b.harga_jual);
-        });
-    });
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-}
-
-function renderTopupKategoriControls() {
-    const kategoris = [...new Set(topupProducts.map(p => p.kategori || "Lainnya"))].sort();
-
-    const filterEl = document.getElementById("topupKategoriFilter");
-    const current = filterEl.value;
-    filterEl.innerHTML = `<option value="">Semua Kategori</option>` +
-        kategoris.map(k => `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
-    filterEl.value = kategoris.includes(current) ? current : "";
-    topupKategoriFilter = filterEl.value;
-
-    const menu = document.getElementById("deleteByKategoriMenu");
-    menu.innerHTML = kategoris.length
-        ? kategoris.map(k => `
-            <li><button class="dropdown-item text-danger" onclick="deleteTopupKategori('${k.replace(/'/g, "\\'")}')">
-                <i class="bi bi-trash3 me-1"></i>${escapeHtml(k)}
-            </button></li>
-        `).join("") + `<li><hr class="dropdown-divider"></li><li><button class="dropdown-item text-danger fw-semibold" onclick="deleteAllTopupProductsConfirmed()"><i class="bi bi-exclamation-triangle me-1"></i>Hapus SEMUA kategori</button></li>`
-        : `<li class="text-muted small px-2">Belum ada kategori</li>`;
-
-    // Datalist buat tombol "Pindah Kategori" massal — admin bisa pilih kategori
-    // yang udah ada atau ketik nama baru buat bikin kategori/kartu game baru.
-    const datalist = document.getElementById("topupKategoriDatalist");
-    if (datalist) datalist.innerHTML = kategoris.map(k => `<option value="${escapeHtml(k)}">`).join("");
-}
-
-// "Kelola Kategori" — satu toggle per kategori/game. Sebuah kategori dianggap
-// AKTIF kalau minimal 1 produk di dalamnya aktif (sama persis logika yang
-// nentuin kartu game itu tampil atau enggak di halaman toko). Nyalain/matiin
-// toggle-nya bakal nyalain/matiin SEMUA produk di kategori itu sekaligus.
-function renderKategoriToggleList() {
-    const container = document.getElementById("kategoriToggleList");
-    if (!container) return;
-
-    const map = new Map(); // kategori -> { total, active }
-    topupProducts.forEach(p => {
-        const k = p.kategori || "Lainnya";
-        if (!map.has(k)) map.set(k, { total: 0, active: 0 });
-        const entry = map.get(k);
-        entry.total += 1;
-        if (p.is_active) entry.active += 1;
-    });
-
-    const kategoris = [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-    if (!kategoris.length) {
-        container.innerHTML = `<p class="text-muted small mb-0">Sync produk dulu buat lihat daftar kategori</p>`;
-        return;
-    }
-
-    container.innerHTML = kategoris.map(([kategori, info]) => {
-        const isActive = info.active > 0;
-        const safeId = `katToggle-${kategori.replace(/[^a-zA-Z0-9]/g, "_")}`;
-        return `
-            <div class="d-flex justify-content-between align-items-center border rounded px-3 py-2" style="border-color:var(--bs-border-color);">
-                <div>
-                    <div class="fw-semibold">${escapeHtml(kategori)}</div>
-                    <div class="text-muted small">${info.total} produk • ${info.active} aktif</div>
-                </div>
-                <div class="form-check form-switch mb-0">
-                    <input class="form-check-input" type="checkbox" role="switch" id="${safeId}" ${isActive ? "checked" : ""} data-kategori="${escapeHtml(kategori)}">
-                </div>
-            </div>
-        `;
-    }).join("");
-
-    container.querySelectorAll("input[data-kategori]").forEach(input => {
-        input.addEventListener("change", () => toggleKategoriActive(input.dataset.kategori, input.checked, input));
-    });
-}
-
-async function toggleKategoriActive(kategori, isActive, inputEl) {
-    if (inputEl) inputEl.disabled = true;
-    try {
-        const res = await apiFetch("/topup/admin/products/kategori-status", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ kategori, is_active: isActive })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal mengubah status kategori");
-
-        showToast(data.message || "Status kategori berhasil diubah");
-        loadTopupProducts();
-    } catch (err) {
-        if (inputEl) inputEl.checked = !isActive; // balikin toggle kalau gagal
-        if (err.message === "unauthorized") return;
-        showToast(err.message, true);
-    } finally {
-        if (inputEl) inputEl.disabled = false;
-    }
-}
-
-document.getElementById("topupKategoriFilter").addEventListener("change", (e) => {
-    topupKategoriFilter = e.target.value;
-    renderTopupProducts();
-});
-
-document.getElementById("topupSearchInput").addEventListener("input", (e) => {
-    topupSearchQuery = e.target.value.trim();
-    renderTopupProducts();
-});
-
-function renderTopupProducts() {
-    const tbody = document.getElementById("topupProducts");
-    const list = getFilteredTopupProducts();
-
-    // buang seleksi yang produknya udah gak kelihatan lagi (filter/refresh)
-    const visibleIds = new Set(list.map(p => p.id));
-    topupSelectedIds.forEach(id => { if (!visibleIds.has(id)) topupSelectedIds.delete(id); });
-
-    if (!list.length) {
-        const emptyMsg = !topupProducts.length
-            ? "Belum ada produk. Sync dulu dari TokoVoucher di atas."
-            : topupSearchQuery
-                ? `Gak ada produk dengan nama mengandung "${escapeHtml(topupSearchQuery)}".`
-                : "Gak ada produk di kategori ini.";
-        tbody.innerHTML = `<tr><td colspan="11" class="text-center text-muted py-4">${emptyMsg}</td></tr>`;
-        updateTopupSelectedCount();
-        return;
-    }
-
-    const groups = groupTopupProductsByKategori(list);
-    tbody.innerHTML = groups.map(([kategori, products]) => `
-        <tr class="table-secondary">
-            <td colspan="11" class="fw-semibold">
-                <i class="bi bi-controller me-1"></i>${escapeHtml(kategori)}
-                <span class="text-muted fw-normal small ms-1">(${products.length} produk)</span>
-            </td>
-        </tr>
-        ${products.map(p => {
-            const modal = Number(p.harga_beli) || 0;
-            const jual = Number(p.harga_jual) || 0;
-            const untung = jual - modal;
-            const persen = modal > 0 ? (untung / modal) * 100 : 0;
-            const untungClass = untung > 0 ? "text-success" : (untung < 0 ? "text-danger" : "text-muted");
-            return `
-        <tr>
-            <td><input type="checkbox" class="form-check-input topup-row-check" data-id="${Number(p.id)}" ${topupSelectedIds.has(p.id) ? "checked" : ""}></td>
-            <td>${p.item_icon ? `<img src="${p.item_icon}" alt="" style="width:32px;height:32px;object-fit:contain;">` : `<span class="text-muted">◆</span>`}</td>
-            <td><code>${escapeHtml(p.kode_produk)}</code></td>
-            <td>${highlightSearchMatch(p.nama)}</td>
-            <td>${escapeHtml(p.kategori || "-")}</td>
-            <td>Rp ${modal.toLocaleString("id-ID")}</td>
-            <td>Rp ${jual.toLocaleString("id-ID")}</td>
-            <td class="${untungClass} fw-semibold">
-                Rp ${untung.toLocaleString("id-ID")}
-                <div class="small fw-normal">${modal > 0 ? persen.toFixed(1) + "%" : "-"}</div>
-            </td>
-            <td>${p.butuh_server_id ? `<span class="badge bg-info">Ya</span>` : "-"}</td>
-            <td>${p.is_active ? `<span class="badge bg-success">Aktif</span>` : `<span class="badge bg-secondary">Nonaktif</span>`}</td>
-            <td>
-                <button class="btn btn-warning btn-sm" onclick="editTopupProduct(${Number(p.id)})"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deleteTopupProduct(${Number(p.id)})"><i class="bi bi-trash"></i></button>
-            </td>
-        </tr>
-        `;
-        }).join("")}
-    `).join("");
-
-    tbody.querySelectorAll(".topup-row-check").forEach(cb => {
-        cb.addEventListener("change", () => {
-            const id = Number(cb.dataset.id);
-            if (cb.checked) topupSelectedIds.add(id); else topupSelectedIds.delete(id);
-            updateTopupSelectedCount();
-        });
-    });
-
-    updateTopupSelectedCount();
-}
-
-function updateTopupSelectedCount() {
-    document.getElementById("topupSelectedCount").textContent = `${topupSelectedIds.size} dipilih`;
-    const list = getFilteredTopupProducts();
-    document.getElementById("topupSelectAll").checked = list.length > 0 && topupSelectedIds.size === list.length;
-}
-
-document.getElementById("topupSelectAll").addEventListener("change", (e) => {
-    const list = getFilteredTopupProducts();
-    if (e.target.checked) list.forEach(p => topupSelectedIds.add(p.id));
-    else topupSelectedIds.clear();
-    renderTopupProducts();
-});
-
-document.getElementById("topupBulkIconInput").addEventListener("change", async (e) => {
-    const file = e.target.files[0];
-    e.target.value = ""; // reset biar bisa pilih file yang sama lagi lain kali
-    if (!file) return;
-
-    if (topupSelectedIds.size === 0) {
-        return showToast("Pilih minimal 1 produk dulu (atau centang \"Pilih semua yang tampil\" per kategori)", true);
-    }
-    if (!confirm(`Pasang icon ini ke ${topupSelectedIds.size} produk terpilih?`)) return;
-
-    try {
-        const formData = new FormData();
-        formData.append("image", file);
-        const uploadRes = await apiFetch("/upload?type=logo", { method: "POST", body: formData });
-        const uploadData = await uploadRes.json().catch(() => ({}));
-        if (!uploadRes.ok) throw new Error(uploadData.message || "Upload icon gagal");
-
-        const res = await apiFetch("/topup/admin/products/bulk-icon", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ids: [...topupSelectedIds], item_icon: uploadData.url })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal menerapkan icon");
-
-        showToast(data.message || "Icon berhasil diterapkan");
-        loadTopupProducts();
-    } catch (err) {
-        if (err.message === "unauthorized") return;
-        showToast(err.message, true);
-    }
-});
 
 async function bulkSetTopupStatus(isActive) {
     if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
@@ -2382,39 +2102,16 @@ async function bulkSetTopupButuhServerId(butuhServerId) {
     }
 }
 
-async function bulkMoveTopupKategori() {
-    if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
-    const input = document.getElementById("topupBulkKategoriInput");
-    const kategori = input.value.trim();
-    if (!kategori) return showToast("Isi/pilih nama kategori tujuan dulu", true);
-    if (!confirm(`Pindahkan ${topupSelectedIds.size} produk terpilih ke kategori "${kategori}"?`)) return;
-
-    try {
-        const res = await apiFetch("/topup/admin/products/bulk-kategori", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ids: [...topupSelectedIds], kategori })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal memindahkan kategori");
-
-        showToast(data.message || "Produk berhasil dipindahkan ke kategori baru");
-        topupSelectedIds.clear();
-        input.value = "";
-        loadTopupProducts();
-    } catch (err) {
-        if (err.message === "unauthorized") return;
-        showToast(err.message, true);
-    }
-}
-
 async function bulkMarkupTopupPrice() {
     if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
 
     const type = document.getElementById("topupBulkMarkupType").value;
     const valueInput = document.getElementById("topupBulkMarkupValue");
     const value = parseFloat(valueInput.value);
-    const rounding = document.getElementById("topupBulkMarkupRound").value;
+    // Pembulatan gak lagi punya input sendiri di toolbar — backend yang
+    // nentuin. Sebelumnya baris ini baca elemen yang gak ada dan bikin
+    // seluruh tombol markup massal mati dengan TypeError.
+    const rounding = 0;
 
     if (isNaN(value) || value < 0) return showToast("Isi angka markup dulu ya", true);
 
@@ -2515,162 +2212,6 @@ async function bulkDeleteTopupSelected() {
 
         showToast(data.message || "Produk terpilih berhasil dihapus");
         topupSelectedIds.clear();
-        loadTopupProducts();
-    } catch (err) {
-        if (err.message === "unauthorized") return;
-        showToast(err.message, true);
-    }
-}
-
-async function deleteTopupKategori(kategori) {
-    if (!confirm(`Yakin hapus SEMUA produk kategori "${kategori}"? Tindakan ini tidak bisa dibatalkan.`)) return;
-    try {
-        const res = await apiFetch(`/topup/admin/products?kategori=${encodeURIComponent(kategori)}`, { method: "DELETE" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal menghapus kategori");
-
-        showToast(data.message || `Kategori "${kategori}" berhasil dihapus`);
-        loadTopupProducts();
-    } catch (err) {
-        if (err.message === "unauthorized") return;
-        showToast(err.message, true);
-    }
-}
-
-async function deleteAllTopupProductsConfirmed() {
-    if (!confirm("Yakin hapus SEMUA produk topup (semua game/kategori)? Tindakan ini tidak bisa dibatalkan.")) return;
-    if (!confirm("Sekali lagi — ini akan menghapus SELURUH produk topup tanpa terkecuali. Lanjutkan?")) return;
-
-    try {
-        const res = await apiFetch("/topup/admin/products", { method: "DELETE" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal menghapus semua produk");
-
-        showToast(data.message || "Semua produk topup berhasil dihapus");
-        loadTopupProducts();
-    } catch (err) {
-        if (err.message === "unauthorized") return;
-        showToast(err.message, true);
-    }
-}
-
-function editTopupProduct(id) {
-    const p = topupProducts.find(x => x.id === id);
-    if (!p) return;
-    editingTopupProductId = id;
-
-    document.getElementById("tpEditNama").value = p.nama || "";
-    document.getElementById("tpEditKategori").value = p.kategori || "";
-    document.getElementById("tpEditHargaBeli").value = "Rp " + Number(p.harga_beli).toLocaleString("id-ID");
-    document.getElementById("tpEditHargaJual").value = p.harga_jual;
-    document.getElementById("tpEditButuhServerId").checked = !!p.butuh_server_id;
-    document.getElementById("tpEditIsActive").checked = !!p.is_active;
-
-    const iconInput = document.getElementById("tpEditIconInput");
-    if (iconInput) iconInput.value = "";
-    const iconPreview = document.getElementById("tpEditIconPreview");
-    if (iconPreview) {
-        if (p.item_icon) {
-            iconPreview.src = p.item_icon;
-            iconPreview.classList.remove("d-none");
-        } else {
-            iconPreview.classList.add("d-none");
-        }
-    }
-
-    topupProductModal.show();
-}
-
-const tpEditIconInput = document.getElementById("tpEditIconInput");
-if (tpEditIconInput) {
-    tpEditIconInput.addEventListener("change", () => {
-        const file = tpEditIconInput.files[0];
-        if (!file) return;
-        const preview = document.getElementById("tpEditIconPreview");
-        preview.src = URL.createObjectURL(file);
-        preview.classList.remove("d-none");
-    });
-}
-
-async function saveTopupProduct() {
-    if (!editingTopupProductId) return;
-
-    const payload = {
-        nama: document.getElementById("tpEditNama").value.trim(),
-        kategori: document.getElementById("tpEditKategori").value.trim(),
-        harga_jual: Number(document.getElementById("tpEditHargaJual").value || 0),
-        butuh_server_id: document.getElementById("tpEditButuhServerId").checked,
-        is_active: document.getElementById("tpEditIsActive").checked
-    };
-
-    try {
-        const iconFile = document.getElementById("tpEditIconInput")?.files[0];
-        if (iconFile) {
-            const formData = new FormData();
-            formData.append("image", iconFile);
-            const uploadRes = await apiFetch("/upload?type=logo", { method: "POST", body: formData });
-            const uploadData = await uploadRes.json().catch(() => ({}));
-            if (!uploadRes.ok) throw new Error(uploadData.message || "Upload icon gagal");
-            payload.item_icon = uploadData.url;
-        }
-
-        const res = await apiFetch(`/topup/admin/products/${editingTopupProductId}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal menyimpan produk");
-
-        topupProductModal.hide();
-        loadTopupProducts();
-        showToast("Produk topup berhasil disimpan");
-    } catch (err) {
-        if (err.message === "unauthorized") return;
-        showToast(err.message, true);
-    }
-}
-
-async function saveCategoryLogo() {
-    const kategori = document.getElementById("catLogoKategori").value.trim();
-    const file = document.getElementById("catLogoFile").files[0];
-
-    if (!kategori) return showToast("Isi nama kategori/game dulu", true);
-    if (!file) return showToast("Pilih file logo dulu", true);
-
-    try {
-        const formData = new FormData();
-        formData.append("image", file);
-        const uploadRes = await apiFetch("/upload?type=logo", { method: "POST", body: formData });
-        const uploadData = await uploadRes.json().catch(() => ({}));
-        if (!uploadRes.ok) throw new Error(uploadData.message || "Upload logo gagal");
-
-        const res = await apiFetch("/topup/admin/category-logo", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ kategori, operator_logo: uploadData.url })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal menyimpan logo game");
-
-        showToast(data.message || "Logo game berhasil disimpan");
-        document.getElementById("catLogoKategori").value = "";
-        document.getElementById("catLogoFile").value = "";
-        loadTopupProducts();
-    } catch (err) {
-        if (err.message === "unauthorized") return;
-        showToast(err.message, true);
-    }
-}
-
-async function deleteTopupProduct(id) {
-    if (!confirm("Hapus produk topup ini?")) return;
-    try {
-        const res = await apiFetch(`/topup/admin/products/${id}`, { method: "DELETE" });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal menghapus produk");
-
-        showToast(data.message || "Produk berhasil dihapus");
         loadTopupProducts();
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -2828,9 +2369,12 @@ async function recheckTopupStatus(id) {
 async function ensureTopupProductsForPromo() {
     if (topupProducts.length) return;
     try {
-        const res = await apiFetch("/topup/admin/products");
+        // Cuma produk AKTIF yang masuk akal buat dijadiin target kode promo,
+        // dan endpoint-nya sekarang balikin { data, total, ... }.
+        const res = await apiFetch("/topup/admin/products?status=active&limit=0");
         if (res.ok) {
-            topupProducts = await res.json();
+            const payload = await res.json();
+            topupProducts = Array.isArray(payload) ? payload : (payload.data || []);
             topupProductsLoaded = true;
         }
     } catch (e) { /* silent -- picker tetap bisa jalan cuma buat produk biasa */ }
@@ -2848,7 +2392,7 @@ function renderPcProductList(selectedIds) {
     `).join("");
 
     const topupHtml = topupProducts.length ? `
-        <div class="text-muted small mt-2 mb-1 border-top pt-2"><i class="bi bi-gem"></i> Produk Topup Diamond</div>
+        <div class="text-muted small mt-2 mb-1 border-top pt-2"><i class="bi bi-gem"></i> Produk Topup TokoVoucher</div>
         ${topupProducts.map(p => `
             <div class="form-check">
                 <input class="form-check-input pc-product-checkbox" type="checkbox" value="${escapeHtml(p.kode_produk)}" id="pcProductTp${escapeHtml(p.kode_produk)}" ${selected.has(String(p.kode_produk)) ? "checked" : ""}>
@@ -3228,42 +2772,65 @@ async function loadStats() {
 
 function renderStats(stats) {
     const rupiah = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
+    const setText = (id, value) => {
+        const node = document.getElementById(id);
+        if (node) node.textContent = value;
+    };
 
-    document.getElementById("statTotalRevenue").textContent = rupiah(stats.total_revenue);
-    document.getElementById("statRevenueRegular").textContent = rupiah(stats.revenue_regular);
-    document.getElementById("statRevenueTopup").textContent = rupiah(stats.revenue_topup);
-    document.getElementById("statOrderCount").textContent = `${stats.total_paid_orders} / ${stats.total_orders}`;
+    setText("statTotalRevenue", rupiah(stats.total_revenue));
+    setText("statRevenueRegular", rupiah(stats.revenue_regular));
+    setText("statRevenueTopup", rupiah(stats.revenue_topup));
+    setText("statOrderCount", `${stats.total_paid_orders || 0} / ${stats.total_orders || 0}`);
 
-    // top produk biasa
+    // Semua daftar di bawah dikasih default array kosong: kalau backend
+    // sempat balikin payload tanpa salah satu key-nya, satu baris .length
+    // yang gagal bikin SELURUH panel statistik kosong (termasuk grafiknya).
+    const topProducts = stats.top_products || [];
+    const topKategori = stats.top_topup_categories || [];
+
     const topProductsEl = document.getElementById("statTopProducts");
-    topProductsEl.innerHTML = stats.top_products.length
-        ? stats.top_products.map(p => `
-            <tr><td>${escapeHtml(p.name)}</td><td>${p.qty}</td><td>${rupiah(p.revenue)}</td></tr>
-        `).join("")
-        : `<tr><td colspan="3" class="text-center text-muted py-3">Belum ada penjualan produk biasa.</td></tr>`;
+    if (topProductsEl) {
+        topProductsEl.innerHTML = topProducts.length
+            ? topProducts.map(p => `
+                <tr><td>${escapeHtml(p.name)}</td><td>${p.qty}</td><td>${rupiah(p.revenue)}</td></tr>
+            `).join("")
+            : `<tr><td colspan="3" class="text-center text-muted py-3">Belum ada penjualan produk biasa.</td></tr>`;
+    }
 
-    // top kategori topup
     const topKategoriEl = document.getElementById("statTopTopupCategories");
-    topKategoriEl.innerHTML = stats.top_topup_categories.length
-        ? stats.top_topup_categories.map(k => `
-            <tr><td>${escapeHtml(k.kategori)}</td><td>${k.count}</td><td>${rupiah(k.revenue)}</td></tr>
-        `).join("")
-        : `<tr><td colspan="3" class="text-center text-muted py-3">Belum ada penjualan topup.</td></tr>`;
+    if (topKategoriEl) {
+        topKategoriEl.innerHTML = topKategori.length
+            ? topKategori.map(k => `
+                <tr><td>${escapeHtml(k.kategori)}</td><td>${k.count}</td><td>${rupiah(k.revenue)}</td></tr>
+            `).join("")
+            : `<tr><td colspan="3" class="text-center text-muted py-3">Belum ada penjualan topup.</td></tr>`;
+    }
 
     // status breakdown badges
     const statusColors = { paid: "success", sukses: "success", pending: "warning", processing: "info", failed: "danger", gagal: "danger" };
     const statusEl = document.getElementById("statStatusBreakdown");
-    const entries = Object.entries(stats.status_breakdown || {});
-    statusEl.innerHTML = entries.length
-        ? entries.map(([status, count]) => `
-            <span class="badge bg-${statusColors[status] || "secondary"} fs-6 fw-normal px-3 py-2">${escapeHtml(status)}: ${count}</span>
-        `).join("")
-        : `<span class="text-muted small">Belum ada data order.</span>`;
+    if (statusEl) {
+        const entries = Object.entries(stats.status_breakdown || {});
+        statusEl.innerHTML = entries.length
+            ? entries.map(([status, count]) => `
+                <span class="badge bg-${statusColors[status] || "secondary"} fs-6 fw-normal px-3 py-2">${escapeHtml(status)}: ${count}</span>
+            `).join("")
+            : `<span class="text-muted small">Belum ada data order.</span>`;
+    }
 
     // chart tren omzet 30 hari
     const ctx = document.getElementById("statRevenueChart");
-    const labels = stats.revenue_by_day.map(d => d.date.slice(5)); // MM-DD
-    const data = stats.revenue_by_day.map(d => d.revenue);
+    if (!ctx || typeof Chart === "undefined") return;
+
+    const byDay = stats.revenue_by_day || [];
+    const labels = byDay.map(d => String(d.date || "").slice(5)); // MM-DD
+    const data = byDay.map(d => d.revenue);
+
+    // Warna grid/label diambil dari token tema, bukan default Chart.js yang
+    // abu-abu terang -- di tema gelap sumbu grafiknya nyaris gak kebaca.
+    const styles = getComputedStyle(document.documentElement);
+    const axisColor = styles.getPropertyValue("--text-muted").trim() || "#8891B0";
+    const gridColor = styles.getPropertyValue("--line").trim() || "#242c4a";
 
     if (statRevenueChartInstance) statRevenueChartInstance.destroy();
     statRevenueChartInstance = new Chart(ctx, {
@@ -3282,9 +2849,21 @@ function renderStats(stats) {
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false } },
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (item) => "Omzet: Rp " + Number(item.parsed.y || 0).toLocaleString("id-ID")
+                    }
+                }
+            },
             scales: {
-                y: { ticks: { callback: (v) => "Rp " + Number(v).toLocaleString("id-ID") } }
+                x: { ticks: { color: axisColor }, grid: { color: gridColor } },
+                y: {
+                    ticks: { color: axisColor, callback: (v) => "Rp " + Number(v).toLocaleString("id-ID") },
+                    grid: { color: gridColor }
+                }
             }
         }
     });
@@ -3295,8 +2874,18 @@ function initThemeToggle() {
     function applyTheme(theme) {
         document.documentElement.dataset.theme = theme;
         document.documentElement.setAttribute("data-theme", theme);
+        // Sinkron ke color mode bawaan Bootstrap 5.3 -- lihat theme-init.js.
+        // Tanpa ini, komponen Bootstrap (tabel, form, dropdown, offcanvas,
+        // utility *-subtle) tetap ngerender versi terang di tema gelap.
+        document.documentElement.setAttribute("data-bs-theme", theme);
         try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch (e) {}
         const isLight = theme === "light";
+
+        // Chart.js nge-bake warna sumbu waktu chart dibuat, jadi grafik yang
+        // udah tampil harus digambar ulang pas tema diganti.
+        if (typeof statRevenueChartInstance !== "undefined" && statRevenueChartInstance && statsLoaded) {
+            loadStats();
+        }
 
         document.querySelectorAll("#themeToggle, .theme-toggle").forEach(btn => {
             const icon = btn.querySelector(".theme-toggle-icon");
@@ -3894,7 +3483,7 @@ function renderCmdKResults() {
         { title: "Statistik & Omzet Penjualan", icon: "bi-graph-up", action: () => switchView("stats") },
         { title: "Kelola Produk Fisik/Digital", icon: "bi-box-seam", action: () => switchView("dashboard") },
         { title: "Kelola Pesanan & Transaction Logs", icon: "bi-cart", action: () => switchView("orders") },
-        { title: "Kelola Topup Diamond & Game", icon: "bi-gem", action: () => switchView("topup") },
+        { title: "Kelola Topup TokoVoucher & Game", icon: "bi-gem", action: () => switchView("topup") },
         { title: "Daftar Pengguna & OTP", icon: "bi-people", action: () => switchView("users") },
         { title: "Pengaturan Slide Promo & Banner", icon: "bi-megaphone", action: () => switchView("promo") },
         { title: "Gaming News & Portal Artikel", icon: "bi-newspaper", action: () => switchView("news") },
@@ -4257,9 +3846,17 @@ async function generateProductFaqs() {
 let aiHealthCheckInterval = null;
 let currentMultiAiData = null;
 
+// PENTING: penyedia AI rutin menghapus model lama. Daftar Groq lama di
+// sini (llama-3.3-70b-versatile, mixtral-8x7b-32768, dst) SEMUANYA sudah
+// di-decommission -- akibatnya model yang kepilih dari dropdown ini gak
+// pernah bisa dipanggil dan NexBot jawab "informasi belum tersedia" ke
+// SEMUA pertanyaan. Backend sekarang nanya daftar model langsung ke Groq
+// waktu runtime (lihat services/groqProvider.js), jadi kalaupun daftar di
+// bawah ini basi lagi, NexBot tetap jalan. Tetap perbarui daftar ini kalau
+// penyedianya ganti katalog.
 const AI_PRESET_MODELS = {
     gemini: ["gemini-flash-latest", "gemini-2.0-flash", "gemini-1.5-pro", "gemini-1.5-flash", "custom"],
-    groq: ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "llama3-70b-8192", "mixtral-8x7b-32768", "custom"],
+    groq: ["openai/gpt-oss-20b", "openai/gpt-oss-120b", "groq/compound-mini", "groq/compound", "qwen/qwen3.6-27b", "custom"],
     openrouter: ["meta-llama/llama-3.3-70b-instruct", "deepseek/deepseek-r1-distill-llama-70b", "google/gemini-2.0-flash-001", "qwen/qwen-2.5-72b-instruct", "custom"]
 };
 

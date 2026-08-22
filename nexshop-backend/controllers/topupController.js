@@ -23,8 +23,11 @@ const {
     MARKUP_TIERS,
     MARKUP_CAP_ABSOLUT,
     AUTO_MARKUP_ROUND,
-    isTopupGameCategory
+    isTopupGameCategory,
+    resolveNexshopCategory,
+    resolveOperator
 } = require("../utils/topupHelpers");
+const { fetchAllRows } = require("../utils/supabasePaginate");
 
 const IPAYMU_PAYMENT_METHODS = Object.freeze({
     qris: "qris",
@@ -670,28 +673,127 @@ exports.syncProducts = async (req, res) => {
     }
 };
 
-// ADMIN — list semua produk topup (termasuk nonaktif), buat tabel dashboard
+// Ambil map kategori TokoVoucher -> kategori NexShop sebagai Map.
+async function loadCategoryMap() {
+    const { data, error } = await supabase
+        .from("topup_category_map")
+        .select("tokovoucher_category_name, nexshop_category_name");
+    if (error) throw error;
+
+    const map = new Map();
+    (data || []).forEach((m) => map.set(m.tokovoucher_category_name, m.nexshop_category_name));
+    return map;
+}
+
+// Ambil SELURUH produk topup region Indonesia (bukan cuma 1000 baris
+// pertama), lengkap sama kategori NexShop + identitas operator yang udah
+// di-resolve. Dipakai getAllProductsAdmin dan getCatalogSummary supaya
+// dua-duanya PASTI lihat data yang sama persis.
+async function loadAdminCatalog(columns = "*") {
+    const [categoryMap, rows] = await Promise.all([
+        loadCategoryMap(),
+        fetchAllRows((from, to) =>
+            supabase
+                .from("topup_products")
+                .select(columns)
+                .order("id", { ascending: true })
+                .range(from, to)
+        )
+    ]);
+
+    // Buang produk region luar Indonesia yang mungkin masih nyangkut di DB
+    // dari sync lama (sebelum filter region ada).
+    return rows
+        .filter((p) => !isForeignProduct(p.kategori, p.kode_produk, p.nama))
+        .map((p) => {
+            const op = resolveOperator(p);
+            return {
+                ...p,
+                nexshop_category: resolveNexshopCategory(p, categoryMap),
+                operator_id: op.id,
+                operator_name: op.name
+            };
+        });
+}
+
+// ADMIN — list produk topup (termasuk nonaktif), buat tabel dashboard.
+//
+// Filter kategori/operator/pencarian dikerjain DI SERVER, bukan di browser.
+// Alasannya dua: (1) katalog TokoVoucher isinya 11.000+ produk, ngirim
+// semuanya ke browser tiap kali tab dibuka itu berat banget; (2) mapping
+// kategori butuh tabel topup_category_map yang cuma bisa dibaca role
+// "admin" — kalau mapping-nya dikerjain di browser, staff (dan admin yang
+// map-nya belum ke-load) bakal lihat SEMUA produk jatuh ke "Lainnya" dan
+// tabelnya kelihatan kosong terus.
+//
+// Respons: { data, total, limit, offset, category_counts, operators }
 exports.getAllProductsAdmin = async (req, res) => {
     if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
-        const { data, error } = await supabase
-            .from("topup_products")
-            .select("*")
-            .order("kategori", { ascending: true })
-            .order("harga_jual", { ascending: true });
+        const catalog = await loadAdminCatalog();
 
-        if (error) return res.status(500).json({ message: "Database Error" });
+        const category = String(req.query.category || "").trim();
+        const operator = String(req.query.operator || "").trim();
+        const status = String(req.query.status || "").trim(); // "active" | "inactive" | ""
+        const q = String(req.query.q || "").trim().toLowerCase();
 
-        // Sama kayak getProducts: buang produk region luar Indonesia yang
-        // mungkin masih nyangkut di DB dari sync lama (sebelum filter region
-        // ada). Dashboard admin jadi cuma pernah nampilin produk region Indo,
-        // gak perlu dropdown "pilih region" krn cuma ada 1 region yang diizinin.
-        const indoOnly = (data || []).filter((p) => !isForeignProduct(p.kategori, p.kode_produk));
-        res.json(indoOnly);
+        // "ids" dipakai picker kode promo: minta produk tertentu aja.
+        const idsParam = String(req.query.ids || "").trim();
+        if (idsParam) {
+            const wanted = new Set(idsParam.split(",").map((v) => v.trim()).filter(Boolean));
+            const picked = catalog.filter((p) => wanted.has(String(p.id)));
+            return res.json({ data: picked, total: picked.length, limit: picked.length, offset: 0, category_counts: {}, operators: [] });
+        }
+
+        let list = catalog;
+        if (category) list = list.filter((p) => p.nexshop_category === category);
+        if (operator) list = list.filter((p) => p.operator_id === operator);
+        if (status === "active") list = list.filter((p) => !!p.is_active);
+        if (status === "inactive") list = list.filter((p) => !p.is_active);
+        if (q) {
+            list = list.filter(
+                (p) =>
+                    String(p.nama || "").toLowerCase().includes(q) ||
+                    String(p.kode_produk || "").toLowerCase().includes(q)
+            );
+        }
+
+        // Daftar operator DI DALAM hasil filter sekarang — dipakai sidebar
+        // biar admin bisa lompat ke game/operator tanpa reload apa pun.
+        const operatorMap = new Map();
+        list.forEach((p) => {
+            if (!operatorMap.has(p.operator_id)) {
+                operatorMap.set(p.operator_id, { id: p.operator_id, name: p.operator_name, total: 0, active: 0 });
+            }
+            const entry = operatorMap.get(p.operator_id);
+            entry.total++;
+            if (p.is_active) entry.active++;
+        });
+
+        list.sort((a, b) => {
+            const byOperator = String(a.operator_name).localeCompare(String(b.operator_name), "id");
+            if (byOperator !== 0) return byOperator;
+            return (Number(a.harga_beli) || 0) - (Number(b.harga_beli) || 0);
+        });
+
+        const total = list.length;
+        // limit=0 artinya "kirim semua yang cocok" (dipakai tombol pilih-semua).
+        const rawLimit = req.query.limit === undefined ? 300 : parseInt(req.query.limit, 10);
+        const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 5000) : total;
+        const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
+
+        res.json({
+            data: list.slice(offset, offset + limit),
+            total,
+            limit,
+            offset,
+            operators: [...operatorMap.values()].sort((a, b) => a.name.localeCompare(b.name, "id"))
+        });
     } catch (err) {
-        res.status(500).json({ message: "Server Error" });
+        console.error("getAllProductsAdmin:", err.message);
+        res.status(500).json({ message: "Gagal mengambil data produk topup" });
     }
 };
 
@@ -2024,7 +2126,7 @@ exports.getSyncStatus = async (req, res) => {
     }
     try {
         const status = catalogService.getSyncStatus();
-        const { data } = await supabase.from("catalog_sync_log").select("*").order("started_at", { ascending: false }).limit(1).single();
+        const { data } = await supabase.from("catalog_sync_log").select("*").order("started_at", { ascending: false }).limit(1).maybeSingle();
         res.json({ is_running: status.is_running, last_log: data || null });
     } catch (err) {
         res.status(500).json({ message: "Gagal memuat status sync" });
@@ -2036,56 +2138,45 @@ exports.getCatalogSummary = async (req, res) => {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
-        const { data: syncLog } = await supabase.from("catalog_sync_log").select("*").order("started_at", { ascending: false }).limit(1).single();
-        const { data: mapData } = await supabase.from("topup_category_map").select("*");
-        const categoryMap = new Map();
-        if (mapData) mapData.forEach(m => categoryMap.set(m.tokovoucher_category_name, m.nexshop_category_name));
+        // .maybeSingle() (bukan .single()) — katalog yang belum pernah
+        // di-sync sama sekali punya 0 baris log, dan .single() nganggep itu
+        // error PGRST116 yang bikin seluruh ringkasan gagal dimuat.
+        const { data: syncLog } = await supabase
+            .from("catalog_sync_log")
+            .select("*")
+            .order("started_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
 
-        const { data: products, error } = await supabase.from("topup_products").select("kategori, source_category_id, source_category_name, source_operator_id, source_operator_name, source_status, is_active, auto_managed, manual_category_override");
-        if (error) throw error;
+        // loadAdminCatalog() udah paginasi + resolve kategori/operator, jadi
+        // ringkasan ini PASTI konsisten sama isi tabel produk di sebelahnya.
+        const products = await loadAdminCatalog(
+            "id, nama, kode_produk, kategori, source_category_name, source_operator_id, source_operator_name, source_status, is_active, auto_managed, manual_category_override"
+        );
 
-        const globalStats = {
-            total: products.length,
-            active: 0,
-            inactive: 0,
-            foreign: 0
-        };
-
+        const globalStats = { total: products.length, active: 0, inactive: 0, foreign: 0 };
         const summary = {};
-        
-        products.forEach(p => {
-            const isForeign = p.source_status && p.source_status !== 'active';
-            if (isForeign) {
-                globalStats.foreign++;
-            } else if (p.is_active) {
-                globalStats.active++;
-            } else {
-                globalStats.inactive++;
-            }
 
-            // Use the same priority mapping as public-catalog
-            let cat = "Lainnya";
-            if (p.manual_category_override) {
-                cat = p.kategori || "Lainnya";
-            } else if (p.source_category_name && categoryMap.has(p.source_category_name)) {
-                cat = categoryMap.get(p.source_category_name);
-            } else if (categoryMap.has(p.kategori)) {
-                cat = categoryMap.get(p.kategori);
-            }
+        products.forEach((p) => {
+            const isForeign = p.source_status && p.source_status !== "active";
+            if (isForeign) globalStats.foreign++;
+            else if (p.is_active) globalStats.active++;
+            else globalStats.inactive++;
 
-            // Fallback for operator matching public-catalog logic
-            const opName = p.source_operator_name || p.kategori || "Unknown";
-            const opId = p.source_operator_id || "LEGACY_OP_" + opName; // Group by stable ID if available
-            const catId = p.source_category_id || "LEGACY_CAT_" + cat;
+            const cat = p.nexshop_category;
+            if (!summary[cat]) summary[cat] = { total: 0, active: 0, operators: {} };
 
-            if (!summary[cat]) summary[cat] = { operators: {} };
-            
-            if (!summary[cat].operators[opId]) {
-                summary[cat].operators[opId] = { 
-                    name: opName, 
-                    source_category_id: p.source_category_id,
-                    source_operator_id: p.source_operator_id,
-                    total: 0, 
+            const catEntry = summary[cat];
+            catEntry.total++;
+            if (!isForeign && p.is_active) catEntry.active++;
+
+            if (!catEntry.operators[p.operator_id]) {
+                catEntry.operators[p.operator_id] = {
+                    name: p.operator_name,
+                    source_category_id: p.source_category_id || null,
+                    source_operator_id: p.source_operator_id || null,
+                    legacy_kategori: p.source_operator_id ? null : p.kategori || null,
+                    total: 0,
                     active: 0,
                     inactive: 0,
                     auto_managed_true: 0,
@@ -2093,42 +2184,35 @@ exports.getCatalogSummary = async (req, res) => {
                     foreign: 0
                 };
             }
-            
-            const opObj = summary[cat].operators[opId];
+
+            const opObj = catEntry.operators[p.operator_id];
             opObj.total++;
-            
+
             if (isForeign) {
                 opObj.foreign++;
             } else {
                 if (p.is_active) opObj.active++;
                 else opObj.inactive++;
-                
+
                 if (p.auto_managed) opObj.auto_managed_true++;
                 else opObj.auto_managed_false++;
             }
         });
 
-        // Determine MIXED/ON/OFF state
+        // Tentuin state MIXED/ON/OFF per operator
         for (const cat in summary) {
             for (const opId in summary[cat].operators) {
                 const op = summary[cat].operators[opId];
-                // Eligible products = total - foreign
                 const eligible = op.total - op.foreign;
-                if (eligible === 0) {
-                    op.state = "OFF";
-                } else if (op.active === eligible) {
-                    op.state = "ON";
-                } else if (op.active === 0) {
-                    op.state = "OFF";
-                } else {
-                    op.state = "MIXED";
-                }
+                if (eligible === 0 || op.active === 0) op.state = "OFF";
+                else if (op.active === eligible) op.state = "ON";
+                else op.state = "MIXED";
             }
         }
 
         res.json({ current: globalStats, sync: syncLog || null, categories: summary });
     } catch (err) {
-        console.error(err);
+        console.error("getCatalogSummary:", err.message);
         res.status(500).json({ message: "Gagal memuat ringkasan katalog" });
     }
 };
@@ -2138,32 +2222,38 @@ exports.toggleOperator = async (req, res) => {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
-        const { source_category_id, source_operator_id, legacy_name, active } = req.body;
-        
-        let query = supabase.from("topup_products").select("id, is_active, auto_managed, source_status");
-        
-        if (source_operator_id) {
-            query = query.eq("source_operator_id", source_operator_id);
-            if (source_category_id) {
-                query = query.eq("source_category_id", source_category_id);
-            }
-        } else if (legacy_name) {
-            // Safe fallback for legacy products that have no stable ID
-            query = query.is("source_operator_id", null).eq("kategori", legacy_name);
-        } else {
-            return res.status(400).json({ message: "Missing stable identity for bulk toggle" });
+        const { source_category_id, source_operator_id, legacy_name, legacy_kategori, active } = req.body;
+        if (typeof active !== "boolean") {
+            return res.status(400).json({ message: "Field active wajib boolean" });
         }
 
-        const { data: products, error } = await query;
-        if (error) throw error;
+        const applyFilter = (query) => {
+            if (source_operator_id) {
+                query = query.eq("source_operator_id", source_operator_id);
+                if (source_category_id) query = query.eq("source_category_id", source_category_id);
+                return query;
+            }
+            // Produk lama tanpa source_operator_id cuma bisa diidentifikasi
+            // lewat kolom kategori-nya.
+            return query.is("source_operator_id", null).eq("kategori", legacy_kategori || legacy_name);
+        };
+
+        if (!source_operator_id && !legacy_kategori && !legacy_name) {
+            return res.status(400).json({ message: "Identitas operator gak lengkap buat bulk toggle" });
+        }
+
+        // Paginasi -- operator besar (mis. Mobile Legends) gampang lewat 1000
+        // produk, dan tanpa ini sisanya diam-diam gak ikut keubah.
+        const products = await fetchAllRows((from, to) =>
+            applyFilter(supabase.from("topup_products").select("id, is_active, auto_managed, source_status, harga_beli, harga_jual")).range(from, to)
+        );
 
         let protectedCount = 0;
         let foreignCount = 0;
-        const idsToUpdate = [];
-        
-        products.forEach(p => {
-            const isForeign = p.source_status && p.source_status !== 'active';
-            if (isForeign) {
+        const toUpdate = [];
+
+        products.forEach((p) => {
+            if (p.source_status && p.source_status !== "active") {
                 foreignCount++;
                 return;
             }
@@ -2171,33 +2261,184 @@ exports.toggleOperator = async (req, res) => {
                 protectedCount++;
                 return;
             }
-            // Only update if it actually needs changing
-            if (p.is_active !== active) {
-                idsToUpdate.push(p.id);
-            }
+            if (p.is_active !== active) toUpdate.push(p);
         });
 
-        if (idsToUpdate.length === 0) {
-            return res.json({ message: `Selesai. 0 diubah (Protected: ${protectedCount}, Foreign: ${foreignCount})` });
+        if (toUpdate.length === 0) {
+            return res.json({ message: `Selesai. 0 diubah (Dilindungi: ${protectedCount}, Foreign: ${foreignCount})`, changed: 0 });
         }
 
-        // Perform bulk update safely
+        // Produk yang harga jualnya masih 0 gak boleh tayang di toko -- isi
+        // otomatis pakai markup wajar biar gak kejual rugi.
+        const needsPrice = active ? toUpdate.filter((p) => !p.harga_jual || Number(p.harga_jual) <= 0) : [];
+        const plain = toUpdate.filter((p) => !needsPrice.includes(p));
+
         const chunkSize = 200;
-        for (let i = 0; i < idsToUpdate.length; i += chunkSize) {
-            const chunk = idsToUpdate.slice(i, i + chunkSize);
-            const { error: updErr } = await supabase.from("topup_products").update({ is_active: active }).in("id", chunk);
-            if (updErr) throw updErr;
+        async function bulkUpdate(rows, payloadFor) {
+            const groups = new Map();
+            rows.forEach((p) => {
+                const key = JSON.stringify(payloadFor(p));
+                if (!groups.has(key)) groups.set(key, { payload: payloadFor(p), ids: [] });
+                groups.get(key).ids.push(p.id);
+            });
+            for (const { payload, ids } of groups.values()) {
+                for (let i = 0; i < ids.length; i += chunkSize) {
+                    const { error } = await supabase
+                        .from("topup_products")
+                        .update({ ...payload, updated_at: new Date().toISOString() })
+                        .in("id", ids.slice(i, i + chunkSize));
+                    if (error) throw error;
+                }
+            }
         }
 
-        res.json({ message: `Berhasil mengubah ${idsToUpdate.length} produk menjadi ${active ? 'Aktif' : 'Nonaktif'}. (Dilindungi: ${protectedCount}, Diabaikan: ${foreignCount})` });
+        await bulkUpdate(plain, () => ({ is_active: active }));
+        await bulkUpdate(needsPrice, (p) => ({ is_active: active, harga_jual: hitungMarkupWajar(p.harga_beli || 0) }));
+
+        notify("product", `${active ? "OK" : "OFF"} ${req.user.email} ${active ? "mengaktifkan" : "menonaktifkan"} ${toUpdate.length} produk operator "${legacy_name || source_operator_id}"`);
+        res.json({
+            message: `Berhasil mengubah ${toUpdate.length} produk jadi ${active ? "Aktif" : "Nonaktif"}. (Dilindungi: ${protectedCount}, Diabaikan: ${foreignCount})`,
+            changed: toUpdate.length
+        });
     } catch (err) {
-        console.error(err);
+        console.error("toggleOperator:", err.message);
         res.status(500).json({ message: "Gagal memproses bulk toggle" });
     }
 };
 
+// ADMIN -- terapin satu aksi ke SEMUA produk yang cocok sama filter yang
+// lagi aktif di dashboard (kategori + operator + status + kata kunci),
+// tanpa admin harus nyentang 11.000 checkbox satu-satu.
+//
+// Ini inti dari "setup produk gampang": pilih kategori -> klik sekali ->
+// selesai. Produk yang statusnya udah di-override manual sama admin
+// (auto_managed = false) TETAP dilindungi buat aksi aktivasi.
+const FILTER_ACTIONS = new Set(["activate", "deactivate", "auto-markup", "server-id-on", "server-id-off"]);
+
+exports.applyToFilter = async (req, res) => {
+    if (!["admin", "staff"].includes(req.user.role)) {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+
+    const { action } = req.body || {};
+    if (!FILTER_ACTIONS.has(action)) {
+        return res.status(400).json({ message: "Aksi tidak dikenal" });
+    }
+
+    try {
+        const filter = req.body.filter || {};
+        const category = String(filter.category || "").trim();
+        const operator = String(filter.operator || "").trim();
+        const status = String(filter.status || "").trim();
+        const q = String(filter.q || "").trim().toLowerCase();
+
+        if (!category && !operator && !q && !status) {
+            return res.status(400).json({ message: "Pilih minimal satu filter dulu supaya aksinya gak kena ke seluruh katalog" });
+        }
+
+        const catalog = await loadAdminCatalog(
+            "id, nama, kode_produk, kategori, source_category_name, source_operator_id, source_operator_name, source_status, is_active, auto_managed, manual_category_override, harga_beli, harga_jual, butuh_server_id"
+        );
+
+        let list = catalog.filter((p) => !(p.source_status && p.source_status !== "active"));
+        if (category) list = list.filter((p) => p.nexshop_category === category);
+        if (operator) list = list.filter((p) => p.operator_id === operator);
+        if (status === "active") list = list.filter((p) => !!p.is_active);
+        if (status === "inactive") list = list.filter((p) => !p.is_active);
+        if (q) {
+            list = list.filter(
+                (p) =>
+                    String(p.nama || "").toLowerCase().includes(q) ||
+                    String(p.kode_produk || "").toLowerCase().includes(q)
+            );
+        }
+
+        if (list.length === 0) {
+            return res.json({ message: "Gak ada produk yang cocok sama filter ini", changed: 0, matched: 0 });
+        }
+
+        let protectedCount = 0;
+        let changed = 0;
+        const chunkSize = 200;
+
+        // Kelompokin baris yang payload-nya sama biar 1 query per grup,
+        // bukan 1 query per produk.
+        async function updateInChunks(rows, payloadFor) {
+            const groups = new Map();
+            rows.forEach((p) => {
+                const payload = payloadFor(p);
+                if (!payload) return;
+                const key = JSON.stringify(payload);
+                if (!groups.has(key)) groups.set(key, { payload, ids: [] });
+                groups.get(key).ids.push(p.id);
+            });
+
+            for (const { payload, ids } of groups.values()) {
+                for (let i = 0; i < ids.length; i += chunkSize) {
+                    const { error } = await supabase
+                        .from("topup_products")
+                        .update({ ...payload, updated_at: new Date().toISOString() })
+                        .in("id", ids.slice(i, i + chunkSize));
+                    if (error) throw error;
+                }
+                changed += ids.length;
+            }
+        }
+
+        if (action === "activate" || action === "deactivate") {
+            const active = action === "activate";
+            const eligible = list.filter((p) => {
+                if (p.is_active === active) return false;
+                if (!p.auto_managed) {
+                    protectedCount++;
+                    return false;
+                }
+                return true;
+            });
+
+            await updateInChunks(eligible, (p) => {
+                const payload = { is_active: active };
+                if (active && (!p.harga_jual || Number(p.harga_jual) <= 0)) {
+                    payload.harga_jual = hitungMarkupWajar(p.harga_beli || 0);
+                }
+                return payload;
+            });
+        } else if (action === "auto-markup") {
+            await updateInChunks(list, (p) => {
+                const target = hitungMarkupWajar(p.harga_beli || 0);
+                return Number(p.harga_jual) === target ? null : { harga_jual: target };
+            });
+        } else {
+            const wanted = action === "server-id-on";
+            await updateInChunks(
+                list.filter((p) => !!p.butuh_server_id !== wanted),
+                () => ({ butuh_server_id: wanted })
+            );
+        }
+
+        const labels = {
+            activate: "diaktifkan",
+            deactivate: "dinonaktifkan",
+            "auto-markup": "dihitung ulang harga jualnya",
+            "server-id-on": "ditandai butuh Server ID",
+            "server-id-off": "ditandai tanpa Server ID"
+        };
+
+        notify("product", `${req.user.email} menerapkan "${action}" ke ${changed} produk topup (filter: ${category || "semua"}${operator ? " / " + operator : ""})`);
+        res.json({
+            message: `${changed} produk ${labels[action]}.${protectedCount ? ` ${protectedCount} produk dilindungi (override manual).` : ""}${changed === 0 ? " Semuanya sudah sesuai." : ""}`,
+            changed,
+            protected: protectedCount,
+            matched: list.length
+        });
+    } catch (err) {
+        console.error("applyToFilter:", err.message);
+        res.status(500).json({ message: "Gagal menerapkan aksi massal" });
+    }
+};
+
 exports.getCategoryMap = async (req, res) => {
-    if (!["admin"].includes(req.user.role)) {
+    if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -2341,9 +2582,11 @@ exports.getPublicCatalog = async (req, res) => {
             const operatorId = p.source_operator_id || displayOperator;
             
             // If there's a manual_name_override, we shouldn't "clean" it. Otherwise apply standard cleaning.
-            if (p.manual_name_override) {
-                p.nama = p.manual_name_override;
-            } else {
+            // manual_name_override itu FLAG boolean (lihat migration 007),
+            // bukan nama penggantinya. Sebelumnya p.nama di-set ke nilai
+            // boolean-nya, jadi produk yang namanya diubah admin nongol
+            // sebagai "true" di halaman toko.
+            if (!p.manual_name_override) {
                 p.nama = cleanProductName(p.nama);
             }
             

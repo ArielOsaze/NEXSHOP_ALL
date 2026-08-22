@@ -1,38 +1,84 @@
 // catalogSync.js
-// Handles the new Topup Catalog Sync and Management UI
+// Pengelolaan katalog Topup TokoVoucher di dashboard admin.
+//
+// CATATAN PENTING soal versi sebelumnya:
+// Filter kategori dulu dikerjain DI BROWSER pakai variabel `categoryMap`
+// yang cuma diisi kalau admin kebetulan buka modal "Mapping Kategori".
+// Karena modal itu jarang dibuka, `categoryMap` hampir selalu kosong, jadi
+// SEMUA produk dipetakan ke "Lainnya" -- begitu admin klik kategori mana
+// pun (E-Wallet, Gaming, ...), tabelnya nampilin "Tidak ada produk
+// ditemukan" padahal produknya ada belasan ribu di database.
+//
+// Sekarang mapping kategori, filter, dan paginasi dikerjain DI SERVER
+// (GET /topup/admin/products), jadi apa yang keliatan di sidebar dan apa
+// yang keliatan di tabel dijamin datang dari perhitungan yang sama.
 
-let catalogProducts = [];
-let catalogSummary = {};
-let categoryMap = [];
-let currentCategory = "";
-let currentOperator = "";
-let topupSearchQueryCatalog = "";
-let operatorSearchQuery = "";
-let operatorStateFilter = "Semua";
+let catalogProducts = [];      // produk pada halaman yang lagi tampil
+let catalogSummary = {};       // ringkasan per kategori dari server
+let catalogTotalMatched = 0;   // total produk yang cocok filter (lintas halaman)
+let catalogPage = 0;
+let catalogLoading = false;
 let syncInterval = null;
 
+const CATALOG_PAGE_SIZE = 200;
+
+const catalogFilter = {
+    category: "",
+    operator: "",
+    status: "",
+    q: ""
+};
+
+// ===========================================================
+// Util
+// ===========================================================
+function formatNumber(n) {
+    return new Intl.NumberFormat("id-ID").format(Number(n) || 0);
+}
+
+function formatRupiah(n) {
+    return "Rp " + new Intl.NumberFormat("id-ID").format(Number(n) || 0);
+}
+
+function el(id) {
+    return document.getElementById(id);
+}
+
+// ===========================================================
+// Sinkronisasi katalog
+// ===========================================================
 async function syncFullCatalog() {
+    const btn = el("btnSyncFull");
+    const overlay = el("syncProgressOverlay");
+    const area = el("catalogManagerArea");
+
     try {
-        document.getElementById("btnSyncFull").disabled = true;
-        document.getElementById("syncProgressOverlay").classList.remove("d-none");
-        document.getElementById("catalogManagerArea").classList.add("opacity-50");
-        document.getElementById("catalogManagerArea").style.pointerEvents = "none";
+        if (btn) btn.disabled = true;
+        if (overlay) overlay.classList.remove("d-none");
+        if (area) {
+            area.classList.add("opacity-50");
+            area.style.pointerEvents = "none";
+        }
 
         const res = await apiFetch("/topup/admin/sync-full", { method: "POST" });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Gagal sinkronisasi katalog");
 
-        showToast(data.message || "Proses sinkronisasi berjalan...");
-        
-        // Start polling for status
-        if (!syncInterval) {
-            syncInterval = setInterval(checkSyncStatus, 3000);
-        }
+        showToast(data.message || "Proses sinkronisasi berjalan…");
+
+        if (!syncInterval) syncInterval = setInterval(checkSyncStatus, 3000);
     } catch (err) {
         if (err.message === "unauthorized") return;
         showToast(err.message, true);
         resetSyncUI();
     }
+}
+
+function setSyncChip(variant, html) {
+    const indicator = el("syncStatusIndicator");
+    if (!indicator) return;
+    indicator.className = `badge rounded-pill status-chip status-chip-${variant}`;
+    indicator.innerHTML = html;
 }
 
 async function checkSyncStatus() {
@@ -41,35 +87,37 @@ async function checkSyncStatus() {
         if (!res.ok) return;
         const data = await res.json();
 
-        const indicator = document.getElementById("syncStatusIndicator");
-        
         if (data.is_running) {
-            indicator.className = "badge bg-warning text-dark border";
-            indicator.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Sedang Sync...';
-            document.getElementById("btnSyncFull").disabled = true;
-            document.getElementById("syncProgressOverlay").classList.remove("d-none");
+            setSyncChip("running", '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Sedang sync…');
+            const btn = el("btnSyncFull");
+            if (btn) btn.disabled = true;
+            const overlay = el("syncProgressOverlay");
+            if (overlay) overlay.classList.remove("d-none");
+            return;
+        }
+
+        if (syncInterval) {
+            clearInterval(syncInterval);
+            syncInterval = null;
+        }
+        resetSyncUI();
+
+        const log = data.last_log;
+        if (!log) {
+            setSyncChip("idle", "Belum pernah sync");
+            return;
+        }
+
+        if (log.status === "success") {
+            setSyncChip("success", `<i class="bi bi-check-circle me-1"></i>${new Date(log.completed_at).toLocaleString("id-ID")}`);
+            showToast(`Sync selesai. Baru: ${log.products_added}, Update: ${log.products_updated}`);
+            loadCatalogSummary();
+            window.loadTopupProducts();
+        } else if (log.status === "error") {
+            setSyncChip("error", `<i class="bi bi-exclamation-triangle me-1"></i>Gagal`);
+            showToast(`Sync gagal: ${log.error_message}`, true);
         } else {
-            // Done
-            if (syncInterval) {
-                clearInterval(syncInterval);
-                syncInterval = null;
-            }
-            resetSyncUI();
-            
-            if (data.last_log) {
-                const log = data.last_log;
-                if (log.status === 'success') {
-                    indicator.className = "badge bg-success-subtle text-success border border-success-subtle";
-                    indicator.innerHTML = `<i class="bi bi-check-circle"></i> Terakhir: ${new Date(log.completed_at).toLocaleString('id-ID')}`;
-                    showToast(`Sync selesai! Baru: ${log.products_added}, Update: ${log.products_updated}`);
-                    loadCatalogSummary();
-                    window.loadTopupProducts(); // Refresh table
-                } else if (log.status === 'error') {
-                    indicator.className = "badge bg-danger-subtle text-danger border border-danger-subtle";
-                    indicator.innerHTML = `<i class="bi bi-exclamation-triangle"></i> Gagal: ${log.error_message}`;
-                    showToast(`Sync gagal: ${log.error_message}`, true);
-                }
-            }
+            setSyncChip("running", '<span class="spinner-border spinner-border-sm me-1" role="status"></span> Sedang sync…');
         }
     } catch (err) {
         console.error("Gagal cek status sync", err);
@@ -77,441 +125,471 @@ async function checkSyncStatus() {
 }
 
 function resetSyncUI() {
-    document.getElementById("btnSyncFull").disabled = false;
-    document.getElementById("syncProgressOverlay").classList.add("d-none");
-    document.getElementById("catalogManagerArea").classList.remove("opacity-50");
-    document.getElementById("catalogManagerArea").style.pointerEvents = "auto";
+    const btn = el("btnSyncFull");
+    if (btn) btn.disabled = false;
+    const overlay = el("syncProgressOverlay");
+    if (overlay) overlay.classList.add("d-none");
+    const area = el("catalogManagerArea");
+    if (area) {
+        area.classList.remove("opacity-50");
+        area.style.pointerEvents = "auto";
+    }
 }
 
+// ===========================================================
+// Ringkasan katalog + isi dropdown kategori/operator
+// ===========================================================
 async function loadCatalogSummary() {
     try {
         const res = await apiFetch("/topup/admin/catalog-summary");
-        if (!res.ok) throw new Error("Gagal load summary");
+        if (!res.ok) throw new Error("Gagal memuat ringkasan katalog");
         const data = await res.json();
-        
-        // Render Global Stats
-        document.getElementById('statCatTotal').textContent = formatNumber(data.current.total);
-        document.getElementById('statCatActive').textContent = formatNumber(data.current.active);
-        document.getElementById('statCatInactive').textContent = formatNumber(data.current.inactive);
-        document.getElementById('statCatForeign').textContent = formatNumber(data.current.foreign);
 
-        if (data.sync) {
-            document.getElementById('statSyncTime').textContent = new Date(data.sync.completed_at).toLocaleString('id-ID');
-            document.getElementById('statSyncFound').textContent = formatNumber(data.sync.products_found);
-            document.getElementById('statSyncAdded').textContent = formatNumber(data.sync.products_added);
-            document.getElementById('statSyncUpdated').textContent = formatNumber(data.sync.products_updated);
-            document.getElementById('statSyncForeign').textContent = formatNumber(data.sync.products_skipped_foreign);
-        }
-
-        catalogSummary = data.categories;
-        renderCategoryNav();
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-function formatNumber(n) {
-    return new Intl.NumberFormat('id-ID').format(n || 0);
-}
-
-function renderCategoryNav() {
-    const nav = document.getElementById("catalogCategoryNav");
-    if (!nav) return;
-    
-    let html = '';
-    const categories = Object.keys(catalogSummary).sort();
-    
-    if (categories.length === 0) {
-        nav.innerHTML = '<div class="text-muted small">Belum ada data. Silakan klik Sync Semua Produk.</div>';
-        return;
-    }
-
-    if (!currentCategory && categories.length > 0) currentCategory = categories[0];
-
-    categories.forEach(cat => {
-        const isActive = cat === currentCategory;
-        let totalCat = 0;
-        Object.values(catalogSummary[cat].operators).forEach(o => totalCat += o.total);
-
-        html += `
-            <button class="btn btn-sm ${isActive ? 'btn-primary fw-bold' : 'btn-outline-secondary'} rounded-pill text-nowrap px-3" 
-                onclick="selectCategory('${cat.replace(/'/g, "\\'")}')">
-                ${cat} <span class="badge bg-${isActive ? 'light text-primary' : 'secondary'} ms-1 rounded-pill">${totalCat}</span>
-            </button>
-        `;
-    });
-    
-    nav.innerHTML = html;
-    renderOperatorList();
-}
-
-function selectCategory(cat) {
-    currentCategory = cat;
-    currentOperator = ""; // Reset operator when category changes
-    renderCategoryNav();
-    window.loadTopupProducts();
-}
-
-function renderOperatorList() {
-    const list = document.getElementById("catalogOperatorList");
-    const bulkArea = document.getElementById("operatorBulkToggleArea");
-    if (!list) return;
-
-    if (!currentCategory || !catalogSummary[currentCategory]) {
-        list.innerHTML = '<div class="text-muted small">Pilih kategori...</div>';
-        if (bulkArea) bulkArea.classList.add('d-none');
-        return;
-    }
-
-    const ops = catalogSummary[currentCategory].operators;
-    let opIds = Object.keys(ops).sort((a, b) => ops[a].name.localeCompare(ops[b].name));
-    
-    // Apply Operator State Filter
-    if (operatorStateFilter && operatorStateFilter !== "Semua") {
-        opIds = opIds.filter(id => ops[id].state === operatorStateFilter);
-    }
-    
-    // Apply Operator Search Query
-    if (operatorSearchQuery) {
-        const q = operatorSearchQuery.toLowerCase();
-        opIds = opIds.filter(id => ops[id].name.toLowerCase().includes(q));
-    }
-    
-    let totalCat = 0;
-    opIds.forEach(id => totalCat += ops[id].total);
-
-    let html = `
-        <button class="btn btn-sm text-start w-100 mb-1 ${currentOperator === '' ? 'btn-dark' : 'btn-light border'}" 
-            onclick="selectOperator('')">
-            Semua Operator <span class="badge bg-secondary float-end">${totalCat}</span>
-        </button>
-    `;
-
-    if (opIds.length === 0) {
-        html += `<div class="text-muted small mt-2">Tidak ada operator yang cocok.</div>`;
-    }
-
-    opIds.forEach(opId => {
-        const opObj = ops[opId];
-        const isActive = opId === currentOperator;
-        
-        let stateBadge = '';
-        if (opObj.state === 'ON') stateBadge = '<span class="badge bg-success" style="font-size:0.6rem">ON</span>';
-        else if (opObj.state === 'MIXED') stateBadge = '<span class="badge bg-warning text-dark" style="font-size:0.6rem">MIXED</span>';
-        else stateBadge = '<span class="badge bg-secondary" style="font-size:0.6rem">OFF</span>';
-        
-        if (isActive) {
-            // Expanded Card View
-            html += `
-                <div class="card border-primary shadow-sm mb-1">
-                    <div class="card-body p-2">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="fw-bold text-primary text-truncate" style="max-width: 150px;" title="${opObj.name}">${opObj.name}</span>
-                            ${stateBadge}
-                        </div>
-                        <div class="d-flex justify-content-between text-muted" style="font-size: 0.75rem;">
-                            <span><b>${opObj.total}</b> products</span>
-                        </div>
-                        <div class="d-flex justify-content-between text-muted mb-2" style="font-size: 0.75rem;">
-                            <span class="text-success">${opObj.active} Active</span>
-                            <span class="text-secondary">${opObj.inactive} Inactive</span>
-                        </div>
-                        <div class="d-flex gap-1">
-                            <button class="btn btn-sm btn-success flex-fill" style="font-size: 0.75rem;" onclick="bulkToggleOperator('${opId.replace(/'/g, "\\'")}', true)">[ ON ]</button>
-                            <button class="btn btn-sm btn-outline-danger flex-fill" style="font-size: 0.75rem;" onclick="bulkToggleOperator('${opId.replace(/'/g, "\\'")}', false)">[ OFF ]</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        } else {
-            // Collapsed Button View
-            html += `
-                <button class="btn btn-sm text-start w-100 mb-1 btn-outline-secondary border" 
-                    onclick="selectOperator('${opId.replace(/'/g, "\\'")}')">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="text-truncate" style="max-width: 120px;" title="${opObj.name}">${opObj.name}</span>
-                        <div class="d-flex align-items-center gap-1">
-                            ${stateBadge}
-                            <span class="badge bg-secondary">${opObj.total}</span>
-                        </div>
-                    </div>
-                </button>
-            `;
-        }
-    });
-
-    list.innerHTML = html;
-
-    // Clear the old bulk area
-    if (bulkArea) bulkArea.classList.add('d-none');
-}
-
-async function bulkToggleOperator(opId, activate) {
-    const opObj = catalogSummary[currentCategory].operators[opId];
-    if (!opObj) return;
-
-    const actionText = activate ? "Aktifkan" : "Nonaktifkan";
-    const protectedCount = opObj.auto_managed_false;
-    const eligibleCount = opObj.total - opObj.foreign - protectedCount;
-    const targetCount = activate ? (eligibleCount - opObj.active) : opObj.active;
-
-    const res = await Swal.fire({
-        title: `${actionText} ${opObj.name}?`,
-        html: `
-            <div class="text-start small">
-                <div>Total produk: <b>${opObj.total}</b></div>
-                <div>Akan diproses: <b>${targetCount > 0 ? targetCount : eligibleCount}</b></div>
-                <div class="text-muted mt-2">
-                    - Manual override (dilindungi): <b>${protectedCount}</b><br>
-                    - Foreign/Deleted (diabaikan): <b>${opObj.foreign}</b>
-                </div>
-            </div>
-        `,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: actionText,
-        cancelButtonText: 'Batal',
-        confirmButtonColor: activate ? '#198754' : '#dc3545'
-    });
-
-    if (!res.isConfirmed) return;
-
-    try {
-        const payload = {
-            source_operator_id: opObj.source_operator_id,
-            source_category_id: opObj.source_category_id,
-            legacy_name: opObj.name,
-            active: activate
+        const setText = (id, value) => {
+            const node = el(id);
+            if (node) node.textContent = value;
         };
 
-        const result = await apiFetch('/topup/admin/toggle-operator', {
-            method: 'POST',
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
-        });
+        setText("statCatTotal", formatNumber(data.current.total));
+        setText("statCatActive", formatNumber(data.current.active));
+        setText("statCatInactive", formatNumber(data.current.inactive));
+        setText("statCatForeign", formatNumber(data.current.foreign));
 
-        const data = await result.json();
-        if (!result.ok) throw new Error(data.message);
+        if (data.sync) {
+            setText("statSyncTime", data.sync.completed_at
+                ? new Date(data.sync.completed_at).toLocaleString("id-ID")
+                : "Sedang berjalan…");
+            setText("statSyncFound", formatNumber(data.sync.products_found));
+            setText("statSyncAdded", formatNumber(data.sync.products_added));
+            setText("statSyncUpdated", formatNumber(data.sync.products_updated));
+            setText("statSyncForeign", formatNumber(data.sync.products_skipped_foreign));
+        }
 
-        showToast(data.message);
-        loadCatalogSummary();
-        window.loadTopupProducts();
+        catalogSummary = data.categories || {};
+        renderCategorySelect();
+        renderOperatorSelect();
     } catch (err) {
+        if (err.message === "unauthorized") return;
+        console.error(err);
         showToast(err.message, true);
     }
 }
 
-function selectOperator(op) {
-    currentOperator = op;
-    renderOperatorList();
-    window.loadTopupProducts();
+function renderCategorySelect() {
+    const select = el("catalogCategorySelect");
+    if (!select) return;
+
+    const categories = Object.keys(catalogSummary).sort((a, b) => a.localeCompare(b, "id"));
+    if (!categories.length) {
+        select.innerHTML = '<option value="">Belum ada data — sync dulu</option>';
+        return;
+    }
+
+    const options = ['<option value="">Semua kategori</option>'];
+    categories.forEach((cat) => {
+        const info = catalogSummary[cat];
+        options.push(
+            `<option value="${escapeHtml(cat)}">${escapeHtml(cat)} — ${formatNumber(info.total)} produk (${formatNumber(info.active)} aktif)</option>`
+        );
+    });
+
+    select.innerHTML = options.join("");
+    select.value = catalogFilter.category;
+    // Kalau kategori tersimpan udah gak ada lagi (mis. mapping berubah),
+    // jangan biarin filter nyangkut ke nilai hantu yang gak match apa pun.
+    if (select.value !== catalogFilter.category) catalogFilter.category = "";
 }
 
-// Override existing loadTopupProducts
-window.loadTopupProducts = async function() {
-    const tbody = document.getElementById("topupProducts");
+function renderOperatorSelect() {
+    const select = el("catalogOperatorSelect");
+    if (!select) return;
+
+    const cat = catalogFilter.category;
+    const operators = cat && catalogSummary[cat] ? catalogSummary[cat].operators || {} : {};
+    const ids = Object.keys(operators).sort((a, b) =>
+        String(operators[a].name).localeCompare(String(operators[b].name), "id")
+    );
+
+    if (!cat) {
+        select.innerHTML = '<option value="">Pilih kategori dulu</option>';
+        select.disabled = true;
+        catalogFilter.operator = "";
+        return;
+    }
+
+    select.disabled = false;
+    const options = ['<option value="">Semua game / operator</option>'];
+    ids.forEach((id) => {
+        const op = operators[id];
+        const state = op.state === "ON" ? "ON" : op.state === "MIXED" ? "SEBAGIAN" : "OFF";
+        options.push(
+            `<option value="${escapeHtml(id)}">${escapeHtml(op.name)} — ${formatNumber(op.total)} produk [${state}]</option>`
+        );
+    });
+
+    select.innerHTML = options.join("");
+    select.value = catalogFilter.operator;
+    if (select.value !== catalogFilter.operator) catalogFilter.operator = "";
+}
+
+// ===========================================================
+// Muat produk (filter + paginasi dikerjain server)
+// ===========================================================
+function buildCatalogQuery(extra = {}) {
+    const params = new URLSearchParams();
+    if (catalogFilter.category) params.set("category", catalogFilter.category);
+    if (catalogFilter.operator) params.set("operator", catalogFilter.operator);
+    if (catalogFilter.status) params.set("status", catalogFilter.status);
+    if (catalogFilter.q) params.set("q", catalogFilter.q);
+    Object.entries(extra).forEach(([key, value]) => params.set(key, value));
+    return params.toString();
+}
+
+window.loadTopupProducts = async function loadTopupProducts() {
+    const tbody = el("topupProducts");
     if (!tbody) return;
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat produk...</td></tr>`;
+    if (catalogLoading) return;
+    catalogLoading = true;
+
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-5"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Memuat produk…</td></tr>`;
 
     try {
-        const res = await apiFetch("/topup/admin/products");
-        if (!res.ok) throw new Error("Gagal mengambil data produk topup");
+        const query = buildCatalogQuery({
+            limit: CATALOG_PAGE_SIZE,
+            offset: catalogPage * CATALOG_PAGE_SIZE
+        });
+        const res = await apiFetch(`/topup/admin/products?${query}`);
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || "Gagal mengambil data produk topup");
+        }
 
-        catalogProducts = await res.json();
+        const payload = await res.json();
+        // Toleran ke bentuk lama (array telanjang) kalau backend belum ke-deploy.
+        catalogProducts = Array.isArray(payload) ? payload : payload.data || [];
+        catalogTotalMatched = Array.isArray(payload) ? catalogProducts.length : Number(payload.total) || 0;
+
+        // Halaman kosong tapi total > 0 artinya offset-nya kelewat (mis. abis
+        // ganti filter) — balik ke halaman pertama.
+        if (!catalogProducts.length && catalogTotalMatched > 0 && catalogPage > 0) {
+            catalogPage = 0;
+            catalogLoading = false;
+            return window.loadTopupProducts();
+        }
+
         renderProductTable();
+        renderBulkFilterPanel();
+        renderPager();
         refreshTopupUndoRedoButtons();
     } catch (err) {
         if (err.message === "unauthorized") return;
         tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${escapeHtml(err.message)}</td></tr>`;
+    } finally {
+        catalogLoading = false;
     }
-}
+};
 
 function renderProductTable() {
-    const tbody = document.getElementById("topupProducts");
+    const tbody = el("topupProducts");
     if (!tbody) return;
 
-    topupSearchQueryCatalog = document.getElementById("topupSearchInput")?.value || "";
+    const header = el("productTableHeader");
+    if (header) header.textContent = `Daftar Produk (${formatNumber(catalogTotalMatched)})`;
 
-    let list = catalogProducts;
-    
-    // Create a local category map dictionary for fast lookup
-    const catDict = {};
-    if (categoryMap && Array.isArray(categoryMap)) {
-        categoryMap.forEach(m => catDict[m.tokovoucher_category_name] = m.nexshop_category_name);
+    const note = el("topupTableNote");
+    if (note) {
+        note.textContent = catalogTotalMatched > catalogProducts.length
+            ? `Menampilkan ${formatNumber(catalogProducts.length)} dari ${formatNumber(catalogTotalMatched)}`
+            : "";
     }
 
-    list = list.map(p => {
-        let cat = "Lainnya";
-        if (p.manual_category_override) {
-            cat = p.kategori || "Lainnya";
-        } else if (p.source_category_name && catDict[p.source_category_name]) {
-            cat = catDict[p.source_category_name];
-        } else if (catDict[p.kategori]) {
-            cat = catDict[p.kategori];
-        }
-
-        const opName = p.source_operator_name || p.kategori || "Unknown";
-        const opId = p.source_operator_id || "LEGACY_OP_" + opName;
-
-        return { ...p, _mappedCat: cat, _opId: opId };
-    });
-
-    // Filter by Category
-    if (currentCategory) {
-        list = list.filter(p => p._mappedCat === currentCategory);
-    }
-    
-    // Filter by Operator (opId)
-    if (currentOperator) {
-        list = list.filter(p => p._opId === currentOperator);
-    } else {
-        // PERF: Don't render ALL products in the DOM if no operator is selected.
-        // Cap it to avoid massive DOM slowdowns, or prompt them to pick an operator.
-        if (list.length > 500) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-5">
-                <i class="bi bi-list-task fs-2 d-block mb-2 text-secondary"></i>
-                Silakan pilih Operator/Game di sebelah kiri untuk melihat produk.<br>
-                <small class="text-secondary">(Menampilkan 10,000+ produk sekaligus dapat memberatkan browser)</small>
-            </td></tr>`;
-            document.getElementById("productTableHeader").textContent = `Daftar Produk`;
-            return;
-        }
-    }
-
-    // Filter by Search
-    if (topupSearchQueryCatalog) {
-        const q = topupSearchQueryCatalog.toLowerCase();
-        list = list.filter(p => String(p.nama || "").toLowerCase().includes(q) || String(p.kode_produk || "").toLowerCase().includes(q));
-    }
-
-    if (list.length === 0) {
+    if (!catalogProducts.length) {
+        const hasFilter = catalogFilter.category || catalogFilter.operator || catalogFilter.q || catalogFilter.status;
         tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-5">
             <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
-            Tidak ada produk ditemukan.
+            ${hasFilter ? "Tidak ada produk yang cocok dengan filter ini." : "Belum ada produk. Klik <b>Sync Katalog</b> di langkah 1."}
         </td></tr>`;
-        document.getElementById("productTableHeader").textContent = `Daftar Produk (0)`;
+        updateTopupSelectedCount();
         return;
     }
 
-    document.getElementById("productTableHeader").textContent = `Daftar Produk (${list.length})`;
-
-    const formatRp = n => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(n);
-
-    let html = '';
-    list.forEach(p => {
-        const activeClass = p.is_active ? 'text-success fw-bold' : 'text-muted';
-        const activeText = p.is_active ? '<i class="bi bi-check-circle-fill text-success"></i> Aktif' : '<i class="bi bi-x-circle text-muted"></i> Nonaktif';
+    tbody.innerHTML = catalogProducts.map((p) => {
         const isChecked = topupSelectedIds.has(p.id) ? "checked" : "";
-        const rowClass = topupSelectedIds.has(p.id) ? "table-active" : (p.is_active ? "" : "opacity-75");
+        const rowClass = topupSelectedIds.has(p.id) ? "table-active" : (p.is_active ? "" : "row-inactive");
 
-        const modalRp = p.harga_beli || 0;
-        const jualRp = p.harga_jual || 0;
+        const modalRp = Number(p.harga_beli) || 0;
+        const jualRp = Number(p.harga_jual) || 0;
         const untungRp = jualRp - modalRp;
         const profitClass = untungRp > 0 ? "text-success" : (untungRp < 0 ? "text-danger" : "text-muted");
+        const noPrice = jualRp <= 0;
 
-        html += `
+        return `
             <tr class="${rowClass}">
                 <td class="text-center">
-                    <input class="form-check-input topup-checkbox" type="checkbox" value="${p.id}" ${isChecked} onchange="toggleTopupSelect('${p.id}', this.checked)">
+                    <input class="form-check-input topup-checkbox" type="checkbox" value="${p.id}" ${isChecked}
+                        onchange="toggleTopupSelect(${JSON.stringify(p.id)}, this.checked)">
                 </td>
                 <td>
-                    <div class="fw-bold mb-1" style="font-size: 0.95rem;">${highlightSearchMatch(p.nama || "-")}</div>
-                    <div class="d-flex gap-2 text-muted small align-items-center">
-                        <span class="badge bg-light border text-dark font-monospace">${escapeHtml(p.kode_produk)}</span>
-                        ${p.source_jenis_name ? `<span class="badge bg-light border text-dark">${escapeHtml(p.source_jenis_name)}</span>` : ''}
-                        ${p.butuh_server_id ? `<span class="badge bg-info-subtle border border-info-subtle text-info-emphasis"><i class="bi bi-person-vcard"></i> Srv ID</span>` : ''}
+                    <div class="fw-semibold mb-1">${highlightSearchMatch(p.nama || "-")}</div>
+                    <div class="d-flex gap-2 flex-wrap align-items-center meta-badges">
+                        <span class="badge badge-code font-monospace">${escapeHtml(p.kode_produk || "-")}</span>
+                        ${p.operator_name ? `<span class="badge badge-meta">${escapeHtml(p.operator_name)}</span>` : ""}
+                        ${p.source_jenis_name ? `<span class="badge badge-meta">${escapeHtml(p.source_jenis_name)}</span>` : ""}
+                        ${p.butuh_server_id ? `<span class="badge badge-server"><i class="bi bi-person-vcard"></i> Server ID</span>` : ""}
                     </div>
                 </td>
-                <td class="font-monospace small text-muted">${formatRp(modalRp)}</td>
-                <td class="font-monospace fw-bold">${formatRp(jualRp)} <br><span class="small ${profitClass}">+${formatRp(untungRp)}</span></td>
-                <td class="text-center small">${activeText}</td>
+                <td class="font-monospace small text-muted text-nowrap">${formatRupiah(modalRp)}</td>
+                <td class="font-monospace fw-semibold text-nowrap">
+                    ${noPrice ? '<span class="text-danger">Belum diatur</span>' : formatRupiah(jualRp)}
+                    ${noPrice ? "" : `<div class="small fw-normal ${profitClass}">${untungRp >= 0 ? "+" : ""}${formatRupiah(untungRp)}</div>`}
+                </td>
+                <td class="text-center small text-nowrap">
+                    ${p.is_active
+                        ? '<span class="badge bg-success">Aktif</span>'
+                        : '<span class="badge bg-secondary">Nonaktif</span>'}
+                </td>
                 <td class="text-end">
-                    <button class="btn btn-sm btn-light border text-primary" onclick="openProductDrawer('${p.id}')">
-                        <i class="bi bi-pencil-square"></i> Edit
+                    <button class="btn btn-sm btn-outline-primary" onclick="openProductDrawer(${JSON.stringify(p.id)})">
+                        <i class="bi bi-pencil-square"></i>
                     </button>
                 </td>
             </tr>
         `;
-    });
+    }).join("");
 
-    tbody.innerHTML = html;
     updateTopupSelectedCount();
 }
 
+// ===========================================================
+// Seleksi checkbox
+//
+// Fungsi ini SEBELUMNYA gak pernah didefinisikan di mana pun, padahal tiap
+// checkbox produk manggil onchange="toggleTopupSelect(...)". Jadi tiap
+// admin nyentang produk, browser cuma ngelempar ReferenceError diam-diam
+// dan seleksi selalu kosong -- semua tombol aksi massal jawabnya "Pilih
+// minimal 1 produk dulu" walaupun udah dicentang banyak.
+// ===========================================================
+function toggleTopupSelect(id, checked) {
+    if (checked) topupSelectedIds.add(id);
+    else topupSelectedIds.delete(id);
+    updateTopupSelectedCount();
+}
+
+function updateTopupSelectedCount() {
+    const countEl = el("topupSelectedCount");
+    if (countEl) countEl.textContent = `${formatNumber(topupSelectedIds.size)} dipilih`;
+
+    const selectAll = el("topupSelectAll");
+    if (selectAll) {
+        const visible = catalogProducts.map((p) => p.id);
+        selectAll.checked = visible.length > 0 && visible.every((id) => topupSelectedIds.has(id));
+        selectAll.indeterminate = !selectAll.checked && visible.some((id) => topupSelectedIds.has(id));
+    }
+}
+
+// ===========================================================
+// Panel aksi massal berbasis filter (langkah 3)
+// ===========================================================
+function renderBulkFilterPanel() {
+    const summary = el("bulkFilterSummary");
+    const card = el("bulkFilterCard");
+    if (!card) return;
+
+    const hasFilter = Boolean(catalogFilter.category || catalogFilter.operator || catalogFilter.q || catalogFilter.status);
+    card.querySelectorAll(".bulk-filter-actions button").forEach((btn) => {
+        btn.disabled = !hasFilter || catalogTotalMatched === 0;
+    });
+
+    if (!summary) return;
+
+    if (!hasFilter) {
+        summary.textContent = "Pilih kategori dulu di langkah 2 — aksi massal sengaja dikunci supaya gak kena ke seluruh katalog.";
+        return;
+    }
+
+    const parts = [];
+    if (catalogFilter.category) parts.push(catalogFilter.category);
+    if (catalogFilter.operator) {
+        const op = catalogSummary[catalogFilter.category]?.operators?.[catalogFilter.operator];
+        parts.push(op ? op.name : catalogFilter.operator);
+    }
+    if (catalogFilter.status) parts.push(catalogFilter.status === "active" ? "hanya aktif" : "hanya nonaktif");
+    if (catalogFilter.q) parts.push(`cari "${catalogFilter.q}"`);
+
+    summary.innerHTML = `Aksi di bawah bakal kena ke <b>${formatNumber(catalogTotalMatched)} produk</b> — ${escapeHtml(parts.join(" · "))}`;
+}
+
+async function applyToFilter(action) {
+    if (!catalogTotalMatched) return showToast("Gak ada produk yang cocok sama filter ini", true);
+
+    const labels = {
+        activate: "Aktifkan",
+        deactivate: "Nonaktifkan",
+        "auto-markup": "Hitung ulang harga jual",
+        "server-id-on": "Tandai butuh Server ID",
+        "server-id-off": "Tandai tanpa Server ID"
+    };
+
+    const confirmed = await Swal.fire({
+        title: `${labels[action]} ${formatNumber(catalogTotalMatched)} produk?`,
+        html: `<div class="text-start small">Berlaku untuk <b>semua produk</b> yang cocok dengan filter sekarang, bukan cuma yang tampil di halaman ini.</div>`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: labels[action],
+        cancelButtonText: "Batal"
+    });
+    if (!confirmed.isConfirmed) return;
+
+    try {
+        const res = await apiFetch("/topup/admin/products/apply-filter", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action, filter: catalogFilter })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal menerapkan aksi massal");
+
+        showToast(data.message);
+        topupSelectedIds.clear();
+        await loadCatalogSummary();
+        await window.loadTopupProducts();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast(err.message, true);
+    }
+}
+
+// ===========================================================
+// Paginasi
+// ===========================================================
+function renderPager() {
+    const bar = el("topupPagerBar");
+    if (!bar) return;
+
+    const totalPages = Math.max(1, Math.ceil(catalogTotalMatched / CATALOG_PAGE_SIZE));
+    if (totalPages <= 1) {
+        bar.classList.add("d-none");
+        return;
+    }
+
+    bar.classList.remove("d-none");
+    const info = el("topupPagerInfo");
+    if (info) info.textContent = `Halaman ${catalogPage + 1} dari ${totalPages}`;
+
+    const prev = el("topupPrevPage");
+    const next = el("topupNextPage");
+    if (prev) prev.disabled = catalogPage === 0;
+    if (next) next.disabled = catalogPage >= totalPages - 1;
+}
+
+function changeCatalogPage(delta) {
+    const totalPages = Math.max(1, Math.ceil(catalogTotalMatched / CATALOG_PAGE_SIZE));
+    const nextPage = Math.min(Math.max(0, catalogPage + delta), totalPages - 1);
+    if (nextPage === catalogPage) return;
+    catalogPage = nextPage;
+    window.loadTopupProducts();
+}
+
+// ===========================================================
+// Drawer edit produk
+// ===========================================================
 function openProductDrawer(id) {
-    const p = catalogProducts.find(x => x.id === id);
+    const p = catalogProducts.find((x) => x.id === id);
     if (!p) return;
-    
-    const body = document.getElementById("productDrawerBody");
+
+    const body = el("productDrawerBody");
+    if (!body) return;
+
+    const suggested = Math.round((Number(p.harga_beli) || 0) * 1.05);
+
     body.innerHTML = `
         <div class="mb-4">
             <h6 class="fw-bold text-muted mb-1">Nama Produk</h6>
-            <div class="fs-5 fw-bold">${escapeHtml(p.nama)}</div>
-            <div class="badge bg-dark mt-1 font-monospace">${escapeHtml(p.kode_produk)}</div>
+            <div class="fs-5 fw-bold">${escapeHtml(p.nama || "-")}</div>
+            <div class="badge badge-code font-monospace mt-1">${escapeHtml(p.kode_produk || "-")}</div>
         </div>
 
-        <div class="card bg-light border-0 mb-4">
+        <div class="card drawer-info-card mb-4">
             <div class="card-body p-3">
-                <div class="row g-2">
+                <div class="row g-3">
                     <div class="col-6">
-                        <span class="text-muted small d-block">Operator</span>
-                        <span class="fw-medium">${escapeHtml(p.source_operator_name || '-')}</span>
+                        <span class="text-muted small d-block">Game / Operator</span>
+                        <span class="fw-medium">${escapeHtml(p.operator_name || "-")}</span>
                     </div>
                     <div class="col-6">
                         <span class="text-muted small d-block">Kategori</span>
-                        <span class="fw-medium">${escapeHtml(p.kategori || '-')}</span>
+                        <span class="fw-medium">${escapeHtml(p.nexshop_category || p.kategori || "-")}</span>
                     </div>
                     <div class="col-6">
                         <span class="text-muted small d-block">Jenis</span>
-                        <span class="fw-medium">${escapeHtml(p.source_jenis_name || '-')}</span>
+                        <span class="fw-medium">${escapeHtml(p.source_jenis_name || "-")}</span>
                     </div>
                     <div class="col-6">
-                        <span class="text-muted small d-block">Harga Modal (TokoVoucher)</span>
-                        <span class="fw-medium font-monospace">Rp ${new Intl.NumberFormat('id-ID').format(p.harga_beli || 0)}</span>
+                        <span class="text-muted small d-block">Harga Modal</span>
+                        <span class="fw-medium font-monospace">${formatRupiah(p.harga_beli)}</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <form id="productEditForm">
-            <input type="hidden" id="drawProdId" value="${p.id}">
-            
+        <form id="productEditForm" onsubmit="return false;">
+            <input type="hidden" id="drawProdId" value="${escapeHtml(String(p.id))}">
+
             <div class="mb-3">
-                <label class="form-label fw-bold">Harga Jual (Rp)</label>
+                <label class="form-label fw-bold" for="drawHargaJual">Harga Jual</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-light">Rp</span>
-                    <input type="number" class="form-control" id="drawHargaJual" value="${p.harga_jual || p.harga_beli || 0}" min="0">
+                    <span class="input-group-text">Rp</span>
+                    <input type="number" class="form-control" id="drawHargaJual" value="${Number(p.harga_jual) || 0}" min="0">
+                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('drawHargaJual').value=${suggested}">
+                        Saran ${formatRupiah(suggested)}
+                    </button>
                 </div>
-            </div>
-            
-            <div class="mb-3 form-check form-switch">
-                <input class="form-check-input" type="checkbox" role="switch" id="drawIsActive" ${p.is_active ? 'checked' : ''}>
-                <label class="form-check-label fw-bold" for="drawIsActive">Status Aktif</label>
-                <div class="form-text mt-0 text-muted">Hanya produk aktif yang tampil di toko.</div>
+                <div class="form-text">Harga jual 0 berarti produk gak bisa tayang di toko.</div>
             </div>
 
             <div class="mb-3 form-check form-switch">
-                <input class="form-check-input" type="checkbox" role="switch" id="drawButuhServer" ${p.butuh_server_id ? 'checked' : ''}>
+                <input class="form-check-input" type="checkbox" role="switch" id="drawIsActive" ${p.is_active ? "checked" : ""}>
+                <label class="form-check-label fw-bold" for="drawIsActive">Status Aktif</label>
+                <div class="form-text mt-0">Hanya produk aktif yang tampil di toko.</div>
+            </div>
+
+            <div class="mb-3 form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="drawButuhServer" ${p.butuh_server_id ? "checked" : ""}>
                 <label class="form-check-label fw-bold" for="drawButuhServer">Butuh Server ID</label>
-                <div class="form-text mt-0 text-muted">Aktifkan jika game ini memerlukan Server ID / Zone ID (contoh: MLBB).</div>
+                <div class="form-text mt-0">Aktifkan kalau game ini minta Server ID / Zone ID (contoh: MLBB).</div>
             </div>
         </form>
     `;
 
-    document.getElementById("btnSaveProductDrawer").onclick = saveProductDrawer;
+    const saveBtn = el("btnSaveProductDrawer");
+    if (saveBtn) saveBtn.onclick = saveProductDrawer;
 
-    const bsOffcanvas = new bootstrap.Offcanvas(document.getElementById('productDrawer'));
-    bsOffcanvas.show();
+    bootstrap.Offcanvas.getOrCreateInstance(el("productDrawer")).show();
 }
 
 async function saveProductDrawer() {
-    const id = document.getElementById("drawProdId").value;
-    const harga_jual = parseInt(document.getElementById("drawHargaJual").value, 10);
-    const is_active = document.getElementById("drawIsActive").checked;
-    const butuh_server_id = document.getElementById("drawButuhServer").checked;
+    const idField = el("drawProdId");
+    if (!idField) return;
 
+    // id produk itu integer di database; kirim balik sebagai angka biar
+    // cocok sama tipe kolomnya.
+    const rawId = idField.value;
+    const id = /^\d+$/.test(rawId) ? Number(rawId) : rawId;
+
+    const harga_jual = parseInt(el("drawHargaJual").value, 10);
+    const is_active = el("drawIsActive").checked;
+    const butuh_server_id = el("drawButuhServer").checked;
+
+    if (!Number.isFinite(harga_jual) || harga_jual < 0) {
+        return showToast("Harga jual harus angka >= 0", true);
+    }
+    if (is_active && harga_jual === 0) {
+        return showToast("Produk gak bisa diaktifkan kalau harga jualnya masih 0", true);
+    }
+
+    const saveBtn = el("btnSaveProductDrawer");
     try {
-        document.getElementById("btnSaveProductDrawer").disabled = true;
+        if (saveBtn) saveBtn.disabled = true;
         const res = await apiFetch(`/topup/admin/products/${id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -520,113 +598,182 @@ async function saveProductDrawer() {
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Gagal update produk");
 
-        showToast("Produk berhasil diupdate");
-        const offcanvas = bootstrap.Offcanvas.getInstance(document.getElementById('productDrawer'));
-        if (offcanvas) offcanvas.hide();
-        
-        window.loadTopupProducts();
+        showToast("Produk berhasil diperbarui");
+        bootstrap.Offcanvas.getInstance(el("productDrawer"))?.hide();
+
+        await window.loadTopupProducts();
         loadCatalogSummary();
     } catch (err) {
+        if (err.message === "unauthorized") return;
         showToast(err.message, true);
     } finally {
-        document.getElementById("btnSaveProductDrawer").disabled = false;
+        if (saveBtn) saveBtn.disabled = false;
     }
 }
+
+// ===========================================================
+// Modal mapping kategori
+// ===========================================================
+let categoryMap = [];
 
 async function openCategoryMapModal() {
     try {
         const res = await apiFetch("/topup/admin/category-map");
-        if (!res.ok) throw new Error("Gagal load mapping");
+        if (!res.ok) throw new Error("Gagal memuat mapping kategori");
         categoryMap = await res.json();
-        
+
         renderCategoryMapTable();
-        const modal = new bootstrap.Modal(document.getElementById('categoryMapModal'));
-        modal.show();
-    } catch(err) {
+        bootstrap.Modal.getOrCreateInstance(el("categoryMapModal")).show();
+    } catch (err) {
+        if (err.message === "unauthorized") return;
         showToast(err.message, true);
     }
 }
 
 function renderCategoryMapTable() {
-    const tbody = document.getElementById("categoryMapTableBody");
+    const tbody = el("categoryMapTableBody");
     if (!tbody) return;
-    
-    if (categoryMap.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">Belum ada mapping</td></tr>';
+
+    if (!categoryMap.length) {
+        tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted py-3">Belum ada mapping</td></tr>';
         return;
     }
-    
-    let html = '';
-    categoryMap.forEach(m => {
-        html += `
-            <tr>
-                <td class="fw-bold">${escapeHtml(m.tokovoucher_category_name)}</td>
-                <td><span class="badge bg-primary-subtle text-primary border border-primary-subtle">${escapeHtml(m.nexshop_category_name)}</span></td>
-                <td class="text-end">
-                    <button class="btn btn-sm btn-link text-muted p-0" title="Klik tambah di bawah untuk menimpa nama ini"><i class="bi bi-pencil"></i></button>
-                </td>
-            </tr>
-        `;
-    });
-    tbody.innerHTML = html;
+
+    tbody.innerHTML = categoryMap.map((m) => `
+        <tr>
+            <td class="fw-semibold">${escapeHtml(m.tokovoucher_category_name)}</td>
+            <td><span class="badge badge-meta">${escapeHtml(m.nexshop_category_name)}</span></td>
+            <td class="text-end">
+                <button class="btn btn-sm btn-link p-0 text-decoration-none"
+                    onclick="prefillCategoryMap(${JSON.stringify(m.tokovoucher_category_name)}, ${JSON.stringify(m.nexshop_category_name)})"
+                    title="Ubah mapping ini">
+                    <i class="bi bi-pencil"></i>
+                </button>
+            </td>
+        </tr>
+    `).join("");
 }
 
-document.getElementById("addCategoryMapForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const tv = document.getElementById("mapInputTv").value.trim();
-    const ns = document.getElementById("mapInputNs").value.trim();
-    if (!tv || !ns) return;
-
-    try {
-        const res = await apiFetch("/topup/admin/category-map", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tokovoucher_category_name: tv, nexshop_category_name: ns })
-        });
-        if (!res.ok) throw new Error("Gagal menyimpan mapping");
-        
-        showToast("Mapping berhasil disimpan");
-        document.getElementById("mapInputTv").value = "";
-        document.getElementById("mapInputNs").value = "";
-        
-        // Reload modal table
-        openCategoryMapModal();
-    } catch (err) {
-        showToast(err.message, true);
+// Tombol pensil di tabel mapping dulunya cuma ikon mati tanpa aksi apa pun.
+function prefillCategoryMap(tokovoucherName, nexshopName) {
+    const tv = el("mapInputTv");
+    const ns = el("mapInputNs");
+    if (tv) tv.value = tokovoucherName;
+    if (ns) {
+        ns.value = nexshopName;
+        ns.focus();
     }
-});
+}
 
-// Hook into dashboard tab changes
-document.addEventListener("DOMContentLoaded", () => {
-    const searchInput = document.getElementById("topupSearchInput");
+// ===========================================================
+// Init
+// ===========================================================
+function bindCatalogFilters() {
+    const categorySelect = el("catalogCategorySelect");
+    if (categorySelect) {
+        categorySelect.addEventListener("change", (e) => {
+            catalogFilter.category = e.target.value;
+            catalogFilter.operator = "";
+            catalogPage = 0;
+            topupSelectedIds.clear();
+            renderOperatorSelect();
+            window.loadTopupProducts();
+        });
+    }
+
+    const operatorSelect = el("catalogOperatorSelect");
+    if (operatorSelect) {
+        operatorSelect.addEventListener("change", (e) => {
+            catalogFilter.operator = e.target.value;
+            catalogPage = 0;
+            topupSelectedIds.clear();
+            window.loadTopupProducts();
+        });
+    }
+
+    const statusSelect = el("catalogStatusSelect");
+    if (statusSelect) {
+        statusSelect.addEventListener("change", (e) => {
+            catalogFilter.status = e.target.value;
+            catalogPage = 0;
+            window.loadTopupProducts();
+        });
+    }
+
+    const searchInput = el("topupSearchInput");
     if (searchInput) {
+        let debounce = null;
         searchInput.addEventListener("input", (e) => {
-            topupSearchQueryCatalog = e.target.value;
+            const value = e.target.value.trim();
+            clearTimeout(debounce);
+            // Pencarian sekarang jalan di server, jadi jangan nembak tiap
+            // ketukan keyboard.
+            debounce = setTimeout(() => {
+                catalogFilter.q = value;
+                topupSearchQuery = value; // dipakai highlightSearchMatch
+                catalogPage = 0;
+                window.loadTopupProducts();
+            }, 350);
+        });
+    }
+
+    const selectAll = el("topupSelectAll");
+    if (selectAll) {
+        selectAll.addEventListener("change", (e) => {
+            if (e.target.checked) catalogProducts.forEach((p) => topupSelectedIds.add(p.id));
+            else catalogProducts.forEach((p) => topupSelectedIds.delete(p.id));
             renderProductTable();
         });
     }
 
-    const opSearchInput = document.getElementById("operatorSearchInput");
-    if (opSearchInput) {
-        opSearchInput.addEventListener("input", (e) => {
-            operatorSearchQuery = e.target.value;
-            renderOperatorList();
-        });
-    }
+    const mapForm = el("addCategoryMapForm");
+    if (mapForm) {
+        mapForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const tv = el("mapInputTv").value.trim();
+            const ns = el("mapInputNs").value.trim();
+            if (!tv || !ns) return;
 
-    const opStateRadios = document.querySelectorAll('input[name="op_state_filter"]');
-    opStateRadios.forEach(radio => {
-        radio.addEventListener("change", (e) => {
-            if (e.target.checked) {
-                operatorStateFilter = e.target.value;
-                renderOperatorList();
+            try {
+                const res = await apiFetch("/topup/admin/category-map", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ tokovoucher_category_name: tv, nexshop_category_name: ns })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || "Gagal menyimpan mapping");
+
+                showToast("Mapping berhasil disimpan");
+                el("mapInputTv").value = "";
+                el("mapInputNs").value = "";
+
+                // Mapping ngubah kategori tiap produk, jadi ringkasan +
+                // tabelnya wajib dimuat ulang biar gak beda sama server.
+                const refreshed = await apiFetch("/topup/admin/category-map");
+                if (refreshed.ok) {
+                    categoryMap = await refreshed.json();
+                    renderCategoryMapTable();
+                }
+                await loadCatalogSummary();
+                await window.loadTopupProducts();
+            } catch (err) {
+                if (err.message === "unauthorized") return;
+                showToast(err.message, true);
             }
         });
-    });
+    }
+}
 
-    // Call checkSyncStatus on load to see if it's currently running
-    setTimeout(() => {
-        checkSyncStatus();
-        loadCatalogSummary();
-    }, 1000);
+let catalogInitialized = false;
+
+// Dipanggil dashboard.js waktu tab Topup dibuka pertama kali.
+window.initTopupCatalog = function initTopupCatalog() {
+    if (catalogInitialized) return;
+    catalogInitialized = true;
+    checkSyncStatus();
+    loadCatalogSummary().then(() => window.loadTopupProducts());
+};
+
+document.addEventListener("DOMContentLoaded", () => {
+    bindCatalogFilters();
 });

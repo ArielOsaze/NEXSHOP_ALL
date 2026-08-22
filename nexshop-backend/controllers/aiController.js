@@ -192,18 +192,39 @@ function knowledgeColumns() {
 }
 
 async function loadKnowledge(query) {
-    let dbKnowledge = [];
+    // RPC full-text search dipakai sebagai PENAMBAH recall, BUKAN sebagai
+    // filter keras. Sebelumnya, begitu RPC balikin minimal 1 baris, seluruh
+    // knowledge_base lain gak pernah ikut dipertimbangkan lagi -- padahal
+    // full-text search Postgres gampang meleset buat kalimat percakapan
+    // ("kalau saya beli sekarang kapan masuknya ya"). Hasilnya NexBot
+    // ngejawab "informasi belum tersedia" padahal jawabannya ADA di
+    // knowledge base. Sekarang dua sumbernya digabung, biar ranker yang
+    // nentuin mana yang relevan.
+    let rpcRows = [];
     try {
         const rpc = await supabase.rpc("search_nexbot_knowledge", { search_query: query.raw, result_limit: 80 });
-        if (!rpc.error && Array.isArray(rpc.data) && rpc.data.length) dbKnowledge = rpc.data;
-    } catch (_) { /* fall through to the compatible query */ }
-    
-    if (!dbKnowledge.length) {
-        const { data, error } = await supabase.from("knowledge_base").select(knowledgeColumns()).eq("status", "active").order("priority", { ascending: false }).limit(250);
-        if (!error && data?.length) dbKnowledge = data;
-    }
-    
-    return [...dbKnowledge, ...BUILTIN_KNOWLEDGE];
+        if (!rpc.error && Array.isArray(rpc.data)) rpcRows = rpc.data;
+    } catch (_) { /* RPC opsional — katalog lengkap di bawah tetap jalan */ }
+
+    let baseRows = [];
+    const { data, error } = await supabase
+        .from("knowledge_base")
+        .select(knowledgeColumns())
+        .eq("status", "active")
+        .order("priority", { ascending: false })
+        .limit(500);
+    if (!error && data?.length) baseRows = data;
+
+    // Gabung + buang duplikat berdasarkan id (baris RPC dan baris tabel bisa
+    // nunjuk entri yang sama).
+    const merged = new Map();
+    [...rpcRows, ...baseRows, ...BUILTIN_KNOWLEDGE].forEach((row) => {
+        if (!row) return;
+        const key = String(row.id ?? row.title ?? "");
+        if (key && !merged.has(key)) merged.set(key, row);
+    });
+
+    return [...merged.values()];
 }
 
 async function loadConversationMemory(sessionId, userId) {
@@ -222,6 +243,35 @@ function memoryEntities(query, memory) {
     const recentCustomerMessage = [...memory.conversation].reverse().find((item) => item.role === "user")?.message || "";
     const favorite = memory.userMemory?.favorite_game || "";
     return detectEntities(normalizeQuery(`${recentCustomerMessage} ${favorite}`));
+}
+
+// Riwayat percakapan SUDAH diambil (loadConversationMemory) tapi dulu cuma
+// dipakai buat nebak entity -- isinya gak pernah sampai ke model. Akibatnya
+// tiap pertanyaan lanjutan diperlakukan sebagai percakapan baru: "kalau yang
+// 1 tahun berapa?" atau "kalau yang itu gimana?" kehilangan konteksnya total
+// dan NexBot jawab ngawur/minta diulang.
+//
+// Driver provider (Groq/Gemini/OpenRouter) cuma nerima satu string prompt,
+// jadi transkrip ditempel di depan pertanyaan terakhir.
+const MAX_HISTORY_TURNS = 4;
+const MAX_HISTORY_CHARS = 400;
+
+function buildConversationPrompt(memory, message) {
+    const turns = (memory?.conversation || []).slice(-MAX_HISTORY_TURNS);
+    if (!turns.length) return message;
+
+    const transcript = turns
+        .map((turn) => {
+            const who = turn.role === "assistant" ? "NexBot" : "Customer";
+            const text = String(turn.message || "").replace(/\s+/g, " ").trim().slice(0, MAX_HISTORY_CHARS);
+            return text ? `${who}: ${text}` : "";
+        })
+        .filter(Boolean)
+        .join("\n");
+
+    if (!transcript) return message;
+
+    return `PERCAKAPAN SEBELUMNYA (konteks, jangan dijawab ulang):\n${transcript}\n\nPERTANYAAN CUSTOMER SEKARANG:\n${message}`;
 }
 
 async function retrieveKnowledge(message, sessionId, user) {
@@ -470,7 +520,7 @@ JIKA BAGIAN "FAKTA KNOWLEDGE BASE" DI ATAS KOSONG (tidak ada fakta sama sekali):
 Jawab persis kalimat ini SAJA, tanpa tambahan apapun: "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kamu bisa menghubungi Customer Service NexShop untuk informasi lebih lanjut."`;
 
             const aiRes = await aiProviderManager.generateResponse({
-                prompt: message,
+                prompt: buildConversationPrompt(result.memory, message),
                 systemPrompt,
                 userId: user?.id,
                 sessionId

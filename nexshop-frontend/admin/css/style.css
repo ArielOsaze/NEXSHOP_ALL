@@ -543,3 +543,158 @@ main{
 .cmd-k-item:hover, .cmd-k-item.active{ background:var(--violet); color:#ffffff; }
 .cmd-k-item:hover .text-muted, .cmd-k-item.active .text-muted{ color:rgba(255,255,255,0.8)!important; }
 .ai-advisor-card{ border-left:4px solid var(--violet); background:linear-gradient(135deg, var(--bg-panel), var(--bg-panel-2)); }
+
+/* ===========================================================
+   TOPUP TOKOVOUCHER — katalog produk
+   ===========================================================
+   Halaman ini sebelumnya nyampur utility terang bawaan Bootstrap
+   (bg-light, table-light, btn-light, text-dark) di atas panel gelap,
+   jadi bar aksi massal & header tabel nongol sebagai balok putih yang
+   nabrak tema. Sekarang semua permukaannya pakai token tema.
+   =========================================================== */
+
+/* --- Pengaman umum: utility terang Bootstrap ikut token tema --- */
+.bg-light{ background-color:var(--bg-panel-2)!important; }
+.bg-body-tertiary{ background-color:var(--bg-panel-2)!important; }
+/* Kecualiin .badge: badge kayak "bg-info text-dark" atau "bg-warning
+   text-dark" emang SENGAJA teks gelap di atas warna terang. Kalau ikut
+   dibalik jadi terang, tulisannya malah ilang di badge-nya sendiri. */
+.text-dark:not(.badge){ color:var(--text)!important; }
+.badge.bg-light{
+    background-color:var(--bg-panel-3)!important;
+    color:var(--text)!important;
+    border-color:var(--line)!important;
+}
+.btn-light{
+    background-color:var(--bg-panel-2);
+    border-color:var(--line);
+    color:var(--text);
+}
+.btn-light:hover{ background-color:var(--bg-panel-3); color:var(--text); }
+.table-light,
+.table > thead.table-light{
+    --bs-table-bg:var(--bg-panel-2);
+    --bs-table-color:var(--text-muted);
+}
+
+/* --- Kartu langkah setup (1 → 2 → 3) --- */
+.setup-step .step-badge{
+    flex:0 0 auto;
+    width:30px; height:30px;
+    display:inline-flex; align-items:center; justify-content:center;
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--violet),var(--violet-2));
+    color:#fff;
+    font-weight:700; font-size:14px;
+    box-shadow:0 0 14px rgba(139,92,246,.35);
+}
+
+/* --- Chip status sync --- */
+.status-chip{
+    background:var(--bg-panel-2);
+    color:var(--text-muted);
+    border:1px solid var(--line);
+    font-weight:600;
+    padding:.45em .85em;
+}
+.status-chip-success{ color:#22C55E; border-color:rgba(34,197,94,.35); }
+.status-chip-error{ color:#F87171; border-color:rgba(248,113,113,.35); }
+.status-chip-running{ color:var(--cyan); border-color:rgba(34,211,238,.35); }
+
+/* --- Kartu ringkasan katalog --- */
+.stat-card{ border-left:4px solid var(--line); }
+.stat-card-primary{ border-left-color:var(--violet); }
+.stat-card-info{ border-left-color:var(--cyan); }
+.stat-card-title{
+    color:var(--text-muted);
+    font-size:.72rem;
+    font-weight:700;
+    letter-spacing:.09em;
+    margin-bottom:1rem;
+}
+.stat-card-time{
+    color:var(--cyan);
+    font-size:.72rem;
+    font-weight:500;
+    letter-spacing:0;
+    text-transform:none;
+}
+.stat-card .border-start{ border-color:var(--line)!important; }
+
+/* --- Baris filter --- */
+.catalog-filter-bar .form-label{ font-size:12px; }
+
+/* --- Bar aksi massal di atas tabel --- */
+.topup-bulk-bar{
+    background:var(--bg-panel-2);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+}
+.bulk-label{
+    color:var(--text-muted);
+    font-size:.7rem;
+    font-weight:600;
+    letter-spacing:.04em;
+    margin-bottom:.25rem;
+}
+
+/* --- Tabel produk --- */
+.topup-table-scroll{ max-height:560px; overflow-y:auto; }
+.topup-table-scroll thead th{
+    position:sticky; top:0; z-index:2;
+    background:var(--bg-panel-2);
+}
+#topupProducts tr.row-inactive td{ opacity:.62; }
+#topupProducts mark{
+    background:rgba(139,92,246,.28);
+    color:var(--text);
+    padding:0 2px; border-radius:3px;
+}
+
+/* --- Badge meta di baris produk --- */
+.meta-badges .badge{ font-weight:500; font-size:.68rem; }
+.badge-code{
+    background:var(--bg-panel-3);
+    color:var(--text-muted);
+    border:1px solid var(--line);
+}
+.badge-meta{
+    background:rgba(139,92,246,.14);
+    color:var(--violet);
+    border:1px solid rgba(139,92,246,.28);
+}
+:root[data-theme="light"] .badge-meta{ color:var(--violet-2); }
+.badge-server{
+    background:rgba(34,211,238,.14);
+    color:var(--cyan);
+    border:1px solid rgba(34,211,238,.3);
+}
+:root[data-theme="light"] .badge-server{ color:var(--cyan-2); }
+
+/* --- Drawer edit produk --- */
+#productDrawer{
+    background:var(--bg-panel);
+    color:var(--text);
+    border-left:1px solid var(--line);
+}
+#productDrawer .offcanvas-header,
+.offcanvas-footer{
+    background:var(--bg-panel-2);
+    border-color:var(--line)!important;
+}
+.offcanvas-footer{ border-top:1px solid var(--line); }
+.drawer-info-card{
+    background:var(--bg-panel-2);
+    border:1px solid var(--line);
+}
+#productDrawer .form-text{ color:var(--text-muted); }
+
+/* --- Modal mapping kategori --- */
+#categoryMapModal .modal-content{ background:var(--bg-panel); color:var(--text); }
+#categoryMapModal .modal-header,
+#categoryMapModal .modal-footer{ background:var(--bg-panel-2); border-color:var(--line); }
+
+@media (max-width: 575.98px){
+    .setup-step .card-body{ padding:1rem; }
+    .bulk-filter-actions .btn{ flex:1 1 100%; }
+}

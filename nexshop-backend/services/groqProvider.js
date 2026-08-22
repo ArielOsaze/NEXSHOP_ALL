@@ -2,17 +2,79 @@
 
 const axios = require("axios");
 
-const DEFAULT_MODEL = "llama-3.3-70b-versatile";
+// ===========================================================
+// KENAPA DAFTAR MODELNYA DIAMBIL RUNTIME, BUKAN DI-HARDCODE
+//
+// Groq rutin men-decommission model lama. Daftar statis yang dulu ada di
+// sini (llama-3.3-70b-versatile, llama-3.1-8b-instant, mixtral-8x7b-32768,
+// gemma2-9b-it) SEMUANYA sudah dihapus dari katalog Groq -- jadi tiap
+// permintaan NexBot nyoba 4 model, gagal 4-4nya (404/400), lalu jatuh ke
+// kalimat "Maaf, informasi belum tersedia". Dari sisi user, NexBot
+// kelihatan gak bisa jawab APA PUN, padahal retrieval-nya benar.
+//
+// Sekarang kandidat model ditanya langsung ke /v1/models punya Groq dan
+// di-cache 30 menit, jadi daftarnya ikut kalau Groq ganti katalog lagi.
+// Daftar statis di bawah cuma jaring pengaman kalau endpoint itu gak bisa
+// dihubungi.
+// ===========================================================
+const DEFAULT_MODEL = "openai/gpt-oss-20b";
 const FALLBACK_MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant",
-    "mixtral-8x7b-32768",
-    "gemma2-9b-it"
+    "openai/gpt-oss-20b",
+    "openai/gpt-oss-120b",
+    "groq/compound-mini",
+    "qwen/qwen3.6-27b"
 ];
+
+// Model non-chat yang gak boleh dipakai buat NexBot (speech-to-text,
+// klasifikasi prompt, TTS).
+const NON_CHAT_MODEL_PATTERN = /whisper|prompt-guard|tts|orpheus|safeguard/i;
+
+const MODEL_CACHE_TTL_MS = 30 * 60 * 1000;
+let modelCache = { models: [], ts: 0 };
+
+async function listAvailableModels(apiKey) {
+    const now = Date.now();
+    if (modelCache.models.length && now - modelCache.ts < MODEL_CACHE_TTL_MS) {
+        return modelCache.models;
+    }
+
+    try {
+        const res = await axios.get("https://api.groq.com/openai/v1/models", {
+            headers: { Authorization: `Bearer ${apiKey}` },
+            timeout: 8000
+        });
+
+        const models = (res.data?.data || [])
+            .map((m) => m.id)
+            .filter((id) => id && !NON_CHAT_MODEL_PATTERN.test(id));
+
+        if (models.length) {
+            modelCache = { models, ts: now };
+            console.log(`[Groq] ${models.length} model chat tersedia: ${models.join(", ")}`);
+        }
+        return models;
+    } catch (err) {
+        console.warn(`[Groq] Gagal ambil daftar model (${err.response?.status || err.message}), pakai daftar statis.`);
+        return [];
+    }
+}
 
 async function generateContent({ apiKey, preferredModel, prompt, systemPrompt = "", timeoutMs = 10000 }) {
     const startTime = Date.now();
-    const modelCandidates = Array.from(new Set([preferredModel || DEFAULT_MODEL, ...FALLBACK_MODELS])).filter(Boolean);
+
+    const available = await listAvailableModels(apiKey);
+    const isUsable = (model) => !available.length || available.includes(model);
+
+    // Model pilihan admin tetap didahulukan, TAPI cuma kalau Groq emang
+    // masih punya model itu -- kalau enggak, langsung lompat ke model yang
+    // beneran ada daripada buang satu request buat dapat 404.
+    const candidates = [
+        preferredModel,
+        ...FALLBACK_MODELS,
+        ...available
+    ].filter((model) => Boolean(model) && isUsable(model));
+
+    const modelCandidates = Array.from(new Set(candidates.length ? candidates : [DEFAULT_MODEL]));
 
     let lastError = null;
     let lastHttpStatus = 500;

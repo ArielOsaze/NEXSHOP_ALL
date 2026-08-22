@@ -125,6 +125,38 @@ function isTopupGameCategory(nexshopCategoryName) {
     return TOPUP_GAME_CATEGORIES.has(String(nexshopCategoryName || "").trim().toLowerCase());
 }
 
+// ===========================================================
+// RESOLUSI KATEGORI — SATU sumber kebenaran buat "produk ini masuk
+// kategori NexShop yang mana". Sebelumnya logika ini di-copy-paste di 3
+// tempat (getCatalogSummary, getPublicCatalog, dan renderProductTable di
+// frontend). Yang di frontend nge-baca `categoryMap` yang GAK PERNAH
+// di-load, jadi SEMUA produk jatuh ke "Lainnya" -- itu sebabnya tabel
+// produk di dashboard selalu kosong pas kategori dipilih.
+//
+// Prioritas: override manual admin -> map by nama kategori TokoVoucher ->
+// map by kategori yang kesimpen -> "Lainnya".
+// categoryMap boleh Map ataupun object biasa.
+// ===========================================================
+function resolveNexshopCategory(product, categoryMap) {
+    const lookup = (key) => {
+        if (!key) return undefined;
+        if (categoryMap instanceof Map) return categoryMap.get(key);
+        return categoryMap ? categoryMap[key] : undefined;
+    };
+
+    if (product.manual_category_override) return product.kategori || "Lainnya";
+    return lookup(product.source_category_name) || lookup(product.kategori) || "Lainnya";
+}
+
+// Identitas operator/game yang STABIL. Produk lama hasil sync jadul gak
+// punya source_operator_id, jadi dikasih id turunan dari namanya supaya
+// tetap bisa dikelompokkan (dan tetap kebedain dari operator ber-id).
+function resolveOperator(product) {
+    const name = product.source_operator_name || product.kategori || "Unknown";
+    const id = product.source_operator_id ? String(product.source_operator_id) : "LEGACY_OP_" + name;
+    return { id, name };
+}
+
 module.exports = {
     FOREIGN_REGION_KATEGORI,
     FOREIGN_REGION_CODE_PATTERNS,
@@ -137,5 +169,7 @@ module.exports = {
     bulatkanKeAtas,
     hitungMarkupWajar,
     TOPUP_GAME_CATEGORIES,
-    isTopupGameCategory
+    isTopupGameCategory,
+    resolveNexshopCategory,
+    resolveOperator
 };

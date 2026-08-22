@@ -2696,7 +2696,21 @@ function getPopularShortcutRank(kategori) {
     return idx === -1 ? TOPUP_POPULAR_SHORTCUTS.length : idx;
 }
 
-// Kelompokkan produk topup per kategori (= 1 game/kartu di grid). Logo game
+// Ambil NAMA GAME untuk 1 kartu di grid. Data hasil sync provider menaruh
+// nama game asli (Mobile Legends, PUBG Mobile, Free Fire, dst) di
+// `source_operator_name`, sedangkan kolom `kategori` untuk data sync semuanya
+// berisi "Gaming" -- makanya kalau dikelompokkan per `kategori` semua game
+// nempel jadi 1 kartu. Prioritas: nama game dari operator, lalu kategori,
+// terakhir "Lainnya".
+function getTopupGameName(p) {
+    const op = p.source_operator_name && String(p.source_operator_name).trim();
+    if (op) return op;
+    const kat = p.kategori && String(p.kategori).trim();
+    if (kat) return kat;
+    return "Lainnya";
+}
+
+// Kelompokkan produk topup per NAMA GAME (= 1 game/kartu di grid). Logo game
 // diambil dari operator_logo yang diatur admin lewat Admin Dashboard.
 // Urutan grid: game yang "paling banyak dicari" (ada di TOPUP_POPULAR_SHORTCUTS,
 // misal MLBB/PUBGM/Free Fire/CODM) selalu muncul PALING ATAS sesuai urutan
@@ -2705,7 +2719,7 @@ function getPopularShortcutRank(kategori) {
 function buildTopupGames() {
     const map = new Map();
     TOPUP_PRODUCTS.forEach(p => {
-        const key = p.kategori || "Lainnya";
+        const key = getTopupGameName(p);
         if (!map.has(key)) map.set(key, { kategori: key, logo: p.operator_logo || null, products: [] });
         const g = map.get(key);
         g.products.push(p);
