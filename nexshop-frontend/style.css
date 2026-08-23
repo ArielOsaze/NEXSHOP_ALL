@@ -4813,6 +4813,19 @@ input::placeholder {
     opacity: 1;
 }
 
+/* Touchscreen gak punya :hover, jadi overlay "ganti foto" di atas gak
+   pernah kelihatan di HP -- efeknya user gak tau ada tombol ganti foto
+   di situ (kelihatannya avatar cuma gambar diem, padahal bisa di-tap).
+   Makanya foto profil kelihatan "gak mau ganti" di mobile: bukan upload-nya
+   yang gagal, tapi usernya gak pernah nemu cara buat mulai upload.
+   Tampilin overlay-nya permanen (redup) di perangkat tanpa hover. */
+@media (hover: none) {
+    .account-avatar-edit {
+        opacity: 1;
+        background: rgba(0, 0, 0, 0.4);
+    }
+}
+
 .hof-avatar-sm {
     width: 32px;
     height: 32px;
