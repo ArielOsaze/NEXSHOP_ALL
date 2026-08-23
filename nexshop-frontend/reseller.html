@@ -822,22 +822,40 @@
 
             if (!token) {
                 tampilkanStatus(
-                    `<span class="material-symbols-outlined" aria-hidden="true">login</span>
-                     <div><strong>Masuk dulu ke akun NexShop</strong><br>
-                     Pengajuan reseller dikaitkan ke akunmu. <a href="/login.html">Masuk atau daftar di sini</a>, lalu kembali ke halaman ini.</div>`
+                    `<span class="material-symbols-outlined" aria-hidden="true" style="font-size:1.4rem;">account_circle</span>
+                     <div><strong>Masuk ke Akun untuk Mendaftar Reseller</strong><br>
+                     Program reseller terhubung langsung ke akun NexShop Anda untuk mengaktifkan potongan harga otomatis dan API Key.
+                     <div style="margin-top:0.6rem;">
+                         <a href="/login.html?redirect=/reseller.html" class="mkt-btn-primary" style="display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;padding:0.45rem 1rem;font-size:0.84rem;border-radius:6px;">
+                             <span class="material-symbols-outlined" style="font-size:1rem;">login</span> Masuk / Daftar Akun
+                         </a>
+                     </div>
+                     </div>`,
+                    "rs-alert--tunggu"
                 );
-                kunciForm("Masuk dulu untuk mendaftar");
+                kunciForm("Silakan Masuk ke Akun Dulu");
                 return;
             }
 
             try {
                 const res = await fetch(`${API_BASE}/reseller/me`, { headers: { Authorization: `Bearer ${token}` } });
                 if (res.status === 401) {
+                    // Bersihkan token kadaluarsa dari localStorage
+                    localStorage.removeItem(PUBLIC_TOKEN_STORAGE_KEY);
+                    localStorage.removeItem("token");
                     tampilkanStatus(
-                        `<span class="material-symbols-outlined" aria-hidden="true">login</span>
-                         <div><strong>Sesi kamu sudah berakhir</strong><br><a href="/login.html">Masuk lagi</a> untuk melanjutkan pendaftaran.</div>`
+                        `<span class="material-symbols-outlined" aria-hidden="true" style="font-size:1.4rem;">lock_reset</span>
+                         <div><strong>Sesi Login Anda Telah Berakhir</strong><br>
+                         Silakan masuk kembali ke akun NexShop Anda untuk melanjutkan pengisian formulir reseller.
+                         <div style="margin-top:0.6rem;">
+                             <a href="/login.html?redirect=/reseller.html" class="mkt-btn-primary" style="display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;padding:0.45rem 1rem;font-size:0.84rem;border-radius:6px;">
+                                 <span class="material-symbols-outlined" style="font-size:1rem;">login</span> Masuk Lagi
+                             </a>
+                         </div>
+                         </div>`,
+                        "rs-alert--tunggu"
                     );
-                    kunciForm("Masuk dulu untuk mendaftar");
+                    kunciForm("Silakan Masuk Lagi");
                     return;
                 }
 
