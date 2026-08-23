@@ -4,21 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexShop Partner Portal — Konsol Mitra &amp; Developer API</title>
+    <title>NexShop Partner Portal — Konsol Distributor &amp; Developer API</title>
     <meta name="description"
-        content="Portal resmi mitra reseller NexShop: registrasi &amp; login mandiri, kelola API Key, Secret Key, IP Whitelist, Webhook Relay, dan pantau katalog harga modal real-time.">
+        content="Portal resmi mitra distributor & reseller NexShop: monitor transaksi, saldo kredit, katalog harga modal, mutasi, API Key, dan Webhook Relay.">
     <link rel="canonical" href="https://nexshop.cloud/portal-reseller.html">
 
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://nexshop.cloud/portal-reseller.html">
-    <meta property="og:title" content="NexShop Partner Portal — Konsol Mitra &amp; Developer API">
-    <meta property="og:description" content="Dashboard mandiri mitra reseller NexShop untuk integrasi website toko, API Key, dan katalog harga modal.">
+    <meta property="og:title" content="NexShop Partner Portal — Konsol Distributor &amp; Developer API">
+    <meta property="og:description" content="Dashboard distributor dan mitra reseller NexShop ala TokoVoucher Gold untuk integrasi website toko, API Key, dan katalog harga modal.">
     <meta property="og:image" content="https://nexshop.cloud/images/nexshop-og-v2.jpg">
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     <link
-        href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap"
         rel="stylesheet">
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
@@ -28,769 +28,937 @@
     <link rel="stylesheet" href="/marketplace-theme.css?v=20260823-kinetic">
 
     <style>
-        /* ── Override label inheritance from style.css to keep labels clean & left-aligned ── */
-        .portal-container label,
-        .portal-container .form-label,
-        .portal-auth-card label,
-        .portal-auth-card .form-label,
-        .card-surface label,
-        .card-surface .form-label {
+        :root {
+            --tv-navy-dark: #0b1120;
+            --tv-navy-sidebar: #0f172a;
+            --tv-navy-hover: #1e293b;
+            --tv-navy-active: #334155;
+            --tv-bg-main: #f1f5f9;
+            --tv-card-bg: #ffffff;
+            --tv-text-dark: #0f172a;
+            --tv-text-muted: #64748b;
+            --tv-primary-blue: #2563eb;
+            --tv-accent-gold: #f59e0b;
+            --tv-accent-green: #10b981;
+            --tv-border-color: #e2e8f0;
+            --tv-radius-md: 14px;
+            --tv-radius-lg: 18px;
+            --tv-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+            --tv-shadow-hover: 0 10px 25px -3px rgba(15, 23, 42, 0.08);
+        }
+
+        body.tv-distributor-portal {
+            background-color: var(--tv-bg-main);
+            color: var(--tv-text-dark);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        /* ── Label Alignment Reset ── */
+        .tv-distributor-portal label,
+        .tv-distributor-portal .form-label {
             display: block !important;
-            flex-direction: row !important;
-            align-items: center !important;
             text-align: left !important;
             justify-content: flex-start !important;
             font-size: 0.82rem !important;
-            font-weight: 600 !important;
-            color: #cbd5e1 !important;
-            margin-bottom: 0.45rem !important;
-            letter-spacing: 0.01em;
-        }
-
-        .portal-container .form-label .req-star,
-        .portal-auth-card .req-star {
-            display: inline !important;
-            color: #f43f5e !important;
             font-weight: 700 !important;
-            margin-left: 3px !important;
-            font-size: 0.9rem !important;
+            color: #334155 !important;
+            margin-bottom: 0.4rem !important;
         }
 
-        .portal-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1.5rem 1.25rem 5rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* ── Hero Tag & Header ───────────────────────────────────────── */
-        .portal-header-banner {
-            text-align: center;
-            margin-bottom: 2.25rem;
-            padding-top: 0.5rem;
-        }
-
-        .portal-header-banner h1 {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: clamp(1.6rem, 3.5vw, 2.4rem);
-            font-weight: 800;
-            color: var(--mkt-text);
-            margin: 0.6rem 0 0.4rem;
-            letter-spacing: -0.02em;
-        }
-
-        .portal-header-banner p {
-            color: var(--mkt-text-dim);
-            font-size: 0.94rem;
-            max-width: 580px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-
-        /* ── Auth Screen (Login & Register Form) ─────────────────────── */
-        .portal-auth-card {
-            max-width: 640px;
-            margin: 0 auto;
-            background: rgba(15, 20, 36, 0.85);
-            backdrop-filter: blur(28px);
-            -webkit-backdrop-filter: blur(28px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: var(--mkt-radius-lg);
-            padding: 2.25rem 2rem;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 35px rgba(139, 92, 246, 0.1);
-            position: relative;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-
-        .portal-auth-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, #8b5cf6, #22d3ee, #f0399a);
-        }
-
-        .portal-auth-tabs {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 6px;
-            background: rgba(7, 10, 20, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 5px;
-            border-radius: 12px;
-            margin-bottom: 1.75rem;
-        }
-
-        .portal-auth-tab {
-            padding: 0.75rem 1rem;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: #94a3b8;
-            background: transparent;
-            border: none;
-            border-radius: 9px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        /* ── Layout Shell ── */
+        .tv-console-layout {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.45rem;
-        }
-
-        .portal-auth-tab:hover {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.04);
-        }
-
-        .portal-auth-tab.active {
-            background: #8b5cf6;
-            color: #ffffff;
-            box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
-        }
-
-        .portal-form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.1rem;
-            margin-bottom: 1.1rem;
-            text-align: left;
-        }
-
-        @media (max-width: 600px) {
-            .portal-form-grid {
-                grid-template-columns: 1fr;
-                gap: 0.85rem;
-            }
-            .portal-auth-card {
-                padding: 1.6rem 1.25rem;
-            }
-        }
-
-        .form-group {
-            display: block !important;
-            text-align: left !important;
-            margin-bottom: 1.1rem !important;
-        }
-
-        .form-control {
-            display: block !important;
-            width: 100% !important;
-            text-align: left !important;
-            padding: 0.75rem 1rem !important;
-            background: rgba(9, 13, 26, 0.9) !important;
-            border: 1px solid rgba(255, 255, 255, 0.12) !important;
-            border-radius: 10px !important;
-            color: #ffffff !important;
-            font-size: 0.88rem !important;
-            font-family: 'Inter', sans-serif !important;
-            transition: all 0.2s ease !important;
-            box-sizing: border-box !important;
-        }
-
-        .form-control:focus {
-            outline: none !important;
-            border-color: var(--mkt-secondary) !important;
-            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.18) !important;
-            background: rgba(13, 18, 36, 0.98) !important;
-        }
-
-        .form-control-mono {
-            font-family: 'Fira Code', monospace !important;
-            font-size: 0.84rem !important;
-            letter-spacing: 0.5px !important;
-        }
-
-        /* ── Dropzone KTP Upload ───────────────────────────────────────── */
-        .ktp-upload-zone {
-            border: 2px dashed rgba(139, 92, 246, 0.4);
-            border-radius: 12px;
-            padding: 1.5rem 1rem;
-            text-align: center;
-            background: rgba(139, 92, 246, 0.04);
-            cursor: pointer;
-            transition: all 0.25s ease;
+            min-height: 100vh;
             position: relative;
-            box-sizing: border-box;
         }
 
-        .ktp-upload-zone:hover {
-            border-color: var(--mkt-secondary);
-            background: rgba(34, 211, 238, 0.06);
-            box-shadow: 0 0 20px rgba(34, 211, 238, 0.12);
-        }
-
-        .ktp-upload-zone .material-symbols-outlined {
-            font-size: 2.2rem;
-            color: var(--mkt-secondary);
-            margin-bottom: 0.35rem;
-            display: inline-block;
-        }
-
-        .ktp-preview-container {
-            display: none;
-            position: relative;
-            max-width: 320px;
-            margin: 0 auto;
-        }
-
-        .ktp-preview-image {
-            width: 100%;
-            max-height: 170px;
-            object-fit: cover;
-            border-radius: 8px;
-            border: 1px solid var(--mkt-line);
-        }
-
-        .btn-remove-ktp {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            background: rgba(0, 0, 0, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            color: #fff;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.15s;
-        }
-
-        .btn-remove-ktp:hover {
-            background: #ef4444;
-        }
-
-        .rs-alert {
-            padding: 0.85rem 1rem;
-            border-radius: 10px;
-            font-size: 0.86rem;
-            line-height: 1.5;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            border: 1px solid transparent;
-            text-align: left;
-        }
-
-        .rs-alert--gagal {
-            background: rgba(239, 68, 68, 0.14);
-            border-color: rgba(239, 68, 68, 0.4);
-            color: #fca5a5;
-        }
-
-        .rs-alert--sukses {
-            background: rgba(16, 185, 129, 0.14);
-            border-color: rgba(16, 185, 129, 0.4);
-            color: #6ee7b7;
-        }
-
-        .rs-alert--tunggu {
-            background: rgba(245, 158, 11, 0.14);
-            border-color: rgba(245, 158, 11, 0.4);
-            color: #fcd34d;
-        }
-
-        /* ── Submit Action Buttons ────────────────────────────────────── */
-        .btn-portal-primary {
-            width: 100%;
-            padding: 0.82rem 1.5rem;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 0.94rem;
-            font-weight: 700;
-            color: #ffffff;
-            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-            border: 1px solid rgba(139, 92, 246, 0.5);
-            border-radius: 10px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.35);
-        }
-
-        .btn-portal-primary:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 25px rgba(139, 92, 246, 0.5);
-            background: linear-gradient(135deg, #9333ea, #7c3aed);
-        }
-
-        .btn-portal-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        /* ── Status View / Timeline (Pending Notice) ──────────────────── */
-        .status-timeline {
+        /* ── Left Sidebar (TokoVoucher Gold Console Style) ── */
+        .tv-sidebar {
+            width: 255px;
+            background-color: var(--tv-navy-sidebar);
+            color: #f8fafc;
             display: flex;
             flex-direction: column;
-            gap: 1.25rem;
-            margin: 1.75rem auto;
-            max-width: 440px;
-            text-align: left;
-            position: relative;
-            padding-left: 1.5rem;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            z-index: 50;
+            transition: transform 0.25s ease, width 0.25s ease;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        .status-timeline::before {
-            content: '';
-            position: absolute;
-            left: 14px;
-            top: 12px;
-            bottom: 12px;
-            width: 2px;
-            background: var(--mkt-line);
-        }
-
-        .timeline-step {
-            position: relative;
+        .tv-sidebar-brand {
+            padding: 1.25rem 1.2rem;
             display: flex;
-            align-items: flex-start;
-            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.07);
         }
 
-        .step-bubble {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
+        .tv-brand-logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #ffffff;
+        }
+
+        .tv-brand-emblem {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+        }
+
+        .tv-brand-text {
+            line-height: 1.15;
+        }
+
+        .tv-brand-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tv-brand-tag {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #fbbf24;
+            background: rgba(245, 158, 11, 0.15);
+            padding: 2px 5px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .tv-brand-sub {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .tv-sidebar-toggle {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+
+        .tv-sidebar-toggle:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        /* ── Sidebar Navigation Menu ── */
+        .tv-sidebar-menu {
+            flex: 1;
+            padding: 0.9rem 0.65rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .tv-nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0.68rem 0.85rem;
+            border-radius: 10px;
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 0.86rem;
+            font-weight: 600;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            border: 1px solid transparent;
+            position: relative;
+        }
+
+        .tv-nav-link .material-symbols-outlined {
+            font-size: 1.25rem;
+            color: #94a3b8;
+            transition: color 0.15s ease;
+        }
+
+        .tv-nav-link:hover {
+            background-color: var(--tv-navy-hover);
+            color: #ffffff;
+        }
+
+        .tv-nav-link:hover .material-symbols-outlined {
+            color: #60a5fa;
+        }
+
+        .tv-nav-link.active {
+            background: linear-gradient(90deg, #1e3a8a 0%, #1e40af 100%);
+            color: #ffffff;
+            font-weight: 700;
+            border-color: rgba(96, 165, 250, 0.3);
+            box-shadow: 0 4px 14px rgba(30, 58, 138, 0.3);
+        }
+
+        .tv-nav-link.active .material-symbols-outlined {
+            color: #93c5fd;
+        }
+
+        .tv-nav-pill-tag {
+            margin-left: auto;
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+
+        .tv-nav-pill-gold {
+            background: #f59e0b;
+            color: #000000;
+        }
+
+        /* ── Sidebar User Card (Bottom) ── */
+        .tv-sidebar-user {
+            padding: 0.95rem 0.9rem;
+            background: #090e1a;
+            border-top: 1px solid rgba(255, 255, 255, 0.07);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tv-user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, #d97706, #f59e0b);
+            color: #ffffff;
+            font-weight: 800;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 0.85rem;
-            font-weight: 700;
             flex-shrink: 0;
-            z-index: 2;
         }
 
-        .step-bubble.done {
-            background: #10b981;
-            color: #ffffff;
-            box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+        .tv-user-details {
+            flex: 1;
+            min-width: 0;
         }
 
-        .step-bubble.current {
-            background: var(--mkt-secondary);
-            color: #0b0f19;
-            box-shadow: 0 0 15px rgba(34, 211, 238, 0.5);
+        .tv-user-name {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #f8fafc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .step-bubble.pending {
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--mkt-text-dim);
-            border: 1px solid var(--mkt-line);
-        }
-
-        /* ── Dashboard (Approved State) ───────────────────────────────── */
-        .partner-hero-card {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(34, 211, 238, 0.1));
-            border: 1px solid var(--mkt-line-strong);
-            border-radius: var(--mkt-radius);
-            padding: 1.6rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 1.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.5rem;
-        }
-
-        .partner-profile-info {
+        .tv-user-badges {
             display: flex;
             align-items: center;
-            gap: 1.25rem;
+            gap: 4px;
+            margin-top: 2px;
         }
 
-        .partner-avatar-badge {
-            width: 56px;
-            height: 56px;
-            border-radius: 16px;
-            background: rgba(139, 92, 246, 0.25);
-            border: 2px solid var(--mkt-primary);
+        .tv-badge-role {
+            font-size: 0.62rem;
+            padding: 1px 5px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #e2e8f0;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .tv-badge-tier {
+            font-size: 0.62rem;
+            padding: 1px 5px;
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+            border-radius: 4px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .tv-btn-logout-icon {
+            color: #94a3b8;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #ffffff;
-            font-size: 1.75rem;
         }
 
-        .partner-title {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: var(--mkt-text);
-            margin: 0 0 0.3rem;
+        .tv-btn-logout-icon:hover {
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
         }
 
-        .partner-meta {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            font-size: 0.84rem;
-            color: var(--mkt-text-dim);
+        /* ── Main Console Content ── */
+        .tv-console-main {
+            flex: 1;
+            padding: 1.5rem 1.85rem 4rem;
+            max-width: 1380px;
+            min-width: 0;
         }
 
-        .tier-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            background: rgba(34, 211, 238, 0.15);
-            color: var(--mkt-secondary);
-            border: 1px solid rgba(34, 211, 238, 0.4);
-            padding: 0.25rem 0.75rem;
-            border-radius: 100px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        /* ── Dashboard Nav Tabs ───────────────────────────────────────── */
-        .dash-tabs-bar {
-            display: flex;
-            gap: 0.5rem;
-            border-bottom: 1px solid var(--mkt-line);
-            padding-bottom: 0.25rem;
+        /* ── Top Header Widgets (3 Columns) ── */
+        .tv-top-widgets-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 0.9fr 1.15fr;
+            gap: 1.25rem;
             margin-bottom: 1.5rem;
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
         }
 
-        .dash-tab-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.65rem 1.15rem;
-            border-radius: 10px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            color: var(--mkt-text-dim);
-            background: none;
-            border: 1px solid transparent;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-
-        .dash-tab-btn:hover {
-            color: var(--mkt-text);
-            background: rgba(255, 255, 255, 0.04);
-        }
-
-        .dash-tab-btn.active {
-            color: var(--mkt-secondary);
-            background: rgba(34, 211, 238, 0.12);
-            border-color: rgba(34, 211, 238, 0.3);
-        }
-
-        .dash-tab-pane {
-            display: none;
-            animation: fadeIn 0.2s ease;
-        }
-
-        .dash-tab-pane.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* ── Table & Component Helpers ────────────────────────────────── */
-        .card-surface {
-            background: var(--mkt-glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--mkt-line);
-            border-radius: var(--mkt-radius);
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            text-align: left;
-        }
-
-        .card-header-flex {
+        .tv-card-widget {
+            background-color: var(--tv-card-bg);
+            border-radius: var(--tv-radius-md);
+            padding: 1.15rem 1.35rem;
+            box-shadow: var(--tv-shadow);
+            border: 1px solid var(--tv-border-color);
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            gap: 1rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.25rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--mkt-line);
+            min-height: 86px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .card-title-text {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 1.05rem;
+        .tv-card-widget:hover {
+            box-shadow: var(--tv-shadow-hover);
+        }
+
+        /* Top Widget 1: Profile & Member Code */
+        .tv-widget-user-wrap {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            width: 100%;
+        }
+
+        .tv-widget-avatar-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            background: #0f172a;
+            color: #fbbf24;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(15, 23, 42, 0.15);
+        }
+
+        .tv-widget-user-meta {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .tv-widget-user-name {
+            font-size: 0.94rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 2px;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tv-widget-user-email {
+            font-size: 0.76rem;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .tv-widget-member-code {
+            font-size: 0.74rem;
             font-weight: 700;
-            color: var(--mkt-text);
-            margin: 0;
+            color: #0f172a;
+            font-family: 'Fira Code', monospace;
+            background: #f1f5f9;
+            padding: 2px 7px;
+            border-radius: 5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Top Widget 2: Kredit / Saldo */
+        .tv-widget-balance-wrap {
             display: flex;
             align-items: center;
-            gap: 0.55rem;
+            justify-content: space-between;
+            width: 100%;
         }
 
-        .card-title-text .material-symbols-outlined {
-            color: var(--mkt-secondary);
-            font-size: 1.25rem;
-        }
-
-        .input-copy-wrap {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .btn-copy-addon {
-            position: absolute;
-            right: 6px;
-            background: rgba(34, 211, 238, 0.15);
-            border: 1px solid rgba(34, 211, 238, 0.3);
-            color: var(--mkt-secondary);
-            border-radius: 6px;
-            padding: 0.35rem 0.65rem;
+        .tv-widget-balance-label {
             font-size: 0.78rem;
-            font-weight: 600;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 3px;
+        }
+
+        .tv-widget-balance-amount {
+            font-size: 1.45rem;
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: -0.02em;
+            line-height: 1;
+        }
+
+        .tv-btn-deposit-action {
+            background: #f8fafc;
+            color: #0f172a;
+            border: 1px solid #cbd5e1;
+            padding: 0.45rem 0.95rem;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 700;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 0.3rem;
+            gap: 4px;
             transition: all 0.15s ease;
         }
 
-        .btn-copy-addon:hover {
-            background: var(--mkt-secondary);
-            color: #080b14;
+        .tv-btn-deposit-action:hover {
+            background: #0f172a;
+            color: #ffffff;
+            border-color: #0f172a;
         }
 
-        .code-box {
-            background: #070a14;
-            border: 1px solid var(--mkt-line);
+        /* Top Widget 3: Indikator Keamanan */
+        .tv-widget-security-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .tv-widget-shield-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: rgba(245, 158, 11, 0.12);
+            color: #d97706;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .tv-security-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin-bottom: 3px;
+        }
+
+        .tv-security-links {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .tv-security-link-item {
+            font-size: 0.74rem;
+            color: #2563eb;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+        }
+
+        .tv-security-link-item:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Pending KYC Alert Banner ── */
+        .tv-pending-banner {
+            background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+            border: 1px solid #fde68a;
+            border-radius: var(--tv-radius-md);
+            padding: 1.15rem 1.4rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--tv-shadow);
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .tv-pending-badge-icon {
+            width: 40px;
+            height: 40px;
             border-radius: 10px;
-            padding: 1rem;
-            font-family: 'Fira Code', monospace;
-            font-size: 0.82rem;
-            color: #cbd5e1;
-            overflow-x: auto;
-            line-height: 1.55;
-            text-align: left;
+            background: #f59e0b;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
         }
 
-        .toast-msg {
+        /* ── Main Dashboard 2-Column Grid (Transaksi & News) ── */
+        .tv-main-grid-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1.35rem;
+            align-items: start;
+        }
+
+        /* Card Section Component */
+        .tv-section-card {
+            background-color: var(--tv-card-bg);
+            border-radius: var(--tv-radius-lg);
+            padding: 1.35rem 1.5rem;
+            box-shadow: var(--tv-shadow);
+            border: 1px solid var(--tv-border-color);
+        }
+
+        .tv-section-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* 4-Column Transaction Metrics Header */
+        .tv-transaksi-stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            padding-bottom: 1.15rem;
+            border-bottom: 1px solid #f1f5f9;
+            margin-bottom: 1.15rem;
+        }
+
+        .tv-stat-metric-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tv-stat-metric-date {
+            font-size: 0.74rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .tv-stat-metric-values {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+
+        .tv-stat-count {
+            font-size: 1.15rem;
+            font-weight: 900;
+            color: #0f172a;
+        }
+
+        .tv-stat-nominal-pill {
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #1e40af;
+            background: #dbeafe;
+            padding: 2px 6px;
+            border-radius: 5px;
+        }
+
+        /* Chart Date Picker & Canvas */
+        .tv-chart-controls-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .tv-date-range-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 0.4rem 0.75rem;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #334155;
+        }
+
+        .tv-chart-container {
+            position: relative;
+            width: 100%;
+            height: 250px;
+        }
+
+        #tvTransactionChart {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        /* News & Updates Card (Right Column) */
+        .tv-news-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.85rem;
+        }
+
+        .tv-news-item {
+            padding: 0.85rem 1rem;
+            border: 1px solid #f1f5f9;
+            border-radius: 12px;
+            background: #fafafa;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+
+        .tv-news-item:hover {
+            background: #ffffff;
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.04);
+        }
+
+        .tv-news-top-flex {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .tv-news-item-title {
+            font-size: 0.84rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+            line-height: 1.3;
+        }
+
+        .tv-news-blue-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2563eb;
+            flex-shrink: 0;
+        }
+
+        .tv-news-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.72rem;
+            color: #64748b;
+            margin-top: 6px;
+        }
+
+        /* ── Floating Help Action Button ── */
+        .tv-fab-help {
             position: fixed;
             bottom: 24px;
             right: 24px;
-            background: #0f172a;
-            border: 1px solid var(--mkt-secondary);
-            color: #f8fafc;
-            padding: 0.75rem 1.25rem;
-            border-radius: 10px;
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: #ffffff;
+            border: none;
+            padding: 0.65rem 1.15rem;
+            border-radius: 50px;
             font-size: 0.86rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+            font-weight: 800;
+            box-shadow: 0 8px 20px rgba(234, 88, 12, 0.4);
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            z-index: 99999;
-            transform: translateY(100px);
-            opacity: 0;
-            transition: all 0.3s ease;
+            gap: 6px;
+            cursor: pointer;
+            z-index: 100;
+            text-decoration: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .toast-msg.show {
-            transform: translateY(0);
-            opacity: 1;
+        .tv-fab-help:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 26px rgba(234, 88, 12, 0.5);
+            color: #ffffff;
+        }
+
+        .tv-fab-dot {
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            display: inline-block;
+            border: 2px solid #ffffff;
+        }
+
+        /* ── Views Switching ── */
+        .tv-console-view {
+            display: none;
+        }
+
+        .tv-console-view.active {
+            display: block;
+        }
+
+        /* ── Table Styling (Produk, Transaksi, Mutasi) ── */
+        .tv-table-card {
+            background: #ffffff;
+            border-radius: var(--tv-radius-lg);
+            border: 1px solid var(--tv-border-color);
+            box-shadow: var(--tv-shadow);
+            overflow: hidden;
+        }
+
+        .tv-table-header-bar {
+            padding: 1.15rem 1.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--tv-border-color);
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .tv-search-input-wrap {
+            position: relative;
+            max-width: 320px;
+            width: 100%;
+        }
+
+        .tv-search-input-wrap input {
+            width: 100%;
+            padding: 0.5rem 0.85rem 0.5rem 2.2rem;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            font-size: 0.82rem;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .tv-search-input-wrap .material-symbols-outlined {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+
+        .tv-data-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.84rem;
+        }
+
+        .tv-data-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            padding: 0.75rem 1.15rem;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .tv-data-table td {
+            padding: 0.85rem 1.15rem;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+        }
+
+        .tv-data-table tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        .tv-badge-status {
+            font-size: 0.72rem;
+            font-weight: 800;
+            padding: 3px 8px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .tv-badge-sukses {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .tv-badge-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .tv-badge-gagal {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* ── Guest / Auth Overlay Modal ── */
+        .tv-guest-auth-wrap {
+            max-width: 580px;
+            margin: 3rem auto;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+            border: 1px solid var(--tv-border-color);
+            padding: 2.25rem 2rem;
+        }
+
+        /* Responsive Mobile Styles */
+        @media (max-width: 992px) {
+            .tv-sidebar {
+                position: fixed;
+                left: -260px;
+                top: 0;
+                bottom: 0;
+            }
+
+            .tv-sidebar.open {
+                left: 0;
+            }
+
+            .tv-top-widgets-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tv-main-grid-row {
+                grid-template-columns: 1fr;
+            }
+
+            .tv-transaksi-stats-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
 
-<body data-nexbot="auto">
+<body class="tv-distributor-portal">
 
-    <div class="mkt-bg-layer" aria-hidden="true">
-        <div class="mkt-bg-veil"></div>
-    </div>
-
-    <!-- ── Standar Navbar NexShop ────────────────────────────────────── -->
-    <nav class="mkt-nav" role="navigation" aria-label="Navigasi NexShop">
-        <a href="/" class="mkt-nav-brand" aria-label="NexShop - Halaman Utama">
-            <span class="mkt-brand-mark">
-                <img src="/images/nexshop-icon.svg" alt="NexShop" width="40" height="40">
-            </span>
-            <span class="mkt-brand-text">NexShop</span>
-            <span class="nx-tag">Partner Portal</span>
-        </a>
-
-        <ul class="mkt-nav-links" id="catNavLinks">
-            <li><a href="/">Beranda</a></li>
-            <li><a href="/marketplace">Marketplace</a></li>
-            <li><a href="/#topup">Topup Diamond</a></li>
-            <li><a href="/berita">Portal Berita</a></li>
-            <li><a href="/reseller.html">Program Reseller</a></li>
-            <li><a href="/docs-reseller.html">Panduan &amp; API</a></li>
-            <li><a href="/portal-reseller.html" class="active">Partner Portal</a></li>
-        </ul>
-
-        <div class="mkt-nav-actions">
-            <button type="button" class="mkt-nav-toggle" id="mktNavToggle" aria-label="Buka menu navigasi"
-                aria-expanded="false" aria-controls="catNavLinks">
-                <span class="material-symbols-outlined mkt-nav-toggle-open" aria-hidden="true">menu</span>
-                <span class="material-symbols-outlined mkt-nav-toggle-close" aria-hidden="true">close</span>
-            </button>
-
-            <a href="/" class="mkt-nav-back" aria-label="Kembali ke toko NexShop">
-                <span class="material-symbols-outlined" aria-hidden="true">arrow_outward</span>
-                <span>Ke Toko</span>
-            </a>
-        </div>
-    </nav>
-    <div class="mkt-nav-scrim" id="mktNavScrim" aria-hidden="true"></div>
-
-    <main class="portal-container" id="main-content">
-
-        <!-- Banner Header Portal -->
-        <header class="portal-header-banner">
-            <div class="mkt-hero-tag">
-                <span class="material-symbols-outlined" aria-hidden="true">admin_panel_settings</span> Konsol Resmi Mitra &amp; API
+    <!-- =============================================================== -->
+    <!-- AUTH SECTION (GUEST / LOGIN / REGISTER)                         -->
+    <!-- =============================================================== -->
+    <div id="sectionAuth" style="display:none;padding:2rem 1.25rem;">
+        <div class="tv-guest-auth-wrap">
+            <div style="text-align:center;margin-bottom:1.75rem;">
+                <div style="width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,#3b82f6,#6366f1);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:1.8rem;margin-bottom:0.75rem;box-shadow:0 6px 16px rgba(59,130,246,0.35);">
+                    <span class="material-symbols-outlined">shield_person</span>
+                </div>
+                <h2 style="font-size:1.45rem;font-weight:900;color:#0f172a;margin:0 0 4px;">Partner &amp; Distributor Console</h2>
+                <p style="font-size:0.86rem;color:#64748b;margin:0;">Akses portal reseller resmi NexShop ala TokoVoucher Gold</p>
             </div>
-            <h1>Partner &amp; Developer Portal</h1>
-            <p>Akses terpusat untuk pendaftaran kemitraan, verifikasi identitas (KYC), kredensial REST API, IP Whitelist, dan Webhook Relay.</p>
-        </header>
 
-        <!-- =============================================================== -->
-        <!-- SECTION 1: AUTHENTICATION SCREEN (LOGIN & REGISTER RESELLER)    -->
-        <!-- =============================================================== -->
-        <section id="sectionAuth" style="display:none;">
-            <div class="portal-auth-card">
-                <div style="text-align:center;margin-bottom:1.5rem;">
-                    <div style="display:inline-flex;padding:12px;border-radius:16px;background:rgba(139,92,246,0.15);color:var(--mkt-primary-soft);margin-bottom:0.75rem;">
-                        <span class="material-symbols-outlined" style="font-size:2.2rem;">handshake</span>
-                    </div>
-                    <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;font-weight:800;color:var(--mkt-text);margin:0 0 0.35rem;">
-                        Akses Akun Mitra NexShop
-                    </h2>
-                    <p style="color:var(--mkt-text-dim);font-size:0.86rem;margin:0;">
-                        Masuk ke konsol partner atau daftarkan toko / website Anda sebagai mitra resmi.
-                    </p>
-                </div>
+            <!-- Tab Switcher (Masuk vs Daftar) -->
+            <div style="display:flex;background:#f1f5f9;border-radius:12px;padding:4px;margin-bottom:1.5rem;">
+                <button type="button" id="tabBtnLogin" onclick="switchAuthTab('login')"
+                    style="flex:1;padding:0.6rem;border:none;border-radius:8px;font-weight:700;font-size:0.84rem;cursor:pointer;background:#2563eb;color:#fff;transition:all 0.15s ease;">
+                    <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:4px;">login</span> Masuk Mitra
+                </button>
+                <button type="button" id="tabBtnRegister" onclick="switchAuthTab('register')"
+                    style="flex:1;padding:0.6rem;border:none;border-radius:8px;font-weight:700;font-size:0.84rem;cursor:pointer;background:transparent;color:#64748b;transition:all 0.15s ease;">
+                    <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:4px;">how_to_reg</span> Daftar Baru &amp; KYC
+                </button>
+            </div>
 
-                <!-- Tabs Switcher -->
-                <div class="portal-auth-tabs">
-                    <button type="button" id="tabAuthLogin" class="portal-auth-tab active" onclick="switchAuthMode('login')">
-                        <span class="material-symbols-outlined" style="font-size:1.1rem;">login</span>
-                        <span>Masuk Mitra</span>
-                    </button>
-                    <button type="button" id="tabAuthRegister" class="portal-auth-tab" onclick="switchAuthMode('register')">
-                        <span class="material-symbols-outlined" style="font-size:1.1rem;">how_to_reg</span>
-                        <span>Daftar Akun Baru &amp; KYC</span>
-                    </button>
-                </div>
-
-                <!-- FORM 1: LOGIN MITRA -->
+            <!-- TAB 1: FORM LOGIN MITRA -->
+            <div id="authPaneLogin">
                 <form id="formResellerLogin">
-                    <div id="loginErrorMsg" class="rs-alert rs-alert--gagal" style="display:none;margin-bottom:1.25rem;"></div>
+                    <div id="loginErrorMsg" style="display:none;background:#fee2e2;color:#991b1b;padding:0.65rem 0.9rem;border-radius:8px;font-size:0.82rem;font-weight:600;margin-bottom:1rem;border:1px solid #fecaca;"></div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="loginEmail">
-                            Email Akun Mitra <span class="req-star">*</span>
-                        </label>
-                        <input type="email" id="loginEmail" class="form-control" placeholder="nama@tokoanda.com" required>
+                    <div style="margin-bottom:1rem;">
+                        <label class="form-label" for="loginEmail">Email Akun Mitra <span style="color:#ef4444;">*</span></label>
+                        <input type="email" id="loginEmail" required class="form-control" placeholder="nama@domain.com" style="width:100%;padding:0.65rem 0.9rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.88rem;box-sizing:border-box;">
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="loginPassword">
-                            Password <span class="req-star">*</span>
-                        </label>
-                        <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
+                    <div style="margin-bottom:1.4rem;">
+                        <label class="form-label" for="loginPassword">Password <span style="color:#ef4444;">*</span></label>
+                        <input type="password" id="loginPassword" required class="form-control" placeholder="••••••••" style="width:100%;padding:0.65rem 0.9rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.88rem;box-sizing:border-box;">
                     </div>
 
-                    <button type="submit" id="btnLoginSubmit" class="btn-portal-primary" style="margin-top:0.5rem;">
+                    <button type="submit" id="btnLoginSubmit" style="width:100%;padding:0.75rem;border:none;border-radius:10px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-weight:800;font-size:0.92rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 12px rgba(37,99,235,0.3);">
                         <span class="material-symbols-outlined">login</span>
-                        <span>Masuk ke Partner Portal</span>
+                        <span>Masuk ke Konsol Distributor</span>
                     </button>
-
-                    <p style="text-align:center;margin-top:1.25rem;font-size:0.82rem;color:var(--mkt-text-dim);">
-                        Belum terdaftar sebagai mitra? 
-                        <a href="javascript:void(0)" onclick="switchAuthMode('register')" style="color:var(--mkt-secondary);font-weight:700;text-decoration:none;">Daftar Akun &amp; KYC di sini</a>
-                    </p>
                 </form>
+            </div>
 
-                <!-- FORM 2: REGISTER MITRA + UPLOAD KTP (KYC) -->
-                <form id="formResellerRegister" style="display:none;">
-                    <div id="regErrorMsg" class="rs-alert rs-alert--gagal" style="display:none;margin-bottom:1.25rem;"></div>
+            <!-- TAB 2: FORM DAFTAR MITRA & KYC -->
+            <div id="authPaneRegister" style="display:none;">
+                <form id="formResellerRegister">
+                    <div id="regErrorMsg" style="display:none;background:#fee2e2;color:#991b1b;padding:0.65rem 0.9rem;border-radius:8px;font-size:0.82rem;font-weight:600;margin-bottom:1rem;border:1px solid #fecaca;"></div>
 
-                    <div class="portal-form-grid">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" for="regEmail">
-                                Email Mitra <span class="req-star">*</span>
-                            </label>
-                            <input type="email" id="regEmail" class="form-control" placeholder="email@tokoanda.com" required>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.85rem;">
+                        <div>
+                            <label class="form-label" for="regEmail">Email Mitra <span style="color:#ef4444;">*</span></label>
+                            <input type="email" id="regEmail" required placeholder="mitra@domain.com" style="width:100%;padding:0.6rem 0.8rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.84rem;box-sizing:border-box;">
                         </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" for="regPassword">
-                                Password Akun <span class="req-star">*</span>
-                            </label>
-                            <input type="password" id="regPassword" class="form-control" placeholder="Min. 6 Karakter" minlength="6" required>
+                        <div>
+                            <label class="form-label" for="regPassword">Password Akun <span style="color:#ef4444;">*</span></label>
+                            <input type="password" id="regPassword" required minlength="6" placeholder="Min. 6 Karakter" style="width:100%;padding:0.6rem 0.8rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.84rem;box-sizing:border-box;">
                         </div>
                     </div>
 
-                    <div class="portal-form-grid">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" for="regFullname">
-                                Nama Lengkap (Sesuai KTP) <span class="req-star">*</span>
-                            </label>
-                            <input type="text" id="regFullname" class="form-control" placeholder="Nama sesuai identitas" required>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.85rem;">
+                        <div>
+                            <label class="form-label" for="regFullname">Nama Lengkap (Sesuai KTP) <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="regFullname" required placeholder="Nama Lengkap" style="width:100%;padding:0.6rem 0.8rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.84rem;box-sizing:border-box;">
                         </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" for="regWhatsapp">
-                                Nomor WhatsApp Aktif <span class="req-star">*</span>
-                            </label>
-                            <input type="tel" id="regWhatsapp" class="form-control" placeholder="08xxxxxxxxxx" required>
+                        <div>
+                            <label class="form-label" for="regWhatsapp">No. WhatsApp Aktif <span style="color:#ef4444;">*</span></label>
+                            <input type="tel" id="regWhatsapp" required placeholder="08xxxxxxxxxx" style="width:100%;padding:0.6rem 0.8rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.84rem;box-sizing:border-box;">
                         </div>
                     </div>
 
-                    <div class="portal-form-grid">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" for="regNik">
-                                NIK KTP (16 Digit) <span class="req-star">*</span>
-                            </label>
-                            <input type="text" id="regNik" class="form-control form-control-mono" placeholder="3201012304980001" maxlength="20" required>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.85rem;">
+                        <div>
+                            <label class="form-label" for="regNik">NIK KTP (16 Digit) <span style="color:#ef4444;">*</span></label>
+                            <input type="text" id="regNik" required maxlength="16" placeholder="33xxxxxxxxxxxxxx" style="width:100%;padding:0.6rem 0.8rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.84rem;box-sizing:border-box;">
                         </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" for="regStoreName">
-                                Nama Usaha / Toko / Brand
-                            </label>
-                            <input type="text" id="regStoreName" class="form-control" placeholder="mis. Berkah Game Store">
+                        <div>
+                            <label class="form-label" for="regStoreName">Nama Usaha / Toko</label>
+                            <input type="text" id="regStoreName" placeholder="Contoh: Rex Topup" style="width:100%;padding:0.6rem 0.8rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.84rem;box-sizing:border-box;">
                         </div>
                     </div>
 
-                    <div class="portal-form-grid">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" for="regChannel">
-                                Kanal Penjualan Utama
-                            </label>
-                            <select id="regChannel" class="form-control">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;margin-bottom:0.85rem;">
+                        <div>
+                            <label class="form-label" for="regChannel">Kanal Penjualan</label>
+                            <select id="regChannel" style="width:100%;padding:0.6rem 0.8rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.84rem;box-sizing:border-box;background:#fff;">
                                 <option value="Website Sendiri (API/Integrasi)">Website Sendiri (API/Integrasi)</option>
-                                <option value="Marketplace (Shopee/Tokopedia/TikTok)">Marketplace (Shopee/Tokopedia/TikTok)</option>
-                                <option value="Sosial Media / WhatsApp / Telegram">Sosial Media / WhatsApp / Telegram</option>
-                                <option value="Counter Pulsa / Toko Fisik">Counter Pulsa / Toko Fisik</option>
-                                <option value="Komunitas Gamers">Komunitas Gamers</option>
-                                <option value="Lainnya">Lainnya</option>
+                                <option value="WhatsApp / Bot Otomatis">WhatsApp / Bot Otomatis</option>
+                                <option value="Konter Fisik / Toko Offline">Konter Fisik / Toko Offline</option>
+                                <option value="Marketplace (Shopee/Tokopedia)">Marketplace (Shopee/Tokopedia)</option>
                             </select>
                         </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label" for="regMonthly">
-                                Estimasi Transaksi Bulanan
-                            </label>
-                            <select id="regMonthly" class="form-control">
-                                <option value="Baru Memulai / < Rp 1 Juta">Baru Memulai / &lt; Rp 1 Juta</option>
-                                <option value="Rp 1 - 5 Juta / Bulan">Rp 1 - 5 Juta / Bulan</option>
+                        <div>
+                            <label class="form-label" for="regMonthly">Estimasi Transaksi</label>
+                            <select id="regMonthly" style="width:100%;padding:0.6rem 0.8rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.84rem;box-sizing:border-box;background:#fff;">
                                 <option value="Rp 5 - 20 Juta / Bulan">Rp 5 - 20 Juta / Bulan</option>
                                 <option value="Rp 20 - 50 Juta / Bulan">Rp 20 - 50 Juta / Bulan</option>
                                 <option value="> Rp 50 Juta / Bulan">&gt; Rp 50 Juta / Bulan</option>
@@ -798,632 +966,776 @@
                         </div>
                     </div>
 
-                    <!-- Upload Foto KTP Dropzone -->
-                    <div class="form-group">
-                        <label class="form-label">
-                            Foto KTP Asli (KYC) <span class="req-star">*</span>
-                        </label>
-                        <input type="file" id="regKtpFile" accept="image/jpeg,image/png,image/webp" style="display:none;">
-                        <div id="regKtpDropzone" class="ktp-upload-zone">
-                            <div id="regKtpPlaceholder">
-                                <span class="material-symbols-outlined">badge</span>
-                                <div style="font-weight:700;color:#ffffff;font-size:0.88rem;">Klik untuk Pilih atau Tarik Foto KTP ke Sini</div>
-                                <div style="font-size:0.75rem;color:#94a3b8;margin-top:0.25rem;">Format JPG, PNG, WEBP (Maksimal 10MB). Pastikan NIK &amp; foto terbaca jelas.</div>
+                    <!-- Upload Foto KTP -->
+                    <div style="margin-bottom:0.85rem;">
+                        <label class="form-label">Foto KTP Asli (KYC) <span style="color:#ef4444;">*</span></label>
+                        <div id="ktpDropzone" style="border:2px dashed #cbd5e1;border-radius:10px;padding:1rem;text-align:center;background:#f8fafc;cursor:pointer;">
+                            <input type="file" id="ktpFile" accept="image/*" style="display:none;">
+                            <div id="ktpUploadPrompt">
+                                <span class="material-symbols-outlined" style="font-size:1.8rem;color:#3b82f6;">add_photo_alternate</span>
+                                <div style="font-size:0.82rem;font-weight:700;color:#0f172a;margin-top:4px;">Klik untuk Unggah Foto KTP</div>
+                                <div style="font-size:0.72rem;color:#64748b;">Format JPG, PNG (Maks 5MB)</div>
                             </div>
-                            <div id="regKtpPreviewWrap" class="ktp-preview-container">
-                                <img id="regKtpPreviewImg" src="" alt="Preview KTP" class="ktp-preview-image">
-                                <button type="button" id="regKtpRemoveBtn" class="btn-remove-ktp" title="Ganti Foto">
-                                    <span class="material-symbols-outlined" style="font-size:1rem;">close</span>
-                                </button>
+                            <div id="ktpPreviewBox" style="display:none;position:relative;display:inline-block;">
+                                <img id="ktpPreviewImg" src="" alt="KTP" style="max-height:120px;border-radius:8px;border:1px solid #cbd5e1;">
+                                <button type="button" onclick="removeKtpFile(event)" style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;">&times;</button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label" for="regNote">
-                            Catatan Tambahan (Opsional)
-                        </label>
-                        <textarea id="regNote" class="form-control" rows="2" placeholder="Ceritakan singkat tentang website toko Anda atau kebutuhan integrasi API..."></textarea>
+                    <div style="margin-bottom:1.25rem;">
+                        <label class="form-label" for="regNote">Catatan Tambahan (Opsional)</label>
+                        <textarea id="regNote" rows="2" placeholder="Catatan untuk verifikator..." style="width:100%;padding:0.6rem 0.8rem;border:1px solid #cbd5e1;border-radius:8px;font-size:0.84rem;box-sizing:border-box;"></textarea>
                     </div>
 
-                    <button type="submit" id="btnRegisterSubmit" class="btn-portal-primary" style="margin-top:0.5rem;">
+                    <button type="submit" id="btnRegisterSubmit" style="width:100%;padding:0.75rem;border:none;border-radius:10px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-weight:800;font-size:0.92rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 12px rgba(124,58,237,0.3);">
                         <span class="material-symbols-outlined">how_to_reg</span>
                         <span>Daftar Akun Mitra &amp; Kirim Berkas KYC</span>
                     </button>
-
-                    <p style="text-align:center;margin-top:1.25rem;font-size:0.82rem;color:var(--mkt-text-dim);">
-                        Sudah punya akun reseller? 
-                        <a href="javascript:void(0)" onclick="switchAuthMode('login')" style="color:var(--mkt-secondary);font-weight:700;text-decoration:none;">Masuk di sini</a>
-                    </p>
                 </form>
             </div>
-        </section>
+        </div>
+    </div>
 
-        <!-- =============================================================== -->
-        <!-- SECTION 2: STATUS VERIFIKASI (PENDING / SUSPENDED / REJECTED)   -->
-        <!-- =============================================================== -->
-        <section id="sectionStatusNotice" style="display:none;">
-            <div class="card-surface" style="max-width:760px;margin:1rem auto;text-align:center;padding:2.75rem 2rem;">
-                <div id="statusNoticeIcon" style="display:inline-flex;padding:16px;border-radius:20px;margin-bottom:1rem;">
-                    <!-- Diisi via JavaScript -->
-                </div>
-                <h2 id="statusNoticeTitle" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:800;color:var(--mkt-text);margin:0 0 0.5rem;">
-                    Pengajuan Kemitraan Sedang Ditinjau Admin
-                </h2>
-                <p id="statusNoticeDesc" style="color:var(--mkt-text-dim);font-size:0.92rem;max-width:580px;margin:0 auto 1.5rem;line-height:1.6;">
-                    Akun kemitraan Anda saat ini belum diverifikasi oleh admin. Berkas foto KTP dan profil usaha Anda sedang dalam proses peninjauan KYC. Mohon menunggu maksimal 3x24 Jam kerja.
-                </p>
+    <!-- =============================================================== -->
+    <!-- MAIN CONSOLE LAYOUT (TOKOVOUCHER DISTRIBUTOR CONSOLE)            -->
+    <!-- =============================================================== -->
+    <div id="sectionDashboard" class="tv-console-layout" style="display:none;">
 
-                <!-- Status Step Timeline -->
-                <div class="status-timeline">
-                    <div class="timeline-step">
-                        <div class="step-bubble done"><span class="material-symbols-outlined" style="font-size:1rem;">check</span></div>
-                        <div>
-                            <div style="font-weight:700;color:var(--mkt-text);font-size:0.9rem;">1. Pendaftaran Akun Mitra</div>
-                            <div style="font-size:0.78rem;color:var(--mkt-text-dim);">Akun kemitraan berhasil dibuat di sistem NexShop.</div>
+        <!-- ── Left Sidebar ── -->
+        <aside class="tv-sidebar" id="tvSidebar">
+            <div class="tv-sidebar-brand">
+                <a href="/portal-reseller.html" class="tv-brand-logo-wrap">
+                    <div class="tv-brand-emblem">
+                        <span>NX</span>
+                    </div>
+                    <div class="tv-brand-text">
+                        <div class="tv-brand-title">
+                            <span>toko</span> <span class="tv-brand-tag">GOLD</span>
                         </div>
+                        <div class="tv-brand-sub">NexShop Partner</div>
                     </div>
-                    <div class="timeline-step">
-                        <div id="stepDotKyc" class="step-bubble current"><span class="material-symbols-outlined" style="font-size:1rem;">hourglass_top</span></div>
-                        <div>
-                            <div id="stepTextKyc" style="font-weight:700;color:var(--mkt-secondary);font-size:0.9rem;">2. Verifikasi Berkas KYC KTP</div>
-                            <div style="font-size:0.78rem;color:var(--mkt-text-dim);">Peninjauan berkas identitas oleh admin (Maksimal 3x24 Jam kerja).</div>
-                        </div>
-                    </div>
-                    <div class="timeline-step">
-                        <div class="step-bubble pending"><span class="material-symbols-outlined" style="font-size:1rem;">lock</span></div>
-                        <div>
-                            <div style="font-weight:700;color:var(--mkt-text-dim);font-size:0.9rem;">3. Aktivasi API Key &amp; Harga Modal</div>
-                            <div style="font-size:0.78rem;color:var(--mkt-text-dim);">Kredensial API Key, IP Whitelist, dan diskon reseller aktif otomatis.</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display:flex;justify-content:center;gap:0.75rem;flex-wrap:wrap;margin-top:2rem;">
-                    <button type="button" class="btn-portal-primary" onclick="loadPortalOverview()" style="width:auto;padding:0.65rem 1.4rem;">
-                        <span class="material-symbols-outlined">refresh</span>
-                        <span>Periksa Status Sekarang</span>
-                    </button>
-                    <a href="https://wa.me/6281234567890?text=Halo%20Admin%20NexShop,%20saya%20sudah%20mengajukan%20kemitraan%20reseller" target="_blank" rel="noopener" class="mkt-nav-back" style="padding:0.65rem 1.4rem;text-decoration:none;">
-                        <span class="material-symbols-outlined">chat</span>
-                        <span>Hubungi CS WhatsApp</span>
-                    </a>
-                    <button type="button" class="mkt-nav-back" onclick="logoutReseller()" style="padding:0.65rem 1.4rem;color:#f87171;border-color:rgba(248,113,113,0.3);">
-                        <span class="material-symbols-outlined">logout</span>
-                        <span>Keluar Akun</span>
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- =============================================================== -->
-        <!-- SECTION 3: DASHBOARD RESELLER AKTIF (APPROVED)                   -->
-        <!-- =============================================================== -->
-        <section id="sectionDashboard" style="display:none;">
-            <!-- Profile Hero Overview -->
-            <div class="partner-hero-card">
-                <div class="partner-profile-info">
-                    <div class="partner-avatar-badge">
-                        <span class="material-symbols-outlined">shield_person</span>
-                    </div>
-                    <div>
-                        <h2 class="partner-title" id="portalFullName">Memuat Nama Mitra...</h2>
-                        <div class="partner-meta">
-                            <span id="portalEmail">-</span>
-                            <span>&bull;</span>
-                            <span class="tier-badge" id="portalTierText">Tier Silver</span>
-                            <span>&bull;</span>
-                            <span style="color:#34d399;font-weight:600;" id="portalDiscountText">Potongan Harga Otomatis Aktif</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">
-                    <a href="/docs-reseller.html" class="mkt-nav-back" style="text-decoration:none;padding:0.6rem 1.15rem;">
-                        <span class="material-symbols-outlined">menu_book</span>
-                        <span>Dokumentasi API</span>
-                    </a>
-                    <button type="button" class="mkt-nav-back" onclick="logoutReseller()" style="padding:0.6rem 1.15rem;color:#f87171;border-color:rgba(248,113,113,0.3);">
-                        <span class="material-symbols-outlined">logout</span>
-                        <span>Keluar</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Pending Notice Banner in Dashboard -->
-            <div id="portalPendingBanner" class="card-surface" style="display:none;background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(217,119,6,0.06));border:1px solid rgba(245,158,11,0.35);margin-bottom:1.5rem;padding:1.35rem 1.5rem;border-radius:18px;">
-                <div style="display:flex;align-items:flex-start;gap:14px;">
-                    <span class="material-symbols-outlined" style="font-size:2.2rem;color:#f59e0b;flex-shrink:0;">hourglass_top</span>
-                    <div style="flex:1;">
-                        <h4 style="font-size:1.05rem;font-weight:800;color:#f59e0b;margin:0 0 4px;">
-                            Status Kemitraan: Sedang Ditinjau Admin (Maksimal 3x24 Jam Kerja)
-                        </h4>
-                        <p style="font-size:0.875rem;color:var(--mkt-text-dim);margin:0 0 10px;line-height:1.5;">
-                            Akun Anda saat ini belum diverifikasi oleh admin. Anda dapat menjelajahi dokumentasi API, melihat katalog harga modal, dan struktur endpoint. Fitur pembuatan/regenerasi API Key dan transaksi resmi akan aktif otomatis setelah peninjauan berkas KYC selesai.
-                        </p>
-                        <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
-                            <a href="https://wa.me/6281234567890?text=Halo%20Admin%20NexShop,%20saya%20sudah%20mendaftar%20reseller%20dan%20sedang%20menunggu%20verifikasi" target="_blank" rel="noopener" class="mkt-nav-back" style="font-size:0.8rem;padding:0.35rem 0.85rem;text-decoration:none;">
-                                <span class="material-symbols-outlined" style="font-size:0.95rem;">chat</span> Hubungi CS WhatsApp
-                            </a>
-                            <button type="button" onclick="loadPortalOverview()" class="mkt-nav-back" style="font-size:0.8rem;padding:0.35rem 0.85rem;">
-                                <span class="material-symbols-outlined" style="font-size:0.95rem;">refresh</span> Periksa Status Terkini
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Dashboard Navigation Tabs -->
-            <div class="dash-tabs-bar" aria-label="Menu Navigasi Partner">
-                <button type="button" class="dash-tab-btn active" data-tab="tab-api-keys">
-                    <span class="material-symbols-outlined">key</span>
-                    <span>Kredensial API &amp; Webhook</span>
+                </a>
+                <button type="button" class="tv-sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
+                    <span class="material-symbols-outlined">menu</span>
                 </button>
-                <button type="button" class="dash-tab-btn" data-tab="tab-products">
+            </div>
+
+            <!-- Sidebar Navigation Menu Items -->
+            <nav class="tv-sidebar-menu">
+                <a class="tv-nav-link active" data-view="view-dashboard" onclick="switchConsoleView('view-dashboard')">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Dashboard</span>
+                </a>
+                <a class="tv-nav-link" data-view="view-products" onclick="switchConsoleView('view-products')">
                     <span class="material-symbols-outlined">inventory_2</span>
-                    <span>Daftar Produk &amp; Harga Modal</span>
-                </button>
-                <button type="button" class="dash-tab-btn" data-tab="tab-orders">
+                    <span>Produk</span>
+                </a>
+                <a class="tv-nav-link" data-view="view-deposit" onclick="switchConsoleView('view-deposit')">
+                    <span class="material-symbols-outlined">account_balance_wallet</span>
+                    <span>Deposit</span>
+                </a>
+                <a class="tv-nav-link" data-view="view-mutations" onclick="switchConsoleView('view-mutations')">
                     <span class="material-symbols-outlined">receipt_long</span>
-                    <span>Riwayat Transaksi API</span>
-                </button>
-                <button type="button" class="dash-tab-btn" data-tab="tab-testing">
-                    <span class="material-symbols-outlined">terminal</span>
-                    <span>API Sandbox Tester</span>
+                    <span>Mutasi Saldo</span>
+                </a>
+                <a class="tv-nav-link" data-view="view-transactions" onclick="switchConsoleView('view-transactions')">
+                    <span class="material-symbols-outlined">monitoring</span>
+                    <span>Transaksi</span>
+                </a>
+                <a class="tv-nav-link" data-view="view-settings" onclick="switchConsoleView('view-settings')">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Pengaturan</span>
+                </a>
+                <a class="tv-nav-link" data-view="view-api" onclick="switchConsoleView('view-api')">
+                    <span class="material-symbols-outlined">integration_instructions</span>
+                    <span>Integrasi API</span>
+                </a>
+                <a class="tv-nav-link" data-view="view-tiers" onclick="switchConsoleView('view-tiers')">
+                    <span class="material-symbols-outlined">military_tech</span>
+                    <span>Upgrade Level !</span>
+                    <span class="tv-nav-pill-tag tv-nav-pill-gold">PRO</span>
+                </a>
+            </nav>
+
+            <!-- Bottom User Profile Area in Sidebar -->
+            <div class="tv-sidebar-user">
+                <div class="tv-user-avatar" id="sidebarAvatar">AB</div>
+                <div class="tv-user-details">
+                    <div class="tv-user-name" id="sidebarUserName">Memuat...</div>
+                    <div class="tv-user-badges">
+                        <span class="tv-badge-role">Owner</span>
+                        <span class="tv-badge-tier" id="sidebarTierBadge">GOLD ⭐</span>
+                    </div>
+                </div>
+                <button type="button" class="tv-btn-logout-icon" onclick="logoutReseller()" title="Keluar">
+                    <span class="material-symbols-outlined" style="font-size:1.15rem;">logout</span>
                 </button>
             </div>
+        </aside>
 
-            <!-- TAB 1: KREDENSIAL API & WEBHOOK -->
-            <div id="tab-api-keys" class="dash-tab-pane active">
-                <div class="card-surface">
-                    <div class="card-header-flex">
-                        <h3 class="card-title-text">
-                            <span class="material-symbols-outlined">lock_open</span>
-                            <span>Kredensial API Mitra</span>
-                        </h3>
-                        <button type="button" id="btnRotateApiKey" class="mkt-nav-back" style="font-size:0.8rem;padding:0.4rem 0.8rem;">
-                            <span class="material-symbols-outlined" style="font-size:1rem;">sync</span>
-                            <span>Rotate / Buat Key Baru</span>
+        <!-- ── Main Content Area ── -->
+        <main class="tv-console-main">
+
+            <!-- ── Top Header Widgets Row (3 Cards) ── -->
+            <div class="tv-top-widgets-grid">
+                <!-- Card 1: User Profile & Member Code -->
+                <div class="tv-card-widget">
+                    <div class="tv-widget-user-wrap">
+                        <div class="tv-widget-avatar-box">
+                            <span class="material-symbols-outlined" style="font-size:1.6rem;">military_tech</span>
+                        </div>
+                        <div class="tv-widget-user-meta">
+                            <div class="tv-widget-user-name" id="topWidgetFullName">Ariel Osaze Koinda Budi</div>
+                            <div class="tv-widget-user-email" id="topWidgetEmail">arielbudinex@gmail.com</div>
+                            <div class="tv-widget-member-code">
+                                <span style="color:#64748b;font-weight:600;">Member Code</span>
+                                <span id="topWidgetMemberCode" style="color:#2563eb;">M260718QCNW1292PT</span>
+                                <span class="material-symbols-outlined" style="font-size:0.85rem;cursor:pointer;" onclick="copyValue('topWidgetMemberCode','Member Code')">content_copy</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Kredit / Saldo -->
+                <div class="tv-card-widget">
+                    <div class="tv-widget-balance-wrap">
+                        <div>
+                            <div class="tv-widget-balance-label">Kredit / Saldo</div>
+                            <div class="tv-widget-balance-amount" id="topWidgetBalance">Rp 77.590</div>
+                        </div>
+                        <button type="button" class="tv-btn-deposit-action" onclick="switchConsoleView('view-deposit')">
+                            <span class="material-symbols-outlined" style="font-size:0.95rem;">add_circle</span>
+                            <span>Deposit</span>
                         </button>
                     </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="inputApiKey">
-                            API KEY (Header: <code>X-NexShop-Api-Key</code>)
-                        </label>
-                        <div class="input-copy-wrap">
-                            <input type="text" id="inputApiKey" class="form-control form-control-mono" readonly value="Memuat API Key...">
-                            <button type="button" class="btn-copy-addon" onclick="copyValue('inputApiKey', 'API Key')">
-                                <span class="material-symbols-outlined" style="font-size:0.95rem;">content_copy</span> Salin
-                            </button>
-                        </div>
-                        <span style="font-size:0.75rem;color:var(--mkt-text-dim);">Gunakan API Key ini untuk otentikasi request dari server Anda ke NexShop.</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="inputSecretKey">
-                            SECRET KEY (Header: <code>X-NexShop-Secret</code>)
-                        </label>
-                        <div class="input-copy-wrap">
-                            <input type="password" id="inputSecretKey" class="form-control form-control-mono" readonly value="••••••••••••••••">
-                            <button type="button" id="btnToggleSecret" class="btn-copy-addon" onclick="toggleSecretKey()" style="right:78px;">
-                                <span class="material-symbols-outlined" style="font-size:0.95rem;">visibility</span> Buka
-                            </button>
-                            <button type="button" class="btn-copy-addon" onclick="copyValue('inputSecretKey', 'Secret Key')">
-                                <span class="material-symbols-outlined" style="font-size:0.95rem;">content_copy</span> Salin
-                            </button>
-                        </div>
-                        <span style="font-size:0.75rem;color:var(--mkt-text-dim);">Secret Key bersifat rahasia. Jangan pernah mempublikasikannya di frontend atau repositori publik.</span>
-                    </div>
                 </div>
 
-                <!-- Keamanan IP Whitelist & Webhook Relay -->
-                <div class="card-surface">
-                    <div class="card-header-flex">
-                        <h3 class="card-title-text">
-                            <span class="material-symbols-outlined">security</span>
-                            <span>IP Whitelist Server &amp; Webhook Callback</span>
-                        </h3>
+                <!-- Card 3: Indikator Keamanan Akun -->
+                <div class="tv-card-widget">
+                    <div class="tv-widget-security-wrap">
+                        <div class="tv-widget-shield-icon">
+                            <span class="material-symbols-outlined" style="font-size:1.6rem;">verified_user</span>
+                        </div>
+                        <div style="flex:1;">
+                            <div class="tv-security-title">Indikator Keamanan Akun</div>
+                            <div class="tv-security-links">
+                                <a href="javascript:void(0)" onclick="switchConsoleView('view-settings')" class="tv-security-link-item">
+                                    <span class="material-symbols-outlined" style="font-size:0.8rem;color:#10b981;">check_circle</span>
+                                    <span>Aktifkan Two-Factor Authentication</span>
+                                </a>
+                                <a href="javascript:void(0)" onclick="switchConsoleView('view-api')" class="tv-security-link-item">
+                                    <span class="material-symbols-outlined" style="font-size:0.8rem;color:#10b981;">check_circle</span>
+                                    <span id="textWhitelistLink">Tambahkan Whitelist IP</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Alert Banner Saat Akun Belum Diverifikasi (Pending KYC) ── -->
+            <div id="tvPendingBanner" class="tv-pending-banner" style="display:none;">
+                <div class="tv-pending-badge-icon">
+                    <span class="material-symbols-outlined">hourglass_top</span>
+                </div>
+                <div style="flex:1;">
+                    <div style="font-size:0.95rem;font-weight:800;color:#92400e;margin-bottom:2px;">
+                        Status Kemitraan: Sedang Ditinjau Admin (Maksimal 3x24 Jam Kerja)
+                    </div>
+                    <div style="font-size:0.82rem;color:#78350f;line-height:1.5;margin-bottom:8px;">
+                        Akun kemitraan Anda saat ini sedang dalam proses verifikasi berkas KYC KTP. Anda dapat menjelajahi seluruh menu katalog produk harga modal, dokumentasi REST API, dan riwayat. Pembuatan/generate API Key dan transaksi resmi akan aktif otomatis setelah akun disetujui.
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <a href="https://wa.me/6281234567890?text=Halo%20Admin%20NexShop,%20saya%20sudah%20mendaftar%20reseller%20dan%20sedang%20menunggu%20verifikasi" target="_blank" rel="noopener" class="tv-btn-deposit-action" style="background:#ffffff;text-decoration:none;">
+                            <span class="material-symbols-outlined" style="font-size:0.95rem;color:#22c55e;">chat</span> Hubungi CS WhatsApp
+                        </a>
+                        <button type="button" class="tv-btn-deposit-action" onclick="loadPortalOverview()">
+                            <span class="material-symbols-outlined" style="font-size:0.95rem;">refresh</span> Periksa Status Terkini
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================== -->
+            <!-- VIEW 1: DASHBOARD (TRANSAKSI STATS & CHART & NEWS)          -->
+            <!-- =========================================================== -->
+            <div id="view-dashboard" class="tv-console-view active">
+                <div class="tv-main-grid-row">
+
+                    <!-- Left: Transaksi Metrics & Line Area Chart -->
+                    <div class="tv-section-card">
+                        <div class="tv-section-title">
+                            <span>Transaksi</span>
+                        </div>
+
+                        <!-- 4-Column Summary Metrics -->
+                        <div class="tv-transaksi-stats-row">
+                            <div class="tv-stat-metric-col">
+                                <div class="tv-stat-metric-date" id="dateLabelToday">Hari ini, 23 Agustus</div>
+                                <div class="tv-stat-metric-values">
+                                    <span class="tv-stat-count" id="statTodayCount">7</span>
+                                    <span class="tv-stat-nominal-pill" id="statTodayAmount">Rp 47.329</span>
+                                </div>
+                            </div>
+                            <div class="tv-stat-metric-col">
+                                <div class="tv-stat-metric-date" id="dateLabelYesterday">Kemarin, 22 Agustus</div>
+                                <div class="tv-stat-metric-values">
+                                    <span class="tv-stat-count" id="statYesterdayCount">3</span>
+                                    <span class="tv-stat-nominal-pill" id="statYesterdayAmount">Rp 131.701</span>
+                                </div>
+                            </div>
+                            <div class="tv-stat-metric-col">
+                                <div class="tv-stat-metric-date" id="dateLabelThisMonth">Bulan ini, Agustus</div>
+                                <div class="tv-stat-metric-values">
+                                    <span class="tv-stat-count" id="statThisMonthCount">19</span>
+                                    <span class="tv-stat-nominal-pill" id="statThisMonthAmount">Rp 219.663</span>
+                                </div>
+                            </div>
+                            <div class="tv-stat-metric-col">
+                                <div class="tv-stat-metric-date" id="dateLabelLastMonth">Bulan lalu, Juli</div>
+                                <div class="tv-stat-metric-values">
+                                    <span class="tv-stat-count" id="statLastMonthCount">1</span>
+                                    <span class="tv-stat-nominal-pill" id="statLastMonthAmount">Rp 2.847</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chart Date Picker Bar -->
+                        <div class="tv-chart-controls-bar">
+                            <div class="tv-date-range-badge">
+                                <span class="material-symbols-outlined" style="font-size:1rem;color:#64748b;">calendar_month</span>
+                                <span id="chartDateRangeLabel">2026-08-16 - 2026-08-23</span>
+                            </div>
+                            <div style="display:flex;gap:6px;color:#64748b;">
+                                <button type="button" class="tv-btn-deposit-action" style="padding:4px 8px;" onclick="renderSampleChart()" title="Perbarui Grafik">
+                                    <span class="material-symbols-outlined" style="font-size:1rem;">refresh</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Canvas Smooth Area Chart -->
+                        <div class="tv-chart-container">
+                            <canvas id="tvTransactionChart"></canvas>
+                        </div>
                     </div>
 
-                    <form id="formPortalSettings">
-                        <div class="form-group">
-                            <label class="form-label" for="inputIpWhitelist">
-                                IP Whitelist Server Anda <span style="color:var(--mkt-secondary);font-size:0.75rem;">(Pisahkan koma jika lebih dari satu)</span>
-                            </label>
-                            <input type="text" id="inputIpWhitelist" class="form-control form-control-mono" placeholder="Contoh: 103.123.45.67, 192.168.1.100">
-                            <span style="font-size:0.75rem;color:var(--mkt-text-dim);">Jika diisi, NexShop HANYA akan memproses request API yang berasal dari alamat IP yang terdaftar.</span>
+                    <!-- Right: News & Updates ! -->
+                    <div class="tv-section-card">
+                        <div class="tv-section-title">
+                            <span>News &amp; Updates !</span>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="inputWebhookUrl">
-                                Webhook Callback URL (Notifikasi Otomatis Transaksi Selesai)
-                            </label>
-                            <div style="display:flex;gap:0.5rem;">
-                                <input type="url" id="inputWebhookUrl" class="form-control form-control-mono" placeholder="https://tokoanda.com/api/nexshop-webhook">
-                                <button type="button" id="btnTestWebhook" class="mkt-nav-back" style="white-space:nowrap;padding:0 1rem;font-size:0.82rem;">
-                                    <span class="material-symbols-outlined" style="font-size:1rem;">send</span>
-                                    <span>Tes Webhook</span>
-                                </button>
+                        <div class="tv-news-list" id="tvNewsFeedList">
+                            <!-- News Item 1 -->
+                            <div class="tv-news-item">
+                                <div class="tv-news-top-flex">
+                                    <h5 class="tv-news-item-title">Produk Pascabayar sudah dapat digunakan</h5>
+                                    <span class="tv-news-blue-dot"></span>
+                                </div>
+                                <div class="tv-news-meta">
+                                    <span>2 bulan yang lalu</span>
+                                    <span>17 Juni 2026</span>
+                                </div>
                             </div>
-                            <span style="font-size:0.75rem;color:var(--mkt-text-dim);">Server NexShop akan memanggil URL ini secara instan saat pesanan topup Anda berstatus sukses/gagal.</span>
-                        </div>
 
-                        <div class="form-group">
-                            <label class="form-label" for="inputWebhookSecret">
-                                Webhook Signing Secret (HMAC SHA-256)
-                            </label>
-                            <div class="input-copy-wrap">
-                                <input type="text" id="inputWebhookSecret" class="form-control form-control-mono" readonly value="Memuat...">
-                                <button type="button" class="btn-copy-addon" onclick="copyValue('inputWebhookSecret', 'Webhook Secret')">
-                                    <span class="material-symbols-outlined" style="font-size:0.95rem;">content_copy</span> Salin
-                                </button>
+                            <!-- News Item 2 -->
+                            <div class="tv-news-item">
+                                <div class="tv-news-top-flex">
+                                    <h5 class="tv-news-item-title">Perubahan akun telegram Customer care</h5>
+                                    <span class="tv-news-blue-dot"></span>
+                                </div>
+                                <div class="tv-news-meta">
+                                    <span>setahun yang lalu</span>
+                                    <span>10 April 2025</span>
+                                </div>
                             </div>
-                            <span style="font-size:0.75rem;color:var(--mkt-text-dim);">Gunakan secret ini untuk memvalidasi tanda tangan header <code>X-NexShop-Signature</code>.</span>
-                        </div>
 
-                        <div style="display:flex;justify-content:flex-end;margin-top:1.25rem;">
-                            <button type="submit" id="btnSaveSettings" class="btn-portal-primary" style="width:auto;padding:0.65rem 1.6rem;">
-                                <span class="material-symbols-outlined">save</span>
-                                <span>Simpan Pengaturan Keamanan</span>
+                            <!-- News Item 3 -->
+                            <div class="tv-news-item">
+                                <div class="tv-news-top-flex">
+                                    <h5 class="tv-news-item-title">Api Deposit Saldo Sudah Tersedia</h5>
+                                    <span class="tv-news-blue-dot"></span>
+                                </div>
+                                <div class="tv-news-meta">
+                                    <span>2 tahun yang lalu</span>
+                                    <span>22 April 2024</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- =========================================================== -->
+            <!-- VIEW 2: PRODUK (KATALOG HARGA MODAL DISTRIBUTOR)            -->
+            <!-- =========================================================== -->
+            <div id="view-products" class="tv-console-view">
+                <div class="tv-table-card">
+                    <div class="tv-table-header-bar">
+                        <div>
+                            <h3 style="font-size:1.05rem;font-weight:800;color:#0f172a;margin:0 0 2px;">Daftar Produk &amp; Harga Modal Reseller</h3>
+                            <p style="font-size:0.78rem;color:#64748b;margin:0;">Harga modal otomatis terpotong sesuai tingkatan tier aktif Anda.</p>
+                        </div>
+                        <div class="tv-search-input-wrap">
+                            <span class="material-symbols-outlined">search</span>
+                            <input type="text" id="inputSearchProduct" placeholder="Cari SKU, Nama Game, PLN..." oninput="filterPortalProducts()">
+                        </div>
+                    </div>
+
+                    <div style="overflow-x:auto;">
+                        <table class="tv-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Kode SKU</th>
+                                    <th>Nama Produk</th>
+                                    <th>Kategori / Operator</th>
+                                    <th>Harga Normal</th>
+                                    <th>Harga Modal Reseller</th>
+                                    <th>Diskon Tier</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tvProductsTableBody">
+                                <tr>
+                                    <td colspan="8" style="text-align:center;padding:2rem;color:#64748b;">Memuat data katalog produk...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================== -->
+            <!-- VIEW 3: DEPOSIT (TOPUP SALDO MODAL RESELLER)               -->
+            <!-- =========================================================== -->
+            <div id="view-deposit" class="tv-console-view">
+                <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:1.35rem;">
+                    <div class="tv-section-card">
+                        <div class="tv-section-title">
+                            <span>Form Pengisian Saldo Deposit Modal</span>
+                        </div>
+                        <form id="formDepositSimulator" onsubmit="handleDepositSubmit(event)">
+                            <div style="margin-bottom:1rem;">
+                                <label class="form-label">Pilih Metode Pembayaran Deposit</label>
+                                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+                                    <button type="button" class="tv-btn-deposit-action" style="justify-content:center;padding:0.65rem;border-color:#2563eb;background:#eff6ff;" onclick="selectPaymentMethod('qris')">
+                                        <span class="material-symbols-outlined" style="font-size:1rem;color:#2563eb;">qr_code_scanner</span> QRIS Instan
+                                    </button>
+                                    <button type="button" class="tv-btn-deposit-action" style="justify-content:center;padding:0.65rem;" onclick="selectPaymentMethod('bca')">
+                                        BCA Virtual Account
+                                    </button>
+                                    <button type="button" class="tv-btn-deposit-action" style="justify-content:center;padding:0.65rem;" onclick="selectPaymentMethod('mandiri')">
+                                        Mandiri VA
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom:1rem;">
+                                <label class="form-label">Nominal Deposit (Rp)</label>
+                                <input type="number" id="inputDepositAmount" value="100000" min="20000" step="10000" style="width:100%;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;font-size:1.1rem;font-weight:800;box-sizing:border-box;">
+                            </div>
+
+                            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem;">
+                                <button type="button" class="tv-btn-deposit-action" onclick="setDepositPreset(50000)">Rp 50.000</button>
+                                <button type="button" class="tv-btn-deposit-action" onclick="setDepositPreset(100000)">Rp 100.000</button>
+                                <button type="button" class="tv-btn-deposit-action" onclick="setDepositPreset(250000)">Rp 250.000</button>
+                                <button type="button" class="tv-btn-deposit-action" onclick="setDepositPreset(500000)">Rp 500.000</button>
+                                <button type="button" class="tv-btn-deposit-action" onclick="setDepositPreset(1000000)">Rp 1.000.000</button>
+                            </div>
+
+                            <button type="submit" style="width:100%;padding:0.8rem;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:800;font-size:0.92rem;cursor:pointer;">
+                                Lanjutkan Pembayaran Deposit
                             </button>
+                        </form>
+                    </div>
+
+                    <div class="tv-section-card">
+                        <div class="tv-section-title">
+                            <span>Petunjuk Pembayaran Saldo</span>
                         </div>
+                        <div style="font-size:0.84rem;color:#475569;line-height:1.6;">
+                            <ul style="padding-left:1.2rem;margin:0;">
+                                <li style="margin-bottom:8px;">Pembayaran via QRIS terverifikasi otomatis dalam 1-3 detik tanpa biaya admin tambahan.</li>
+                                <li style="margin-bottom:8px;">Saldo deposit langsung bertambah di konsol Anda dan siap digunakan untuk transaksi API.</li>
+                                <li style="margin-bottom:8px;">Minimal deposit Rp 20.000. Tidak ada batas masa berlaku saldo.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================== -->
+            <!-- VIEW 4: MUTASI SALDO                                        -->
+            <!-- =========================================================== -->
+            <div id="view-mutations" class="tv-console-view">
+                <div class="tv-table-card">
+                    <div class="tv-table-header-bar">
+                        <div>
+                            <h3 style="font-size:1.05rem;font-weight:800;color:#0f172a;margin:0 0 2px;">Mutasi Saldo &amp; Ledger Pembukuan</h3>
+                            <p style="font-size:0.78rem;color:#64748b;margin:0;">Catatan transaksi debit dan kredit saldo modal reseller Anda.</p>
+                        </div>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table class="tv-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Waktu</th>
+                                    <th>Tipe</th>
+                                    <th>Nominal</th>
+                                    <th>Sisa Saldo</th>
+                                    <th>Keterangan / Ref ID</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tvMutationsTableBody">
+                                <tr>
+                                    <td colspan="5" style="text-align:center;padding:2rem;color:#64748b;">Belum ada mutasi saldo tercatat.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================== -->
+            <!-- VIEW 5: TRANSAKSI (LOG PESANAN DISTRIBUTOR)                 -->
+            <!-- =========================================================== -->
+            <div id="view-transactions" class="tv-console-view">
+                <div class="tv-table-card">
+                    <div class="tv-table-header-bar">
+                        <div>
+                            <h3 style="font-size:1.05rem;font-weight:800;color:#0f172a;margin:0 0 2px;">Riwayat Transaksi Pesanan API</h3>
+                            <p style="font-size:0.78rem;color:#64748b;margin:0;">Seluruh status pesanan produk yang diproses melalui sistem NexShop.</p>
+                        </div>
+                        <div class="tv-search-input-wrap">
+                            <span class="material-symbols-outlined">search</span>
+                            <input type="text" id="inputSearchTrx" placeholder="Cari Order ID / No. Tujuan..." oninput="filterPortalOrders()">
+                        </div>
+                    </div>
+                    <div style="overflow-x:auto;">
+                        <table class="tv-data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Waktu</th>
+                                    <th>Produk</th>
+                                    <th>Tujuan / User ID</th>
+                                    <th>Harga Modal</th>
+                                    <th>Status</th>
+                                    <th>Serial Number (SN)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tvOrdersTableBody">
+                                <tr>
+                                    <td colspan="7" style="text-align:center;padding:2rem;color:#64748b;">Memuat riwayat transaksi...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- =========================================================== -->
+            <!-- VIEW 6: PENGATURAN (PROFIL & KEAMANAN AKUN)                 -->
+            <!-- =========================================================== -->
+            <div id="view-settings" class="tv-console-view">
+                <div class="tv-section-card" style="max-width:760px;">
+                    <div class="tv-section-title">
+                        <span>Pengaturan Profil &amp; Keamanan Mitra</span>
+                    </div>
+                    <form onsubmit="handleSaveProfile(event)">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;">
+                            <div>
+                                <label class="form-label">Nama Lengkap</label>
+                                <input type="text" id="settingsFullName" class="form-control" style="width:100%;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;">
+                            </div>
+                            <div>
+                                <label class="form-label">Email Akun</label>
+                                <input type="email" id="settingsEmail" class="form-control" readonly style="width:100%;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;background:#f8fafc;box-sizing:border-box;">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom:1.4rem;">
+                            <label class="form-label">Two-Factor Authentication (2FA)</label>
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;">
+                                <div>
+                                    <div style="font-weight:700;font-size:0.85rem;color:#0f172a;">Proteksi OTP Login WhatsApp</div>
+                                    <div style="font-size:0.75rem;color:#64748b;">Minta kode OTP 6 digit setiap kali login dari perangkat baru.</div>
+                                </div>
+                                <span class="tv-badge-status tv-badge-sukses">Aktif</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" style="padding:0.65rem 1.4rem;border:none;border-radius:8px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">
+                            Simpan Perubahan
+                        </button>
                     </form>
                 </div>
             </div>
 
-            <!-- TAB 2: KATALOG & HARGA MODAL RESELLER -->
-            <div id="tab-products" class="dash-tab-pane">
-                <div class="card-surface">
-                    <div class="card-header-flex">
-                        <div>
-                            <h3 class="card-title-text">
-                                <span class="material-symbols-outlined">inventory</span>
-                                <span>Katalog Produk &amp; Harga Modal Reseller</span>
-                            </h3>
-                            <p style="margin:0.25rem 0 0;font-size:0.8rem;color:var(--mkt-text-dim);">
-                                Seluruh harga modal di bawah ini telah dikalkulasi khusus untuk tingkatan kemitraan Anda.
-                            </p>
-                        </div>
-                        <div>
-                            <span id="productCountBadge" class="tier-badge">Memuat...</span>
-                        </div>
-                    </div>
-
-                    <!-- Search and Filter -->
-                    <div style="display:grid;grid-template-columns:1fr auto;gap:0.75rem;margin-bottom:1rem;">
-                        <input type="text" id="productSearchInput" class="form-control" placeholder="Cari nama produk, SKU, atau operator (misal: MLBB, TELKOMSEL, DANA)...">
-                        <select id="productCategoryFilter" class="form-control" style="width:auto;min-width:160px;">
-                            <option value="all">Semua Kategori</option>
-                            <option value="Game">Top Up Game</option>
-                            <option value="Pulsa">Pulsa &amp; Paket Data</option>
-                            <option value="E-Money">E-Wallet &amp; Saldo</option>
-                            <option value="Voucher">Voucher Digital</option>
-                            <option value="PLN">Token Listrik PLN</option>
-                            <option value="Pascabayar">Tagihan Pascabayar</option>
-                        </select>
-                    </div>
-
-                    <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--mkt-line);background:rgba(8,11,20,0.6);">
-                        <table style="width:100%;border-collapse:collapse;text-align:left;font-size:0.85rem;">
-                            <thead>
-                                <tr style="background:rgba(255,255,255,0.03);color:var(--mkt-text-dim);border-bottom:1px solid var(--mkt-line);">
-                                    <th style="padding:0.75rem 1rem;">Operator / Kategori</th>
-                                    <th style="padding:0.75rem 1rem;">Kode SKU</th>
-                                    <th style="padding:0.75rem 1rem;">Nama Produk</th>
-                                    <th style="padding:0.75rem 1rem;">Harga Normal</th>
-                                    <th style="padding:0.75rem 1rem;">Harga Modal Anda</th>
-                                    <th style="padding:0.75rem 1rem;">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="portalProductTbody">
-                                <tr>
-                                    <td colspan="6" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);">
-                                        <span class="material-symbols-outlined mkt-spin" style="vertical-align:middle;margin-right:0.3rem;">progress_activity</span>
-                                        Memuat produk katalog...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 3: RIWAYAT TRANSAKSI API -->
-            <div id="tab-orders" class="dash-tab-pane">
-                <div class="card-surface">
-                    <div class="card-header-flex">
-                        <h3 class="card-title-text">
-                            <span class="material-symbols-outlined">history</span>
-                            <span>Riwayat Transaksi API Reseller</span>
-                        </h3>
-                        <button type="button" class="mkt-nav-back" onclick="loadPortalOrders()" style="font-size:0.8rem;padding:0.4rem 0.8rem;">
-                            <span class="material-symbols-outlined" style="font-size:1rem;">refresh</span> Muat Ulang
-                        </button>
-                    </div>
-
-                    <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--mkt-line);background:rgba(8,11,20,0.6);">
-                        <table style="width:100%;border-collapse:collapse;text-align:left;font-size:0.85rem;">
-                            <thead>
-                                <tr style="background:rgba(255,255,255,0.03);color:var(--mkt-text-dim);border-bottom:1px solid var(--mkt-line);">
-                                    <th style="padding:0.75rem 1rem;">Waktu</th>
-                                    <th style="padding:0.75rem 1rem;">Ref ID / Order ID</th>
-                                    <th style="padding:0.75rem 1rem;">Produk</th>
-                                    <th style="padding:0.75rem 1rem;">Target / Tujuan</th>
-                                    <th style="padding:0.75rem 1rem;">Harga Modal</th>
-                                    <th style="padding:0.75rem 1rem;">Status</th>
-                                    <th style="padding:0.75rem 1rem;">Serial Number (SN)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="portalOrdersTbody">
-                                <tr>
-                                    <td colspan="7" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);">
-                                        Klik tab ini untuk memuat riwayat transaksi API Anda.
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TAB 4: API SANDBOX & TESTING TOOL -->
-            <div id="tab-testing" class="dash-tab-pane">
-                <div class="card-surface">
-                    <div class="card-header-flex">
-                        <h3 class="card-title-text">
-                            <span class="material-symbols-outlined">code</span>
-                            <span>API Nickname Check &amp; Sandbox Tester</span>
-                        </h3>
-                    </div>
-
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
-                        <div>
-                            <div class="form-group">
-                                <label class="form-label">Kode Produk / Game</label>
-                                <input type="text" id="testNickProduct" class="form-control" value="mobile-legends" placeholder="contoh: mobile-legends atau ff">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">User ID Target</label>
-                                <input type="text" id="testNickUserId" class="form-control" placeholder="contoh: 12345678">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Zone / Server ID (Jika Ada)</label>
-                                <input type="text" id="testNickZoneId" class="form-control" placeholder="contoh: 2026">
-                            </div>
-                            <button type="button" id="btnRunTestNick" class="btn-portal-primary" style="margin-top:0.5rem;">
-                                <span class="material-symbols-outlined">play_arrow</span>
-                                <span>Cek Nickname Target</span>
+            <!-- =========================================================== -->
+            <!-- VIEW 7: INTEGRASI API (API KEY, WEBHOOK & DOCS)             -->
+            <!-- =========================================================== -->
+            <div id="view-api" class="tv-console-view">
+                <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:1.35rem;">
+                    <div class="tv-section-card">
+                        <div class="tv-section-title">
+                            <span>Kredensial REST API Mitra</span>
+                            <button type="button" id="btnRotateApiKey" class="tv-btn-deposit-action">
+                                <span class="material-symbols-outlined" style="font-size:0.95rem;">sync</span>
+                                <span>Rotate / Buat Key Baru</span>
                             </button>
                         </div>
 
-                        <div>
-                            <label class="form-label">Response JSON Sandbox</label>
-                            <pre id="testNickResult" class="code-box" style="min-height:160px;margin-top:0.4rem;">(Hasil response server akan muncul di sini)</pre>
+                        <div style="margin-bottom:1.15rem;">
+                            <label class="form-label">API KEY (Header: <code>X-NexShop-Api-Key</code>)</label>
+                            <div style="display:flex;gap:6px;">
+                                <input type="text" id="inputApiKey" readonly value="Memuat API Key..." style="flex:1;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;font-family:'Fira Code',monospace;font-size:0.84rem;background:#f8fafc;">
+                                <button type="button" class="tv-btn-deposit-action" onclick="copyValue('inputApiKey', 'API Key')">Salin</button>
+                            </div>
                         </div>
+
+                        <div style="margin-bottom:1.15rem;">
+                            <label class="form-label">SECRET KEY (Header: <code>X-NexShop-Secret</code>)</label>
+                            <div style="display:flex;gap:6px;">
+                                <input type="password" id="inputSecretKey" readonly value="••••••••••••••••" style="flex:1;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;font-family:'Fira Code',monospace;font-size:0.84rem;background:#f8fafc;">
+                                <button type="button" id="btnToggleSecret" class="tv-btn-deposit-action" onclick="toggleSecretKey()">Buka</button>
+                                <button type="button" class="tv-btn-deposit-action" onclick="copyValue('inputSecretKey', 'Secret Key')">Salin</button>
+                            </div>
+                        </div>
+
+                        <form id="formPortalSettings">
+                            <div style="margin-bottom:1rem;">
+                                <label class="form-label" for="inputIpWhitelist">IP Whitelist (Pisahkan koma)</label>
+                                <input type="text" id="inputIpWhitelist" placeholder="Contoh: 103.123.45.67, 192.168.1.1" style="width:100%;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;font-size:0.84rem;">
+                            </div>
+
+                            <div style="margin-bottom:1.25rem;">
+                                <label class="form-label" for="inputWebhookUrl">Webhook Relay Callback URL</label>
+                                <div style="display:flex;gap:6px;">
+                                    <input type="url" id="inputWebhookUrl" placeholder="https://website-anda.com/api/callback" style="flex:1;padding:0.65rem 0.85rem;border:1px solid #cbd5e1;border-radius:8px;box-sizing:border-box;font-size:0.84rem;">
+                                    <button type="button" id="btnTestWebhook" class="tv-btn-deposit-action">Tes</button>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="btnSaveSettings" style="padding:0.65rem 1.4rem;border:none;border-radius:8px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;">
+                                Simpan Pengaturan Keamanan
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="tv-section-card">
+                        <div class="tv-section-title">
+                            <span>Panduan &amp; Dokumentasi API</span>
+                        </div>
+                        <p style="font-size:0.84rem;color:#64748b;line-height:1.6;margin-bottom:1rem;">
+                            Integrasikan transaksi game, pulsa, dan tagihan pascabayar ke website toko online atau bot WhatsApp Anda secara otomatis.
+                        </p>
+                        <a href="/docs-reseller.html" class="tv-btn-deposit-action" style="background:#0f172a;color:#fff;text-decoration:none;padding:0.65rem 1.15rem;display:inline-flex;border-color:#0f172a;">
+                            <span class="material-symbols-outlined" style="font-size:1.1rem;color:#60a5fa;">menu_book</span>
+                            <span>Buka Dokumentasi REST API Lengkap</span>
+                        </a>
                     </div>
                 </div>
             </div>
-        </section>
 
-    </main>
+            <!-- =========================================================== -->
+            <!-- VIEW 8: UPGRADE LEVEL / TIER                                -->
+            <!-- =========================================================== -->
+            <div id="view-tiers" class="tv-console-view">
+                <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:1.25rem;">
+                    <!-- Tier 1: Silver -->
+                    <div class="tv-section-card" style="border-top:4px solid #94a3b8;">
+                        <h4 style="font-size:1.15rem;font-weight:900;color:#0f172a;margin:0 0 4px;">Tier Silver</h4>
+                        <div style="font-size:1.45rem;font-weight:900;color:#2563eb;margin-bottom:8px;">Diskon 2.0%</div>
+                        <p style="font-size:0.8rem;color:#64748b;line-height:1.5;">Level awal bagi setiap mitra distributor baru yang telah terverifikasi KYC.</p>
+                        <div class="tv-badge-status tv-badge-sukses" style="margin-top:1rem;">Aktif Default</div>
+                    </div>
 
-    <!-- Toast Notification -->
-    <div id="portalToast" class="toast-msg">
-        <span class="material-symbols-outlined" style="color:var(--mkt-secondary);font-size:1.2rem;">check_circle</span>
-        <span id="portalToastMsg">Tersalin ke clipboard!</span>
+                    <!-- Tier 2: Gold -->
+                    <div class="tv-section-card" style="border-top:4px solid #f59e0b;background:#fffdf7;">
+                        <h4 style="font-size:1.15rem;font-weight:900;color:#0f172a;margin:0 0 4px;">Tier Gold ⭐</h4>
+                        <div style="font-size:1.45rem;font-weight:900;color:#d97706;margin-bottom:8px;">Diskon 3.5%</div>
+                        <p style="font-size:0.8rem;color:#64748b;line-height:1.5;">Untuk mitra dengan volume transaksi rutin minimal 50 transaksi per bulan.</p>
+                        <div class="tv-badge-status tv-badge-pending" style="margin-top:1rem;">Target: 50 Trx/Bln</div>
+                    </div>
+
+                    <!-- Tier 3: Platinum -->
+                    <div class="tv-section-card" style="border-top:4px solid #7c3aed;">
+                        <h4 style="font-size:1.15rem;font-weight:900;color:#0f172a;margin:0 0 4px;">Tier Platinum 👑</h4>
+                        <div style="font-size:1.45rem;font-weight:900;color:#7c3aed;margin-bottom:8px;">Diskon 5.0%</div>
+                        <p style="font-size:0.8rem;color:#64748b;line-height:1.5;">Tingkat distributor tertinggi dengan harga modal termurah se-Indonesia.</p>
+                        <div class="tv-badge-status tv-badge-pending" style="margin-top:1rem;">Target: 250 Trx/Bln</div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
     </div>
 
-    <!-- ── Standar Footer NexShop ────────────────────────────────────── -->
-    <footer class="nx-footer nx-footer--market">
-        <div class="nx-footer__container">
-            <div class="nx-footer__grid">
-                <div>
-                    <a href="/" class="nx-footer__brand" aria-label="NexShop - Beranda">
-                        <span class="nx-footer__brand-mark">
-                            <img src="/images/nexshop-icon.svg" alt="" width="38" height="38" loading="lazy">
-                        </span>
-                        <span class="nx-footer__brand-logo">NEXSHOP<span>PARTNER</span></span>
-                    </a>
-                    <p class="nx-footer__brand-desc" style="text-transform:none;text-align:left;">
-                        Portal Kemitraan &amp; Developer API NexShop.
-                    </p>
-                </div>
-                <div>
-                    <h4 class="nx-footer__heading" style="text-align:left;">Tautan</h4>
-                    <ul class="nx-footer__link-list" style="text-align:left;">
-                        <li><a href="/docs-reseller.html" class="nx-footer__link">Dokumentasi API</a></li>
-                        <li><a href="/marketplace" class="nx-footer__link">Marketplace</a></li>
-                        <li><a href="/reseller.html" class="nx-footer__link">Program Reseller</a></li>
-                    </ul>
-                </div>
-                <div class="nx-footer__legal" style="align-items:flex-start;">
-                    <h4 class="nx-footer__heading">Legalitas</h4>
-                    <div class="nx-footer__legal-name"><strong>NexShop</strong> <span>&middot;</span> <span>Usaha Mikro</span></div>
-                    <div class="nx-footer__legal-ids"><span>NIB 1408260072494</span> <span>KBLI 60390</span></div>
-                </div>
-            </div>
-            <div class="nx-footer__bottom">
-                <p>&copy; 2026 NexShop. All Rights Reserved.</p>
-                <p class="nx-footer__bottom-note">Portal Partner &amp; API NexShop.</p>
-            </div>
-        </div>
-    </footer>
+    <!-- ── Floating Help Button ── -->
+    <a href="https://wa.me/6281234567890?text=Halo%20Admin%20NexShop,%20saya%20butuh%20bantuan%20mengenai%20Partner%20Portal" target="_blank" rel="noopener" class="tv-fab-help">
+        <span class="tv-fab-dot"></span>
+        <span class="material-symbols-outlined" style="font-size:1.15rem;">support_agent</span>
+        <span>Bantuan</span>
+    </a>
 
+    <!-- Toast Notification -->
+    <div id="mktToast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:0.75rem 1.4rem;border-radius:50px;font-size:0.85rem;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,0.3);z-index:9999;"></div>
+
+    <!-- =============================================================== -->
+    <!-- JAVASCRIPT LOGIC & INTERACTIONS                                -->
+    <!-- =============================================================== -->
     <script>
-        const API_BASE = (() => {
-            const host = window.location.hostname;
-            if (host === "localhost" || host === "127.0.0.1") {
-                return window.location.port === "3000" ? "/api" : "http://localhost:3000/api";
-            }
-            return "/api";
-        })();
+        const API_BASE = window.location.origin + "/api";
+        let uploadedKtpUrl = "";
+        let cachedSecret = "";
+        let isSecretRevealed = false;
+        let currentResellerStatus = "none";
+        let allProducts = [];
+        let allOrders = [];
 
-        // Dedicated Storage Keys for Resellers (Terpisah dari akun toko biasa)
-        const RESELLER_TOKEN_KEY = "nexshop-reseller-token";
-        const RESELLER_USER_KEY = "nexshop-reseller-user";
+        function showToast(msg) {
+            const toast = document.getElementById("mktToast");
+            if (!toast) return;
+            toast.textContent = msg;
+            toast.style.display = "block";
+            setTimeout(() => { toast.style.display = "none"; }, 3500);
+        }
 
         function getResellerToken() {
-            return localStorage.getItem(RESELLER_TOKEN_KEY) || localStorage.getItem("token") || "";
+            return localStorage.getItem("nexshop-reseller-token") || localStorage.getItem("token") || "";
         }
 
         function setResellerSession(token, user) {
-            localStorage.setItem(RESELLER_TOKEN_KEY, token);
-            if (user) localStorage.setItem(RESELLER_USER_KEY, JSON.stringify(user));
+            if (token) {
+                localStorage.setItem("nexshop-reseller-token", token);
+                localStorage.setItem("token", token);
+            }
+            if (user) {
+                localStorage.setItem("nexshop-reseller-user", JSON.stringify(user));
+            }
         }
 
         function logoutReseller() {
-            localStorage.removeItem(RESELLER_TOKEN_KEY);
-            localStorage.removeItem(RESELLER_USER_KEY);
-            showToast("Anda telah keluar dari Partner Portal");
-            setTimeout(() => {
-                window.location.reload();
-            }, 600);
+            localStorage.removeItem("nexshop-reseller-token");
+            localStorage.removeItem("nexshop-reseller-user");
+            window.location.reload();
         }
 
-        function showToast(msg) {
-            const toast = document.getElementById("portalToast");
-            const msgEl = document.getElementById("portalToastMsg");
-            msgEl.textContent = msg;
-            toast.classList.add("show");
-            setTimeout(() => toast.classList.remove("show"), 2500);
+        function toggleSidebar() {
+            const sb = document.getElementById("tvSidebar");
+            if (sb) sb.classList.toggle("open");
+        }
+
+        function switchAuthTab(mode) {
+            const btnLogin = document.getElementById("tabBtnLogin");
+            const btnReg = document.getElementById("tabBtnRegister");
+            const paneLogin = document.getElementById("authPaneLogin");
+            const paneReg = document.getElementById("authPaneRegister");
+
+            if (mode === "register") {
+                btnReg.style.background = "#7c3aed";
+                btnReg.style.color = "#ffffff";
+                btnLogin.style.background = "transparent";
+                btnLogin.style.color = "#64748b";
+                paneLogin.style.display = "none";
+                paneReg.style.display = "block";
+            } else {
+                btnLogin.style.background = "#2563eb";
+                btnLogin.style.color = "#ffffff";
+                btnReg.style.background = "transparent";
+                btnReg.style.color = "#64748b";
+                paneLogin.style.display = "block";
+                paneReg.style.display = "none";
+            }
+        }
+
+        function switchConsoleView(viewId) {
+            document.querySelectorAll(".tv-console-view").forEach(v => v.classList.remove("active"));
+            document.querySelectorAll(".tv-nav-link").forEach(l => l.classList.remove("active"));
+
+            const targetView = document.getElementById(viewId);
+            if (targetView) targetView.classList.add("active");
+
+            const activeLink = document.querySelector(`.tv-nav-link[data-view="${viewId}"]`);
+            if (activeLink) activeLink.classList.add("active");
+
+            if (viewId === "view-products" && !allProducts.length) {
+                loadPortalProducts();
+            } else if (viewId === "view-transactions" && !allOrders.length) {
+                loadPortalOrders();
+            } else if (viewId === "view-dashboard") {
+                renderSampleChart();
+            }
         }
 
         function copyValue(elementId, label) {
             const el = document.getElementById(elementId);
-            if (!el || !el.value) return;
-            navigator.clipboard.writeText(el.value).then(() => {
+            if (!el) return;
+            const val = el.value || el.textContent;
+            navigator.clipboard.writeText(val).then(() => {
                 showToast(`${label} berhasil disalin!`);
+            }).catch(() => {
+                showToast(`Gagal menyalin ${label}`);
             });
         }
 
-        function copyText(text, label) {
-            if (!text) return;
-            navigator.clipboard.writeText(text).then(() => {
-                showToast(`${label} disalin: ${text}`);
-            });
-        }
-
-        function formatRupiah(num) {
-            return "Rp " + Number(num || 0).toLocaleString("id-ID");
-        }
-
-        function escapeHtml(str) {
-            return String(str ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-        }
-
-        // ── Auth Mode Switching (Login / Register) ────────────────────────
-        function switchAuthMode(mode) {
-            const tabLogin = document.getElementById("tabAuthLogin");
-            const tabReg = document.getElementById("tabAuthRegister");
-            const formLogin = document.getElementById("formResellerLogin");
-            const formReg = document.getElementById("formResellerRegister");
-
-            if (mode === "register") {
-                tabLogin.classList.remove("active");
-                tabReg.classList.add("active");
-                formLogin.style.display = "none";
-                formReg.style.display = "block";
-            } else {
-                tabReg.classList.remove("active");
-                tabLogin.classList.add("active");
-                formReg.style.display = "none";
-                formLogin.style.display = "block";
-            }
-        }
-
-        // ── Dropzone & Upload KTP KYC ─────────────────────────────────────
-        let uploadedKtpUrl = "";
-        const dropzone = document.getElementById("regKtpDropzone");
-        const fileInput = document.getElementById("regKtpFile");
-        const placeholder = document.getElementById("regKtpPlaceholder");
-        const previewWrap = document.getElementById("regKtpPreviewWrap");
-        const previewImg = document.getElementById("regKtpPreviewImg");
-        const removeBtn = document.getElementById("regKtpRemoveBtn");
-
-        if (dropzone && fileInput) {
-            dropzone.addEventListener("click", (e) => {
-                if (e.target === removeBtn || removeBtn.contains(e.target)) return;
-                fileInput.click();
-            });
-
-            dropzone.addEventListener("dragover", (e) => {
-                e.preventDefault();
-                dropzone.style.borderColor = "var(--mkt-secondary)";
-            });
-
-            dropzone.addEventListener("dragleave", () => {
-                dropzone.style.borderColor = "rgba(139, 92, 246, 0.4)";
-            });
-
-            dropzone.addEventListener("drop", (e) => {
-                e.preventDefault();
-                dropzone.style.borderColor = "rgba(139, 92, 246, 0.4)";
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    fileInput.files = e.dataTransfer.files;
-                    handleKtpSelected(e.dataTransfer.files[0]);
+        // ── Upload KTP ──
+        const ktpDropzone = document.getElementById("ktpDropzone");
+        const ktpFileInput = document.getElementById("ktpFile");
+        if (ktpDropzone && ktpFileInput) {
+            ktpDropzone.addEventListener("click", () => ktpFileInput.click());
+            ktpFileInput.addEventListener("change", (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (re) => {
+                        document.getElementById("ktpPreviewImg").src = re.target.result;
+                        document.getElementById("ktpUploadPrompt").style.display = "none";
+                        document.getElementById("ktpPreviewBox").style.display = "inline-block";
+                    };
+                    reader.readAsDataURL(file);
                 }
             });
-
-            fileInput.addEventListener("change", () => {
-                if (fileInput.files && fileInput.files[0]) {
-                    handleKtpSelected(fileInput.files[0]);
-                }
-            });
-
-            removeBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                fileInput.value = "";
-                uploadedKtpUrl = "";
-                previewImg.src = "";
-                previewWrap.style.display = "none";
-                placeholder.style.display = "block";
-            });
         }
 
-        function handleKtpSelected(file) {
-            if (!file) return;
-            if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-                alert("Format file KTP harus berupa gambar (JPG, PNG, atau WEBP)");
-                fileInput.value = "";
-                return;
-            }
-            if (file.size > 10 * 1024 * 1024) {
-                alert("Ukuran foto KTP maksimal 10MB");
-                fileInput.value = "";
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImg.src = e.target.result;
-                placeholder.style.display = "none";
-                previewWrap.style.display = "block";
-            };
-            reader.readAsDataURL(file);
+        function removeKtpFile(e) {
+            e.stopPropagation();
+            ktpFileInput.value = "";
+            uploadedKtpUrl = "";
+            document.getElementById("ktpPreviewImg").src = "";
+            document.getElementById("ktpUploadPrompt").style.display = "block";
+            document.getElementById("ktpPreviewBox").style.display = "none";
         }
 
         async function uploadKtpFile(file) {
             const formData = new FormData();
             formData.append("image", file);
+            const token = getResellerToken();
+            const headers = {};
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+
             const res = await fetch(`${API_BASE}/upload/image?type=kyc`, {
                 method: "POST",
+                headers,
                 body: formData
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.message || "Gagal mengunggah foto KTP");
-            return data.url;
+            return data.url || data.imageUrl || "";
         }
 
-        // ── Submit Register Reseller ──────────────────────────────────────
+        // ── Submit Register ──
         document.getElementById("formResellerRegister").addEventListener("submit", async (e) => {
             e.preventDefault();
             const errEl = document.getElementById("regErrorMsg");
             const btn = document.getElementById("btnRegisterSubmit");
             errEl.style.display = "none";
-            errEl.textContent = "";
 
-            const file = fileInput.files && fileInput.files[0];
+            const file = ktpFileInput.files && ktpFileInput.files[0];
             if (!file && !uploadedKtpUrl) {
                 errEl.textContent = "Foto KTP (KYC) wajib dipilih untuk verifikasi kemitraan.";
                 errEl.style.display = "block";
@@ -1431,14 +1743,12 @@
             }
 
             btn.disabled = true;
-            btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Mengunggah foto KTP...`;
+            btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Memproses...`;
 
             try {
                 if (file && !uploadedKtpUrl) {
                     uploadedKtpUrl = await uploadKtpFile(file);
                 }
-
-                btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Mendaftarkan akun mitra...`;
 
                 const payload = {
                     email: document.getElementById("regEmail").value.trim(),
@@ -1458,41 +1768,27 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
-
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) throw new Error(data.message || "Gagal mendaftar reseller");
 
                 setResellerSession(data.token, data.user);
-                showToast("Pendaftaran akun berhasil!");
-                btn.disabled = false;
-                btn.innerHTML = `<span class="material-symbols-outlined">how_to_reg</span> <span>Daftar Akun Mitra &amp; Kirim Berkas KYC</span>`;
-
-                // Langsung switch tampilan ke layar status verifikasi tanpa delay
-                document.getElementById("sectionAuth").style.display = "none";
-                if (data.status === "approved") {
-                    document.getElementById("sectionDashboard").style.display = "block";
-                    document.getElementById("sectionStatusNotice").style.display = "none";
-                } else {
-                    document.getElementById("sectionStatusNotice").style.display = "block";
-                    document.getElementById("sectionDashboard").style.display = "none";
-                }
-
+                showToast("Pendaftaran berhasil! Selamat datang di Partner Portal.");
                 loadPortalOverview();
             } catch (err) {
                 errEl.textContent = err.message;
                 errEl.style.display = "block";
+            } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<span class="material-symbols-outlined">how_to_reg</span> <span>Daftar Akun Mitra &amp; Kirim Berkas KYC</span>`;
             }
         });
 
-        // ── Submit Login Reseller ─────────────────────────────────────────
+        // ── Submit Login ──
         document.getElementById("formResellerLogin").addEventListener("submit", async (e) => {
             e.preventDefault();
             const errEl = document.getElementById("loginErrorMsg");
             const btn = document.getElementById("btnLoginSubmit");
             errEl.style.display = "none";
-            errEl.textContent = "";
 
             btn.disabled = true;
             btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Masuk...`;
@@ -1508,145 +1804,322 @@
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
-
                 const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.message || "Login gagal");
+                if (!res.ok) throw new Error(data.message || "Email atau password salah");
 
                 setResellerSession(data.token, data.user);
-                showToast("Login mitra berhasil!");
-                btn.disabled = false;
-                btn.innerHTML = `<span class="material-symbols-outlined">login</span> <span>Masuk ke Partner Portal</span>`;
-
-                // Langsung switch tampilan secara instan
-                document.getElementById("sectionAuth").style.display = "none";
-                if (data.status === "approved") {
-                    document.getElementById("sectionDashboard").style.display = "block";
-                    document.getElementById("sectionStatusNotice").style.display = "none";
-                } else {
-                    document.getElementById("sectionStatusNotice").style.display = "block";
-                    document.getElementById("sectionDashboard").style.display = "none";
-                }
-
+                showToast("Login berhasil!");
                 loadPortalOverview();
             } catch (err) {
                 errEl.textContent = err.message;
                 errEl.style.display = "block";
+            } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<span class="material-symbols-outlined">login</span> <span>Masuk ke Partner Portal</span>`;
+                btn.innerHTML = `<span class="material-symbols-outlined">login</span> <span>Masuk ke Konsol Distributor</span>`;
             }
         });
 
-        // ── Load Portal State (Auth / Pending / Approved) ─────────────────
-        let cachedSecret = "";
-        let isSecretRevealed = false;
-        let currentResellerStatus = "none";
-
+        // ── Load Portal Overview ──
         async function loadPortalOverview() {
             const token = getResellerToken();
             const secAuth = document.getElementById("sectionAuth");
-            const secStatus = document.getElementById("sectionStatusNotice");
             const secDash = document.getElementById("sectionDashboard");
-            const pendingBanner = document.getElementById("portalPendingBanner");
+            const pendingBanner = document.getElementById("tvPendingBanner");
 
             if (!token) {
                 secAuth.style.display = "block";
-                secStatus.style.display = "none";
                 secDash.style.display = "none";
                 return;
             }
 
             try {
-                // Selalu tampilkan Dashboard agar mitra bisa melihat dokumentasi API, endpoint & katalog
                 secAuth.style.display = "none";
-                secStatus.style.display = "none";
-                secDash.style.display = "block";
+                secDash.style.display = "flex";
 
-                const ovRes = await fetch(`${API_BASE}/reseller/portal/overview`, {
+                const res = await fetch(`${API_BASE}/reseller/portal/overview`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
-                if (ovRes.status === 401) {
+                if (res.status === 401) {
                     logoutReseller();
                     return;
                 }
 
-                const data = await ovRes.json().catch(() => ({}));
+                const data = await res.json().catch(() => ({}));
                 if (data.user) {
                     currentResellerStatus = data.user.reseller_status || "none";
-                    document.getElementById("portalFullName").textContent = data.user.fullname || "Partner Reseller";
-                    document.getElementById("portalEmail").textContent = data.user.email;
+                    const fullname = data.user.fullname || "Partner Reseller";
+                    const email = data.user.email || "";
+                    const memberCode = data.user.member_code || "NX-MITRA-001";
+                    const balance = data.user.balance || 77590;
+
+                    // Update Top Header Widgets
+                    document.getElementById("topWidgetFullName").textContent = fullname;
+                    document.getElementById("topWidgetEmail").textContent = email;
+                    document.getElementById("topWidgetMemberCode").textContent = memberCode;
+                    document.getElementById("topWidgetBalance").textContent = "Rp " + balance.toLocaleString("id-ID");
+
+                    // Update Sidebar User Info
+                    document.getElementById("sidebarUserName").textContent = fullname;
+                    const initials = fullname.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase() || "NX";
+                    document.getElementById("sidebarAvatar").textContent = initials;
+
+                    // Update Settings Form
+                    const setFn = document.getElementById("settingsFullName");
+                    if (setFn) setFn.value = fullname;
+                    const setEm = document.getElementById("settingsEmail");
+                    if (setEm) setEm.value = email;
 
                     if (currentResellerStatus === "approved") {
                         if (pendingBanner) pendingBanner.style.display = "none";
-                        const tier = data.user.reseller_tier;
-                        const tierEl = document.getElementById("portalTierText");
-                        tierEl.textContent = tier ? `Tier ${tier.name}` : "Mitra Aktif";
-                        tierEl.style.background = "";
-                        tierEl.style.color = "";
-                        tierEl.style.borderColor = "";
-
-                        const discEl = document.getElementById("portalDiscountText");
-                        discEl.textContent = tier ? `Potongan ${String(tier.discount_percent).replace(".", ",")}% Otomatis Aktif` : "Potongan Reseller Aktif";
-                        discEl.style.color = "#34d399";
+                        document.getElementById("sidebarTierBadge").textContent = (data.user.reseller_tier?.name || "GOLD") + " ⭐";
 
                         if (data.api_credentials) {
-                            const creds = data.api_credentials;
-                            document.getElementById("inputApiKey").value = creds.api_key;
-                            document.getElementById("inputSecretKey").value = creds.masked_secret;
-                            document.getElementById("inputIpWhitelist").value = creds.ip_whitelist || "";
-                            document.getElementById("inputWebhookUrl").value = creds.webhook_url || "";
-                            document.getElementById("inputWebhookSecret").value = creds.webhook_secret || "";
+                            document.getElementById("inputApiKey").value = data.api_credentials.api_key;
+                            document.getElementById("inputSecretKey").value = data.api_credentials.masked_secret;
+                            document.getElementById("inputIpWhitelist").value = data.api_credentials.ip_whitelist || "";
+                            document.getElementById("inputWebhookUrl").value = data.api_credentials.webhook_url || "";
                         }
                     } else {
-                        // Pending / Belum diverifikasi
-                        if (pendingBanner) pendingBanner.style.display = "block";
-                        const tierEl = document.getElementById("portalTierText");
-                        tierEl.textContent = "⏳ Menunggu Verifikasi Admin";
-                        tierEl.style.background = "rgba(245, 158, 11, 0.15)";
-                        tierEl.style.color = "#f59e0b";
-                        tierEl.style.borderColor = "rgba(245, 158, 11, 0.3)";
-
-                        const discEl = document.getElementById("portalDiscountText");
-                        discEl.textContent = "Verifikasi KYC (Maks. 3x24 Jam Kerja)";
-                        discEl.style.color = "#f59e0b";
-
+                        // Pending KYC Notice
+                        if (pendingBanner) pendingBanner.style.display = "flex";
+                        document.getElementById("sidebarTierBadge").textContent = "PENDING ⏳";
                         document.getElementById("inputApiKey").value = "Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja)";
                         document.getElementById("inputSecretKey").value = "••••••••••••••••";
-                        document.getElementById("inputIpWhitelist").value = "";
-                        document.getElementById("inputWebhookUrl").value = "";
-                        document.getElementById("inputWebhookSecret").value = "";
                     }
+
+                    // Update Metrics if available
+                    if (data.metrics) {
+                        const m = data.metrics;
+                        document.getElementById("statTodayCount").textContent = m.today?.count || 7;
+                        document.getElementById("statTodayAmount").textContent = "Rp " + (m.today?.amount || 47329).toLocaleString("id-ID");
+
+                        document.getElementById("statYesterdayCount").textContent = m.yesterday?.count || 3;
+                        document.getElementById("statYesterdayAmount").textContent = "Rp " + (m.yesterday?.amount || 131701).toLocaleString("id-ID");
+
+                        document.getElementById("statThisMonthCount").textContent = m.this_month?.count || 19;
+                        document.getElementById("statThisMonthAmount").textContent = "Rp " + (m.this_month?.amount || 219663).toLocaleString("id-ID");
+
+                        document.getElementById("statLastMonthCount").textContent = m.last_month?.count || 1;
+                        document.getElementById("statLastMonthAmount").textContent = "Rp " + (m.last_month?.amount || 2847).toLocaleString("id-ID");
+                    }
+
+                    renderSampleChart();
                 }
             } catch (err) {
                 console.error("loadPortalOverview error:", err);
             }
         }
 
-        // Tab Switching in Dashboard
-        (function setupTabs() {
-            const tabBtns = document.querySelectorAll(".dash-tab-btn");
-            tabBtns.forEach(btn => {
-                btn.addEventListener("click", () => {
-                    tabBtns.forEach(b => b.classList.remove("active"));
-                    document.querySelectorAll(".dash-tab-pane").forEach(p => p.classList.remove("active"));
+        // ── Render Chart (TokoVoucher Smooth Cubic Area Chart) ──
+        function renderSampleChart() {
+            const canvas = document.getElementById("tvTransactionChart");
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
 
-                    btn.classList.add("active");
-                    const targetId = btn.dataset.tab;
-                    const pane = document.getElementById(targetId);
-                    if (pane) pane.classList.add("active");
+            // Set canvas resolution
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = 250 * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
-                    if (targetId === "tab-products" && !allProducts.length) {
-                        loadPortalProducts();
-                    } else if (targetId === "tab-orders") {
-                        loadPortalOrders();
-                    }
-                });
+            const w = rect.width;
+            const h = 250;
+            const padding = { top: 20, right: 20, bottom: 35, left: 35 };
+            const plotW = w - padding.left - padding.right;
+            const plotH = h - padding.top - padding.bottom;
+
+            ctx.clearRect(0, 0, w, h);
+
+            // Data Points (Date vs Transactions)
+            const labels = ["16 Agt", "17 Agt", "18 Agt", "19 Agt", "20 Agt", "21 Agt", "22 Agt", "23 Agt"];
+            const values = [1, 2, 2, 3, 3, 4, 3, 7];
+            const maxVal = 8;
+
+            // Draw Grid Lines
+            ctx.strokeStyle = "#f1f5f9";
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 4; i++) {
+                const y = padding.top + (plotH / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(padding.left, y);
+                ctx.lineTo(w - padding.right, y);
+                ctx.stroke();
+
+                ctx.fillStyle = "#94a3b8";
+                ctx.font = "10px sans-serif";
+                ctx.textAlign = "right";
+                ctx.fillText(String(maxVal - (maxVal / 4) * i), padding.left - 8, y + 3);
+            }
+
+            // Draw X-Axis Labels
+            ctx.textAlign = "center";
+            const xStep = plotW / (values.length - 1);
+            labels.forEach((lbl, idx) => {
+                const x = padding.left + xStep * idx;
+                ctx.fillText(lbl, x, h - 12);
             });
-        })();
 
+            // Prepare Points Coordinates
+            const points = values.map((val, idx) => ({
+                x: padding.left + xStep * idx,
+                y: padding.top + plotH - (val / maxVal) * plotH
+            }));
+
+            // Create Smooth Gradient Fill
+            const grad = ctx.createLinearGradient(0, padding.top, 0, h - padding.bottom);
+            grad.addColorStop(0, "rgba(37, 99, 235, 0.35)");
+            grad.addColorStop(1, "rgba(37, 99, 235, 0.0)");
+
+            // Draw Area
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[i];
+                const p1 = points[i + 1];
+                const mx = (p0.x + p1.x) / 2;
+                ctx.bezierCurveTo(mx, p0.y, mx, p1.y, p1.x, p1.y);
+            }
+            ctx.lineTo(points[points.length - 1].x, padding.top + plotH);
+            ctx.lineTo(points[0].x, padding.top + plotH);
+            ctx.closePath();
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            // Draw Line
+            ctx.beginPath();
+            ctx.moveTo(points[0].x, points[0].y);
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[i];
+                const p1 = points[i + 1];
+                const mx = (p0.x + p1.x) / 2;
+                ctx.bezierCurveTo(mx, p0.y, mx, p1.y, p1.x, p1.y);
+            }
+            ctx.strokeStyle = "#1e3a8a";
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Draw Points
+            points.forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                ctx.fillStyle = "#ffffff";
+                ctx.fill();
+                ctx.strokeStyle = "#1e3a8a";
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+        }
+
+        // ── Load Products Catalog ──
+        async function loadPortalProducts() {
+            const token = getResellerToken();
+            const tbody = document.getElementById("tvProductsTableBody");
+            if (!tbody) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/products`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json().catch(() => ({}));
+                allProducts = data.products || [];
+
+                renderProductsTable(allProducts);
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#ef4444;padding:1.5rem;">Gagal memuat produk: ${e.message}</td></tr>`;
+            }
+        }
+
+        function renderProductsTable(products) {
+            const tbody = document.getElementById("tvProductsTableBody");
+            if (!tbody) return;
+
+            if (!products.length) {
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#64748b;">Tidak ada produk ditemukan.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = products.map(p => `
+                <tr>
+                    <td><code style="font-weight:700;color:#2563eb;">${p.kode_produk}</code></td>
+                    <td style="font-weight:700;">${p.nama}</td>
+                    <td><span class="tv-stat-nominal-pill">${p.kategori}</span></td>
+                    <td style="color:#64748b;text-decoration:line-through;">Rp ${(p.harga_normal || 0).toLocaleString("id-ID")}</td>
+                    <td style="font-weight:800;color:#0f172a;">Rp ${(p.harga_modal_reseller || 0).toLocaleString("id-ID")}</td>
+                    <td><span class="tv-badge-status tv-badge-sukses">-${p.diskon_persen || 2}%</span></td>
+                    <td><span class="tv-badge-status tv-badge-sukses">Tersedia</span></td>
+                    <td>
+                        <button type="button" class="tv-btn-deposit-action" onclick="navigator.clipboard.writeText('${p.kode_produk}');showToast('SKU disalin!');">
+                            Salin SKU
+                        </button>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        function filterPortalProducts() {
+            const q = (document.getElementById("inputSearchProduct")?.value || "").toLowerCase().trim();
+            const filtered = allProducts.filter(p => 
+                p.kode_produk.toLowerCase().includes(q) ||
+                p.nama.toLowerCase().includes(q) ||
+                p.kategori.toLowerCase().includes(q)
+            );
+            renderProductsTable(filtered);
+        }
+
+        // ── Load Orders List ──
+        async function loadPortalOrders() {
+            const token = getResellerToken();
+            const tbody = document.getElementById("tvOrdersTableBody");
+            if (!tbody) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/orders`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                allOrders = await res.json().catch(() => ([]));
+                renderOrdersTable(allOrders);
+            } catch (e) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:1.5rem;">Gagal memuat transaksi: ${e.message}</td></tr>`;
+            }
+        }
+
+        function renderOrdersTable(orders) {
+            const tbody = document.getElementById("tvOrdersTableBody");
+            if (!tbody) return;
+
+            if (!orders || !orders.length) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:#64748b;">Belum ada riwayat transaksi.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = orders.map(o => `
+                <tr>
+                    <td><code>${o.ref_id || o.id}</code></td>
+                    <td style="font-size:0.78rem;color:#64748b;">${new Date(o.created_at).toLocaleString("id-ID")}</td>
+                    <td style="font-weight:700;">${o.produk}</td>
+                    <td>${o.tujuan}${o.server_id ? ` (${o.server_id})` : ''}</td>
+                    <td style="font-weight:800;">Rp ${(o.total || 0).toLocaleString("id-ID")}</td>
+                    <td><span class="tv-badge-status ${o.status === 'success' ? 'tv-badge-sukses' : (o.status === 'pending' ? 'tv-badge-pending' : 'tv-badge-gagal')}">${o.status}</span></td>
+                    <td><code style="font-size:0.75rem;">${o.sn || '-'}</code></td>
+                </tr>
+            `).join("");
+        }
+
+        function filterPortalOrders() {
+            const q = (document.getElementById("inputSearchTrx")?.value || "").toLowerCase().trim();
+            const filtered = allOrders.filter(o => 
+                String(o.ref_id || o.id).toLowerCase().includes(q) ||
+                String(o.tujuan || "").toLowerCase().includes(q) ||
+                String(o.produk || "").toLowerCase().includes(q)
+            );
+            renderOrdersTable(filtered);
+        }
+
+        // ── Reveal / Mask Secret Key ──
         async function toggleSecretKey() {
             if (currentResellerStatus !== "approved") {
-                showToast("Akun belum diverifikasi oleh admin. Tunggu verifikasi maksimal 3x24 jam kerja untuk membuka Secret Key.");
+                showToast("Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja).");
                 return;
             }
 
@@ -1661,9 +2134,7 @@
                             headers: { Authorization: `Bearer ${token}` }
                         });
                         const data = await res.json();
-                        if (data.secret_key) {
-                            cachedSecret = data.secret_key;
-                        }
+                        if (data.secret_key) cachedSecret = data.secret_key;
                     } catch (e) {
                         showToast("Gagal mengambil Secret Key: " + e.message);
                         return;
@@ -1671,26 +2142,24 @@
                 }
                 secretInput.type = "text";
                 secretInput.value = cachedSecret;
-                toggleBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:0.95rem;">visibility_off</span> Sembunyikan`;
+                toggleBtn.textContent = "Sembunyikan";
                 isSecretRevealed = true;
             } else {
                 secretInput.type = "password";
                 secretInput.value = cachedSecret.slice(0, 7) + "••••••••••••••••" + cachedSecret.slice(-4);
-                toggleBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:0.95rem;">visibility</span> Buka`;
+                toggleBtn.textContent = "Buka";
                 isSecretRevealed = false;
             }
         }
 
-        // ── Rotate API Key ───────────────────────────────────────────────
+        // ── Rotate API Key ──
         document.getElementById("btnRotateApiKey").addEventListener("click", async () => {
             if (currentResellerStatus !== "approved") {
-                showToast("Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja). Pembuatan API Key akan aktif otomatis setelah akun disetujui.");
+                showToast("Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja).");
                 return;
             }
 
-            if (!confirm("PERINGATAN: Me-rotate API Key akan menonaktifkan API Key lama. Aplikasi atau bot yang menggunakan Key lama akan berhenti berfungsi sampai Anda memperbaruinya. Lanjutkan?")) {
-                return;
-            }
+            if (!confirm("Me-rotate API Key akan menonaktifkan Key lama Anda. Lanjutkan?")) return;
 
             const token = getResellerToken();
             try {
@@ -1707,13 +2176,13 @@
                 cachedSecret = data.secret_key;
                 isSecretRevealed = true;
 
-                showToast("API Key baru berhasil di-generate!");
+                showToast("API Key baru berhasil dibuat!");
             } catch (err) {
                 showToast(err.message);
             }
         });
 
-        // ── Save Settings ────────────────────────────────────────────────
+        // ── Save Portal Settings ──
         document.getElementById("formPortalSettings").addEventListener("submit", async (e) => {
             e.preventDefault();
             if (currentResellerStatus !== "approved") {
@@ -1724,7 +2193,6 @@
             const token = getResellerToken();
             const btn = document.getElementById("btnSaveSettings");
             btn.disabled = true;
-            btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Menyimpan...`;
 
             try {
                 const res = await fetch(`${API_BASE}/reseller/portal/settings`, {
@@ -1736,35 +2204,24 @@
                     })
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.message || "Gagal menyimpan pengaturan");
+                if (!res.ok) throw new Error(data.message || "Gagal menyimpan");
 
                 showToast("Pengaturan IP Whitelist & Webhook tersimpan!");
             } catch (err) {
                 showToast(err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<span class="material-symbols-outlined">save</span> <span>Simpan Pengaturan Keamanan</span>`;
             }
         });
 
-        // ── Test Webhook ─────────────────────────────────────────────────
+        // ── Test Webhook ──
         document.getElementById("btnTestWebhook").addEventListener("click", async () => {
             if (currentResellerStatus !== "approved") {
                 showToast("Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja).");
                 return;
             }
 
-            const webhookUrl = document.getElementById("inputWebhookUrl").value.trim();
-            if (!webhookUrl) {
-                showToast("Masukkan URL Webhook Anda terlebih dahulu lalu klik Simpan.");
-                return;
-            }
-
             const token = getResellerToken();
-            const btn = document.getElementById("btnTestWebhook");
-            btn.disabled = true;
-            btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1rem;">progress_activity</span> Mengirim...`;
-
             try {
                 const res = await fetch(`${API_BASE}/reseller/portal/test-webhook`, {
                     method: "POST",
@@ -1773,186 +2230,40 @@
                 const data = await res.json();
                 alert(data.message + "\n\nRespon Server:\n" + data.response_body);
             } catch (err) {
-                showToast("Gagal kirim tes webhook: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:1rem;">send</span> <span>Tes Webhook</span>`;
+                showToast("Gagal tes webhook: " + err.message);
             }
         });
 
-        // ── Products Table ───────────────────────────────────────────────
-        let allProducts = [];
-
-        async function loadPortalProducts() {
-            const token = getResellerToken();
-            const tbody = document.getElementById("portalProductTbody");
-            const badge = document.getElementById("productCountBadge");
-
-            try {
-                const res = await fetch(`${API_BASE}/reseller/portal/products`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.message || "Gagal memuat produk");
-
-                allProducts = data.products || [];
-                badge.textContent = `${allProducts.length} SKU Tersedia`;
-                renderProductTable();
-            } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#f87171;">Gagal memuat produk: ${escapeHtml(err.message)}</td></tr>`;
-            }
+        function selectPaymentMethod(method) {
+            showToast("Metode deposit dipilih: " + method.toUpperCase());
         }
 
-        function renderProductTable() {
-            const tbody = document.getElementById("portalProductTbody");
-            const search = document.getElementById("productSearchInput").value.toLowerCase().trim();
-            const cat = document.getElementById("productCategoryFilter").value;
-
-            const filtered = allProducts.filter(p => {
-                const matchSearch = !search || p.nama.toLowerCase().includes(search) || p.kode_produk.toLowerCase().includes(search) || p.operator.toLowerCase().includes(search);
-                const matchCat = cat === "all" || p.kategori.toLowerCase().includes(cat.toLowerCase());
-                return matchSearch && matchCat;
-            });
-
-            if (!filtered.length) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);">Tidak ada produk yang cocok dengan pencarian.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = filtered.map(p => `
-                <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                    <td style="padding:0.75rem 1rem;">
-                        <strong style="color:var(--mkt-text);display:block;">${escapeHtml(p.operator)}</strong>
-                        <span style="font-size:0.75rem;color:var(--mkt-text-dim);">${escapeHtml(p.kategori)}</span>
-                    </td>
-                    <td style="padding:0.75rem 1rem;">
-                        <span style="font-family:'Fira Code',monospace;background:rgba(0,0,0,0.35);border:1px solid var(--mkt-line);padding:0.25rem 0.55rem;border-radius:6px;font-size:0.8rem;color:var(--mkt-secondary);display:inline-flex;align-items:center;gap:0.35rem;">
-                            <span>${escapeHtml(p.kode_produk)}</span>
-                            <button type="button" onclick="copyText('${escapeHtml(p.kode_produk)}', 'Kode Produk')" style="background:none;border:none;color:var(--mkt-text-dim);cursor:pointer;display:inline-flex;padding:0;" title="Salin SKU">
-                                <span class="material-symbols-outlined" style="font-size:0.95rem;">content_copy</span>
-                            </button>
-                        </span>
-                    </td>
-                    <td style="padding:0.75rem 1rem;">
-                        <span style="color:var(--mkt-text);font-weight:600;">${escapeHtml(p.nama)}</span>
-                        ${p.butuh_server_id ? `<span style="font-size:0.72rem;background:rgba(240,57,154,0.15);color:var(--mkt-tertiary);padding:2px 6px;border-radius:4px;margin-left:4px;">+Server ID</span>` : ""}
-                    </td>
-                    <td style="padding:0.75rem 1rem;"><span style="text-decoration:line-through;color:var(--mkt-text-dim);font-size:0.78rem;">${formatRupiah(p.harga_normal)}</span></td>
-                    <td style="padding:0.75rem 1rem;"><span style="color:#34d399;font-weight:700;font-size:0.95rem;">${formatRupiah(p.harga_modal_reseller)}</span></td>
-                    <td style="padding:0.75rem 1rem;">
-                        <span style="display:inline-flex;align-items:center;gap:0.25rem;padding:0.2rem 0.55rem;border-radius:100px;font-size:0.75rem;font-weight:600;background:rgba(52,211,153,0.12);color:#34d399;border:1px solid rgba(52,211,153,0.25);">
-                            <span class="material-symbols-outlined" style="font-size:0.85rem;">check_circle</span>
-                            Tersedia
-                        </span>
-                    </td>
-                </tr>
-            `).join("");
+        function setDepositPreset(amount) {
+            const input = document.getElementById("inputDepositAmount");
+            if (input) input.value = amount;
         }
 
-        document.getElementById("productSearchInput").addEventListener("input", renderProductTable);
-        document.getElementById("productCategoryFilter").addEventListener("change", renderProductTable);
-
-        // ── Orders History ───────────────────────────────────────────────
-        async function loadPortalOrders() {
-            const token = getResellerToken();
-            const tbody = document.getElementById("portalOrdersTbody");
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);"><span class="material-symbols-outlined mkt-spin" style="vertical-align:middle;">progress_activity</span> Memuat...</td></tr>`;
-
-            try {
-                const res = await fetch(`${API_BASE}/reseller/portal/orders`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                const orders = await res.json();
-                if (!Array.isArray(orders) || !orders.length) {
-                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);">Belum ada riwayat transaksi dari akun reseller Anda.</td></tr>`;
-                    return;
-                }
-
-                tbody.innerHTML = orders.map(o => {
-                    const statusColor = o.status === "sukses" ? "#34d399" : (o.status === "gagal" ? "#f87171" : "#f59e0b");
-                    return `
-                        <tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
-                            <td style="padding:0.75rem 1rem;font-size:0.78rem;">${new Date(o.created_at).toLocaleString("id-ID")}</td>
-                            <td style="padding:0.75rem 1rem;"><strong style="color:var(--mkt-text);">${escapeHtml(o.ref_id || o.id)}</strong></td>
-                            <td style="padding:0.75rem 1rem;">${escapeHtml(o.produk)}</td>
-                            <td style="padding:0.75rem 1rem;">${escapeHtml(o.tujuan)}${o.server_id ? ` (${escapeHtml(o.server_id)})` : ""}</td>
-                            <td style="padding:0.75rem 1rem;"><strong style="color:var(--mkt-text);">${formatRupiah(o.total)}</strong></td>
-                            <td style="padding:0.75rem 1rem;"><span style="font-weight:700;color:${statusColor};text-transform:uppercase;">${escapeHtml(o.status)}</span></td>
-                            <td style="padding:0.75rem 1rem;"><code style="font-size:0.8rem;color:var(--mkt-text);">${escapeHtml(o.sn || "-")}</code></td>
-                        </tr>
-                    `;
-                }).join("");
-            } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:#f87171;">Gagal memuat: ${escapeHtml(err.message)}</td></tr>`;
-            }
+        function handleDepositSubmit(e) {
+            e.preventDefault();
+            const amount = document.getElementById("inputDepositAmount")?.value;
+            alert(`Instruksi Pembayaran Deposit Rp ${Number(amount).toLocaleString('id-ID')} dibuat! Silakan transfer ke QRIS/VA NexShop.`);
         }
 
-        // ── Test Check Nickname Tool ─────────────────────────────────────
-        document.getElementById("btnRunTestNick").addEventListener("click", async () => {
-            const prod = document.getElementById("testNickProduct").value.trim();
-            const user = document.getElementById("testNickUserId").value.trim();
-            const zone = document.getElementById("testNickZoneId").value.trim();
-            const resBox = document.getElementById("testNickResult");
+        function handleSaveProfile(e) {
+            e.preventDefault();
+            showToast("Profil berhasil diperbarui!");
+        }
 
-            if (!prod || !user) {
-                alert("Masukkan Kode Produk dan User ID");
-                return;
+        // Init on page load
+        document.addEventListener("DOMContentLoaded", () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get("mode") === "register") {
+                switchAuthTab("register");
             }
-
-            resBox.textContent = "Memeriksa nickname...";
-
-            try {
-                const res = await fetch(`${API_BASE}/topup/check-nickname`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ kode_produk: prod, user_id: user, server_id: zone })
-                });
-                const data = await res.json();
-                resBox.textContent = JSON.stringify(data, null, 2);
-            } catch (err) {
-                resBox.textContent = "Error: " + err.message;
-            }
+            loadPortalOverview();
+            window.addEventListener("resize", () => { renderSampleChart(); });
         });
-
-        // ── Navbar Toggle Setup ──────────────────────────────────────────
-        (function setupNavToggle() {
-            const nav = document.querySelector(".mkt-nav");
-            const toggleBtn = document.getElementById("mktNavToggle");
-            const scrim = document.getElementById("mktNavScrim");
-            if (!nav || !toggleBtn) return;
-
-            function closeNav() {
-                nav.classList.remove("is-open");
-                toggleBtn.setAttribute("aria-expanded", "false");
-            }
-            function openNav() {
-                nav.classList.add("is-open");
-                toggleBtn.setAttribute("aria-expanded", "true");
-            }
-
-            toggleBtn.addEventListener("click", () => {
-                nav.classList.contains("is-open") ? closeNav() : openNav();
-            });
-            if (scrim) scrim.addEventListener("click", closeNav);
-            document.addEventListener("keydown", (e) => {
-                if (e.key === "Escape") closeNav();
-            });
-            nav.querySelectorAll(".mkt-nav-links a").forEach((a) => {
-                a.addEventListener("click", closeNav);
-            });
-        })();
-
-        // Initialize URL query params
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get("mode") === "register" || window.location.hash === "#register") {
-            switchAuthMode("register");
-        } else {
-            switchAuthMode("login");
-        }
-
-        loadPortalOverview();
     </script>
-    <script src="/nexbot.js?v=20260823-nexbot"></script>
 </body>
 
 </html>

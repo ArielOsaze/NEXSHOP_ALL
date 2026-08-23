@@ -777,6 +777,86 @@ exports.updateTier = async (req, res) => {
 // PARTNER PORTAL — Endpoints Khusus Reseller Aktif
 // ===========================================================
 
+function getResellerMemberCode(user) {
+    if (!user || !user.id) return "NX-MITRA-000";
+    const yearCode = "26";
+    const idHex = Number(user.id).toString(16).toUpperCase().padStart(4, "0");
+    const checksum = (Number(user.id) * 31 % 89 + 10).toString();
+    return `M${yearCode}${idHex}QCNW${checksum}PT`;
+}
+
+const RESELLER_PORTAL_NEWS = [
+    {
+        id: "news-1",
+        title: "Produk Pascabayar & Token Listrik PLN sudah dapat digunakan",
+        date: "17 Juni 2026",
+        badge: "Fitur Baru",
+        desc: "Layanan cek tagihan & bayar PDAM, PLN Pascabayar, dan BPJS kini aktif di endpoint /api/reseller/v1/order."
+    },
+    {
+        id: "news-2",
+        title: "Pembaruan IP Whitelist & Webhook Relay v2",
+        date: "10 April 2026",
+        badge: "Sistem",
+        desc: "Sistem relay otomatis mem-forward status pesanan ke URL Webhook Anda dengan signature HMAC SHA-256."
+    },
+    {
+        id: "news-3",
+        title: "API Deposit Saldo Otomatis QRIS & Virtual Account",
+        date: "22 Jan 2026",
+        badge: "Keuangan",
+        desc: "Topup saldo deposit modal reseller dapat dilakukan secara real-time via QRIS Instan dan Bank Virtual Account."
+    }
+];
+
+async function getResellerDashboardMetrics(userId) {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    const yesterdayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+
+    let todayCount = 0, todayAmount = 0;
+    let yesterdayCount = 0, yesterdayAmount = 0;
+    let thisMonthCount = 0, thisMonthAmount = 0;
+    let lastMonthCount = 0, lastMonthAmount = 0;
+
+    try {
+        const { data: orders } = await supabase
+            .from("topup_orders")
+            .select("id, total, created_at, status")
+            .eq("user_id", userId);
+
+        if (orders && orders.length > 0) {
+            orders.forEach(o => {
+                const total = Number(o.total) || 0;
+                const d = new Date(o.created_at);
+                if (d >= new Date(todayStart)) {
+                    todayCount++;
+                    todayAmount += total;
+                } else if (d >= new Date(yesterdayStart) && d < new Date(todayStart)) {
+                    yesterdayCount++;
+                    yesterdayAmount += total;
+                }
+                if (d >= new Date(thisMonthStart)) {
+                    thisMonthCount++;
+                    thisMonthAmount += total;
+                } else if (d >= new Date(lastMonthStart) && d < new Date(thisMonthStart)) {
+                    lastMonthCount++;
+                    lastMonthAmount += total;
+                }
+            });
+        }
+    } catch (_) {}
+
+    return {
+        today: { count: todayCount, amount: todayAmount },
+        yesterday: { count: yesterdayCount, amount: yesterdayAmount },
+        this_month: { count: thisMonthCount, amount: thisMonthAmount },
+        last_month: { count: lastMonthCount, amount: lastMonthAmount }
+    };
+}
+
 /**
  * Overview Kredensial, Status Tier & IP Whitelist Reseller
  */
@@ -784,7 +864,7 @@ exports.getPortalOverview = async (req, res) => {
     try {
         const { data: user, error: uErr } = await supabase
             .from("users")
-            .select("id, email, fullname, reseller_status, reseller_tier, reseller_since")
+            .select("id, email, fullname, reseller_status, reseller_tier, reseller_since, balance")
             .eq("id", req.user.id)
             .maybeSingle();
 
@@ -805,6 +885,10 @@ exports.getPortalOverview = async (req, res) => {
             if (latestApp && latestApp.status) status = latestApp.status;
         }
 
+        const memberCode = getResellerMemberCode(user);
+        const metrics = await getResellerDashboardMetrics(user.id);
+        const balance = Number(user.balance) || 0;
+
         // Jika akun belum approved (misal pending / none), tetap berikan akses portal untuk lihat dokumentasi & katalog
         if (status !== "approved") {
             return res.json({
@@ -812,9 +896,17 @@ exports.getPortalOverview = async (req, res) => {
                     id: user.id,
                     email: user.email,
                     fullname: user.fullname,
+                    member_code: memberCode,
+                    balance: balance,
                     reseller_status: status,
                     reseller_tier: { code: "pending", name: "Menunggu Verifikasi", discount_percent: 0 },
                     reseller_since: null
+                },
+                metrics,
+                news: RESELLER_PORTAL_NEWS,
+                security_indicator: {
+                    two_factor: false,
+                    ip_whitelist_active: false
                 },
                 api_credentials: {
                     api_key: "Belum Aktif (Akun Menunggu Verifikasi)",
@@ -873,9 +965,17 @@ exports.getPortalOverview = async (req, res) => {
                 id: user.id,
                 email: user.email,
                 fullname: user.fullname,
+                member_code: memberCode,
+                balance: balance,
                 reseller_status: user.reseller_status,
                 reseller_tier: tier ? { code: tier.code, name: tier.name, discount_percent: tier.discount_percent } : null,
                 reseller_since: user.reseller_since
+            },
+            metrics,
+            news: RESELLER_PORTAL_NEWS,
+            security_indicator: {
+                two_factor: false,
+                ip_whitelist_active: !!(apiKeyRow && apiKeyRow.ip_whitelist)
             },
             api_credentials: apiKeyRow ? {
                 api_key: apiKeyRow.api_key,

@@ -396,6 +396,23 @@ function getSerialInstruction(displayCategory, isPascabayar) {
     return "Simpan kode/SN ini sebagai bukti transaksi Anda.";
 }
 
+function cleanProductName(name) {
+    if (!name) return "";
+    let cleaned = name;
+    
+    // Example: MLBB-ID-86-DM -> 86 Diamonds
+    const mlMatch = cleaned.match(/^MLBB-ID-(\d+)-DM$/i);
+    if (mlMatch) {
+        return `${mlMatch[1]} Diamonds`;
+    }
+    
+    // Clean up typical unambiguous suffixes/prefixes
+    cleaned = cleaned.replace(/\(Promo\)/gi, "").trim();
+    cleaned = cleaned.replace(/\[Promo\]/gi, "").trim();
+    cleaned = cleaned.replace(/\s+/g, " ");
+    return cleaned;
+}
+
 module.exports = {
     FOREIGN_REGION_KATEGORI,
     FOREIGN_REGION_CODE_PATTERNS,
@@ -407,6 +424,7 @@ module.exports = {
     AUTO_MARKUP_ROUND,
     bulatkanKeAtas,
     hitungMarkupWajar,
+    cleanProductName,
     EWALLET_ADMIN_MIN,
     EWALLET_ADMIN_MAX,
     EWALLET_ADMIN_PER_OPERATOR,
