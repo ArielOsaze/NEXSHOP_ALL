@@ -859,7 +859,9 @@
             const adaHargaReseller = catalog.some((c) => c.operators.some((op) => op.products.some((p) => p.harga_reseller)));
             banner.classList.toggle("hidden", !adaHargaReseller);
             document.getElementById("mktNavResellerPill")?.classList.toggle("hidden", !adaHargaReseller);
-            syncMktNavHeight();
+            // syncMktNavHeight() dihapus — nav height kini diatur via CSS (--mkt-nav-h),
+            // fungsi ini sudah tidak didefinisikan dan menyebabkan ReferenceError
+            // yang mencegah katalog tampil walau data dari API sudah berhasil dimuat.
         }
 
         function matchesQuery(text, tokens) {

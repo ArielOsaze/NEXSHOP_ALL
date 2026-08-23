@@ -91,8 +91,33 @@ if (process.env.FRONTEND_URL) {
     }
 }
 
+// ADDITIONAL_CORS_ORIGINS: origin tambahan boleh dipisah koma di .env
+// (mis. ADDITIONAL_CORS_ORIGINS=http://localhost:5501,http://localhost:8080)
+if (process.env.ADDITIONAL_CORS_ORIGINS) {
+    process.env.ADDITIONAL_CORS_ORIGINS.split(",").forEach((o) => {
+        const clean = o.trim().replace(/\/$/, "");
+        if (clean && !allowedOrigins.includes(clean)) allowedOrigins.push(clean);
+    });
+}
+
 app.use(cors({
-    origin: allowedOrigins,
+    // Pakai callback agar Live Server di port berapa pun dan semua
+    // localhost/127.0.0.1 tetap bisa hit API tanpa harus edit
+    // allowedOrigins setiap ganti port. Di production, hanya domain yang
+    // terdaftar di atas yang diizinkan — localhost sendiri tidak bisa
+    // diakses dari internet sehingga aman untuk selalu diizinkan.
+    origin: (origin, callback) => {
+        // Request tanpa Origin header (curl, Postman, server-to-server) → izinkan
+        if (!origin) return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        // Localhost/127.0.0.1 (port berapapun) selalu aman diizinkan karena
+        // tidak dapat diakses dari internet — ini mencegah CORS error saat
+        // Live Server berjalan di port yang berbeda dari yang ada di daftar.
+        if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+            return callback(null, true);
+        }
+        callback(new Error("CORS: origin tidak diizinkan — " + origin));
+    },
     credentials: true,
     exposedHeaders: ["X-Admin-Pin-Error"]
 }));
