@@ -4583,9 +4583,13 @@ async function fetchUserWallet() {
     const oldMktNavBalance = document.getElementById("mktNavWalletBalance");
 
     if (!token) {
+        // "Saldo" (bukan "Masuk Saldo") -- kalimat panjang bikin pill wallet
+        // di header mobile jadi lebar banget & bikin header keliatan sesak
+        // (nabrak tombol Login/avatar di sebelahnya). "Saldo" tetap jelas
+        // maksudnya karena konteksnya udah di dalem tombol berikon wallet.
         window.currentUserWallet = null;
-        balanceElements.forEach(el => { el.textContent = "Masuk Saldo"; });
-        if (oldMktNavBalance) oldMktNavBalance.textContent = "Masuk Saldo";
+        balanceElements.forEach(el => { el.textContent = "Saldo"; });
+        if (oldMktNavBalance) oldMktNavBalance.textContent = "Saldo";
         if (modalBalanceEl) modalBalanceEl.textContent = "Rp 0";
         return;
     }
@@ -4597,8 +4601,8 @@ async function fetchUserWallet() {
         if (!res.ok) {
             if (res.status === 401) {
                 window.currentUserWallet = null;
-                balanceElements.forEach(el => { el.textContent = "Masuk Saldo"; });
-                if (oldMktNavBalance) oldMktNavBalance.textContent = "Masuk Saldo";
+                balanceElements.forEach(el => { el.textContent = "Saldo"; });
+                if (oldMktNavBalance) oldMktNavBalance.textContent = "Saldo";
             }
             return;
         }

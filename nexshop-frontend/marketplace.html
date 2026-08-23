@@ -2131,8 +2131,8 @@
 
             if (!token) {
                 window.currentUserWallet = null;
-                balanceElements.forEach(el => { el.textContent = "Masuk Saldo"; });
-                if (oldMktNavBalance) oldMktNavBalance.textContent = "Masuk Saldo";
+                balanceElements.forEach(el => { el.textContent = "Saldo"; });
+                if (oldMktNavBalance) oldMktNavBalance.textContent = "Saldo";
                 if (modalBalanceEl) modalBalanceEl.textContent = "Rp 0";
                 return;
             }
@@ -2144,7 +2144,7 @@
                 if (!res.ok) {
                     if (res.status === 401) {
                         window.currentUserWallet = null;
-                        balanceElements.forEach(el => { el.textContent = "Masuk Saldo"; });
+                        balanceElements.forEach(el => { el.textContent = "Saldo"; });
                     }
                     return;
                 }
