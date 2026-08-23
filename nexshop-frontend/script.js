@@ -746,7 +746,7 @@ const accountDropdown = document.getElementById("accountDropdown");
 
 function refreshAccountUI() {
     if (currentUser) {
-        accountBtn.textContent = currentUser.fullname.split(" ")[0];
+        accountBtn.querySelector("#accountBtnLabel").textContent = currentUser.fullname.split(" ")[0];
         accountBtn.classList.add("logged-in");
         const accountAvatar = document.getElementById("accountAvatar");
         if (currentUser.avatar_url) {
@@ -768,7 +768,7 @@ function refreshAccountUI() {
         document.getElementById("accountEmail").textContent = currentUser.email;
         attachAvatarUploadListeners();
     } else {
-        accountBtn.textContent = "Login";
+        accountBtn.querySelector("#accountBtnLabel").textContent = "Login";
         accountBtn.classList.remove("logged-in");
     }
 }

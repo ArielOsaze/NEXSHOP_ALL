@@ -7820,7 +7820,7 @@ html:not(.dark) .home-glass-badge {
     display: inline-flex;
     align-items: center;
     gap: 0.55rem;
-    padding: 0.35rem 0.8rem 0.35rem 0.45rem;
+    padding: 0.35rem 0.7rem 0.35rem 0.45rem;
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(56, 189, 248, 0.15));
     border: 1px solid rgba(99, 102, 241, 0.35);
     border-radius: 999px;
@@ -7878,16 +7878,13 @@ html:not(.dark) .home-glass-badge {
     line-height: 1.15;
 }
 
+/* Diminta: tombol wallet di nav cuma nampilin ikon + nominal saldo aja
+   (gak ada label "NexShop Wallet" di atasnya) -- berlaku di desktop
+   MAUPUN mobile, jadi disembunyiin di sini (base rule), bukan cuma di
+   dalam @media mobile seperti sebelumnya. Teks "NexShop Wallet" tetap
+   ada di aria-label/title tombol buat aksesibilitas. */
 .nx-wallet-nav-label {
-    font-size: 0.62rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: #94a3b8;
-}
-
-:root[data-theme="light"] .nx-wallet-nav-label {
-    color: #64748b;
+    display: none;
 }
 
 .nx-wallet-nav-val {
@@ -7901,20 +7898,10 @@ html:not(.dark) .home-glass-badge {
     color: #0f172a;
 }
 
+/* Chevron juga bagian dari "cuma icon + nominal" -- disembunyiin di
+   semua ukuran layar, bukan cuma mobile. */
 .nx-wallet-nav-chevron {
-    font-size: 0.65rem;
-    color: rgba(255, 255, 255, 0.4);
-    margin-left: 2px;
-    transition: transform 0.2s ease;
-}
-
-:root[data-theme="light"] .nx-wallet-nav-chevron {
-    color: rgba(15, 23, 42, 0.4);
-}
-
-.nx-wallet-nav-btn:hover .nx-wallet-nav-chevron {
-    transform: translateX(2px);
-    color: #38bdf8;
+    display: none;
 }
 
 /* Mobile Drawer Wallet Card */
@@ -8021,11 +8008,6 @@ html:not(.dark) .home-glass-badge {
         padding: 0.32rem 0.65rem 0.32rem 0.4rem;
         gap: 0.4rem;
         min-height: 38px;
-    }
-
-    .nx-wallet-nav-label,
-    .nx-wallet-nav-chevron {
-        display: none;
     }
 
     .nx-wallet-nav-val {
