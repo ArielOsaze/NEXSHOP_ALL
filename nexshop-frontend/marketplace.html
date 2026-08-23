@@ -570,6 +570,33 @@
                         <input type="text" id="mktCheckoutServer" placeholder="Masukkan Server ID">
                     </label>
                 </div>
+                <!-- Bank ID / Kode Bank Search (khusus produk Transfer Antar Bank / TFBANK) -->
+                <div id="mktCheckoutBankGroup" class="hidden">
+                    <label class="mkt-bank-field-label">
+                        <span>Bank ID / Bank Tujuan</span>
+                        <div class="mkt-bank-search-wrap">
+                            <span class="material-symbols-outlined mkt-bank-search-icon" aria-hidden="true">search</span>
+                            <input type="text" id="mktBankSearchInput" placeholder="Cari bank (BCA, BRI, Mandiri, Jago...)" autocomplete="off">
+                            <button type="button" class="mkt-bank-clear-btn hidden" id="mktBankClearBtn" aria-label="Hapus pencarian">
+                                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                            </button>
+                            <input type="hidden" id="mktCheckoutBankId" name="bank_id">
+                            <div class="mkt-bank-dropdown hidden" id="mktBankSearchResults" role="listbox" aria-label="Daftar bank tujuan"></div>
+                        </div>
+                    </label>
+                    <div id="mktBankSelectedCard" class="mkt-bank-selected-card hidden">
+                        <div class="mkt-bank-selected-main">
+                            <span class="mkt-bank-code-badge" id="mktBankSelectedCodeBadge">014</span>
+                            <div class="mkt-bank-selected-text">
+                                <strong id="mktBankSelectedName">Bank Central Asia (BCA)</strong>
+                                <span id="mktBankSelectedCategory">Bank Swasta &bull; Kode: 014</span>
+                            </div>
+                        </div>
+                        <button type="button" class="mkt-bank-change-btn" id="mktBankChangeBtn">
+                            <span>Ganti Bank</span>
+                        </button>
+                    </div>
+                </div>
                 <!-- Cek Tagihan — cuma nongol buat produk pascabayar (flag
                      cek_tagihan dari /topup/public-catalog) -->
                 <div id="mktCheckoutInquiryGroup" class="hidden">
@@ -970,15 +997,249 @@
         // ── Checkout ─────────────────────────────────────────────────────
         let currentMktCheckoutProduct = null;
 
+        // ── Database Kode Bank Indonesia (Standar ATM Bersama / BI 2026) ──
+        const INDONESIA_BANKS = [
+            // Bank BUMN
+            { code: "002", name: "Bank BRI (Bank Rakyat Indonesia)", shortName: "BRI", category: "Bank BUMN" },
+            { code: "008", name: "Bank Mandiri", shortName: "Mandiri", category: "Bank BUMN" },
+            { code: "009", name: "Bank BNI (Bank Negara Indonesia)", shortName: "BNI", category: "Bank BUMN" },
+            { code: "200", name: "Bank BTN (Bank Tabungan Negara)", shortName: "BTN", category: "Bank BUMN" },
+            { code: "451", name: "Bank Syariah Indonesia (BSI)", shortName: "BSI", category: "Bank BUMN Syariah" },
+
+            // Bank Swasta & Digital Populer
+            { code: "014", name: "Bank BCA (Bank Central Asia)", shortName: "BCA", category: "Bank Swasta" },
+            { code: "022", name: "Bank CIMB Niaga / CIMB Niaga Syariah", shortName: "CIMB Niaga", category: "Bank Swasta" },
+            { code: "013", name: "Bank Permata / Permata Syariah", shortName: "Permata", category: "Bank Swasta" },
+            { code: "011", name: "Bank Danamon / Danamon Syariah", shortName: "Danamon", category: "Bank Swasta" },
+            { code: "016", name: "Bank Maybank Indonesia", shortName: "Maybank", category: "Bank Swasta" },
+            { code: "019", name: "Bank Panin", shortName: "Panin", category: "Bank Swasta" },
+            { code: "028", name: "Bank OCBC NISP", shortName: "OCBC NISP", category: "Bank Swasta" },
+            { code: "542", name: "Bank Jago / Bank Artos", shortName: "Bank Jago", category: "Bank Digital" },
+            { code: "535", name: "SeaBank (Bank Seabank Indonesia)", shortName: "SeaBank", category: "Bank Digital" },
+            { code: "501", name: "Blu by BCA Digital", shortName: "BCA Digital / Blu", category: "Bank Digital" },
+            { code: "490", name: "Bank Neo Commerce (BNC / Neobank)", shortName: "Neo Commerce", category: "Bank Digital" },
+            { code: "567", name: "Allo Bank Indonesia", shortName: "Allo Bank", category: "Bank Digital" },
+            { code: "947", name: "Bank Aladin Syariah", shortName: "Aladin", category: "Bank Digital" },
+            { code: "558", name: "Superbank (Bank Fama)", shortName: "Superbank", category: "Bank Digital" },
+            { code: "494", name: "Bank Raya Indonesia (BRI Agro)", shortName: "Bank Raya", category: "Bank Digital" },
+            { code: "213", name: "Bank BTPN / Jenius", shortName: "BTPN / Jenius", category: "Bank Swasta" },
+            { code: "506", name: "Bank Mega", shortName: "Bank Mega", category: "Bank Swasta" },
+            { code: "147", name: "Bank Muamalat Indonesia", shortName: "Muamalat", category: "Bank Swasta Syariah" },
+            { code: "153", name: "Bank Sinarmas", shortName: "Sinarmas", category: "Bank Swasta" },
+            { code: "046", name: "Bank DBS Indonesia", shortName: "DBS", category: "Bank Swasta" },
+            { code: "484", name: "Bank KEB Hana Indonesia (LINE Bank)", shortName: "KEB Hana / LINE Bank", category: "Bank Digital" },
+            { code: "503", name: "Bank Nationalnobu (Nobu Bank)", shortName: "Nobu Bank", category: "Bank Swasta" },
+            { code: "559", name: "Bank Mandiri Taspen (Bank Mantap)", shortName: "Bank Mantap", category: "Bank Swasta" },
+            { code: "536", name: "Bank BCA Syariah", shortName: "BCA Syariah", category: "Bank Swasta Syariah" },
+            { code: "547", name: "Bank BTPN Syariah", shortName: "BTPN Syariah", category: "Bank Swasta Syariah" },
+            { code: "031", name: "Citibank Indonesia", shortName: "Citibank", category: "Bank Asing" },
+            { code: "050", name: "Standard Chartered Bank", shortName: "Standard Chartered", category: "Bank Asing" },
+            { code: "061", name: "Bank ANZ Indonesia", shortName: "ANZ", category: "Bank Asing" },
+            { code: "037", name: "Bank Artha Graha Internasional", shortName: "Artha Graha", category: "Bank Swasta" },
+            { code: "157", name: "Bank Maspion Indonesia", shortName: "Maspion", category: "Bank Swasta" },
+            { code: "161", name: "Bank Ganesha", shortName: "Ganesha", category: "Bank Swasta" },
+            { code: "164", name: "Bank ICBC Indonesia", shortName: "ICBC", category: "Bank Swasta" },
+            { code: "167", name: "Bank QNB Indonesia", shortName: "QNB", category: "Bank Swasta" },
+            { code: "212", name: "Bank Woori Saudara (BWS)", shortName: "Woori Saudara", category: "Bank Swasta" },
+            { code: "441", name: "Bank Bukopin / KB Bank", shortName: "KB Bukopin", category: "Bank Swasta" },
+            { code: "422", name: "Bank Syariah Bukopin / KB Bank Syariah", shortName: "KB Syariah", category: "Bank Swasta Syariah" },
+            { code: "485", name: "Bank MNC Internasional (MotionBank)", shortName: "MNC Bank", category: "Bank Digital" },
+            { code: "513", name: "Bank Ina Perdana", shortName: "Bank Ina", category: "Bank Swasta" },
+            { code: "517", name: "Bank Panin Dubai Syariah", shortName: "Panin Dubai", category: "Bank Swasta Syariah" },
+            { code: "521", name: "Bank Bukopin Syariah", shortName: "Bukopin Syariah", category: "Bank Swasta Syariah" },
+            { code: "523", name: "Bank Sahabat Sampoerna", shortName: "Sahabat Sampoerna", category: "Bank Swasta" },
+            { code: "526", name: "Bank Oke Indonesia", shortName: "OK Bank", category: "Bank Swasta" },
+            { code: "531", name: "Bank Amar Indonesia", shortName: "Amar Bank", category: "Bank Digital" },
+            { code: "548", name: "Bank Multiarta Sentosa (Bank MAS)", shortName: "Bank MAS", category: "Bank Swasta" },
+            { code: "553", name: "Bank Mayora", shortName: "Bank Mayora", category: "Bank Swasta" },
+            { code: "555", name: "Bank Index Selindo", shortName: "Bank Index", category: "Bank Swasta" },
+            { code: "566", name: "Bank Victoria International", shortName: "Victoria", category: "Bank Swasta" },
+            { code: "945", name: "Bank IBK Indonesia (Bank Agris)", shortName: "IBK Indonesia", category: "Bank Swasta" },
+            { code: "949", name: "Bank CTBC Indonesia", shortName: "CTBC", category: "Bank Swasta" },
+            { code: "950", name: "Bank Commonwealth", shortName: "Commonwealth", category: "Bank Swasta" },
+
+            // Bank Pembangunan Daerah (BPD)
+            { code: "110", name: "Bank BJB (Bank Jabar Banten)", shortName: "BJB", category: "Bank BPD" },
+            { code: "111", name: "Bank DKI", shortName: "Bank DKI", category: "Bank BPD" },
+            { code: "112", name: "Bank BPD DIY (Yogyakarta)", shortName: "BPD DIY", category: "Bank BPD" },
+            { code: "113", name: "Bank Jateng (Jawa Tengah)", shortName: "Bank Jateng", category: "Bank BPD" },
+            { code: "114", name: "Bank Jatim (Jawa Timur)", shortName: "Bank Jatim", category: "Bank BPD" },
+            { code: "115", name: "Bank Jambi", shortName: "Bank Jambi", category: "Bank BPD" },
+            { code: "116", name: "Bank BPD Aceh / Aceh Syariah", shortName: "Bank Aceh", category: "Bank BPD" },
+            { code: "117", name: "Bank Sumut", shortName: "Bank Sumut", category: "Bank BPD" },
+            { code: "118", name: "Bank Nagari (BPD Sumbar)", shortName: "Bank Nagari", category: "Bank BPD" },
+            { code: "119", name: "Bank Riau Kepri / Riau Kepri Syariah", shortName: "Riau Kepri", category: "Bank BPD" },
+            { code: "120", name: "Bank Sumsel Babel", shortName: "Sumsel Babel", category: "Bank BPD" },
+            { code: "121", name: "Bank Lampung", shortName: "Bank Lampung", category: "Bank BPD" },
+            { code: "122", name: "Bank Kalsel (Kalimantan Selatan)", shortName: "Bank Kalsel", category: "Bank BPD" },
+            { code: "123", name: "Bank Kalbar (Kalimantan Barat)", shortName: "Bank Kalbar", category: "Bank BPD" },
+            { code: "124", name: "Bank Kaltimtara (Kaltim Kaltara)", shortName: "Bank Kaltimtara", category: "Bank BPD" },
+            { code: "125", name: "Bank Kalteng (Kalimantan Tengah)", shortName: "Bank Kalteng", category: "Bank BPD" },
+            { code: "126", name: "Bank Sulselbar (Sulawesi Selatan & Barat)", shortName: "Bank Sulselbar", category: "Bank BPD" },
+            { code: "127", name: "Bank SulutGo (Sulawesi Utara & Gorontalo)", shortName: "Bank SulutGo", category: "Bank BPD" },
+            { code: "128", name: "Bank NTB / NTB Syariah", shortName: "Bank NTB", category: "Bank BPD" },
+            { code: "129", name: "Bank BPD Bali", shortName: "BPD Bali", category: "Bank BPD" },
+            { code: "130", name: "Bank NTT (Nusa Tenggara Timur)", shortName: "Bank NTT", category: "Bank BPD" },
+            { code: "131", name: "Bank Maluku Malut", shortName: "Bank Maluku", category: "Bank BPD" },
+            { code: "132", name: "Bank Papua", shortName: "Bank Papua", category: "Bank BPD" },
+            { code: "133", name: "Bank Bengkulu", shortName: "Bank Bengkulu", category: "Bank BPD" },
+            { code: "134", name: "Bank Sulteng (Sulawesi Tengah)", shortName: "Bank Sulteng", category: "Bank BPD" },
+            { code: "135", name: "Bank Sultra (Sulawesi Tenggara)", shortName: "Bank Sultra", category: "Bank BPD" },
+            { code: "137", name: "Bank Banten", shortName: "Bank Banten", category: "Bank BPD" }
+        ];
+
+        function resetMarketplaceBankSelector() {
+            const input = document.getElementById("mktBankSearchInput");
+            const hiddenId = document.getElementById("mktCheckoutBankId");
+            const dropdown = document.getElementById("mktBankSearchResults");
+            const clearBtn = document.getElementById("mktBankClearBtn");
+            const card = document.getElementById("mktBankSelectedCard");
+            const labelWrap = document.querySelector(".mkt-bank-field-label");
+
+            if (input) input.value = "";
+            if (hiddenId) hiddenId.value = "";
+            if (dropdown) {
+                dropdown.classList.add("hidden");
+                dropdown.innerHTML = "";
+            }
+            if (clearBtn) clearBtn.classList.add("hidden");
+            if (card) card.classList.add("hidden");
+            if (labelWrap) labelWrap.classList.remove("hidden");
+        }
+
+        function selectMarketplaceBank(bank) {
+            if (!bank) return;
+            const hiddenId = document.getElementById("mktCheckoutBankId");
+            const labelWrap = document.querySelector(".mkt-bank-field-label");
+            const card = document.getElementById("mktBankSelectedCard");
+            const dropdown = document.getElementById("mktBankSearchResults");
+            const codeBadge = document.getElementById("mktBankSelectedCodeBadge");
+            const nameEl = document.getElementById("mktBankSelectedName");
+            const catEl = document.getElementById("mktBankSelectedCategory");
+
+            if (hiddenId) hiddenId.value = bank.code;
+            if (codeBadge) codeBadge.textContent = bank.code;
+            if (nameEl) nameEl.textContent = bank.name;
+            if (catEl) catEl.textContent = `${bank.category} • Kode: ${bank.code}`;
+
+            if (dropdown) dropdown.classList.add("hidden");
+            if (labelWrap) labelWrap.classList.add("hidden");
+            if (card) card.classList.remove("hidden");
+        }
+
+        function filterMarketplaceBanks(query) {
+            const q = String(query || "").toLowerCase().trim();
+            if (!q) return INDONESIA_BANKS.slice(0, 15);
+            return INDONESIA_BANKS.filter(b => 
+                b.code.includes(q) || 
+                b.name.toLowerCase().includes(q) || 
+                b.shortName.toLowerCase().includes(q) ||
+                b.category.toLowerCase().includes(q)
+            );
+        }
+
+        function renderMarketplaceBankDropdown(banks) {
+            const dropdown = document.getElementById("mktBankSearchResults");
+            if (!dropdown) return;
+
+            if (!banks.length) {
+                dropdown.innerHTML = `
+                    <div class="mkt-bank-empty">
+                        <span class="material-symbols-outlined" style="font-size:1.5rem;color:var(--mkt-text-muted);">search_off</span>
+                        <span>Bank tidak ditemukan. Pastikan ejaan atau kode benar.</span>
+                    </div>
+                `;
+                dropdown.classList.remove("hidden");
+                return;
+            }
+
+            dropdown.innerHTML = banks.map(b => `
+                <button type="button" class="mkt-bank-option" data-code="${escapeHtml(b.code)}">
+                    <span class="mkt-bank-code-badge">${escapeHtml(b.code)}</span>
+                    <div class="mkt-bank-option-info">
+                        <span class="mkt-bank-option-name">${escapeHtml(b.name)}</span>
+                        <span class="mkt-bank-option-cat">${escapeHtml(b.category)}</span>
+                    </div>
+                </button>
+            `).join("");
+
+            dropdown.querySelectorAll(".mkt-bank-option").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const code = btn.dataset.code;
+                    const found = INDONESIA_BANKS.find(b => b.code === code);
+                    if (found) selectMarketplaceBank(found);
+                });
+            });
+
+            dropdown.classList.remove("hidden");
+        }
+
+        function setupMarketplaceBankSearch() {
+            const input = document.getElementById("mktBankSearchInput");
+            const clearBtn = document.getElementById("mktBankClearBtn");
+            const dropdown = document.getElementById("mktBankSearchResults");
+            const changeBtn = document.getElementById("mktBankChangeBtn");
+            const labelWrap = document.querySelector(".mkt-bank-field-label");
+            const card = document.getElementById("mktBankSelectedCard");
+
+            if (!input || !dropdown) return;
+
+            input.addEventListener("focus", () => {
+                const results = filterMarketplaceBanks(input.value);
+                renderMarketplaceBankDropdown(results);
+            });
+
+            input.addEventListener("input", () => {
+                const val = input.value;
+                if (clearBtn) clearBtn.classList.toggle("hidden", !val);
+                const results = filterMarketplaceBanks(val);
+                renderMarketplaceBankDropdown(results);
+            });
+
+            if (clearBtn) {
+                clearBtn.addEventListener("click", () => {
+                    input.value = "";
+                    clearBtn.classList.add("hidden");
+                    input.focus();
+                    renderMarketplaceBankDropdown(filterMarketplaceBanks(""));
+                });
+            }
+
+            if (changeBtn) {
+                changeBtn.addEventListener("click", () => {
+                    document.getElementById("mktCheckoutBankId").value = "";
+                    card.classList.add("hidden");
+                    labelWrap.classList.remove("hidden");
+                    input.value = "";
+                    input.focus();
+                    renderMarketplaceBankDropdown(filterMarketplaceBanks(""));
+                });
+            }
+
+            document.addEventListener("click", (e) => {
+                if (!e.target.closest("#mktCheckoutBankGroup")) {
+                    dropdown.classList.add("hidden");
+                }
+            });
+        }
+
+        setupMarketplaceBankSearch();
+
         // ── Label field "tujuan" per kategori ───────────────────────────
         // SATU sumber buat label + placeholder form checkout, per kategori
         // NexShop. SALINAN dari getTargetFieldMeta() di
         // nexshop-backend/utils/topupHelpers.js — kalau nambah/ubah kategori
         // di sana, samain juga di sini (gak bisa import module Node ke
         // <script> browser biasa).
-        function getMarketplaceTargetFieldMeta(kategori, cekTagihan) {
+        function getMarketplaceTargetFieldMeta(kategori, cekTagihan, product) {
             const kat = String(kategori || "").trim().toLowerCase();
+            const kode = String(product?.kode_produk || "").toUpperCase();
+            const op = String(product?.operator || "").toLowerCase();
+            const nama = String(product?.nama || "").toLowerCase();
 
+            if (kode.includes("TFBANK") || op.includes("transfer bank") || op.includes("transfer dana") || nama.includes("transfer antar bank")) {
+                return { label: "Nomor Rekening", placeholder: "Masukkan Nomor Rekening Tujuan" };
+            }
             if (kat === "pln") {
                 return cekTagihan
                     ? { label: "ID Pelanggan / No Meter PLN", placeholder: "Masukkan ID Pelanggan PLN" }
@@ -1000,6 +1261,14 @@
                 return { label: "Nomor HP / Akun Tujuan", placeholder: "Masukkan nomor HP / akun tujuan" };
             }
             return { label: "Nomor / ID Tujuan", placeholder: "Masukkan nomor atau ID tujuan" };
+        }
+
+        function isProductBankTransfer(product) {
+            if (!product) return false;
+            const kode = String(product.kode_produk || "").toUpperCase();
+            const op = String(product.operator || "").toLowerCase();
+            const nama = String(product.nama || "").toLowerCase();
+            return kode.includes("TFBANK") || op.includes("transfer bank") || op.includes("transfer dana") || nama.includes("transfer antar bank");
         }
 
         function openMarketplaceCheckout(product) {
@@ -1026,15 +1295,23 @@
             resetMarketplaceInquiry();
             document.getElementById("mktCheckoutInquiryGroup").classList.toggle("hidden", !product.cek_tagihan);
 
+            const isBankTransfer = isProductBankTransfer(product);
             const isGame = product.kategori.toLowerCase() === "gaming" || product.kategori.toLowerCase() === "voucher game";
-            const targetMeta = getMarketplaceTargetFieldMeta(product.kategori, product.cek_tagihan);
+            const targetMeta = getMarketplaceTargetFieldMeta(product.kategori, product.cek_tagihan, product);
             document.getElementById("mktCheckoutTargetLabel").textContent = targetMeta.label;
             document.getElementById("mktCheckoutTarget").placeholder = targetMeta.placeholder;
 
-            if (isGame && product.butuh_server_id) {
+            resetMarketplaceBankSelector();
+
+            if (isBankTransfer) {
+                document.getElementById("mktCheckoutBankGroup").classList.remove("hidden");
+                document.getElementById("mktCheckoutServerGroup").classList.add("hidden");
+            } else if (isGame && product.butuh_server_id) {
                 document.getElementById("mktCheckoutServerGroup").classList.remove("hidden");
+                document.getElementById("mktCheckoutBankGroup").classList.add("hidden");
             } else {
                 document.getElementById("mktCheckoutServerGroup").classList.add("hidden");
+                document.getElementById("mktCheckoutBankGroup").classList.add("hidden");
             }
 
             document.getElementById("mktCheckoutOverlay").classList.add("is-visible");
@@ -1151,6 +1428,25 @@
                 return;
             }
 
+            const isBankTransfer = isProductBankTransfer(currentMktCheckoutProduct);
+            let serverIdValue = undefined;
+
+            if (isBankTransfer) {
+                const bankId = document.getElementById("mktCheckoutBankId").value.trim();
+                if (!bankId) {
+                    errEl.textContent = "Silakan cari dan pilih Bank ID / Bank Tujuan terlebih dahulu.";
+                    return;
+                }
+                serverIdValue = bankId;
+            } else if (currentMktCheckoutProduct.butuh_server_id) {
+                const sVal = document.getElementById("mktCheckoutServer").value.trim();
+                if (!sVal) {
+                    errEl.textContent = "Server ID wajib diisi untuk produk ini.";
+                    return;
+                }
+                serverIdValue = sVal;
+            }
+
             btn.disabled = true;
             btn.textContent = "Memproses...";
             errEl.textContent = "";
@@ -1158,10 +1454,10 @@
             try {
                 const payload = {
                     kode_produk: currentMktCheckoutProduct.kode_produk,
-                    tujuan: document.getElementById("mktCheckoutTarget").value,
-                    server_id: currentMktCheckoutProduct.butuh_server_id ? document.getElementById("mktCheckoutServer").value : undefined,
-                    recipient_phone: document.getElementById("mktCheckoutPhone").value,
-                    recipient_email: document.getElementById("mktCheckoutEmail").value || undefined,
+                    tujuan: document.getElementById("mktCheckoutTarget").value.trim(),
+                    server_id: serverIdValue,
+                    recipient_phone: document.getElementById("mktCheckoutPhone").value.trim(),
+                    recipient_email: document.getElementById("mktCheckoutEmail").value.trim() || undefined,
                     payment_method: paymentMethod,
                     payment_channel: paymentMethod === "va" ? document.getElementById("mktCheckoutVaBank").value : undefined
                 };

@@ -334,6 +334,9 @@ function getTargetFieldMeta(displayCategory, isPascabayar) {
     if (kat === "tagihan") {
         return { formLabel: "ID Pelanggan / Nomor Tujuan", placeholder: "Masukkan ID Pelanggan", resultLabel: "ID Pelanggan" };
     }
+    if (kat === "transfer bank" || kat === "transfer dana" || kat === "transfer") {
+        return { formLabel: "Nomor Rekening", placeholder: "Masukkan Nomor Rekening", resultLabel: "Nomor Rekening" };
+    }
     if (kat === "pulsa" || kat === "paket data") {
         return { formLabel: "Nomor HP Tujuan", placeholder: "08xxxxxxxxxx", resultLabel: "Nomor HP Tujuan" };
     }
@@ -383,6 +386,9 @@ function getSerialInstruction(displayCategory, isPascabayar) {
     }
     if (kat === "hiburan") {
         return "Ini adalah kode voucher Anda. Gunakan kode ini sesuai petunjuk redeem pada aplikasi/layanan terkait.";
+    }
+    if (kat === "transfer bank" || kat === "transfer dana" || kat === "transfer") {
+        return "Transfer dana antar bank berhasil diproses. Simpan nomor referensi / SN ini sebagai bukti transfer Anda.";
     }
     if (kat === "tagihan") {
         return "Ini adalah nomor referensi pembayaran Anda. Simpan sebagai bukti pembayaran tagihan.";

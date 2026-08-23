@@ -1650,7 +1650,7 @@ exports.create = async (req, res) => {
     const userId = req.user ? req.user.id : null;
 
     if (!kode_produk || !tujuan) {
-        return res.status(400).json({ message: "Produk dan tujuan (Player ID) wajib diisi" });
+        return res.status(400).json({ message: "Produk dan nomor/tujuan wajib diisi" });
     }
 
     // Wajib diisi & harus nomor asli -- fallback default sebelumnya
@@ -1699,7 +1699,14 @@ exports.create = async (req, res) => {
         }
 
         if (product.butuh_server_id && !server_id) {
-            return res.status(400).json({ message: "Server ID wajib diisi untuk produk ini" });
+            const isBank = (product.kode_produk && product.kode_produk.toUpperCase().includes("TFBANK")) ||
+                /transfer\s*bank|transfer\s*dana/i.test(product.source_operator_name || "") ||
+                /transfer\s*bank/i.test(product.nama || "");
+            return res.status(400).json({
+                message: isBank
+                    ? "Bank ID / Kode Bank wajib dipilih untuk transfer antar bank"
+                    : "Server ID wajib diisi untuk produk ini"
+            });
         }
 
         // Cart topup selalu 1 item (id = kode_produk, biar bisa dipakai admin
