@@ -4391,6 +4391,30 @@ document.addEventListener("DOMContentLoaded", () => {
 // produk opsional>, lalu di sini dibuka flow checkout yang SAMA persis
 // kayak yang dipakai grid Topup biasa.
 // ===========================================================
+// ===========================================================
+// BRIDGE dari NexBot -- balasan chatbot bisa ngarahin ke aksi yang cuma
+// ada di halaman ini (mis. modal Cek Transaksi), lewat link
+// data-nexbot-action di nexbot.js. Kalau usernya WAKTU ITU lagi di
+// halaman ini, link itu langsung manggil fungsinya (gak lewat sini sama
+// sekali). Fungsi ini cuma jalan buat kasus usernya lagi di halaman LAIN
+// (mis. marketplace.html yang gak muat script.js ini) -- link fallback-nya
+// bawa dia balik kesini dengan ?nexbot_action=<nama>, lalu aksi yang sama
+// dijalankan otomatis begitu halaman ini kebuka.
+// ===========================================================
+const NEXBOT_ACTION_HANDLERS = {
+    track: () => openTrackModal()
+};
+function openNexBotActionFromQuery() {
+    const params = new URLSearchParams(window.location.search);
+    const action = params.get("nexbot_action");
+    if (!action || typeof NEXBOT_ACTION_HANDLERS[action] !== "function") return;
+
+    // Bersihin query string biar refresh/back gak numpuk aksinya lagi.
+    window.history.replaceState({}, "", window.location.pathname);
+    NEXBOT_ACTION_HANDLERS[action]();
+}
+document.addEventListener("DOMContentLoaded", openNexBotActionFromQuery);
+
 async function openMarketplaceCheckoutFromQuery() {
     const params = new URLSearchParams(window.location.search);
     const marketOperator = params.get("market");

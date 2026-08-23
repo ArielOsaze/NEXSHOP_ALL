@@ -1899,6 +1899,10 @@ input::placeholder{ color:var(--text-dim); }
 .nexbot-msg-content a:hover{ text-decoration-thickness:2px; }
 :root[data-theme="light"] .nexbot-msg--bot .nexbot-msg-content a{ color:var(--violet); }
 .nexbot-msg--user .nexbot-msg-content a{ color:#fff; }
+/* Link navigasi internal (mis. sebutan "nexshop.cloud/marketplace" atau
+   "Cek Transaksi" yang NexBot ubah jadi link) -- dikasih panah kecil biar
+   kebeda dari link referensi biasa, nandain ini bakal mindahin halaman. */
+.nexbot-msg-content a.nexbot-inline-link::after{ content:"\2192"; display:inline-block; margin-left:2px; font-weight:700; text-decoration:none; }
 
 .nexbot-heading{ font-weight:700; color:var(--text); line-height:1.4; margin:14px 0 8px; display:flex; align-items:center; gap:7px; }
 .nexbot-heading--1{ font-size:14.5px; }

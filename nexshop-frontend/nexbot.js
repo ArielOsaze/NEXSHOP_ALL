@@ -36,6 +36,8 @@ const NEXBOT_QUICK_TOPICS = [
     { icon: "fa-wallet", topic: "Pembayaran pakai apa?" },
     { icon: "fa-cart-shopping", topic: "Cara membeli produk?" },
     { icon: "fa-bolt", topic: "Cara top up?" },
+    { icon: "fa-shop", topic: "Apa itu Marketplace NexShop?" },
+    { icon: "fa-handshake", topic: "Cara daftar reseller?" },
     { icon: "fa-rotate-left", topic: "Kebijakan refund?" },
     { icon: "fa-brands fa-whatsapp", topic: "Hubungi Customer Service" }
 ];
@@ -124,6 +126,22 @@ function nexbotEscape(str) {
     return String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+// Peta menu/aksi yang NAMANYA disebut NexBot tapi TIDAK punya halaman
+// sendiri (mis. "Cek Transaksi" itu modal di index.html, bukan URL). Key di
+// sini dipakai sebagai nilai `data-nexbot-action`, dan hrefnya cuma
+// fallback: kalau user lagi di halaman lain (mis. marketplace.html) yang
+// gak muat fungsi JS-nya, dia diarahkan balik ke beranda dan aksi yang
+// sama otomatis dijalankan lewat openNexBotActionFromQuery() di script.js.
+const NEXBOT_ACTION_LINKS = [
+    { pattern: /\bmenu Cek Transaksi\b|\bCek Transaksi\b/g, action: "track", href: "/?nexbot_action=track" }
+];
+
+// Fungsi JS di index.html yang dipanggil kalau usernya SUDAH di halaman
+// itu (biar gak perlu reload sama sekali). Dicek pakai typeof supaya aman
+// dipanggil dari halaman mana pun -- kalau fungsinya gak ada, klik jatuh
+// balik ke href biasa di atas.
+const NEXBOT_ACTION_FUNCTIONS = { track: "openTrackModal" };
+
 function nexbotInline(raw) {
     const slots = [];
     const stash = (html) => {
@@ -146,11 +164,42 @@ function nexbotInline(raw) {
         pre + stash(`<a href="${url}" target="_blank" rel="noopener noreferrer">${url.replace(/^https?:\/\//, "")}</a>`)
     );
 
+    // nexshop.cloud/xxx TANPA skema (gaya penulisan yang dipakai knowledge
+    // base, mis. "halaman Marketplace di nexshop.cloud/marketplace") --
+    // diubah jadi link RELATIF yang bisa langsung diklik. Sengaja relatif
+    // (bukan https://nexshop.cloud/xxx) dan TANPA target="_blank" karena
+    // ini navigasi pindah halaman di web yang sama, bukan link keluar.
+    s = s.replace(/\bnexshop\.cloud((?:\/[a-zA-Z0-9\-_]+(?:\.[a-zA-Z0-9]+)?)*\/?)/gi, (m, path) =>
+        stash(`<a href="${path && path !== "/" ? path : "/"}" class="nexbot-inline-link">${m}</a>`)
+    );
+
+    // Menu/aksi internal yang gak punya URL sendiri (lihat NEXBOT_ACTION_LINKS).
+    NEXBOT_ACTION_LINKS.forEach(({ pattern, action, href }) => {
+        s = s.replace(pattern, (m) => stash(`<a href="${href}" class="nexbot-inline-link" data-nexbot-action="${action}">${m}</a>`));
+    });
+
     s = s
         .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
         .replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, "$1<em>$2</em>");
 
     return s.replace(new RegExp(`${NEXBOT_SLOT}(\\d+)${NEXBOT_SLOT}`, "g"), (m, i) => slots[Number(i)]);
+}
+
+// Link `data-nexbot-action` di dalam balasan yang baru dirender: kalau
+// fungsi JS-nya ADA di halaman ini, jalanin langsung (chat ditutup dulu
+// biar modalnya kelihatan) dan batalkan navigasi hrefnya. Kalau gak ada
+// (usernya lagi di halaman lain), biarin browser ikutin href fallback-nya.
+function attachNexBotInlineActions(scopeEl) {
+    scopeEl.querySelectorAll("[data-nexbot-action]").forEach((el) => {
+        el.addEventListener("click", (e) => {
+            const fnName = NEXBOT_ACTION_FUNCTIONS[el.dataset.nexbotAction];
+            if (fnName && typeof window[fnName] === "function") {
+                e.preventDefault();
+                closeNexBotWidget();
+                window[fnName]();
+            }
+        });
+    });
 }
 
 // Baris yang dimulai emoji, mis. "💳 Pembayaran"
@@ -370,9 +419,11 @@ function updateNexBotGreeting() {
     const topik = [
         "🎮 Produk Game",
         "💎 Topup Diamond",
+        "🛍️ Marketplace (E-Wallet, Pulsa, Tagihan)",
         "🎁 Voucher & Diskon",
         "💳 Pembayaran",
         "📦 Status Pesanan",
+        "🤝 Program Reseller",
         "❓ Bantuan & Kebijakan"
     ].join("\n");
 
@@ -396,6 +447,21 @@ const nexbotState = {
     loading: false,
     history: []
 };
+
+// Dipisah dari closeBtn listener supaya bisa dipanggil juga dari link aksi
+// di dalam balasan (mis. pas ngarahin ke modal Cek Transaksi -- chat
+// ditutup dulu biar modalnya gak ketutupan jendela NexBot).
+function closeNexBotWidget() {
+    const windowEl = document.getElementById("nexbotWindow");
+    const floatBtn = document.getElementById("nexbotFloatBtn");
+    if (!windowEl || !floatBtn || windowEl.classList.contains("hidden")) return;
+    windowEl.classList.add("closing");
+    setTimeout(() => {
+        windowEl.classList.add("hidden");
+        windowEl.classList.remove("closing");
+        floatBtn.classList.remove("hidden");
+    }, 200);
+}
 
 function initNexBotChat() {
     const floatBtn = document.getElementById("nexbotFloatBtn");
@@ -421,14 +487,7 @@ function initNexBotChat() {
         }
     });
 
-    closeBtn.addEventListener("click", () => {
-        windowEl.classList.add("closing");
-        setTimeout(() => {
-            windowEl.classList.add("hidden");
-            windowEl.classList.remove("closing");
-            floatBtn.classList.remove("hidden");
-        }, 200);
-    });
+    closeBtn.addEventListener("click", closeNexBotWidget);
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -602,7 +661,10 @@ function appendNexBotMessage(text, sender, cards = [], handoff = false) {
 
     msgDiv.innerHTML = html;
     body.appendChild(msgDiv);
-    if (isBot) attachNexBotCopy(msgDiv, text);
+    if (isBot) {
+        attachNexBotCopy(msgDiv, text);
+        attachNexBotInlineActions(msgDiv);
+    }
     nexbotScrollToBottom();
 }
 
