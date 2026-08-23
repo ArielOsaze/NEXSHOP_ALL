@@ -291,7 +291,7 @@ exports.resellerLogin = async (req, res) => {
         const { data: user, error: userErr } = await supabase
             .from("users")
             .select("id, fullname, email, password, role, reseller_status, phone, is_blacklisted")
-            .eq("email", email)
+            .ilike("email", email)
             .maybeSingle();
 
         if (userErr && !isMissingTableError(userErr)) {
