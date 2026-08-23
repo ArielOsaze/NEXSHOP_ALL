@@ -36,7 +36,7 @@ router.put("/admin/products/bulk-status", authMiddleware, adminMiddleware, topup
 router.put("/admin/products/bulk-server-id", authMiddleware, adminMiddleware, topupController.bulkUpdateButuhServerId); // toggle "butuh server id" massal
 router.put("/admin/products/bulk-icon", authMiddleware, adminMiddleware, topupController.bulkUpdateIcon); // set icon massal (produk terpilih)
 router.put("/admin/products/bulk-markup", authMiddleware, adminMiddleware, topupController.bulkMarkupPrice); // hitung ulang harga jual dari harga modal (markup %/nominal)
-router.put("/admin/products/auto-markup", authMiddleware, adminMiddleware, topupController.autoMarkupPrice); // markup otomatis "wajar" (persen dari tabel MARKUP_TIERS, gak perlu input manual)
+router.put("/admin/products/auto-markup", authMiddleware, adminMiddleware, topupController.autoMarkupPrice); // markup otomatis "wajar" (persen dari MARKUP_TIERS utk kategori biasa, admin flat khusus E-Wallet -- lihat hitungMarkupWajar di topupHelpers.js, gak perlu input manual)
 router.put("/admin/products/smart-activate", authMiddleware, adminMiddleware, topupController.smartActivateProducts); // aktivasi cerdas: pilih varian termurah per nominal diamond + nonaktifin nominal yg gak/jarang laku
 router.put("/admin/products/bulk-kategori", authMiddleware, adminMiddleware, topupController.bulkUpdateKategori); // pindah kategori massal (produk terpilih)
 router.put("/admin/products/kategori-status", authMiddleware, adminMiddleware, topupController.setKategoriActive); // toggle satu kategori/game sekaligus

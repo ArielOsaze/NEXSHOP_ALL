@@ -435,8 +435,8 @@ exports.smartActivateProducts = async (req, res) => {
         const kodeSet = new Set(groupable.map((p) => p.kode_produk));
         const orderRows = kodeSet.size
             ? await fetchAllRows((from, to) =>
-                supabase.from("topup_orders").select("kode_produk").eq("status", "sukses").range(from, to)
-            )
+                  supabase.from("topup_orders").select("kode_produk").eq("status", "sukses").range(from, to)
+              )
             : [];
         const salesCount = {};
         orderRows.forEach((o) => {
@@ -516,7 +516,7 @@ exports.smartActivateProducts = async (req, res) => {
             items.forEach((p) => target.set(p.id, winnerIds.has(p.id)));
         }
 
-        // Kategori NexShop yang produknya FUNGIBLE murni berdasarkan nominal --
+// Kategori NexShop yang produknya FUNGIBLE murni berdasarkan nominal --
         // beda "jenis"/jalur supplier TIDAK dianggap SKU yang beda secara bisnis
         // buat kategori ini, karena hasil akhir yang diterima pembeli PERSIS sama
         // gak peduli lewat jalur mana (top up DANA Rp1.000 ya tetap nambah saldo
@@ -625,10 +625,13 @@ exports.smartActivateProducts = async (req, res) => {
         );
 
         res.json({
-            message: `Aktivasi cerdas selesai: ${activated} produk diaktifkan, ${deactivated} dinonaktifkan (${ringkasanJalur})${skipped.length ? `, ${skipped.length} produk game dilewatin (nominal gak kebaca dari namanya)` : ""
-                }${skippedManual ? `, ${skippedManual} dilindungi (status di-override manual)` : ""}${skippedSupplierOff ? `, ${skippedSupplierOff} dilewatin (nonaktif di supplier)` : ""
-                }${skippedForeignRegion ? `, ${skippedForeignRegion} dilewatin (region luar Indonesia / gak ketemu)` : ""}${produkGame.length && !filterPopularitasDipakai ? " — belum ada histori order sukses, jadi filter popularitas belum diterapkan" : ""
-                }`,
+            message: `Aktivasi cerdas selesai: ${activated} produk diaktifkan, ${deactivated} dinonaktifkan (${ringkasanJalur})${
+                skipped.length ? `, ${skipped.length} produk game dilewatin (nominal gak kebaca dari namanya)` : ""
+            }${skippedManual ? `, ${skippedManual} dilindungi (status di-override manual)` : ""}${
+                skippedSupplierOff ? `, ${skippedSupplierOff} dilewatin (nonaktif di supplier)` : ""
+            }${skippedForeignRegion ? `, ${skippedForeignRegion} dilewatin (region luar Indonesia / gak ketemu)` : ""}${
+                produkGame.length && !filterPopularitasDipakai ? " — belum ada histori order sukses, jadi filter popularitas belum diterapkan" : ""
+            }`,
             activated,
             deactivated,
             skipped: skipped.length,
@@ -850,7 +853,7 @@ exports.getProducts = async (req, res) => {
         let allData = [];
         let page = 0;
         const pageSize = 1000;
-
+        
         while (true) {
             const { data, error } = await supabase
                 .from("topup_products")
@@ -865,16 +868,16 @@ exports.getProducts = async (req, res) => {
                 console.log(error);
                 return res.status(500).json({ message: "Database Error" });
             }
-
+            
             if (!data || data.length === 0) break;
-
+            
             // DYNAMIC PRICING: if harga_jual is 0, calculate dynamically using backend markup rules.
             data.forEach(p => {
                 if (!p.harga_jual || p.harga_jual === 0) {
                     p.harga_jual = hitungMarkupWajar(p.harga_beli || 0, p.kategori, p.source_operator_name);
                 }
             });
-
+            
             terapkanHargaReseller(data, konteksReseller);
             data.forEach((p) => { delete p.harga_beli; }); // margin internal, jangan bocor ke publik
 
@@ -882,7 +885,7 @@ exports.getProducts = async (req, res) => {
             if (data.length < pageSize) break;
             page++;
         }
-
+        
         const data = allData;
 
         // Jaga-jaga (defense in depth): walaupun sync sekarang udah nolak produk
@@ -1000,8 +1003,9 @@ exports.syncProducts = async (req, res) => {
         }
 
         res.json({
-            message: `${data.length} produk berhasil disinkronkan${skippedForeignCount ? ` (${skippedForeignCount} produk region luar Indonesia dilewatin)` : ""
-                }`,
+            message: `${data.length} produk berhasil disinkronkan${
+                skippedForeignCount ? ` (${skippedForeignCount} produk region luar Indonesia dilewatin)` : ""
+            }`,
             data
         });
     } catch (err) {
@@ -1337,8 +1341,9 @@ exports.bulkMarkupPrice = async (req, res) => {
 
         notify("product", `💰 ${req.user.email} menerapkan markup ${markupLabel} ke ${rows.length} produk topup`);
         res.json({
-            message: `Harga jual ${rows.length} produk berhasil dihitung ulang dari harga modal${skippedForeignRegion ? ` (${skippedForeignRegion} produk region luar Indonesia dilewatin)` : ""
-                }`
+            message: `Harga jual ${rows.length} produk berhasil dihitung ulang dari harga modal${
+                skippedForeignRegion ? ` (${skippedForeignRegion} produk region luar Indonesia dilewatin)` : ""
+            }`
         });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
@@ -1346,11 +1351,14 @@ exports.bulkMarkupPrice = async (req, res) => {
 };
 
 // ADMIN — sama kayak bulkMarkupPrice, tapi persennya GAK diinput manual:
-// dihitung sendiri dari MARKUP_TIERS berdasarkan besaran harga modal
-// masing-masing produk (jadi produk terpilih bisa punya harga_beli
-// beda-beda dan tetap dapet markup yang "wajar" buat rentangnya masing-
-// masing). Cocok dipakai abis sync produk baru (misal semua item diamond
-// satu game) biar harganya langsung disesuaikan tanpa itung manual.
+// dihitung sendiri lewat hitungMarkupWajar() berdasarkan kategori +
+// besaran harga modal masing-masing produk (jadi produk terpilih bisa
+// punya harga_beli/kategori beda-beda dan tetap dapet markup yang
+// "wajar" buat masing-masing: persen dari MARKUP_TIERS buat kategori
+// biasa, ADMIN FLAT khusus E-Wallet -- lihat hitungMarkupWajar &
+// hitungAdminEwallet di topupHelpers.js). Cocok dipakai abis sync produk
+// baru (misal semua item diamond satu game) biar harganya langsung
+// disesuaikan tanpa itung manual.
 exports.autoMarkupPrice = async (req, res) => {
     if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
@@ -1398,8 +1406,9 @@ exports.autoMarkupPrice = async (req, res) => {
 
         notify("product", `🤖 ${req.user.email} menerapkan markup otomatis (wajar) ke ${rows.length} produk topup`);
         res.json({
-            message: `Harga jual ${rows.length} produk berhasil dihitung otomatis dari harga modal${skippedForeignRegion ? ` (${skippedForeignRegion} produk region luar Indonesia dilewatin)` : ""
-                }`
+            message: `Harga jual ${rows.length} produk berhasil dihitung otomatis dari harga modal${
+                skippedForeignRegion ? ` (${skippedForeignRegion} produk region luar Indonesia dilewatin)` : ""
+            }`
         });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
@@ -1668,7 +1677,7 @@ exports.create = async (req, res) => {
         if (prodErr || !product) {
             return res.status(404).json({ message: "Produk topup tidak ditemukan atau tidak aktif" });
         }
-
+        
         // DYNAMIC PRICING: if harga_jual is 0, calculate dynamically using backend markup rules.
         if (!product.harga_jual || product.harga_jual === 0) {
             product.harga_jual = hitungMarkupWajar(product.harga_beli || 0, product.kategori, product.source_operator_name);
@@ -1778,9 +1787,10 @@ exports.create = async (req, res) => {
                     );
                     notify(
                         "topup",
-                        `⚠️ Fallback direct→redirect utk topup order ${orderId}: ${directErr.isTimeout
-                            ? "TIMEOUT (kemungkinan IP VPS belum di-whitelist iPaymu Direct Payment)"
-                            : (debugDirectError || "unknown error")
+                        `⚠️ Fallback direct→redirect utk topup order ${orderId}: ${
+                            directErr.isTimeout
+                                ? "TIMEOUT (kemungkinan IP VPS belum di-whitelist iPaymu Direct Payment)"
+                                : (debugDirectError || "unknown error")
                         }`
                     );
                     isDirect = false;
@@ -1812,19 +1822,19 @@ exports.create = async (req, res) => {
             return res.status(500).json({ message: "Gagal membuat transaksi pembayaran" });
         }
 
-        const updatePayload = isDirect
+        const updatePayload = isDirect 
             ? {
                 ipaymu_trx_id: payment.transactionId,
                 payment_no: payment.paymentNo,
                 qr_content: payment.qrContent,
                 payment_expired: payment.expired,
                 payment_flow: "direct"
-            }
+              }
             : {
                 ipaymu_session_id: payment.sessionId,
                 payment_url: payment.paymentUrl,
                 payment_flow: "redirect"
-            };
+              };
 
         await supabase.from("topup_orders").update(updatePayload).eq("id", orderId);
 
@@ -1835,7 +1845,7 @@ exports.create = async (req, res) => {
             // yang beneran ke-encode di QR/VA iPaymu (bisa termasuk fee kalau
             // dibebankan ke pembeli), bukan total polos.
             const displayAmount = payment.amount || (total + (payment.fee || 0));
-
+            
             sendUserWhatsApp(normalizedPhone, "pending", { name: "Pelanggan", order_id: orderId, total: rupiahLog(displayAmount) });
 
             res.status(201).json({
@@ -1895,7 +1905,7 @@ exports.validatePromo = async (req, res) => {
         if (prodErr || !product) {
             return res.status(404).json({ valid: false, message: "Produk topup tidak ditemukan" });
         }
-
+        
         // DYNAMIC PRICING: if harga_jual is 0, calculate dynamically using backend markup rules.
         if (!product.harga_jual || product.harga_jual === 0) {
             product.harga_jual = hitungMarkupWajar(product.harga_beli || 0, product.kategori, product.source_operator_name);
@@ -2130,7 +2140,7 @@ async function fulfillOrder(order) {
             sendWhatsAppNotification(
                 `💎 *Pembelian Topup Baru*\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
             );
-
+            
             // Fonnte user WA delivery idempotency
             const { processNotificationEvent } = require('../services/notificationDeliveryService');
             processNotificationEvent(order.id, "success").catch(e => console.log("Gagal trigger notif WA Topup:", e));
@@ -2244,7 +2254,7 @@ exports.handleIpaymuNotification = async (req, res) => {
         }
 
         const { data: updatedRows, error } = await query.select();
-
+        
         if (error) {
             console.log(error);
             return res.status(500).json({ message: "Gagal update status pesanan" });
@@ -2287,7 +2297,7 @@ async function reconcileTopupOrder(order, result) {
     let finalStatus = "processing";
     if (result.status === 0 || result.status === "0") finalStatus = "gagal";
     else finalStatus = TOKOVOUCHER_STATUS_MAP[result.status] || "processing";
-
+    
     const wasNotYetSukses = order.status !== "sukses";
 
     // Monotonic Check untuk Tokovoucher Webhook / Reconcile
@@ -2342,7 +2352,7 @@ async function reconcileTopupOrder(order, result) {
         sendWhatsAppNotification(
             `💎 *Pembelian Topup Baru*\nOrder ID: ${order.id}\nProduk: ${order.nama_produk}\nTujuan: ${order.tujuan}${order.server_id ? ` (${order.server_id})` : ""}\nTotal: ${rupiahLog(order.harga)}`
         );
-
+        
         // Fonnte user WA delivery idempotency
         const { processNotificationEvent } = require('../services/notificationDeliveryService');
         processNotificationEvent(order.id, "success").catch(e => console.log("Gagal trigger notif WA Topup:", e));
@@ -2855,13 +2865,13 @@ exports.updateCategoryMap = async (req, res) => {
         if (!tokovoucher_category_name || !nexshop_category_name) {
             return res.status(400).json({ message: "Data tidak lengkap" });
         }
-
+        
         const { error } = await supabase.from("topup_category_map").upsert({
             tokovoucher_category_name,
             nexshop_category_name,
             updated_at: new Date().toISOString()
         }, { onConflict: "tokovoucher_category_name" });
-
+        
         if (error) throw error;
         res.json({ message: "Mapping berhasil diubah" });
     } catch (err) {
@@ -2878,11 +2888,11 @@ exports.setOperatorActive = async (req, res) => {
         if (!operator_name || typeof is_active !== "boolean") {
             return res.status(400).json({ message: "Data tidak lengkap" });
         }
-
+        
         const { error } = await supabase.from("topup_products")
             .update({ is_active })
             .eq("source_operator_name", operator_name);
-
+            
         if (error) throw error;
         res.json({ message: `Semua produk untuk operator ${operator_name} berhasil ${is_active ? 'diaktifkan' : 'dinonaktifkan'}` });
     } catch (err) {
@@ -2894,13 +2904,13 @@ exports.setOperatorActive = async (req, res) => {
 function cleanProductName(name) {
     if (!name) return "";
     let cleaned = name;
-
+    
     // Example: MLBB-ID-86-DM -> 86 Diamonds
     const mlMatch = cleaned.match(/^MLBB-ID-(\d+)-DM$/i);
     if (mlMatch) {
         return `${mlMatch[1]} Diamonds`;
     }
-
+    
     // Clean up typical unambiguous suffixes/prefixes
     cleaned = cleaned.replace(/\(Promo\)/gi, "").trim();
     cleaned = cleaned.replace(/\[Promo\]/gi, "").trim();
@@ -2917,7 +2927,7 @@ exports.getPublicCatalog = async (req, res) => {
         let allData = [];
         let page = 0;
         const pageSize = 1000;
-
+        
         while (true) {
             const { data, error } = await supabase.from("topup_products")
                 .select("id, nama, kode_produk, kategori, source_category_id, source_category_name, source_operator_id, source_operator_name, harga_beli, harga_jual, butuh_server_id, source_status, operator_logo, item_icon, manual_category_override, manual_name_override")
@@ -2927,39 +2937,39 @@ exports.getPublicCatalog = async (req, res) => {
                 .order("harga_jual")
                 .range(page * pageSize, (page + 1) * pageSize - 1);
             if (error) throw error;
-
+            
             if (!data || data.length === 0) break;
-
+            
             // DYNAMIC PRICING: if harga_jual is 0, calculate dynamically using backend markup rules.
             data.forEach(p => {
                 if (!p.harga_jual || p.harga_jual === 0) {
                     p.harga_jual = hitungMarkupWajar(p.harga_beli || 0, p.kategori, p.source_operator_name);
                 }
             });
-
+            
             terapkanHargaReseller(data, konteksReseller);
 
             allData.push(...data);
             if (data.length < pageSize) break;
             page++;
         }
-
+        
         const data = allData;
-
+        
         // Fetch category map
         const { data: mapData, error: mapErr } = await supabase.from("topup_category_map").select("*");
         const categoryMap = new Map();
         if (!mapErr && mapData) {
             mapData.forEach(m => categoryMap.set(m.tokovoucher_category_name, m.nexshop_category_name));
         }
-
+        
         // Group by mapped category -> distinct operator -> products
         const catalogMap = new Map();
-
+        
         data.forEach(p => {
             if (p.source_status && p.source_status !== 'active') return;
             delete p.source_status; // Security: hide internal status
-
+            
             // Category Mapping Logic (Priority: manual override -> category map -> safe fallback)
             let displayCategory = "Lainnya";
             if (p.manual_category_override) {
@@ -2989,11 +2999,11 @@ exports.getPublicCatalog = async (req, res) => {
             // tapi bisa nongol di sini kalau kelanjur ke-aktifin (baris
             // lama di DB atau ke-aktifin gak sengaja lewat bulk-activate).
             if (isCheckerUtilityProduct(p.nama)) return;
-
+            
             // Operator Mapping Logic (Use explicit operator name, fallback to legacy kategori)
             const displayOperator = p.source_operator_name || p.kategori || "Unknown";
             const operatorId = p.source_operator_id || displayOperator;
-
+            
             // If there's a manual_name_override, we shouldn't "clean" it. Otherwise apply standard cleaning.
             // manual_name_override itu FLAG boolean (lihat migration 007),
             // bukan nama penggantinya. Sebelumnya p.nama di-set ke nilai
@@ -3002,7 +3012,7 @@ exports.getPublicCatalog = async (req, res) => {
             if (!p.manual_name_override) {
                 p.nama = cleanProductName(p.nama);
             }
-
+            
             // Produk pascabayar dapet flag "cek_tagihan" biar frontend bisa
             // nampilin tombol Cek Tagihan. Yang dikirim cuma boolean-nya --
             // id/nama kategori asli TokoVoucher tetap disembunyiin dari client.
@@ -3016,14 +3026,14 @@ exports.getPublicCatalog = async (req, res) => {
             delete p.source_category_name;
             delete p.source_operator_name;
             delete p.source_operator_id;
-
+            
             const opLogo = p.operator_logo;
-            delete p.operator_logo;
+            delete p.operator_logo; 
 
             if (!catalogMap.has(displayCategory)) {
                 catalogMap.set(displayCategory, new Map());
             }
-
+            
             const opMap = catalogMap.get(displayCategory);
             if (!opMap.has(operatorId)) {
                 opMap.set(operatorId, {
@@ -3033,10 +3043,10 @@ exports.getPublicCatalog = async (req, res) => {
                     products: []
                 });
             }
-
+            
             opMap.get(operatorId).products.push(p);
         });
-
+        
         // Convert Maps to Arrays
         const catalog = Array.from(catalogMap.entries()).map(([category, opMap]) => {
             return {
@@ -3044,7 +3054,7 @@ exports.getPublicCatalog = async (req, res) => {
                 operators: Array.from(opMap.values())
             };
         });
-
+        
         res.json(catalog);
     } catch (err) {
         console.error(err);

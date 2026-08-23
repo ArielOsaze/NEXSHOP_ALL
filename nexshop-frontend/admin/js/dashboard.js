@@ -2383,8 +2383,9 @@ async function bulkMarkupTopupPrice() {
 }
 
 // Sama kayak bulkMarkupTopupPrice, tapi gak perlu isi tipe/nilai/pembulatan —
-// backend yang hitung sendiri persen wajarnya berdasarkan besaran harga
-// modal tiap produk (lihat MARKUP_TIERS di topupController.js)
+// backend yang hitung sendiri markup wajarnya per produk (persen dari
+// MARKUP_TIERS buat kategori biasa, admin flat khusus E-Wallet — lihat
+// hitungMarkupWajar di topupHelpers.js)
 async function bulkAutoMarkupTopupPrice() {
     if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
 
