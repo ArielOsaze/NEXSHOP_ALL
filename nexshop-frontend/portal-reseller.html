@@ -930,6 +930,29 @@
                 </div>
             </div>
 
+            <!-- Pending Notice Banner in Dashboard -->
+            <div id="portalPendingBanner" class="card-surface" style="display:none;background:linear-gradient(135deg,rgba(245,158,11,0.12),rgba(217,119,6,0.06));border:1px solid rgba(245,158,11,0.35);margin-bottom:1.5rem;padding:1.35rem 1.5rem;border-radius:18px;">
+                <div style="display:flex;align-items:flex-start;gap:14px;">
+                    <span class="material-symbols-outlined" style="font-size:2.2rem;color:#f59e0b;flex-shrink:0;">hourglass_top</span>
+                    <div style="flex:1;">
+                        <h4 style="font-size:1.05rem;font-weight:800;color:#f59e0b;margin:0 0 4px;">
+                            Status Kemitraan: Sedang Ditinjau Admin (Maksimal 3x24 Jam Kerja)
+                        </h4>
+                        <p style="font-size:0.875rem;color:var(--mkt-text-dim);margin:0 0 10px;line-height:1.5;">
+                            Akun Anda saat ini belum diverifikasi oleh admin. Anda dapat menjelajahi dokumentasi API, melihat katalog harga modal, dan struktur endpoint. Fitur pembuatan/regenerasi API Key dan transaksi resmi akan aktif otomatis setelah peninjauan berkas KYC selesai.
+                        </p>
+                        <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+                            <a href="https://wa.me/6281234567890?text=Halo%20Admin%20NexShop,%20saya%20sudah%20mendaftar%20reseller%20dan%20sedang%20menunggu%20verifikasi" target="_blank" rel="noopener" class="mkt-nav-back" style="font-size:0.8rem;padding:0.35rem 0.85rem;text-decoration:none;">
+                                <span class="material-symbols-outlined" style="font-size:0.95rem;">chat</span> Hubungi CS WhatsApp
+                            </a>
+                            <button type="button" onclick="loadPortalOverview()" class="mkt-nav-back" style="font-size:0.8rem;padding:0.35rem 0.85rem;">
+                                <span class="material-symbols-outlined" style="font-size:0.95rem;">refresh</span> Periksa Status Terkini
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Dashboard Navigation Tabs -->
             <div class="dash-tabs-bar" aria-label="Menu Navigasi Partner">
                 <button type="button" class="dash-tab-btn active" data-tab="tab-api-keys">
@@ -1516,12 +1539,14 @@
         // ── Load Portal State (Auth / Pending / Approved) ─────────────────
         let cachedSecret = "";
         let isSecretRevealed = false;
+        let currentResellerStatus = "none";
 
         async function loadPortalOverview() {
             const token = getResellerToken();
             const secAuth = document.getElementById("sectionAuth");
             const secStatus = document.getElementById("sectionStatusNotice");
             const secDash = document.getElementById("sectionDashboard");
+            const pendingBanner = document.getElementById("portalPendingBanner");
 
             if (!token) {
                 secAuth.style.display = "block";
@@ -1531,36 +1556,38 @@
             }
 
             try {
-                const res = await fetch(`${API_BASE}/reseller/me`, {
+                // Selalu tampilkan Dashboard agar mitra bisa melihat dokumentasi API, endpoint & katalog
+                secAuth.style.display = "none";
+                secStatus.style.display = "none";
+                secDash.style.display = "block";
+
+                const ovRes = await fetch(`${API_BASE}/reseller/portal/overview`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
-                if (res.status === 401) {
+                if (ovRes.status === 401) {
                     logoutReseller();
                     return;
                 }
 
-                const meData = await res.json().catch(() => ({}));
-                const status = meData.status || "none";
+                const data = await ovRes.json().catch(() => ({}));
+                if (data.user) {
+                    currentResellerStatus = data.user.reseller_status || "none";
+                    document.getElementById("portalFullName").textContent = data.user.fullname || "Partner Reseller";
+                    document.getElementById("portalEmail").textContent = data.user.email;
 
-                if (status === "approved") {
-                    secAuth.style.display = "none";
-                    secStatus.style.display = "none";
-                    secDash.style.display = "block";
+                    if (currentResellerStatus === "approved") {
+                        if (pendingBanner) pendingBanner.style.display = "none";
+                        const tier = data.user.reseller_tier;
+                        const tierEl = document.getElementById("portalTierText");
+                        tierEl.textContent = tier ? `Tier ${tier.name}` : "Mitra Aktif";
+                        tierEl.style.background = "";
+                        tierEl.style.color = "";
+                        tierEl.style.borderColor = "";
 
-                    // Fetch Overview Data API
-                    const ovRes = await fetch(`${API_BASE}/reseller/portal/overview`, {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    const data = await ovRes.json().catch(() => ({}));
-
-                    if (ovRes.ok && data.user) {
-                        document.getElementById("portalFullName").textContent = data.user.fullname || "Partner Reseller";
-                        document.getElementById("portalEmail").textContent = data.user.email;
-                        if (data.user.reseller_tier) {
-                            document.getElementById("portalTierText").textContent = `Tier ${data.user.reseller_tier.name}`;
-                            document.getElementById("portalDiscountText").textContent = `Potongan ${String(data.user.reseller_tier.discount_percent).replace(".", ",")}% Otomatis Aktif`;
-                        }
+                        const discEl = document.getElementById("portalDiscountText");
+                        discEl.textContent = tier ? `Potongan ${String(tier.discount_percent).replace(".", ",")}% Otomatis Aktif` : "Potongan Reseller Aktif";
+                        discEl.style.color = "#34d399";
 
                         if (data.api_credentials) {
                             const creds = data.api_credentials;
@@ -1570,35 +1597,25 @@
                             document.getElementById("inputWebhookUrl").value = creds.webhook_url || "";
                             document.getElementById("inputWebhookSecret").value = creds.webhook_secret || "";
                         }
+                    } else {
+                        // Pending / Belum diverifikasi
+                        if (pendingBanner) pendingBanner.style.display = "block";
+                        const tierEl = document.getElementById("portalTierText");
+                        tierEl.textContent = "⏳ Menunggu Verifikasi Admin";
+                        tierEl.style.background = "rgba(245, 158, 11, 0.15)";
+                        tierEl.style.color = "#f59e0b";
+                        tierEl.style.borderColor = "rgba(245, 158, 11, 0.3)";
+
+                        const discEl = document.getElementById("portalDiscountText");
+                        discEl.textContent = "Verifikasi KYC (Maks. 3x24 Jam Kerja)";
+                        discEl.style.color = "#f59e0b";
+
+                        document.getElementById("inputApiKey").value = "Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja)";
+                        document.getElementById("inputSecretKey").value = "••••••••••••••••";
+                        document.getElementById("inputIpWhitelist").value = "";
+                        document.getElementById("inputWebhookUrl").value = "";
+                        document.getElementById("inputWebhookSecret").value = "";
                     }
-                } else if (status === "pending" || status === "none") {
-                    secAuth.style.display = "none";
-                    secDash.style.display = "none";
-                    secStatus.style.display = "block";
-
-                    const iconBox = document.getElementById("statusNoticeIcon");
-                    iconBox.style.background = "rgba(245, 158, 11, 0.15)";
-                    iconBox.style.color = "#f59e0b";
-                    iconBox.innerHTML = `<span class="material-symbols-outlined" style="font-size:2.6rem;">hourglass_top</span>`;
-
-                    document.getElementById("statusNoticeTitle").textContent = "Pengajuan Kemitraan Sedang Ditinjau Admin";
-                    document.getElementById("statusNoticeDesc").innerHTML = "Akun kemitraan Anda saat ini belum diverifikasi oleh admin. Berkas foto KTP dan data profil usaha Anda sedang dalam proses peninjauan KYC. Mohon menunggu maksimal 3x24 Jam kerja.";
-                } else if (status === "suspended") {
-                    secAuth.style.display = "none";
-                    secDash.style.display = "none";
-                    secStatus.style.display = "block";
-
-                    const iconBox = document.getElementById("statusNoticeIcon");
-                    iconBox.style.background = "rgba(239, 68, 68, 0.15)";
-                    iconBox.style.color = "#ef4444";
-                    iconBox.innerHTML = `<span class="material-symbols-outlined" style="font-size:2.6rem;">block</span>`;
-
-                    document.getElementById("statusNoticeTitle").textContent = "Status Kemitraan Reseller Sedang Dibekukan";
-                    document.getElementById("statusNoticeDesc").innerHTML = "Akun kemitraan Anda saat ini sedang dibekukan. Silakan hubungi Customer Service NexShop untuk informasi reaktivasi.";
-                } else {
-                    secAuth.style.display = "block";
-                    secStatus.style.display = "none";
-                    secDash.style.display = "none";
                 }
             } catch (err) {
                 console.error("loadPortalOverview error:", err);
@@ -1628,6 +1645,11 @@
         })();
 
         async function toggleSecretKey() {
+            if (currentResellerStatus !== "approved") {
+                showToast("Akun belum diverifikasi oleh admin. Tunggu verifikasi maksimal 3x24 jam kerja untuk membuka Secret Key.");
+                return;
+            }
+
             const secretInput = document.getElementById("inputSecretKey");
             const toggleBtn = document.getElementById("btnToggleSecret");
             const token = getResellerToken();
@@ -1643,7 +1665,7 @@
                             cachedSecret = data.secret_key;
                         }
                     } catch (e) {
-                        alert("Gagal mengambil Secret Key");
+                        showToast("Gagal mengambil Secret Key: " + e.message);
                         return;
                     }
                 }
@@ -1661,6 +1683,11 @@
 
         // ── Rotate API Key ───────────────────────────────────────────────
         document.getElementById("btnRotateApiKey").addEventListener("click", async () => {
+            if (currentResellerStatus !== "approved") {
+                showToast("Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja). Pembuatan API Key akan aktif otomatis setelah akun disetujui.");
+                return;
+            }
+
             if (!confirm("PERINGATAN: Me-rotate API Key akan menonaktifkan API Key lama. Aplikasi atau bot yang menggunakan Key lama akan berhenti berfungsi sampai Anda memperbaruinya. Lanjutkan?")) {
                 return;
             }
@@ -1682,13 +1709,18 @@
 
                 showToast("API Key baru berhasil di-generate!");
             } catch (err) {
-                alert(err.message);
+                showToast(err.message);
             }
         });
 
         // ── Save Settings ────────────────────────────────────────────────
         document.getElementById("formPortalSettings").addEventListener("submit", async (e) => {
             e.preventDefault();
+            if (currentResellerStatus !== "approved") {
+                showToast("Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja).");
+                return;
+            }
+
             const token = getResellerToken();
             const btn = document.getElementById("btnSaveSettings");
             btn.disabled = true;
@@ -1708,7 +1740,7 @@
 
                 showToast("Pengaturan IP Whitelist & Webhook tersimpan!");
             } catch (err) {
-                alert(err.message);
+                showToast(err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<span class="material-symbols-outlined">save</span> <span>Simpan Pengaturan Keamanan</span>`;
@@ -1717,9 +1749,14 @@
 
         // ── Test Webhook ─────────────────────────────────────────────────
         document.getElementById("btnTestWebhook").addEventListener("click", async () => {
+            if (currentResellerStatus !== "approved") {
+                showToast("Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja).");
+                return;
+            }
+
             const webhookUrl = document.getElementById("inputWebhookUrl").value.trim();
             if (!webhookUrl) {
-                alert("Masukkan URL Webhook Anda terlebih dahulu lalu klik Simpan.");
+                showToast("Masukkan URL Webhook Anda terlebih dahulu lalu klik Simpan.");
                 return;
             }
 
@@ -1736,7 +1773,7 @@
                 const data = await res.json();
                 alert(data.message + "\n\nRespon Server:\n" + data.response_body);
             } catch (err) {
-                alert("Gagal kirim tes webhook: " + err.message);
+                showToast("Gagal kirim tes webhook: " + err.message);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:1rem;">send</span> <span>Tes Webhook</span>`;

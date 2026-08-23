@@ -789,10 +789,44 @@ exports.getPortalOverview = async (req, res) => {
             .maybeSingle();
 
         if (uErr) throw uErr;
-        if (!user || user.reseller_status !== "approved") {
-            return res.status(403).json({
-                message: "Akses Partner Portal khusus akun reseller aktif.",
-                reseller_status: user?.reseller_status || "none"
+        if (!user) {
+            return res.status(404).json({ message: "User tidak ditemukan" });
+        }
+
+        let status = user.reseller_status || "none";
+        if (status === "none") {
+            const { data: latestApp } = await supabase
+                .from("reseller_applications")
+                .select("status")
+                .eq("user_id", user.id)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            if (latestApp && latestApp.status) status = latestApp.status;
+        }
+
+        // Jika akun belum approved (misal pending / none), tetap berikan akses portal untuk lihat dokumentasi & katalog
+        if (status !== "approved") {
+            return res.json({
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    fullname: user.fullname,
+                    reseller_status: status,
+                    reseller_tier: { code: "pending", name: "Menunggu Verifikasi", discount_percent: 0 },
+                    reseller_since: null
+                },
+                api_credentials: {
+                    api_key: "Belum Aktif (Akun Menunggu Verifikasi)",
+                    masked_secret: "••••••••••••••••",
+                    ip_whitelist: "",
+                    webhook_url: "",
+                    webhook_secret: "",
+                    is_active: false,
+                    total_requests: 0,
+                    last_used_at: null,
+                    created_at: null
+                }
             });
         }
 
@@ -866,6 +900,11 @@ exports.getPortalOverview = async (req, res) => {
  */
 exports.revealSecretKey = async (req, res) => {
     try {
+        const { data: user } = await supabase.from("users").select("reseller_status").eq("id", req.user.id).maybeSingle();
+        if (!user || user.reseller_status !== "approved") {
+            return res.status(403).json({ message: "Akun belum diverifikasi oleh admin. Tunggu verifikasi maksimal 3x24 jam kerja untuk mengakses Secret Key." });
+        }
+
         const { data: keyRecord, error } = await supabase
             .from("reseller_api_keys")
             .select("secret_key, webhook_secret")
@@ -891,6 +930,11 @@ exports.revealSecretKey = async (req, res) => {
  */
 exports.generateOrRotateApiKey = async (req, res) => {
     try {
+        const { data: user } = await supabase.from("users").select("reseller_status").eq("id", req.user.id).maybeSingle();
+        if (!user || user.reseller_status !== "approved") {
+            return res.status(403).json({ message: "Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja). Pembuatan API Key akan aktif otomatis setelah akun disetujui." });
+        }
+
         const newApiKey = generateResellerApiKey();
         const newSecretKey = generateResellerSecretKey();
         const newWebhookSecret = generateResellerWebhookSecret();
@@ -932,6 +976,11 @@ exports.updatePortalSettings = async (req, res) => {
     const rawWebhook = String(req.body.webhook_url || "").trim();
 
     try {
+        const { data: user } = await supabase.from("users").select("reseller_status").eq("id", req.user.id).maybeSingle();
+        if (!user || user.reseller_status !== "approved") {
+            return res.status(403).json({ message: "Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja)." });
+        }
+
         const payload = {
             ip_whitelist: rawIp || null,
             webhook_url: rawWebhook || null,
