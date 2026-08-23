@@ -9,7 +9,12 @@
 const assert = require("assert");
 const crypto = require("crypto");
 const { generateWebhookSignature } = require("../nexshop-backend/services/resellerWebhookService");
-const { hitungHargaReseller, hitungMarkupWajar } = require("../nexshop-backend/utils/resellerPricing");
+// hitungMarkupWajar ada di topupHelpers, BUKAN di resellerPricing. Impor
+// lama diam-diam menghasilkan undefined (tidak ketahuan karena test ini
+// tidak pernah memanggilnya) -- bug yang sama pernah bikin
+// resellerApiController balas 500 di produksi.
+const { hitungHargaReseller } = require("../nexshop-backend/utils/resellerPricing");
+const { hitungMarkupWajar } = require("../nexshop-backend/utils/topupHelpers");
 
 console.log("===============================================================================");
 console.log("  NEXSHOP REGTEST: WALLET, LEDGER, ATOMICITY & RESELLER OPEN API V1");

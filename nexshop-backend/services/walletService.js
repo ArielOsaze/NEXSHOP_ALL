@@ -14,6 +14,22 @@ class WalletNotSetupError extends Error {
     }
 }
 
+// RPC atomik di PostgreSQL mengembalikan bentuk yang BERBEDA antara jalur
+// normal ({balance_before, balance_after, ...}) dan jalur idempotent
+// ({balance, ...}). Pemanggil (mis. resellerApiController) membaca
+// `balance_after`, jadi pada respons idempotent nilainya undefined dan
+// saldo sisa yang dikirim ke mitra jadi kosong. Normalisasi di satu tempat:
+// balance dan balance_after selalu terisi, apa pun jalurnya.
+function normalizeWalletResult(result) {
+    if (!result || typeof result !== "object") return result;
+    const after = result.balance_after != null ? result.balance_after : result.balance;
+    return {
+        ...result,
+        balance: Number(result.balance != null ? result.balance : after) || 0,
+        balance_after: Number(after) || 0
+    };
+}
+
 function isWalletMissing(error) {
     if (!error) return false;
     const code = String(error.code || "");
@@ -122,7 +138,7 @@ async function creditWallet({
         if (error) {
             // Jika RPC belum ada di database, lakukan fallback transaksi aman di query
             if (error.message && (error.message.includes("function") || error.code === "42883")) {
-                return await fallbackCreditWallet({
+                return normalizeWalletResult(await fallbackCreditWallet({
                     userId,
                     type,
                     amount: numAmount,
@@ -130,13 +146,13 @@ async function creditWallet({
                     externalTransactionId,
                     description,
                     metadata
-                });
+                }));
             }
             if (isWalletMissing(error)) throw new WalletNotSetupError();
             throw error;
         }
 
-        return data;
+        return normalizeWalletResult(data);
     } catch (err) {
         if (isWalletMissing(err)) throw new WalletNotSetupError();
         throw err;
@@ -176,7 +192,7 @@ async function debitWallet({
 
         if (error) {
             if (error.message && (error.message.includes("function") || error.code === "42883")) {
-                return await fallbackDebitWallet({
+                return normalizeWalletResult(await fallbackDebitWallet({
                     userId,
                     type,
                     amount: numAmount,
@@ -184,13 +200,13 @@ async function debitWallet({
                     externalTransactionId,
                     description,
                     metadata
-                });
+                }));
             }
             if (isWalletMissing(error)) throw new WalletNotSetupError();
             throw error;
         }
 
-        return data;
+        return normalizeWalletResult(data);
     } catch (err) {
         if (isWalletMissing(err)) throw new WalletNotSetupError();
         throw err;
@@ -220,104 +236,62 @@ async function refundWallet({
     });
 }
 
-/**
- * Fallback Credit jika RPC PostgreSQL belum dibuat di Supabase
- */
-async function fallbackCreditWallet({
-    userId,
-    type,
-    amount,
-    referenceId,
-    externalTransactionId,
-    description,
-    metadata
-}) {
-    // 1. Idempotency check
-    const { data: existingTrx } = await supabase
+// ===========================================================
+// JALUR CADANGAN (dipakai HANYA kalau RPC credit_wallet_atomic /
+// debit_wallet_atomic belum ada di Supabase)
+//
+// Versi sebelumnya memakai pola baca-lalu-tulis polos:
+//     baca saldo -> hitung saldo baru -> UPDATE wallets SET balance = baru
+// Itu tidak aman untuk uang. Dua request bersamaan sama-sama membaca saldo
+// lama, lalu keduanya menulis hasil hitungannya sendiri -- yang menang
+// adalah penulis terakhir, dan potongan/penambahan yang satunya HILANG
+// (lost update). Pada debit, versi lama juga sudah memasang
+// `.gte("balance", amount)` tapi TIDAK PERNAH memeriksa apakah UPDATE-nya
+// benar-benar mengenai baris: kalau saldo keburu habis, update-nya diam-diam
+// nol baris, kodenya tetap lanjut mencatat mutasi, lalu MENIMPA
+// users.balance dengan angka basi -- uang tercipta kembali.
+//
+// Sekarang keduanya memakai compare-and-swap: UPDATE hanya boleh mengenai
+// baris yang saldonya MASIH sama persis dengan yang barusan dibaca
+// (.eq("balance", balanceBefore)), dan hasilnya di-.select() supaya jumlah
+// baris terdampak bisa diperiksa. Kalau 0 baris (ada yang menyalip), operasi
+// diulang dengan saldo terbaru. Ini membuat jalur cadangan aman tanpa perlu
+// transaksi database.
+// ===========================================================
+
+const CAS_MAX_RETRY = 5;
+
+function toNumber(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+}
+
+// Idempotency: satu reference_id = satu mutasi, selamanya.
+async function findExistingTransaction(referenceId) {
+    const { data } = await supabase
         .from("wallet_transactions")
         .select("id, balance_after")
         .eq("reference_id", referenceId)
         .maybeSingle();
-
-    if (existingTrx) {
-        const wallet = await getOrCreateWallet(userId);
-        return {
-            success: true,
-            idempotent: true,
-            message: "Transaksi sudah diproses sebelumnya",
-            wallet_id: wallet.id,
-            balance: wallet.balance,
-            transaction_id: existingTrx.id
-        };
-    }
-
-    const wallet = await getOrCreateWallet(userId);
-    const balanceBefore = Number(wallet.balance) || 0;
-    const balanceAfter = balanceBefore + amount;
-
-    // 2. Update wallet
-    const { error: updErr } = await supabase
-        .from("wallets")
-        .update({ balance: balanceAfter, updated_at: new Date().toISOString() })
-        .eq("id", wallet.id);
-
-    if (updErr) throw updErr;
-
-    // 3. Insert transaction
-    const { data: trx, error: trxErr } = await supabase
-        .from("wallet_transactions")
-        .insert([{
-            wallet_id: wallet.id,
-            user_id: userId,
-            type,
-            amount,
-            direction: "IN",
-            balance_before: balanceBefore,
-            balance_after: balanceAfter,
-            reference_id: referenceId,
-            external_transaction_id: externalTransactionId,
-            description,
-            status: "SUCCESS",
-            metadata
-        }])
-        .select()
-        .single();
-
-    if (trxErr) throw trxErr;
-
-    await supabase.from("users").update({ balance: balanceAfter }).eq("id", userId);
-
-    return {
-        success: true,
-        idempotent: false,
-        wallet_id: wallet.id,
-        balance_before: balanceBefore,
-        balance_after: balanceAfter,
-        amount,
-        transaction_id: trx?.id
-    };
+    return data || null;
 }
 
 /**
- * Fallback Debit jika RPC PostgreSQL belum dibuat di Supabase
+ * Inti compare-and-swap untuk kedua arah mutasi.
+ * @param {"IN"|"OUT"} direction
  */
-async function fallbackDebitWallet({
+async function fallbackMutateWallet({
     userId,
     type,
     amount,
     referenceId,
     externalTransactionId,
     description,
-    metadata
+    metadata,
+    direction
 }) {
-    // 1. Idempotency check
-    const { data: existingTrx } = await supabase
-        .from("wallet_transactions")
-        .select("id, balance_after")
-        .eq("reference_id", referenceId)
-        .maybeSingle();
-
-    if (existingTrx) {
+    const existing = await findExistingTransaction(referenceId);
+    if (existing) {
         const wallet = await getOrCreateWallet(userId);
         return {
             success: true,
@@ -325,61 +299,121 @@ async function fallbackDebitWallet({
             message: "Transaksi sudah diproses sebelumnya",
             wallet_id: wallet.id,
             balance: wallet.balance,
-            transaction_id: existingTrx.id
+            balance_after: wallet.balance,
+            transaction_id: existing.id
         };
     }
 
-    const wallet = await getOrCreateWallet(userId);
-    const balanceBefore = Number(wallet.balance) || 0;
+    let lastError = null;
 
-    if (balanceBefore < amount) {
-        throw new Error(`Saldo tidak mencukupi. Saldo saat ini: Rp ${balanceBefore.toLocaleString('id-ID')}, dibutuhkan: Rp ${amount.toLocaleString('id-ID')}`);
-    }
+    for (let attempt = 0; attempt < CAS_MAX_RETRY; attempt++) {
+        const wallet = await getOrCreateWallet(userId);
 
-    const balanceAfter = balanceBefore - amount;
+        if (wallet.status && wallet.status !== "ACTIVE") {
+            throw new Error("Dompet saldo sedang dibekukan atau nonaktif.");
+        }
 
-    // 2. Update wallet
-    const { error: updErr } = await supabase
-        .from("wallets")
-        .update({ balance: balanceAfter, updated_at: new Date().toISOString() })
-        .eq("id", wallet.id)
-        .gte("balance", amount); // pencegahan race condition di update level
+        const balanceBefore = toNumber(wallet.balance);
 
-    if (updErr) throw updErr;
+        if (direction === "OUT" && balanceBefore < amount) {
+            throw new Error(
+                `Saldo tidak mencukupi. Saldo saat ini: Rp ${balanceBefore.toLocaleString("id-ID")}, dibutuhkan: Rp ${amount.toLocaleString("id-ID")}`
+            );
+        }
 
-    // 3. Insert transaction
-    const { data: trx, error: trxErr } = await supabase
-        .from("wallet_transactions")
-        .insert([{
+        const balanceAfter = direction === "OUT" ? balanceBefore - amount : balanceBefore + amount;
+
+        // COMPARE-AND-SWAP: hanya kena kalau saldo belum berubah sejak dibaca.
+        const { data: swapped, error: updErr } = await supabase
+            .from("wallets")
+            .update({ balance: balanceAfter, updated_at: new Date().toISOString() })
+            .eq("id", wallet.id)
+            .eq("balance", balanceBefore)
+            .select("id, balance");
+
+        if (updErr) {
+            if (isWalletMissing(updErr)) throw new WalletNotSetupError();
+            throw updErr;
+        }
+
+        // 0 baris = ada mutasi lain yang menyalip di antara baca & tulis.
+        // Ulangi dari saldo terbaru, jangan pernah lanjut dengan angka basi.
+        if (!swapped || swapped.length === 0) {
+            lastError = new Error("Saldo sedang berubah oleh transaksi lain");
+            continue;
+        }
+
+        // Catat mutasi ke ledger. reference_id UNIQUE di database, jadi kalau
+        // request kembar menang balapan di sini, insert-nya gagal 23505 --
+        // saldo dikembalikan ke nilai semula lalu hasil milik pemenang
+        // dipakai, supaya tidak ada mutasi ganda untuk satu reference_id.
+        const { data: trx, error: trxErr } = await supabase
+            .from("wallet_transactions")
+            .insert([{
+                wallet_id: wallet.id,
+                user_id: userId,
+                type,
+                amount,
+                direction,
+                balance_before: balanceBefore,
+                balance_after: balanceAfter,
+                reference_id: referenceId,
+                external_transaction_id: externalTransactionId,
+                description,
+                status: "SUCCESS",
+                metadata
+            }])
+            .select()
+            .single();
+
+        if (trxErr) {
+            await supabase
+                .from("wallets")
+                .update({ balance: balanceBefore, updated_at: new Date().toISOString() })
+                .eq("id", wallet.id)
+                .eq("balance", balanceAfter);
+
+            if (String(trxErr.code) === "23505") {
+                const winner = await findExistingTransaction(referenceId);
+                const current = await getOrCreateWallet(userId);
+                return {
+                    success: true,
+                    idempotent: true,
+                    message: "Transaksi sudah diproses sebelumnya",
+                    wallet_id: current.id,
+                    balance: current.balance,
+                    balance_after: current.balance,
+                    transaction_id: winner ? winner.id : null
+                };
+            }
+            throw trxErr;
+        }
+
+        // users.balance cuma cermin buat tampilan cepat; sumber kebenarannya
+        // tetap tabel wallets. Ditulis setelah ledger aman.
+        await supabase.from("users").update({ balance: balanceAfter }).eq("id", userId);
+
+        return {
+            success: true,
+            idempotent: false,
             wallet_id: wallet.id,
-            user_id: userId,
-            type,
-            amount,
-            direction: "OUT",
             balance_before: balanceBefore,
             balance_after: balanceAfter,
-            reference_id: referenceId,
-            external_transaction_id: externalTransactionId,
-            description,
-            status: "SUCCESS",
-            metadata
-        }])
-        .select()
-        .single();
+            balance: balanceAfter,
+            amount,
+            transaction_id: trx ? trx.id : null
+        };
+    }
 
-    if (trxErr) throw trxErr;
+    throw lastError || new Error("Gagal memperbarui saldo setelah beberapa kali percobaan. Coba lagi sebentar lagi.");
+}
 
-    await supabase.from("users").update({ balance: balanceAfter }).eq("id", userId);
+async function fallbackCreditWallet(args) {
+    return fallbackMutateWallet({ ...args, direction: "IN" });
+}
 
-    return {
-        success: true,
-        idempotent: false,
-        wallet_id: wallet.id,
-        balance_before: balanceBefore,
-        balance_after: balanceAfter,
-        amount,
-        transaction_id: trx?.id
-    };
+async function fallbackDebitWallet(args) {
+    return fallbackMutateWallet({ ...args, direction: "OUT" });
 }
 
 /**

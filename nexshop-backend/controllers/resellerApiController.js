@@ -3,7 +3,12 @@ const supabase = require("../config/db");
 const walletService = require("../services/walletService");
 const tokovoucher = require("../config/tokovoucher");
 const { getResellerContext } = require("../services/resellerService");
-const { hitungHargaReseller, hitungMarkupWajar } = require("../utils/resellerPricing");
+// BUG FIX: hitungMarkupWajar TIDAK diekspor oleh utils/resellerPricing --
+// dia ada di utils/topupHelpers. Impor lama bikin nilainya undefined,
+// jadi tiap produk yang harga_jual-nya kosong/0 melempar
+// "hitungMarkupWajar is not a function" dan endpoint balas 500.
+const { hitungHargaReseller } = require("../utils/resellerPricing");
+const { hitungMarkupWajar } = require("../utils/topupHelpers");
 const { sendTelegramNotification } = require("../config/notify");
 
 function rupiahLog(n) {
@@ -32,7 +37,40 @@ exports.createOrder = async (req, res) => {
         });
     }
 
-    const resellerRefId = ref_id ? String(ref_id).trim() : `REF-${Date.now()}`;
+    // ==========================================================
+    // VALIDASI INPUT
+    // Endpoint ini memotong saldo sungguhan, jadi tiap field yang masuk
+    // ke query/ledger dibatasi bentuk & panjangnya di sini -- bukan
+    // diserahkan ke lapisan bawah. Sebelumnya nilai apa pun (termasuk
+    // string sepanjang megabyte atau berisi karakter filter PostgREST)
+    // diteruskan begitu saja.
+    // ==========================================================
+    const kodeProduk = String(kode_produk).trim();
+    const tujuanBersih = String(tujuan).trim();
+    const serverIdBersih = server_id == null || String(server_id).trim() === "" ? null : String(server_id).trim();
+
+    if (kodeProduk.length > 60 || !/^[A-Za-z0-9._-]+$/.test(kodeProduk)) {
+        return res.status(400).json({ success: false, message: "Format 'kode_produk' tidak valid." });
+    }
+    if (tujuanBersih.length < 2 || tujuanBersih.length > 60 || !/^[A-Za-z0-9._@-]+$/.test(tujuanBersih)) {
+        return res.status(400).json({ success: false, message: "Format 'tujuan' tidak valid (2-60 karakter alfanumerik)." });
+    }
+    if (serverIdBersih !== null && (serverIdBersih.length > 30 || !/^[A-Za-z0-9._-]+$/.test(serverIdBersih))) {
+        return res.status(400).json({ success: false, message: "Format 'server_id' tidak valid." });
+    }
+
+    // ref_id ikut masuk ke reference_id ledger wallet (kunci idempotency),
+    // jadi bentuknya harus ketat dan tidak boleh kosong-tapi-whitespace.
+    const resellerRefId = ref_id != null && String(ref_id).trim()
+        ? String(ref_id).trim()
+        : `REF-${Date.now()}-${crypto.randomBytes(4).toString("hex")}`;
+
+    if (resellerRefId.length > 80 || !/^[A-Za-z0-9._-]+$/.test(resellerRefId)) {
+        return res.status(400).json({
+            success: false,
+            message: "Format 'ref_id' tidak valid (maksimal 80 karakter: huruf, angka, '.', '-', '_')."
+        });
+    }
 
     try {
         // 1. Idempotency Check: Pastikan ref_id reseller belum pernah digunakan
@@ -69,14 +107,14 @@ exports.createOrder = async (req, res) => {
         const { data: product, error: prodErr } = await supabase
             .from("topup_products")
             .select("nama, kode_produk, harga_beli, harga_jual, butuh_server_id, kategori, source_operator_name")
-            .eq("kode_produk", kode_produk)
+            .eq("kode_produk", kodeProduk)
             .eq("is_active", true)
             .maybeSingle();
 
         if (prodErr || !product) {
             return res.status(404).json({
                 success: false,
-                message: `Produk dengan kode '${kode_produk}' tidak ditemukan atau sedang tidak aktif`
+                message: `Produk dengan kode '${kodeProduk}' tidak ditemukan atau sedang tidak aktif`
             });
         }
 
@@ -91,7 +129,7 @@ exports.createOrder = async (req, res) => {
             finalResellerPrice = hasil.harga;
         }
 
-        if (product.butuh_server_id && !server_id) {
+        if (product.butuh_server_id && !serverIdBersih) {
             return res.status(400).json({
                 success: false,
                 message: "Produk ini memerlukan 'server_id' (Zone ID / Server ID)"
@@ -99,7 +137,17 @@ exports.createOrder = async (req, res) => {
         }
 
         // 3. Potong saldo reseller secara atomik
-        const debitRef = `RSL-PUR-${resellerRefId}-${Date.now()}`;
+        //
+        // BUG FIX (idempotency): referensi debit dulu berisi Date.now(),
+        // sehingga SETIAP percobaan menghasilkan reference_id baru. Dua
+        // request bersamaan dengan ref_id yang sama karena itu sama-sama
+        // lolos pengecekan duplikat di langkah 1 (cek-lalu-insert tidak
+        // atomik) dan sama-sama memotong saldo -- reseller dipotong dua
+        // kali untuk satu pesanan. Referensi sekarang DITURUNKAN penuh dari
+        // (user, ref_id) supaya UNIQUE constraint di wallet_transactions
+        // .reference_id yang menjadi penjaga idempotency-nya: percobaan
+        // kedua dijawab "sudah pernah diproses" tanpa memindahkan uang.
+        const debitRef = `RSL-PUR-${userId}-${resellerRefId}`;
         let debitResult;
         try {
             debitResult = await walletService.debitWallet({
@@ -108,12 +156,12 @@ exports.createOrder = async (req, res) => {
                 amount: finalResellerPrice,
                 referenceId: debitRef,
                 externalTransactionId: resellerRefId,
-                description: `Reseller API: Pembelian ${product.nama} (${tujuan})`,
+                description: `Reseller API: Pembelian ${product.nama} (${tujuanBersih})`,
                 metadata: {
                     reseller_ref_id: resellerRefId,
                     kode_produk: product.kode_produk,
-                    target: tujuan,
-                    server_id: server_id || null
+                    target: tujuanBersih,
+                    server_id: serverIdBersih
                 }
             });
         } catch (walletErr) {
@@ -134,8 +182,8 @@ exports.createOrder = async (req, res) => {
             api_key_id: req.user.api_key_id || null,
             kode_produk: product.kode_produk,
             nama_produk: product.nama,
-            tujuan: tujuan,
-            server_id: server_id || null,
+            tujuan: tujuanBersih,
+            server_id: serverIdBersih,
             harga: finalResellerPrice,
             subtotal: product.harga_jual,
             payment_method: "reseller_wallet",
@@ -144,8 +192,48 @@ exports.createOrder = async (req, res) => {
         }]);
 
         if (insertErr) {
+            // 23505 = tabrakan UNIQUE INDEX idx_topup_orders_reseller_ref
+            // (reseller_user_id, reseller_ref_id). Artinya request kembar
+            // sedang/sudah membuat pesanan yang SAMA -- pesanannya sah, dan
+            // debit-nya sudah di-dedup lewat debitRef deterministik di atas.
+            //
+            // PENTING: jangan refund di sini. Versi sebelumnya mengembalikan
+            // dana pada kasus ini, padahal saldo cuma terpotong sekali --
+            // jadi refund-nya MENCIPTAKAN uang dari ketiadaan setiap kali
+            // ada request kembar.
+            if (String(insertErr.code) === "23505") {
+                const { data: kembar } = await supabase
+                    .from("topup_orders")
+                    .select("id, status, kode_produk, nama_produk, tujuan, server_id, harga, tv_sn, created_at")
+                    .eq("reseller_user_id", userId)
+                    .eq("reseller_ref_id", resellerRefId)
+                    .maybeSingle();
+
+                if (kembar) {
+                    return res.status(200).json({
+                        success: true,
+                        idempotent: true,
+                        message: "Pesanan dengan ref_id ini sudah pernah dibuat sebelumnya",
+                        data: {
+                            order_id: kembar.id,
+                            ref_id: resellerRefId,
+                            status: kembar.status === "sukses" ? "SUCCESS" : (kembar.status === "gagal" ? "FAILED" : "PROCESSING"),
+                            kode_produk: kembar.kode_produk,
+                            nama_produk: kembar.nama_produk,
+                            target: kembar.tujuan,
+                            server_id: kembar.server_id,
+                            price: Number(kembar.harga),
+                            serial_number: kembar.tv_sn || null,
+                            balance_remaining: await walletService.getWalletBalance(userId),
+                            created_at: kembar.created_at
+                        }
+                    });
+                }
+            }
+
             console.error("Gagal simpan order reseller:", insertErr);
-            // Refund kembali saldo karena kegagalan insert
+            // Kegagalan insert yang sesungguhnya: pesanan tidak pernah ada,
+            // jadi dana yang sudah dipotong wajib dikembalikan.
             await walletService.refundWallet({
                 userId,
                 amount: finalResellerPrice,
@@ -166,8 +254,8 @@ exports.createOrder = async (req, res) => {
             tvResult = await tokovoucher.createTransaction({
                 refId: orderId,
                 kodeProduk: product.kode_produk,
-                tujuan: tujuan,
-                serverId: server_id || undefined
+                tujuan: tujuanBersih,
+                serverId: serverIdBersih || undefined
             });
 
             if (tvResult.status === 0 || tvResult.status === "0") {
@@ -203,7 +291,7 @@ exports.createOrder = async (req, res) => {
         }
 
         sendTelegramNotification(
-            `🚀 <b>Order Reseller API Baru</b>\nReseller: ${req.user.fullname || req.user.email}\nRef ID: ${resellerRefId}\nProduk: ${product.nama}\nTujuan: ${tujuan}\nHarga: ${rupiahLog(finalResellerPrice)}`
+            `🚀 <b>Order Reseller API Baru</b>\nReseller: ${req.user.fullname || req.user.email}\nRef ID: ${resellerRefId}\nProduk: ${product.nama}\nTujuan: ${tujuanBersih}\nHarga: ${rupiahLog(finalResellerPrice)}`
         );
 
         res.status(201).json({
@@ -215,8 +303,8 @@ exports.createOrder = async (req, res) => {
                 status: finalStatus === "sukses" ? "SUCCESS" : (finalStatus === "gagal" ? "FAILED" : "PROCESSING"),
                 kode_produk: product.kode_produk,
                 nama_produk: product.nama,
-                target: tujuan,
-                server_id: server_id || null,
+                target: tujuanBersih,
+                server_id: serverIdBersih,
                 price: finalResellerPrice,
                 serial_number: tvResult?.sn || null,
                 message: tvResult?.message || tvResult?.error_msg || "Pesanan sedang diproses",
@@ -243,11 +331,25 @@ exports.getOrderStatus = async (req, res) => {
     const userId = req.user.id;
 
     try {
+        // KEAMANAN: `id` datang dari URL dan dulu ditempel mentah ke dalam
+        // string filter .or(). Sintaks filter PostgREST memakai koma dan
+        // tanda kurung sebagai pemisah, jadi nilai seperti
+        //   "x,reseller_user_id.gt.0"
+        // menyuntikkan kondisi tambahan ke dalam query. Karakter di luar
+        // pola order id / ref id yang sah ditolak lebih dulu.
+        const lookupId = String(id || "").trim();
+        if (!lookupId || lookupId.length > 80 || !/^[A-Za-z0-9_-]+$/.test(lookupId)) {
+            return res.status(400).json({
+                success: false,
+                message: "Format order_id / ref_id tidak valid (hanya huruf, angka, '-' dan '_')."
+            });
+        }
+
         const { data: order, error } = await supabase
             .from("topup_orders")
             .select("id, reseller_ref_id, kode_produk, nama_produk, tujuan, server_id, harga, status, tv_sn, tv_message, created_at, updated_at")
             .eq("reseller_user_id", userId)
-            .or(`id.eq.${id},reseller_ref_id.eq.${id}`)
+            .or(`id.eq.${lookupId},reseller_ref_id.eq.${lookupId}`)
             .maybeSingle();
 
         if (error || !order) {
@@ -298,9 +400,12 @@ exports.getBalance = async (req, res) => {
             data: {
                 balance: wallet.balance,
                 currency: wallet.currency,
-                tier: konteksReseller.tier?.name || "GOLD",
-                discount_percent: konteksReseller.discountPercent,
-                reseller_status: req.user.reseller_status || "approved"
+                // Nilai apa adanya. Fallback lama ("GOLD" / "approved")
+                // melaporkan tier & status yang tidak pernah dimiliki akun.
+                tier: konteksReseller.tier ? konteksReseller.tier.name : null,
+                tier_code: konteksReseller.tier ? konteksReseller.tier.code : null,
+                discount_percent: Number(konteksReseller.discountPercent) || 0,
+                reseller_status: req.user.reseller_status || null
             }
         });
     } catch (err) {
@@ -324,7 +429,12 @@ exports.getProducts = async (req, res) => {
         if (error) throw error;
 
         const konteksReseller = await getResellerContext(userId);
-        const discountPercent = konteksReseller.discountPercent || 3.5;
+        // JANGAN mengarang diskon. Nilai lama `|| 3.5` bikin akun yang
+        // tier-nya 0% (atau yang konteks reseller-nya gagal dimuat) tetap
+        // dikirimi "harga reseller" berdiskon 3,5% yang tidak pernah
+        // disetujui admin -- angka di API jadi tidak cocok dengan yang
+        // benar-benar ditagih saat order.
+        const discountPercent = Number(konteksReseller.discountPercent) || 0;
 
         const formatted = (products || []).map(p => {
             let basePrice = Number(p.harga_jual) || 0;

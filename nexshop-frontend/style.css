@@ -4315,12 +4315,28 @@ nav#mainNav.nav-scrolled {
     margin-bottom: 16px;
 }
 
+/* Deskripsi produk (game key, Xbox Game Pass, bundle) sering berupa
+   beberapa paragraf. text-align:justify bikin tepi kanannya rata sehingga
+   blok teksnya terbaca rapi, bukan bergerigi.
+
+   text-wrap:pretty + hyphens dipasang bersamaan dan itu penting: justify
+   tanpa keduanya menghasilkan "sungai" spasi lebar di kolom sempit (HP)
+   karena browser meregangkan spasi antar kata untuk memaksa rata kanan.
+   hyphens:auto mengizinkan pemenggalan kata, text-wrap:pretty memperbaiki
+   pembagian baris terakhir, dan word-break mencegah URL/kode panjang
+   menjebol lebar kolom. */
 .pm-desc {
     color: var(--text-muted);
     font-size: 14px;
     margin: 0 0 20px;
     line-height: 1.65;
     white-space: pre-line;
+    text-align: justify;
+    text-justify: inter-word;
+    text-wrap: pretty;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    overflow-wrap: anywhere;
 }
 
 .pm-benefits {
@@ -4746,6 +4762,18 @@ input::placeholder {
 }
 
 /* account dropdown */
+/* #accountBtn (avatar/tombol akun di navbar) isinya ikon + label nama.
+   Anak-anaknya dimatiin pointer-event-nya biar event.target selalu tombol
+   itu sendiri -- pasangan dari perbaikan closest() di script.js, sekaligus
+   bikin seluruh area tombol jadi satu hit target yang utuh. */
+#accountBtn {
+    touch-action: manipulation;
+}
+
+#accountBtn > * {
+    pointer-events: none;
+}
+
 .account-dropdown {
     position: fixed;
     top: 70px;
@@ -7848,6 +7876,22 @@ html:not(.dark) .home-glass-badge {
     -webkit-tap-highlight-color: transparent;
 }
 
+/* Jaring pengaman hit-testing: semua isi tombol wallet (ikon, label,
+   nominal, chevron) dimatiin pointer-event-nya supaya event.target SELALU
+   tombolnya sendiri, bukan <span>/<i> di dalamnya. Ini yang bikin tap di
+   HP -- yang gampang mendarat persis di atas teks nominal -- konsisten
+   kebaca sebagai klik tombol. touch-action:manipulation matiin double-tap
+   zoom delay + bikin tap gak gampang dianggap gesture pan oleh container
+   .nx-nav-actions yang bisa discroll horizontal. */
+.nx-wallet-nav-btn {
+    touch-action: manipulation;
+}
+
+.nx-wallet-nav-btn > *,
+.nx-wallet-nav-btn > * * {
+    pointer-events: none;
+}
+
 .nx-wallet-nav-btn:hover {
     background: linear-gradient(135deg, rgba(99, 102, 241, 0.28), rgba(56, 189, 248, 0.28));
     border-color: rgba(56, 189, 248, 0.65);
@@ -7932,6 +7976,23 @@ html:not(.dark) .home-glass-badge {
     margin-bottom: 0.5rem;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
+}
+
+.drawer-wallet-card {
+    touch-action: manipulation;
+}
+
+/* Sama seperti tombol wallet di navbar: isi kartu gak boleh jadi
+   event.target. Pengecualiannya tombol "Top Up" di dalamnya -- itu
+   memang target klik tersendiri (punya data-wallet-trigger sendiri). */
+.drawer-wallet-card > *,
+.drawer-wallet-card > * * {
+    pointer-events: none;
+}
+
+.drawer-wallet-topup-btn {
+    pointer-events: auto !important;
+    touch-action: manipulation;
 }
 
 .drawer-wallet-card:hover,
@@ -9049,4 +9110,119 @@ html:not(.dark) .home-glass-badge {
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
+}
+
+/* ==========================================================================
+   PEMUATAN BERTAHAP (LAZY LOAD) — KATALOG GAME HALAMAN UTAMA
+   ==========================================================================
+   Katalog tidak lagi diunduh sekaligus; kartu game datang per halaman dari
+   /topup/catalog/games. Zona ini memuat tombol muat-lagi + sentinel
+   IntersectionObserver, atau keterangan penutup saat semua hasil tampil.
+
+   Tombolnya tetap ada meskipun auto-load aktif: infinite scroll murni
+   memutus navigasi keyboard dan tidak berfungsi di browser tanpa
+   IntersectionObserver. */
+.topup-loadmore-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 28px;
+    /* Tinggi minimum menjaga layout stabil saat isi zona berganti dari
+       tombol ke teks penutup -- tanpa ini halaman "melompat" di akhir
+       daftar. */
+    min-height: 44px;
+}
+
+.topup-loadmore-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 26px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    background: var(--bg-panel);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color .2s ease, background-color .2s ease, transform .2s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.topup-loadmore-btn:hover:not(:disabled) {
+    border-color: var(--violet);
+    background: var(--surface-highlight);
+    transform: translateY(-1px);
+}
+
+.topup-loadmore-btn:focus-visible {
+    outline: 2px solid var(--violet);
+    outline-offset: 3px;
+}
+
+.topup-loadmore-btn:disabled {
+    opacity: .65;
+    cursor: progress;
+    transform: none;
+}
+
+/* Panah berputar jadi indikator memuat, jadi status tombol terbaca tanpa
+   menambah elemen yang menggeser layout. */
+.topup-loadmore-btn.is-loading i {
+    animation: topup-loadmore-spin .9s linear infinite;
+}
+
+@keyframes topup-loadmore-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .topup-loadmore-btn,
+    .topup-loadmore-btn.is-loading i {
+        transition: none;
+        animation: none;
+    }
+}
+
+.topup-loadmore-sisa {
+    padding: 2px 9px;
+    border-radius: 999px;
+    background: var(--surface-highlight);
+    color: var(--text-cyan);
+    font-size: 11.5px;
+    font-weight: 800;
+}
+
+.topup-loadmore-done {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    text-align: center;
+}
+
+/* Sentinel yang diawasi IntersectionObserver. Tingginya 1px (bukan 0)
+   karena sebagian browser tidak pernah melaporkan elemen setinggi nol
+   sebagai berpotongan. */
+#topupLoadSentinel {
+    width: 100%;
+    height: 1px;
+    pointer-events: none;
+}
+
+/* Deskripsi produk: di kolom yang sangat sempit, rata kanan-kiri tetap
+   menyisakan "sungai" spasi lebar walau hyphens sudah aktif -- jumlah kata
+   per baris terlalu sedikit untuk diratakan dengan rapi. Di bawah 420px
+   teks dikembalikan rata kiri: keterbacaan menang dari kerapian tepi. */
+@media (max-width: 420px) {
+    .pm-desc {
+        text-align: left;
+        hyphens: manual;
+        -webkit-hyphens: manual;
+    }
 }

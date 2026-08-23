@@ -20,9 +20,11 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap"
         rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
-        rel="stylesheet">
+    <!-- Ikon portal memakai Font Awesome 6 (bukan Material Symbols):
+         satu keluarga ikon untuk seluruh konsol mitra, dan konsisten
+         dengan halaman NexShop lainnya. -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <script src="/theme-init.js"></script>
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/marketplace-theme.css?v=20260823-kinetic">
@@ -190,7 +192,7 @@
             position: relative;
         }
 
-        .tv-nav-link .material-symbols-outlined {
+        .tv-nav-link > i[class*='fa-'] {
             font-size: 1.25rem;
             color: #64748b;
             transition: color 0.15s ease;
@@ -201,7 +203,7 @@
             color: #ffffff;
         }
 
-        .tv-nav-link:hover .material-symbols-outlined {
+        .tv-nav-link:hover > i[class*='fa-'] {
             color: #38bdf8;
         }
 
@@ -213,7 +215,7 @@
             box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
         }
 
-        .tv-nav-link.active .material-symbols-outlined {
+        .tv-nav-link.active > i[class*='fa-'] {
             color: #60a5fa;
         }
 
@@ -939,7 +941,34 @@
             box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
         }
 
-        .tv-search-input-wrap .material-symbols-outlined {
+        /* Pasangan tombol unduh (CSV + JSON) yang menempel jadi satu
+           kontrol. Dibuat flex-wrap supaya di layar sempit dia turun rapi,
+           bukan mendorong tombol lain keluar dari kartu. */
+        .tv-dl-split {
+            display: inline-flex;
+            align-items: stretch;
+            gap: 0;
+        }
+
+        .tv-dl-split > button:first-child {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .tv-dl-split > button.tv-dl-split-alt {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+            border-left-width: 0;
+            padding-left: 0.7rem;
+            padding-right: 0.7rem;
+        }
+
+        .tv-dl-split > button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .tv-search-input-wrap > i[class*='fa-'] {
             position: absolute;
             left: 9px;
             top: 50%;
@@ -1083,11 +1112,11 @@
             <div style="display:flex;background:rgba(255,255,255,0.06);border-radius:12px;padding:4px;margin-bottom:1.5rem;">
                 <button type="button" id="tabBtnLogin" onclick="switchAuthTab('login')"
                     style="flex:1;padding:0.65rem;border:none;border-radius:8px;font-weight:700;font-size:0.86rem;cursor:pointer;background:#2563eb;color:#fff;transition:all 0.15s ease;">
-                    <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:4px;">login</span> Masuk Mitra
+                    <i class="fa-solid fa-right-to-bracket" style="font-size:1rem;vertical-align:middle;margin-right:4px;" aria-hidden="true"></i> Masuk Mitra
                 </button>
                 <button type="button" id="tabBtnRegister" onclick="switchAuthTab('register')"
                     style="flex:1;padding:0.65rem;border:none;border-radius:8px;font-weight:700;font-size:0.86rem;cursor:pointer;background:transparent;color:#94a3b8;transition:all 0.15s ease;">
-                    <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:4px;">how_to_reg</span> Daftar Baru &amp; KYC
+                    <i class="fa-solid fa-user-check" style="font-size:1rem;vertical-align:middle;margin-right:4px;" aria-hidden="true"></i> Daftar Baru &amp; KYC
                 </button>
             </div>
 
@@ -1107,7 +1136,7 @@
                     </div>
 
                     <button type="submit" id="btnLoginSubmit" style="width:100%;padding:0.8rem;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-weight:800;font-size:0.94rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 16px rgba(37,99,235,0.4);">
-                        <span class="material-symbols-outlined">login</span>
+                        <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
                         <span>Masuk ke Konsol Distributor</span>
                     </button>
                 </form>
@@ -1177,11 +1206,18 @@
                         <div id="ktpDropzone" style="border:2px dashed rgba(255,255,255,0.15);border-radius:12px;padding:1rem;text-align:center;background:rgba(255,255,255,0.02);cursor:pointer;">
                             <input type="file" id="ktpFile" accept="image/*" style="display:none;">
                             <div id="ktpUploadPrompt">
-                                <span class="material-symbols-outlined" style="font-size:2rem;color:#38bdf8;">add_photo_alternate</span>
+                                <i class="fa-regular fa-image" style="font-size:2rem;color:#38bdf8;" aria-hidden="true"></i>
                                 <div style="font-size:0.84rem;font-weight:700;color:#ffffff;margin-top:4px;">Klik untuk Unggah Foto KTP</div>
                                 <div style="font-size:0.74rem;color:#94a3b8;">Format JPG, PNG (Maks 5MB)</div>
                             </div>
-                            <div id="ktpPreviewBox" style="display:none;position:relative;display:inline-block;">
+                            <!-- BUG FIX: style lama menulis `display` DUA KALI
+                                 ("display:none; ... ;display:inline-block"). Deklarasi
+                                 terakhir yang menang, jadi kotak pratinjau ini selalu
+                                 tampil sejak awal -- memunculkan ikon gambar rusak plus
+                                 tombol hapus melayang padahal belum ada file dipilih.
+                                 Sekarang cuma satu deklarasi display, dan JS yang
+                                 mengubahnya jadi inline-block setelah file dibaca. -->
+                            <div id="ktpPreviewBox" style="display:none;position:relative;">
                                 <img id="ktpPreviewImg" src="" alt="KTP" style="max-height:120px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);">
                                 <button type="button" onclick="removeKtpFile(event)" style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;">&times;</button>
                             </div>
@@ -1194,7 +1230,7 @@
                     </div>
 
                     <button type="submit" id="btnRegisterSubmit" style="width:100%;padding:0.8rem;border:none;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-weight:800;font-size:0.94rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 16px rgba(124,58,237,0.4);">
-                        <span class="material-symbols-outlined">how_to_reg</span>
+                        <i class="fa-solid fa-user-check" aria-hidden="true"></i>
                         <span>Daftar Akun Mitra &amp; Kirim Berkas KYC</span>
                     </button>
                 </form>
@@ -1220,42 +1256,42 @@
                     </div>
                 </a>
                 <button type="button" class="tv-sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
-                    <span class="material-symbols-outlined">menu</span>
+                    <i class="fa-solid fa-bars" aria-hidden="true"></i>
                 </button>
             </div>
 
             <!-- Sidebar Navigation Menu Items -->
             <nav class="tv-sidebar-menu">
                 <a class="tv-nav-link active" data-view="view-dashboard" onclick="switchConsoleView('view-dashboard')">
-                    <span class="material-symbols-outlined">dashboard</span>
+                    <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
                     <span>Dashboard</span>
                 </a>
                 <a class="tv-nav-link" data-view="view-products" onclick="switchConsoleView('view-products')">
-                    <span class="material-symbols-outlined">inventory_2</span>
+                    <i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i>
                     <span>Produk</span>
                 </a>
                 <a class="tv-nav-link" data-view="view-deposit" onclick="switchConsoleView('view-deposit')">
-                    <span class="material-symbols-outlined">account_balance_wallet</span>
+                    <i class="fa-solid fa-wallet" aria-hidden="true"></i>
                     <span>Deposit</span>
                 </a>
                 <a class="tv-nav-link" data-view="view-mutations" onclick="switchConsoleView('view-mutations')">
-                    <span class="material-symbols-outlined">receipt_long</span>
+                    <i class="fa-solid fa-receipt" aria-hidden="true"></i>
                     <span>Mutasi Saldo</span>
                 </a>
                 <a class="tv-nav-link" data-view="view-transactions" onclick="switchConsoleView('view-transactions')">
-                    <span class="material-symbols-outlined">monitoring</span>
+                    <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
                     <span>Transaksi</span>
                 </a>
                 <a class="tv-nav-link" data-view="view-settings" onclick="switchConsoleView('view-settings')">
-                    <span class="material-symbols-outlined">settings</span>
+                    <i class="fa-solid fa-gear" aria-hidden="true"></i>
                     <span>Pengaturan</span>
                 </a>
                 <a class="tv-nav-link" data-view="view-api" onclick="switchConsoleView('view-api')">
-                    <span class="material-symbols-outlined">integration_instructions</span>
+                    <i class="fa-solid fa-code" aria-hidden="true"></i>
                     <span>Integrasi API</span>
                 </a>
                 <a class="tv-nav-link" data-view="view-tiers" onclick="switchConsoleView('view-tiers')">
-                    <span class="material-symbols-outlined">military_tech</span>
+                    <i class="fa-solid fa-award" aria-hidden="true"></i>
                     <span>Upgrade Level !</span>
                     <span class="tv-nav-pill-tag tv-nav-pill-gold">PRO</span>
                 </a>
@@ -1263,16 +1299,16 @@
 
             <!-- Bottom User Profile Area in Sidebar -->
             <div class="tv-sidebar-user">
-                <div class="tv-user-avatar" id="sidebarAvatar">AB</div>
+                <div class="tv-user-avatar" id="sidebarAvatar" aria-hidden="true">--</div>
                 <div class="tv-user-details">
-                    <div class="tv-user-name" id="sidebarUserName">Ariel Osaze</div>
+                    <div class="tv-user-name" id="sidebarUserName">Memuat…</div>
                     <div class="tv-user-badges">
-                        <span class="tv-badge-role">Owner</span>
-                        <span class="tv-badge-tier" id="sidebarTierBadge">GOLD ⭐</span>
+                        <span class="tv-badge-role">Mitra</span>
+                        <span class="tv-badge-tier" id="sidebarTierBadge">—</span>
                     </div>
                 </div>
                 <button type="button" class="tv-btn-logout-icon" onclick="logoutReseller()" title="Keluar">
-                    <span class="material-symbols-outlined" style="font-size:1.15rem;">logout</span>
+                    <i class="fa-solid fa-right-from-bracket" style="font-size:1.15rem;" aria-hidden="true"></i>
                 </button>
             </div>
         </aside>
@@ -1286,20 +1322,20 @@
                 <div class="tv-card-widget">
                     <div class="tv-widget-user-wrap">
                         <div class="tv-widget-avatar-box">
-                            <span class="material-symbols-outlined" style="font-size:1.7rem;">military_tech</span>
+                            <i class="fa-solid fa-award" style="font-size:1.7rem;" aria-hidden="true"></i>
                         </div>
                         <div class="tv-widget-user-meta">
                             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                                 <div class="tv-widget-user-name" id="topWidgetFullName">Memuat akun mitra...</div>
                                 <div id="topWidgetStatusChip">
-                                    <span class="tv-badge-status tv-badge-pending">⏳ Menunggu Verifikasi</span>
+                                    <span class="tv-badge-status tv-badge-pending"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> Menunggu Verifikasi</span>
                                 </div>
                             </div>
                             <div class="tv-widget-user-email" id="topWidgetEmail">...</div>
                             <div class="tv-widget-member-code">
                                 <span style="color:#94a3b8;font-weight:600;">Member Code</span>
                                 <span id="topWidgetMemberCode" style="color:#60a5fa;">...</span>
-                                <span class="material-symbols-outlined" style="font-size:0.85rem;cursor:pointer;" onclick="copyValue('topWidgetMemberCode','Member Code')">content_copy</span>
+                                <i class="fa-regular fa-copy" style="font-size:0.85rem;cursor:pointer;" aria-hidden="true"></i>
                             </div>
                         </div>
                     </div>
@@ -1313,7 +1349,7 @@
                             <div class="tv-widget-balance-amount" id="topWidgetBalance">Rp 0</div>
                         </div>
                         <button type="button" class="tv-btn-deposit-action" onclick="switchConsoleView('view-deposit')">
-                            <span class="material-symbols-outlined" style="font-size:1rem;color:#38bdf8;">add_circle</span>
+                            <i class="fa-solid fa-circle-plus" style="font-size:1rem;color:#38bdf8;" aria-hidden="true"></i>
                             <span>Deposit</span>
                         </button>
                     </div>
@@ -1323,19 +1359,21 @@
                 <div class="tv-card-widget">
                     <div class="tv-widget-security-wrap">
                         <div class="tv-widget-shield-icon">
-                            <span class="material-symbols-outlined" style="font-size:1.7rem;">verified_user</span>
+                            <i class="fa-solid fa-shield-halved" style="font-size:1.7rem;" aria-hidden="true"></i>
                         </div>
-                        <div style="flex:1;">
+                        <div style="flex:1;min-width:0;">
                             <div class="tv-security-title">Indikator Keamanan Akun</div>
-                            <div class="tv-security-links">
-                                <a href="javascript:void(0)" onclick="switchConsoleView('view-settings')" class="tv-security-link-item">
-                                    <span class="material-symbols-outlined" style="font-size:0.85rem;color:#10b981;">check_circle</span>
-                                    <span>Aktifkan Two-Factor Authentication</span>
-                                </a>
-                                <a href="javascript:void(0)" onclick="switchConsoleView('view-api')" class="tv-security-link-item">
-                                    <span class="material-symbols-outlined" style="font-size:0.85rem;color:#10b981;">check_circle</span>
-                                    <span id="textWhitelistLink">Tambahkan Whitelist IP</span>
-                                </a>
+                            <!-- Diisi renderSecurityIndicator() dari
+                                 security_indicator milik respons API.
+                                 Sebelumnya dua baris di sini dicentang hijau
+                                 permanen di HTML -- akun tanpa IP whitelist
+                                 pun tetap terlihat "aman", dan 2FA dicentang
+                                 padahal fiturnya belum ada sama sekali. -->
+                            <div class="tv-security-links" id="tvSecurityList">
+                                <span class="tv-security-link-item" style="cursor:default;">
+                                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size:0.8rem;color:#64748b;" aria-hidden="true"></i>
+                                    <span>Memeriksa status keamanan…</span>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -1345,22 +1383,22 @@
             <!-- ── Alert Banner Saat Akun Belum Diverifikasi (Pending KYC) ── -->
             <div id="tvPendingBanner" class="tv-pending-banner" style="display:flex;">
                 <div class="tv-pending-badge-icon">
-                    <span class="material-symbols-outlined">hourglass_top</span>
+                    <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
                 </div>
                 <div style="flex:1;">
                     <div style="font-size:0.98rem;font-weight:900;color:#fbbf24;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
-                        <span class="material-symbols-outlined" style="font-size:1.2rem;color:#f59e0b;">warning</span>
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size:1.2rem;color:#f59e0b;" aria-hidden="true"></i>
                         <span>Akun Belum Diverifikasi oleh Admin (Maksimal 3x24 Jam Kerja)</span>
                     </div>
                     <div style="font-size:0.86rem;color:#e2e8f0;line-height:1.6;margin-bottom:10px;">
                         Pendaftaran kemitraan Anda telah diterima dan saat ini sedang menunggu tinjauan berkas KYC KTP oleh tim admin NexShop. <strong>Notifikasi ini akan otomatis hilang setelah pengajuan Anda disetujui (ACC) oleh admin</strong>. Selama masa peninjauan, Anda tetap dapat melihat seluruh katalog harga modal reseller dan mempelajari dokumentasi REST API.
                     </div>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                        <a href="https://wa.me/6281234567890?text=Halo%20Admin%20NexShop,%20saya%20sudah%20mendaftar%20reseller%20dan%20sedang%20menunggu%20verifikasi%20KYC" target="_blank" rel="noopener" class="tv-btn-deposit-action" style="text-decoration:none;background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#4ade80;">
-                            <span class="material-symbols-outlined" style="font-size:1rem;color:#22c55e;">chat</span> Konfirmasi via WhatsApp
+                        <a data-wa-pesan="Halo Admin NexShop, saya sudah mendaftar reseller dan sedang menunggu verifikasi KYC." target="_blank" rel="noopener noreferrer" class="tv-btn-deposit-action" style="display:none;text-decoration:none;background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#4ade80;">
+                            <i class="fa-brands fa-whatsapp" style="font-size:1rem;color:#22c55e;" aria-hidden="true"></i> Konfirmasi via WhatsApp
                         </a>
                         <button type="button" class="tv-btn-deposit-action" onclick="loadPortalOverview()">
-                            <span class="material-symbols-outlined" style="font-size:1rem;">refresh</span> Cek Status Verifikasi Terkini
+                            <i class="fa-solid fa-rotate" style="font-size:1rem;" aria-hidden="true"></i> Cek Status Verifikasi Terkini
                         </button>
                     </div>
                 </div>
@@ -1413,12 +1451,12 @@
                         <!-- Chart Date Picker Bar -->
                         <div class="tv-chart-controls-bar">
                             <div class="tv-date-range-badge">
-                                <span class="material-symbols-outlined" style="font-size:1.05rem;color:#38bdf8;">calendar_month</span>
+                                <i class="fa-regular fa-calendar" style="font-size:1.05rem;color:#38bdf8;" aria-hidden="true"></i>
                                 <span id="chartDateRangeLabel">7 Hari Terakhir</span>
                             </div>
                             <div style="display:flex;gap:6px;">
                                 <button type="button" class="tv-btn-deposit-action" style="padding:4px 8px;" onclick="loadPortalOverview()" title="Perbarui Grafik">
-                                    <span class="material-symbols-outlined" style="font-size:1rem;">refresh</span>
+                                    <i class="fa-solid fa-rotate" style="font-size:1rem;" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
@@ -1451,19 +1489,44 @@
                     
                     <!-- 1. Header Row (Title & Action Buttons) -->
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:12px;">
-                        <div>
+                        <div style="min-width:0;">
                             <h2 style="font-size:1.35rem;font-weight:900;color:#ffffff;margin:0 0 4px;">Katalog Produk &amp; Harga Modal Reseller</h2>
-                            <p style="font-size:0.84rem;color:#94a3b8;margin:0;">Jelajahi harga modal termurah se-Indonesia dengan filter kategori &amp; game real-time.</p>
+                            <!-- Klaim "termurah se-Indonesia" dihapus: itu
+                                 pernyataan pemasaran yang tidak bisa
+                                 dibuktikan dan bukan informasi yang berguna
+                                 di konsol kerja mitra. -->
+                            <p style="font-size:0.84rem;color:#94a3b8;margin:0;">Harga modal sesuai tingkatan akunmu, tersinkron langsung dengan katalog NexShop.</p>
                         </div>
-                        <div style="display:flex;align-items:center;gap:10px;">
+                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                             <button type="button" class="tv-btn-deposit-action" onclick="openRequestProductModal()" style="border-color:#38bdf8;color:#38bdf8;background:rgba(56,189,248,0.1);">
-                                <span class="material-symbols-outlined" style="font-size:1.1rem;">add_circle</span>
+                                <i class="fa-solid fa-circle-plus" style="font-size:1.1rem;" aria-hidden="true"></i>
                                 <span>Request Produk</span>
                             </button>
                             <button type="button" class="tv-btn-deposit-action" onclick="downloadProductsExcel()" style="border-color:#10b981;color:#10b981;background:rgba(16,185,129,0.1);">
-                                <span class="material-symbols-outlined" style="font-size:1.1rem;">download</span>
-                                <span>Download Excel</span>
+                                <i class="fa-solid fa-file-arrow-down" style="font-size:1.1rem;" aria-hidden="true"></i>
+                                <span>Unduh Harga Tier Saya</span>
                             </button>
+                            <!-- Unduhan rincian harga untuk SEMUA level.
+                                 Angkanya dihitung server (endpoint
+                                 /portal/price-list) supaya identik dengan
+                                 harga yang ditagih saat checkout. -->
+                            <div class="tv-dl-split">
+                                <button type="button" id="btnDownloadPriceList" class="tv-btn-deposit-action"
+                                    onclick="downloadPriceListPerLevel('csv')"
+                                    title="Unduh rincian harga untuk semua level reseller (CSV siap dibuka di Excel)"
+                                    style="border-color:#a78bfa;color:#c4b5fd;background:rgba(167,139,250,0.12);">
+                                    <i class="fa-solid fa-table-list" style="font-size:1.1rem;" aria-hidden="true"></i>
+                                    <span>Rincian Harga Semua Level</span>
+                                </button>
+                                <button type="button" class="tv-btn-deposit-action tv-dl-split-alt"
+                                    onclick="downloadPriceListPerLevel('json')"
+                                    title="Unduh versi JSON untuk diproses otomatis oleh sistem tokomu"
+                                    aria-label="Unduh rincian harga semua level dalam format JSON"
+                                    style="border-color:#a78bfa;color:#c4b5fd;background:rgba(167,139,250,0.12);">
+                                    <i class="fa-solid fa-code" style="font-size:1rem;" aria-hidden="true"></i>
+                                    <span>JSON</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -1486,7 +1549,7 @@
                     <!-- 3. Operator Search Bar -->
                     <div style="margin-bottom:1.1rem;">
                         <div class="tv-search-input-wrap" style="max-width:100%;">
-                            <span class="material-symbols-outlined">sports_esports</span>
+                            <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
                             <input type="text" id="inputSearchOperator" placeholder="Cari Operator / Game (misal: Free Fire, Mobile Legends, Telkomsel, PLN, DANA)..." oninput="filterOperatorGrid()">
                         </div>
                     </div>
@@ -1506,15 +1569,15 @@
                         <div style="display:flex;align-items:center;gap:8px;">
                             <span style="font-size:0.84rem;font-weight:700;color:#94a3b8;">Tampilan:</span>
                             <button type="button" id="btnViewGrid" class="tv-btn-deposit-action" style="padding:4px 10px;border-color:#3b82f6;background:rgba(37,99,235,0.25);color:#fff;" onclick="setProductDisplayMode('grid')">
-                                <span class="material-symbols-outlined" style="font-size:1rem;">grid_view</span> Grid Foto
+                                <i class="fa-solid fa-table-cells-large" style="font-size:1rem;" aria-hidden="true"></i> Grid Foto
                             </button>
                             <button type="button" id="btnViewTable" class="tv-btn-deposit-action" style="padding:4px 10px;" onclick="setProductDisplayMode('table')">
-                                <span class="material-symbols-outlined" style="font-size:1rem;">table_rows</span> Tabel Rinci
+                                <i class="fa-solid fa-list" style="font-size:1rem;" aria-hidden="true"></i> Tabel Rinci
                             </button>
                             <span id="labelTotalFilteredProducts" style="font-size:0.8rem;color:#60a5fa;font-weight:700;margin-left:8px;">0 Produk</span>
                         </div>
                         <div class="tv-search-input-wrap" style="max-width:320px;">
-                            <span class="material-symbols-outlined">search</span>
+                            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                             <input type="text" id="inputSearchProduct" placeholder="Cari Kode SKU / Denom..." oninput="filterPortalProducts()">
                         </div>
                     </div>
@@ -1566,7 +1629,7 @@
                                 <label class="form-label">Pilih Metode Pembayaran Deposit</label>
                                 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
                                     <button type="button" class="tv-btn-deposit-action" style="justify-content:center;padding:0.75rem;border-color:#3b82f6;background:rgba(37,99,235,0.25);" onclick="selectPaymentMethod('qris')">
-                                        <span class="material-symbols-outlined" style="font-size:1.1rem;color:#38bdf8;">qr_code_scanner</span> QRIS Instan
+                                        <i class="fa-solid fa-qrcode" style="font-size:1.1rem;color:#38bdf8;" aria-hidden="true"></i> QRIS Instan
                                     </button>
                                     <button type="button" class="tv-btn-deposit-action" style="justify-content:center;padding:0.75rem;" onclick="selectPaymentMethod('bca')">
                                         BCA VA
@@ -1592,7 +1655,7 @@
 
                             <button type="submit" id="btnSubmitDeposit" style="width:100%;padding:0.85rem;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-weight:800;font-size:0.95rem;cursor:pointer;box-shadow:0 4px 16px rgba(37,99,235,0.4);display:inline-flex;align-items:center;justify-content:center;gap:8px;">
                                 <span>Lanjutkan Pembayaran Deposit</span>
-                                <span class="material-symbols-outlined" style="font-size:1.1rem;">arrow_forward</span>
+                                <i class="fa-solid fa-arrow-right" style="font-size:1.1rem;" aria-hidden="true"></i>
                             </button>
                         </form>
                     </div>
@@ -1607,7 +1670,7 @@
                             <img id="resellerQrisImage" src="" alt="QRIS Code" style="width:230px;height:230px;object-fit:contain;display:block;border-radius:8px;">
                         </div>
                         <div style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:0.85rem;color:#fbbf24;font-weight:800;margin-bottom:6px;">
-                            <span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">hourglass_top</span>
+                            <i class="fa-solid fa-hourglass-half mkt-spin" style="font-size:1.1rem;" aria-hidden="true"></i>
                             <span>Menunggu Pembayaran...</span>
                         </div>
                         <div style="font-size:0.78rem;color:#94a3b8;margin-bottom:1.2rem;line-height:1.4;">
@@ -1696,7 +1759,7 @@
                             <p style="font-size:0.8rem;color:#94a3b8;margin:0;">Seluruh status pesanan produk yang diproses melalui sistem NexShop.</p>
                         </div>
                         <div class="tv-search-input-wrap">
-                            <span class="material-symbols-outlined">search</span>
+                            <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                             <input type="text" id="inputSearchTrx" placeholder="Cari Order ID / No. Tujuan..." oninput="filterPortalOrders()">
                         </div>
                     </div>
@@ -1768,7 +1831,7 @@
                 <!-- Banner Khusus View API Jika Belum Di-ACC -->
                 <div id="apiPendingNotice" class="tv-pending-banner" style="display:flex;margin-bottom:1.35rem;">
                     <div class="tv-pending-badge-icon">
-                        <span class="material-symbols-outlined">lock_clock</span>
+                        <i class="fa-solid fa-lock" aria-hidden="true"></i>
                     </div>
                     <div style="flex:1;">
                         <div style="font-size:0.95rem;font-weight:800;color:#fbbf24;margin-bottom:3px;">
@@ -1785,7 +1848,7 @@
                         <div class="tv-section-title">
                             <span>Kredensial REST API Mitra</span>
                             <button type="button" id="btnRotateApiKey" class="tv-btn-deposit-action">
-                                <span class="material-symbols-outlined" style="font-size:0.95rem;">sync</span>
+                                <i class="fa-solid fa-arrows-rotate" style="font-size:0.95rem;" aria-hidden="true"></i>
                                 <span>Rotate / Buat Key Baru</span>
                             </button>
                         </div>
@@ -1835,7 +1898,7 @@
                             Integrasikan transaksi game, pulsa, dan tagihan pascabayar ke website toko online atau bot WhatsApp Anda secara otomatis menggunakan REST API standar industri.
                         </p>
                         <a href="/docs-reseller.html" class="tv-btn-deposit-action" style="background:#2563eb;color:#fff;text-decoration:none;padding:0.75rem 1.35rem;display:inline-flex;border-color:#3b82f6;">
-                            <span class="material-symbols-outlined" style="font-size:1.15rem;color:#93c5fd;">menu_book</span>
+                            <i class="fa-solid fa-book-open" style="font-size:1.15rem;color:#93c5fd;" aria-hidden="true"></i>
                             <span>Buka Dokumentasi REST API Lengkap</span>
                         </a>
                     </div>
@@ -1846,26 +1909,18 @@
             <!-- VIEW 8: UPGRADE LEVEL / TIER                                -->
             <!-- =========================================================== -->
             <div id="view-tiers" class="tv-console-view">
-                <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:1.35rem;">
-                    <div class="tv-section-card" style="border-top:4px solid #94a3b8;">
-                        <h4 style="font-size:1.2rem;font-weight:900;color:#ffffff;margin:0 0 4px;">Tier Silver</h4>
-                        <div style="font-size:1.55rem;font-weight:900;color:#38bdf8;margin-bottom:8px;">Diskon 2.0%</div>
-                        <p style="font-size:0.84rem;color:#cbd5e1;line-height:1.6;">Level awal bagi setiap mitra distributor baru yang telah terverifikasi KYC.</p>
-                        <div class="tv-badge-status tv-badge-sukses" style="margin-top:1rem;">Aktif Default</div>
-                    </div>
-
-                    <div class="tv-section-card" style="border-top:4px solid #f59e0b;background:rgba(245,158,11,0.06);">
-                        <h4 style="font-size:1.2rem;font-weight:900;color:#ffffff;margin:0 0 4px;">Tier Gold ⭐</h4>
-                        <div style="font-size:1.55rem;font-weight:900;color:#fbbf24;margin-bottom:8px;">Diskon 3.5%</div>
-                        <p style="font-size:0.84rem;color:#cbd5e1;line-height:1.6;">Untuk mitra dengan volume transaksi rutin minimal 50 transaksi per bulan.</p>
-                        <div class="tv-badge-status tv-badge-pending" style="margin-top:1rem;">Target: 50 Trx/Bln</div>
-                    </div>
-
-                    <div class="tv-section-card" style="border-top:4px solid #a855f7;background:rgba(168,85,247,0.06);">
-                        <h4 style="font-size:1.2rem;font-weight:900;color:#ffffff;margin:0 0 4px;">Tier Platinum 👑</h4>
-                        <div style="font-size:1.55rem;font-weight:900;color:#c084fc;margin-bottom:8px;">Diskon 5.0%</div>
-                        <p style="font-size:0.84rem;color:#cbd5e1;line-height:1.6;">Tingkat distributor tertinggi dengan harga modal termurah se-Indonesia.</p>
-                        <div class="tv-badge-status tv-badge-pending" style="margin-top:1rem;">Target: 250 Trx/Bln</div>
+                <div class="tv-section-card" style="margin-bottom:1.25rem;">
+                    <div class="tv-section-title"><span>Tingkatan Reseller</span></div>
+                    <p style="font-size:0.86rem;color:#94a3b8;line-height:1.7;margin:0;">
+                        Daftar tingkatan di bawah dimuat langsung dari konfigurasi NexShop, jadi
+                        persentasenya selalu sama dengan yang diterapkan pada harga modal kamu.
+                        Kenaikan tingkatan ditetapkan admin berdasarkan riwayat transaksi &mdash;
+                        hubungi tim kemitraan bila ingin meninjau tingkatan akunmu.
+                    </p>
+                </div>
+                <div id="tvTierGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.35rem;">
+                    <div class="tv-section-card" style="color:#94a3b8;font-size:0.86rem;">
+                        <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> Memuat tingkatan…
                     </div>
                 </div>
             </div>
@@ -1874,9 +1929,9 @@
     </div>
 
     <!-- ── Floating Help Button ── -->
-    <a href="https://wa.me/6281234567890?text=Halo%20Admin%20NexShop,%20saya%20butuh%20bantuan%20mengenai%20Partner%20Portal" target="_blank" rel="noopener" class="tv-fab-help">
+    <a data-wa-pesan="Halo Admin NexShop, saya butuh bantuan mengenai Partner Portal." target="_blank" rel="noopener noreferrer" class="tv-fab-help" style="display:none;">
         <span class="tv-fab-dot"></span>
-        <span class="material-symbols-outlined" style="font-size:1.2rem;">support_agent</span>
+        <i class="fa-solid fa-headset" style="font-size:1.2rem;" aria-hidden="true"></i>
         <span>Bantuan</span>
     </a>
 
@@ -1950,6 +2005,47 @@
             setTimeout(() => { toast.style.display = "none"; }, 3500);
         }
 
+        // Nomor WhatsApp admin & tier aktif -- diisi dari server saat
+        // halaman dimuat. Nomor contoh dokumentasi yang dulu ditulis langsung di
+        // HTML adalah nomor contoh dokumentasi, bukan kontak NexShop: mitra
+        // yang menekan tombol bantuan akan mengirim pesan ke nomor asing.
+        let adminWhatsApp = "";
+        let activeTierInfo = null;
+
+        async function loadKontakAdmin() {
+            try {
+                const res = await fetch(`${API_BASE}/settings/store`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const nomor = String(data.contact_whatsapp || data.contact_phone || "").replace(/\D/g, "");
+                if (!nomor) return;
+                adminWhatsApp = nomor.startsWith("0") ? "62" + nomor.slice(1) : nomor;
+                terapkanLinkWhatsApp();
+            } catch (_) {
+                /* kontak gagal dimuat -> tombol WA disembunyikan, lihat di bawah */
+            }
+        }
+
+        function linkWhatsApp(pesan) {
+            if (!adminWhatsApp) return "";
+            return `https://wa.me/${adminWhatsApp}?text=${encodeURIComponent(pesan)}`;
+        }
+
+        // Sembunyikan tombol WhatsApp selama nomor aslinya belum diketahui,
+        // supaya tidak ada tombol yang mengarah ke nomor yang salah.
+        function terapkanLinkWhatsApp() {
+            document.querySelectorAll("[data-wa-pesan]").forEach((el) => {
+                const url = linkWhatsApp(el.getAttribute("data-wa-pesan"));
+                if (url) {
+                    el.href = url;
+                    el.style.display = "";
+                } else {
+                    el.removeAttribute("href");
+                    el.style.display = "none";
+                }
+            });
+        }
+
         function getResellerToken() {
             // PENTING: jangan fallback ke localStorage "token" biasa -- itu token
             // login customer di toko utama (index.html/marketplace), bukan bukti
@@ -2006,6 +2102,13 @@
         }
 
         function switchConsoleView(viewId) {
+            // Tingkatan baru diambil saat view-nya benar-benar dibuka, bukan
+            // di awal halaman -- menghemat satu request untuk mitra yang tidak
+            // pernah membuka tab ini.
+            if (viewId === "view-tiers" && !tierSudahDimuat) {
+                tierSudahDimuat = true;
+                loadTiers();
+            }
             document.querySelectorAll(".tv-console-view").forEach(v => v.classList.remove("active"));
             document.querySelectorAll(".tv-nav-link").forEach(l => l.classList.remove("active"));
 
@@ -2256,7 +2359,7 @@
                                 <span style="font-size:1.15rem;font-weight:900;color:#38bdf8;">Rp ${(p.harga_modal_reseller || 0).toLocaleString("id-ID")}</span>
                             </div>
                             <button type="button" class="tv-btn-deposit-action" style="width:100%;justify-content:center;padding:0.5rem;" onclick="navigator.clipboard.writeText('${p.kode_produk}');showToast('SKU ${p.kode_produk} disalin!');">
-                                <span class="material-symbols-outlined" style="font-size:0.95rem;">content_copy</span>
+                                <i class="fa-regular fa-copy" style="font-size:0.95rem;" aria-hidden="true"></i>
                                 <span>Salin SKU</span>
                             </button>
                         </div>
@@ -2297,6 +2400,95 @@
         }
 
         // ── Download Excel / CSV ──
+        // Netralkan CSV/Excel formula injection: sel yang diawali = + - @
+        // dieksekusi sebagai rumus begitu file dibuka. Nama produk berasal
+        // dari katalog supplier, jadi isinya tidak sepenuhnya kita kendalikan.
+        function csvCell(value) {
+            let teks = value === null || value === undefined ? "" : String(value);
+            if (/^[=+\-@\t\r]/.test(teks)) teks = "'" + teks;
+            return '"' + teks.replace(/"/g, '""') + '"';
+        }
+
+        // Bantu memicu unduhan dari Blob dengan pembersihan object URL.
+        function unduhBlob(blob, namaFile) {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = namaFile;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            // Bebaskan memori; tanpa ini object URL menggantung sampai tab ditutup.
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        // ── Unduh rincian harga SEMUA level reseller ──
+        //
+        // Berbeda dari downloadProductsExcel() yang hanya mengekspor harga
+        // untuk tier akun ini, endpoint /portal/price-list mengembalikan satu
+        // kolom harga untuk SETIAP level beserta nominal hematnya. Seluruh
+        // angkanya dihitung di server memakai fungsi yang sama dengan
+        // checkout, jadi isi file tidak akan pernah berbeda dari harga yang
+        // benar-benar ditagih.
+        async function downloadPriceListPerLevel(format) {
+            const token = getResellerToken();
+            if (!token) {
+                showToast("Sesi kamu sudah berakhir. Silakan masuk lagi.");
+                return;
+            }
+
+            const tombol = document.getElementById("btnDownloadPriceList");
+            const isiAsli = tombol ? tombol.innerHTML : "";
+            if (tombol) {
+                tombol.disabled = true;
+                tombol.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Menyiapkan…';
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/price-list?format=${encodeURIComponent(format || "csv")}`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (!res.ok) {
+                    // Server mengirim JSON alasan penolakan (mis. akun belum
+                    // di-approve). Tampilkan pesannya apa adanya.
+                    let pesan = "Gagal menyiapkan daftar harga.";
+                    try {
+                        const err = await res.json();
+                        if (err && err.message) pesan = err.message;
+                    } catch (_) {}
+                    showToast(pesan);
+                    return;
+                }
+
+                const tanggal = new Date().toISOString().slice(0, 10);
+
+                if (format === "json") {
+                    const data = await res.json();
+                    unduhBlob(
+                        new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" }),
+                        `Daftar-Harga-Reseller-NexShop-${tanggal}.json`
+                    );
+                } else {
+                    const teks = await res.text();
+                    unduhBlob(
+                        new Blob([teks], { type: "text/csv;charset=utf-8" }),
+                        `Daftar-Harga-Reseller-NexShop-${tanggal}.csv`
+                    );
+                }
+
+                showToast("Daftar harga per level reseller berhasil diunduh.");
+            } catch (err) {
+                console.error("downloadPriceListPerLevel:", err);
+                showToast("Gagal mengunduh daftar harga. Periksa koneksi kamu.");
+            } finally {
+                if (tombol) {
+                    tombol.disabled = false;
+                    tombol.innerHTML = isiAsli;
+                }
+            }
+        }
+
         function downloadProductsExcel() {
             if (!allProducts.length) {
                 showToast("Tidak ada produk untuk diunduh.");
@@ -2304,16 +2496,16 @@
             }
             const headers = ["Kode SKU", "Nama Produk", "Kategori", "Operator", "Harga Normal", "Harga Modal Reseller", "Diskon %", "Status"];
             const rows = allProducts.map(p => [
-                `"${p.kode_produk}"`,
-                `"${(p.nama || '').replace(/"/g, '""')}"`,
-                `"${p.kategori || ''}"`,
-                `"${p.operator || ''}"`,
+                p.kode_produk,
+                p.nama || "",
+                p.kategori || "",
+                p.operator || "",
                 p.harga_normal || 0,
                 p.harga_modal_reseller || 0,
                 p.diskon_persen || 0,
-                `"${p.status || 'tersedia'}"`
+                p.status || "tersedia"
             ]);
-            const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\r\n");
+            const csvContent = "\uFEFF" + [headers.map(csvCell).join(","), ...rows.map(r => r.map(csvCell).join(","))].join("\r\n");
             const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
@@ -2329,8 +2521,12 @@
         function openRequestProductModal() {
             const reqGame = prompt("Masukkan nama game/produk atau SKU yang ingin Anda request ke admin NexShop:");
             if (reqGame && reqGame.trim()) {
-                const url = `https://wa.me/6281234567890?text=${encodeURIComponent('Halo Admin NexShop, saya mitra reseller ingin request penambahan produk baru: ' + reqGame.trim())}`;
-                window.open(url, "_blank");
+                const url = linkWhatsApp("Halo Admin NexShop, saya mitra reseller ingin request penambahan produk baru: " + reqGame.trim());
+                if (!url) {
+                    showToast("Kontak admin belum tersedia. Coba muat ulang halaman.");
+                    return;
+                }
+                window.open(url, "_blank", "noopener");
             }
         }
 
@@ -2400,7 +2596,7 @@
             }
 
             btn.disabled = true;
-            btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Memproses...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner mkt-spin" style="font-size:1.1rem;" aria-hidden="true"></i> Memproses...`;
 
             try {
                 if (file && !uploadedKtpUrl) {
@@ -2426,6 +2622,23 @@
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json().catch(() => ({}));
+
+                // Email sudah terdaftar. Server sengaja MENOLAK (bukan
+                // menimpa akun lama seperti perilaku sebelumnya, yang bisa
+                // dipakai mengambil alih akun orang lain). Arahkan langsung
+                // ke tab Masuk supaya pendaftar tidak buntu di sini.
+                if (res.status === 409 || data.code === "EMAIL_ALREADY_REGISTERED") {
+                    switchAuthTab("login");
+                    const inputEmailLogin = document.getElementById("loginEmail");
+                    if (inputEmailLogin) inputEmailLogin.value = payload.email || "";
+                    const errLogin = document.getElementById("loginErrorMsg");
+                    if (errLogin) {
+                        errLogin.textContent = data.message || "Email ini sudah terdaftar. Silakan masuk memakai password akunmu.";
+                        errLogin.style.display = "block";
+                    }
+                    return;
+                }
+
                 if (!res.ok) throw new Error(data.message || "Gagal mendaftar reseller");
 
                 setResellerSession(data.token, data.user);
@@ -2436,7 +2649,7 @@
                 errEl.style.display = "block";
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<span class="material-symbols-outlined">how_to_reg</span> <span>Daftar Akun Mitra &amp; Kirim Berkas KYC</span>`;
+                btn.innerHTML = `<i class="fa-solid fa-user-check" aria-hidden="true"></i> <span>Daftar Akun Mitra &amp; Kirim Berkas KYC</span>`;
             }
         });
 
@@ -2448,7 +2661,7 @@
             errEl.style.display = "none";
 
             btn.disabled = true;
-            btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Masuk...`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner mkt-spin" style="font-size:1.1rem;" aria-hidden="true"></i> Masuk...`;
 
             try {
                 const payload = {
@@ -2472,7 +2685,7 @@
                 errEl.style.display = "block";
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<span class="material-symbols-outlined">login</span> <span>Masuk ke Konsol Distributor</span>`;
+                btn.innerHTML = `<i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i> <span>Masuk ke Konsol Distributor</span>`;
             }
         });
 
@@ -2552,7 +2765,10 @@
                     const isApproved = (currentResellerStatus === "approved");
                     const fullname = data.user.fullname || "Mitra Reseller";
                     const email = data.user.email || "";
-                    const memberCode = data.user.member_code || "NX-MITRA-001";
+                    // Jangan mengarang kode member. Kalau server belum
+                    // mengirimkannya, tampilkan tanda strip -- bukan kode
+                    // palsu yang kelihatan sah dan bisa ikut disalin mitra.
+                    const memberCode = data.user.member_code || "—";
                     const balance = Number(data.user.balance) || 0;
 
                     // Update Top Header Widgets
@@ -2583,13 +2799,21 @@
                     const statusChip = document.getElementById("topWidgetStatusChip");
                     if (statusChip) {
                         statusChip.innerHTML = isApproved 
-                            ? `<span class="tv-badge-status tv-badge-sukses">✅ Akun Terverifikasi</span>` 
-                            : `<span class="tv-badge-status tv-badge-pending">⏳ Menunggu Verifikasi</span>`;
+                            ? `<span class="tv-badge-status tv-badge-sukses"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Akun Terverifikasi</span>` 
+                            : `<span class="tv-badge-status tv-badge-pending"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> Menunggu Verifikasi</span>`;
                     }
 
                     if (isApproved) {
-                        const tierName = data.user.reseller_tier?.name || "GOLD";
-                        document.getElementById("sidebarTierBadge").textContent = `${tierName} ⭐`;
+                        // Fallback lama "GOLD" menampilkan tingkatan yang
+                        // belum tentu dimiliki akun ini -- mitra bisa mengira
+                        // diskonnya lebih besar daripada yang sebenarnya.
+                        const tierName = (data.user.reseller_tier && data.user.reseller_tier.name) || null;
+                        const tierDiskon = Number(data.user.reseller_tier && data.user.reseller_tier.discount_percent) || 0;
+                        activeTierInfo = tierName
+                            ? { name: tierName, discount: tierDiskon, code: (data.user.reseller_tier && data.user.reseller_tier.code) || null }
+                            : null;
+                        document.getElementById("sidebarTierBadge").textContent =
+                            tierName ? `${tierName} · ${tierDiskon}%` : "Tier belum diatur";
 
                         if (data.api_credentials) {
                             document.getElementById("inputApiKey").value = data.api_credentials.api_key || "Belum ada key";
@@ -2598,7 +2822,8 @@
                             document.getElementById("inputWebhookUrl").value = data.api_credentials.webhook_url || "";
                         }
                     } else {
-                        document.getElementById("sidebarTierBadge").textContent = "PENDING ⏳";
+                        activeTierInfo = null;
+                        document.getElementById("sidebarTierBadge").textContent = "Menunggu verifikasi";
                         document.getElementById("inputApiKey").value = "Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja)";
                         document.getElementById("inputSecretKey").value = "••••••••••••••••";
                     }
@@ -2625,12 +2850,147 @@
                         renderDynamicChart([]);
                     }
 
+                    // Indikator keamanan: status sebenarnya, bukan
+                    // centang hijau permanen seperti versi sebelumnya.
+                    renderSecurityIndicator(data.security_indicator || {}, isApproved);
+
                     // Update Real News
                     renderNewsFeed(data.news || []);
                 }
             } catch (err) {
                 console.error("loadPortalOverview error:", err);
             }
+        }
+
+        // ── Tingkatan Reseller (data asli, bukan kartu hardcoded) ──
+        //
+        // Sebelumnya tiga kartu tier ditulis langsung di HTML lengkap dengan
+        // persentase diskon dan "target transaksi" karangan. Angka-angka itu
+        // tidak pernah berasal dari database, jadi mitra bisa membaca diskon
+        // yang berbeda dari yang benar-benar diterapkan pada harganya.
+        let tierSudahDimuat = false;
+
+        async function loadTiers() {
+            const grid = document.getElementById("tvTierGrid");
+            if (!grid) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/tiers`);
+                if (!res.ok) throw new Error("Gagal memuat tingkatan");
+                const tiers = await res.json();
+
+                if (!Array.isArray(tiers) || !tiers.length) {
+                    grid.innerHTML = `
+                <div class="tv-section-card" style="color:#94a3b8;font-size:0.86rem;">
+                    <i class="fa-solid fa-circle-info" aria-hidden="true"></i>
+                    Tingkatan reseller belum dikonfigurasi admin.
+                </div>`;
+                    return;
+                }
+
+                // Aksen warna diputar berurutan supaya tiap kartu tetap
+                // terbedakan berapa pun jumlah tingkatan yang dikonfigurasi
+                // admin -- tidak dipatok ke tiga tingkatan seperti versi lama.
+                const aksen = ["#94a3b8", "#38bdf8", "#f59e0b", "#a855f7", "#10b981"];
+                const kodeAktif = activeTierInfo && activeTierInfo.code ? String(activeTierInfo.code) : null;
+                const namaAktif = activeTierInfo && activeTierInfo.name ? String(activeTierInfo.name) : null;
+
+                grid.innerHTML = tiers.map((t, i) => {
+                    const warna = aksen[i % aksen.length];
+                    const ini = (kodeAktif && String(t.code) === kodeAktif)
+                        || (namaAktif && String(t.name) === namaAktif);
+                    const diskon = Number(t.discount_percent) || 0;
+
+                    return `
+                <div class="tv-section-card" style="border-top:4px solid ${warna};${ini ? "box-shadow:0 0 0 1px " + warna + ";" : ""}">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+                        <h4 style="font-size:1.2rem;font-weight:900;color:#ffffff;margin:0;">${escapeHtml(t.name || t.code || "-")}</h4>
+                        ${ini ? '<span class="tv-badge-status tv-badge-sukses">Tingkatan kamu</span>' : ""}
+                    </div>
+                    <div style="font-size:1.55rem;font-weight:900;color:${warna};margin-bottom:8px;">Diskon ${diskon}%</div>
+                    <p style="font-size:0.84rem;color:#cbd5e1;line-height:1.6;margin:0;">
+                        ${escapeHtml(t.description || "Potongan otomatis di seluruh katalog NexShop.")}
+                    </p>
+                </div>`;
+                }).join("");
+            } catch (err) {
+                console.error("loadTiers:", err);
+                grid.innerHTML = `
+            <div class="tv-section-card" style="color:#f87171;font-size:0.86rem;">
+                <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                Gagal memuat tingkatan reseller.
+                <button type="button" class="tv-btn-deposit-action" style="margin-top:0.75rem;" onclick="loadTiers()">Coba lagi</button>
+            </div>`;
+            }
+        }
+
+        // ── Indikator Keamanan (status nyata dari server) ──
+        //
+        // Tiap baris punya tiga kemungkinan keadaan dan ikon yang berbeda:
+        //   aktif        -> centang hijau
+        //   belum aktif  -> tanda seru kuning + tetap bisa diklik ke halaman
+        //                   pengaturannya
+        //   belum ada    -> ikon abu-abu, TIDAK diklaim sebagai fitur yang
+        //                   tinggal dinyalakan (mis. 2FA yang memang belum
+        //                   dibangun di NexShop)
+        function renderSecurityIndicator(indikator, isApproved) {
+            const wrap = document.getElementById("tvSecurityList");
+            if (!wrap) return;
+
+            const baris = [
+                {
+                    label: indikator.ip_whitelist_active ? "IP Whitelist aktif" : "IP Whitelist belum diatur",
+                    aktif: !!indikator.ip_whitelist_active,
+                    tersedia: true,
+                    view: "view-api"
+                },
+                {
+                    label: indikator.webhook_configured ? "Webhook callback terpasang" : "Webhook callback belum diatur",
+                    aktif: !!indikator.webhook_configured,
+                    tersedia: true,
+                    view: "view-api"
+                },
+                {
+                    label: isApproved ? "Identitas (KYC) terverifikasi" : "Identitas (KYC) menunggu tinjauan admin",
+                    aktif: !!isApproved,
+                    tersedia: true,
+                    view: "view-settings"
+                },
+                {
+                    label: "Two-Factor Authentication belum tersedia",
+                    aktif: false,
+                    tersedia: indikator.two_factor_available === true,
+                    view: "view-settings"
+                }
+            ];
+
+            wrap.innerHTML = baris.map((b) => {
+                let ikon, warna;
+                if (!b.tersedia) {
+                    ikon = "fa-regular fa-circle";
+                    warna = "#64748b";
+                } else if (b.aktif) {
+                    ikon = "fa-solid fa-circle-check";
+                    warna = "#10b981";
+                } else {
+                    ikon = "fa-solid fa-circle-exclamation";
+                    warna = "#f59e0b";
+                }
+
+                // Baris untuk fitur yang belum ada tidak dibuat bisa diklik --
+                // menautkannya ke halaman pengaturan cuma bikin mitra mencari
+                // tombol yang memang tidak pernah ada di sana.
+                if (!b.tersedia) {
+                    return `<span class="tv-security-link-item" style="cursor:default;opacity:0.72;">
+                        <i class="${ikon}" style="font-size:0.85rem;color:${warna};" aria-hidden="true"></i>
+                        <span>${escapeHtml(b.label)}</span>
+                    </span>`;
+                }
+                return `<a href="javascript:void(0)" onclick="switchConsoleView('${b.view}')" class="tv-security-link-item">
+                    <i class="${ikon}" style="font-size:0.85rem;color:${warna};" aria-hidden="true"></i>
+                    <span>${escapeHtml(b.label)}</span>
+                </a>`;
+            }).join("");
         }
 
         // ── Render Dynamic Chart From Real Data ──
@@ -2997,7 +3357,7 @@
             const submitBtn = document.getElementById("btnSubmitDeposit");
             const origText = submitBtn.innerHTML;
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Menyiapkan Tagihan...`;
+            submitBtn.innerHTML = `<i class="fa-solid fa-spinner mkt-spin" style="font-size:1.1rem;" aria-hidden="true"></i> Menyiapkan Tagihan...`;
 
             try {
                 const res = await fetch(`${API_BASE}/wallet/topup`, {
@@ -3054,7 +3414,7 @@
 
                                 loadPortalOverview();
                                 loadPortalMutations();
-                                showToast("🎉 Pembayaran QRIS Berhasil! Saldo deposit telah masuk.");
+                                showToast("Pembayaran QRIS berhasil. Saldo deposit sudah masuk.");
                             } else if (checkData.status === "FAILED" || checkData.status === "EXPIRED" || checkData.status === "CANCELLED") {
                                 clearInterval(activeResellerTopupPoll);
                                 activeResellerTopupPoll = null;
@@ -3112,6 +3472,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
+            loadKontakAdmin();
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get("mode") === "register") {
                 switchAuthTab("register");

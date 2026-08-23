@@ -160,7 +160,16 @@ function priceBlockHtml(p, size = "sm") {
         </div>
     `;
 }
-const stars = (rating) => "★".repeat(Math.round(rating)) + "☆".repeat(5 - Math.round(rating));
+// Bintang rating memakai ikon Font Awesome, bukan karakter emoji
+// bintang. Glif emoji dirender berbeda-beda di tiap sistem operasi dan
+// warnanya tidak bisa diatur CSS, jadi tampilan rating tidak konsisten
+// antar perangkat.
+const stars = (rating) => {
+    const penuh = Math.round(Number(rating) || 0);
+    const aman = Math.max(0, Math.min(5, penuh));
+    return '<i class="fa-solid fa-star" aria-hidden="true"></i>'.repeat(aman)
+        + '<i class="fa-regular fa-star" aria-hidden="true"></i>'.repeat(5 - aman);
+};
 
 function safeJSONParse(value, fallback) {
     if (typeof value !== "string") return fallback;
@@ -214,6 +223,27 @@ function toast(message, type = "default") {
     `;
     container.appendChild(el);
     setTimeout(() => el.remove(), 3000);
+}
+
+/* ---------- Event target helpers ----------
+   BUG FIX (mobile): di WebKit/iOS, `event.target` buat click yang berasal
+   dari tap bisa berupa TEXT NODE, bukan Element -- khususnya kalau jarinya
+   mendarat persis di atas teks (mis. nominal "Rp 250.000" di tombol saldo
+   navbar). Text node gak punya .closest(), jadi pemanggilan
+   `event.target.closest(...)` melempar TypeError, listener-nya mati, dan
+   tombolnya kelihatan "gak bisa diklik" -- padahal di desktop (yang
+   target-nya selalu Element) sama sekali gak kelihatan masalahnya.
+   Semua delegasi event di file ini WAJIB lewat dua helper di bawah. */
+function eventElement(target) {
+    if (!target) return null;
+    // Node.ELEMENT_NODE === 1; text node (3) dinaikin ke elemen induknya.
+    if (target.nodeType === 1) return target;
+    return target.parentElement || null;
+}
+
+function closestFromEvent(target, selector) {
+    const el = eventElement(target);
+    return el ? el.closest(selector) : null;
 }
 
 /* ---------- Overlay helpers ---------- */
@@ -511,24 +541,24 @@ function renderProducts() {
                     <div class="relative w-full aspect-[4/3] rounded-t-2xl sm:rounded-t-3xl overflow-hidden bg-transparent shrink-0">
                         <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 fallback-clear" loading="lazy" decoding="async">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 pointer-events-none"></div>
-                        ${(isFlashSaleActive(p) || p.badge) ? `<div class="absolute top-2 left-2 flex flex-col gap-1">${isFlashSaleActive(p) ? '<span class="bg-red-500 text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1 border border-white/10"><span class="material-symbols-outlined text-[8px] sm:text-[10px]">bolt</span> FLASH SALE</span>' : ""}${p.badge ? `<span class="bg-black/50 backdrop-blur-md text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full uppercase tracking-widest border border-white/10">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}
+                        ${(isFlashSaleActive(p) || p.badge) ? `<div class="absolute top-2 left-2 flex flex-col gap-1">${isFlashSaleActive(p) ? '<span class="bg-red-500 text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1 border border-white/10"><i class="fa-solid fa-bolt text-[8px] sm:text-[10px]" aria-hidden="true"></i> FLASH SALE</span>' : ""}${p.badge ? `<span class="bg-black/50 backdrop-blur-md text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full uppercase tracking-widest border border-white/10">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}
                     </div>
                     <div class="p-[clamp(6px,2vw,20px)] flex flex-col flex-1">
                         <div class="flex-1">
                             ${p.category ? `<div class="text-[clamp(0.5rem,1.5vw,0.625rem)] font-bold text-brand-indigo dark:text-brand-cyan uppercase tracking-wider mb-1 truncate">${escapeHtml(p.category)}</div>` : ""}
                             <h4 class="font-bold text-gray-900 dark:text-white text-[clamp(0.65rem,2.2vw,1.125rem)] leading-tight line-clamp-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors">${escapeHtml(p.name)}</h4>
                             <div class="flex items-center gap-1 text-[clamp(0.55rem,1.7vw,0.75rem)] text-gray-500 dark:text-gray-400 mt-1 sm:mt-2 font-medium">
-                                <span class="text-amber-400 text-[clamp(0.5rem,1.5vw,0.75rem)]">★</span> <span>${p.rating || 5} · ${p.sold || 0} sold</span>
+                                <i class="fa-solid fa-star text-amber-400 text-[clamp(0.5rem,1.5vw,0.75rem)]" aria-hidden="true"></i> <span>${p.rating || 5} · ${p.sold || 0} sold</span>
                             </div>
                         </div>
                         <div class="flex items-center justify-between mt-2 sm:mt-4 shrink-0">
                             <div class="font-bold text-gray-900 dark:text-white text-[clamp(0.65rem,2vw,1rem)] truncate">${priceBlockHtml(p, "sm")}</div>
                             <div class="flex gap-1 sm:gap-2 relative z-10 shrink-0">
                                 <button class="w-[clamp(24px,5vw,32px)] h-[clamp(24px,5vw,32px)] rounded-full bg-brand-indigo/10 dark:bg-white/5 flex items-center justify-center text-brand-indigo dark:text-brand-cyan hover:bg-brand-indigo hover:text-white transition-colors" data-product-action="add" data-id="${p.id}" title="Tambah ke keranjang">
-                                    <span class="material-symbols-outlined text-[clamp(0.75rem,2.5vw,1rem)]">add_shopping_cart</span>
+                                    <i class="fa-solid fa-cart-plus text-[clamp(0.75rem,2.5vw,1rem)]" aria-hidden="true"></i>
                                 </button>
                                 <button class="w-[clamp(24px,5vw,32px)] h-[clamp(24px,5vw,32px)] rounded-full bg-gray-900 dark:bg-white flex items-center justify-center text-white dark:text-gray-900 hover:scale-110 transition-transform" data-product-action="buy" data-id="${p.id}" title="Beli sekarang">
-                                    <span class="material-symbols-outlined text-[clamp(0.75rem,2.5vw,1rem)]">shopping_bag</span>
+                                    <i class="fa-solid fa-bag-shopping text-[clamp(0.75rem,2.5vw,1rem)]" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
@@ -550,7 +580,7 @@ function initProductGridInteractions() {
     if (!grid) return;
 
     grid.addEventListener("click", (event) => {
-        const action = event.target.closest("[data-product-action]");
+        const action = closestFromEvent(event.target, "[data-product-action]");
         if (action && grid.contains(action)) {
             const id = Number(action.dataset.id);
             if (!Number.isFinite(id)) return;
@@ -559,14 +589,14 @@ function initProductGridInteractions() {
             return;
         }
 
-        const card = event.target.closest("[data-product-card]");
+        const card = closestFromEvent(event.target, "[data-product-card]");
         if (card && grid.contains(card)) openProductModal(Number(card.dataset.id));
     });
 
     grid.addEventListener("keydown", (event) => {
         if (event.key !== "Enter" && event.key !== " ") return;
-        if (event.target.closest("[data-product-action]")) return;
-        const card = event.target.closest("[data-product-card]");
+        if (closestFromEvent(event.target, "[data-product-action]")) return;
+        const card = closestFromEvent(event.target, "[data-product-card]");
         if (!card || !grid.contains(card)) return;
         event.preventDefault();
         openProductModal(Number(card.dataset.id));
@@ -829,17 +859,38 @@ function attachAvatarUploadListeners() {
     };
 }
 
-accountBtn.addEventListener("click", () => {
+function toggleAccountMenu() {
     if (currentUser) {
-        accountDropdown.classList.toggle("active");
+        const open = accountDropdown.classList.toggle("active");
+        accountBtn.setAttribute("aria-expanded", String(open));
     } else {
         openOverlay("authOverlay");
     }
+}
+
+accountBtn.addEventListener("click", toggleAccountMenu);
+// #accountBtn adalah <div>, bukan <button>, jadi keyboard gak otomatis
+// ngirim click. Tanpa ini tombol akun gak bisa dibuka pakai Tab + Enter.
+accountBtn.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+    e.preventDefault();
+    toggleAccountMenu();
 });
 
 document.addEventListener("click", (e) => {
-    if (!accountDropdown.contains(e.target) && e.target !== accountBtn) {
+    // BUG FIX (desktop): dulu pengecekannya `e.target !== accountBtn`.
+    // #accountBtn punya anak (<i> ikon + <span> label nama), jadi begitu
+    // user ngeklik ikon/labelnya -- yang justru bagian yang kelihatan --
+    // e.target adalah anak itu, bukan #accountBtn sendiri. Listener klik
+    // tombol membuka dropdown, lalu listener ini (yang jalan belakangan di
+    // fase bubble pada event YANG SAMA) langsung nutup lagi. Efeknya
+    // dropdown akun gak pernah kebuka. Sekarang dipakai closest() biar klik
+    // di mana pun di dalam tombol dihitung sebagai klik tombolnya.
+    const el = eventElement(e.target);
+    if (!el) return;
+    if (!accountDropdown.contains(el) && !el.closest("#accountBtn")) {
         accountDropdown.classList.remove("active");
+        accountBtn.setAttribute("aria-expanded", "false");
     }
 });
 
@@ -1493,7 +1544,7 @@ async function showPaidOrderSuccess(orderData, isTopup) {
     const orderId = orderData.id || orderData.orderId || orderData.reference_id;
     const trackingNote = currentUser
         ? `Kamu bisa cek status di "Pesanan Saya".`
-        : `⚠️ Kamu checkout tanpa akun — catat Order ID ini baik-baik, karena tidak tersimpan di riwayat manapun: <strong>${escapeHtml(orderId)}</strong>`;
+        : `<i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i> Kamu checkout tanpa akun — catat Order ID ini baik-baik, karena tidak tersimpan di riwayat manapun: <strong>${escapeHtml(orderId)}</strong>`;
 
     document.getElementById("checkoutSuccessMsg").innerHTML =
         `Terima kasih, pesanan kamu senilai ${rupiah(orderData.total || 0)} telah lunas. ${trackingNote}`;
@@ -1590,7 +1641,7 @@ async function renderRatingPrompt(orderData, container) {
     // Inject HTML rating form sepenuhnya ke container
     // (innerHTML di-reset sehingga tidak ada duplicate listener lama)
     container.innerHTML = `
-        <h4 style="margin-bottom:0.5rem;font-size:1.05rem;color:var(--text);">⭐ Bagaimana pengalamanmu berbelanja di NexShop?</h4>
+        <h4 style="margin-bottom:0.5rem;font-size:1.05rem;color:var(--text);"><i class="fa-solid fa-star" aria-hidden="true"></i> Bagaimana pengalamanmu berbelanja di NexShop?</h4>
         <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">Masukan kamu membantu kami meningkatkan layanan.</p>
         <div id="rp_stars_${uid}" style="display:flex;justify-content:center;gap:0.5rem;margin-bottom:1rem;">
             ${[1,2,3,4,5].map(n => `
@@ -1862,7 +1913,8 @@ function testimonialInitials(name) {
 
 function testimonialCardHtml(item) {
     const score = Math.max(1, Math.min(5, parseInt(item.score, 10) || 5));
-    const stars = "★".repeat(score) + "☆".repeat(5 - score);
+    const stars = '<i class="fa-solid fa-star" aria-hidden="true"></i>'.repeat(score)
+        + '<i class="fa-regular fa-star" aria-hidden="true"></i>'.repeat(5 - score);
     // Testimoni kustom (dibuat admin dari dashboard) bisa punya foto profil
     // asli (item.avatar) -- kalau ada, tampilkan foto itu; kalau tidak
     // (rating asli dari pembeli), fallback ke inisial seperti sebelumnya.
@@ -1988,7 +2040,7 @@ function renderTestimonials(items) {
     }
 
     marquee.addEventListener("click", (e) => {
-        const card = e.target.closest(".testimonial-card");
+        const card = closestFromEvent(e.target, ".testimonial-card");
         if (!card || !marquee.contains(card)) return;
         openSpotlight(card);
     });
@@ -1997,7 +2049,7 @@ function renderTestimonials(items) {
     // lagi fokus keyboard juga buka spotlight, konsisten sama klik mouse.
     marquee.addEventListener("keydown", (e) => {
         if (e.key !== "Enter" && e.key !== " ") return;
-        const card = e.target.closest(".testimonial-card");
+        const card = closestFromEvent(e.target, ".testimonial-card");
         if (!card || !marquee.contains(card)) return;
         e.preventDefault();
         openSpotlight(card);
@@ -2085,11 +2137,11 @@ function renderTrackResult(data, options = {}) {
     const configuredWhatsApp = cachedStoreSettings?.contact_whatsapp || document.getElementById("footerWaLink")?.href || "";
     if (data.type === "order" && isPaid && configuredWhatsApp) {
         const waDigits = configuredWhatsApp.replace(/\D/g, "");
-        const prefill = `Halo admin, saya sudah bayar pesanan dengan No. Transaksi ${data.id}. Saya akan melampirkan bukti pembayaran iPaymu di chat ini. Mohon diproses ya 🙏`;
+        const prefill = `Halo admin, saya sudah bayar pesanan dengan No. Transaksi ${data.id}. Saya akan melampirkan bukti pembayaran iPaymu di chat ini. Mohon diproses ya, terima kasih.`;
         const waHref = `https://wa.me/${waDigits}?text=${encodeURIComponent(prefill)}`;
         waCta = `
             <div class="track-wa-cta">
-                <p class="otp-info">🎮 Pembayaran sudah terverifikasi. Produk game ini diproses manual oleh admin. ${fromPaymentReturn ? "Klik tombol di bawah lalu lampirkan screenshot/bukti pembayaran iPaymu di chat." : `Sertakan <strong>No. Transaksi ${escapeHtml(data.id)}</strong> saat chat admin.`}</p>
+                <p class="otp-info"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Pembayaran sudah terverifikasi. Produk game ini diproses manual oleh admin. ${fromPaymentReturn ? "Klik tombol di bawah lalu lampirkan screenshot/bukti pembayaran iPaymu di chat." : `Sertakan <strong>No. Transaksi ${escapeHtml(data.id)}</strong> saat chat admin.`}</p>
                 <a href="${waHref}" target="_blank" rel="noopener" class="btn-primary track-wa-btn"><i class="fa-brands fa-whatsapp" aria-hidden="true"></i> Chat Admin via WhatsApp</a>
             </div>
         `;
@@ -2618,7 +2670,10 @@ function formatPolicyText(text) {
 // ada yang di-hardcode. Endpoint & kontrak API tidak berubah sama sekali
 // dari implementasi lama (check-nickname, create order) supaya checkout,
 // iPaymu, dan backend tetap jalan seperti sebelumnya.
-let TOPUP_PRODUCTS = [];
+// TOPUP_PRODUCTS DIHAPUS: dulu menampung SELURUH produk game hasil satu
+// request /topup/products. Katalog sekarang dimuat bertahap per kartu
+// (lihat loadTopupProducts), dan nominal per game diambil saat game itu
+// dibuka -- tidak ada lagi satu array raksasa yang perlu disimpan.
 let TOPUP_GAMES = [];
 
 // Shortcut "sering dicari" di atas grid topup. keywords dicocokkan (contains,
@@ -2715,18 +2770,130 @@ function hargaResellerHtml(p, kelasCoret = "tw-price-normal") {
     return `<span class="${kelasCoret}">${rupiah(p.harga_normal)}</span>`;
 }
 
-async function loadTopupProducts() {
-    renderTopupGameSkeleton();
+// ==============================================================
+// PEMUATAN KATALOG GAME BERTAHAP (LAZY LOAD)
+//
+// Dulu: satu request /topup/products menarik SELURUH produk game dengan
+// SEMUA kolomnya (select("*")), lalu browser mengelompokkannya per game
+// hanya untuk menampilkan kartu berisi nama, logo, jumlah produk, dan
+// harga termurah. Ribuan baris diunduh, di-parse, dan ditahan di memori
+// tab padahal isinya baru dipakai kalau user membuka satu game.
+//
+// Sekarang: server mengirim RINGKASAN kartu per halaman
+// (/topup/catalog/games). Daftar nominal satu game baru diambil ketika
+// game itu dibuka.
+//
+// Pencarian tetap menjangkau seluruh katalog karena filternya dijalankan
+// SERVER atas indeks lengkap -- termasuk nama tiap nominal di dalam game
+// yang kartunya belum pernah dimuat. Menyaring di browser atas data yang
+// kebetulan sudah terunduh akan membuat game yang belum termuat mustahil
+// ditemukan, yaitu menukar masalah berat halaman dengan pencarian rusak.
+// ==============================================================
+const TOPUP_PAGE_SIZE = 18;
+let topupPage = 0;
+let topupHasMore = true;
+let topupLoading = false;
+let topupTotal = 0;
+// Token permintaan: hasil pencarian lama yang datang terlambat tidak boleh
+// menimpa hasil pencarian yang lebih baru.
+let topupRequestToken = 0;
+// Nominal per game, diisi saat kartunya dibuka.
+const TOPUP_PRODUK_CACHE = new Map();
+
+async function loadTopupProducts(reset = true) {
+    if (topupLoading) return;
+
+    if (reset) {
+        topupPage = 0;
+        topupHasMore = true;
+        TOPUP_GAMES = [];
+        renderTopupGameSkeleton();
+    }
+    if (!topupHasMore) return;
+
+    topupLoading = true;
+    const tokenPermintaan = ++topupRequestToken;
+    setTopupLoadMoreState("loading");
+
     try {
-        const res = await fetch(`${API_BASE}/topup/products`, { headers: publicAuthHeaders() });
-        if (!res.ok) { renderTopupGameGrid(); return; }
-        TOPUP_PRODUCTS = await res.json();
-        buildTopupGames();
+        const params = new URLSearchParams({
+            page: String(topupPage + 1),
+            limit: String(TOPUP_PAGE_SIZE)
+        });
+        if (topupSearchQuery.trim()) params.set("q", topupSearchQuery.trim());
+
+        const res = await fetch(`${API_BASE}/topup/catalog/games?${params}`, {
+            headers: publicAuthHeaders()
+        });
+        if (!res.ok) throw new Error("Gagal memuat katalog game");
+        const data = await res.json();
+
+        // Respons kedaluwarsa (user sudah mengetik kata kunci lain).
+        if (tokenPermintaan !== topupRequestToken) return;
+
+        topupPage = data.page || topupPage + 1;
+        topupHasMore = !!data.has_more;
+        topupTotal = Number(data.total) || 0;
+
+        // Bentuk objek disamakan dengan struktur lama ({kategori, logo,
+        // products}) supaya seluruh kode di bawah -- termasuk openGameDetail
+        // -- tidak perlu ikut diubah. Bedanya `products` sekarang mulai
+        // kosong dan diisi saat game dibuka.
+        const kartuBaru = (data.items || []).map((g) => ({
+            id: g.id,
+            kategori: g.name,
+            logo: g.logo,
+            product_count: g.product_count,
+            min_price: g.min_price,
+            products: []
+        }));
+
+        TOPUP_GAMES = reset ? kartuBaru : TOPUP_GAMES.concat(kartuBaru);
         renderTopupGameGrid();
     } catch (err) {
-        // biarin grid kosong kalau API gagal
-        renderTopupGameGrid();
+        if (tokenPermintaan !== topupRequestToken) return;
+        console.error("loadTopupProducts:", err);
+        if (reset) {
+            TOPUP_GAMES = [];
+            renderTopupGameGrid();
+        } else {
+            setTopupLoadMoreState("error");
+        }
+    } finally {
+        if (tokenPermintaan === topupRequestToken) {
+            topupLoading = false;
+            setTopupLoadMoreState(topupHasMore ? "idle" : "done");
+        }
     }
+}
+
+/**
+ * Ambil daftar nominal satu game. Dipanggil tepat saat kartunya dibuka,
+ * bukan di muka. Hasilnya di-cache supaya membuka ulang game yang sama
+ * tidak memanggil jaringan lagi.
+ */
+async function ambilProdukGame(game) {
+    if (!game) return [];
+    if (game.products && game.products.length) return game.products;
+
+    const kunci = String(game.id || game.kategori).toLowerCase();
+    if (TOPUP_PRODUK_CACHE.has(kunci)) {
+        game.products = TOPUP_PRODUK_CACHE.get(kunci);
+        return game.products;
+    }
+
+    const res = await fetch(
+        `${API_BASE}/topup/catalog/group/game/${encodeURIComponent(kunci)}/products`,
+        { headers: publicAuthHeaders() }
+    );
+    if (!res.ok) throw new Error("Gagal memuat nominal game");
+    const data = await res.json();
+    const produk = data.products || [];
+
+    TOPUP_PRODUK_CACHE.set(kunci, produk);
+    game.products = produk;
+    if (!game.logo && data.logo) game.logo = data.logo;
+    return produk;
 }
 
 // Cari posisi game di daftar "paling banyak dicari" (TOPUP_POPULAR_SHORTCUTS).
@@ -2760,22 +2927,13 @@ function getTopupGameName(p) {
 // misal MLBB/PUBGM/Free Fire/CODM) selalu muncul PALING ATAS sesuai urutan
 // shortcut-nya, baru sisanya diurutkan alfabetis di bawahnya -- bukan cuma
 // alfabetis polos kayak sebelumnya.
-function buildTopupGames() {
-    const map = new Map();
-    TOPUP_PRODUCTS.forEach(p => {
-        const key = getTopupGameName(p);
-        if (!map.has(key)) map.set(key, { kategori: key, logo: p.operator_logo || null, products: [] });
-        const g = map.get(key);
-        g.products.push(p);
-        if (!g.logo && p.operator_logo) g.logo = p.operator_logo;
-    });
-    TOPUP_GAMES = [...map.values()].sort((a, b) => {
-        const rankA = getPopularShortcutRank(a.kategori);
-        const rankB = getPopularShortcutRank(b.kategori);
-        if (rankA !== rankB) return rankA - rankB;
-        return a.kategori.localeCompare(b.kategori);
-    });
-}
+// buildTopupGames() DIHAPUS.
+//
+// Fungsi ini dulu mengelompokkan seluruh produk jadi kartu per game di
+// browser -- pekerjaan yang hanya mungkin kalau seluruh katalog sudah
+// terunduh lebih dulu. Pengelompokan itu sekarang dilakukan server sekali
+// lalu di-cache (services/catalogIndexService.js), jadi hasilnya sama untuk
+// semua pengunjung tanpa satu pun dari mereka perlu mengunduh katalog utuh.
 
 function renderTopupGameSkeleton() {
     const grid = document.getElementById("topupGameGrid");
@@ -2799,12 +2957,17 @@ function renderTopupGameGrid() {
     if (!grid) return;
 
     const query = topupSearchQuery.trim().toLowerCase();
-    const data = query
-        ? TOPUP_GAMES.filter(g => g.kategori && g.kategori.toLowerCase().includes(query))
-        : TOPUP_GAMES;
+    // TIDAK ADA penyaringan di sisi klien lagi: TOPUP_GAMES hanya berisi
+    // kartu yang sudah dimuat, jadi menyaringnya di sini akan melewatkan
+    // game yang cocok tapi belum terkirim. Penyaringan dikerjakan server
+    // lewat parameter `q` (lihat loadTopupProducts).
+    const data = TOPUP_GAMES;
 
     const countBadge = document.getElementById("topupSearchCountBadge");
-    if (countBadge) countBadge.textContent = `${data.length} Game`;
+    // Angka ini TOTAL hasil dari server, bukan jumlah kartu yang terlihat --
+    // menampilkan jumlah yang terlihat akan menyesatkan ("18 Game" padahal
+    // hasilnya 140).
+    if (countBadge) countBadge.textContent = `${topupTotal} Game`;
 
     const clearBtn = document.getElementById("topupSearchClearBtn");
     if (clearBtn) clearBtn.classList.toggle("hidden", !query);
@@ -2827,15 +2990,18 @@ function renderTopupGameGrid() {
                 topupSearchQuery = "";
                 const input = document.getElementById("topupSearchInput");
                 if (input) input.value = "";
-                renderTopupGameGrid();
+                loadTopupProducts(true);
             });
         }
+        renderTopupLoadMore();
         return;
     }
 
     grid.innerHTML = data.map(g => {
-        const prices = g.products.map(p => Number(p.harga_jual) || 0).filter(n => n > 0);
-        const minPrice = prices.length ? Math.min(...prices) : null;
+        // Jumlah produk & harga termurah datang dari ringkasan server --
+        // dulu dihitung dari array produk lengkap yang harus diunduh dulu.
+        const minPrice = g.min_price !== undefined && g.min_price !== null ? g.min_price : null;
+        const jumlahProduk = g.product_count || 0;
         const logoUrl = g.logo ? escapeHtml(safeUrl(g.logo)) : "";
         return `
         <div class="topup-game-card group relative home-glass-card rounded-xl sm:rounded-2xl p-[clamp(6px,2vw,16px)] flex flex-col justify-between transition-all duration-300" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
@@ -2846,20 +3012,20 @@ function renderTopupGameGrid() {
                     ` : `
                     <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/20 to-brand-cyan/20"></div>
                     <div class="absolute inset-0 flex items-center justify-center">
-                        <span class="material-symbols-outlined text-3xl sm:text-5xl text-white/50">sports_esports</span>
+                        <i class="fa-solid fa-gamepad text-3xl sm:text-5xl text-white/50" aria-hidden="true"></i>
                     </div>
                     `}
                     <span class="absolute top-2 left-2 home-glass-badge !text-[9px] !px-2 !py-0.5 !shadow-sm">INSTAN</span>
                 </div>
                 <h4 class="text-[clamp(0.65rem,2.2vw,0.85rem)] leading-tight font-bold text-gray-900 dark:text-white line-clamp-2 mb-1 sm:mb-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors" title="${escapeHtml(g.kategori)}">${escapeHtml(g.kategori)}</h4>
                 <div class="flex items-center gap-1 text-[clamp(0.55rem,1.7vw,0.75rem)] text-gray-500 dark:text-gray-400 mb-2 sm:mb-4 font-medium">
-                    <span class="material-symbols-outlined text-[clamp(0.65rem,2vw,1rem)]">inventory_2</span> <span>${g.products.length} Produk</span>
+                    <i class="fa-solid fa-layer-group text-[clamp(0.6rem,1.9vw,0.9rem)]" aria-hidden="true"></i> <span>${jumlahProduk} Produk</span>
                 </div>
             </div>
             <div class="flex items-center justify-between mt-auto">
                 ${minPrice !== null ? `<div class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan text-[clamp(0.65rem,2vw,0.875rem)]">Mulai ${rupiah(minPrice)}</div>` : "<div></div>"}
                 <div class="w-[clamp(20px,5vw,32px)] h-[clamp(20px,5vw,32px)] rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-brand-indigo hover:text-white transition-colors relative z-10 shrink-0">
-                    <span class="material-symbols-outlined text-[clamp(0.75rem,2.5vw,1rem)]">arrow_forward</span>
+                    <i class="fa-solid fa-arrow-right text-[clamp(0.7rem,2.3vw,0.9rem)]" aria-hidden="true"></i>
                 </div>
             </div>
         </div>
@@ -2872,13 +3038,114 @@ function renderTopupGameGrid() {
             if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openGameDetail(card.dataset.kategori); }
         });
     });
+
+    renderTopupLoadMore();
+}
+
+// ==============================================================
+// KONTROL "MUAT LEBIH BANYAK" — KATALOG GAME
+//
+// Dua jalur disediakan bersamaan dan itu disengaja:
+//   * IntersectionObserver -> memuat otomatis saat sentinel mendekati layar,
+//   * tombol eksplisit    -> tetap ada, bisa difokus keyboard, dan berfungsi
+//     di browser tanpa IntersectionObserver. Infinite scroll saja akan
+//     memutus navigasi keyboard.
+// ==============================================================
+let topupObserver = null;
+
+function lepasTopupObserver() {
+    if (topupObserver) {
+        topupObserver.disconnect();
+        topupObserver = null;
+    }
+}
+
+function renderTopupLoadMore() {
+    const zona = document.getElementById("topupLoadMoreZone");
+    if (!zona) return;
+
+    if (!TOPUP_GAMES.length) {
+        zona.innerHTML = "";
+        lepasTopupObserver();
+        return;
+    }
+    if (!topupHasMore) {
+        zona.innerHTML = `<p class="topup-loadmore-done">Semua ${topupTotal} game sudah ditampilkan.</p>`;
+        lepasTopupObserver();
+        return;
+    }
+
+    const sisa = Math.max(topupTotal - TOPUP_GAMES.length, 0);
+    zona.innerHTML = `
+        <button type="button" class="topup-loadmore-btn" id="topupLoadMoreBtn">
+            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+            <span class="topup-loadmore-label">Muat lebih banyak</span>
+            <span class="topup-loadmore-sisa">${sisa} lagi</span>
+        </button>
+        <div id="topupLoadSentinel" aria-hidden="true"></div>
+    `;
+
+    const btn = document.getElementById("topupLoadMoreBtn");
+    if (btn) btn.addEventListener("click", () => loadTopupProducts(false));
+
+    lepasTopupObserver();
+    const sentinel = document.getElementById("topupLoadSentinel");
+    if (sentinel && typeof IntersectionObserver !== "undefined") {
+        topupObserver = new IntersectionObserver((entries) => {
+            if (entries.some((e) => e.isIntersecting) && topupHasMore && !topupLoading) {
+                loadTopupProducts(false);
+            }
+        }, { rootMargin: "400px 0px" });
+        topupObserver.observe(sentinel);
+    }
+}
+
+function setTopupLoadMoreState(state) {
+    const btn = document.getElementById("topupLoadMoreBtn");
+    if (!btn) return;
+    const label = btn.querySelector(".topup-loadmore-label");
+    if (state === "loading") {
+        btn.disabled = true;
+        btn.classList.add("is-loading");
+        if (label) label.textContent = "Memuat…";
+    } else if (state === "error") {
+        btn.disabled = false;
+        btn.classList.remove("is-loading");
+        if (label) label.textContent = "Gagal memuat — coba lagi";
+    } else {
+        btn.disabled = false;
+        btn.classList.remove("is-loading");
+        if (label) label.textContent = "Muat lebih banyak";
+    }
 }
 
 /* ---- Halaman Detail Game (bukan modal) ---- */
 
-function openGameDetail(kategori, overrideGame = null, returnView = 'grid', preselectProductId = null) {
+async function openGameDetail(kategori, overrideGame = null, returnView = 'grid', preselectProductId = null) {
     const game = overrideGame || TOPUP_GAMES.find(g => g.kategori === kategori);
     if (!game) return;
+
+    // Nominal game TIDAK lagi ikut terkirim bersama katalog awal -- diambil
+    // di sini, hanya untuk game yang benar-benar dibuka. Hasilnya di-cache
+    // (lihat ambilProdukGame) supaya membuka ulang game yang sama tidak
+    // memanggil jaringan lagi.
+    if (!game.products || !game.products.length) {
+        try {
+            showAppLoader();
+            await ambilProdukGame(game);
+        } catch (err) {
+            console.error("openGameDetail:", err);
+            toast("Gagal memuat daftar nominal. Periksa koneksi kamu.", "error");
+            return;
+        } finally {
+            hideAppLoader();
+        }
+    }
+
+    if (!game.products || !game.products.length) {
+        toast("Belum ada nominal aktif untuk game ini.", "info");
+        return;
+    }
 
     twState = {
         kategori: game.kategori,
@@ -3202,7 +3469,7 @@ function renderTopupPaymentGrid() {
                 ${window.currentUserWallet && twState.product ? (
                     window.currentUserWallet.balance >= twState.product.harga_jual ? `
                         <div class="text-emerald-500 font-semibold mt-1 flex items-center gap-1">
-                            <span class="material-symbols-outlined text-xs">check_circle</span>
+                            <i class="fa-solid fa-circle-check text-xs" aria-hidden="true"></i>
                             <span>Saldo mencukupi. Sisa setelah transaksi: <strong>${rupiah(window.currentUserWallet.balance - twState.product.harga_jual)}</strong></span>
                         </div>
                     ` : `
@@ -3834,18 +4101,37 @@ function initSearchListeners() {
     const topupSearchInput = document.getElementById("topupSearchInput");
     const topupSearchClearBtn = document.getElementById("topupSearchClearBtn");
 
+    // Pencarian game dikerjakan SERVER (/topup/catalog/games?q=).
+    // Kartu kini dimuat bertahap, jadi menyaring di browser hanya akan
+    // menelusuri kartu yang kebetulan sudah terunduh -- game yang cocok tapi
+    // belum termuat tidak akan pernah muncul. Server menyaring atas indeks
+    // lengkap, termasuk nama tiap nominal di dalam game.
+    let topupSearchDebounce = null;
+
     if (topupSearchInput) {
         topupSearchInput.addEventListener("input", (e) => {
             topupSearchQuery = e.target.value;
-            renderTopupGameGrid();
+            // Debounce: tanpa ini tiap ketukan huruf memicu satu request.
+            clearTimeout(topupSearchDebounce);
+            topupSearchDebounce = setTimeout(() => loadTopupProducts(true), 280);
+        });
+
+        // Enter tidak perlu menunggu debounce.
+        topupSearchInput.addEventListener("keydown", (e) => {
+            if (e.key !== "Enter") return;
+            e.preventDefault();
+            clearTimeout(topupSearchDebounce);
+            topupSearchQuery = topupSearchInput.value;
+            loadTopupProducts(true);
         });
     }
 
     if (topupSearchClearBtn) {
         topupSearchClearBtn.addEventListener("click", () => {
+            clearTimeout(topupSearchDebounce);
             topupSearchQuery = "";
             if (topupSearchInput) topupSearchInput.value = "";
-            renderTopupGameGrid();
+            loadTopupProducts(true);
         });
     }
 }
@@ -3855,7 +4141,7 @@ function initThemeToggle() {
     applyTheme(currentTheme, false);
 
     document.addEventListener("click", (e) => {
-        const btn = e.target.closest("#themeToggle, .theme-toggle");
+        const btn = closestFromEvent(e.target, "#themeToggle, .theme-toggle");
         if (btn) {
             e.preventDefault();
             e.stopPropagation();
@@ -3874,7 +4160,7 @@ function initThemeToggle() {
 
 function initMobileMenu() {
     document.addEventListener("click", (e) => {
-        const menuToggle = e.target.closest("#menuToggle, .menu-toggle");
+        const menuToggle = closestFromEvent(e.target, "#menuToggle, .menu-toggle");
         const navMenu = document.getElementById("navMenu");
 
         if (menuToggle && navMenu) {
@@ -3890,7 +4176,7 @@ function initMobileMenu() {
                 navMenu.classList.remove("active");
                 const btn = document.getElementById("menuToggle");
                 if (btn) btn.setAttribute("aria-expanded", "false");
-            } else if (e.target.closest("a, button:not(#themeToggle)")) {
+            } else if (closestFromEvent(e.target, "a, button:not(#themeToggle)")) {
                 navMenu.classList.remove("active");
                 const btn = document.getElementById("menuToggle");
                 if (btn) btn.setAttribute("aria-expanded", "false");
@@ -4276,7 +4562,7 @@ async function loadOneStopCatalog() {
         grid.innerHTML = `
             <div class="col-span-full text-center py-12">
                 <div class="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4 text-red-500">
-                    <span class="material-symbols-outlined text-3xl">error</span>
+                    <i class="fa-solid fa-circle-exclamation text-3xl" aria-hidden="true"></i>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Gagal Memuat Katalog</h3>
                 <p class="text-gray-500 dark:text-gray-400">Silakan periksa koneksi internet atau refresh halaman.</p>
@@ -4333,7 +4619,7 @@ function renderOneStopOperators() {
             const matchCategory = matchesQuery(categoryObj.category);
             const matchOperator = matchesQuery(op.operator);
             
-            const fallbackIcon = `<span class="material-symbols-outlined text-4xl text-gray-400">sports_esports</span>`;
+            const fallbackIcon = `<i class="fa-solid fa-gamepad text-4xl text-gray-400" aria-hidden="true"></i>`;
             const imgHtml = op.operator_logo 
                 ? `<img src="${safeUrl(op.operator_logo)}" alt="${op.operator}" onerror="this.outerHTML='${fallbackIcon}'" class="w-full h-full object-contain drop-shadow-lg" loading="lazy">`
                 : fallbackIcon;
@@ -4366,7 +4652,7 @@ function renderOneStopOperators() {
                         <div class="mt-auto w-full pt-3 border-t border-gray-200 dark:border-white/10 flex justify-between items-center relative z-10">
                             ${priceHtml}
                             <div class="w-6 h-6 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-600 dark:text-gray-300 group-hover:bg-brand-indigo group-hover:text-white transition-colors shrink-0">
-                                <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                <i class="fa-solid fa-arrow-right text-sm" aria-hidden="true"></i>
                             </div>
                         </div>
                     </div>
@@ -4390,7 +4676,7 @@ function renderOneStopOperators() {
                                 <div class="mt-auto w-full pt-3 border-t border-gray-200 dark:border-white/10 flex justify-between items-center relative z-10">
                                     <div class="font-bold text-gray-900 dark:text-white">${rupiah(p.harga_jual)}${hargaResellerHtml(p, "tw-price-normal")}</div>
                                     <div class="w-6 h-6 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-600 dark:text-gray-300 group-hover:bg-brand-indigo group-hover:text-white transition-colors shrink-0">
-                                        <span class="material-symbols-outlined text-sm">arrow_forward</span>
+                                        <i class="fa-solid fa-arrow-right text-sm" aria-hidden="true"></i>
                                     </div>
                                 </div>
                             </div>
@@ -4417,7 +4703,7 @@ function renderOneStopOperators() {
         html = `
             <div class="col-span-full flex flex-col items-center justify-center py-16 text-center">
                 <div class="w-20 h-20 bg-gray-100 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
-                    <span class="material-symbols-outlined text-4xl text-gray-400">search_off</span>
+                    <i class="fa-solid fa-magnifying-glass-minus text-4xl text-gray-400" aria-hidden="true"></i>
                 </div>
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Yah, layanan yang kamu cari belum ditemukan.</h3>
                 <p class="text-gray-500 dark:text-gray-400 max-w-md">Coba cari dengan kata kunci lain atau pilih kategori yang tersedia.</p>
@@ -4755,12 +5041,34 @@ function closeWalletModal(e) {
 
 function initWalletUI() {
     // Global Event Delegation for ANY wallet trigger
+    // Fase CAPTURE + normalisasi text node (lihat closestFromEvent).
+    // Capture dipakai supaya handler ini gak bisa dimatikan oleh
+    // stopPropagation() dari listener lain di jalur bubble, dan supaya
+    // trigger yang di-render belakangan (mis. kartu wallet di drawer
+    // mobile) tetap kebaca tanpa perlu re-bind.
     document.addEventListener("click", (event) => {
-        const trigger = event.target.closest("[data-wallet-trigger]");
-        if (trigger) {
-            event.preventDefault();
-            openWalletModal();
+        const trigger = closestFromEvent(event.target, "[data-wallet-trigger]");
+        if (!trigger) return;
+        event.preventDefault();
+        // Kartu wallet ada juga di dalam drawer menu mobile. Drawer-nya
+        // harus ditutup duluan: kalau nggak, drawer ketinggalan kebuka di
+        // belakang bottom sheet wallet, dan pas wallet ditutup body
+        // overflow-nya ikut kereset padahal drawer masih aktif.
+        if (trigger.closest("#mobileMenuOverlay")) {
+            closeOverlay("mobileMenuOverlay");
         }
+        openWalletModal();
+    }, true);
+
+    // Kartu wallet di drawer mobile itu <div role="button" tabindex="0">,
+    // jadi Enter/Space harus dijembatani manual.
+    document.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " " && event.key !== "Spacebar") return;
+        const trigger = closestFromEvent(event.target, '[data-wallet-trigger][role="button"]');
+        if (!trigger) return;
+        event.preventDefault();
+        if (trigger.closest("#mobileMenuOverlay")) closeOverlay("mobileMenuOverlay");
+        openWalletModal();
     });
 
     // Close Button

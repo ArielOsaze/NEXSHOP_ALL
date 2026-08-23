@@ -2,6 +2,7 @@ const supabase = require("../config/db");
 const crypto = require("crypto");
 const tokovoucher = require("../config/tokovoucher");
 const catalogService = require("../services/catalogService");
+const { getCatalogIndex, halamanGrup, urutkanPopuler, invalidateCatalogIndex } = require("../services/catalogIndexService");
 const webhookRelay = require("../services/webhookRelayService");
 const { createRedirectPayment, checkTransactionStatus, createDirectPayment, isDirectPaymentMethod } = require("../config/ipaymu");
 
@@ -3077,7 +3078,154 @@ function cleanProductName(name) {
     return cleaned;
 }
 
+// ===========================================================
+// ETALASE PUBLIK BERTAHAP (LAZY LOADING) + PENCARIAN SISI SERVER
+//
+// Endpoint lama (/topup/products dan /topup/public-catalog) mengirim SELURUH
+// katalog dalam satu respons -- makin banyak produk, makin berat halaman
+// dibuka, padahal kartu di grid cuma butuh nama, logo, jumlah produk, dan
+// harga termurah. Tiga endpoint di bawah menggantikan pola itu:
+//
+//   GET /api/topup/catalog/games          -> kartu game (halaman utama)
+//   GET /api/topup/catalog/operators      -> kartu operator (Marketplace)
+//   GET /api/topup/catalog/group/:jenis/:id/products -> isi satu grup
+//
+// Kenapa pencarian tetap benar meski kartu dimuat bertahap: filter `q`
+// dijalankan di SERVER atas seluruh indeks katalog (termasuk nama tiap
+// produk di dalam grup yang kartunya belum pernah dikirim ke browser).
+// Kalau penyaringan dilakukan di browser atas data yang sudah terunduh saja,
+// produk yang belum termuat tidak akan pernah bisa ditemukan -- itu justru
+// menukar satu masalah dengan masalah yang lebih buruk.
+// ===========================================================
+
+// Game yang paling sering dicari selalu di halaman pertama. Urutan ini
+// dipakai server supaya konsisten di semua perangkat -- sebelumnya
+// pengurutan populer hanya ada di frontend dan otomatis salah begitu
+// daftarnya dipotong per halaman.
+const URUTAN_GAME_POPULER = ["mobile legends", "pubg", "free fire", "call of duty", "genshin", "valorant", "roblox"];
+
+function terapkanHargaResellerKeRingkasan(items, konteksReseller) {
+    if (!konteksReseller || !konteksReseller.isReseller) return items;
+    const persen = Number(konteksReseller.discountPercent) || 0;
+    if (persen <= 0) return items;
+
+    // Ringkasan kartu hanya memuat harga TERMURAH, dan harga modal tidak
+    // ikut dikirim ke sini, jadi lantai margin tidak bisa dihitung ulang di
+    // lapisan ini. Yang ditampilkan cukup penanda bahwa harga reseller
+    // berlaku; angka pastinya dihitung ulang saat grup dibuka dan saat
+    // checkout -- satu-satunya tempat yang menentukan tagihan.
+    return items.map((it) => ({ ...it, harga_reseller_aktif: true, diskon_persen: persen }));
+}
+
+exports.getCatalogGames = async (req, res) => {
+    try {
+        const konteksReseller = await getResellerContext(req.user && req.user.id);
+        const indeks = await getCatalogIndex();
+
+        const daftar = urutkanPopuler([...indeks.games], URUTAN_GAME_POPULER);
+        const hasil = halamanGrup(daftar, {
+            page: req.query.page,
+            limit: req.query.limit,
+            q: req.query.q,
+            kategori: req.query.kategori
+        });
+
+        hasil.items = terapkanHargaResellerKeRingkasan(hasil.items, konteksReseller);
+        // Cache pendek di sisi klien/CDN: isi kartu sama untuk semua tamu.
+        // Tidak dipasang kalau pemanggilnya reseller (harganya personal).
+        if (!konteksReseller.isReseller) {
+            res.setHeader("Cache-Control", "public, max-age=60");
+        } else {
+            res.setHeader("Cache-Control", "private, no-store");
+        }
+        res.json(hasil);
+    } catch (err) {
+        console.error("getCatalogGames:", err.message);
+        res.status(500).json({ message: "Gagal memuat daftar game" });
+    }
+};
+
+exports.getCatalogOperators = async (req, res) => {
+    try {
+        const konteksReseller = await getResellerContext(req.user && req.user.id);
+        const indeks = await getCatalogIndex();
+
+        const daftar = [...indeks.operators].sort((a, b) => a.name.localeCompare(b.name, "id"));
+        const hasil = halamanGrup(daftar, {
+            page: req.query.page,
+            limit: req.query.limit,
+            q: req.query.q,
+            kategori: req.query.kategori
+        });
+
+        hasil.items = terapkanHargaResellerKeRingkasan(hasil.items, konteksReseller);
+        // Daftar kategori dikirim sekali di halaman pertama saja -- halaman
+        // berikutnya tidak perlu mengulang data yang sama.
+        if (hasil.page === 1) {
+            hasil.categories = indeks.categories;
+            hasil.total_operators = indeks.total_operators;
+        }
+
+        if (!konteksReseller.isReseller) {
+            res.setHeader("Cache-Control", "public, max-age=60");
+        } else {
+            res.setHeader("Cache-Control", "private, no-store");
+        }
+        res.json(hasil);
+    } catch (err) {
+        console.error("getCatalogOperators:", err.message);
+        res.status(500).json({ message: "Gagal memuat daftar operator" });
+    }
+};
+
+/**
+ * Produk milik SATU grup, diambil hanya saat kartunya dibuka.
+ * Inilah yang membuat payload awal halaman tetap kecil.
+ */
+exports.getCatalogGroupProducts = async (req, res) => {
+    const jenis = String(req.params.jenis || "").toLowerCase();
+    const id = String(req.params.id || "").toLowerCase().trim();
+
+    if (jenis !== "game" && jenis !== "operator") {
+        return res.status(400).json({ message: "Jenis grup harus 'game' atau 'operator'." });
+    }
+    if (!id || id.length > 120) {
+        return res.status(400).json({ message: "Id grup tidak valid." });
+    }
+
+    try {
+        const konteksReseller = await getResellerContext(req.user && req.user.id);
+        const indeks = await getCatalogIndex();
+
+        const grup = jenis === "game" ? indeks.gamesById.get(id) : indeks.operatorsById.get(id);
+        if (!grup) {
+            return res.status(404).json({ message: "Grup produk tidak ditemukan." });
+        }
+
+        // Salin dulu: objek di cache dipakai bersama semua pengunjung, jadi
+        // harga reseller TIDAK BOLEH ditulis ke dalamnya. Tanpa salinan ini,
+        // harga milik satu reseller akan bocor ke pengunjung berikutnya yang
+        // kebetulan dilayani dari cache yang sama.
+        const produk = grup.products.map((p) => ({ ...p }));
+        terapkanHargaReseller(produk, konteksReseller);
+
+        res.setHeader("Cache-Control", konteksReseller.isReseller ? "private, no-store" : "public, max-age=60");
+        res.json({
+            id: grup.id,
+            name: grup.name,
+            category: grup.category,
+            logo: grup.logo || null,
+            total: produk.length,
+            products: produk
+        });
+    } catch (err) {
+        console.error("getCatalogGroupProducts:", err.message);
+        res.status(500).json({ message: "Gagal memuat produk grup" });
+    }
+};
+
 exports.getPublicCatalog = async (req, res) => {
+
     try {
         // Sama seperti getProducts: reseller yang login lihat harga miliknya.
         const konteksReseller = await getResellerContext(req.user && req.user.id);
@@ -3220,3 +3368,60 @@ exports.getPublicCatalog = async (req, res) => {
         res.status(500).json({ message: "Gagal memuat katalog publik" });
     }
 };
+
+
+// ===========================================================
+// INVALIDASI CACHE INDEKS KATALOG
+//
+// Etalase publik dilayani dari indeks yang di-cache di memori
+// (services/catalogIndexService.js). Tanpa pembatalan cache, perubahan
+// admin -- aktif/nonaktif produk, ubah harga, sync katalog baru -- baru
+// terlihat pengunjung setelah TTL habis.
+//
+// Pembungkusan dilakukan di SINI, sekali, atas daftar handler yang memang
+// mengubah katalog. Alternatifnya adalah menempelkan invalidateCatalogIndex()
+// di dalam setiap handler satu per satu -- cara itu gampang terlewat begitu
+// ada handler baru ditambahkan, dan gejalanya (etalase menampilkan data lama)
+// tidak kelihatan seperti bug sampai ada yang mengeluh.
+// ===========================================================
+const HANDLER_PENGUBAH_KATALOG = [
+    "smartActivateProducts",
+    "syncProducts",
+    "updateProduct",
+    "setKategoriActive",
+    "updateCategoryLogo",
+    "bulkUpdateStatus",
+    "bulkUpdateButuhServerId",
+    "bulkMarkupPrice",
+    "autoMarkupPrice",
+    "bulkUpdateIcon",
+    "bulkUpdateKategori",
+    "bulkDeleteProducts",
+    "undoLastAction",
+    "redoLastAction",
+    "deleteProduct",
+    "deleteAllProducts",
+    "create",
+    "applyToFilter"
+];
+
+for (const nama of HANDLER_PENGUBAH_KATALOG) {
+    const asli = exports[nama];
+    if (typeof asli !== "function") {
+        // Menjaga daftar di atas tetap jujur: kalau ada handler yang diganti
+        // nama/dihapus, ketahuan saat start-up, bukan diam-diam berhenti
+        // membatalkan cache.
+        console.warn(`[catalog-cache] handler "${nama}" tidak ditemukan, invalidasi dilewati`);
+        continue;
+    }
+    exports[nama] = async function (req, res, next) {
+        try {
+            return await asli.call(this, req, res, next);
+        } finally {
+            // Dijalankan juga saat handler melempar: sebagian mutasi bisa
+            // sudah tersimpan sebelum errornya terjadi, jadi cache tetap
+            // harus dianggap basi.
+            invalidateCatalogIndex();
+        }
+    };
+}

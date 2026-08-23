@@ -134,14 +134,13 @@ body {
     overflow-x: hidden;
 }
 
-.material-symbols-outlined {
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+/* Ikon situs memakai Font Awesome. Aturan dasar di bawah menggantikan
+   aturan .material-symbols-outlined lama: line-height 1 menjaga ikon tidak
+   menambah tinggi baris, dan user-select none mencegah glif ikut tersorot
+   saat pengguna menyeleksi teks di sekitarnya. */
+i[class*="fa-"] {
     line-height: 1;
     user-select: none;
-}
-
-.material-symbols-outlined.is-filled {
-    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
 .hidden {
@@ -454,7 +453,7 @@ body {
     align-items: center;
 }
 
-.mkt-nav-search .material-symbols-outlined {
+.mkt-nav-search i[class*='fa-'] {
     position: absolute;
     left: 0.7rem;
     font-size: 1.05rem;
@@ -500,7 +499,7 @@ body {
     white-space: nowrap;
 }
 
-.mkt-nav-pill .material-symbols-outlined {
+.mkt-nav-pill i[class*='fa-'] {
     font-size: 1rem;
 }
 
@@ -521,7 +520,7 @@ body {
     transition: border-color 0.18s, color 0.18s, background 0.18s;
 }
 
-.mkt-nav-track-btn .material-symbols-outlined {
+.mkt-nav-track-btn i[class*='fa-'] {
     font-size: 1.05rem;
 }
 
@@ -587,12 +586,12 @@ body {
     background: var(--mkt-primary-tint);
 }
 
-.mkt-nav-toggle .material-symbols-outlined {
+.mkt-nav-toggle i[class*='fa-'] {
     font-size: 1.3rem;
     transition: transform 0.2s;
 }
 
-.mkt-nav.is-open .mkt-nav-toggle .material-symbols-outlined {
+.mkt-nav.is-open .mkt-nav-toggle i[class*='fa-'] {
     transform: rotate(90deg);
 }
 
@@ -668,7 +667,7 @@ body {
     text-transform: uppercase;
 }
 
-.mkt-hero-tag .material-symbols-outlined {
+.mkt-hero-tag i[class*='fa-'] {
     font-size: 1rem;
 }
 
@@ -723,7 +722,7 @@ body {
     box-shadow: 0 18px 45px rgba(0, 0, 0, 0.32), 0 0 0 4px var(--mkt-glow-soft);
 }
 
-.mkt-search-wrap>.material-symbols-outlined {
+.mkt-search-wrap>i[class*='fa-'] {
     flex: 0 0 auto;
     margin-left: 0.85rem;
     color: var(--mkt-text-muted);
@@ -819,7 +818,7 @@ body {
     color: var(--mkt-secondary);
 }
 
-.mkt-hero-cta-icon .material-symbols-outlined {
+.mkt-hero-cta-icon i[class*='fa-'] {
     font-size: 1.15rem;
 }
 
@@ -887,7 +886,7 @@ body {
     color: var(--mkt-text-muted);
 }
 
-.mkt-trust-strip .material-symbols-outlined {
+.mkt-trust-strip i[class*='fa-'] {
     font-size: 1rem;
     color: var(--mkt-secondary);
 }
@@ -1030,7 +1029,7 @@ body {
     transition: background 0.2s, color 0.2s;
 }
 
-.cat-btn-icon .material-symbols-outlined {
+.cat-btn-icon i[class*='fa-'] {
     font-size: 1.15rem;
 }
 
@@ -1147,19 +1146,19 @@ body {
     }
 }
 
-.cat-btn-icon .material-symbols-outlined {
+.cat-btn-icon i[class*='fa-'] {
     animation: cat-icon-breathe 3.6s ease-in-out infinite;
 }
 
-.cat-btn:nth-child(3n+1) .cat-btn-icon .material-symbols-outlined {
+.cat-btn:nth-child(3n+1) .cat-btn-icon i[class*='fa-'] {
     animation-delay: 0s;
 }
 
-.cat-btn:nth-child(3n+2) .cat-btn-icon .material-symbols-outlined {
+.cat-btn:nth-child(3n+2) .cat-btn-icon i[class*='fa-'] {
     animation-delay: 1.2s;
 }
 
-.cat-btn:nth-child(3n+3) .cat-btn-icon .material-symbols-outlined {
+.cat-btn:nth-child(3n+3) .cat-btn-icon i[class*='fa-'] {
     animation-delay: 2.4s;
 }
 
@@ -1186,7 +1185,7 @@ body {
     animation: mkt-deco-float 3.6s ease-in-out infinite;
 }
 
-.mkt-rail-deco-item .material-symbols-outlined {
+.mkt-rail-deco-item i[class*='fa-'] {
     font-size: 1.15rem;
 }
 
@@ -1455,7 +1454,7 @@ body {
     color: var(--mkt-text-muted);
 }
 
-.mkt-empty .material-symbols-outlined {
+.mkt-empty i[class*='fa-'] {
     font-size: 2.5rem;
     color: var(--mkt-primary);
     opacity: 0.6;
@@ -1565,7 +1564,7 @@ body {
     gap: 0.65rem;
 }
 
-.mkt-promo-link .material-symbols-outlined {
+.mkt-promo-link i[class*='fa-'] {
     font-size: 1.05rem;
 }
 
@@ -1599,7 +1598,7 @@ body {
     color: var(--mkt-secondary);
 }
 
-.mkt-support-icon .material-symbols-outlined {
+.mkt-support-icon i[class*='fa-'] {
     font-size: 1.6rem;
 }
 
@@ -1798,7 +1797,7 @@ body {
     border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
-.mkt-reseller-banner .material-symbols-outlined {
+.mkt-reseller-banner i[class*='fa-'] {
     font-size: 1.6rem;
     color: var(--mkt-primary);
 }
@@ -2014,7 +2013,7 @@ body {
     transition: border-color 0.18s, background 0.18s;
 }
 
-.mkt-pay-card .material-symbols-outlined {
+.mkt-pay-card i[class*='fa-'] {
     font-size: 1.25rem;
     color: var(--mkt-secondary);
 }
@@ -2212,11 +2211,11 @@ body {
     word-break: break-all;
 }
 
-.mkt-payment-status .material-symbols-outlined,
-.mkt-btn-secondary .material-symbols-outlined,
-.mkt-btn-primary .material-symbols-outlined,
-.mkt-detail-back .material-symbols-outlined,
-.nx-footer__legal-link .material-symbols-outlined {
+.mkt-payment-status i[class*='fa-'],
+.mkt-btn-secondary i[class*='fa-'],
+.mkt-btn-primary i[class*='fa-'],
+.mkt-detail-back i[class*='fa-'],
+.nx-footer__legal-link i[class*='fa-'] {
     font-size: 1.1rem;
     vertical-align: -0.2em;
 }
@@ -2516,7 +2515,7 @@ body {
         border-radius: 8px;
     }
 
-    .cat-btn-icon .material-symbols-outlined {
+    .cat-btn-icon i[class*='fa-'] {
         font-size: 0.95rem;
     }
 
@@ -2525,7 +2524,7 @@ body {
         height: 2.1rem;
     }
 
-    .mkt-rail-deco-item .material-symbols-outlined {
+    .mkt-rail-deco-item i[class*='fa-'] {
         font-size: 1.05rem;
     }
 
@@ -2635,7 +2634,7 @@ body {
         gap: 0.35rem;
     }
 
-    .mkt-nav-track-btn span:not(.material-symbols-outlined) {
+    .mkt-nav-track-btn span:not(i[class*='fa-']) {
         display: none;
     }
 
@@ -2645,7 +2644,7 @@ body {
         justify-content: center;
     }
 
-    .mkt-nav-back span:not(.material-symbols-outlined) {
+    .mkt-nav-back span:not(i[class*='fa-']) {
         display: none;
     }
 
@@ -2656,7 +2655,7 @@ body {
         gap: 0;
     }
 
-    .mkt-nav-back .material-symbols-outlined {
+    .mkt-nav-back i[class*='fa-'] {
         font-size: 1.2rem;
     }
 
@@ -2701,7 +2700,7 @@ body {
         grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
     }
 
-    .mkt-nav-pill span:not(.material-symbols-outlined) {
+    .mkt-nav-pill span:not(i[class*='fa-']) {
         display: none;
     }
 
@@ -2863,7 +2862,7 @@ body {
     color: var(--mkt-text);
 }
 
-.mkt-bank-clear-btn .material-symbols-outlined {
+.mkt-bank-clear-btn i[class*='fa-'] {
     font-size: 1.1rem;
 }
 
@@ -4165,4 +4164,120 @@ body {
     opacity: 0 !important;
     visibility: hidden !important;
     pointer-events: none !important;
+}
+
+/* ==========================================================================
+   PEMUATAN BERTAHAP (LAZY LOAD) — kontrol "Muat lebih banyak"
+   ==========================================================================
+   Katalog tidak lagi diunduh sekaligus; kartu datang per halaman. Zona ini
+   berisi tombol muat-lagi + sentinel IntersectionObserver, atau keterangan
+   penutup saat semua hasil sudah tampil.
+
+   Tombolnya tetap ada meski auto-load aktif: infinite scroll murni memutus
+   navigasi keyboard dan tidak berfungsi kalau IntersectionObserver tidak
+   tersedia. */
+.mkt-loadmore-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 1.75rem;
+    /* min-height menjaga tinggi kolom stabil saat isinya berganti dari
+       tombol ke teks penutup -- tanpa ini halaman "melompat" tiap kali
+       batch terakhir selesai dimuat. */
+    min-height: 2.75rem;
+}
+
+.mkt-loadmore-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.72rem 1.5rem;
+    border-radius: 999px;
+    border: 1px solid var(--mkt-stroke);
+    background: var(--mkt-surface-2);
+    color: var(--mkt-text);
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    touch-action: manipulation;
+}
+
+.mkt-loadmore-btn:hover:not(:disabled) {
+    border-color: var(--mkt-line-strong);
+    background: var(--mkt-primary-tint);
+    transform: translateY(-1px);
+}
+
+.mkt-loadmore-btn:focus-visible {
+    outline: 2px solid var(--mkt-primary);
+    outline-offset: 3px;
+}
+
+.mkt-loadmore-btn:disabled {
+    opacity: 0.65;
+    cursor: progress;
+    transform: none;
+}
+
+/* Ikon panah berputar jadi spinner saat memuat, jadi status tombol terbaca
+   tanpa menambah elemen baru yang menggeser layout. */
+.mkt-loadmore-btn.is-loading i {
+    animation: mkt-loadmore-spin 0.9s linear infinite;
+}
+
+@keyframes mkt-loadmore-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mkt-loadmore-btn,
+    .mkt-loadmore-btn.is-loading i {
+        transition: none;
+        animation: none;
+    }
+}
+
+.mkt-loadmore-sisa {
+    padding: 0.12rem 0.5rem;
+    border-radius: 999px;
+    background: var(--mkt-primary-tint);
+    color: var(--mkt-primary);
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.mkt-loadmore-done {
+    margin: 0;
+    color: var(--mkt-text-muted);
+    font-size: 0.82rem;
+    text-align: center;
+}
+
+/* Sentinel: elemen tak terlihat yang diawasi IntersectionObserver. Diberi
+   tinggi 1px (bukan 0) karena elemen setinggi nol tidak pernah dilaporkan
+   berpotongan oleh sebagian browser. */
+#mktLoadSentinel {
+    width: 100%;
+    height: 1px;
+    pointer-events: none;
+}
+
+/* Kartu & tile dalam keadaan skeleton tidak boleh bisa diklik atau difokus
+   -- kalau tidak, pengguna keyboard bisa "masuk" ke kartu kosong. */
+.market-card.is-skeleton,
+.mkt-product-tile.is-skeleton {
+    pointer-events: none;
+    cursor: default;
+}
+
+.mkt-product-tile.is-skeleton {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
 }

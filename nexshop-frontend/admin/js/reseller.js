@@ -208,17 +208,92 @@ async function loadResellerApplications() {
     }
 }
 
-function showKtpModal(url, nama, nik) {
+// Object URL blob yang sedang ditampilkan. Dilepas tiap modal dibuka ulang
+// / ditutup supaya foto KTP tidak menggantung di memori tab admin.
+let ktpObjectUrlAktif = null;
+
+function lepasKtpObjectUrl() {
+    if (ktpObjectUrlAktif) {
+        URL.revokeObjectURL(ktpObjectUrlAktif);
+        ktpObjectUrlAktif = null;
+    }
+}
+
+/**
+ * Menampilkan foto KTP pendaftar.
+ *
+ * Dulu fungsi ini cukup menyetel img.src = url, karena berkasnya memang
+ * tersimpan di bucket PUBLIK -- siapa pun yang punya URL itu bisa membukanya
+ * tanpa login. Sekarang dokumen tersimpan terenkripsi di bucket privat dan
+ * hanya bisa diambil lewat GET /api/reseller/admin/kyc-document yang butuh
+ * token admin, jadi berkasnya diambil via fetch lalu ditampilkan sebagai
+ * blob sementara. Konsekuensinya: tidak ada lagi URL foto KTP yang bisa
+ * disalin, dibagikan, atau tertinggal di riwayat browser.
+ */
+async function showKtpModal(ref, nama, nik) {
     document.getElementById("modalKtpNama").textContent = nama || "-";
     document.getElementById("modalKtpNik").textContent = nik || "-";
+
     const img = document.getElementById("modalKtpImg");
-    img.src = url;
     const dLink = document.getElementById("modalKtpDownload");
-    dLink.href = url;
+
+    lepasKtpObjectUrl();
+    img.removeAttribute("src");
+    img.alt = "Memuat dokumen…";
+    if (dLink) {
+        dLink.removeAttribute("href");
+        dLink.classList.add("disabled");
+    }
+
     const modalEl = document.getElementById("modalKtpPreview");
     if (modalEl) {
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
+        new bootstrap.Modal(modalEl).show();
+        // Bebaskan blob begitu modal ditutup.
+        modalEl.addEventListener("hidden.bs.modal", lepasKtpObjectUrl, { once: true });
+    }
+
+    // Dokumen lama (sebelum enkripsi diaktifkan) masih berupa URL http(s)
+    // biasa. Tetap didukung supaya pengajuan lama masih bisa ditinjau.
+    if (!String(ref || "").startsWith("kyc:")) {
+        img.src = ref;
+        img.alt = "Foto KTP " + (nama || "");
+        if (dLink) {
+            dLink.href = ref;
+            dLink.classList.remove("disabled");
+        }
+        return;
+    }
+
+    try {
+        const res = await fetch(
+            `${API_BASE}/reseller/admin/kyc-document?ref=${encodeURIComponent(ref)}`,
+            { headers: { Authorization: `Bearer ${rsGetAdminToken()}` } }
+        );
+
+        if (!res.ok) {
+            let pesan = "Gagal memuat dokumen (HTTP " + res.status + ")";
+            try {
+                const err = await res.json();
+                if (err && err.message) pesan = err.message;
+            } catch (_) {}
+            img.alt = pesan;
+            if (typeof showToast === "function") showToast(pesan, "error");
+            return;
+        }
+
+        const blob = await res.blob();
+        ktpObjectUrlAktif = URL.createObjectURL(blob);
+        img.src = ktpObjectUrlAktif;
+        img.alt = "Foto KTP " + (nama || "");
+        if (dLink) {
+            dLink.href = ktpObjectUrlAktif;
+            dLink.download = "KTP-" + String(nama || "pendaftar").replace(/[^A-Za-z0-9]+/g, "-") + ".webp";
+            dLink.classList.remove("disabled");
+        }
+    } catch (err) {
+        console.error("showKtpModal:", err);
+        img.alt = "Gagal memuat dokumen identitas";
+        if (typeof showToast === "function") showToast("Gagal memuat dokumen identitas", "error");
     }
 }
 

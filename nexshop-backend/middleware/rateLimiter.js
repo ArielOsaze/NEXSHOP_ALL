@@ -1,4 +1,9 @@
 const rateLimit = require("express-rate-limit");
+// ipKeyGenerator menormalkan alamat IPv6 ke prefix /64 sebelum dipakai
+// sebagai kunci. Tanpa itu, satu klien IPv6 bisa berpindah-pindah
+// alamat di dalam blok miliknya sendiri dan mendapat jatah limit baru
+// terus-menerus (express-rate-limit v7 juga memperingatkan soal ini).
+const { ipKeyGenerator } = require("express-rate-limit");
 const { notify } = require("../config/notify");
 
 // Kenapa ini penting: sebelumnya endpoint login/register/OTP gak ada
@@ -147,4 +152,62 @@ const resellerApplyLimiter = rateLimit({
     message: { message: "Terlalu banyak percobaan pendaftaran reseller. Coba lagi nanti." }
 });
 
-module.exports = { loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter };
+// Login khusus Partner Portal reseller. Sebelumnya endpoint
+// POST /api/reseller/auth/login TIDAK punya limiter sama sekali, jadi
+// password akun mitra (yang saldonya bisa jutaan rupiah) bisa ditebak
+// tanpa batas -- padahal login toko utama sudah dibatasi sejak lama.
+const resellerLoginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak percobaan login Partner Portal. Coba lagi dalam beberapa menit." }
+});
+
+// Open API reseller (/api/v1/reseller/*). Dibatasi PER API KEY, bukan per
+// IP: satu mitra biasanya memanggil dari satu server, jadi kunci per-IP
+// akan salah sasaran begitu beberapa mitra berbagi jaringan/NAT yang sama.
+// Kalau kunci API belum terbaca, jatuh ke IP.
+const resellerApiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => {
+        const key = req.headers["x-nexshop-api-key"] || req.headers["x-api-key"];
+        if (key) return "apikey:" + String(key).slice(0, 64);
+        const auth = String(req.headers["authorization"] || "");
+        if (auth.startsWith("Bearer nx_live_")) return "apikey:" + auth.slice(7, 71);
+        return "ip:" + ipKeyGenerator(req.ip || "unknown");
+    },
+    message: {
+        success: false,
+        message: "Rate limit terlampaui (maksimal 120 request per menit). Beri jeda antar permintaan.",
+        code: "RATE_LIMITED"
+    }
+});
+
+// Endpoint tes webhook memicu request keluar dari server kita ke alamat
+// yang ditentukan mitra. Tanpa batas, tombol itu bisa dipakai sebagai
+// amplifier untuk membanjiri pihak ketiga dari IP NexShop.
+const resellerWebhookTestLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu sering menjalankan tes webhook. Coba lagi beberapa menit lagi." }
+});
+
+// Callback pembayaran wallet tidak terautentikasi (verifikasinya
+// server-to-server ke iPaymu). Setiap panggilan memicu satu request keluar,
+// jadi lajunya tetap perlu dibatasi supaya tidak bisa dipakai menghabiskan
+// kuota API gateway pembayaran.
+const walletNotificationLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak notifikasi masuk." }
+});
+
+module.exports = { resellerLoginLimiter, resellerApiLimiter, resellerWebhookTestLimiter, walletNotificationLimiter, loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter };

@@ -12,6 +12,16 @@ const { checkNicknameLimiter, inquiryLimiter } = require("../middleware/rateLimi
 // Public Full Catalog for One Stop Solution
 // optionalAuth: guest lihat harga normal, reseller yang login langsung
 // lihat harga resellernya (dihitung di server, lihat resellerService).
+// --- Etalase bertahap (lazy load) + pencarian sisi server ---
+// Tiga route ini menggantikan pola "tarik seluruh katalog sekali jalan".
+// Kartu dikirim per halaman, dan pencariannya dijalankan server atas SELURUH
+// indeks katalog -- jadi produk yang kartunya belum termuat tetap ketemu.
+router.get("/catalog/games", optionalAuthMiddleware, topupController.getCatalogGames);
+router.get("/catalog/operators", optionalAuthMiddleware, topupController.getCatalogOperators);
+router.get("/catalog/group/:jenis/:id/products", optionalAuthMiddleware, topupController.getCatalogGroupProducts);
+
+// Endpoint lama tetap ada supaya integrasi/halaman yang belum dimigrasi
+// tidak rusak mendadak.
 router.get("/public-catalog", optionalAuthMiddleware, topupController.getPublicCatalog);
 
 router.get("/products", optionalAuthMiddleware, topupController.getProducts);

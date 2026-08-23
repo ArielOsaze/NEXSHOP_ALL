@@ -74,7 +74,6 @@
 </script>
 
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,700&display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <script src="/theme-init.js?v=20260812-otp-security"></script>
@@ -232,10 +231,10 @@
 </div>
 <div class="nx-nav-actions flex items-center gap-1 sm:gap-2 shrink-0">
 <button class="lg:hidden min-w-[38px] min-h-[38px] sm:min-w-[44px] sm:min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors shrink-0" id="mobileMenuBtn" aria-label="Menu Navigasi">
-<span class="material-symbols-outlined text-gray-600 dark:text-gray-300 text-xl">menu</span>
+<i class="fa-solid fa-bars text-gray-600 dark:text-gray-300 text-xl" aria-hidden="true"></i>
 </button>
 <button class="min-w-[38px] min-h-[38px] sm:min-w-[44px] sm:min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors relative shrink-0" id="cartBtn" aria-label="Keranjang Belanja">
-<span class="material-symbols-outlined text-gray-600 dark:text-gray-300 text-xl">shopping_bag</span>
+<i class="fa-solid fa-bag-shopping text-gray-600 dark:text-gray-300 text-xl" aria-hidden="true"></i>
 <span class="absolute top-2 right-2 w-2 h-2 bg-brand-cyan rounded-full animate-ping hidden" id="cartCount"></span>
 </button>
 <button class="theme-toggle min-w-[38px] min-h-[38px] sm:min-w-[44px] sm:min-h-[44px] rounded-full hidden md:flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors shrink-0" id="themeToggle" aria-label="Ganti Tema">
@@ -254,7 +253,7 @@
     <i class="fa-solid fa-chevron-right nx-wallet-nav-chevron" aria-hidden="true"></i>
 </button>
 
-<div class="h-8 w-8 sm:h-10 sm:w-auto px-0 sm:pl-2.5 sm:pr-5 rounded-full border border-gray-200 dark:border-white/10 cursor-pointer hover:border-brand-indigo transition-colors ml-0.5 sm:ml-1 shrink-0 flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap overflow-hidden sm:max-w-[130px]" id="accountBtn">
+<div class="h-8 w-8 sm:h-10 sm:w-auto px-0 sm:pl-2.5 sm:pr-5 rounded-full border border-gray-200 dark:border-white/10 cursor-pointer hover:border-brand-indigo transition-colors ml-0.5 sm:ml-1 shrink-0 flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap overflow-hidden sm:max-w-[130px]" id="accountBtn" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false" aria-label="Akun saya">
     <i class="fa-solid fa-circle-user text-sm sm:text-base opacity-70 shrink-0" aria-hidden="true"></i>
     <span id="accountBtnLabel" class="hidden sm:inline truncate">Login</span>
 </div>
@@ -315,7 +314,7 @@ Webstore game terlengkap. Dari diskon harian sampai topup instan — aman, cepat
 <div class="flex flex-col sm:flex-row gap-5 pt-4">
 <a href="#games" class="btn-magnetic group relative px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-extrabold rounded-2xl overflow-hidden shadow-xl shadow-gray-900/20 dark:shadow-white/10 tracking-tight flex items-center justify-center">
 <div class="absolute inset-0 w-full h-full bg-gradient-to-r from-brand-indigo to-brand-cyan opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-<span class="relative z-10 flex items-center gap-2">Belanja Sekarang <span class="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">arrow_forward</span></span>
+<span class="relative z-10 flex items-center gap-2">Belanja Sekarang <i class="fa-solid fa-arrow-right text-sm group-hover:translate-x-1 transition-transform" aria-hidden="true"></i></span>
 </a>
 <button type="button" id="heroTrackBtn" class="btn-magnetic px-8 py-4 glass-panel text-gray-900 dark:text-white font-bold rounded-2xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors tracking-tight">
 Cek Transaksi
@@ -408,7 +407,7 @@ Cek Transaksi
 
         <div class="flex gap-4 catalog-controls">
             <div class="relative catalog-search-wrap">
-                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true"></i>
                 <input type="text" id="topupSearchInput" placeholder="Cari game topup..." class="w-full md:w-64 pl-12 pr-4 py-3 bg-white dark:bg-[#0a0a0c] border border-gray-200 dark:border-white/10 rounded-xl focus:border-brand-indigo dark:focus:border-brand-cyan outline-none transition-colors text-gray-900 dark:text-white font-medium" />
                 <button type="button" id="topupSearchClearBtn" class="search-clear-btn hidden absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -419,6 +418,10 @@ Cek Transaksi
     </div>
     <div class="topup-game-grid grid grid-cols-3 min-[480px]:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-[clamp(6px,1.5vw,16px)]" id="topupGameGrid">
     </div>
+    <!-- Zona kontrol pemuatan bertahap. Diisi renderTopupLoadMore():
+         tombol "Muat lebih banyak" + sentinel IntersectionObserver, atau
+         keterangan bahwa semua game sudah tampil. -->
+    <div class="topup-loadmore-zone" id="topupLoadMoreZone"></div>
 </section>
 
 <!-- Produk & Voucher -->
@@ -434,7 +437,7 @@ Cek Transaksi
         
         <div class="flex gap-4 catalog-controls">
             <div class="relative catalog-search-wrap">
-                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true"></i>
                 <input type="text" id="searchProductInput" placeholder="Cari game..." class="w-full md:w-64 pl-12 pr-4 py-3 bg-white dark:bg-[#0a0a0c] border border-gray-200 dark:border-white/10 rounded-xl focus:border-brand-indigo dark:focus:border-brand-cyan outline-none transition-colors text-gray-900 dark:text-white font-medium" />
                 <button type="button" id="searchClearBtn" class="search-clear-btn hidden absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
@@ -469,7 +472,7 @@ Cek Transaksi
     <!-- Search Box -->
     <div class="max-w-xl mx-auto mb-10 px-4">
         <div class="relative catalog-search-wrap">
-            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+            <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true"></i>
             <input type="text" id="oneStopSearchInput" placeholder="Cari operator atau produk..." class="w-full pl-12 pr-4 py-3 bg-white dark:bg-[#0a0a0c] border border-gray-200 dark:border-white/10 rounded-xl focus:border-brand-indigo dark:focus:border-brand-cyan outline-none transition-colors text-gray-900 dark:text-white font-medium" />
         </div>
     </div>
@@ -1178,15 +1181,15 @@ Cek Transaksi
                     <span class="nexbot-msg-time">Online</span>
                 </div>
                 <div class="nexbot-msg-content" id="nexbotWelcomeContent">
-                    <p>Halo 👋 Saya <strong>NexBot</strong>, asisten virtual resmi NexShop.</p>
+                    <p>Halo, saya <strong>NexBot</strong>, asisten virtual resmi NexShop.</p>
                     <p>Saya bisa bantu soal:</p>
                     <ul class="nexbot-emoji-list">
-                        <li><span class="nexbot-emoji-icon" aria-hidden="true">🎮</span><span>Produk Game</span></li>
-                        <li><span class="nexbot-emoji-icon" aria-hidden="true">💎</span><span>Topup Diamond</span></li>
-                        <li><span class="nexbot-emoji-icon" aria-hidden="true">🎁</span><span>Voucher &amp; Diskon</span></li>
-                        <li><span class="nexbot-emoji-icon" aria-hidden="true">💳</span><span>Pembayaran</span></li>
-                        <li><span class="nexbot-emoji-icon" aria-hidden="true">📦</span><span>Status Pesanan</span></li>
-                        <li><span class="nexbot-emoji-icon" aria-hidden="true">❓</span><span>Bantuan &amp; Kebijakan</span></li>
+                        <li><span class="nexbot-emoji-icon" aria-hidden="true"><i class="fa-solid fa-gamepad"></i></span><span>Produk Game</span></li>
+                        <li><span class="nexbot-emoji-icon" aria-hidden="true"><i class="fa-solid fa-gem"></i></span><span>Topup Diamond</span></li>
+                        <li><span class="nexbot-emoji-icon" aria-hidden="true"><i class="fa-solid fa-gift"></i></span><span>Voucher &amp; Diskon</span></li>
+                        <li><span class="nexbot-emoji-icon" aria-hidden="true"><i class="fa-solid fa-credit-card"></i></span><span>Pembayaran</span></li>
+                        <li><span class="nexbot-emoji-icon" aria-hidden="true"><i class="fa-solid fa-box"></i></span><span>Status Pesanan</span></li>
+                        <li><span class="nexbot-emoji-icon" aria-hidden="true"><i class="fa-solid fa-circle-question"></i></span><span>Bantuan &amp; Kebijakan</span></li>
                     </ul>
                 </div>
             </div>

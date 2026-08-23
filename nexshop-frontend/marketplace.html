@@ -52,9 +52,6 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
-        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <script src="/theme-init.js"></script>
     <link rel="stylesheet" href="/style.css?v=20260823-wallet-redesign">
@@ -179,21 +176,21 @@
                  marketplace-theme.css). -->
             <button type="button" class="mkt-nav-toggle" id="mktNavToggle" aria-label="Buka menu navigasi"
                 aria-expanded="false" aria-controls="catNavLinks">
-                <span class="material-symbols-outlined mkt-nav-toggle-open" aria-hidden="true">menu</span>
-                <span class="material-symbols-outlined mkt-nav-toggle-close" aria-hidden="true">close</span>
+                <i class="fa-solid fa-bars mkt-nav-toggle-open" aria-hidden="true"></i>
+                <i class="fa-solid fa-xmark mkt-nav-toggle-close" aria-hidden="true"></i>
             </button>
 
             <!-- Pencarian ringkas di nav: nyetir input hero yang sama, jadi
                  gak ada dua sumber kebenaran buat kata kunci pencarian. -->
             <div class="mkt-nav-search">
-                <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                 <input type="text" id="mktNavSearchInput" placeholder="Cari layanan..."
                     aria-label="Cari layanan digital">
             </div>
 
             <!-- Muncul otomatis kalau katalog yang diterima berisi harga reseller -->
             <span class="mkt-nav-pill hidden" id="mktNavResellerPill" title="Harga reseller sudah aktif di akun kamu">
-                <span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span>
+                <i class="fa-solid fa-award" aria-hidden="true"></i>
                 <span>Harga Reseller</span>
             </span>
 
@@ -210,12 +207,12 @@
             </button>
 
             <button type="button" class="mkt-nav-track-btn" id="mktTrackNavBtn" aria-label="Cek Transaksi">
-                <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+                <i class="fa-solid fa-receipt" aria-hidden="true"></i>
                 <span>Cek Transaksi</span>
             </button>
 
             <a href="/" class="mkt-nav-back" aria-label="Kembali ke toko NexShop">
-                <span class="material-symbols-outlined" aria-hidden="true">arrow_outward</span>
+                <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
                 <span>Ke Toko</span>
             </a>
         </div>
@@ -226,7 +223,7 @@
     <main class="mkt-main" id="main-content">
         <!-- Muncul otomatis kalau katalog yang diterima berisi harga reseller -->
         <div class="mkt-reseller-banner hidden" id="mktResellerBanner">
-            <span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span>
+            <i class="fa-solid fa-award" aria-hidden="true"></i>
             <div>
                 <strong>Harga reseller aktif</strong>
                 <p>Semua harga di halaman ini sudah termasuk potongan reseller kamu.</p>
@@ -236,7 +233,7 @@
 
         <section class="mkt-hero">
             <div class="mkt-hero-tag">
-                <span class="material-symbols-outlined" aria-hidden="true">bolt</span> One Stop Solution
+                <i class="fa-solid fa-bolt" aria-hidden="true"></i> One Stop Solution
             </div>
             <h1>Satu Platform, <span class="mkt-hero-accent">Ribuan Solusi Digital</span></h1>
             <p>Isi ulang E-Wallet, beli pulsa &amp; paket data, bayar PLN &amp; tagihan lainnya &mdash; diproses instan,
@@ -246,7 +243,7 @@
                  filternya jalan sambil ngetik: di mobile, tombol itu yang
                  nutup keyboard dan bawa layar ke hasil. -->
             <form class="mkt-search-wrap" id="mktSearchForm" role="search" autocomplete="off">
-                <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                 <input type="text" id="mktSearchInput" placeholder="Cari DANA, OVO, PLN, pulsa, tagihan..."
                     aria-label="Cari layanan digital">
                 <button type="submit" class="mkt-search-btn">Cari</button>
@@ -255,7 +252,7 @@
             <div class="mkt-hero-ctas">
                 <div class="mkt-hero-cta">
                     <span class="mkt-hero-cta-icon mkt-hero-cta-icon--cyan">
-                        <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
+                        <i class="fa-solid fa-store" aria-hidden="true"></i>
                     </span>
                     <div class="mkt-hero-cta-text">
                         <strong>Ingin jualan?</strong>
@@ -266,21 +263,21 @@
 
                 <a href="/#topup" class="mkt-hero-cta mkt-hero-cta--link">
                     <span class="mkt-hero-cta-icon">
-                        <span class="material-symbols-outlined" aria-hidden="true">sports_esports</span>
+                        <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
                     </span>
                     <div class="mkt-hero-cta-text">
                         <strong>Top Up Game?</strong>
                         <span>Buka etalase Topup Diamond</span>
                     </div>
-                    <span class="material-symbols-outlined mkt-hero-cta-arrow" aria-hidden="true">arrow_forward</span>
+                    <i class="fa-solid fa-arrow-right mkt-hero-cta-arrow" aria-hidden="true"></i>
                 </a>
             </div>
 
             <ul class="mkt-trust-strip">
-                <li><span class="material-symbols-outlined" aria-hidden="true">bolt</span> Proses otomatis 24 jam</li>
-                <li><span class="material-symbols-outlined" aria-hidden="true">verified_user</span> Legal &amp; berbadan
+                <li><i class="fa-solid fa-bolt" aria-hidden="true"></i> Proses otomatis 24 jam</li>
+                <li><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Legal &amp; berbadan
                     usaha</li>
-                <li><span class="material-symbols-outlined" aria-hidden="true">payments</span> QRIS, VA &amp; E-Wallet
+                <li><i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i> QRIS, VA &amp; E-Wallet
                 </li>
             </ul>
         </section>
@@ -297,16 +294,16 @@
                              e-toll, voucher, melayang pelan + glow. -->
                         <div class="mkt-rail-deco" aria-hidden="true">
                             <span class="mkt-rail-deco-item mkt-rail-deco-item--wallet" title="E-Wallet">
-                                <span class="material-symbols-outlined is-filled">account_balance_wallet</span>
+                                <i class="fa-solid fa-wallet" aria-hidden="true"></i>
                             </span>
                             <span class="mkt-rail-deco-item mkt-rail-deco-item--card" title="Kartu">
-                                <span class="material-symbols-outlined is-filled">credit_card</span>
+                                <i class="fa-solid fa-credit-card" aria-hidden="true"></i>
                             </span>
                             <span class="mkt-rail-deco-item mkt-rail-deco-item--etoll" title="E-Toll">
-                                <span class="material-symbols-outlined is-filled">toll</span>
+                                <i class="fa-solid fa-road" aria-hidden="true"></i>
                             </span>
                             <span class="mkt-rail-deco-item mkt-rail-deco-item--voucher" title="Voucher">
-                                <span class="material-symbols-outlined is-filled">confirmation_number</span>
+                                <i class="fa-solid fa-ticket" aria-hidden="true"></i>
                             </span>
                         </div>
                     </div>
@@ -326,6 +323,11 @@
                         <span id="totalCount"></span>
                     </div>
                     <div class="market-grid" id="marketGrid" aria-live="polite"></div>
+                    <!-- Zona kontrol pemuatan bertahap. Diisi renderLoadMore():
+                         tombol "Muat lebih banyak" + sentinel untuk
+                         IntersectionObserver, atau keterangan bahwa semua
+                         layanan sudah tampil. -->
+                    <div class="mkt-loadmore-zone" id="mktLoadMoreZone"></div>
                 </section>
 
                 <!-- Blok pendukung. Disembunyikan bareng etalase waktu
@@ -340,14 +342,14 @@
                                 halaman ini &mdash; tanpa kode promo, tanpa minimum transaksi.</p>
                             <a href="/reseller.html" class="mkt-promo-link">
                                 Lihat tingkatan &amp; syaratnya
-                                <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                                <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                             </a>
                         </div>
                     </section>
 
                     <section class="mkt-support-card">
                         <span class="mkt-support-icon">
-                            <span class="material-symbols-outlined" aria-hidden="true">headset_mic</span>
+                            <i class="fa-solid fa-headset" aria-hidden="true"></i>
                         </span>
                         <div class="mkt-support-text">
                             <h4>Butuh bantuan?</h4>
@@ -361,7 +363,7 @@
                 <!-- Detail operator: daftar produk dari 1 operator, dibuka dari kartu di grid -->
                 <section class="mkt-detail hidden" id="marketplaceDetail">
                     <button type="button" class="mkt-detail-back" id="mktDetailBackBtn">
-                        <span class="material-symbols-outlined" aria-hidden="true">arrow_back</span> Kembali ke
+                        <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Kembali ke
                         Marketplace
                     </button>
                     <div class="mkt-detail-header" id="mktDetailHeader"></div>
@@ -438,8 +440,7 @@
                         <span>Terdaftar melalui OSS</span>
                     </div>
                     <a href="/legalitas.html" class="nx-footer__legal-link">
-                        Informasi legalitas <span class="material-symbols-outlined"
-                            aria-hidden="true">arrow_forward</span>
+                        Informasi legalitas <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                     </a>
                 </div>
             </div>
@@ -459,7 +460,7 @@
     <div class="mkt-overlay" id="mktTrackOverlay">
         <div class="mkt-modal" role="dialog" aria-modal="true" aria-labelledby="mktTrackTitle">
             <button type="button" class="mkt-modal-close" id="mktTrackCloseBtn" aria-label="Tutup">
-                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>
             <div class="auth-tabs">
                 <button type="button" class="auth-tab active" data-mkt-track-tab="byid">Cek by Order ID</button>
@@ -491,7 +492,7 @@
     <div class="mkt-overlay" id="mktPolicyOverlay">
         <div class="mkt-modal mkt-modal--wide" role="dialog" aria-modal="true" aria-labelledby="mktPolicyTitle">
             <button type="button" class="mkt-modal-close" id="mktPolicyCloseBtn" aria-label="Tutup">
-                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>
             <div class="policy-tabs">
                 <button type="button" class="policy-tab active" data-mkt-policy-tab="faq">FAQ</button>
@@ -565,7 +566,7 @@
     <div class="mkt-overlay" id="mktCheckoutOverlay">
         <div class="mkt-modal" role="dialog" aria-modal="true" aria-labelledby="mktCheckoutTitle">
             <button type="button" class="mkt-modal-close" id="mktCheckoutCloseBtn" aria-label="Tutup">
-                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>
             <div class="mkt-checkout-summary">
                 <span class="mkt-checkout-op" id="mktCheckoutOpName"></span>
@@ -587,10 +588,10 @@
                     <label class="mkt-bank-field-label">
                         <span>Bank ID / Bank Tujuan</span>
                         <div class="mkt-bank-search-wrap">
-                            <span class="material-symbols-outlined mkt-bank-search-icon" aria-hidden="true">search</span>
+                            <i class="fa-solid fa-magnifying-glass mkt-bank-search-icon" aria-hidden="true"></i>
                             <input type="text" id="mktBankSearchInput" placeholder="Cari bank (BCA, BRI, Mandiri, Jago...)" autocomplete="off">
                             <button type="button" class="mkt-bank-clear-btn hidden" id="mktBankClearBtn" aria-label="Hapus pencarian">
-                                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                             </button>
                             <input type="hidden" id="mktCheckoutBankId" name="bank_id">
                             <div class="mkt-bank-dropdown hidden" id="mktBankSearchResults" role="listbox" aria-label="Daftar bank tujuan"></div>
@@ -613,7 +614,7 @@
                      cek_tagihan dari /topup/public-catalog) -->
                 <div id="mktCheckoutInquiryGroup" class="hidden">
                     <button type="button" class="mkt-btn-secondary mkt-inquiry-btn" id="mktCheckoutInquiryBtn">
-                        <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span> Cek Tagihan
+                        <i class="fa-solid fa-receipt" aria-hidden="true"></i> Cek Tagihan
                     </button>
                     <div class="mkt-inquiry-result hidden" id="mktCheckoutInquiryResult"></div>
                 </div>
@@ -630,27 +631,27 @@
                         <label class="mkt-pay-option">
                             <input type="radio" name="mktPaymentMethod" value="qris">
                             <span class="mkt-pay-card">
-                                <span class="material-symbols-outlined" aria-hidden="true">qr_code_scanner</span> QRIS
+                                <i class="fa-solid fa-qrcode" aria-hidden="true"></i> QRIS
                             </span>
                         </label>
                         <label class="mkt-pay-option">
                             <input type="radio" name="mktPaymentMethod" value="va">
                             <span class="mkt-pay-card">
-                                <span class="material-symbols-outlined" aria-hidden="true">account_balance</span>
+                                <i class="fa-solid fa-building-columns" aria-hidden="true"></i>
                                 Virtual Account
                             </span>
                         </label>
                         <label class="mkt-pay-option">
                             <input type="radio" name="mktPaymentMethod" value="banktransfer">
                             <span class="mkt-pay-card">
-                                <span class="material-symbols-outlined" aria-hidden="true">swap_horiz</span> Transfer
+                                <i class="fa-solid fa-right-left" aria-hidden="true"></i> Transfer
                                 Bank
                             </span>
                         </label>
                         <label class="mkt-pay-option">
                             <input type="radio" name="mktPaymentMethod" value="card">
                             <span class="mkt-pay-card">
-                                <span class="material-symbols-outlined" aria-hidden="true">credit_card</span> Kartu
+                                <i class="fa-solid fa-credit-card" aria-hidden="true"></i> Kartu
                                 Kredit/Debit
                             </span>
                         </label>
@@ -677,7 +678,7 @@
     <div class="mkt-overlay" id="mktPaymentOverlay">
         <div class="mkt-modal" role="dialog" aria-modal="true" aria-labelledby="mktPaymentTitle">
             <button type="button" class="mkt-modal-close" id="mktPaymentCloseBtn" aria-label="Tutup">
-                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
             </button>
             <h3 id="mktPaymentTitle">Selesaikan Pembayaran</h3>
 
@@ -685,7 +686,7 @@
                 <p class="mkt-payment-hint">Scan QRIS ini pakai aplikasi E-Wallet atau M-Banking kamu.</p>
                 <div id="mktPaymentQr" class="mkt-payment-qr"></div>
                 <button type="button" class="mkt-btn-secondary" id="mktPaymentDownloadQrBtn">
-                    <span class="material-symbols-outlined" aria-hidden="true">download</span> Download QR
+                    <i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i> Download QR
                 </button>
             </div>
 
@@ -693,7 +694,7 @@
                 <p class="mkt-payment-hint">Transfer ke nomor Virtual Account berikut:</p>
                 <div class="mkt-payment-va-number" id="mktPaymentVaNumber"></div>
                 <button type="button" class="mkt-btn-secondary" id="mktPaymentCopyVaBtn">
-                    <span class="material-symbols-outlined" aria-hidden="true">content_copy</span> Salin Nomor VA
+                    <i class="fa-regular fa-copy" aria-hidden="true"></i> Salin Nomor VA
                 </button>
             </div>
 
@@ -704,7 +705,7 @@
             </div>
 
             <p class="mkt-payment-status" id="mktPaymentStatus">
-                <span class="material-symbols-outlined mkt-spin" aria-hidden="true">progress_activity</span> Menunggu
+                <i class="fa-solid fa-spinner fa-spin mkt-spin" aria-hidden="true"></i> Menunggu
                 pembayaran, jangan tutup halaman ini...
             </p>
         </div>
@@ -723,7 +724,16 @@
 
         const rupiah = (n) => "Rp" + (Number(n) || 0).toLocaleString("id-ID");
 
-        let catalog = [];
+        // Ringkasan kartu operator yang SUDAH dimuat (bertahap). Isinya
+        // objek ringkas dari /topup/catalog/operators, bukan lagi seluruh
+        // katalog beserta daftar produknya.
+        let operators = [];
+        // Faset kategori + jumlahnya, dihitung server atas SELURUH katalog --
+        // jadi angka di chip tidak berubah-ubah saat memuat halaman berikutnya.
+        let kategoriFaset = [];
+        let totalOperatorSemua = 0;
+        // Cache produk per operator, diisi saat kartunya dibuka.
+        const produkOperatorCache = new Map();
         let activeCategory = "";
         let searchQuery = "";
 
@@ -793,42 +803,129 @@
             });
         })();
 
-        async function loadCatalog() {
-            const grid = document.getElementById("marketGrid");
-            grid.innerHTML = Array(12).fill(`
-        <div class="market-card" aria-hidden="true">
+        // ==============================================================
+        // PEMUATAN KATALOG BERTAHAP (LAZY LOAD)
+        //
+        // Dulu: satu request menarik SELURUH katalog -- setiap operator
+        // lengkap dengan seluruh daftar produknya -- padahal kartu di grid
+        // cuma menampilkan nama, logo, jumlah produk, dan harga termurah.
+        // Makin banyak produk, makin lama halaman ini bisa dipakai, dan
+        // makin besar memori yang ditahan tab.
+        //
+        // Sekarang: server mengirim RINGKASAN kartu per halaman
+        // (/topup/catalog/operators). Daftar produk satu operator baru
+        // diambil ketika kartunya dibuka.
+        //
+        // Pencarian TETAP menjangkau seluruh katalog karena filternya
+        // dikerjakan server atas indeks lengkap -- termasuk nama produk di
+        // dalam operator yang kartunya belum pernah dimuat. Menyaring di
+        // browser atas data yang kebetulan sudah terunduh akan membuat
+        // produk yang belum termuat mustahil ditemukan.
+        // ==============================================================
+        const MKT_PAGE_SIZE = 24;
+        let mktPage = 0;
+        let mktHasMore = true;
+        let mktLoading = false;
+        let mktTotal = 0;
+        // Token permintaan: melindungi dari respons yang datang tidak
+        // berurutan. Tanpa ini, hasil pencarian lama yang datang terlambat
+        // bisa menimpa hasil pencarian yang lebih baru.
+        let mktRequestToken = 0;
+
+        function mktSkeletonHtml(jumlah) {
+            return Array(jumlah).fill(`
+        <div class="market-card is-skeleton" aria-hidden="true">
             <div class="mkt-skeleton" style="width:56px;height:56px;border-radius:16px;margin-bottom:0.75rem;"></div>
             <div class="mkt-skeleton" style="width:80%;height:12px;border-radius:6px;margin-bottom:0.4rem;"></div>
             <div class="mkt-skeleton" style="width:50%;height:10px;border-radius:6px;"></div>
         </div>
     `).join("");
+        }
+
+        function mktAuthHeaders() {
+            const token = localStorage.getItem("nexshop-public-token") || localStorage.getItem("token");
+            return token ? { Authorization: `Bearer ${token}` } : {};
+        }
+
+        /**
+         * @param {boolean} reset true = mulai dari halaman 1 (ganti kata
+         *                        kunci / kategori), false = tambah halaman
+         *                        berikutnya ke daftar yang sudah ada.
+         */
+        async function loadCatalogPage(reset) {
+            if (mktLoading) return;
+            const grid = document.getElementById("marketGrid");
+            if (!grid) return;
+
+            if (reset) {
+                mktPage = 0;
+                mktHasMore = true;
+                operators = [];
+                grid.innerHTML = mktSkeletonHtml(12);
+            }
+            if (!mktHasMore) return;
+
+            mktLoading = true;
+            const tokenPermintaan = ++mktRequestToken;
+            setLoadMoreState("loading");
 
             try {
-                // Token ikut dikirim (kalau ada): server bakal balas harga
-                // reseller buat akun yang sudah disetujui. Guest tetap dapat
-                // harga normal karena endpoint-nya optional-auth.
-                const token = localStorage.getItem("nexshop-public-token") || localStorage.getItem("token");
-                const res = await fetch(`${API_BASE}/topup/public-catalog`, {
-                    headers: token ? { Authorization: `Bearer ${token}` } : {}
+                const params = new URLSearchParams({
+                    page: String(mktPage + 1),
+                    limit: String(MKT_PAGE_SIZE)
+                });
+                if (searchQuery.trim()) params.set("q", searchQuery.trim());
+                if (activeCategory) params.set("kategori", activeCategory);
+
+                const res = await fetch(`${API_BASE}/topup/catalog/operators?${params}`, {
+                    headers: mktAuthHeaders()
                 });
                 if (!res.ok) throw new Error("Gagal mengambil katalog.");
                 const data = await res.json();
-                catalog = Array.isArray(data) ? data : [];
-                renderCategoryChips();
+
+                // Respons kedaluwarsa (user sudah mengetik kata kunci lain).
+                if (tokenPermintaan !== mktRequestToken) return;
+
+                mktPage = data.page || mktPage + 1;
+                mktHasMore = !!data.has_more;
+                mktTotal = Number(data.total) || 0;
+                operators = reset ? (data.items || []) : operators.concat(data.items || []);
+
+                if (Array.isArray(data.categories)) {
+                    kategoriFaset = data.categories;
+                    totalOperatorSemua = Number(data.total_operators) || 0;
+                    renderCategoryChips();
+                }
+
                 renderGrid();
                 renderResellerBanner();
             } catch (err) {
                 console.error("Gagal memuat katalog marketplace:", err);
-                grid.innerHTML = `
+                if (tokenPermintaan !== mktRequestToken) return;
+                if (reset) {
+                    grid.innerHTML = `
             <div class="mkt-empty">
-                <span class="material-symbols-outlined" aria-hidden="true">warning</span>
+                <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
                 <h3>Gagal Memuat Katalog</h3>
-                <p>Silakan periksa koneksi internet kamu atau refresh halaman ini.</p>
+                <p>Silakan periksa koneksi internet kamu atau muat ulang halaman ini.</p>
+                <button type="button" class="mkt-btn-secondary" onclick="loadCatalogPage(true)">Coba Lagi</button>
             </div>
         `;
+                } else {
+                    setLoadMoreState("error");
+                }
             } finally {
+                if (tokenPermintaan === mktRequestToken) {
+                    mktLoading = false;
+                    setLoadMoreState(mktHasMore ? "idle" : "done");
+                }
                 hideAppLoader();
             }
+        }
+
+        // Dipertahankan supaya pemanggil lama (mis. tombol coba lagi) tetap jalan.
+        function loadCatalog() {
+            return loadCatalogPage(true);
         }
 
         // Ikon + "tone" warna per kategori. Kategorinya datang dari mapping
@@ -836,48 +933,61 @@
         // -- kalau gak ada yang cocok, jatuh ke ikon umum, bukan kosong.
         // Urutan sengaja dari yang paling spesifik ke paling umum (mis. "kartu
         // perdana"/SIM harus kena ikon pulsa duluan, bukan ikon kartu generik).
+        // Ikon kategori memakai kelas Font Awesome (bukan nama ligatur
+        // Material Symbols), sejalan dengan sisa ikon di halaman ini.
         const CATEGORY_ICONS = [
-            { test: /e-?wallet|e-?money|dompet|saldo/i, icon: "account_balance_wallet", tone: "wallet" },
-            { test: /e-?toll|etoll/i, icon: "toll", tone: "etoll" },
-            { test: /pulsa|telpon|sms|perdana|kartu\s*sim/i, icon: "phone_iphone", tone: "pulsa" },
-            { test: /paket\s*data|internet/i, icon: "wifi", tone: "data" },
-            { test: /pln|listrik|token/i, icon: "electric_bolt", tone: "pln" },
-            { test: /tagihan|pascabayar|pdam|bpjs/i, icon: "receipt_long", tone: "tagihan" },
-            { test: /voucher/i, icon: "confirmation_number", tone: "voucher" },
-            { test: /game/i, icon: "sports_esports", tone: "game" },
-            { test: /hiburan|tv|streaming/i, icon: "live_tv", tone: "hiburan" },
-            { test: /transfer|bank/i, icon: "swap_horiz", tone: "transfer" },
-            { test: /kartu|debit|kredit|\batm\b/i, icon: "credit_card", tone: "card" }
+            { test: /e-?wallet|e-?money|dompet|saldo/i, icon: "fa-solid fa-wallet", tone: "wallet" },
+            { test: /e-?toll|etoll/i, icon: "fa-solid fa-road", tone: "etoll" },
+            { test: /pulsa|telpon|sms|perdana|kartu\s*sim/i, icon: "fa-solid fa-mobile-screen-button", tone: "pulsa" },
+            { test: /paket\s*data|internet/i, icon: "fa-solid fa-wifi", tone: "data" },
+            { test: /pln|listrik|token/i, icon: "fa-solid fa-bolt", tone: "pln" },
+            { test: /tagihan|pascabayar|pdam|bpjs/i, icon: "fa-solid fa-file-invoice-dollar", tone: "tagihan" },
+            { test: /voucher/i, icon: "fa-solid fa-ticket", tone: "voucher" },
+            { test: /game/i, icon: "fa-solid fa-gamepad", tone: "game" },
+            { test: /hiburan|tv|streaming/i, icon: "fa-solid fa-tv", tone: "hiburan" },
+            { test: /transfer|bank/i, icon: "fa-solid fa-right-left", tone: "transfer" },
+            { test: /kartu|debit|kredit|\batm\b/i, icon: "fa-solid fa-credit-card", tone: "card" }
         ];
 
         function categoryIcon(name) {
-            if (!name) return { icon: "grid_view", tone: "" };
+            if (!name) return { icon: "fa-solid fa-table-cells-large", tone: "" };
             const found = CATEGORY_ICONS.find((c) => c.test.test(name));
-            return found ? found : { icon: "apps", tone: "" };
+            return found ? found : { icon: "fa-solid fa-shapes", tone: "" };
         }
 
         function renderCategoryChips() {
             const wrap = document.getElementById("catFilterWrap");
-            const totalOperator = catalog.reduce((sum, c) => sum + c.operators.length, 0);
+            if (!wrap) return;
+
+            // Angka pada chip berasal dari faset yang dihitung server atas
+            // SELURUH katalog. Sebelumnya dihitung dari array katalog di
+            // browser -- pendekatan itu jadi salah begitu kartu dimuat
+            // bertahap, karena jumlahnya ikut bertambah tiap "muat lagi".
             const chips = [
-                { label: "Semua Layanan", value: "", count: totalOperator },
-                ...catalog.map((c) => ({ label: c.category, value: c.category, count: c.operators.length }))
+                { label: "Semua Layanan", value: "", count: totalOperatorSemua },
+                ...kategoriFaset.map((c) => ({ label: c.name, value: c.name, count: c.count }))
             ];
+
             wrap.innerHTML = chips.map((c) => {
                 const { icon, tone } = categoryIcon(c.value);
                 return `
         <button type="button" class="cat-btn ${activeCategory === c.value ? "active" : ""}" data-cat="${escapeHtml(c.value)}">
-            <span class="cat-btn-icon" data-tone="${tone}"><span class="material-symbols-outlined is-filled" aria-hidden="true">${icon}</span></span>
+            <span class="cat-btn-icon" data-tone="${tone}"><i class="${icon}" aria-hidden="true"></i></span>
             <span class="cat-btn-label">${escapeHtml(c.label)}</span>
             <span class="cat-btn-count">${c.count}</span>
         </button>
     `;
             }).join("");
+
             wrap.querySelectorAll(".cat-btn").forEach((btn) => {
                 btn.addEventListener("click", () => {
                     activeCategory = btn.dataset.cat;
                     renderCategoryChips();
-                    renderGrid();
+                    // Ganti kategori = query baru ke server, mulai dari
+                    // halaman 1. Bukan sekadar menyembunyikan kartu yang
+                    // sudah dimuat -- kategori ini bisa punya operator yang
+                    // belum pernah terkirim ke browser.
+                    loadCatalogPage(true);
                 });
             });
         }
@@ -892,15 +1002,19 @@
         // Banner "kamu login sebagai reseller" ditampilkan begitu ketahuan
         // ada produk berharga reseller di katalog -- gak perlu request
         // tambahan cuma buat nanya status.
-        function renderResellerBanner() {
+        // Penanda "harga reseller aktif". Sebelumnya disimpulkan dengan
+        // menyisir SELURUH katalog di browser -- tidak mungkin lagi sekarang
+        // karena produk tidak diunduh di muka. Sinyalnya kini datang dari
+        // dua sumber: flag ringkasan kartu (harga_reseller_aktif) dan produk
+        // asli begitu satu operator dibuka.
+        function tandaiHargaReseller(aktif) {
             const banner = document.getElementById("mktResellerBanner");
-            if (!banner) return;
-            const adaHargaReseller = catalog.some((c) => c.operators.some((op) => op.products.some((p) => p.harga_reseller)));
-            banner.classList.toggle("hidden", !adaHargaReseller);
-            document.getElementById("mktNavResellerPill")?.classList.toggle("hidden", !adaHargaReseller);
-            // syncMktNavHeight() dihapus — nav height kini diatur via CSS (--mkt-nav-h),
-            // fungsi ini sudah tidak didefinisikan dan menyebabkan ReferenceError
-            // yang mencegah katalog tampil walau data dari API sudah berhasil dimuat.
+            if (banner) banner.classList.toggle("hidden", !aktif);
+            document.getElementById("mktNavResellerPill")?.classList.toggle("hidden", !aktif);
+        }
+
+        function renderResellerBanner() {
+            tandaiHargaReseller(operators.some((op) => op.harga_reseller_aktif));
         }
 
         function matchesQuery(text, tokens) {
@@ -915,20 +1029,19 @@
         // yang dipakai grid Topup Diamond biasa, cuma UI/formnya terpisah biar
         // halaman Marketplace bisa berdiri sendiri.
 
-        function openMarketplaceDetail(operatorId) {
-            let operatorObj = null;
-            let operatorCategory = "";
-
-            for (const catObj of catalog) {
-                const found = catObj.operators.find(op => String(op.id) === String(operatorId));
-                if (found) {
-                    operatorObj = found;
-                    operatorCategory = catObj.category;
-                    break;
-                }
-            }
-
-            if (!operatorObj) return;
+        // ==============================================================
+        // DETAIL OPERATOR
+        //
+        // Daftar produk TIDAK lagi ikut terkirim bersama katalog awal --
+        // diambil di sini, hanya untuk operator yang benar-benar dibuka
+        // (/topup/catalog/group/operator/:id/products). Hasilnya disimpan di
+        // produkOperatorCache supaya membuka ulang operator yang sama tidak
+        // memanggil jaringan lagi.
+        // ==============================================================
+        async function openMarketplaceDetail(operatorId) {
+            const ringkas = operators.find((op) => String(op.id) === String(operatorId));
+            const operatorCategory = ringkas ? ringkas.category : "";
+            const operatorName = ringkas ? ringkas.name : "";
 
             document.getElementById("mktServicesSection").classList.add("hidden");
             document.getElementById("mktSecondarySections")?.classList.add("hidden");
@@ -939,18 +1052,55 @@
             const detailContainer = document.getElementById("marketplaceDetail");
             detailContainer.classList.remove("hidden");
 
-            const fallbackIcon = `<span class='material-symbols-outlined' aria-hidden='true'>storefront</span>`;
-            const imgHtml = operatorObj.operator_logo
-                ? `<img src="${safeUrl(operatorObj.operator_logo)}" alt="${escapeHtml(operatorObj.operator)}" onerror="this.outerHTML=&quot;${fallbackIcon}&quot;" loading="lazy">`
+            const fallbackIcon = `<i class='fa-solid fa-store' aria-hidden='true'></i>`;
+            const imgHtml = ringkas && ringkas.logo
+                ? `<img src="${safeUrl(ringkas.logo)}" alt="${escapeHtml(operatorName)}" onerror="this.outerHTML=&quot;${fallbackIcon}&quot;" loading="lazy" decoding="async">`
                 : fallbackIcon;
 
             document.getElementById("mktDetailHeader").innerHTML = `
         <div class="mkt-detail-icon">${imgHtml}</div>
         <div class="mkt-detail-info">
             <div class="mkt-detail-cat">${escapeHtml(operatorCategory)}</div>
-            <h2>${escapeHtml(operatorObj.operator)}</h2>
+            <h2>${escapeHtml(operatorName)}</h2>
         </div>
     `;
+
+            const wrapProduk = document.getElementById("mktDetailProducts");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+
+            let produk = produkOperatorCache.get(String(operatorId));
+
+            if (!produk) {
+                // Skeleton selama produk diambil -- tanpa ini area detail
+                // tampak kosong dan terasa seperti gagal membuka.
+                wrapProduk.innerHTML = Array(8).fill(
+                    `<div class="mkt-product-tile is-skeleton" aria-hidden="true">
+                        <span class="mkt-skeleton" style="width:70%;height:11px;border-radius:5px;"></span>
+                        <span class="mkt-skeleton" style="width:45%;height:15px;border-radius:5px;margin-top:8px;"></span>
+                    </div>`
+                ).join("");
+
+                try {
+                    const res = await fetch(
+                        `${API_BASE}/topup/catalog/group/operator/${encodeURIComponent(operatorId)}/products`,
+                        { headers: mktAuthHeaders() }
+                    );
+                    if (!res.ok) throw new Error("Gagal memuat produk.");
+                    const data = await res.json();
+                    produk = data.products || [];
+                    produkOperatorCache.set(String(operatorId), produk);
+                } catch (err) {
+                    console.error("openMarketplaceDetail:", err);
+                    wrapProduk.innerHTML = `
+                <div class="mkt-empty">
+                    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                    <h3>Gagal memuat produk</h3>
+                    <p>Periksa koneksi kamu lalu coba buka lagi layanan ini.</p>
+                </div>
+            `;
+                    return;
+                }
+            }
 
             // Grid tile nominal: seluruh tile jadi tombol beli (gak ada
             // tombol "Beli" terpisah lagi), nama produk kecil di atas,
@@ -959,12 +1109,21 @@
             // varian sumber beda harga buat nama yang mirip (mis. "DANA
             // 1.000" vs "Dana 1.000"), jadi pembeli perlu lihat nama
             // persis sebelum checkout.
-            let productsHtml = "";
-            operatorObj.products.forEach(p => {
+            if (!produk.length) {
+                wrapProduk.innerHTML = `
+            <div class="mkt-empty">
+                <i class="fa-solid fa-box-open" aria-hidden="true"></i>
+                <h3>Belum ada produk aktif</h3>
+                <p>Layanan ini sedang tidak memiliki nominal yang bisa dibeli.</p>
+            </div>
+        `;
+                return;
+            }
+
+            wrapProduk.innerHTML = produk.map((p) => {
                 const tersedia = p.harga_jual !== undefined && p.harga_jual !== null;
                 const harga = tersedia ? rupiah(p.harga_jual) : "Tidak tersedia";
-
-                productsHtml += `
+                return `
             <button type="button" class="mkt-product-tile${tersedia ? "" : " mkt-product-tile--disabled"}" ${tersedia ? "" : "disabled"}
                 data-id="${p.id}" data-kode="${escapeHtml(p.kode_produk)}" data-nama="${escapeHtml(p.nama)}"
                 data-harga="${tersedia ? p.harga_jual : ""}" data-server="${p.butuh_server_id ? 'true' : 'false'}"
@@ -973,11 +1132,13 @@
                 <span class="mkt-product-tile-price">${harga}${tersedia ? hargaCoretHtml(p) : ""}</span>
             </button>
         `;
-            });
+            }).join("");
 
-            document.getElementById("mktDetailProducts").innerHTML = productsHtml;
+            // Banner harga reseller dievaluasi ulang dari produk yang baru
+            // diambil -- ringkasan kartu tidak memuat harga per produk.
+            tandaiHargaReseller(produk.some((p) => p.harga_reseller));
 
-            document.getElementById("mktDetailProducts").querySelectorAll(".mkt-product-tile:not(:disabled)").forEach(tile => {
+            wrapProduk.querySelectorAll(".mkt-product-tile:not(:disabled)").forEach((tile) => {
                 tile.addEventListener("click", () => {
                     openMarketplaceCheckout({
                         id: tile.dataset.id,
@@ -987,12 +1148,10 @@
                         butuh_server_id: tile.dataset.server === "true",
                         cek_tagihan: tile.dataset.cekTagihan === "true",
                         kategori: operatorCategory,
-                        operator: operatorObj.operator
+                        operator: operatorName
                     });
                 });
             });
-
-            window.scrollTo({ top: 0, behavior: "smooth" });
         }
 
         function closeMarketplaceDetail() {
@@ -1157,7 +1316,7 @@
             if (!banks.length) {
                 dropdown.innerHTML = `
                     <div class="mkt-bank-empty">
-                        <span class="material-symbols-outlined" style="font-size:1.5rem;color:var(--mkt-text-muted);">search_off</span>
+                        <i class="fa-solid fa-magnifying-glass-minus" style="font-size:1.5rem;color:var(--mkt-text-muted);" aria-hidden="true"></i>
                         <span>Bank tidak ditemukan. Pastikan ejaan atau kode benar.</span>
                     </div>
                 `;
@@ -1229,7 +1388,7 @@
             }
 
             document.addEventListener("click", (e) => {
-                if (!e.target.closest("#mktCheckoutBankGroup")) {
+                if (!nxClosest(e.target, "#mktCheckoutBankGroup")) {
                     dropdown.classList.add("hidden");
                 }
             });
@@ -1353,7 +1512,7 @@
             result.innerHTML = "";
             const btn = document.getElementById("mktCheckoutInquiryBtn");
             btn.disabled = false;
-            btn.innerHTML = `<span class="material-symbols-outlined" aria-hidden="true">receipt_long</span> Cek Tagihan`;
+            btn.innerHTML = `<i class="fa-solid fa-receipt" aria-hidden="true"></i> Cek Tagihan`;
         }
 
         function showMarketplaceInquiryError(pesan) {
@@ -1375,7 +1534,7 @@
             const btn = document.getElementById("mktCheckoutInquiryBtn");
             const result = document.getElementById("mktCheckoutInquiryResult");
             btn.disabled = true;
-            btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" aria-hidden="true">progress_activity</span> Mengecek tagihan…`;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mkt-spin" aria-hidden="true"></i> Mengecek tagihan…`;
             result.classList.add("hidden");
             result.classList.remove("is-error");
 
@@ -1422,7 +1581,7 @@
                 showMarketplaceInquiryError(err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<span class="material-symbols-outlined" aria-hidden="true">receipt_long</span> Cek Tagihan`;
+                btn.innerHTML = `<i class="fa-solid fa-receipt" aria-hidden="true"></i> Cek Tagihan`;
             }
         });
 
@@ -1515,7 +1674,7 @@
             const statusEl = document.getElementById("mktPaymentStatus");
 
             statusEl.className = "mkt-payment-status";
-            statusEl.innerHTML = `<span class="material-symbols-outlined mkt-spin" aria-hidden="true">progress_activity</span> Menunggu pembayaran, jangan tutup halaman ini...`;
+            statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin mkt-spin" aria-hidden="true"></i> Menunggu pembayaran, jangan tutup halaman ini...`;
 
             if (paymentData.qrContent) {
                 qrisWrap.classList.remove("hidden");
@@ -1556,7 +1715,7 @@
                     navigator.clipboard.writeText(paymentData.paymentNo).then(() => {
                         const b = document.getElementById("mktPaymentCopyVaBtn");
                         const original = b.innerHTML;
-                        b.innerHTML = `<span class="material-symbols-outlined" aria-hidden="true">check</span> Disalin!`;
+                        b.innerHTML = `<i class="fa-solid fa-check" aria-hidden="true"></i> Disalin!`;
                         setTimeout(() => { b.innerHTML = original; }, 2000);
                     });
                 };
@@ -1593,11 +1752,11 @@
 
                         if (["processing", "sukses", "success"].includes(data.status)) {
                             statusEl.className = "mkt-payment-status mkt-status-success";
-                            statusEl.innerHTML = `<span class="material-symbols-outlined" aria-hidden="true">check_circle</span> Pembayaran diterima! Pesanan kamu sedang diproses.`;
+                            statusEl.innerHTML = `<i class="fa-solid fa-circle-check" aria-hidden="true"></i> Pembayaran diterima! Pesanan kamu sedang diproses.`;
                             return; // stop polling
                         } else if (data.status === "failed") {
                             statusEl.className = "mkt-payment-status mkt-status-failed";
-                            statusEl.innerHTML = `<span class="material-symbols-outlined" aria-hidden="true">cancel</span> Pembayaran gagal / kedaluwarsa.`;
+                            statusEl.innerHTML = `<i class="fa-solid fa-circle-xmark" aria-hidden="true"></i> Pembayaran gagal / kedaluwarsa.`;
                             return; // stop polling
                         }
                     }
@@ -1627,7 +1786,7 @@
                 <div class="mkt-count">${escapeHtml(countLabel)}</div>
                 <div class="market-card-foot">
                     <div class="market-card-price">${priceHtml}</div>
-                    <span class="material-symbols-outlined market-card-chevron" aria-hidden="true">chevron_right</span>
+                    <i class="fa-solid fa-chevron-right market-card-chevron" aria-hidden="true"></i>
                 </div>
             </div>
         </div>
@@ -1637,97 +1796,70 @@
         function renderGrid() {
             const grid = document.getElementById("marketGrid");
             const totalCount = document.getElementById("totalCount");
-            const tokens = searchQuery.toLowerCase().trim().split(/\s+/).filter(Boolean);
-
-            let html = "";
-            let matchCount = 0;
+            if (!grid) return;
 
             try {
-                catalog.forEach((categoryObj) => {
-                    if (activeCategory && categoryObj.category !== activeCategory) return;
-
-                    let categoryHtml = "";
-
-                    categoryObj.operators.forEach((op) => {
-                        const matchCategory = matchesQuery(categoryObj.category, tokens);
-                        const matchOperator = matchesQuery(op.operator, tokens);
-                        const fallbackIcon = `<span class='material-symbols-outlined' aria-hidden='true'>storefront</span>`;
-                        const imgHtml = op.operator_logo
-                            ? `<img src="${safeUrl(op.operator_logo)}" alt="${escapeHtml(op.operator)}" onerror="this.outerHTML=&quot;${fallbackIcon}&quot;" loading="lazy">`
-                            : fallbackIcon;
-
-                        if (matchCategory || matchOperator) {
-                            matchCount++;
-                            let minPrice = null;
-                            op.products.forEach((p) => {
-                                if (p.harga_jual !== undefined && p.harga_jual !== null) {
-                                    if (minPrice === null || p.harga_jual < minPrice) minPrice = p.harga_jual;
-                                }
-                            });
-                            const opDataAttr = encodeURIComponent(op.id || op.operator);
-                            categoryHtml += marketCardHtml({
-                                operatorId: opDataAttr,
-                                iconHtml: imgHtml,
-                                name: op.operator,
-                                countLabel: `${op.products.length} Produk`,
-                                minPrice
-                            });
-                        } else if (tokens.length > 0) {
-                            const matchedProducts = op.products.filter((p) => matchesQuery(p.nama, tokens));
-                            if (matchedProducts.length > 0) {
-                                matchCount++;
-                                const opDataAttr = encodeURIComponent(op.id || op.operator);
-                                let minMatchedPrice = null;
-                                matchedProducts.forEach((p) => {
-                                    if (p.harga_jual !== undefined && p.harga_jual !== null) {
-                                        if (minMatchedPrice === null || p.harga_jual < minMatchedPrice) minMatchedPrice = p.harga_jual;
-                                    }
-                                });
-                                categoryHtml += marketCardHtml({
-                                    operatorId: opDataAttr,
-                                    iconHtml: imgHtml,
-                                    name: op.operator,
-                                    countLabel: `${matchedProducts.length} Produk Cocok`,
-                                    minPrice: minMatchedPrice
-                                });
-                            }
-                        }
-                    });
-
-                    if (categoryHtml) {
-                        if (!activeCategory && tokens.length === 0) {
-                            html += `
-                        <div class="mkt-category-heading">${escapeHtml(categoryObj.category)}</div>
-                        <div class="mkt-category-bar"></div>
-                    `;
-                        }
-                        html += categoryHtml;
-                    }
-                });
-
-                if (matchCount === 0) {
-                    html = `
+                if (!operators.length) {
+                    grid.innerHTML = `
                 <div class="mkt-empty">
-                    <span class="material-symbols-outlined" aria-hidden="true">search_off</span>
+                    <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                     <h3>Layanan yang kamu cari belum ada</h3>
                     <p>Coba kata kunci lain atau pilih kategori yang tersedia di atas.</p>
                 </div>
             `;
+                    if (totalCount) totalCount.textContent = "";
+                    renderLoadMore();
+                    return;
                 }
 
+                // Judul kategori hanya ditampilkan saat menelusuri tanpa
+                // filter/pencarian. Saat hasil pencarian dicampur dari banyak
+                // kategori, judul berulang justru memecah daftar dan bikin
+                // kartu susah dibandingkan.
+                const pakaiJudulKategori = !activeCategory && !searchQuery.trim();
+                let kategoriTerakhir = null;
+                let html = "";
+
+                operators.forEach((op) => {
+                    if (pakaiJudulKategori && op.category !== kategoriTerakhir) {
+                        kategoriTerakhir = op.category;
+                        html += `
+                        <div class="mkt-category-heading">${escapeHtml(op.category || "Lainnya")}</div>
+                        <div class="mkt-category-bar"></div>
+                    `;
+                    }
+
+                    const fallbackIcon = `<i class='fa-solid fa-store' aria-hidden='true'></i>`;
+                    const imgHtml = op.logo
+                        ? `<img src="${safeUrl(op.logo)}" alt="${escapeHtml(op.name)}" onerror="this.outerHTML=&quot;${fallbackIcon}&quot;" loading="lazy" decoding="async" width="56" height="56">`
+                        : fallbackIcon;
+
+                    html += marketCardHtml({
+                        operatorId: encodeURIComponent(op.id),
+                        iconHtml: imgHtml,
+                        name: op.name,
+                        countLabel: `${op.product_count} Produk`,
+                        minPrice: op.min_price
+                    });
+                });
+
                 grid.innerHTML = html;
-                totalCount.textContent = matchCount ? `${matchCount} layanan` : "";
+
+                if (totalCount) {
+                    // Angka ini dari server = TOTAL hasil, bukan cuma yang
+                    // sudah termuat. Menampilkan jumlah kartu yang terlihat
+                    // akan menyesatkan ("12 layanan" padahal ada 240).
+                    totalCount.textContent = mktTotal ? `${mktTotal} layanan` : "";
+                }
 
                 grid.querySelectorAll(".market-card").forEach((card, index) => {
-                    // Animasi masuk bertahap, tapi cuma buat layar pertama --
-                    // kalau semua kartu ikut delay, hasil pencarian di bawah
-                    // kelihatan lama munculnya.
+                    // Animasi masuk bertahap hanya untuk layar pertama; kalau
+                    // semua kartu ikut delay, batch berikutnya terasa lambat.
                     if (index < 12) card.style.animationDelay = `${index * 45}ms`;
 
                     const buka = () => {
-                        const operatorName = decodeURIComponent(card.dataset.operator || "");
-                        if (!operatorName) return;
-                        openMarketplaceDetail(operatorName);
+                        const id = decodeURIComponent(card.dataset.operator || "");
+                        if (id) openMarketplaceDetail(id);
                     };
                     card.addEventListener("click", buka);
                     card.addEventListener("keydown", (e) => {
@@ -1737,16 +1869,103 @@
                         }
                     });
                 });
+
+                renderLoadMore();
             } catch (err) {
                 console.error("[MARKETPLACE RENDER ERROR]", err);
                 grid.innerHTML = `
             <div class="mkt-empty">
-                <span class="material-symbols-outlined" aria-hidden="true">bug_report</span>
-                <h3>Error Rendering Grid</h3>
+                <i class="fa-solid fa-bug" aria-hidden="true"></i>
+                <h3>Gagal Menampilkan Katalog</h3>
                 <p>${escapeHtml(err.message)}</p>
             </div>
         `;
             }
+        }
+
+        // ==============================================================
+        // KONTROL "MUAT LEBIH BANYAK"
+        //
+        // Dua jalur sengaja disediakan bersamaan:
+        //   * IntersectionObserver -> memuat otomatis saat sentinel masuk
+        //     layar (terasa seperti infinite scroll),
+        //   * tombol eksplisit    -> tetap ada dan bisa difokus keyboard,
+        //     karena infinite scroll saja mematikan navigasi keyboard dan
+        //     tidak berfungsi bila IntersectionObserver tidak tersedia.
+        // ==============================================================
+        let mktObserver = null;
+
+        function renderLoadMore() {
+            const zona = document.getElementById("mktLoadMoreZone");
+            if (!zona) return;
+
+            if (!mktHasMore && operators.length) {
+                zona.innerHTML = `<p class="mkt-loadmore-done">Semua ${mktTotal} layanan sudah ditampilkan.</p>`;
+                lepasObserver();
+                return;
+            }
+            if (!operators.length) {
+                zona.innerHTML = "";
+                lepasObserver();
+                return;
+            }
+
+            zona.innerHTML = `
+        <button type="button" class="mkt-loadmore-btn" id="mktLoadMoreBtn">
+            <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
+            <span>Muat lebih banyak</span>
+            <span class="mkt-loadmore-sisa">${Math.max(mktTotal - operators.length, 0)} lagi</span>
+        </button>
+        <div id="mktLoadSentinel" aria-hidden="true"></div>
+    `;
+
+            const btn = document.getElementById("mktLoadMoreBtn");
+            if (btn) btn.addEventListener("click", () => loadCatalogPage(false));
+
+            pasangObserver();
+        }
+
+        function setLoadMoreState(state) {
+            const btn = document.getElementById("mktLoadMoreBtn");
+            if (!btn) return;
+            const label = btn.querySelector("span");
+            if (state === "loading") {
+                btn.disabled = true;
+                btn.classList.add("is-loading");
+                if (label) label.textContent = "Memuat…";
+            } else if (state === "error") {
+                btn.disabled = false;
+                btn.classList.remove("is-loading");
+                if (label) label.textContent = "Gagal memuat — coba lagi";
+            } else {
+                btn.disabled = false;
+                btn.classList.remove("is-loading");
+                if (label) label.textContent = "Muat lebih banyak";
+            }
+        }
+
+        function lepasObserver() {
+            if (mktObserver) {
+                mktObserver.disconnect();
+                mktObserver = null;
+            }
+        }
+
+        function pasangObserver() {
+            lepasObserver();
+            const sentinel = document.getElementById("mktLoadSentinel");
+            if (!sentinel || typeof IntersectionObserver === "undefined") return;
+
+            mktObserver = new IntersectionObserver((entries) => {
+                if (entries.some((e) => e.isIntersecting) && mktHasMore && !mktLoading) {
+                    loadCatalogPage(false);
+                }
+            }, {
+                // Mulai memuat sebelum sentinel benar-benar terlihat supaya
+                // kartu berikutnya sudah siap ketika user sampai di bawah.
+                rootMargin: "400px 0px"
+            });
+            mktObserver.observe(sentinel);
         }
 
         // Dua kotak pencarian (hero + nav) nyetir SATU state yang sama, dan
@@ -1755,11 +1974,31 @@
         const mktSearchInput = document.getElementById("mktSearchInput");
         const mktNavSearchInput = document.getElementById("mktNavSearchInput");
 
+        // Pencarian dikerjakan SERVER (lihat /topup/catalog/operators?q=).
+        // Ini bukan sekadar pilihan gaya: kartu kini dimuat bertahap, jadi
+        // menyaring di browser hanya akan menelusuri kartu yang kebetulan
+        // sudah terunduh -- layanan yang belum termuat mustahil ditemukan.
+        // Server menyaring atas indeks lengkap, termasuk nama tiap produk di
+        // dalam operator yang kartunya belum pernah dikirim.
+        let searchDebounce = null;
+
         function applySearch(value, sumber) {
             searchQuery = value;
             if (sumber !== mktSearchInput && mktSearchInput) mktSearchInput.value = value;
             if (sumber !== mktNavSearchInput && mktNavSearchInput) mktNavSearchInput.value = value;
-            renderGrid();
+
+            // Debounce: tanpa ini setiap ketukan huruf memicu satu request.
+            clearTimeout(searchDebounce);
+            searchDebounce = setTimeout(() => loadCatalogPage(true), 280);
+        }
+
+        // Enter / submit -> jangan tunggu debounce.
+        function applySearchNow(value, sumber) {
+            clearTimeout(searchDebounce);
+            searchQuery = value;
+            if (sumber !== mktSearchInput && mktSearchInput) mktSearchInput.value = value;
+            if (sumber !== mktNavSearchInput && mktNavSearchInput) mktNavSearchInput.value = value;
+            loadCatalogPage(true);
         }
 
         mktSearchInput?.addEventListener("input", (e) => applySearch(e.target.value, mktSearchInput));
@@ -1770,13 +2009,14 @@
             // Di mobile ini yang nutup keyboard virtual, lalu hasilnya
             // digulirkan ke layar.
             mktSearchInput?.blur();
+            applySearchNow(mktSearchInput ? mktSearchInput.value : searchQuery, mktSearchInput);
             document.getElementById("mktServicesSection")?.scrollIntoView({ behavior: "smooth", block: "start" });
         });
 
         document.getElementById("mktRailResetBtn")?.addEventListener("click", () => {
             activeCategory = "";
-            applySearch("", null);
             renderCategoryChips();
+            applySearchNow("", null);
         });
 
         // Kartu support cuma memicu tombol NexBot yang sudah ada, bukan bikin
@@ -1946,11 +2186,11 @@
             const configuredWhatsApp = cachedMktStoreSettings?.contact_whatsapp || "";
             if (data.type === "order" && isPaid && configuredWhatsApp) {
                 const waDigits = configuredWhatsApp.replace(/\D/g, "");
-                const prefill = `Halo admin, saya sudah bayar pesanan dengan No. Transaksi ${data.id}. Saya akan melampirkan bukti pembayaran iPaymu di chat ini. Mohon diproses ya 🙏`;
+                const prefill = `Halo admin, saya sudah bayar pesanan dengan No. Transaksi ${data.id}. Saya akan melampirkan bukti pembayaran iPaymu di chat ini. Mohon diproses ya, terima kasih.`;
                 const waHref = `https://wa.me/${waDigits}?text=${encodeURIComponent(prefill)}`;
                 waCta = `
                     <div class="track-wa-cta">
-                        <p class="otp-info">🎮 Pembayaran sudah terverifikasi. Produk ini diproses manual oleh admin. Sertakan <strong>No. Transaksi ${escapeHtml(data.id)}</strong> saat chat admin.</p>
+                        <p class="otp-info"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Pembayaran sudah terverifikasi. Produk ini diproses manual oleh admin. Sertakan <strong>No. Transaksi ${escapeHtml(data.id)}</strong> saat chat admin.</p>
                         <a href="${waHref}" target="_blank" rel="noopener" class="mkt-btn-secondary">Chat Admin via WhatsApp</a>
                     </div>
                 `;
@@ -2229,6 +2469,23 @@
             }
         }
 
+        /* BUG FIX (mobile): di WebKit/iOS `event.target` untuk click hasil tap
+           bisa berupa TEXT NODE (bukan Element) kalau jarinya mendarat persis
+           di atas teks -- mis. nominal saldo di tombol wallet navbar. Text node
+           gak punya .closest(), jadi `event.target.closest(...)` melempar
+           TypeError, listener-nya mati, dan tombol saldonya kelihatan "gak bisa
+           diklik" di HP padahal normal di desktop. */
+        function nxEventElement(target) {
+            if (!target) return null;
+            if (target.nodeType === 1) return target;
+            return target.parentElement || null;
+        }
+
+        function nxClosest(target, selector) {
+            const el = nxEventElement(target);
+            return el ? el.closest(selector) : null;
+        }
+
         function openWalletModal(e) {
             if (e && typeof e.preventDefault === "function") e.preventDefault();
             const token = localStorage.getItem("nexshop-public-token") || localStorage.getItem("token");
@@ -2268,13 +2525,22 @@
         }
 
         function initMarketplaceWalletUI() {
+            // Fase CAPTURE supaya gak bisa dimatikan stopPropagation() dari
+            // listener lain, + normalisasi text node (lihat nxClosest).
             document.addEventListener("click", (event) => {
-                const trigger = event.target.closest("[data-wallet-trigger]");
-                if (trigger) {
-                    event.preventDefault();
-                    openWalletModal();
+                const trigger = nxClosest(event.target, "[data-wallet-trigger]");
+                if (!trigger) return;
+                event.preventDefault();
+                // Panel nav mobile ditutup dulu biar gak nyangkut kebuka di
+                // belakang bottom sheet wallet.
+                const nav = document.querySelector(".mkt-nav");
+                if (nav && nav.classList.contains("is-open")) {
+                    nav.classList.remove("is-open");
+                    const tgl = document.getElementById("mktNavToggle");
+                    if (tgl) tgl.setAttribute("aria-expanded", "false");
                 }
-            });
+                openWalletModal();
+            }, true);
 
             const closeBtn = document.getElementById("closeWalletModalBtn");
             if (closeBtn) closeBtn.addEventListener("click", closeWalletModal);

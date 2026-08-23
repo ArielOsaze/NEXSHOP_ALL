@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const net = require("net");
 const axios = require("axios");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -7,6 +8,8 @@ const { notify } = require("../config/notify");
 const { getTiers, getTier, getResellerContext, invalidateTierCache, isMissingTableError } = require("../services/resellerService");
 const { hitungHargaReseller } = require("../utils/resellerPricing");
 const { hitungMarkupWajar, cleanProductName } = require("../utils/topupHelpers");
+const { validateWebhookUrlShape, assertSafeOutboundUrl } = require("../utils/safeOutboundUrl");
+const { decryptDocument, parseDocumentRef, isDocumentRef } = require("../utils/secureDocument");
 
 // ===========================================================
 // PROGRAM RESELLER & PARTNER PORTAL NEXSHOP
@@ -44,9 +47,50 @@ function generateResellerWebhookSecret() {
     return "whsec_" + crypto.randomBytes(24).toString("hex");
 }
 
+// Netralkan CSV/Excel formula injection. Sel yang diawali = + - @ (atau
+// tab/CR yang bikin Excel menggeser parsing) dieksekusi sebagai rumus saat
+// file dibuka -- itu jalan masuk untuk perintah berbahaya lewat nama produk
+// yang berasal dari katalog supplier. Prefiks tanda kutip tunggal memaksa
+// Excel & LibreOffice memperlakukannya sebagai teks biasa.
+function csvCell(value) {
+    let teks = value === null || value === undefined ? "" : String(value);
+    if (/^[=+\-@\t\r]/.test(teks)) {
+        teks = "'" + teks;
+    }
+    return '"' + teks.replace(/"/g, '""') + '"';
+}
+
 function maskSecret(secret) {
     if (!secret || secret.length < 10) return "••••••••••••••••";
     return secret.slice(0, 7) + "••••••••••••••••" + secret.slice(-4);
+}
+
+// IP whitelist disimpan sebagai daftar dipisah koma. Sebelumnya nilai apa
+// pun langsung ditelan mentah, jadi salah ketik ("192.168.1", "my-server")
+// diam-diam bikin SELURUH request reseller ditolak 403 tanpa petunjuk
+// letak salahnya. Sekarang tiap entri divalidasi dan dinormalisasi dulu.
+function validasiIpWhitelist(raw) {
+    const value = String(raw || "").trim();
+    if (!value) return { ok: true, value: null };
+    if (value.length > 1000) return { ok: false, reason: "Daftar IP whitelist terlalu panjang (maksimal 1000 karakter)." };
+
+    const entries = value.split(",").map((x) => x.trim()).filter(Boolean);
+    if (entries.length > 50) return { ok: false, reason: "Maksimal 50 alamat IP dalam whitelist." };
+
+    const bersih = [];
+    for (const entry of entries) {
+        if (entry === "*") {
+            // Opt-out eksplisit: pemilik akun sengaja mematikan pembatasan IP.
+            bersih.push("*");
+            continue;
+        }
+        if (net.isIP(entry) === 0) {
+            return { ok: false, reason: `"${entry}" bukan alamat IP yang valid. Isi alamat IPv4/IPv6 publik server kamu, dipisah koma.` };
+        }
+        bersih.push(entry);
+    }
+    // Buang duplikat supaya daftarnya rapi & idempoten.
+    return { ok: true, value: [...new Set(bersih)].join(",") };
 }
 
 // ===========================================================
@@ -99,22 +143,28 @@ exports.resellerRegister = async (req, res) => {
         let userRole = "user";
 
         if (existingUser) {
-            userId = existingUser.id;
-            userRole = existingUser.role || "user";
-
-            // Update user reseller_status & password menjadi data pendaftaran terbaru
-            const hashedPassword = await bcrypt.hash(password, 10);
-            const updatePayload = {
-                password: hashedPassword,
-                reseller_status: "pending",
-                phone: whatsapp || existingUser.phone,
-                fullname: fullname || existingUser.fullname
-            };
-            const { error: updErr } = await supabase.from("users").update(updatePayload).eq("id", userId);
-            if (updErr && String(updErr.message || "").toLowerCase().includes("reseller_status")) {
-                delete updatePayload.reseller_status;
-                await supabase.from("users").update(updatePayload).eq("id", userId);
-            }
+            // ==========================================================
+            // KEAMANAN — JANGAN PERNAH MENIMPA AKUN YANG SUDAH ADA
+            //
+            // Versi sebelumnya: kalau email-nya sudah kedaftar, endpoint ini
+            // nge-hash password yang BARU DIKIRIM PENDAFTAR lalu nimpa
+            // password akun lama, terus nerbitin JWT pakai id + role akun itu.
+            // Efeknya: siapa pun yang tau alamat email seorang user (termasuk
+            // email admin) bisa nembak endpoint publik ini, ngeganti password
+            // korban, dan langsung dapet token dengan role korban -> ambil
+            // alih akun + eskalasi hak akses penuh, tanpa perlu tau password
+            // lama sama sekali.
+            //
+            // Sekarang: pendaftaran email yang sudah terdaftar DITOLAK. Kalau
+            // itu memang akun dia sendiri, dia harus login dulu (tab "Masuk"),
+            // baru ngirim pengajuan lewat POST /api/reseller/apply yang
+            // terproteksi authMiddleware. Password akun eksisting tidak
+            // pernah disentuh oleh jalur publik ini.
+            // ==========================================================
+            return res.status(409).json({
+                message: "Email ini sudah terdaftar di NexShop. Silakan masuk lewat tab \"Masuk Portal\" memakai password akun kamu, lalu kirim pengajuan kemitraan dari dalam portal.",
+                code: "EMAIL_ALREADY_REGISTERED"
+            });
         } else {
             const hashedPassword = await bcrypt.hash(password, 10);
             const insertUserPayload = {
@@ -148,17 +198,17 @@ exports.resellerRegister = async (req, res) => {
             if (insertUserErr) {
                 console.error("resellerRegister insert user error:", insertUserErr);
                 if (insertUserErr.code === "23505") {
-                    // Jika email atau nomor telp sudah ada, ambil id user tersebut
-                    const { data: fetchExisting } = await supabase.from("users").select("id, role, fullname").eq("email", email).maybeSingle();
-                    if (fetchExisting) {
-                        userId = fetchExisting.id;
-                        userRole = fetchExisting.role || "user";
-                    } else {
-                        return res.status(400).json({ message: "Nomor WhatsApp atau Email sudah terdaftar pada akun lain." });
-                    }
-                } else {
-                    return res.status(400).json({ message: "Gagal membuat akun user: " + (insertUserErr.message || "Periksa data Anda") });
+                    // Race: akun dengan email/WhatsApp ini keburu dibuat di
+                    // antara pengecekan di atas dan INSERT ini. Sama seperti
+                    // cabang existingUser -- JANGAN diam-diam "adopsi" akun
+                    // itu lalu nerbitin token buatnya. Pendaftar belum
+                    // membuktikan dia pemilik akunnya.
+                    return res.status(409).json({
+                        message: "Email atau nomor WhatsApp ini sudah terdaftar pada akun lain. Silakan masuk lewat tab \"Masuk Portal\" untuk melanjutkan pengajuan kemitraan.",
+                        code: "EMAIL_ALREADY_REGISTERED"
+                    });
                 }
+                return res.status(400).json({ message: "Gagal membuat akun user: " + (insertUserErr.message || "Periksa data Anda") });
             }
 
             if (newUser) {
@@ -167,14 +217,13 @@ exports.resellerRegister = async (req, res) => {
             }
         }
 
+        // Sampai titik ini userId HARUS berasal dari baris users yang baru saja
+        // kita INSERT sendiri di request ini. Jalur fallback lama (cari user by
+        // email lalu pakai id-nya) sengaja dihapus: itu jalan masuk yang sama
+        // ke pengambilalihan akun -- token diterbitkan untuk akun yang tidak
+        // pernah diautentikasi di request ini.
         if (!userId) {
-            const { data: fallbackUser } = await supabase.from("users").select("id, role").eq("email", email).maybeSingle();
-            if (fallbackUser) {
-                userId = fallbackUser.id;
-                userRole = fallbackUser.role || "user";
-            } else {
-                return res.status(500).json({ message: "Gagal memproses data akun pengguna." });
-            }
+            return res.status(500).json({ message: "Gagal memproses data akun pengguna." });
         }
 
         // Simpan atau perbarui pengajuan ke reseller_applications
@@ -290,8 +339,14 @@ exports.resellerLogin = async (req, res) => {
     try {
         const { data: user, error: userErr } = await supabase
             .from("users")
+            // KEAMANAN: dulu memakai .ilike() -- di PostgREST, ilike
+            // memperlakukan % dan _ sebagai wildcard. Nilai email seperti
+            // "a%@%" karena itu mencocokkan akun LAIN, dan .maybeSingle()
+            // ikut error kalau kecocokannya lebih dari satu. Email sudah
+            // dinormalisasi ke huruf kecil di atas, jadi pencocokan persis
+            // (.eq) sudah cukup dan tidak punya wildcard sama sekali.
             .select("id, fullname, email, password, role, reseller_status, phone, is_blacklisted")
-            .ilike("email", email)
+            .eq("email", email)
             .maybeSingle();
 
         if (userErr && !isMissingTableError(userErr)) {
@@ -785,29 +840,13 @@ function getResellerMemberCode(user) {
     return `M${yearCode}${idHex}QCNW${checksum}PT`;
 }
 
-const RESELLER_PORTAL_NEWS = [
-    {
-        id: "news-1",
-        title: "Produk Pascabayar & Token Listrik PLN sudah dapat digunakan",
-        date: "17 Juni 2026",
-        badge: "Fitur Baru",
-        desc: "Layanan cek tagihan & bayar PDAM, PLN Pascabayar, dan BPJS kini aktif di endpoint /api/reseller/v1/order."
-    },
-    {
-        id: "news-2",
-        title: "Pembaruan IP Whitelist & Webhook Relay v2",
-        date: "10 April 2026",
-        badge: "Sistem",
-        desc: "Sistem relay otomatis mem-forward status pesanan ke URL Webhook Anda dengan signature HMAC SHA-256."
-    },
-    {
-        id: "news-3",
-        title: "API Deposit Saldo Otomatis QRIS & Virtual Account",
-        date: "22 Jan 2026",
-        badge: "Keuangan",
-        desc: "Topup saldo deposit modal reseller dapat dilakukan secara real-time via QRIS Instan dan Bank Virtual Account."
-    }
-];
+// CATATAN: dulu di sini ada array RESELLER_PORTAL_NEWS berisi tiga
+// "pengumuman" yang ditulis manual lengkap dengan tanggal karangan
+// ("17 Juni 2026", "10 April 2026", "22 Jan 2026"). Isinya tampil di
+// portal seolah-olah pengumuman resmi, padahal tidak pernah ada di
+// database dan tanggalnya tidak pernah berubah. Sekarang feed berita
+// portal HANYA mengambil artikel yang benar-benar terbit di
+// news_articles; kalau kosong, portal menampilkan empty state jujur.
 
 async function getResellerDashboardMetrics(userId) {
     const now = new Date();
@@ -837,14 +876,35 @@ async function getResellerDashboardMetrics(userId) {
     }
 
     try {
+        // PERBAIKAN:
+        // 1. Dulu query ini menarik SELURUH riwayat pesanan user tanpa batas
+        //    waktu maupun limit, padahal angka yang dipakai cuma sampai bulan
+        //    lalu. Sekarang dibatasi sejak awal bulan lalu saja.
+        // 2. Dulu SEMUA pesanan ikut dihitung sebagai omzet -- termasuk yang
+        //    gagal dan yang masih pending. Reseller jadi melihat "omzet" yang
+        //    lebih besar daripada uang yang benar-benar terpakai. Sekarang
+        //    hanya pesanan berstatus sukses yang masuk hitungan nominal.
+        // 3. `total` bisa NULL untuk order jalur API (kolom yang terisi di
+        //    sana `harga`), jadi keduanya dipakai sebagai sumber nominal.
+        const sejak = new Date(lastMonthStart).toISOString();
         const { data: orders } = await supabase
             .from("topup_orders")
-            .select("id, total, created_at, status")
-            .eq("user_id", userId);
+            .select("id, total, harga, created_at, status")
+            .eq("user_id", userId)
+            .gte("created_at", sejak)
+            .order("created_at", { ascending: false })
+            .limit(5000);
+
+        const STATUS_SUKSES = new Set(["sukses", "success"]);
 
         if (orders && orders.length > 0) {
             orders.forEach(o => {
-                const total = Number(o.total) || 0;
+                // Pesanan gagal/pending tetap dihitung jumlahnya (count) supaya
+                // reseller tahu volume percobaannya, tapi nominalnya nol supaya
+                // angka rupiah di dashboard = uang yang benar-benar berputar.
+                const sukses = STATUS_SUKSES.has(String(o.status || "").toLowerCase());
+                const nominal = Number(o.total != null ? o.total : o.harga) || 0;
+                const total = sukses ? nominal : 0;
                 const ot = new Date(o.created_at).getTime();
 
                 if (ot >= todayStart) {
@@ -907,9 +967,13 @@ async function getResellerPortalNews() {
                 slug: a.slug
             }));
         }
-    } catch (_) {}
+    } catch (err) {
+        console.error("getResellerPortalNews:", err.message);
+    }
 
-    return RESELLER_PORTAL_NEWS;
+    // Tidak ada artikel terbit -> kembalikan kosong. Jangan pernah
+    // mengarang pengumuman supaya panel "News & Updates" kelihatan isi.
+    return [];
 }
 
 function getTimeAgoIndo(dateStr) {
@@ -987,7 +1051,10 @@ exports.getPortalOverview = async (req, res) => {
                 news: portalNews,
                 security_indicator: {
                     two_factor: false,
-                    ip_whitelist_active: false
+                    two_factor_available: false,
+                    ip_whitelist_active: false,
+                    webhook_configured: false,
+                    api_key_active: false
                 },
                 api_credentials: {
                     api_key: "Belum Aktif (Akun Menunggu Verifikasi)",
@@ -1054,9 +1121,16 @@ exports.getPortalOverview = async (req, res) => {
             },
             metrics,
             news: portalNews,
+            // Indikator keamanan dilaporkan apa adanya. `two_factor` tetap
+            // false karena NexShop memang BELUM punya 2FA untuk akun mitra --
+            // portal wajib menampilkannya sebagai "belum aktif / belum
+            // tersedia", bukan mencentangnya hijau seolah sudah menyala.
             security_indicator: {
                 two_factor: false,
-                ip_whitelist_active: !!(apiKeyRow && apiKeyRow.ip_whitelist)
+                two_factor_available: false,
+                ip_whitelist_active: !!(apiKeyRow && apiKeyRow.ip_whitelist),
+                webhook_configured: !!(apiKeyRow && apiKeyRow.webhook_url),
+                api_key_active: !!(apiKeyRow && apiKeyRow.is_active)
             },
             api_credentials: apiKeyRow ? {
                 api_key: apiKeyRow.api_key,
@@ -1162,9 +1236,31 @@ exports.updatePortalSettings = async (req, res) => {
             return res.status(403).json({ message: "Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja)." });
         }
 
+        // VALIDASI IP WHITELIST — lihat validasiIpWhitelist().
+        const ipCheck = validasiIpWhitelist(rawIp);
+        if (!ipCheck.ok) {
+            return res.status(400).json({ message: ipCheck.reason, field: "ip_whitelist" });
+        }
+
+        // VALIDASI WEBHOOK URL (ANTI-SSRF) — lihat utils/safeOutboundUrl.js.
+        // Tanpa ini, reseller bisa menyimpan URL yang mengarah ke jaringan
+        // internal NexShop (localhost, database, endpoint metadata cloud)
+        // lalu memakai tombol "Tes Webhook" untuk memaksa server kita
+        // mengambil isinya. Pengecekan DNS dilakukan sekalian di sini
+        // supaya URL yang jelas-jelas tidak bisa dikirimi tidak pernah
+        // tersimpan.
+        let webhookTersimpan = null;
+        if (rawWebhook) {
+            const cek = await assertSafeOutboundUrl(rawWebhook);
+            if (!cek.ok) {
+                return res.status(400).json({ message: cek.reason, field: "webhook_url" });
+            }
+            webhookTersimpan = cek.url;
+        }
+
         const payload = {
-            ip_whitelist: rawIp || null,
-            webhook_url: rawWebhook || null,
+            ip_whitelist: ipCheck.value,
+            webhook_url: webhookTersimpan,
             updated_at: new Date().toISOString()
         };
 
@@ -1245,9 +1341,16 @@ exports.getPortalProducts = async (req, res) => {
               )
             : results;
 
+        // BUG FIX: dulu baris ini membaca `konteksReseller.tierName` --
+        // properti yang TIDAK PERNAH ada di objek hasil getResellerContext
+        // (bentuknya {isReseller, tier, discountPercent}). Nilainya selalu
+        // undefined, jadi portal selamanya menampilkan label generik
+        // "Reseller" alih-alih nama tier asli milik akun.
         res.json({
-            tier: konteksReseller.tierName || "Reseller",
-            discount_percent: konteksReseller.discountPercent || 0,
+            is_reseller: konteksReseller.isReseller,
+            tier: konteksReseller.tier ? konteksReseller.tier.name : null,
+            tier_code: konteksReseller.tier ? konteksReseller.tier.code : null,
+            discount_percent: Number(konteksReseller.discountPercent) || 0,
             total_products: filtered.length,
             products: filtered
         });
@@ -1293,7 +1396,20 @@ exports.testPortalWebhook = async (req, res) => {
             return res.status(400).json({ message: "URL Webhook belum diatur. Masukkan URL endpoint callback Anda terlebih dahulu." });
         }
 
-        const targetUrl = keyRecord.webhook_url;
+        // Re-validasi TEPAT SEBELUM request dikirim, bukan cuma saat
+        // disimpan. URL bisa lolos waktu disimpan lalu domainnya diarahkan
+        // ke IP internal belakangan (DNS rebinding) -- pengecekan di sini
+        // yang menutup celah itu.
+        const cek = await assertSafeOutboundUrl(keyRecord.webhook_url);
+        if (!cek.ok) {
+            return res.status(400).json({
+                success: false,
+                message: "URL webhook ditolak: " + cek.reason,
+                code: "WEBHOOK_URL_REJECTED"
+            });
+        }
+
+        const targetUrl = cek.url;
         const secret = keyRecord.webhook_secret || "whsec_test";
         const timestamp = Math.floor(Date.now() / 1000).toString();
 
@@ -1334,13 +1450,26 @@ exports.testPortalWebhook = async (req, res) => {
                     "X-NexShop-Attempt": "1",
                     "X-NexShop-Signature": signature
                 },
-                timeout: 8000
+                timeout: 8000,
+                // Redirect TIDAK diikuti: endpoint publik yang sudah lolos
+                // validasi bisa membalas 302 ke http://169.254.169.254 dan
+                // axios akan menurutinya tanpa validasi ulang. Reseller yang
+                // endpoint-nya memang redirect harus memberi URL final.
+                maxRedirects: 0,
+                maxContentLength: 64 * 1024,
+                maxBodyLength: 64 * 1024,
+                // Semua status HTTP dianggap "respons", bukan exception,
+                // supaya 4xx/5xx dari server mitra dilaporkan apa adanya.
+                validateStatus: () => true
             });
             responseStatus = resp.status;
-            responseSnippet = typeof resp.data === "object" ? JSON.stringify(resp.data).slice(0, 300) : String(resp.data).slice(0, 300);
+            responseSnippet = typeof resp.data === "object" ? JSON.stringify(resp.data) : String(resp.data == null ? "" : resp.data);
         } catch (postErr) {
             responseStatus = postErr.response ? postErr.response.status : 0;
-            responseSnippet = postErr.response?.data ? (typeof postErr.response.data === "object" ? JSON.stringify(postErr.response.data).slice(0, 300) : String(postErr.response.data).slice(0, 300)) : postErr.message;
+            // Hanya pesan error jaringan yang ditampilkan, BUKAN body
+            // respons -- body dari host yang tak terduga tidak pernah
+            // dipantulkan balik ke pemanggil.
+            responseSnippet = postErr.code || postErr.message || "Gagal terhubung";
         }
 
         const durationMs = Date.now() - startTime;
@@ -1351,7 +1480,7 @@ exports.testPortalWebhook = async (req, res) => {
             status_code: responseStatus,
             duration_ms: durationMs,
             target_url: targetUrl,
-            response_body: responseSnippet || "(kosong)",
+            response_body: String(responseSnippet || "(kosong)").slice(0, 300),
             message: isSuccess
                 ? "Tes webhook BERHASIL! Server Anda merespons HTTP " + responseStatus
                 : "Tes webhook GAGAL. Server Anda merespons HTTP " + (responseStatus || "Timeout/Connection Error")
@@ -1362,4 +1491,246 @@ exports.testPortalWebhook = async (req, res) => {
     }
 };
 
-exports._internal = { normalisasiWhatsApp };
+/**
+ * GET /api/reseller/portal/price-list
+ *
+ * Rincian harga produk untuk SEMUA level (tier) reseller sekaligus.
+ *
+ * Kenapa dihitung di server, bukan di browser:
+ * angka margin adalah aturan bisnis. Kalau persentase tier dikirim ke
+ * frontend lalu frontend yang mengalikan sendiri, hasil di file unduhan
+ * bisa berbeda dari harga yang benar-benar ditagih saat checkout (mis.
+ * karena pembulatan, atau karena lantai margin minimum NexShop tidak ikut
+ * diterapkan). Semua harga di sini keluar dari hitungHargaReseller() yang
+ * PERSIS SAMA dengan yang dipakai checkout dan Open API.
+ *
+ * Format: ?format=csv (default) atau ?format=json
+ */
+exports.getResellerPriceList = async (req, res) => {
+    try {
+        const { data: user, error: userErr } = await supabase
+            .from("users")
+            .select("id, email, fullname, reseller_status, reseller_tier")
+            .eq("id", req.user.id)
+            .maybeSingle();
+
+        if (userErr) {
+            if (isMissingTableError(userErr)) return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
+            throw userErr;
+        }
+        if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
+
+        // Daftar harga modal adalah informasi komersial internal mitra --
+        // hanya untuk akun yang benar-benar sudah disetujui admin.
+        if (user.reseller_status !== "approved") {
+            return res.status(403).json({
+                message: "Daftar harga reseller hanya tersedia untuk akun mitra yang sudah diverifikasi admin.",
+                code: "RESELLER_NOT_APPROVED",
+                reseller_status: user.reseller_status || "none"
+            });
+        }
+
+        const tiers = await getTiers({ activeOnly: true });
+        if (!tiers.length) {
+            return res.status(503).json({
+                message: "Tingkatan reseller belum dikonfigurasi admin.",
+                code: "RESELLER_TIERS_EMPTY"
+            });
+        }
+
+        const kategoriFilter = String(req.query.kategori || "").trim();
+        const format = String(req.query.format || "csv").toLowerCase();
+
+        let query = supabase
+            .from("topup_products")
+            .select("id, nama, kode_produk, kategori, source_operator_name, harga_beli, harga_jual, butuh_server_id, is_active")
+            .eq("is_active", true)
+            .order("kategori", { ascending: true })
+            .order("harga_jual", { ascending: true })
+            .limit(5000);
+
+        if (kategoriFilter && kategoriFilter !== "all") {
+            query = query.ilike("kategori", "%" + kategoriFilter + "%");
+        }
+
+        const { data: products, error } = await query;
+        if (error) throw error;
+
+        const tierAktifKode = user.reseller_tier || null;
+
+        const baris = (products || []).map((p) => {
+            let hargaNormal = Number(p.harga_jual) || 0;
+            if (hargaNormal <= 0) {
+                hargaNormal = hitungMarkupWajar(p.harga_beli || 0, p.kategori, p.source_operator_name);
+            }
+
+            const perTier = {};
+            for (const t of tiers) {
+                const hasil = hitungHargaReseller(hargaNormal, p.harga_beli || 0, t.discount_percent);
+                perTier[t.code] = {
+                    tier_name: t.name,
+                    diskon_persen: t.discount_percent,
+                    harga: hasil.harga,
+                    hemat: hasil.hemat,
+                    // persen_efektif bisa lebih kecil daripada diskon_persen
+                    // kalau harga menyentuh lantai margin minimum NexShop.
+                    persen_efektif: hasil.persen_efektif,
+                    kena_lantai_margin: hasil.kena_lantai
+                };
+            }
+
+            return {
+                kode_produk: p.kode_produk,
+                nama: cleanProductName(p.nama),
+                kategori: p.kategori || "",
+                operator: p.source_operator_name || p.kategori || "",
+                harga_normal: hargaNormal,
+                butuh_server_id: !!p.butuh_server_id,
+                harga_per_tier: perTier
+            };
+        });
+
+        const meta = {
+            toko: "NexShop",
+            digenerate_pada: new Date().toISOString(),
+            untuk_mitra: user.fullname || user.email,
+            tier_aktif: tierAktifKode,
+            total_produk: baris.length,
+            catatan: "Harga sudah termasuk margin NexShop dan tidak pernah turun di bawah modal + margin minimum."
+        };
+
+        if (format === "json") {
+            return res.json({
+                meta,
+                tiers: tiers.map((t) => ({ code: t.code, name: t.name, discount_percent: t.discount_percent })),
+                products: baris
+            });
+        }
+
+        // ---- CSV ----
+        // Setiap nilai dilewatkan csvCell() yang menetralkan formula Excel.
+        // Tanpa itu, nama produk yang kebetulan diawali "=" atau "+" akan
+        // dieksekusi sebagai rumus begitu file dibuka (CSV injection).
+        const header = [
+            "Kode SKU",
+            "Nama Produk",
+            "Kategori",
+            "Operator",
+            "Butuh Server ID",
+            "Harga Normal"
+        ];
+        for (const t of tiers) {
+            header.push(t.name + " (" + t.discount_percent + "%)");
+            header.push("Hemat " + t.name);
+        }
+
+        const lines = [header.map(csvCell).join(",")];
+        for (const row of baris) {
+            const cells = [
+                row.kode_produk,
+                row.nama,
+                row.kategori,
+                row.operator,
+                row.butuh_server_id ? "Ya" : "Tidak",
+                row.harga_normal
+            ];
+            for (const t of tiers) {
+                const info = row.harga_per_tier[t.code];
+                cells.push(info ? info.harga : "");
+                cells.push(info ? info.hemat : "");
+            }
+            lines.push(cells.map(csvCell).join(","));
+        }
+
+        // Baris keterangan di bawah tabel supaya isi file tetap bisa
+        // dipertanggungjawabkan kalau dibuka terpisah dari portal.
+        lines.push("");
+        lines.push([csvCell("Digenerate"), csvCell(new Date().toLocaleString("id-ID"))].join(","));
+        lines.push([csvCell("Untuk mitra"), csvCell(meta.untuk_mitra)].join(","));
+        lines.push([csvCell("Tier aktif"), csvCell(tierAktifKode || "-")].join(","));
+        lines.push([csvCell("Catatan"), csvCell(meta.catatan)].join(","));
+
+        // BOM UTF-8 supaya Excel di Windows membaca huruf beraksen dengan benar.
+        const csv = "﻿" + lines.join("\r\n");
+        const namaFile = "Daftar-Harga-Reseller-NexShop-" + new Date().toISOString().slice(0, 10) + ".csv";
+
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader("Content-Disposition", 'attachment; filename="' + namaFile + '"');
+        res.setHeader("Cache-Control", "no-store");
+        return res.send(csv);
+    } catch (err) {
+        console.error("getResellerPriceList:", err.message);
+        return res.status(500).json({ message: "Gagal menyusun daftar harga reseller" });
+    }
+};
+
+/**
+ * GET /api/reseller/admin/kyc-document?ref=kyc:<path>
+ *
+ * Satu-satunya jalan untuk melihat foto KTP pendaftar.
+ *
+ * Sebelumnya foto KTP disimpan di bucket publik dan URL-nya ditempel
+ * langsung ke <img src> di dashboard admin -- artinya berkasnya bisa dibuka
+ * siapa pun yang pernah melihat URL itu, selamanya, tanpa login. Sekarang:
+ *   * berkasnya tersimpan terenkripsi di bucket privat,
+ *   * hanya admin/staff terautentikasi yang bisa memintanya,
+ *   * dekripsi terjadi di memori dan hasilnya dikirim dengan header
+ *     no-store supaya tidak mengendap di cache browser/proxy,
+ *   * setiap akses dicatat ke log sebagai jejak audit.
+ */
+exports.getKycDocument = async (req, res) => {
+    const ref = String(req.query.ref || "").trim();
+
+    if (!isDocumentRef(ref)) {
+        return res.status(400).json({
+            message: "Referensi dokumen tidak valid.",
+            code: "INVALID_DOC_REF"
+        });
+    }
+
+    const objectPath = parseDocumentRef(ref);
+    if (!objectPath) {
+        // parseDocumentRef sudah menolak path traversal & karakter aneh.
+        return res.status(400).json({ message: "Referensi dokumen ditolak.", code: "INVALID_DOC_REF" });
+    }
+
+    try {
+        // Jejak audit: siapa membuka dokumen identitas siapa, kapan.
+        console.log(`[KYC-AUDIT] ${new Date().toISOString()} admin=${req.user.email} membuka dokumen ${objectPath}`);
+
+        const bucket = process.env.SUPABASE_KYC_BUCKET || "kyc-documents";
+        const { data, error } = await supabase.storage.from(bucket).download(objectPath);
+
+        if (error || !data) {
+            return res.status(404).json({ message: "Dokumen tidak ditemukan di penyimpanan." });
+        }
+
+        const terenkripsi = Buffer.from(await data.arrayBuffer());
+
+        let gambar;
+        try {
+            gambar = decryptDocument(terenkripsi);
+        } catch (dekripErr) {
+            console.error("getKycDocument dekripsi gagal:", dekripErr.message);
+            return res.status(500).json({
+                message: "Dokumen gagal didekripsi. Berkas mungkin rusak atau kunci enkripsi berubah.",
+                code: "DECRYPT_FAILED"
+            });
+        }
+
+        // no-store + noindex: dokumen identitas tidak boleh mengendap di
+        // cache mana pun maupun terindeks.
+        res.setHeader("Content-Type", "image/webp");
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("X-Robots-Tag", "noindex, nofollow");
+        res.setHeader("Content-Disposition", "inline");
+        return res.send(gambar);
+    } catch (err) {
+        console.error("getKycDocument:", err.message);
+        return res.status(500).json({ message: "Gagal memuat dokumen identitas" });
+    }
+};
+
+exports._internal = { normalisasiWhatsApp, csvCell };
+

@@ -85,8 +85,17 @@ module.exports = async (req, res, next) => {
     // 2. JWT Bearer Token standar
     if (token && !token.startsWith("nx_live_")) {
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET || "nexshop-secret-jwt-key-2026");
-            req.user = decoded;
+            // KEAMANAN: jangan pernah fallback ke secret hardcoded. Nilai
+            // default yang dulu ada di sini ("nexshop-secret-jwt-key-2026")
+            // ikut ter-commit ke repo, jadi kalau env JWT_SECRET lupa
+            // dipasang, siapa pun bisa menandatangani token palsu (termasuk
+            // token role admin) dan diterima sebagai sesi sah. Tanpa secret
+            // yang benar, pemanggil diperlakukan sebagai guest.
+            if (!process.env.JWT_SECRET) {
+                req.user = null;
+                return next();
+            }
+            req.user = jwt.verify(token, process.env.JWT_SECRET);
             return next();
         } catch {
             req.user = null;

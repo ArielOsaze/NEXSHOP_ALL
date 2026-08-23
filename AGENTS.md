@@ -48,6 +48,127 @@ This repository is a small fullstack project with:
   `jobs/webhookRelayPoller.js`). Forwarding never blocks the 200 returned to
   TokoVoucher.
 
+## WAJIB DI-SETUP SEBELUM DEPLOY (perubahan terbaru)
+
+### 1. `KYC_ENCRYPTION_KEY` (environment variable) — WAJIB
+Foto KTP pendaftar reseller sekarang dienkripsi AES-256-GCM sebelum disimpan
+(`utils/secureDocument.js`). Tanpa env ini, endpoint upload `type=kyc|ktp`
+sengaja menjawab **503 `KYC_KEY_MISSING`** dan menolak menyimpan berkas —
+itu perilaku yang diinginkan: lebih baik pendaftaran tertahan daripada
+dokumen identitas tersimpan tanpa enkripsi.
+
+Isi dengan passphrase acak minimal 16 karakter, contoh:
+`openssl rand -base64 48`.
+
+**Kunci ini tidak boleh diganti setelah ada dokumen tersimpan.** Kunci
+dekripsi diturunkan darinya, jadi mengganti nilai env membuat seluruh KTP
+lama gagal didekripsi (`DECRYPT_FAILED`).
+
+### 2. Bucket privat `kyc-documents` di Supabase Storage — WAJIB
+Buat bucket bernama `kyc-documents` dan pastikan **Public = OFF**.
+(Nama bisa diubah lewat env `SUPABASE_KYC_BUCKET`.)
+
+Sebelumnya foto KTP diunggah ke bucket `avatars` yang **publik**, dan URL
+publiknya disimpan di `reseller_applications.ktp_url` — artinya siapa pun
+yang memegang URL itu bisa membuka KTP orang lain tanpa login, selamanya.
+Sekarang berkasnya terenkripsi, di bucket privat, dan hanya bisa dilihat
+lewat `GET /api/reseller/admin/kyc-document?ref=kyc:<path>` (admin/staff,
+didekripsi on-the-fly, `Cache-Control: no-store`, setiap akses dicatat ke
+log sebagai jejak audit).
+
+Baris lama yang `ktp_url`-nya masih berupa URL `http(s)://` tetap bisa
+ditinjau — panel admin mendeteksi bentuknya dan jatuh ke mode lama.
+
+### 3. PERUBAHAN BREAKING: Secret Key Open API kini WAJIB
+`middleware/apiKeyAuthMiddleware.js` dulu hanya memeriksa
+`X-NexShop-Secret` *kalau kebetulan dikirim*, sehingga API Key saja sudah
+cukup untuk memesan atas nama reseller — Secret Key praktis tidak berfungsi
+sebagai faktor kedua. Sekarang header itu wajib; permintaan tanpanya dijawab
+`401 SECRET_KEY_REQUIRED`.
+
+**Mitra dengan integrasi berjalan harus diberi tahu sebelum deploy.**
+
+Perbaikan lain di middleware yang sama:
+- IP client tidak lagi dibaca dari header `X-Forwarded-For` / `X-Real-IP` /
+  `CF-Connecting-IP` (bisa dipalsukan bebas oleh pemanggil); dipakai `req.ip`
+  yang dihitung dari `trust proxy`.
+- Bypass `clientIp === "127.0.0.1"` pada pengecekan IP whitelist DIHAPUS.
+  Dikombinasikan dengan poin di atas, dulu cukup mengirim
+  `X-Forwarded-For: 127.0.0.1` untuk melewati whitelist sepenuhnya.
+- Perbandingan Secret Key jadi timing-safe.
+- Fallback `JWT_SECRET` hardcoded dihapus dari
+  `apiKeyAuthMiddleware.js` dan `optionalAuthMiddleware.js`.
+
+## Etalase publik: indeks katalog & pemuatan bertahap
+
+`services/catalogIndexService.js` membangun **indeks ringkas** katalog
+(kartu per game/operator: nama, logo, jumlah produk, harga termurah, plus
+teks pencarian) sekali lalu meng-cache-nya di memori selama 3 menit.
+
+Endpoint yang dilayani dari indeks ini:
+- `GET /api/topup/catalog/games?page&limit&q` — kartu game (halaman utama)
+- `GET /api/topup/catalog/operators?page&limit&q&kategori` — kartu operator (Marketplace)
+- `GET /api/topup/catalog/group/:jenis/:id/products` — isi satu grup
+
+Endpoint lama (`/topup/products`, `/topup/public-catalog`) **tetap ada** dan
+tidak diubah kontraknya, supaya integrasi/halaman yang belum dimigrasi tidak
+rusak.
+
+Dua hal yang tidak boleh diubah tanpa mengerti akibatnya:
+
+1. **Pencarian harus tetap di server.** Kartu dikirim per halaman, jadi
+   menyaring di browser hanya akan menelusuri kartu yang kebetulan sudah
+   terunduh — produk yang belum termuat mustahil ditemukan. Filter `q`
+   dijalankan atas indeks LENGKAP, termasuk nama tiap produk di dalam grup.
+   `regtest/sim14_catalog_lazy_search.js` menjaga sifat ini.
+
+2. **Jangan menulis harga reseller ke objek di dalam cache.** Cache dipakai
+   bersama semua pengunjung. `getCatalogGroupProducts` menyalin produk dulu
+   (`grup.products.map(p => ({ ...p }))`) sebelum menerapkan harga reseller;
+   tanpa salinan itu, harga milik satu reseller bocor ke pengunjung
+   berikutnya.
+
+Cache dibatalkan otomatis oleh pembungkus di ujung
+`controllers/topupController.js` (daftar `HANDLER_PENGUBAH_KATALOG`) dan oleh
+`jobs/catalogSyncPoller.js`. Kalau menambah handler baru yang mengubah
+produk, tambahkan namanya ke daftar itu — kalau tidak, etalase publik akan
+menyajikan data lama sampai TTL habis. Handler yang namanya tidak ditemukan
+akan memunculkan peringatan saat start-up.
+
+## Uang & saldo: hal yang gampang rusak
+
+- `services/walletService.js` memakai RPC atomik (`credit_wallet_atomic` /
+  `debit_wallet_atomic`, migration 011) bila tersedia. Jalur cadangannya kini
+  memakai **compare-and-swap** (`.eq("balance", balanceBefore)` + memeriksa
+  jumlah baris terdampak lewat `.select()`), bukan baca-lalu-tulis polos.
+  Pola lama kehilangan mutasi saat ada dua permintaan bersamaan, dan pada
+  debit bahkan bisa menimpa `users.balance` dengan angka basi — uang tercipta
+  kembali. Jangan kembalikan ke pola lama.
+
+- Referensi debit order reseller **harus deterministik**
+  (`RSL-PUR-{userId}-{refId}`). Versi lama menyertakan `Date.now()` sehingga
+  tiap percobaan menghasilkan `reference_id` baru dan UNIQUE constraint di
+  `wallet_transactions.reference_id` tidak pernah bisa menahan permintaan
+  kembar.
+
+- Pada tabrakan `23505` di `topup_orders` (UNIQUE
+  `reseller_user_id, reseller_ref_id`), **jangan refund**. Saldo hanya
+  terpotong sekali; versi lama refund di jalur ini sehingga setiap permintaan
+  kembar menciptakan uang. Yang benar: kembalikan pesanan yang sudah ada.
+
+## Anti-SSRF untuk URL yang ditentukan pengguna
+
+`utils/safeOutboundUrl.js` memvalidasi setiap URL yang ditentukan pengguna
+sebelum server kita meminta ke sana (Webhook URL reseller). Aturannya: HTTPS
+wajib, tanpa userinfo, port 80/443 saja, dan seluruh hasil resolusi DNS harus
+IP publik.
+
+Dipakai di dua tempat dan keduanya perlu: saat **menyimpan** pengaturan, dan
+sekali lagi tepat sebelum **mengirim** request (domain bisa diarahkan ulang ke
+IP internal setelah lolos penyimpanan — DNS rebinding). `testPortalWebhook`
+juga tidak mengikuti redirect dan tidak lagi memantulkan body respons dari
+host tujuan.
+
 ## Removed features
 - The legacy **Gaming News** aggregator (table `gaming_news`,
   `controllers/newsController.js`, routes `GET/POST /api/news`,

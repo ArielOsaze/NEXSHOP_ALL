@@ -20,9 +20,11 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
         rel="stylesheet">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
-        rel="stylesheet">
+    <!-- Font Material Symbols dilepas: seluruh ikon halaman ini sudah
+         memakai Font Awesome, jadi memuatnya hanya menambah satu request
+         dan berkas font yang tidak pernah dipakai. -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <script src="/theme-init.js"></script>
     <link rel="stylesheet" href="/style.css">
     <link rel="stylesheet" href="/marketplace-theme.css?v=20260823-kinetic">
@@ -102,8 +104,96 @@
             color: var(--mkt-accent);
         }
 
-        .docs-nav a .material-symbols-outlined {
+        .docs-nav a > i[class*='fa-'] {
             font-size: 1.05rem;
+        }
+
+        /* Daftar langkah bernomor pada panduan bertahap. Nomornya elemen
+           tersendiri (bukan list-style) supaya bisa diberi lingkaran dan tetap
+           sejajar dengan judul langkah walau teksnya beberapa baris. */
+        .docs-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 1.1rem;
+            margin: 1.4rem 0;
+        }
+
+        .docs-step {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            padding: 1.1rem 1.2rem;
+            border: 1px solid var(--mkt-line);
+            border-radius: var(--mkt-radius);
+            background: var(--mkt-surface-2);
+        }
+
+        .docs-step-num {
+            flex-shrink: 0;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.9rem;
+            color: #fff;
+            background: linear-gradient(135deg, var(--mkt-primary), var(--mkt-accent));
+        }
+
+        /* min-width:0 wajib di sini: tanpa itu blok teks panjang (mis. baris
+           kode) memaksa flex item melebar melewati kartu induknya. */
+        .docs-step-body {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .docs-step-body h3 {
+            margin: 0 0 0.35rem;
+            font-size: 1rem;
+            color: var(--mkt-text);
+        }
+
+        .docs-step-body p {
+            margin: 0 0 0.6rem;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--mkt-text-muted);
+            /* Paragraf panduan sering beberapa baris; rata kanan-kiri bikin
+               blok teksnya rapi. hyphens mencegah "sungai" spasi lebar. */
+            text-align: justify;
+            text-wrap: pretty;
+            hyphens: auto;
+            -webkit-hyphens: auto;
+            overflow-wrap: anywhere;
+        }
+
+        .docs-step-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        .docs-step-note {
+            padding: 0.6rem 0.8rem;
+            border-left: 3px solid var(--mkt-accent);
+            border-radius: 0 8px 8px 0;
+            background: color-mix(in srgb, var(--mkt-accent) 8%, transparent);
+            font-size: 0.85rem !important;
+        }
+
+        /* Di layar sempit, rata kanan-kiri justru merusak keterbacaan karena
+           terlalu sedikit kata per baris. */
+        @media (max-width: 520px) {
+            .docs-step {
+                flex-direction: column;
+                gap: 0.7rem;
+            }
+
+            .docs-step-body p {
+                text-align: left;
+                hyphens: manual;
+                -webkit-hyphens: manual;
+            }
         }
 
         .docs-nav-section {
@@ -142,7 +232,7 @@
             margin-bottom: 0.75rem;
         }
 
-        .docs-section-badge .material-symbols-outlined {
+        .docs-section-badge > i[class*='fa-'] {
             font-size: 0.95rem;
         }
 
@@ -187,7 +277,7 @@
             gap: 0.5rem;
         }
 
-        .docs-card h3 .material-symbols-outlined {
+        .docs-card h3 > i[class*='fa-'] {
             color: var(--mkt-accent);
             font-size: 1.15rem;
         }
@@ -335,15 +425,15 @@
             color: var(--mkt-text-dim);
         }
 
-        .docs-callout .material-symbols-outlined {
+        .docs-callout > i[class*='fa-'] {
             font-size: 1.2rem;
             flex-shrink: 0;
             margin-top: 0.05rem;
         }
 
-        .docs-callout--info .material-symbols-outlined { color: var(--mkt-accent); }
-        .docs-callout--warn .material-symbols-outlined { color: #f59e0b; }
-        .docs-callout--tip .material-symbols-outlined { color: #10b981; }
+        .docs-callout--info > i[class*='fa-'] { color: var(--mkt-accent); }
+        .docs-callout--warn > i[class*='fa-'] { color: #f59e0b; }
+        .docs-callout--tip > i[class*='fa-'] { color: #10b981; }
 
         /* ── Tables ──────────────────────────────────────────────────── */
         .docs-tier-table {
@@ -696,11 +786,11 @@
         <div class="mkt-nav-actions">
             <button type="button" class="mkt-nav-toggle" id="mktNavToggle" aria-label="Buka menu navigasi"
                 aria-expanded="false" aria-controls="catNavLinks">
-                <span class="material-symbols-outlined mkt-nav-toggle-open" aria-hidden="true">menu</span>
-                <span class="material-symbols-outlined mkt-nav-toggle-close" aria-hidden="true">close</span>
+                <i class="fa-solid fa-bars mkt-nav-toggle-open" aria-hidden="true"></i>
+                <i class="fa-solid fa-xmark mkt-nav-toggle-close" aria-hidden="true"></i>
             </button>
             <a href="/reseller.html#form-daftar" class="mkt-nav-back" aria-label="Daftar jadi reseller">
-                <span class="material-symbols-outlined" aria-hidden="true">how_to_reg</span>
+                <i class="fa-solid fa-user-check" aria-hidden="true"></i>
                 <span>Daftar Reseller</span>
             </a>
         </div>
@@ -710,7 +800,7 @@
     <!-- Hero Docs -->
     <header style="max-width:1160px;margin:0 auto;padding:3rem 1.5rem 1.5rem;">
         <div class="mkt-hero-tag">
-            <span class="material-symbols-outlined" aria-hidden="true">developer_mode</span>
+            <i class="fa-solid fa-laptop-code" aria-hidden="true"></i>
             Dokumentasi Reseller &amp; Developer API
         </div>
         <h1 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:clamp(1.75rem,5vw,2.75rem);font-weight:800;margin:0.5rem 0;color:var(--mkt-text);line-height:1.15;">
@@ -732,25 +822,25 @@
                 <li class="docs-nav-section">Program Reseller</li>
                 <li>
                     <a href="#apa-itu-reseller" class="active">
-                        <span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span>
+                        <i class="fa-solid fa-award" aria-hidden="true"></i>
                         Apa itu Reseller?
                     </a>
                 </li>
                 <li>
                     <a href="#keuntungan">
-                        <span class="material-symbols-outlined" aria-hidden="true">verified</span>
+                        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
                         Keuntungan Reseller
                     </a>
                 </li>
                 <li>
                     <a href="#cara-daftar">
-                        <span class="material-symbols-outlined" aria-hidden="true">how_to_reg</span>
+                        <i class="fa-solid fa-user-check" aria-hidden="true"></i>
                         Cara Mendaftar
                     </a>
                 </li>
                 <li>
                     <a href="#mekanisme-harga">
-                        <span class="material-symbols-outlined" aria-hidden="true">sell</span>
+                        <i class="fa-solid fa-tag" aria-hidden="true"></i>
                         Tingkatan Tier &amp; Diskon
                     </a>
                 </li>
@@ -758,25 +848,25 @@
                 <li class="docs-nav-section">Integrasi Website Sendiri</li>
                 <li>
                     <a href="#arsitektur-toko">
-                        <span class="material-symbols-outlined" aria-hidden="true">account_tree</span>
+                        <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
                         Alur Bikin Web Sendiri
                     </a>
                 </li>
                 <li>
                     <a href="#api-auth">
-                        <span class="material-symbols-outlined" aria-hidden="true">key</span>
+                        <i class="fa-solid fa-key" aria-hidden="true"></i>
                         Autentikasi API
                     </a>
                 </li>
                 <li>
                     <a href="#api-katalog">
-                        <span class="material-symbols-outlined" aria-hidden="true">inventory_2</span>
+                        <i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i>
                         API Get Produk &amp; Harga
                     </a>
                 </li>
                 <li>
                     <a href="#api-order">
-                        <span class="material-symbols-outlined" aria-hidden="true">shopping_cart_checkout</span>
+                        <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
                         API Transaksi &amp; Inquiry
                     </a>
                 </li>
@@ -784,39 +874,45 @@
                 <li class="docs-nav-section">Webhook Relay</li>
                 <li>
                     <a href="#webhook-overview">
-                        <span class="material-symbols-outlined" aria-hidden="true">sync_alt</span>
+                        <i class="fa-solid fa-right-left" aria-hidden="true"></i>
                         Konsep Webhook Relay
                     </a>
                 </li>
                 <li>
                     <a href="#webhook-payload">
-                        <span class="material-symbols-outlined" aria-hidden="true">data_object</span>
+                        <i class="fa-solid fa-brackets-curly" aria-hidden="true"></i>
                         Format Header &amp; JSON
                     </a>
                 </li>
                 <li>
                     <a href="#webhook-verify">
-                        <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+                        <i class="fa-solid fa-lock" aria-hidden="true"></i>
                         Verifikasi Signature HMAC
                     </a>
                 </li>
                 <li>
                     <a href="#full-starter-code">
-                        <span class="material-symbols-outlined" aria-hidden="true">terminal</span>
+                        <i class="fa-solid fa-terminal" aria-hidden="true"></i>
                         Contoh Skrip Siap Pakai
                     </a>
                 </li>
 
+                <li>
+                    <a href="#panduan-portal">
+                        <i class="fa-solid fa-list-ul" aria-hidden="true"></i>
+                        Panduan Bertahap Portal
+                    </a>
+                </li>
                 <li class="docs-nav-section">Bantuan &amp; FAQ</li>
                 <li>
                     <a href="#faq">
-                        <span class="material-symbols-outlined" aria-hidden="true">help</span>
+                        <i class="fa-regular fa-circle-question" aria-hidden="true"></i>
                         FAQ Reseller
                     </a>
                 </li>
                 <li>
                     <a href="#kontak">
-                        <span class="material-symbols-outlined" aria-hidden="true">support_agent</span>
+                        <i class="fa-solid fa-headset" aria-hidden="true"></i>
                         Kontak Admin
                     </a>
                 </li>
@@ -829,7 +925,7 @@
             <!-- Mobile ToC -->
             <details class="docs-mobile-toc">
                 <summary>
-                    <span class="material-symbols-outlined" aria-hidden="true">list</span>
+                    <i class="fa-solid fa-list-ul" aria-hidden="true"></i>
                     Daftar Isi Panduan Lengkap
                 </summary>
                 <ol>
@@ -853,7 +949,7 @@
             <!-- ── Bab 1: Apa itu Reseller ── -->
             <section class="docs-section" id="apa-itu-reseller">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span>
+                    <i class="fa-solid fa-award" aria-hidden="true"></i>
                     Bab 1
                 </div>
                 <h2>Apa itu Program Reseller NexShop?</h2>
@@ -866,7 +962,7 @@
                 </ul>
 
                 <div class="docs-card">
-                    <h3><span class="material-symbols-outlined">auto_graph</span> Konsep Kemitraan</h3>
+                    <h3><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Konsep Kemitraan</h3>
                     <p>
                         Setelah akun Anda disetujui, harga di seluruh etalase (Marketplace &amp; Topup Diamond Game)
                         <strong>otomatis dipotong sesuai tingkatan tier diskon</strong> saat Anda login di web maupun saat memanggil API dengan Bearer Token.
@@ -878,7 +974,7 @@
             <!-- ── Bab 2: Keuntungan ── -->
             <section class="docs-section" id="keuntungan">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">verified</span>
+                    <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
                     Bab 2
                 </div>
                 <h2>Keuntungan Menjadi Reseller NexShop</h2>
@@ -889,7 +985,7 @@
                 <div class="docs-benefit-grid">
                     <div class="docs-benefit-card">
                         <div class="docs-benefit-icon">
-                            <span class="material-symbols-outlined">sell</span>
+                            <i class="fa-solid fa-tag" aria-hidden="true"></i>
                         </div>
                         <h4>Harga Otomatis Terpasang</h4>
                         <p>Katalog API dan Web langsung menghasilkan harga modal reseller berdasarkan tier diskon akun Anda.</p>
@@ -897,7 +993,7 @@
 
                     <div class="docs-benefit-card">
                         <div class="docs-benefit-icon">
-                            <span class="material-symbols-outlined">account_balance_wallet</span>
+                            <i class="fa-solid fa-wallet" aria-hidden="true"></i>
                         </div>
                         <h4>Tanpa Deposit Awal</h4>
                         <p>Bebas dari kewajiban deposit saldo mengendap. Anda hanya membayar saat ada pesanan masuk dari pelanggan.</p>
@@ -905,7 +1001,7 @@
 
                     <div class="docs-benefit-card">
                         <div class="docs-benefit-icon">
-                            <span class="material-symbols-outlined">api</span>
+                            <i class="fa-solid fa-plug" aria-hidden="true"></i>
                         </div>
                         <h4>API Lengkap &amp; Stabil</h4>
                         <p>Endpoint Get Produk, Validasi Player ID Game, Cek Tagihan Pascabayar, Checkout, dan Webhook Relay.</p>
@@ -913,7 +1009,7 @@
 
                     <div class="docs-benefit-card">
                         <div class="docs-benefit-icon">
-                            <span class="material-symbols-outlined">support_agent</span>
+                            <i class="fa-solid fa-headset" aria-hidden="true"></i>
                         </div>
                         <h4>Jalur Dukungan Prioritas</h4>
                         <p>Konsultasi, penanganan kendala transaksi, dan integrasi teknis ditangani langsung via WhatsApp khusus.</p>
@@ -924,7 +1020,7 @@
             <!-- ── Bab 3: Cara Daftar ── -->
             <section class="docs-section" id="cara-daftar">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">how_to_reg</span>
+                    <i class="fa-solid fa-user-check" aria-hidden="true"></i>
                     Bab 3
                 </div>
                 <h2>Cara Mendaftar Menjadi Reseller</h2>
@@ -963,7 +1059,7 @@
                         </div>
                     </div>
                     <div class="docs-step">
-                        <div class="docs-step-num">✓</div>
+                        <div class="docs-step-num">4</div>
                         <div class="docs-step-body">
                             <h3>Status Aktif &amp; Siap Digunakan</h3>
                             <p>
@@ -978,7 +1074,7 @@
             <!-- ── Bab 4: Mekanisme Harga & Tier ── -->
             <section class="docs-section" id="mekanisme-harga">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">sell</span>
+                    <i class="fa-solid fa-tag" aria-hidden="true"></i>
                     Bab 4
                 </div>
                 <h2>Tingkatan Tier &amp; Diskon Reseller</h2>
@@ -987,7 +1083,7 @@
                 </p>
 
                 <div class="docs-card">
-                    <h3><span class="material-symbols-outlined">calculate</span> Rumus Perhitungan Diskon</h3>
+                    <h3><i class="fa-solid fa-calculator" aria-hidden="true"></i> Rumus Perhitungan Diskon</h3>
                     <p>
                         <strong>Harga Reseller = Harga Normal &times; (1 &minus; Diskon%)</strong><br><br>
                         <em>Contoh:</em> Jika harga normal produk adalah Rp100.000 dan tier akun Anda memiliki diskon 5%,
@@ -1007,7 +1103,7 @@
                         <tbody id="docsTierBody">
                             <tr>
                                 <td colspan="3" style="text-align:center;color:var(--mkt-text-dim);font-size:0.85rem;padding:1.5rem;">
-                                    <span class="material-symbols-outlined mkt-spin" style="font-size:1.2rem;vertical-align:middle;" aria-hidden="true">progress_activity</span>
+                                    <i class="fa-solid fa-spinner mkt-spin" style="font-size:1.2rem;vertical-align:middle;" aria-hidden="true"></i>
                                     Memuat data tier reseller aktif...
                                 </td>
                             </tr>
@@ -1019,7 +1115,7 @@
             <!-- ── Bab 5: Arsitektur Website Sendiri ── -->
             <section class="docs-section" id="arsitektur-toko">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">account_tree</span>
+                    <i class="fa-solid fa-sitemap" aria-hidden="true"></i>
                     Bab 5 (Developer)
                 </div>
                 <h2>Alur Membangun Website Toko Reseller Sendiri</h2>
@@ -1028,7 +1124,7 @@
                 </p>
 
                 <div class="docs-card">
-                    <h3><span class="material-symbols-outlined">flowsheet</span> Siklus Alur Transaksi Toko Anda</h3>
+                    <h3><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Siklus Alur Transaksi Toko Anda</h3>
                     <div class="docs-steps" style="margin-top:1rem;">
                         <div class="docs-step">
                             <div class="docs-step-num">1</div>
@@ -1065,53 +1161,175 @@
             <!-- ── Bab 6: Autentikasi API ── -->
             <section class="docs-section" id="api-auth">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">key</span>
+                    <i class="fa-solid fa-key" aria-hidden="true"></i>
                     Bab 6 (Developer)
                 </div>
-                <h2>Autentikasi API Reseller</h2>
+                <h2>Autentikasi Open API Reseller</h2>
                 <p>
-                    Setiap pemanggilan API yang memerlukan identifikasi harga reseller menggunakan format <strong>Bearer Token (JWT)</strong>.
+                    Seluruh endpoint <span class="docs-code">/api/v1/reseller/*</span> diautentikasi memakai
+                    <strong>pasangan API Key dan Secret Key</strong> yang bisa Anda lihat di
+                    <a href="/portal-reseller.html">Partner Portal &rsaquo; API &amp; Integrasi</a>.
+                    Keduanya dikirim sebagai HTTP header pada setiap permintaan &mdash; tidak ada
+                    langkah login terpisah dan tidak ada token yang kedaluwarsa.
                 </p>
 
-                <div class="docs-endpoint-card">
-                    <div class="docs-endpoint-header">
-                        <span class="docs-http-method docs-http-method--post">POST</span>
-                        <span class="docs-endpoint-url">/api/auth/login</span>
+                <div class="docs-callout docs-callout--warn">
+                    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                    <div>
+                        <strong>Perubahan penting bagi integrasi lama.</strong>
+                        Sebelumnya Secret Key hanya diperiksa apabila kebetulan dikirim, sehingga
+                        API Key saja sudah cukup untuk memesan atas nama akun Anda &mdash; artinya
+                        satu kunci yang bocor langsung bisa dipakai menghabiskan saldo deposit.
+                        Header <span class="docs-code">X-NexShop-Secret</span> kini <strong>wajib</strong>.
+                        Permintaan tanpa header tersebut dijawab
+                        <span class="docs-code">401 SECRET_KEY_REQUIRED</span>.
                     </div>
-                    <p class="docs-endpoint-desc">
-                        Gunakan email dan kata sandi akun reseller Anda untuk mendapatkan auth token.
-                    </p>
+                </div>
+
+                <div class="docs-card">
+                    <h3><i class="fa-solid fa-lock" aria-hidden="true"></i> Header Wajib</h3>
                     <div class="docs-code-block">
                         <div class="docs-code-header">
-                            <span>Request Body (JSON)</span>
-                            <span>application/json</span>
+                            <span>HTTP Request Headers</span>
+                            <span>semua endpoint /api/v1/reseller</span>
                         </div>
-                        <pre class="docs-code-content"><code>{
-  <span class="property">"email"</span>: <span class="string">"tokoanda@gmail.com"</span>,
-  <span class="property">"password"</span>: <span class="string">"PasswordAkunAnda123"</span>
-}</code></pre>
+                        <pre class="docs-code-content"><code>X-NexShop-Api-Key: nx_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+X-NexShop-Secret:  nx_sec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+Content-Type:      application/json</code></pre>
+                    </div>
+                    <p style="margin-top:0.9rem;">
+                        API Key juga boleh dikirim lewat
+                        <span class="docs-code">Authorization: Bearer nx_live_...</span>, tetapi
+                        <span class="docs-code">X-NexShop-Secret</span> tetap harus disertakan.
+                    </p>
+                </div>
+
+                <div class="docs-card">
+                    <h3><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Aturan Keamanan yang Ditegakkan Server</h3>
+                    <ul class="docs-list">
+                        <li>
+                            <strong>Secret Key wajib &amp; dibandingkan secara timing-safe.</strong>
+                            Server tidak membocorkan berapa banyak karakter awal yang sudah benar
+                            lewat selisih waktu respons.
+                        </li>
+                        <li>
+                            <strong>IP Whitelist (opsional, sangat disarankan).</strong> Isi dengan
+                            alamat IP publik server toko Anda di Partner Portal. Selama daftar itu
+                            terisi, permintaan dari IP lain ditolak
+                            <span class="docs-code">403 IP_NOT_WHITELISTED</span>.
+                            Alamat pemanggil ditentukan server dari koneksi yang sebenarnya &mdash;
+                            header <span class="docs-code">X-Forwarded-For</span> yang Anda kirim
+                            sendiri tidak dipercaya dan tidak bisa dipakai menyamar.
+                        </li>
+                        <li>
+                            <strong>Batas laju 120 permintaan per menit per API Key.</strong>
+                            Melebihi itu dijawab <span class="docs-code">429 RATE_LIMITED</span>.
+                            Beri jeda antar permintaan, jangan mengulang seketika.
+                        </li>
+                        <li>
+                            <strong>Status akun diperiksa di setiap permintaan.</strong> Akun yang
+                            belum disetujui, sedang disuspend, atau diblokir dijawab
+                            <span class="docs-code">403</span> walau kuncinya benar.
+                        </li>
+                        <li>
+                            <strong>Secret Key tidak pernah dikirim balik utuh</strong> oleh endpoint
+                            mana pun kecuali saat Anda menekan "Tampilkan" di Partner Portal.
+                            Simpan sebagai environment variable di server, jangan pernah ditaruh di
+                            kode frontend/aplikasi yang bisa dibaca pengguna.
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="docs-card">
+                    <h3><i class="fa-solid fa-terminal" aria-hidden="true"></i> Uji Koneksi Pertama</h3>
+                    <p>Endpoint teringan untuk memastikan kredensial sudah benar adalah cek saldo:</p>
+                    <div class="docs-code-block">
+                        <div class="docs-code-header">
+                            <span>cURL</span>
+                            <span>GET /api/v1/reseller/balance</span>
+                        </div>
+                        <pre class="docs-code-content"><code>curl https://nexshop.cloud/api/v1/reseller/balance \
+  -H <span class="string">"X-NexShop-Api-Key: $NEXSHOP_API_KEY"</span> \
+  -H <span class="string">"X-NexShop-Secret: $NEXSHOP_SECRET_KEY"</span></code></pre>
                     </div>
                     <div class="docs-code-block">
                         <div class="docs-code-header">
-                            <span>Response (JSON)</span>
+                            <span>Response</span>
                             <span>200 OK</span>
                         </div>
                         <pre class="docs-code-content"><code>{
-  <span class="property">"token"</span>: <span class="string">"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."</span>,
-  <span class="property">"user"</span>: {
-    <span class="property">"id"</span>: <span class="string">"usr_98a72b"</span>,
-    <span class="property">"email"</span>: <span class="string">"tokoanda@gmail.com"</span>,
-    <span class="property">"nama"</span>: <span class="string">"Toko Berkah Gaming"</span>
+  <span class="property">"success"</span>: <span class="keyword">true</span>,
+  <span class="property">"data"</span>: {
+    <span class="property">"balance"</span>: <span class="number">1250000</span>,
+    <span class="property">"currency"</span>: <span class="string">"IDR"</span>,
+    <span class="property">"tier"</span>: <span class="string">"Gold"</span>,
+    <span class="property">"tier_code"</span>: <span class="string">"gold"</span>,
+    <span class="property">"discount_percent"</span>: <span class="number">5</span>,
+    <span class="property">"reseller_status"</span>: <span class="string">"approved"</span>
   }
 }</code></pre>
                     </div>
+                    <div class="docs-callout docs-callout--tip">
+                        <i class="fa-solid fa-circle-check" aria-hidden="true"></i>
+                        <div>
+                            <span class="docs-code">tier</span> dan <span class="docs-code">discount_percent</span>
+                            berisi nilai akun Anda yang sebenarnya. Bila akun belum diberi tingkatan,
+                            <span class="docs-code">tier</span> bernilai <span class="docs-code">null</span> dan
+                            diskonnya <span class="docs-code">0</span> &mdash; bukan nilai contoh.
+                            Jangan mengasumsikan ada diskon default.
+                        </div>
+                    </div>
                 </div>
 
-                <div class="docs-callout docs-callout--info">
-                    <span class="material-symbols-outlined" aria-hidden="true">info</span>
-                    <div>
-                        Sertakan token di setiap header request API berikutnya:<br>
-                        <span class="docs-code">Authorization: Bearer &lt;token_anda&gt;</span>
+                <div class="docs-card">
+                    <h3><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i> Daftar Kode Error Autentikasi</h3>
+                    <div style="overflow-x:auto;">
+                        <table class="docs-tier-table">
+                            <thead>
+                                <tr>
+                                    <th>HTTP</th>
+                                    <th>code</th>
+                                    <th>Artinya &amp; tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>401</td>
+                                    <td><span class="docs-code">INVALID_API_KEY</span></td>
+                                    <td>API Key tidak dikenal atau dinonaktifkan. Cek ulang di Partner Portal.</td>
+                                </tr>
+                                <tr>
+                                    <td>401</td>
+                                    <td><span class="docs-code">SECRET_KEY_REQUIRED</span></td>
+                                    <td>Header <span class="docs-code">X-NexShop-Secret</span> tidak dikirim.</td>
+                                </tr>
+                                <tr>
+                                    <td>401</td>
+                                    <td><span class="docs-code">INVALID_SECRET_KEY</span></td>
+                                    <td>Secret Key tidak cocok dengan API Key tersebut.</td>
+                                </tr>
+                                <tr>
+                                    <td>403</td>
+                                    <td><span class="docs-code">IP_NOT_WHITELISTED</span></td>
+                                    <td>IP server Anda belum terdaftar. Respons menyertakan <span class="docs-code">client_ip</span> yang terbaca server &mdash; salin nilai itu ke pengaturan whitelist.</td>
+                                </tr>
+                                <tr>
+                                    <td>403</td>
+                                    <td><span class="docs-code">RESELLER_NOT_APPROVED</span></td>
+                                    <td>Akun belum diverifikasi admin atau sedang disuspend.</td>
+                                </tr>
+                                <tr>
+                                    <td>403</td>
+                                    <td><span class="docs-code">ACCOUNT_BLOCKED</span></td>
+                                    <td>Akun diblokir. Hubungi dukungan NexShop.</td>
+                                </tr>
+                                <tr>
+                                    <td>429</td>
+                                    <td><span class="docs-code">RATE_LIMITED</span></td>
+                                    <td>Melebihi 120 permintaan per menit. Tunggu, lalu coba lagi dengan jeda.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -1119,7 +1337,7 @@
             <!-- ── Bab 7: API Get Produk & Harga ── -->
             <section class="docs-section" id="api-katalog">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">inventory_2</span>
+                    <i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i>
                     Bab 7 (Developer)
                 </div>
                 <h2>API Get Produk &amp; Harga Modal Reseller</h2>
@@ -1180,7 +1398,7 @@
             <!-- ── Bab 8: API Order, Nickname & Inquiry ── -->
             <section class="docs-section" id="api-order">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">shopping_cart_checkout</span>
+                    <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
                     Bab 8 (Developer)
                 </div>
                 <h2>API Transaksi, Validasi ID &amp; Inquiry</h2>
@@ -1270,7 +1488,7 @@
             <!-- ── Bab 9: Webhook Relay Overview ── -->
             <section class="docs-section" id="webhook-overview">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">sync_alt</span>
+                    <i class="fa-solid fa-right-left" aria-hidden="true"></i>
                     Bab 9 (Webhook)
                 </div>
                 <h2>Konsep &amp; Alur Webhook Relay</h2>
@@ -1279,7 +1497,7 @@
                 </p>
 
                 <div class="docs-card">
-                    <h3><span class="material-symbols-outlined">route</span> Routing Berdasarkan Prefix ref_id</h3>
+                    <h3><i class="fa-solid fa-route" aria-hidden="true"></i> Routing Berdasarkan Prefix ref_id</h3>
                     <p>
                         Setiap kali membuat order, Anda dapat menyertakan prefix unik pada <span class="docs-code">ref_id</span> (misalnya: <span class="docs-code">MYSTORE-10293</span>).
                         Relay NexShop akan mencocokkan prefix tersebut dan secara otomatis mem-forward callback hanya ke endpoint URL toko Anda.
@@ -1290,7 +1508,7 @@
             <!-- ── Bab 10: Webhook Headers & Payload ── -->
             <section class="docs-section" id="webhook-payload">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">data_object</span>
+                    <i class="fa-solid fa-brackets-curly" aria-hidden="true"></i>
                     Bab 10 (Webhook)
                 </div>
                 <h2>Format Header &amp; Payload JSON Webhook</h2>
@@ -1299,7 +1517,7 @@
                 </p>
 
                 <div class="docs-card">
-                    <h3><span class="material-symbols-outlined">http</span> HTTP Request Headers</h3>
+                    <h3><i class="fa-solid fa-globe" aria-hidden="true"></i> HTTP Request Headers</h3>
                     <div class="docs-code-block">
                         <pre class="docs-code-content"><code>Content-Type: application/json
 User-Agent: NexShop-Webhook-Relay/1.0
@@ -1312,7 +1530,7 @@ X-NexShop-Signature: sha256=a1b2c3d4e5f6... (HMAC SHA-256)</code></pre>
                 </div>
 
                 <div class="docs-card">
-                    <h3><span class="material-symbols-outlined">code</span> Payload JSON Body</h3>
+                    <h3><i class="fa-solid fa-code" aria-hidden="true"></i> Payload JSON Body</h3>
                     <div class="docs-code-block">
                         <pre class="docs-code-content"><code>{
   <span class="property">"source"</span>: <span class="string">"nexshop_gateway"</span>,
@@ -1339,7 +1557,7 @@ X-NexShop-Signature: sha256=a1b2c3d4e5f6... (HMAC SHA-256)</code></pre>
             <!-- ── Bab 11: Verifikasi Signature ── -->
             <section class="docs-section" id="webhook-verify">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">lock</span>
+                    <i class="fa-solid fa-lock" aria-hidden="true"></i>
                     Bab 11 (Webhook)
                 </div>
                 <h2>Verifikasi Signature Kriptografis (HMAC SHA-256)</h2>
@@ -1480,67 +1698,338 @@ WEBHOOK_SECRET = <span class="string">"whsec_secret_toko_anda"</span>
             <!-- ── Bab 12: Starter Skrip Siap Pakai ── -->
             <section class="docs-section" id="full-starter-code">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">terminal</span>
+                    <i class="fa-solid fa-terminal" aria-hidden="true"></i>
                     Bab 12 (Full Example)
                 </div>
-                <h2>Contoh Skrip Integrasi Lengkap (Full Starter Flow)</h2>
+                <h2>Contoh Skrip Integrasi Lengkap (Node.js)</h2>
                 <p>
-                    Contoh implementasi pemanggilan API NexShop dari backend toko Anda (Node.js):
+                    Klien siap pakai untuk backend toko Anda. Perhatikan bahwa kredensial dibaca
+                    dari environment variable &mdash; API Key dan Secret Key tidak boleh ditulis
+                    langsung di dalam kode yang ikut masuk ke repositori.
                 </p>
+
+                <div class="docs-callout docs-callout--warn">
+                    <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+                    <div>
+                        Panggil API NexShop <strong>hanya dari server toko Anda</strong>, tidak
+                        pernah dari browser atau aplikasi mobile. Kredensial yang dikirim dari sisi
+                        klien bisa dibaca siapa pun yang membuka DevTools, dan saldo deposit Anda
+                        yang akan terpakai.
+                    </div>
+                </div>
 
                 <div class="docs-card">
                     <div class="docs-code-block">
                         <div class="docs-code-header">
-                            <span>nexshop-client.js (Integrasi Lengkap)</span>
+                            <span>nexshop-client.js</span>
                             <span>Node.js</span>
                         </div>
                         <pre class="docs-code-content"><code><span class="keyword">const</span> axios = <span class="function">require</span>(<span class="string">"axios"</span>);
+<span class="keyword">const</span> crypto = <span class="function">require</span>(<span class="string">"crypto"</span>);
 
-<span class="keyword">const</span> NEXSHOP_BASE = <span class="string">"https://nexshop.cloud/api"</span>;
-<span class="keyword">const</span> AUTH_TOKEN = <span class="string">"eyJhbGciOiJIUzI1Ni..."</span>; <span class="comment">// Dari login akun reseller</span>
-
+<span class="comment">// Kredensial dari environment, BUKAN ditulis di dalam kode.</span>
 <span class="keyword">const</span> client = axios.<span class="function">create</span>({
-    baseURL: NEXSHOP_BASE,
+    baseURL: <span class="string">"https://nexshop.cloud/api/v1/reseller"</span>,
+    timeout: <span class="number">15000</span>,
     headers: {
-        <span class="string">"Authorization"</span>: <span class="string">`Bearer ${AUTH_TOKEN}`</span>,
+        <span class="string">"X-NexShop-Api-Key"</span>: process.env.NEXSHOP_API_KEY,
+        <span class="string">"X-NexShop-Secret"</span>: process.env.NEXSHOP_SECRET_KEY,
         <span class="string">"Content-Type"</span>: <span class="string">"application/json"</span>
     }
 });
 
-<span class="comment">// 1. Ambil Katalog Produk dengan Harga Modal Reseller Anda</span>
+<span class="comment">// 1. Katalog + harga modal sesuai tingkatan akun Anda.</span>
+<span class="comment">//    Simpan/cache hasilnya; jangan panggil per pengunjung toko.</span>
 <span class="keyword">async function</span> <span class="function">getKatalog</span>() {
-    <span class="keyword">const</span> res = <span class="keyword">await</span> client.<span class="function">get</span>(<span class="string">"/topup/public-catalog"</span>);
-    <span class="keyword">return</span> res.data;
+    <span class="keyword">const</span> res = <span class="keyword">await</span> client.<span class="function">get</span>(<span class="string">"/products"</span>);
+    <span class="keyword">return</span> res.data.data; <span class="comment">// [{ kode_produk, harga_normal, harga_reseller, ... }]</span>
 }
 
-<span class="comment">// 2. Validasi Akun Game Pelanggan Toko Anda</span>
-<span class="keyword">async function</span> <span class="function">checkGameUser</span>(kodeProduk, userId, serverId) {
-    <span class="keyword">const</span> res = <span class="keyword">await</span> client.<span class="function">post</span>(<span class="string">"/topup/check-nickname"</span>, {
-        kode_produk: kodeProduk,
+<span class="comment">// 2. Validasi ID game pelanggan SEBELUM order dibuat.</span>
+<span class="comment">//    Order ke tujuan yang salah tidak bisa dibatalkan.</span>
+<span class="keyword">async function</span> <span class="function">cekNickname</span>(kodeGame, userId, zoneId) {
+    <span class="keyword">const</span> res = <span class="keyword">await</span> client.<span class="function">post</span>(<span class="string">"/check-nickname"</span>, {
+        kode_game: kodeGame,
         user_id: userId,
-        server_id: serverId
+        zone_id: zoneId
     });
-    <span class="keyword">return</span> res.data; <span class="comment">// { success: true, nickname: "..." }</span>
+    <span class="keyword">return</span> res.data.data; <span class="comment">// { username: "..." }</span>
 }
 
-<span class="comment">// 3. Buat Transaksi ke NexShop</span>
-<span class="keyword">async function</span> <span class="function">createOrder</span>(kodeProduk, tujuan, serverId) {
-    <span class="keyword">const</span> res = <span class="keyword">await</span> client.<span class="function">post</span>(<span class="string">"/topup"</span>, {
-        kode_produk: kodeProduk,
-        tujuan: tujuan,
-        server_id: serverId,
-        payment_method: <span class="string">"qris"</span>
-    });
-    <span class="keyword">return</span> res.data; <span class="comment">// { success: true, data: { id, total, qr_string } }</span>
-}</code></pre>
+<span class="comment">// 3. Buat pesanan.</span>
+<span class="comment">//    ref_id WAJIB unik per pesanan DAN stabil: kalau permintaan ini</span>
+<span class="comment">//    perlu diulang karena timeout jaringan, kirim ref_id yang SAMA.</span>
+<span class="comment">//    NexShop akan mengembalikan pesanan yang sudah ada alih-alih</span>
+<span class="comment">//    memotong saldo dua kali (idempotency).</span>
+<span class="keyword">async function</span> <span class="function">buatPesanan</span>({ kodeProduk, tujuan, serverId, refId }) {
+    <span class="keyword">try</span> {
+        <span class="keyword">const</span> res = <span class="keyword">await</span> client.<span class="function">post</span>(<span class="string">"/orders"</span>, {
+            kode_produk: kodeProduk,
+            tujuan: tujuan,
+            server_id: serverId,
+            ref_id: refId
+        });
+        <span class="keyword">return</span> res.data.data;
+    } <span class="keyword">catch</span> (err) {
+        <span class="comment">// Timeout BUKAN berarti pesanan gagal -- bisa jadi sudah</span>
+        <span class="comment">// terbuat di sisi NexShop tapi responsnya tidak sampai.</span>
+        <span class="comment">// Jangan langsung menandai gagal; cek statusnya dulu.</span>
+        <span class="keyword">if</span> (!err.response) {
+            <span class="keyword">return await</span> <span class="function">cekStatus</span>(refId);
+        }
+        <span class="keyword">throw</span> err;
+    }
+}
+
+<span class="comment">// 4. Cek status pesanan (pakai order_id ATAU ref_id Anda sendiri).</span>
+<span class="keyword">async function</span> <span class="function">cekStatus</span>(idAtauRef) {
+    <span class="keyword">const</span> res = <span class="keyword">await</span> client.<span class="function">get</span>(<span class="string">`/orders/${<span class="function">encodeURIComponent</span>(idAtauRef)}`</span>);
+    <span class="keyword">return</span> res.data.data; <span class="comment">// status: SUCCESS | PROCESSING | FAILED</span>
+}
+
+<span class="comment">// 5. Sisa saldo deposit.</span>
+<span class="keyword">async function</span> <span class="function">cekSaldo</span>() {
+    <span class="keyword">const</span> res = <span class="keyword">await</span> client.<span class="function">get</span>(<span class="string">"/balance"</span>);
+    <span class="keyword">return</span> res.data.data.balance;
+}
+
+module.exports = { getKatalog, cekNickname, buatPesanan, cekStatus, cekSaldo };</code></pre>
                     </div>
+                </div>
+
+                <div class="docs-card">
+                    <h3><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Penerima Webhook (Express)</h3>
+                    <p>
+                        Endpoint ini menerima pemberitahuan status dari NexShop. Yang paling penting:
+                        <strong>verifikasi signature sebelum mempercayai isinya</strong>, dan balas
+                        <span class="docs-code">200</span> secepat mungkin.
+                    </p>
+                    <div class="docs-code-block">
+                        <div class="docs-code-header">
+                            <span>webhook.js</span>
+                            <span>Express</span>
+                        </div>
+                        <pre class="docs-code-content"><code><span class="comment">// PENTING: pakai raw body. Signature dihitung atas byte mentah;</span>
+<span class="comment">// JSON.stringify hasil parse bisa berbeda susunannya dan bikin</span>
+<span class="comment">// verifikasi selalu gagal.</span>
+app.<span class="function">post</span>(<span class="string">"/webhook/nexshop"</span>,
+    express.<span class="function">raw</span>({ type: <span class="string">"application/json"</span> }),
+    (req, res) =&gt; {
+        <span class="keyword">const</span> signature = req.headers[<span class="string">"x-nexshop-signature"</span>] || <span class="string">""</span>;
+        <span class="keyword">const</span> harusnya = <span class="string">"sha256="</span> + crypto
+            .<span class="function">createHmac</span>(<span class="string">"sha256"</span>, process.env.NEXSHOP_WEBHOOK_SECRET)
+            .<span class="function">update</span>(req.body)
+            .<span class="function">digest</span>(<span class="string">"hex"</span>);
+
+        <span class="comment">// timingSafeEqual, bukan !== : perbandingan biasa membocorkan</span>
+        <span class="comment">// berapa karakter awal yang sudah benar lewat selisih waktu.</span>
+        <span class="keyword">const</span> a = Buffer.<span class="function">from</span>(signature);
+        <span class="keyword">const</span> b = Buffer.<span class="function">from</span>(harusnya);
+        <span class="keyword">if</span> (a.length !== b.length || !crypto.<span class="function">timingSafeEqual</span>(a, b)) {
+            <span class="keyword">return</span> res.<span class="function">status</span>(<span class="number">401</span>).<span class="function">send</span>(<span class="string">"signature tidak valid"</span>);
+        }
+
+        <span class="keyword">const</span> event = JSON.<span class="function">parse</span>(req.body.<span class="function">toString</span>());
+
+        <span class="comment">// Balas 200 DULU, proses belakangan. NexShop menganggap</span>
+        <span class="comment">// respons lambat sebagai gagal dan akan mengirim ulang.</span>
+        res.<span class="function">status</span>(<span class="number">200</span>).<span class="function">json</span>({ received: <span class="keyword">true</span> });
+
+        <span class="comment">// Webhook bisa datang lebih dari sekali untuk pesanan yang</span>
+        <span class="comment">// sama (retry). Pastikan pemrosesannya idempoten -- kunci</span>
+        <span class="comment">// pada reference_id, jangan menambah saldo/mengirim barang</span>
+        <span class="comment">// dua kali untuk satu reference_id.</span>
+        <span class="function">prosesStatusPesanan</span>(event.reference_id, event.status);
+    }
+);</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ── Bab 12b: Panduan Bertahap Portal ── -->
+            <section class="docs-section" id="panduan-portal">
+                <div class="docs-section-badge">
+                    <i class="fa-solid fa-list-ul" aria-hidden="true"></i>
+                    Panduan Bertahap
+                </div>
+                <h2>Menjalankan Partner Portal: Tahap demi Tahap</h2>
+                <p>
+                    Urutan di bawah adalah jalur terpendek dari akun baru sampai transaksi pertama
+                    berhasil. Kerjakan berurutan &mdash; tiap tahap bergantung pada tahap sebelumnya.
+                </p>
+
+                <div class="docs-steps">
+                    <div class="docs-step">
+                        <div class="docs-step-num">1</div>
+                        <div class="docs-step-body">
+                            <h3>Daftar &amp; unggah KTP</h3>
+                            <p>
+                                Buka <a href="/portal-reseller.html">Partner Portal</a> &rsaquo; tab
+                                <strong>Daftar Akun Baru &amp; KYC</strong>. Isi data usaha, lalu unggah
+                                foto KTP yang jelas dan tidak terpotong.
+                            </p>
+                            <p>
+                                Foto KTP dienkripsi (AES-256-GCM) sebelum disimpan dan hanya bisa dibuka
+                                admin lewat halaman peninjauan yang terautentikasi. Berkasnya tidak punya
+                                URL publik, jadi tidak bisa dibuka siapa pun yang kebetulan menerima
+                                tautannya.
+                            </p>
+                            <p class="docs-step-note">
+                                Sudah punya akun belanja NexShop dengan email yang sama? Jangan mendaftar
+                                ulang &mdash; masuk lewat tab <strong>Masuk Portal</strong>, lalu kirim
+                                pengajuan dari dalam portal.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="docs-step">
+                        <div class="docs-step-num">2</div>
+                        <div class="docs-step-body">
+                            <h3>Tunggu verifikasi admin</h3>
+                            <p>
+                                Peninjauan memakan waktu maksimal 3&times;24 jam kerja. Selama menunggu,
+                                Anda tetap bisa masuk portal untuk membaca dokumentasi dan melihat katalog.
+                            </p>
+                            <p>
+                                Tombol <strong>Cek Status Verifikasi Terkini</strong> di banner dashboard
+                                memuat ulang status akun tanpa perlu logout.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="docs-step">
+                        <div class="docs-step-num">3</div>
+                        <div class="docs-step-body">
+                            <h3>Isi saldo deposit</h3>
+                            <p>
+                                Menu <strong>Deposit</strong> &rarr; pilih nominal &rarr; bayar via QRIS
+                                atau Virtual Account. Saldo masuk otomatis setelah pembayaran terverifikasi
+                                ke gateway &mdash; tidak perlu konfirmasi manual.
+                            </p>
+                            <p class="docs-step-note">
+                                Setiap transaksi API memotong saldo ini. Pesanan yang ditolak provider
+                                dikembalikan otomatis ke saldo, tercatat di menu <strong>Mutasi</strong>.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="docs-step">
+                        <div class="docs-step-num">4</div>
+                        <div class="docs-step-body">
+                            <h3>Ambil kredensial API</h3>
+                            <p>
+                                Menu <strong>API &amp; Integrasi</strong> berisi API Key
+                                (<span class="docs-code">nx_live_…</span>) dan Secret Key
+                                (<span class="docs-code">nx_sec_…</span>). Keduanya <strong>wajib</strong>
+                                dikirim di setiap permintaan &mdash; lihat
+                                <a href="#api-auth">Bab 6</a>.
+                            </p>
+                            <p>
+                                Simpan Secret Key sebagai environment variable di server toko Anda.
+                                Menekan <strong>Buat Ulang Kunci</strong> membatalkan pasangan lama
+                                seketika; integrasi yang masih memakai kunci lama akan langsung berhenti
+                                bekerja.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="docs-step">
+                        <div class="docs-step-num">5</div>
+                        <div class="docs-step-body">
+                            <h3>Kunci akses ke IP server Anda</h3>
+                            <p>
+                                Masih di menu yang sama, isi <strong>IP Whitelist</strong> dengan alamat IP
+                                publik server toko Anda (pisahkan dengan koma bila lebih dari satu).
+                                Setelah terisi, kunci yang bocor pun tidak bisa dipakai dari mesin lain.
+                            </p>
+                            <p class="docs-step-note">
+                                Belum tahu IP servernya? Panggil API tanpa whitelist sekali; bila ditolak,
+                                respons <span class="docs-code">403</span> menyertakan
+                                <span class="docs-code">client_ip</span> berisi alamat yang terbaca server.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="docs-step">
+                        <div class="docs-step-num">6</div>
+                        <div class="docs-step-body">
+                            <h3>Pasang Webhook URL</h3>
+                            <p>
+                                Isi <strong>Webhook URL</strong> dengan endpoint HTTPS milik toko Anda,
+                                lalu tekan <strong>Tes Webhook</strong> untuk memastikan server Anda
+                                membalas <span class="docs-code">200</span>.
+                            </p>
+                            <p>Syarat URL yang diterima:</p>
+                            <ul class="docs-list">
+                                <li><strong>HTTPS wajib.</strong> Endpoint HTTP polos ditolak karena data transaksi lewat di sana.</li>
+                                <li><strong>Port 80 atau 443 saja.</strong></li>
+                                <li><strong>Domain publik.</strong> Alamat internal (<span class="docs-code">localhost</span>, <span class="docs-code">10.x</span>, <span class="docs-code">192.168.x</span>, <span class="docs-code">169.254.x</span>) ditolak.</li>
+                                <li><strong>Tanpa username/password di URL</strong> dan <strong>tanpa redirect</strong> &mdash; berikan alamat akhirnya langsung.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="docs-step">
+                        <div class="docs-step-num">7</div>
+                        <div class="docs-step-body">
+                            <h3>Transaksi uji, lalu go-live</h3>
+                            <p>
+                                Lakukan satu order bernominal terkecil ke ID milik Anda sendiri. Pastikan
+                                tiga hal terjadi: saldo terpotong sesuai harga tier, webhook diterima
+                                dengan signature valid, dan status akhir tercatat benar di menu
+                                <strong>Transaksi</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="docs-card">
+                    <h3><i class="fa-solid fa-file-arrow-down" aria-hidden="true"></i> Mengunduh Rincian Harga Semua Level</h3>
+                    <p>
+                        Di menu <strong>Produk</strong> tersedia tombol
+                        <strong>Rincian Harga Semua Level</strong>. Berkas yang diunduh memuat satu kolom
+                        harga untuk <em>setiap</em> tingkatan reseller beserta nominal hematnya &mdash;
+                        berguna untuk menyusun harga jual dan membandingkan keuntungan antar tingkatan.
+                    </p>
+                    <ul class="docs-list">
+                        <li><strong>CSV</strong> &mdash; langsung bisa dibuka di Excel/Google Sheets.</li>
+                        <li><strong>JSON</strong> &mdash; untuk diproses otomatis oleh sistem toko Anda.</li>
+                    </ul>
+                    <p>
+                        Seluruh angkanya dihitung di server memakai rumus yang sama persis dengan
+                        checkout, sehingga harga di berkas tidak akan pernah berbeda dari yang benar-benar
+                        ditagih. Kolom hemat bisa lebih kecil daripada persentase tingkatan bila harga
+                        menyentuh batas margin minimum NexShop &mdash; itu perilaku yang disengaja, bukan
+                        kesalahan hitung.
+                    </p>
+                    <div class="docs-code-block">
+                        <div class="docs-code-header">
+                            <span>Ambil lewat API</span>
+                            <span>GET /api/reseller/portal/price-list</span>
+                        </div>
+                        <pre class="docs-code-content"><code>curl <span class="string">"https://nexshop.cloud/api/reseller/portal/price-list?format=json"</span> \
+  -H <span class="string">"Authorization: Bearer &lt;token_portal&gt;"</span></code></pre>
+                    </div>
+                </div>
+
+                <div class="docs-card">
+                    <h3><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Checklist Sebelum Go-Live</h3>
+                    <ul class="docs-list">
+                        <li>Kredensial disimpan di environment variable, <strong>tidak</strong> di dalam kode atau di sisi browser.</li>
+                        <li>IP Whitelist terisi alamat server produksi.</li>
+                        <li>Webhook memverifikasi signature dengan perbandingan timing-safe, dan memproses ulang kiriman yang sama secara idempoten.</li>
+                        <li><span class="docs-code">ref_id</span> dibuat unik per pesanan dan <strong>dipakai ulang</strong> saat mengulang permintaan yang timeout.</li>
+                        <li>Timeout jaringan ditangani dengan mengecek status, bukan langsung menandai pesanan gagal.</li>
+                        <li>Harga jual di toko Anda dihitung ulang dari respons API, bukan dari angka yang disalin manual.</li>
+                        <li>Ada pemantauan saldo agar transaksi tidak berhenti mendadak karena deposit habis.</li>
+                    </ul>
                 </div>
             </section>
 
             <!-- ── Bab 13: FAQ ── -->
             <section class="docs-section" id="faq">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">help</span>
+                    <i class="fa-regular fa-circle-question" aria-hidden="true"></i>
                     Bab 13
                 </div>
                 <h2>Pertanyaan Umum (FAQ Reseller &amp; Developer)</h2>
@@ -1577,7 +2066,7 @@ WEBHOOK_SECRET = <span class="string">"whsec_secret_toko_anda"</span>
             <!-- ── Bab 14: Kontak ── -->
             <section class="docs-section" id="kontak">
                 <div class="docs-section-badge">
-                    <span class="material-symbols-outlined" aria-hidden="true">support_agent</span>
+                    <i class="fa-solid fa-headset" aria-hidden="true"></i>
                     Bab 14
                 </div>
                 <h2>Kontak Dukungan &amp; Integrasi Reseller</h2>
@@ -1594,21 +2083,28 @@ WEBHOOK_SECRET = <span class="string">"whsec_secret_toko_anda"</span>
                         </p>
                     </div>
                     <div class="docs-cta-actions">
-                        <a href="https://wa.me/6281234567890" target="_blank" rel="noopener"
-                           class="mkt-btn-primary" style="display:inline-flex;align-items:center;gap:0.4rem;text-decoration:none;">
-                            <span class="material-symbols-outlined" aria-hidden="true">chat</span>
+                        <!-- Nomor diisi runtime dari pengaturan toko
+                             (GET /api/settings/store). Nomor contoh dokumentasi yang
+                             dulu ditulis di sini adalah nomor contoh dokumentasi,
+                             bukan kontak NexShop: mitra yang menekannya akan
+                             mengirim pesan ke nomor asing. Tombol disembunyikan
+                             selama nomor aslinya belum diketahui. -->
+                        <a data-wa-pesan="Halo Admin NexShop, saya butuh bantuan integrasi API reseller."
+                           target="_blank" rel="noopener noreferrer"
+                           class="mkt-btn-primary" style="display:none;align-items:center;gap:0.4rem;text-decoration:none;">
+                            <i class="fa-brands fa-whatsapp" aria-hidden="true"></i>
                             WhatsApp Admin
                         </a>
                         <a href="/reseller.html" class="mkt-btn-secondary"
                            style="display:inline-flex;align-items:center;gap:0.4rem;text-decoration:none;">
-                            <span class="material-symbols-outlined" aria-hidden="true">how_to_reg</span>
+                            <i class="fa-solid fa-user-check" aria-hidden="true"></i>
                             Daftar Reseller
                         </a>
                     </div>
                 </div>
 
                 <a href="#" class="docs-back-top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">
-                    <span class="material-symbols-outlined" aria-hidden="true">arrow_upward</span>
+                    <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
                     Kembali ke atas
                 </a>
             </section>
@@ -1648,7 +2144,7 @@ WEBHOOK_SECRET = <span class="string">"whsec_secret_toko_anda"</span>
                         <span>NIB 1408260072494</span> <span>KBLI 60390</span>
                     </div>
                     <a href="/legalitas.html" class="nx-footer__legal-link">
-                        Informasi legalitas <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                        Informasi legalitas <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
                     </a>
                 </div>
             </div>
@@ -1660,6 +2156,29 @@ WEBHOOK_SECRET = <span class="string">"whsec_secret_toko_anda"</span>
     </footer>
 
     <script>
+        // Kontak admin diambil dari pengaturan toko, bukan ditulis di HTML.
+        // Selama nomornya belum termuat, tombol WhatsApp tetap tersembunyi --
+        // lebih baik tidak ada tombol daripada tombol yang menuju nomor salah.
+        (async function muatKontakAdmin() {
+            const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+                ? "http://localhost:3000/api"
+                : window.location.origin + "/api";
+            try {
+                const res = await fetch(`${API}/settings/store`);
+                if (!res.ok) return;
+                const data = await res.json();
+                const digit = String(data.contact_whatsapp || data.contact_phone || "").replace(/\D/g, "");
+                if (!digit) return;
+                const nomor = digit.startsWith("0") ? "62" + digit.slice(1) : digit;
+                document.querySelectorAll("[data-wa-pesan]").forEach((el) => {
+                    el.href = `https://wa.me/${nomor}?text=${encodeURIComponent(el.getAttribute("data-wa-pesan"))}`;
+                    el.style.display = "inline-flex";
+                });
+            } catch (_) {
+                /* kontak gagal dimuat -> tombol tetap tersembunyi */
+            }
+        })();
+
         const API_BASE = (() => {
             const host = window.location.hostname;
             if (host === "localhost" || host === "127.0.0.1") {
@@ -1726,14 +2245,15 @@ WEBHOOK_SECRET = <span class="string">"whsec_secret_toko_anda"</span>
                     tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;color:var(--mkt-text-dim);font-size:0.85rem;padding:1.5rem;">Data tier belum tersedia. Hubungi admin.</td></tr>`;
                     return;
                 }
-                const tierIcons = ["star", "grade", "workspace_premium"];
+                // Kelas Font Awesome, bukan lagi nama ligatur Material Symbols.
+                const tierIcons = ["fa-solid fa-star", "fa-solid fa-medal", "fa-solid fa-award"];
                 tbody.innerHTML = tiers.map((t, i) => {
                     const pct = Number(t.discount_percent) || 0;
                     return `
                     <tr>
                         <td>
                             <span class="docs-tier-badge">
-                                <span class="material-symbols-outlined is-filled" style="color:var(--mkt-accent);font-size:1.05rem;" aria-hidden="true">${tierIcons[i % tierIcons.length]}</span>
+                                <i class="${tierIcons[i % tierIcons.length]}" style="color:var(--mkt-accent);font-size:1.05rem;" aria-hidden="true"></i>
                                 ${escapeHtml(t.name)}
                             </span>
                         </td>

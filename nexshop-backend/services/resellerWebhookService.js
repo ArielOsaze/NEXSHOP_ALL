@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const axios = require("axios");
 const supabase = require("../config/db");
+const { assertSafeOutboundUrl } = require("../utils/safeOutboundUrl");
 
 /**
  * Buat signature HMAC-SHA256 untuk payload webhook reseller
@@ -31,12 +32,26 @@ async function dispatchResellerWebhook(order, eventType = "transaction.updated")
             return;
         }
 
-        const webhookUrl = keyRecord.webhook_url.trim();
-        if (!webhookUrl.startsWith("http://") && !webhookUrl.startsWith("https://")) {
+        // Cek anti-SSRF penuh (skema, port, dan resolusi DNS harus mendarat
+        // di IP publik) -- lihat utils/safeOutboundUrl.js. Pengecekan lama
+        // cuma memastikan string-nya diawali http:// atau https://, sehingga
+        // "http://127.0.0.1:5432/" pun lolos.
+        const cek = await assertSafeOutboundUrl(keyRecord.webhook_url);
+        if (!cek.ok) {
+            console.log(`[Reseller Webhook] Dilewati untuk user ${userId}: ${cek.reason}`);
             return;
         }
+        const webhookUrl = cek.url;
 
-        const secret = keyRecord.webhook_secret || keyRecord.secret_key || "nexshop-default-secret";
+        // Kalau webhook_secret belum ada, JANGAN jatuh ke string konstan yang
+        // ikut ter-commit di repo -- signature-nya jadi bisa dipalsukan siapa
+        // pun. Lebih baik webhook tidak dikirim daripada dikirim dengan
+        // signature yang tidak membuktikan apa-apa.
+        const secret = keyRecord.webhook_secret || keyRecord.secret_key;
+        if (!secret) {
+            console.log(`[Reseller Webhook] Dilewati untuk user ${userId}: webhook_secret belum di-provision.`);
+            return;
+        }
 
         let normalizedStatus = "PROCESSING";
         if (order.status === "sukses") normalizedStatus = "SUCCESS";
@@ -67,7 +82,10 @@ async function dispatchResellerWebhook(order, eventType = "transaction.updated")
                 "X-NexShop-Event": eventType,
                 "User-Agent": "NexShop-Webhook-Relay/1.0"
             },
-            timeout: 10000
+            timeout: 10000,
+            maxRedirects: 0,
+            maxContentLength: 64 * 1024,
+            maxBodyLength: 64 * 1024
         }).then(res => {
             console.log(`[Reseller Webhook] Sent to ${webhookUrl} (Status: ${res.status})`);
         }).catch(err => {

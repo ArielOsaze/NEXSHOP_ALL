@@ -423,24 +423,28 @@ function updateNexBotGreeting() {
     // Sapaan disusun sebagai markdown lalu dirender lewat renderer yang sama
     // dengan jawaban NexBot -- jadi spacing, daftar, dan tipografinya persis
     // sama, bukan tumpukan <br> yang nempel.
+    // Bullet markdown biasa, bukan emoji berjejer. Renderer NexBot
+    // mengubahnya jadi <ul> yang bisa ditata lewat CSS -- tampilannya
+    // konsisten di semua perangkat, dan pembaca layar membacakannya
+    // sebagai daftar, bukan merapal nama-nama emoji.
     const topik = [
-        "🎮 Produk Game",
-        "💎 Topup Diamond",
-        "🛍️ Marketplace (E-Wallet, Pulsa, Tagihan)",
-        "🎁 Voucher & Diskon",
-        "💳 Pembayaran",
-        "📦 Status Pesanan",
-        "🤝 Program Reseller",
-        "❓ Bantuan & Kebijakan"
+        "- Produk Game",
+        "- Topup Diamond",
+        "- Marketplace (E-Wallet, Pulsa, Tagihan)",
+        "- Voucher & Diskon",
+        "- Pembayaran",
+        "- Status Pesanan",
+        "- Program Reseller",
+        "- Bantuan & Kebijakan"
     ].join("\n");
 
     const greetingMarkdown = nameClean
-        ? `Halo ${nameClean} 👋 Selamat datang kembali di **NexShop**.
+        ? `Halo ${nameClean}, selamat datang kembali di **NexShop**.
 
 Saya **NexBot**, asisten virtual kamu. Ada yang bisa dibantu hari ini?
 
 ${topik}`
-        : `Halo 👋 Saya **NexBot**, asisten virtual resmi NexShop.
+        : `Halo, saya **NexBot**, asisten virtual resmi NexShop.
 
 Saya bisa bantu soal:
 
