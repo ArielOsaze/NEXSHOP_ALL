@@ -238,11 +238,22 @@ function isGameProduct(product, displayCategory) {
 // asli di etalase publik.
 //
 // Polanya konsisten: nama produk DIAWALI kata "Cek" diikuti salah satu
-// dari "Nama/ID/Nickname/Akun/Nomor/Saldo". Sengaja gak pakai substring
-// match (bukan `nama.includes("cek")`) supaya produk jualan beneran yang
-// kebetulan ngandung kata "cek" di tengah nama gak ikut kefilter.
+// kata utilitas di bawah. Sengaja gak pakai substring match (bukan
+// `nama.includes("cek")`) supaya produk jualan beneran yang kebetulan
+// ngandung kata "cek" di tengah nama gak ikut kefilter.
+//
+// "status", "kartu", dan "hutang" ditambahkan belakangan. SKU macam
+// "Cek Status Voucher Data XL" (Rp4), "Cek Kartu Perdana Tri" (Rp4), dan
+// "Cek Hutang Pulsa Telkomsel" (Rp10) lolos dari pola lama lalu nongol di
+// etalase Marketplace. Karena kartu operator nampilin harga TERMURAH, satu
+// SKU Rp4 bikin SELURUH kategori kelihatan "Mulai dari Rp4" -- harga yang
+// gak pernah bisa beneran dibeli customer. Efek yang sama juga bikin
+// NexBot nyebutin nominal itu waktu ditanya harga.
+//
+// "tagihan" SENGAJA TIDAK dimasukkan: cek tagihan pascabayar itu alur yang
+// beneran dipakai customer, bukan SKU utilitas internal.
 // ===========================================================
-const CHECKER_UTILITY_NAME_PATTERN = /^cek\s+(nama|id|nickname|akun|nomor|saldo)\b/i;
+const CHECKER_UTILITY_NAME_PATTERN = /^cek\s+(nama|id|nickname|akun|nomor|saldo|status|kartu|hutang)\b/i;
 
 function isCheckerUtilityProduct(nama) {
     const n = String(nama || "").trim();

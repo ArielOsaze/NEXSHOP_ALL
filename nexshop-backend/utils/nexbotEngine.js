@@ -14,7 +14,23 @@ const ALIASES = [
     { canonical: "playstation plus", terms: ["playstation plus", "ps plus", "ps+"] },
     { canonical: "nintendo", terms: ["nintendo eshop", "nintendo"] },
     { canonical: "refund", terms: ["pengembalian dana", "uang kembali", "refund"] },
-    { canonical: "pembayaran", terms: ["metode pembayaran", "pembayaran", "payment", "qris", "virtual account", "transfer", "bayar"] }
+    { canonical: "pembayaran", terms: ["metode pembayaran", "pembayaran", "payment", "qris", "virtual account", "transfer", "bayar"] },
+
+    // Layanan halaman Marketplace. Sebelum ini NexBot gak punya satu pun
+    // istilah PPOB di kamusnya, jadi "isi saldo dana" atau "beli token
+    // listrik" gak pernah nyantol ke knowledge mana pun.
+    { canonical: "e-wallet", terms: ["e wallet", "e-wallet", "ewallet", "dompet digital", "saldo dompet"] },
+    { canonical: "dana", terms: ["saldo dana", "isi dana", "topup dana"] },
+    { canonical: "ovo", terms: ["saldo ovo", "isi ovo", "topup ovo"] },
+    { canonical: "gopay", terms: ["gopay", "go pay", "saldo gopay"] },
+    { canonical: "shopeepay", terms: ["shopeepay", "shopee pay", "spay"] },
+    { canonical: "linkaja", terms: ["linkaja", "link aja"] },
+    { canonical: "pulsa", terms: ["pulsa", "isi pulsa", "beli pulsa"] },
+    { canonical: "paket data", terms: ["paket data", "kuota", "voucher kuota", "paket internet"] },
+    { canonical: "pln", terms: ["token pln", "token listrik", "listrik pln", "pln"] },
+    { canonical: "tagihan", terms: ["tagihan", "pascabayar", "ppob", "pdam", "bpjs", "indihome"] },
+    { canonical: "marketplace", terms: ["marketplace", "one stop solution", "layanan digital"] },
+    { canonical: "reseller", terms: ["reseller", "harga reseller", "jualan lagi", "jadi agen"] }
 ];
 
 const ENTITY_CATALOG = [
@@ -27,7 +43,23 @@ const ENTITY_CATALOG = [
     { name: "PUBG Mobile", terms: ["pubg mobile", "pubgm", "pubg"] },
     { name: "Free Fire", terms: ["free fire", "freefire", "ff"] },
     { name: "Nintendo", terms: ["nintendo"] },
-    { name: "PlayStation Plus", terms: ["playstation plus", "ps plus"] }
+    { name: "PlayStation Plus", terms: ["playstation plus", "ps plus"] },
+
+    // Entity Marketplace/PPOB. Dipakai ranker buat ngasih kredit ke chunk
+    // yang emang ngomongin layanan itu, bukan cuma kebetulan sekata.
+    { name: "E-Wallet", terms: ["e wallet", "e-wallet", "ewallet", "dompet digital"] },
+    { name: "DANA", terms: ["saldo dana", "isi dana", "topup dana", "dana ewallet"] },
+    { name: "OVO", terms: ["ovo"] },
+    { name: "GoPay", terms: ["gopay", "go pay"] },
+    { name: "ShopeePay", terms: ["shopeepay", "shopee pay"] },
+    { name: "LinkAja", terms: ["linkaja", "link aja"] },
+    { name: "Pulsa", terms: ["pulsa"] },
+    { name: "Paket Data", terms: ["paket data", "kuota", "paket internet"] },
+    { name: "Token PLN", terms: ["token pln", "token listrik", "pln"] },
+    { name: "Tagihan", terms: ["tagihan", "pascabayar", "ppob", "pdam", "bpjs", "indihome"] },
+    { name: "E-Toll", terms: ["e toll", "etoll", "kartu tol"] },
+    { name: "Marketplace", terms: ["marketplace"] },
+    { name: "Reseller", terms: ["reseller"] }
 ];
 
 const INTENTS = {
@@ -44,7 +76,16 @@ const INTENTS = {
     Refund: ["refund", "batal", "uang kembali", "garansi", "komplain"],
     Order: ["status pesanan", "status order", "pesanan", "lacak", "tracking", "belum masuk"],
     TechnicalSupport: ["error", "gagal", "tidak bisa", "masalah", "kendala", "login", "otp"],
-    Promotion: ["promo", "diskon", "voucher", "kupon", "kode promo"]
+    Promotion: ["promo", "diskon", "voucher", "kupon", "kode promo"],
+    // Intent khusus layanan Marketplace/PPOB, biar pertanyaan "bisa isi
+    // saldo DANA gak?" gak keklasifikasi jadi Payment (metode bayar) --
+    // dua hal yang beda dan chunk-nya juga beda.
+    // Frasa dua kata ("isi saldo", "topup dana") sengaja dipakai karena
+    // detectIntent ngasih 3 poin buat frasa multi-kata dan cuma 1 buat kata
+    // tunggal. Tanpa ini, "bisa isi saldo DANA gak?" kalah ke intent Payment
+    // (yang punya kata tunggal "dana"), lalu NexBot ngejawab pakai chunk
+    // metode pembayaran dan nyimpulin NexShop gak jual saldo DANA.
+    Marketplace: ["e wallet", "ewallet", "dompet digital", "pulsa", "paket data", "kuota", "token listrik", "token pln", "pln", "tagihan", "pascabayar", "ppob", "pdam", "bpjs", "e toll", "etoll", "marketplace", "isi saldo", "isi ulang", "saldo dana", "saldo ovo", "saldo gopay", "topup dana", "topup ovo", "topup gopay", "isi dana", "isi ovo", "beli pulsa", "isi pulsa"]
 };
 
 function escapeRegExp(value) { return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }

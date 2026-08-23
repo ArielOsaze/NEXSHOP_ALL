@@ -36,6 +36,53 @@ This repository is a small fullstack project with:
   never stored per product, and it is floored so a reseller price can never
   drop below cost + 1% margin.
 
+- `009_create_webhook_relay.sql` must be run before the Webhook Relay
+  (`/api/webhooks/*` and the Settings > Webhook Relay tab in the admin
+  dashboard) will work. Same pattern again: until it is applied those
+  endpoints answer 503 with `code: "WEBHOOK_RELAY_NOT_SETUP"` and the panel
+  shows a setup notice. The relay exists because TokoVoucher only allows one
+  callback URL per member account: the callback lands once on
+  `/api/topup/tokovoucher-webhook`, is reconciled for NexShop's own order,
+  and is then fanned out to the other stores' URLs registered in
+  `webhook_endpoints` (queued in `webhook_deliveries`, retried by
+  `jobs/webhookRelayPoller.js`). Forwarding never blocks the 200 returned to
+  TokoVoucher.
+
+## Removed features
+- The legacy **Gaming News** aggregator (table `gaming_news`,
+  `controllers/newsController.js`, routes `GET/POST /api/news`,
+  `/api/news/all`, `/api/news/preview`, `PATCH|PUT|DELETE /api/news/:id`,
+  and the "Gaming News" view in the admin dashboard) has been deleted. It
+  was fully superseded by **NexShop News** (editorial), which lives in
+  `controllers/newsArticleController.js` over the `news_articles` /
+  `news_sources` tables and serves `/api/news/articles*` and
+  `/api/news/admin/articles*`. The homepage news section and
+  `berita.html` / `berita-artikel.html` already read the editorial
+  endpoints, so nothing public changed except the heading wording.
+  The `gaming_news` table is no longer referenced by any code and can be
+  dropped in Supabase whenever convenient. Do not reintroduce a second
+  news system.
+
+## NexBot knowledge
+- NexBot answers from three places, in this order (see
+  `controllers/aiController.js` -> `answer()`): contact lookup, budget
+  calculator, order lookup, **live price catalog**, then the RAG knowledge
+  base.
+- **Never put prices in knowledge text.** `BUILTIN_KNOWLEDGE` and the
+  `knowledge_base` table are static, but prices change on every catalog
+  sync / markup edit, and small models happily invent numbers. Any answer
+  containing Rupiah must come from `topup_products` at request time via
+  `utils/nexbotCatalog.js` (`handlePriceQuery`) or `handleBudgetQuery`.
+  `regtest/sim10_nexbot_knowledge.js` fails the build if a knowledge chunk
+  contains a Rupiah amount.
+- `utils/nexbotCatalog.js` filters SKUs with `isCheckerUtilityProduct` from
+  `utils/topupHelpers.js` — the SAME helper `getPublicCatalog` uses. Keep it
+  that way: if NexBot and the storefront filter differently, the "mulai
+  dari" price in chat stops matching the price on the page.
+- After adding a knowledge chunk, add a retrieval case to
+  `regtest/sim10_nexbot_knowledge.js`. A chunk that exists but never ranks
+  is invisible — NexBot just answers "informasi belum tersedia".
+
 
 ## Important conventions
 - Backend uses CommonJS modules and `type: commonjs` in `nexshop-backend/package.json`.
@@ -66,5 +113,6 @@ This repository is a small fullstack project with:
 - `nexshop-backend/middleware/authMiddleware.js`
 - `nexshop-backend/config/db.js`
 - `nexshop-backend/middleware/rateLimiter.js`
+- `nexshop-backend/services/webhookRelayService.js`
 - `nexshop-frontend/script.js`
 - `nginx-nexshop.conf`

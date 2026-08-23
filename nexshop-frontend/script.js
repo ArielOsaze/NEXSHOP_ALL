@@ -1749,7 +1749,7 @@ document.querySelectorAll("[data-policy-tab]").forEach(btn => {
     });
 });
 
-/* ---------- Curated gaming news ---------- */
+/* ---------- NexShop News (artikel editorial) ---------- */
 function formatNewsDate(value) {
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? "" : new Intl.DateTimeFormat("id-ID", {
@@ -1757,7 +1757,7 @@ function formatNewsDate(value) {
     }).format(date);
 }
 
-function renderGamingNewsSkeleton() {
+function renderNexshopNewsSkeleton() {
     const section = document.getElementById("news");
     const grid = document.getElementById("newsGrid");
     if (!section || !grid) return;
@@ -1779,7 +1779,7 @@ function renderGamingNewsSkeleton() {
         </article>`).join("");
 }
 
-function renderGamingNews(items) {
+function renderNexshopNews(items) {
     const section = document.getElementById("news");
     const grid = document.getElementById("newsGrid");
     if (!section || !grid) return;
@@ -1792,7 +1792,7 @@ function renderGamingNews(items) {
     
     grid.innerHTML = items.map((item) => {
         const imageUrl = safeUrl(item.image_url) || "/images/placeholder-news.jpg";
-        const category = String(item.category || "Gaming");
+        const category = String(item.category || "Berita");
         
         return `
             <a href="/berita/${encodeURIComponent(item.slug)}" class="group relative home-glass-card rounded-2xl overflow-hidden flex flex-col no-underline text-left transition-all duration-300">
@@ -1829,25 +1829,24 @@ function renderGamingNews(items) {
     section.classList.remove("hidden");
 }
 
-async function loadGamingNews() {
-    renderGamingNewsSkeleton();
+async function loadNexshopNews() {
+    renderNexshopNewsSkeleton();
     try {
-        // Dulu di-filter category=Gaming doang -- tapi ARTICLE_CATEGORIES ada
-        // 10 kategori (Esports, Gaming, Xbox, PlayStation, PC, Mobile, dst),
-        // jadi artikel yang ditag selain persis "Gaming" (mis. Esports) gak
-        // pernah muncul di sini walau sudah published & tampil normal di
-        // portal berita (berita.html gak filter kategori sama sekali).
-        // Section ini judulnya "Latest Gaming News" buat toko game secara
-        // umum, jadi sekarang ambil artikel terbaru lintas semua kategori.
-        // Tampil 9 (grid 3 kolom penuh), bukan 3 lagi -- request user.
+        // Ambil artikel terbaru LINTAS SEMUA KATEGORI, jangan difilter
+        // per kategori: ARTICLE_CATEGORIES punya 10 kategori (Esports,
+        // Gaming, Xbox, PlayStation, PC, Mobile, dst), dan filter kategori
+        // bikin artikel yang ditag selain satu kategori itu gak pernah
+        // nongol di homepage walau sudah published dan tampil normal di
+        // portal berita (berita.html juga gak filter kategori).
+        // Tampil 9 biar grid 3 kolomnya penuh.
         const res = await fetch(`${API_BASE}/news/articles?limit=9`);
         if (!res.ok) throw new Error("Gagal memuat berita game");
         const json = await res.json();
         const articles = Array.isArray(json.data) ? json.data.slice(0, 9) : [];
-        renderGamingNews(articles);
+        renderNexshopNews(articles);
     } catch (err) {
-        console.error("loadGamingNews error:", err);
-        renderGamingNews([]);
+        console.error("loadNexshopNews error:", err);
+        renderNexshopNews([]);
     }
 }
 
@@ -4003,7 +4002,7 @@ async function bootstrapApp() {
         loadProducts(),
         loadTopupProducts(),
         loadTrustStats(),
-        loadGamingNews(),
+        loadNexshopNews(),
         loadTestimonials(),
         loadLeaderboard(),
         checkPaymentReturn(),

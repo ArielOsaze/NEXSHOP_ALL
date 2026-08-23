@@ -70,7 +70,6 @@
         <li class="nav-item"><a class="nav-link" href="#" data-view="users"><i class="bi bi-people me-2"></i>Users</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="reseller"><i class="bi bi-people-fill me-2"></i>Reseller</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="promo"><i class="bi bi-megaphone me-2"></i>Promo</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="news"><i class="bi bi-newspaper me-2"></i>Gaming News</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="editorial"><i class="bi bi-pen-fill me-2"></i>NexShop News</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="promocodes"><i class="bi bi-ticket-perforated me-2"></i>Kode Promo</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="ratings"><i class="bi bi-star me-2"></i>Rating</a></li>
@@ -983,37 +982,6 @@
     </div>
 </section>
 
-<!-- ===== Gaming News view ===== -->
-<section id="view-news" class="view-section d-none">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <div>
-            <h2>Gaming News</h2>
-            <p class="text-muted mb-0">Simpan ringkasan original dan tautkan pembaca ke artikel publisher tepercaya.</p>
-        </div>
-        <button class="btn btn-success text-nowrap" onclick="openNewsModal()"><i class="bi bi-plus-circle"></i> Tambah dari URL</button>
-    </div>
-    <div class="news-management-tools mb-3">
-        <div class="input-group"><span class="input-group-text"><i class="bi bi-search"></i></span><input id="newsSearch" class="form-control" type="search" placeholder="Cari judul, ringkasan, publisher, atau kategori..." oninput="renderNews()" aria-label="Cari berita"></div>
-        <select id="newsFilter" class="form-select" onchange="renderNews()" aria-label="Filter berita"><option value="all">Semua status</option><option value="draft">Draft</option><option value="published">Dipublikasikan</option><option value="hidden">Disembunyikan</option><option value="pinned">Dipin</option><option value="featured">Featured</option></select>
-        <select id="newsSort" class="form-select" onchange="renderNews()" aria-label="Urutkan berita"><option value="newest">Tanggal terbaru</option><option value="oldest">Tanggal terlama</option><option value="title">Judul A–Z</option><option value="source">Publisher A–Z</option></select>
-    </div>
-    <div class="news-bulk-tools mb-3" id="newsBulkTools" hidden>
-        <span id="newsSelectionCount" class="small text-muted me-2">0 dipilih</span>
-        <button class="btn btn-outline-success btn-sm" type="button" onclick="bulkNewsAction('publish')"><i class="bi bi-send-check"></i> Publish</button>
-        <button class="btn btn-outline-secondary btn-sm" type="button" onclick="bulkNewsAction('unpublish')"><i class="bi bi-file-earmark"></i> Jadikan draft</button>
-        <button class="btn btn-outline-dark btn-sm" type="button" onclick="bulkNewsAction('hide')"><i class="bi bi-eye-slash"></i> Sembunyikan</button>
-        <button class="btn btn-outline-danger btn-sm" type="button" onclick="bulkNewsAction('delete')"><i class="bi bi-trash"></i> Hapus</button>
-    </div>
-    <div class="card shadow-sm">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 news-management-table">
-                <thead><tr><th><input id="newsSelectAll" type="checkbox" onchange="toggleAllNews(this.checked)" aria-label="Pilih semua berita"></th><th>Berita</th><th>Publisher</th><th>Terbit</th><th>Status</th><th>Aksi</th></tr></thead>
-                <tbody id="newsItems"><tr><td colspan="6" class="text-center text-muted py-4">Memuat data...</td></tr></tbody>
-            </table>
-        </div>
-    </div>
-</section>
-
 <!-- ===== NexShop News Editorial ===== -->
 <section id="view-editorial" class="view-section d-none">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
@@ -1641,6 +1609,7 @@
         <li class="nav-item"><button class="nav-link" data-settings-tab="apikeys">API Keys</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="security">Keamanan</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="mascot">Event Mascot</button></li>
+        <li class="nav-item"><button class="nav-link" data-settings-tab="webhooks">Webhook Relay</button></li>
     </ul>
 
     <!-- Profil Admin -->
@@ -1851,10 +1820,10 @@
                     <div class="form-text">Dipakai buat kirim email kode OTP registrasi &amp; invoice pesanan/topup. Ambil API Key di <a href="https://app.brevo.com/settings/keys/api" target="_blank" rel="noopener">app.brevo.com</a> → SMTP &amp; API. <strong>Sender Email harus sudah diverifikasi/authenticated</strong> di Brevo (menu Senders &amp; IP), kalau belum, email gagal terkirim walau API Key benar. Kalau email OTP tetap gagal, cek juga menu <strong>Users → OTP Aktif</strong> buat lihat/kirim ulang kode secara manual.</div>
                 </div>
 
-                <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">Google Gemini (Gaming News)</h6></div>
+                <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">Google Gemini (NexShop News &amp; AI)</h6></div>
                 <div class="col-12"><label class="form-label">Gemini API Key</label><input id="geminiApiKey" type="password" class="form-control" placeholder="AIza..."></div>
                 <div class="col-12"><label class="form-label">Model</label><input id="geminiNewsModel" class="form-control" placeholder="gemini-2.5-flash"></div>
-                <div class="col-12"><div class="form-text">Dipakai untuk merangkum News Import dalam bahasa Indonesia. Bila Gemini tidak tersedia, import tetap memakai fallback metadata.</div></div>
+                <div class="col-12"><div class="form-text">Dipakai untuk merangkum riset artikel NexShop News dan sebagai penyedia jawaban NexBot. Bila Gemini tidak tersedia, fitur terkait jatuh ke penyedia AI lain atau fallback metadata.</div></div>
 
                 <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">SMTP (Email)</h6></div>
                 <div class="col-md-8"><label class="form-label">SMTP Host</label><input id="smtpHost" class="form-control" placeholder="smtp.example.com"></div>
@@ -1985,6 +1954,196 @@
                 <div class="col-md-6"><label class="form-label">Berakhir</label><input id="mascotEndDate" type="datetime-local" class="form-control"></div>
                 <div class="col-12"><button type="button" class="btn btn-success" onclick="saveMascotSettings()"><i class="bi bi-floppy"></i> Simpan Event</button><button type="button" class="btn btn-outline-primary ms-2" onclick="previewMascotSettings()"><i class="bi bi-play"></i> Preview Animation</button><p id="mascotError" class="text-danger small mt-2 mb-0"></p></div>
             </form>
+        </div>
+    </div>
+
+    <!-- ================= Webhook Relay =================
+         TokoVoucher cuma ngasih SATU slot URL callback per akun member, dan
+         slot itu kepake NexShop. Panel ini yang bikin callback tadi bisa
+         diteruskan ke URL milik toko/reseller lain yang nebeng akun sama.
+         Butuh migrations/009_create_webhook_relay.sql dijalankan dulu. -->
+    <div id="settingsTabWebhooks" class="card shadow-sm d-none">
+        <div class="card-body">
+            <div id="whSetupWarning" class="alert alert-warning d-none">
+                <i class="bi bi-exclamation-triangle me-1"></i>
+                <span id="whSetupWarningText"></span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap mb-3">
+                <div>
+                    <h6 class="text-uppercase text-muted small mb-1">Webhook Relay</h6>
+                    <p class="text-muted small mb-0" style="max-width:640px;">
+                        TokoVoucher cuma menyediakan <strong>satu</strong> URL callback per akun member, dan slot itu dipakai NexShop.
+                        Relay ini meneruskan callback yang masuk ke URL milik toko / reseller lain yang transaksinya menumpang akun TokoVoucher NexShop.
+                    </p>
+                </div>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="whRefreshBtn">
+                    <i class="bi bi-arrow-clockwise"></i> Muat Ulang
+                </button>
+            </div>
+
+            <!-- URL yang harus dipasang admin di dashboard TokoVoucher -->
+            <div class="border rounded p-3 mb-4 bg-body-tertiary">
+                <label class="form-label small text-uppercase text-muted mb-1">URL Callback di dashboard TokoVoucher</label>
+                <div class="input-group">
+                    <input id="whInboundUrl" class="form-control font-monospace" readonly value="-">
+                    <button type="button" class="btn btn-outline-secondary" id="whCopyInboundBtn"><i class="bi bi-clipboard"></i> Salin</button>
+                </div>
+                <div class="form-text">Isi URL ini <strong>sekali</strong> di TokoVoucher. Semua toko di bawah menerima salinannya dari NexShop, bukan langsung dari TokoVoucher.</div>
+                <div class="d-flex gap-3 flex-wrap mt-3 small" id="whCounters">
+                    <span class="badge text-bg-secondary">Endpoint: <span id="whCountEndpoints">0</span></span>
+                    <span class="badge text-bg-success">Aktif: <span id="whCountActive">0</span></span>
+                    <span class="badge text-bg-warning">Antre: <span id="whCountPending">0</span></span>
+                    <span class="badge text-bg-danger">Gagal: <span id="whCountFailed">0</span></span>
+                    <span class="badge text-bg-dark">Menyerah: <span id="whCountDead">0</span></span>
+                </div>
+            </div>
+
+            <!-- Form tambah / ubah endpoint -->
+            <form id="whEndpointForm" class="row g-3 mb-4" style="max-width:760px;">
+                <input type="hidden" id="whEditingId" value="">
+                <div class="col-12">
+                    <h6 class="text-uppercase text-muted small mb-0" id="whFormTitle">Tambah Endpoint Toko</h6>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Nama Toko / Label <span class="text-danger">*</span></label>
+                    <input id="whLabel" class="form-control" maxlength="80" placeholder="Toko Berkah Cell">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Owner User ID (opsional)</label>
+                    <input id="whOwnerUserId" type="number" class="form-control" placeholder="ID user reseller di NexShop">
+                </div>
+                <div class="col-12">
+                    <label class="form-label">URL Webhook Tujuan <span class="text-danger">*</span></label>
+                    <input id="whTargetUrl" class="form-control font-monospace" placeholder="https://tokoberkah.id/api/callback/tokovoucher">
+                    <div class="form-text">Wajib HTTPS dan tidak boleh mengarah ke alamat jaringan internal.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Prefix Ref ID</label>
+                    <input id="whRefPrefix" class="form-control font-monospace" maxlength="40" placeholder="TKB-">
+                    <div class="form-text">Callback diteruskan kalau <code>ref_id</code> transaksi diawali prefix ini. Minta toko memakai prefix unik saat membuat transaksi.</div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Catatan (opsional)</label>
+                    <input id="whOwnerNote" class="form-control" maxlength="300" placeholder="PIC: 08xx, kontrak s/d Des 2026">
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="whForwardAll">
+                        <label class="form-check-label" for="whForwardAll">
+                            Terima <strong>semua</strong> callback (abaikan prefix)
+                        </label>
+                        <div class="form-text text-warning">Hati-hati: endpoint ini akan menerima data transaksi seluruh toko, termasuk milik NexShop sendiri.</div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="whForwardOriginalSig">
+                        <label class="form-check-label" for="whForwardOriginalSig">
+                            Teruskan header signature asli TokoVoucher
+                        </label>
+                        <div class="form-text">Hanya berguna kalau penerima juga tahu member code &amp; secret TokoVoucher yang sama.</div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="whIsActive" checked>
+                        <label class="form-check-label" for="whIsActive">Aktif</label>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-success" id="whSubmitBtn"><i class="bi bi-plus-lg"></i> Tambah Endpoint</button>
+                    <button type="button" class="btn btn-outline-secondary ms-2 d-none" id="whCancelEditBtn">Batal</button>
+                    <p id="whFormError" class="text-danger small mt-2 mb-0"></p>
+                </div>
+            </form>
+
+            <!-- Secret hanya muncul sekali setelah dibuat / rotate -->
+            <div id="whSecretBox" class="alert alert-success d-none">
+                <div class="fw-semibold mb-1"><i class="bi bi-key me-1"></i> Signing Secret</div>
+                <p class="small mb-2">Simpan sekarang dan kirim ke pemilik toko lewat jalur aman. Setelah panel ini ditutup, secret hanya bisa dilihat lagi dengan Security PIN.</p>
+                <div class="input-group">
+                    <input id="whSecretValue" class="form-control font-monospace" readonly>
+                    <button type="button" class="btn btn-outline-secondary" id="whCopySecretBtn"><i class="bi bi-clipboard"></i> Salin</button>
+                    <button type="button" class="btn btn-outline-secondary" id="whCloseSecretBtn">Tutup</button>
+                </div>
+            </div>
+
+            <h6 class="text-uppercase text-muted small">Endpoint Terdaftar</h6>
+            <div class="table-responsive mb-4">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Toko</th>
+                            <th>URL Tujuan</th>
+                            <th>Routing</th>
+                            <th class="text-center">Sukses / Gagal</th>
+                            <th>Terakhir</th>
+                            <th class="text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="whEndpointsTable">
+                        <tr><td colspan="6" class="text-center text-muted py-3">Memuat...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                <h6 class="text-uppercase text-muted small mb-0">Riwayat Pengiriman</h6>
+                <div class="d-flex gap-2">
+                    <select id="whDeliveryEndpointFilter" class="form-select form-select-sm" style="min-width:180px;">
+                        <option value="">Semua endpoint</option>
+                    </select>
+                    <select id="whDeliveryStatusFilter" class="form-select form-select-sm" style="min-width:150px;">
+                        <option value="">Semua status</option>
+                        <option value="pending">Antre</option>
+                        <option value="success">Sukses</option>
+                        <option value="failed">Gagal</option>
+                        <option value="dead">Menyerah</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-responsive mt-2">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Endpoint</th>
+                            <th>Ref ID</th>
+                            <th>Status</th>
+                            <th class="text-center">Percobaan</th>
+                            <th>Keterangan</th>
+                            <th class="text-end">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="whDeliveriesTable">
+                        <tr><td colspan="7" class="text-center text-muted py-3">Belum ada pengiriman.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <details class="mt-4">
+                <summary class="small text-muted">Cara toko lain memverifikasi payload dari NexShop</summary>
+                <pre class="small bg-body-tertiary border rounded p-3 mt-2 mb-0"><code>// Node.js -- di sisi penerima
+const crypto = require("crypto");
+
+app.post("/api/callback/tokovoucher", express.raw({ type: "*/*" }), (req, res) =&gt; {
+  const raw = req.body.toString("utf8");
+  const ts  = req.headers["x-nexshop-timestamp"];
+  const sig = req.headers["x-nexshop-signature"]; // "sha256=..."
+
+  const expected = "sha256=" + crypto
+    .createHmac("sha256", process.env.NEXSHOP_WEBHOOK_SECRET)
+    .update(ts + "." + raw)
+    .digest("hex");
+
+  if (sig !== expected) return res.status(401).send("bad signature");
+  // Tolak payload yang lebih tua dari 5 menit (anti replay)
+  if (Math.abs(Date.now() / 1000 - Number(ts)) &gt; 300) return res.status(408).send("stale");
+
+  const body = JSON.parse(raw);
+  const trx  = body.data; // payload asli TokoVoucher: ref_id, status, sn, ...
+  // ... update status transaksi di sistem kamu ...
+
+  res.status(200).json({ ok: true }); // WAJIB 2xx, kalau enggak NexShop retry
+});</code></pre>
+            </details>
         </div>
     </div>
 
@@ -2592,33 +2751,6 @@
 </main>
 </div>
 
-<!-- Gaming News Modal -->
-<div class="modal fade" id="newsModal" tabindex="-1" aria-labelledby="newsModalTitle" aria-hidden="true">
-<div class="modal-dialog modal-xl"><div class="modal-content">
-    <div class="modal-header"><h5 class="modal-title" id="newsModalTitle"><i class="bi bi-newspaper me-2"></i>Tambah Berita dari URL</h5><button class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button></div>
-    <div class="modal-body"><form id="newsForm"><div class="row g-3">
-        <div class="col-12"><label class="form-label" for="newsImportUrl">Satu URL artikel publisher tepercaya</label><div class="input-group"><input id="newsImportUrl" type="url" class="form-control" placeholder="https://www.ign.com/..." autocomplete="url"><button class="btn btn-outline-info" type="button" id="previewNewsBtn" onclick="previewNewsUrl()"><i class="bi bi-magic me-1"></i>Preview</button></div><div class="form-text">Tempel satu URL. Metadata dan ringkasan Indonesia dibuat otomatis; artikel lengkap tidak disimpan.</div></div>
-        <div class="col-12 d-none" id="newsPreviewWrap"><div class="news-import-preview"><img id="newsPreviewImage" src="" alt=""><div><span id="newsPreviewPublisherLogo" class="news-preview-logo d-none"><img id="newsPreviewLogoImage" src="" alt=""></span><span id="newsPreviewSource" class="news-source-chip"></span><small id="newsPreviewCategory"></small><strong id="newsPreviewTitle"></strong><small id="newsPreviewDate"></small><p id="newsPreviewSummary" class="mb-0"></p><a id="newsPreviewUrl" target="_blank" rel="noopener noreferrer">Buka artikel asli</a></div></div></div>
-        <div class="col-md-8"><label class="form-label" for="newsTitle">Judul</label><input id="newsTitle" class="form-control" maxlength="255" required></div>
-        <div class="col-md-4"><label class="form-label" for="newsSortOrder">Urutan tampil</label><input id="newsSortOrder" type="number" min="0" max="100000" class="form-control" value="0"></div>
-        <div class="col-12"><label class="form-label" for="newsSummary">Ringkasan Indonesia</label><textarea id="newsSummary" class="form-control" rows="10" minlength="1200" maxlength="6000" required></textarea><div class="form-text">300–600 kata. Edit seperlunya; jangan salin artikel lengkap.</div></div>
-        <div class="col-md-4"><label class="form-label" for="newsSource">Publisher</label><input id="newsSource" class="form-control" maxlength="80" required></div>
-        <div class="col-md-4"><label class="form-label" for="newsCategory">Kategori</label><input id="newsCategory" class="form-control" maxlength="80" required></div>
-        <div class="col-md-8"><label class="form-label" for="newsTags">Tags</label><input id="newsTags" class="form-control" maxlength="400" placeholder="RPG, Update, Mobile Gaming"><div class="form-text">Pisahkan dengan koma, maksimal 8 tag.</div></div>
-        <div class="col-md-4"><label class="form-label" for="newsPublishedAt">Tanggal terbit</label><input id="newsPublishedAt" type="datetime-local" class="form-control" required></div>
-        <div class="col-md-6"><label class="form-label" for="newsSourceUrl">URL artikel asli</label><input id="newsSourceUrl" type="url" class="form-control" placeholder="https://publisher.example/article" required></div>
-        <div class="col-md-6"><label class="form-label" for="newsCanonicalUrl">Canonical URL</label><input id="newsCanonicalUrl" type="url" class="form-control" placeholder="https://publisher.example/article" required></div>
-        <div class="col-md-6"><label class="form-label" for="newsImageUrl">URL gambar utama</label><input id="newsImageUrl" type="url" class="form-control" placeholder="https://..." required></div>
-        <div class="col-md-6"><label class="form-label" for="newsPublisherLogoUrl">URL logo publisher</label><input id="newsPublisherLogoUrl" type="url" class="form-control" placeholder="https://... (opsional)"></div>
-        <div class="col-sm-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="newsIsActive" checked><label class="form-check-label" for="newsIsActive">Aktif</label></div></div>
-        <div class="col-sm-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="newsIsHidden"><label class="form-check-label" for="newsIsHidden">Sembunyikan dari homepage</label></div></div>
-        <div class="col-sm-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="newsIsPinned"><label class="form-check-label" for="newsIsPinned">Pin berita</label></div></div>
-        <div class="col-sm-6"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="newsIsFeatured"><label class="form-check-label" for="newsIsFeatured">Feature berita</label></div></div>
-    </div><p class="text-danger small mt-3 mb-0" id="newsError" role="alert"></p></form></div>
-    <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Batal</button><button type="button" class="btn btn-success" id="saveNewsBtn" onclick="saveNews()"><i class="bi bi-floppy"></i> Simpan Berita</button></div>
-</div></div>
-</div>
-
 <!-- Promo Slide Modal -->
 <div class="modal fade" id="promoModal" tabindex="-1">
 <div class="modal-dialog modal-lg">
@@ -3081,6 +3213,7 @@
 <script src="js/editorial.js?v=20260822-catalog"></script>
 <script src="js/catalogSync.js?v=20260822-catalog"></script>
 <script src="js/reseller.js?v=20260823-reseller"></script>
+<script src="js/webhookRelay.js?v=20260823-webhook"></script>
 
 </body>
 </html>

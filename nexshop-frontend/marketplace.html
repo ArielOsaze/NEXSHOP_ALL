@@ -44,8 +44,10 @@
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
@@ -53,7 +55,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <script src="/theme-init.js"></script>
     <link rel="stylesheet" href="/style.css?v=20260823-pln-token">
-    <link rel="stylesheet" href="/marketplace-theme.css?v=20260822-reseller">
+    <link rel="stylesheet" href="/marketplace-theme.css?v=20260823-kinetic">
 </head>
 
 <body data-nexbot="auto">
@@ -84,10 +86,25 @@
             <li><a href="/reseller.html">Reseller</a></li>
         </ul>
 
-        <a href="/" class="mkt-nav-back" aria-label="Kembali ke toko NexShop">
-            <span class="material-symbols-outlined" aria-hidden="true">arrow_outward</span>
-            <span>Ke Toko</span>
-        </a>
+        <div class="mkt-nav-actions">
+            <!-- Pencarian ringkas di nav: nyetir input hero yang sama, jadi
+                 gak ada dua sumber kebenaran buat kata kunci pencarian. -->
+            <div class="mkt-nav-search">
+                <span class="material-symbols-outlined" aria-hidden="true">search</span>
+                <input type="text" id="mktNavSearchInput" placeholder="Cari layanan..." aria-label="Cari layanan digital">
+            </div>
+
+            <!-- Muncul otomatis kalau katalog yang diterima berisi harga reseller -->
+            <span class="mkt-nav-pill hidden" id="mktNavResellerPill" title="Harga reseller sudah aktif di akun kamu">
+                <span class="material-symbols-outlined" aria-hidden="true">workspace_premium</span>
+                <span>Harga Reseller</span>
+            </span>
+
+            <a href="/" class="mkt-nav-back" aria-label="Kembali ke toko NexShop">
+                <span class="material-symbols-outlined" aria-hidden="true">arrow_outward</span>
+                <span>Ke Toko</span>
+            </a>
+        </div>
     </nav>
 
     <!-- Main content -->
@@ -106,20 +123,64 @@
             <div class="mkt-hero-tag">
                 <span class="material-symbols-outlined" aria-hidden="true">bolt</span> One Stop Solution
             </div>
-            <h1>Satu Platform, Ribuan Solusi Digital</h1>
+            <h1>Satu Platform, <span class="mkt-hero-accent">Ribuan Solusi Digital</span></h1>
             <p>Isi ulang E-Wallet, beli pulsa &amp; paket data, bayar PLN &amp; tagihan lainnya &mdash; diproses instan,
                 aman, dan terpercaya lewat NexShop.</p>
-            <div class="mkt-search-wrap">
+
+            <!-- Pencarian utama. Tombol "Cari" sengaja tetap ada walau
+                 filternya jalan sambil ngetik: di mobile, tombol itu yang
+                 nutup keyboard dan bawa layar ke hasil. -->
+            <form class="mkt-search-wrap" id="mktSearchForm" role="search" autocomplete="off">
                 <span class="material-symbols-outlined" aria-hidden="true">search</span>
-                <input type="text" id="mktSearchInput" placeholder="Cari DANA, OVO, PLN, pulsa, tagihan...">
+                <input type="text" id="mktSearchInput" placeholder="Cari DANA, OVO, PLN, pulsa, tagihan..."
+                    aria-label="Cari layanan digital">
+                <button type="submit" class="mkt-search-btn">Cari</button>
+            </form>
+
+            <div class="mkt-hero-ctas">
+                <div class="mkt-hero-cta">
+                    <span class="mkt-hero-cta-icon mkt-hero-cta-icon--cyan">
+                        <span class="material-symbols-outlined" aria-hidden="true">storefront</span>
+                    </span>
+                    <div class="mkt-hero-cta-text">
+                        <strong>Ingin jualan?</strong>
+                        <span>Gabung program reseller NexShop</span>
+                    </div>
+                    <a href="/reseller.html" class="mkt-hero-cta-link">Daftar</a>
+                </div>
+
+                <a href="/#topup" class="mkt-hero-cta mkt-hero-cta--link">
+                    <span class="mkt-hero-cta-icon">
+                        <span class="material-symbols-outlined" aria-hidden="true">sports_esports</span>
+                    </span>
+                    <div class="mkt-hero-cta-text">
+                        <strong>Top Up Game?</strong>
+                        <span>Buka etalase Topup Diamond</span>
+                    </div>
+                    <span class="material-symbols-outlined mkt-hero-cta-arrow" aria-hidden="true">arrow_forward</span>
+                </a>
             </div>
+
+            <ul class="mkt-trust-strip">
+                <li><span class="material-symbols-outlined" aria-hidden="true">bolt</span> Proses otomatis 24 jam</li>
+                <li><span class="material-symbols-outlined" aria-hidden="true">verified_user</span> Legal &amp; berbadan usaha</li>
+                <li><span class="material-symbols-outlined" aria-hidden="true">payments</span> QRIS, VA &amp; E-Wallet</li>
+            </ul>
         </section>
 
         <div class="mkt-columns">
             <!-- Rail kiri: kategori layanan -->
             <aside class="mkt-col-rail" id="mktRail">
-                <h2 class="mkt-section-title">Semua Layanan</h2>
-                <div class="cat-filter-wrap" id="catFilterWrap"></div>
+                <div class="mkt-rail-panel">
+                    <div class="mkt-rail-head">
+                        <h2 class="mkt-section-title">Kategori</h2>
+                        <p>Jelajahi seluruh layanan digital</p>
+                    </div>
+                    <div class="cat-filter-wrap" id="catFilterWrap"></div>
+                    <div class="mkt-rail-foot">
+                        <button type="button" class="mkt-rail-reset" id="mktRailResetBtn">Tampilkan Semua Layanan</button>
+                    </div>
+                </div>
             </aside>
 
             <!-- Kolom kanan: etalase operator / detail produk -->
@@ -131,6 +192,36 @@
                     </div>
                     <div class="market-grid" id="marketGrid" aria-live="polite"></div>
                 </section>
+
+                <!-- Blok pendukung. Disembunyikan bareng etalase waktu
+                     halaman detail operator kebuka (lihat
+                     openMarketplaceDetail) supaya layar detail bersih. -->
+                <div id="mktSecondarySections" class="mkt-secondary">
+                    <section class="mkt-promo-banner">
+                        <div class="mkt-promo-content">
+                            <span class="mkt-promo-badge">Program Reseller</span>
+                            <h3>Harga khusus untuk yang jualan lagi</h3>
+                            <p>Reseller NexShop yang sudah disetujui otomatis dapat potongan di setiap produk pada
+                                halaman ini &mdash; tanpa kode promo, tanpa minimum transaksi.</p>
+                            <a href="/reseller.html" class="mkt-promo-link">
+                                Lihat tingkatan &amp; syaratnya
+                                <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                            </a>
+                        </div>
+                    </section>
+
+                    <section class="mkt-support-card">
+                        <span class="mkt-support-icon">
+                            <span class="material-symbols-outlined" aria-hidden="true">headset_mic</span>
+                        </span>
+                        <div class="mkt-support-text">
+                            <h4>Butuh bantuan?</h4>
+                            <p>Transaksi nyangkut atau salah nomor tujuan? Tanya NexBot dulu, dia bisa cek status
+                                pesanan kamu.</p>
+                        </div>
+                        <button type="button" class="mkt-support-btn" id="mktSupportBtn">Tanya NexBot</button>
+                    </section>
+                </div>
 
                 <!-- Detail operator: daftar produk dari 1 operator, dibuka dari kartu di grid -->
                 <section class="mkt-detail hidden" id="marketplaceDetail">
@@ -150,7 +241,12 @@
         <div class="nx-footer__container">
             <div class="nx-footer__grid">
                 <div>
-                    <div class="nx-footer__brand-logo">NEXSHOP MARKETPLACE</div>
+                    <a href="/" class="nx-footer__brand" aria-label="NexShop - Beranda">
+                        <span class="nx-footer__brand-mark">
+                            <img src="/images/nexshop-icon.svg" alt="" width="40" height="40" loading="lazy">
+                        </span>
+                        <span class="nx-footer__brand-logo">NEXSHOP<span>MARKETPLACE</span></span>
+                    </a>
                     <p class="nx-footer__brand-desc" style="text-transform: none; text-align: left;">
                         E-Wallet, Pulsa, Paket Data, Tagihan, dan PPOB lainnya dalam satu tempat.
                     </p>
@@ -400,12 +496,16 @@
 
         function renderCategoryChips() {
             const wrap = document.getElementById("catFilterWrap");
-            const categories = catalog.map((c) => c.category);
-            const chips = [{ label: "Semua", value: "" }, ...categories.map((c) => ({ label: c, value: c }))];
+            const totalOperator = catalog.reduce((sum, c) => sum + c.operators.length, 0);
+            const chips = [
+                { label: "Semua Layanan", value: "", count: totalOperator },
+                ...catalog.map((c) => ({ label: c.category, value: c.category, count: c.operators.length }))
+            ];
             wrap.innerHTML = chips.map((c) => `
         <button type="button" class="cat-btn ${activeCategory === c.value ? "active" : ""}" data-cat="${escapeHtml(c.value)}">
             <span class="cat-btn-icon"><span class="material-symbols-outlined is-filled" aria-hidden="true">${categoryIcon(c.value)}</span></span>
-            <span>${escapeHtml(c.label)}</span>
+            <span class="cat-btn-label">${escapeHtml(c.label)}</span>
+            <span class="cat-btn-count">${c.count}</span>
         </button>
     `).join("");
             wrap.querySelectorAll(".cat-btn").forEach((btn) => {
@@ -432,6 +532,7 @@
             if (!banner) return;
             const adaHargaReseller = catalog.some((c) => c.operators.some((op) => op.products.some((p) => p.harga_reseller)));
             banner.classList.toggle("hidden", !adaHargaReseller);
+            document.getElementById("mktNavResellerPill")?.classList.toggle("hidden", !adaHargaReseller);
         }
 
         function matchesQuery(text, tokens) {
@@ -462,6 +563,7 @@
             if (!operatorObj) return;
 
             document.getElementById("mktServicesSection").classList.add("hidden");
+            document.getElementById("mktSecondarySections")?.classList.add("hidden");
             document.getElementById("mktRail").classList.add("hidden");
             document.querySelector(".mkt-columns").classList.add("is-detail");
             document.querySelector(".mkt-hero").classList.add("hidden");
@@ -528,6 +630,7 @@
         function closeMarketplaceDetail() {
             document.getElementById("marketplaceDetail").classList.add("hidden");
             document.getElementById("mktServicesSection").classList.remove("hidden");
+            document.getElementById("mktSecondarySections")?.classList.remove("hidden");
             document.getElementById("mktRail").classList.remove("hidden");
             document.querySelector(".mkt-columns").classList.remove("is-detail");
             document.querySelector(".mkt-hero").classList.remove("hidden");
@@ -870,6 +973,30 @@
             mktStatusPollTimer = setTimeout(poll, 4000);
         }
 
+        // Kartu operator versi "bento": ikon, nama, jumlah produk, lalu
+        // baris harga termurah + panah. Dibikin satu fungsi karena dipakai
+        // dua kali di renderGrid (hasil cocok operator & hasil cocok produk),
+        // dan dulu dua salinan itu sempat beda isi.
+        function marketCardHtml({ operatorId, iconHtml, name, countLabel, minPrice }) {
+            const priceHtml = minPrice !== null && minPrice !== undefined
+                ? `<span class="mkt-price-label">Mulai dari</span><span class="mkt-price">${rupiah(minPrice)}</span>`
+                : `<span class="mkt-price-label">Lihat daftar</span><span class="mkt-price mkt-price--muted">Cek harga</span>`;
+            return `
+        <div class="market-card" data-operator="${operatorId}" role="button" tabindex="0">
+            <span class="market-card-sheen" aria-hidden="true"></span>
+            <div class="market-card-icon">${iconHtml}</div>
+            <div class="market-card-body">
+                <h4>${escapeHtml(name)}</h4>
+                <div class="mkt-count">${escapeHtml(countLabel)}</div>
+                <div class="market-card-foot">
+                    <div class="market-card-price">${priceHtml}</div>
+                    <span class="material-symbols-outlined market-card-chevron" aria-hidden="true">chevron_right</span>
+                </div>
+            </div>
+        </div>
+    `;
+        }
+
         function renderGrid() {
             const grid = document.getElementById("marketGrid");
             const totalCount = document.getElementById("totalCount");
@@ -901,26 +1028,31 @@
                                 }
                             });
                             const opDataAttr = encodeURIComponent(op.id || op.operator);
-                            categoryHtml += `
-                        <div class="market-card" data-operator="${opDataAttr}">
-                            <div class="market-card-icon">${imgHtml}</div>
-                            <h4>${escapeHtml(op.operator)}</h4>
-                            <div class="mkt-count">${op.products.length} Produk</div>
-                            <div class="mkt-price">${minPrice !== null ? "Mulai " + rupiah(minPrice) : ""}</div>
-                        </div>
-                    `;
+                            categoryHtml += marketCardHtml({
+                                operatorId: opDataAttr,
+                                iconHtml: imgHtml,
+                                name: op.operator,
+                                countLabel: `${op.products.length} Produk`,
+                                minPrice
+                            });
                         } else if (tokens.length > 0) {
                             const matchedProducts = op.products.filter((p) => matchesQuery(p.nama, tokens));
                             if (matchedProducts.length > 0) {
                                 matchCount++;
                                 const opDataAttr = encodeURIComponent(op.id || op.operator);
-                                categoryHtml += `
-                            <div class="market-card" data-operator="${opDataAttr}">
-                                <div class="market-card-icon">${imgHtml}</div>
-                                <h4>${escapeHtml(op.operator)}</h4>
-                                <div class="mkt-count">${matchedProducts.length} Produk Cocok</div>
-                            </div>
-                        `;
+                                let minMatchedPrice = null;
+                                matchedProducts.forEach((p) => {
+                                    if (p.harga_jual !== undefined && p.harga_jual !== null) {
+                                        if (minMatchedPrice === null || p.harga_jual < minMatchedPrice) minMatchedPrice = p.harga_jual;
+                                    }
+                                });
+                                categoryHtml += marketCardHtml({
+                                    operatorId: opDataAttr,
+                                    iconHtml: imgHtml,
+                                    name: op.operator,
+                                    countLabel: `${matchedProducts.length} Produk Cocok`,
+                                    minPrice: minMatchedPrice
+                                });
                             }
                         }
                     });
@@ -949,11 +1081,23 @@
                 grid.innerHTML = html;
                 totalCount.textContent = matchCount ? `${matchCount} layanan` : "";
 
-                grid.querySelectorAll(".market-card").forEach((card) => {
-                    card.addEventListener("click", () => {
+                grid.querySelectorAll(".market-card").forEach((card, index) => {
+                    // Animasi masuk bertahap, tapi cuma buat layar pertama --
+                    // kalau semua kartu ikut delay, hasil pencarian di bawah
+                    // kelihatan lama munculnya.
+                    if (index < 12) card.style.animationDelay = `${index * 45}ms`;
+
+                    const buka = () => {
                         const operatorName = decodeURIComponent(card.dataset.operator || "");
                         if (!operatorName) return;
                         openMarketplaceDetail(operatorName);
+                    };
+                    card.addEventListener("click", buka);
+                    card.addEventListener("keydown", (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            buka();
+                        }
                     });
                 });
             } catch (err) {
@@ -968,9 +1112,45 @@
             }
         }
 
-        document.getElementById("mktSearchInput").addEventListener("input", (e) => {
-            searchQuery = e.target.value;
+        // Dua kotak pencarian (hero + nav) nyetir SATU state yang sama, dan
+        // yang satunya ikut diisi biar gak keliatan "kolom cari yang satu lagi
+        // kosong padahal hasilnya kefilter".
+        const mktSearchInput = document.getElementById("mktSearchInput");
+        const mktNavSearchInput = document.getElementById("mktNavSearchInput");
+
+        function applySearch(value, sumber) {
+            searchQuery = value;
+            if (sumber !== mktSearchInput && mktSearchInput) mktSearchInput.value = value;
+            if (sumber !== mktNavSearchInput && mktNavSearchInput) mktNavSearchInput.value = value;
             renderGrid();
+        }
+
+        mktSearchInput?.addEventListener("input", (e) => applySearch(e.target.value, mktSearchInput));
+        mktNavSearchInput?.addEventListener("input", (e) => applySearch(e.target.value, mktNavSearchInput));
+
+        document.getElementById("mktSearchForm")?.addEventListener("submit", (e) => {
+            e.preventDefault();
+            // Di mobile ini yang nutup keyboard virtual, lalu hasilnya
+            // digulirkan ke layar.
+            mktSearchInput?.blur();
+            document.getElementById("mktServicesSection")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+
+        document.getElementById("mktRailResetBtn")?.addEventListener("click", () => {
+            activeCategory = "";
+            applySearch("", null);
+            renderCategoryChips();
+        });
+
+        // Kartu support cuma memicu tombol NexBot yang sudah ada, bukan bikin
+        // kanal bantuan baru yang gak nyambung ke mana-mana.
+        document.getElementById("mktSupportBtn")?.addEventListener("click", () => {
+            const nexbotBtn = document.getElementById("nexbotFloatBtn");
+            if (nexbotBtn) {
+                nexbotBtn.click();
+                return;
+            }
+            window.location.href = "/#kontak";
         });
 
         document.addEventListener("DOMContentLoaded", loadCatalog);

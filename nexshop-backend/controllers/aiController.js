@@ -3,6 +3,9 @@
 const axios = require("axios");
 const { getStoreSettings, getApiKeys, DEFAULT_GEMINI_MODEL, callGeminiWithFallback } = require("../config/settings");
 const { normalizeQuery, detectIntent, detectEntities, rankKnowledge, buildKnowledgeResponse } = require("../utils/nexbotEngine");
+const nexbotCatalog = require("../utils/nexbotCatalog");
+const { getResellerContext } = require("../services/resellerService");
+const { hitungHargaReseller } = require("../utils/resellerPricing");
 const aiProviderManager = require("../services/aiProviderManager");
 const supabase = require("../config/db");
 
@@ -35,7 +38,7 @@ async function logGeminiRequest({ userMessage, modelUsed, responseTimeMs, tokenU
 // migration, but it is not a writable pseudo-database: admin changes must be
 // persisted in Supabase or fail visibly.
 const BUILTIN_KNOWLEDGE = [
-    { id: "builtin-payment", title: "Metode Pembayaran", category: "Payment", keywords: "bayar pembayaran qris dana ovo gopay transfer bank va ipaymu", content: "Pembayaran NexShop diproses dengan aman menggunakan iPaymu sebagai payment gateway. Metode yang didukung meliputi QRIS, e-wallet (DANA, OVO, GoPay), Virtual Account, transfer bank, dan kartu kredit. Pilihan tersedia lengkap saat Checkout.", priority: 5, status: "active" },
+    { id: "builtin-payment", title: "Metode Pembayaran", category: "Payment", keywords: "bayar pembayaran qris dana ovo gopay transfer bank va ipaymu", content: "Pembayaran NexShop diproses dengan aman menggunakan iPaymu sebagai payment gateway. Metode yang didukung meliputi QRIS, e-wallet (DANA, OVO, GoPay), Virtual Account, transfer bank, dan kartu kredit. Pilihan tersedia lengkap saat Checkout. Catatan: di sini DANA, OVO, dan GoPay berperan sebagai ALAT BAYAR. Terpisah dari itu, NexShop juga MENJUAL isi ulang saldo e-wallet tersebut sebagai produk di halaman Marketplace, jadi saldo DANA, OVO, GoPay, dan ShopeePay memang bisa dibeli di NexShop.", priority: 5, status: "active" },
     { id: "builtin-escrow", title: "Mekanisme Escrow", category: "Trust", keywords: "escrow aman penipuan tahan dana garansi uang kembali", content: "NexShop menyediakan mekanisme escrow untuk transaksi yang mendukungnya. Untuk transaksi yang menggunakan mekanisme escrow NexShop, dana ditahan sesuai alur escrow sampai kondisi transaksi terpenuhi.", priority: 5, status: "active" },
     { id: "builtin-legal", title: "Legalitas dan OSS", category: "Trust", keywords: "aman resmi legal penipu scam oss nib kbli terdaftar", content: "NexShop telah memiliki NIB dan terdaftar secara resmi melalui sistem OSS pemerintah. NIB NexShop adalah 1408260072494 dengan skala usaha mikro dan KBLI 60390. Untuk detail legalitas, kamu bisa melihat halaman Legalitas NexShop (nexshop.cloud/legalitas.html).", priority: 5, status: "active" },
     // Jawaban langsung buat pertanyaan umum "apakah NexShop aman/terpercaya?".
@@ -46,7 +49,26 @@ const BUILTIN_KNOWLEDGE = [
     { id: "builtin-trust", title: "Keamanan Bertransaksi di NexShop", category: "Trust", keywords: "aman terpercaya keamanan transaksi kepercayaan", content: "NexShop terdaftar resmi di sistem OSS pemerintah dengan NIB 1408260072494, menggunakan mekanisme escrow untuk transaksi yang mendukungnya, dan memproses pembayaran melalui iPaymu sebagai payment gateway resmi. Kombinasi ini yang jadi dasar keamanan bertransaksi di NexShop.", priority: 6, status: "active" },
     { id: "builtin-topup", title: "Cara Topup Diamond", category: "Guide", keywords: "cara topup diamond ml mlbb mobile legends free fire pubg", content: "Buka menu Topup, pilih game, masukkan User ID dan Zone ID bila diminta, pilih nominal, lalu selesaikan pembayaran. Pesanan diproses otomatis setelah pembayaran terkonfirmasi.", priority: 5, status: "active" },
     { id: "builtin-produk", title: "Cara Membeli Produk", category: "Guide", keywords: "cara membeli produk beli produk checkout keranjang cart pesan barang", content: "Buka menu Produk, pilih item yang kamu inginkan, klik Beli atau tambahkan ke keranjang. Lanjutkan ke Checkout, isi data penerima (nama, kontak, alamat/ID sesuai jenis produk), pilih metode pembayaran, lalu selesaikan pembayaran. Pesanan diproses otomatis setelah pembayaran terkonfirmasi dan status pesanan bisa dicek lewat menu Cek Transaksi.", priority: 5, status: "active" },
-    { id: "builtin-refund", title: "Kebijakan Refund", category: "Policy", keywords: "refund pengembalian dana batal garansi", content: "Untuk kendala saldo atau item yang tidak masuk, siapkan Nomor Order ID dan hubungi Customer Service NexShop agar pesanan dapat diperiksa secara manual.", priority: 5, status: "active" }
+    { id: "builtin-refund", title: "Kebijakan Refund", category: "Policy", keywords: "refund pengembalian dana batal garansi", content: "Untuk kendala saldo atau item yang tidak masuk, siapkan Nomor Order ID dan hubungi Customer Service NexShop agar pesanan dapat diperiksa secara manual.", priority: 5, status: "active" },
+
+    // ------------------------------------------------------------------
+    // MARKETPLACE / PPOB
+    //
+    // Sebelumnya NexBot sama sekali gak kenal halaman Marketplace: ditanya
+    // "bisa isi DANA gak?" atau "bayar PLN di sini bisa?" dia jatuh ke
+    // kalimat fallback, padahal itu salah satu layanan utama NexShop.
+    //
+    // Fakta di sini sengaja TANPA ANGKA HARGA. Harga berubah tiap admin
+    // sync katalog; kalau ditulis di sini NexBot bakal nyebut harga basi.
+    // Pertanyaan harga ditangani terpisah dan selalu query harga hidup --
+    // lihat handlePriceQuery() di bawah.
+    // ------------------------------------------------------------------
+    { id: "builtin-marketplace", title: "Marketplace NexShop (E-Wallet, Pulsa, Tagihan)", category: "Guide", keywords: "marketplace ppob e-wallet ewallet dompet digital dana ovo gopay shopeepay linkaja pulsa paket data kuota pln token listrik tagihan e-toll layanan digital one stop", content: "Selain topup game, NexShop punya halaman Marketplace di nexshop.cloud/marketplace untuk kebutuhan digital harian. Layanan yang tersedia di sana: isi ulang E-Wallet (antara lain DANA, OVO, GoPay, ShopeePay, LinkAja), pulsa semua operator, paket data dan voucher kuota, token listrik PLN, saldo E-Toll, voucher game, layanan hiburan/streaming, serta pembayaran tagihan (PDAM, BPJS, internet pascabayar, TV kabel, multifinance, asuransi). Ketersediaan produk mengikuti katalog yang sedang aktif.", priority: 6, status: "active" },
+    { id: "builtin-marketplace-cara", title: "Cara Beli di Marketplace NexShop", category: "Guide", keywords: "cara beli marketplace cara isi ulang e-wallet ewallet dompet digital cara topup pulsa cara beli paket data cara bayar pln token listrik cara isi dana ovo gopay langkah checkout marketplace nomor tujuan", content: "Langkah membeli di halaman Marketplace: buka nexshop.cloud/marketplace, pilih kategori di panel Kategori atau ketik nama layanan di kolom pencarian, klik kartu penyedia layanan yang dituju, pilih nominal atau produk yang diinginkan, isi nomor tujuan (nomor HP, nomor pelanggan, atau ID akun sesuai jenis layanan), pilih metode pembayaran, lalu selesaikan pembayaran. Pesanan diproses otomatis setelah pembayaran terkonfirmasi, dan statusnya bisa dicek lewat menu Cek Transaksi.", priority: 6, status: "active" },
+    { id: "builtin-pascabayar", title: "Cek Tagihan Pascabayar", category: "Guide", keywords: "pascabayar cek tagihan pdam bpjs telkom indihome multifinance tagihan listrik pascabayar inquiry", content: "Untuk produk pascabayar (misalnya PLN pascabayar, PDAM, BPJS, internet pascabayar, dan multifinance), NexShop menyediakan tombol Cek Tagihan di halaman checkout Marketplace. Masukkan nomor pelanggan lalu klik Cek Tagihan untuk melihat nama pelanggan dan jumlah tagihan sebelum melanjutkan pembayaran.", priority: 5, status: "active" },
+    { id: "builtin-reseller", title: "Program Reseller NexShop", category: "Guide", keywords: "reseller jualan lagi harga khusus diskon reseller daftar reseller tier silver gold platinum mitra agen", content: "NexShop punya program reseller untuk yang mau menjual ulang produknya. Informasi dan pendaftarannya ada di halaman nexshop.cloud/reseller. Reseller yang pengajuannya sudah disetujui admin otomatis mendapat potongan harga di setiap produk, tanpa kode promo dan tanpa minimum transaksi. Besar potongannya mengikuti tingkatan reseller yang diberikan admin. Harga reseller dihitung di server dan langsung tampil saat akun reseller login.", priority: 5, status: "active" },
+    { id: "builtin-berita", title: "NexShop News", category: "Guide", keywords: "berita artikel news portal berita nexshop news baca artikel", content: "NexShop punya portal berita sendiri bernama NexShop News di nexshop.cloud/berita, berisi artikel editorial seputar game dan dunia digital yang ditulis tim NexShop.", priority: 3, status: "active" },
+    { id: "builtin-harga-cek", title: "Cara Mengetahui Harga Produk", category: "Pricing", keywords: "harga berapa biaya tarif daftar harga cek harga list harga", content: "Harga setiap produk NexShop bisa berubah sewaktu-waktu mengikuti harga penyedia. Harga terbaru selalu tampil di halaman produknya: menu Topup untuk topup game, dan halaman Marketplace untuk E-Wallet, pulsa, paket data, PLN, dan tagihan. Kamu juga bisa menanyakan harga suatu layanan langsung ke NexBot, dan angkanya diambil dari katalog yang sedang aktif.", priority: 4, status: "active" }
 ];
 
 const QUICK_ACTIONS = {
@@ -117,15 +139,27 @@ async function handleBudgetQuery(message) {
     if (!budget) {
         return "Boleh sebutkan nominal budget kamu (mis. \"budget 20.000\" atau \"punya uang 50rb\") supaya aku bisa carikan paket diamond yang pas?";
     }
+    // Kalau bukan salah satu dari tiga game di BUDGET_ENTITY_TO_CATEGORY,
+    // coba cocokkan ke SELURUH katalog marketplace (E-Wallet, Pulsa, Paket
+    // Data, PLN, dst). Dulu pertanyaan "punya 50rb bisa dapat pulsa apa"
+    // selalu mentok di pertanyaan balik "mau topup game apa?" padahal
+    // customer-nya gak nanya game sama sekali.
+    let targetKolom = "kategori";
+    let targetNilai = categoryLike;
     if (!categoryLike) {
-        return `Budget Rp${budget.toLocaleString("id-ID")} mau dipakai buat topup game apa ya? (mis. Mobile Legends, Free Fire, PUBG Mobile)`;
+        const match = await nexbotCatalog.matchCatalogTarget(message);
+        if (!match) {
+            return `Budget Rp${budget.toLocaleString("id-ID")} mau dipakai buat layanan apa ya? (mis. Mobile Legends, pulsa Telkomsel, saldo DANA, atau token PLN)`;
+        }
+        targetKolom = match.type === "operator" ? "source_operator_name" : "kategori";
+        targetNilai = match.value;
     }
 
     const { data: withinBudget } = await supabase
         .from("topup_products")
         .select("nama, harga_jual, kategori, kode_produk")
         .eq("is_active", true)
-        .ilike("kategori", `%${categoryLike}%`)
+        .ilike(targetKolom, `%${targetNilai}%`)
         .lte("harga_jual", budget)
         .order("harga_jual", { ascending: false })
         .limit(5);
@@ -137,12 +171,12 @@ async function handleBudgetQuery(message) {
             .from("topup_products")
             .select("nama, harga_jual")
             .eq("is_active", true)
-            .ilike("kategori", `%${categoryLike}%`)
+            .ilike(targetKolom, `%${targetNilai}%`)
             .order("harga_jual", { ascending: true })
             .limit(1);
         const min = cheapest?.[0];
         if (min) {
-            return `Untuk ${categoryLike}, budget Rp${budget.toLocaleString("id-ID")} belum cukup nih. Paket termurah yang tersedia saat ini **${min.nama}** seharga **Rp${Number(min.harga_jual).toLocaleString("id-ID")}**. Kamu bisa cek daftar lengkap harganya di menu Topup ya.`;
+            return `Untuk ${targetNilai}, budget Rp${budget.toLocaleString("id-ID")} belum cukup nih. Produk termurah yang tersedia saat ini **${min.nama}** seharga **Rp${Number(min.harga_jual).toLocaleString("id-ID")}**.`;
         }
         return unavailableReply();
     }
@@ -154,13 +188,13 @@ async function handleBudgetQuery(message) {
         .from("topup_products")
         .select("nama, harga_jual")
         .eq("is_active", true)
-        .ilike("kategori", `%${categoryLike}%`)
+        .ilike(targetKolom, `%${targetNilai}%`)
         .gt("harga_jual", budget)
         .order("harga_jual", { ascending: true })
         .limit(1);
     const nextTier = nextTierRows?.[0];
 
-    let reply = `Dengan budget Rp${budget.toLocaleString("id-ID")} untuk ${categoryLike}, paket yang paling pas kamu dapat: **${best.nama}** seharga **Rp${Number(best.harga_jual).toLocaleString("id-ID")}**.`;
+    let reply = `Dengan budget Rp${budget.toLocaleString("id-ID")} untuk ${targetNilai}, produk yang paling pas kamu dapat: **${best.nama}** seharga **Rp${Number(best.harga_jual).toLocaleString("id-ID")}**.`;
     if (others.length) {
         reply += `\n\nOpsi lain yang juga muat di budget kamu:\n${others.map((p) => `• ${p.nama} — Rp${Number(p.harga_jual).toLocaleString("id-ID")}`).join("\n")}`;
     }
@@ -168,6 +202,66 @@ async function handleBudgetQuery(message) {
         const gap = Number(nextTier.harga_jual) - budget;
         reply += `\n\nKalau nambah sekitar Rp${gap.toLocaleString("id-ID")} lagi (jadi Rp${Number(nextTier.harga_jual).toLocaleString("id-ID")}), kamu bisa dapat **${nextTier.nama}** yang lebih besar.`;
     }
+    return reply;
+}
+
+// ============================================================================
+// FEATURE: Pertanyaan harga langsung ("harga topup DANA berapa?", "pulsa
+// Telkomsel berapaan?", "token PLN mulai dari berapa?").
+//
+// Sama alasannya dengan handleBudgetQuery: angka TIDAK BOLEH datang dari
+// model bahasa. Harga NexShop berubah tiap admin sync katalog atau ubah
+// markup, dan model kecil gampang ngarang nominal. Jadi begitu customer
+// nyebut kategori/operator yang beneran ada di katalog aktif, jawabannya
+// dirakit dari baris topup_products yang sedang tayang -- sumber yang sama
+// dengan halaman Marketplace.
+//
+// Balikin null artinya "bukan pertanyaan harga yang bisa aku pastikan";
+// pertanyaannya lalu diteruskan ke alur knowledge biasa, bukan dipaksa
+// dijawab di sini.
+// ============================================================================
+const MAX_PRICE_ROWS = 5;
+
+async function handlePriceQuery(message, user) {
+    if (!nexbotCatalog.isPriceQuestion(message)) return null;
+
+    const target = await nexbotCatalog.matchCatalogTarget(message);
+    if (!target) return null;
+
+    const { rows, total, error } = await nexbotCatalog.fetchProductsForTarget(target, { limit: MAX_PRICE_ROWS });
+    if (error || !rows.length) return null;
+
+    // Reseller yang sudah login lihat harga resellernya sendiri, biar
+    // angka di chat gak beda sama yang dia lihat di halaman Marketplace.
+    let diskon = 0;
+    try {
+        const ctx = await getResellerContext(user?.id);
+        if (ctx.isReseller) diskon = ctx.discountPercent;
+    } catch (_) { /* status reseller opsional -- fallback ke harga publik */ }
+
+    const hargaFinal = (row) => {
+        if (!diskon) return Number(row.harga_jual);
+        return hitungHargaReseller(Number(row.harga_jual), Number(row.harga_beli), diskon);
+    };
+
+    const label = target.type === "operator" ? target.value : `kategori ${target.value}`;
+    const termurah = hargaFinal(rows[0]);
+
+    const daftar = rows
+        .map((row) => `- ${row.nama}: **${nexbotCatalog.rupiah(hargaFinal(row))}**`)
+        .join("\n");
+
+    let reply = `Harga ${label} di NexShop mulai dari **${nexbotCatalog.rupiah(termurah)}**.`;
+    reply += `\n\n${daftar}`;
+
+    if (total > rows.length) {
+        reply += `\n\nMasih ada ${total - rows.length} pilihan lain. Daftar lengkapnya ada di halaman Marketplace NexShop.`;
+    }
+    if (diskon) {
+        reply += `\n\nAngka di atas sudah harga reseller kamu.`;
+    }
+    reply += `\n\nHarga bisa berubah sewaktu-waktu mengikuti harga penyedia, jadi harga saat checkout yang berlaku.`;
+
     return reply;
 }
 
@@ -469,6 +563,15 @@ async function answer(message, sessionId, user) {
     const isBudgetQuery = !isContact && isBudgetQuestion(message);
     const isOrderQuery = !isContact && !isBudgetQuery && (result.intent === "Order" || /\b(NX[A-F0-9]{10,30}|TP[A-F0-9]{10,30})\b/i.test(message) || /status pesanan|lacak|pesanan saya/i.test(message));
 
+    // Pertanyaan harga dijawab dari katalog hidup, bukan dari model bahasa
+    // (harga berubah tiap admin sync katalog; model kecil gampang ngarang
+    // nominal). handlePriceQuery balikin null kalau customer gak nyebut
+    // layanan yang beneran ada di katalog -- jadi pertanyaan macam "berapa
+    // lama prosesnya" gak kesangkut dan tetap lanjut ke alur knowledge.
+    const priceReply = (!isContact && !isBudgetQuery && !isOrderQuery)
+        ? await handlePriceQuery(message, user)
+        : null;
+
     if (isContact) {
         reply = await handleContactQuery();
         source = "contact_info";
@@ -478,6 +581,9 @@ async function answer(message, sessionId, user) {
     } else if (isOrderQuery) {
         reply = await handleOrderLookup(message, user);
         source = "order_system";
+    } else if (priceReply) {
+        reply = priceReply;
+        source = "price_catalog";
     } else {
         if (process.env.NODE_ENV !== "production") {
             console.log("\n[AI RAG DEBUG]");
@@ -550,7 +656,7 @@ Jawab persis kalimat ini SAJA, tanpa tambahan apapun: "Maaf, informasi tersebut 
         saveConversation({ userId: user?.id, sessionId, role: "user", message, intent: result.intent, knowledgeIds }),
         saveConversation({ userId: user?.id, sessionId, role: "assistant", message: reply, intent: result.intent, knowledgeIds }),
         updateUserMemory(user, result.query, result.intent, result.entities),
-        saveAnalytics({ ...result, source, failed: !result.selected.length && !["order_system", "price_calculator", "contact_info"].includes(source) && !["gemini", "groq", "openrouter"].includes(source), user, sessionId })
+        saveAnalytics({ ...result, source, failed: !result.selected.length && !["order_system", "price_calculator", "price_catalog", "contact_info"].includes(source) && !["gemini", "groq", "openrouter"].includes(source), user, sessionId })
     ]);
     return { reply, source, handoff: source === "handoff", intent: result.intent, entities: result.entities, knowledgeIds };
 }

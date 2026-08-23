@@ -1108,7 +1108,7 @@ nav#mainNav.nav-scrolled {
     contain:layout style;
 }
 
-/* ================= GAMING NEWS ================= */
+/* ================= NEXSHOP NEWS ================= */
 .news-section{ max-width:1240px; margin:0 auto; padding:16px 24px 76px; content-visibility:auto; contain-intrinsic-size:auto 600px; }
 .news-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:18px; }
 .news-card{

@@ -1,33 +1,23 @@
 const express = require("express");
 const router = express.Router();
-const newsController = require("../controllers/newsController");
 const articleController = require("../controllers/newsArticleController");
 const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
-const rateLimit = require("express-rate-limit");
-
-const newsPreviewLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 20,
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { message: "Terlalu banyak preview artikel. Coba lagi beberapa menit." }
-});
 
 // ─────────────────────────────────────────────────────────────────────────────
-// LEGACY Gaming News (aggregator) — JANGAN DIUBAH / DIHAPUS
+// NexShop News (editorial) — satu-satunya sistem berita yang dipakai.
+//
+// Sistem lama "Gaming News" (agregator link publisher, tabel `gaming_news`,
+// controllers/newsController.js) sudah DIHAPUS: fungsinya digantikan penuh
+// oleh editorial di bawah ini, dan mempertahankan dua sistem berita
+// berdampingan cuma bikin admin bingung harus nulis di mana. Rute lamanya
+// (GET/POST/PUT/PATCH/DELETE /api/news dan /api/news/all, /api/news/preview)
+// sekarang balas 404 seperti endpoint tak dikenal lainnya.
+//
+// Kalau tabel `gaming_news` di Supabase masih ada, dia sudah tidak
+// disentuh kode mana pun dan aman dihapus manual kapan saja.
 // ─────────────────────────────────────────────────────────────────────────────
-router.get("/",        newsController.getPublicNews);
-router.get("/all",     authMiddleware, adminMiddleware, newsController.getAllNews);
-router.post("/preview",authMiddleware, adminMiddleware, newsPreviewLimiter, newsController.previewNews);
-router.post("/",       authMiddleware, adminMiddleware, newsController.createNews);
-router.patch("/bulk",  authMiddleware, adminMiddleware, newsController.bulkUpdateNews);
-router.patch("/:id",   authMiddleware, adminMiddleware, newsController.updateNewsFlags);
-router.put("/:id",     authMiddleware, adminMiddleware, newsController.updateNews);
-router.delete("/:id",  authMiddleware, adminMiddleware, newsController.deleteNews);
 
-// ─────────────────────────────────────────────────────────────────────────────
-// EDITORIAL Articles — NexShop News System
 // Public endpoints (tidak butuh auth)
 // ─────────────────────────────────────────────────────────────────────────────
 router.get("/articles",      articleController.getPublicArticles);

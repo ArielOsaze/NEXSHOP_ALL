@@ -17,6 +17,10 @@ router.post("/knowledge/refresh", authMiddleware, superAdminMiddleware, aiContro
 router.post("/knowledge/reseed", authMiddleware, superAdminMiddleware, aiController.reseedKnowledgeBase);
 router.post("/faq/generate", authMiddleware, superAdminMiddleware, aiController.generateProductFaqs);
 router.put("/knowledge/:id", authMiddleware, superAdminMiddleware, aiController.updateKnowledgeBase);
+// Sempat kelewat: dashboard sudah memanggil DELETE /api/ai/knowledge/:id dan
+// aiController.deleteKnowledgeBase sudah ada, cuma route-nya belum pernah
+// didaftarkan -- jadi tombol hapus entri Knowledge Base selalu kena 404.
+router.delete("/knowledge/:id", authMiddleware, superAdminMiddleware, aiController.deleteKnowledgeBase);
 router.get("/analytics", authMiddleware, superAdminMiddleware, aiController.getAnalytics);
 
 // Admin Gemini AI Status, Test, & Logs Endpoints (Legacy)

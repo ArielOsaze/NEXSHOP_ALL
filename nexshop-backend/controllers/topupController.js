@@ -2,6 +2,7 @@ const supabase = require("../config/db");
 const crypto = require("crypto");
 const tokovoucher = require("../config/tokovoucher");
 const catalogService = require("../services/catalogService");
+const webhookRelay = require("../services/webhookRelayService");
 const { createRedirectPayment, checkTransactionStatus, createDirectPayment, isDirectPaymentMethod } = require("../config/ipaymu");
 
 const { checkNickname } = require("../config/apigames");
@@ -2378,9 +2379,26 @@ exports.handleTokoVoucherWebhook = async (req, res) => {
             .eq("id", refId)
             .maybeSingle();
 
+        // RELAY KE TOKO/RESELLER LAIN
+        //
+        // TokoVoucher cuma punya SATU slot URL callback per akun member, dan
+        // slot itu kepake NexShop. Supaya toko lain yang nebeng akun ini tetap
+        // bisa dapat notifikasi, payload-nya diteruskan ke daftar URL mereka
+        // (Settings > Webhook Relay di dashboard).
+        //
+        // Ditaruh SEBELUM cek "order gak ketemu": ref_id yang bukan punya
+        // NexShop justru kemungkinan besar punya toko relay -- itu kasus utama
+        // fitur ini, bukan pengecualian. Sengaja gak di-await dan gak pernah
+        // nge-throw: hasil relay TIDAK boleh nunda/ngegagalin balasan 200 ke
+        // TokoVoucher (kalau telat, mereka retry terus).
+        webhookRelay
+            .enqueueTokoVoucherRelay(body, headerSig)
+            .catch((err) => console.log("[topup-webhook] relay gagal:", err.message));
+
         if (!existingOrder) {
-            // order gak ketemu (ref_id aneh / order lama yg udah dihapus) --
-            // tetep balikin 200 biar TokoVoucher gak retry-retry terus.
+            // order gak ketemu (ref_id aneh / order lama yg udah dihapus /
+            // punya toko relay) -- tetep balikin 200 biar TokoVoucher gak
+            // retry-retry terus.
             return res.status(200).json({ message: "OK (order tidak ditemukan, diabaikan)" });
         }
 

@@ -30,6 +30,7 @@ const uploadRoutes = require("./routes/uploadRoutes");
 const topupRoutes = require("./routes/topupRoutes");
 const resellerRoutes = require("./routes/resellerRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
+const webhookRelayRoutes = require("./routes/webhookRelayRoutes");
 const promoCodeRoutes = require("./routes/promoCodeRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
@@ -43,6 +44,7 @@ const { startTopupStatusPoller } = require("./jobs/topupStatusPoller");
 const { startRetryPoller } = require("./jobs/notificationRetryPoller");
 const { startScheduledPublishPoller } = require("./jobs/scheduledPublishPoller");
 const { startCatalogSyncPoller } = require("./jobs/catalogSyncPoller");
+const { startWebhookRelayPoller } = require("./jobs/webhookRelayPoller");
 
 const app = express();
 
@@ -125,7 +127,7 @@ const WEBHOOK_PATHS = ["/orders/notification", "/topup/notification", "/topup/to
 
 // Dicek relatif terhadap mount point "/api" (req.path di dalam middleware
 // yang dipasang di app.use("/api", ...) udah dipotong prefix-nya).
-const ADMIN_API_PREFIXES = ["/admin", "/topup/admin", "/reseller/admin", "/stats/overview", "/stats/export-orders", "/stats/system-health", "/settings"];
+const ADMIN_API_PREFIXES = ["/admin", "/topup/admin", "/reseller/admin", "/webhooks/admin", "/stats/overview", "/stats/export-orders", "/stats/system-health", "/settings"];
 
 function isAdminApiPath(path) {
     return ADMIN_API_PREFIXES.some((prefix) => path === prefix || path.startsWith(prefix + "/"));
@@ -169,6 +171,7 @@ app.use("/api/promo", promoRoutes);
 app.use("/api/topup", topupRoutes);
 app.use("/api/reseller", resellerRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/webhooks", webhookRelayRoutes);
 app.use("/api/promo-codes", promoCodeRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin/stats", statsRoutes);
@@ -245,6 +248,7 @@ app.listen(PORT, () => {
         startRetryPoller();
         startScheduledPublishPoller();
         startCatalogSyncPoller();
+        startWebhookRelayPoller();
     } else {
         console.log("⏸️  Background pollers dimatikan (set ENABLE_POLLERS=1 untuk mengaktifkan)");
     }

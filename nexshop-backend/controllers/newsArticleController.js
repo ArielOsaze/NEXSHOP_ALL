@@ -1,7 +1,8 @@
 "use strict";
 /**
  * newsArticleController.js
- * NexShop News Editorial System — Controller terpisah dari legacy gaming_news.
+ * NexShop News Editorial System — satu-satunya sistem berita NexShop.
+ * (Sistem lama "Gaming News"/tabel gaming_news sudah dihapus.)
  *
  * Prinsip editorial:
  *   - Artikel adalah ORIGINAL EDITORIAL NEXSHOP, bukan copy/paraphrase sumber.
