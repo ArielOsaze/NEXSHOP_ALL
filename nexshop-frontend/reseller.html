@@ -817,65 +817,91 @@
             if (alasanTombol) btn.textContent = alasanTombol;
         }
 
+        function bukaKunciForm() {
+            const form = document.getElementById("rsForm");
+            form.querySelectorAll("input, select, textarea, button").forEach((el) => { el.disabled = false; });
+            const btn = document.getElementById("rsSubmitBtn");
+            btn.textContent = "Kirim Pengajuan & KYC";
+        }
+
+        // Restore draft dari sessionStorage jika ada
+        function restoreDraftForm() {
+            try {
+                const draft = JSON.parse(sessionStorage.getItem("rs_draft_form") || "null");
+                if (draft) {
+                    if (draft.fullname) document.getElementById("rsFullname").value = draft.fullname;
+                    if (draft.whatsapp) document.getElementById("rsWhatsapp").value = draft.whatsapp;
+                    if (draft.nik) document.getElementById("rsNik").value = draft.nik;
+                    if (draft.store_name) document.getElementById("rsStoreName").value = draft.store_name;
+                    if (draft.channel) document.getElementById("rsChannel").value = draft.channel;
+                    if (draft.monthly_estimate) document.getElementById("rsMonthly").value = draft.monthly_estimate;
+                    if (draft.note) document.getElementById("rsNote").value = draft.note;
+                }
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        function saveDraftForm() {
+            try {
+                const draft = {
+                    fullname: document.getElementById("rsFullname").value.trim(),
+                    whatsapp: document.getElementById("rsWhatsapp").value.trim(),
+                    nik: document.getElementById("rsNik").value.trim(),
+                    store_name: document.getElementById("rsStoreName").value.trim(),
+                    channel: document.getElementById("rsChannel").value,
+                    monthly_estimate: document.getElementById("rsMonthly").value,
+                    note: document.getElementById("rsNote").value.trim()
+                };
+                sessionStorage.setItem("rs_draft_form", JSON.stringify(draft));
+            } catch (e) {
+                // ignore
+            }
+        }
+
         async function loadMyStatus() {
+            bukaKunciForm();
+            restoreDraftForm();
+
             const token = getToken();
 
             if (!token) {
                 tampilkanStatus(
-                    `<span class="material-symbols-outlined" aria-hidden="true" style="font-size:1.4rem;">account_circle</span>
-                     <div><strong>Masuk ke Akun untuk Mendaftar Reseller</strong><br>
-                     Program reseller terhubung langsung ke akun NexShop Anda untuk mengaktifkan potongan harga otomatis dan API Key.
-                     <div style="margin-top:0.6rem;">
-                         <a href="/login.html?redirect=/reseller.html" class="mkt-btn-primary" style="display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;padding:0.45rem 1rem;font-size:0.84rem;border-radius:6px;">
-                             <span class="material-symbols-outlined" style="font-size:1rem;">login</span> Masuk / Daftar Akun
-                         </a>
-                     </div>
+                    `<span class="material-symbols-outlined" aria-hidden="true" style="font-size:1.4rem;color:var(--mkt-accent);">info</span>
+                     <div><strong>Informasi Pendaftaran Reseller</strong><br>
+                     Anda dapat mengisi formulir dan data identitas di bawah ini. Jika belum memiliki akun, Anda akan diarahkan masuk/daftar saat mengirim formulir.
                      </div>`,
                     "rs-alert--tunggu"
                 );
-                kunciForm("Silakan Masuk ke Akun Dulu");
                 return;
             }
 
             try {
                 const res = await fetch(`${API_BASE}/reseller/me`, { headers: { Authorization: `Bearer ${token}` } });
                 if (res.status === 401) {
-                    // Bersihkan token kadaluarsa dari localStorage
                     localStorage.removeItem(PUBLIC_TOKEN_STORAGE_KEY);
                     localStorage.removeItem("token");
                     tampilkanStatus(
-                        `<span class="material-symbols-outlined" aria-hidden="true" style="font-size:1.4rem;">lock_reset</span>
-                         <div><strong>Sesi Login Anda Telah Berakhir</strong><br>
-                         Silakan masuk kembali ke akun NexShop Anda untuk melanjutkan pengisian formulir reseller.
-                         <div style="margin-top:0.6rem;">
-                             <a href="/login.html?redirect=/reseller.html" class="mkt-btn-primary" style="display:inline-flex;align-items:center;gap:0.35rem;text-decoration:none;padding:0.45rem 1rem;font-size:0.84rem;border-radius:6px;">
-                                 <span class="material-symbols-outlined" style="font-size:1rem;">login</span> Masuk Lagi
-                             </a>
-                         </div>
+                        `<span class="material-symbols-outlined" aria-hidden="true" style="font-size:1.4rem;color:var(--mkt-accent);">info</span>
+                         <div><strong>Sesi Perlu Diperbarui</strong><br>
+                         Silakan isi formulir di bawah ini. Anda dapat masuk ke akun NexShop Anda kapan saja untuk menyelesaikan pendaftaran.
                          </div>`,
                         "rs-alert--tunggu"
                     );
-                    kunciForm("Silakan Masuk Lagi");
                     return;
                 }
 
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) {
-                    // Termasuk kasus migration belum dijalankan (503).
-                    tampilkanStatus(
-                        `<span class="material-symbols-outlined" aria-hidden="true">info</span>
-                         <div>${escapeHtml(data.message || "Status reseller belum bisa dimuat.")}</div>`,
-                        "rs-alert--tunggu"
-                    );
                     return;
                 }
 
-                // Prefill dari profil akun biar user gak ngetik ulang
+                // Prefill dari profil akun jika field masih kosong
                 if (data.profil) {
                     const nama = document.getElementById("rsFullname");
                     const wa = document.getElementById("rsWhatsapp");
-                    if (!nama.value) nama.value = data.profil.fullname || "";
-                    if (!wa.value) wa.value = data.profil.phone || "";
+                    if (!nama.value && data.profil.fullname) nama.value = data.profil.fullname;
+                    if (!wa.value && data.profil.phone) wa.value = data.profil.phone;
                 }
 
                 if (data.status === "approved" && data.tier) {
@@ -1030,7 +1056,8 @@
             errEl.textContent = "";
 
             if (!token) {
-                errEl.textContent = "Anda perlu masuk ke akun NexShop terlebih dahulu.";
+                saveDraftForm();
+                errEl.innerHTML = `Anda perlu masuk ke akun NexShop terlebih dahulu untuk mengirim pengajuan. <a href="/login.html?redirect=/reseller.html#form-daftar" style="color:var(--mkt-accent);font-weight:700;text-decoration:underline;">Klik di sini untuk Masuk / Buat Akun</a>`;
                 return;
             }
 
@@ -1068,6 +1095,9 @@
                 });
                 const data = await res.json().catch(() => ({}));
                 if (!res.ok) throw new Error(data.message || "Gagal mengirim pengajuan");
+
+                // Hapus draft setelah berhasil kirim
+                sessionStorage.removeItem("rs_draft_form");
 
                 tampilkanStatus(
                     `<span class="material-symbols-outlined" aria-hidden="true">task_alt</span>

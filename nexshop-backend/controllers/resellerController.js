@@ -131,11 +131,6 @@ exports.applyReseller = async (req, res) => {
             if (isMissingTableError(userErr)) return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
             throw userErr;
         }
-        if (!user) return res.status(404).json({ message: "Akun tidak ditemukan" });
-
-        if (!user.email_verified) {
-            return res.status(403).json({ message: "Verifikasi email kamu dulu sebelum mendaftar jadi reseller." });
-        }
         if (user.reseller_status === "approved") {
             return res.status(400).json({ message: "Akun kamu sudah terdaftar sebagai reseller aktif." });
         }
