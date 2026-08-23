@@ -60,6 +60,22 @@
 
 <body data-nexbot="auto">
 
+    <div class="app-loader is-visible" id="appLoader" role="status" aria-live="polite" aria-busy="true">
+        <div class="app-loader-glow app-loader-glow--violet"></div>
+        <div class="app-loader-glow app-loader-glow--cyan"></div>
+        <div class="app-loader-card">
+            <div class="app-loader-logo-wrap">
+                <span class="app-loader-orbit app-loader-orbit--one"></span>
+                <span class="app-loader-orbit app-loader-orbit--two"></span>
+                <img class="app-loader-logo" src="/images/nexshop-icon.svg" alt="NexShop">
+            </div>
+            <div class="app-loader-brand">Nex<span>Shop</span></div>
+            <p class="app-loader-message" id="appLoaderMessage">Menyiapkan pengalaman berbelanja kamu...</p>
+            <div class="app-loader-progress" aria-hidden="true"><span></span></div>
+            <div class="app-loader-dots" aria-hidden="true"><i></i><i></i><i></i></div>
+        </div>
+    </div>
+
     <!-- Latar gradient statis (dekoratif, ringan) -- dulu di sini ada shader
          WebGL yang cuma nampilin cahaya biru gerak abstrak/gak jelas
          bentuknya, sekarang diganti "hujan" ikon kayak di halaman utama,
@@ -529,6 +545,16 @@
             return String(str || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
         }
 
+        function hideAppLoader() {
+            const loader = document.getElementById("appLoader");
+            if (!loader) return;
+            loader.classList.remove("is-visible");
+            loader.setAttribute("aria-busy", "false");
+        }
+        // Jaring pengaman: kalau fetch macet/lambat, loader tetap ilang
+        // maksimal 5 detik biar halaman gak nyangkut nutupin konten.
+        window.setTimeout(hideAppLoader, 5000);
+
         async function loadCatalog() {
             const grid = document.getElementById("marketGrid");
             grid.innerHTML = Array(12).fill(`
@@ -562,6 +588,8 @@
                 <p>Silakan periksa koneksi internet kamu atau refresh halaman ini.</p>
             </div>
         `;
+            } finally {
+                hideAppLoader();
             }
         }
 

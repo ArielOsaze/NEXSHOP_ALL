@@ -1,28 +1,31 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NexShop News — Berita Gaming & Esports Terkini</title>
-<meta name="description" content="Berita gaming, esports, dan teknologi terkini dari NexShop. Liputan original seputar Xbox, PlayStation, PC Gaming, Mobile, dan dunia esports Indonesia.">
-<link rel="canonical" href="https://nexshop.cloud/berita">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexShop News — Berita Gaming & Esports Terkini</title>
+    <meta name="description"
+        content="Berita gaming, esports, dan teknologi terkini dari NexShop. Liputan original seputar Xbox, PlayStation, PC Gaming, Mobile, dan dunia esports Indonesia.">
+    <link rel="canonical" href="https://nexshop.cloud/berita">
 
-<!-- Open Graph -->
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://nexshop.cloud/berita">
-<meta property="og:title" content="NexShop News — Berita Gaming & Esports Terkini">
-<meta property="og:description" content="Berita gaming, esports, dan teknologi terkini dari NexShop. Liputan original seputar Xbox, PlayStation, PC Gaming, dan dunia esports Indonesia.">
-<meta property="og:image" content="https://nexshop.cloud/images/nexshop-og-v2.jpg">
-<meta property="og:site_name" content="NexShop">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://nexshop.cloud/berita">
+    <meta property="og:title" content="NexShop News — Berita Gaming & Esports Terkini">
+    <meta property="og:description"
+        content="Berita gaming, esports, dan teknologi terkini dari NexShop. Liputan original seputar Xbox, PlayStation, PC Gaming, dan dunia esports Indonesia.">
+    <meta property="og:image" content="https://nexshop.cloud/images/nexshop-og-v2.jpg">
+    <meta property="og:site_name" content="NexShop">
 
-<!-- Twitter -->
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="NexShop News — Berita Gaming & Esports Terkini">
-<meta name="twitter:description" content="Berita gaming dan esports terkini dari NexShop.">
-<meta name="twitter:image" content="https://nexshop.cloud/images/nexshop-og-v2.jpg">
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="NexShop News — Berita Gaming & Esports Terkini">
+    <meta name="twitter:description" content="Berita gaming dan esports terkini dari NexShop.">
+    <meta name="twitter:image" content="https://nexshop.cloud/images/nexshop-og-v2.jpg">
 
-<!-- JSON-LD -->
-<script type="application/ld+json">
+    <!-- JSON-LD -->
+    <script type="application/ld+json">
 {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
@@ -38,672 +41,859 @@
 }
 </script>
 
-<link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="manifest" href="/manifest.json">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-<script src="/theme-init.js"></script>
-<link rel="stylesheet" href="/style.css">
-<style>
-/* =============================
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script src="/theme-init.js"></script>
+    <link rel="stylesheet" href="/style.css">
+    <style>
+        /* =============================
    NexShop News — berita.html
    Menggunakan CSS variables dari style.css
    ============================= */
 
-/* Scrollbar */
-* { scrollbar-width: none; -ms-overflow-style: none; }
-::-webkit-scrollbar { display: none; }
+        /* Scrollbar */
+        * {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
 
-/* Nav */
-.news-nav {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: var(--nav-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--line);
-    padding: 0 clamp(1rem, 4vw, 3rem);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 60px;
-    gap: 1rem;
-}
-.news-nav-brand {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-    font-family: 'Sora', sans-serif;
-    font-weight: 700;
-    font-size: 1.15rem;
-    color: var(--text);
-}
-.news-nav-brand .nx-accent { color: var(--violet); }
-.news-nav-brand .nx-news {
-    font-size: 0.65rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    background: rgba(139,92,246,.12);
-    border: 1px solid rgba(139,92,246,.25);
-    padding: 2px 6px;
-    border-radius: 4px;
-    align-self: flex-end;
-    margin-bottom: 2px;
-}
-.news-nav-links {
-    display: flex;
-    gap: 0.25rem;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-}
-.news-nav-links a {
-    text-decoration: none;
-    color: var(--text-muted);
-    font-size: 0.82rem;
-    font-weight: 500;
-    padding: 0.35rem 0.7rem;
-    border-radius: var(--radius-sm);
-    transition: all 0.18s;
-}
-.news-nav-links a:hover,
-.news-nav-links a.active {
-    color: var(--text);
-    background: var(--bg-panel-2);
-}
-.news-nav-back {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    text-decoration: none;
-    color: var(--text-muted);
-    font-size: 0.82rem;
-    font-weight: 500;
-    padding: 0.3rem 0.7rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--line);
-    transition: all 0.18s;
-}
-.news-nav-back:hover { color: var(--text); border-color: var(--violet); }
+        ::-webkit-scrollbar {
+            display: none;
+        }
 
-/* ── Main container ─────────────────────────── */
-.news-main {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem);
-}
+        /* Nav */
+        .news-nav {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--nav-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--line);
+            padding: 0 clamp(1rem, 4vw, 3rem);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+            gap: 1rem;
+        }
 
-/* ── Category filter ─────────────────────────── */
-.cat-filter-wrap {
-    display: flex;
-    gap: 0.6rem;
-    flex-wrap: wrap;
-    margin-bottom: 2.5rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--line);
-}
-.cat-btn {
-    padding: 0.45rem 1rem;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    background: rgba(255, 255, 255, 0.02);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    color: var(--text-muted);
-    font-size: 0.82rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-family: 'Inter', sans-serif;
-    letter-spacing: 0.02em;
-}
-.cat-btn:hover {
-    border-color: rgba(139, 92, 246, 0.4);
-    color: var(--text);
-    background: rgba(139, 92, 246, 0.05);
-}
-.cat-btn.active {
-    background: rgba(139, 92, 246, 0.15);
-    border-color: rgba(139, 92, 246, 0.4);
-    color: var(--violet);
-    box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
-}
+        .news-nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-family: 'Sora', sans-serif;
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: var(--text);
+        }
 
-/* ── Hero article ─────────────────────────── */
-.hero-article {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    min-height: 480px;
-    background: rgba(18, 23, 41, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius);
-    overflow: hidden;
-    margin-bottom: 3rem;
-    transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-    text-decoration: none;
-}
-.hero-article:hover { 
-    border-color: rgba(139,92,246,.4);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(139, 92, 246, 0.15);
-}
-.hero-img-wrap {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: var(--bg-panel-2);
-    overflow: hidden;
-}
-.hero-img-wrap img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s ease;
-}
-.hero-img-wrap::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, rgba(8, 11, 20, 0.95) 0%, rgba(8, 11, 20, 0.6) 40%, rgba(8, 11, 20, 0.2) 100%);
-    pointer-events: none;
-}
-.hero-article:hover .hero-img-wrap img { transform: scale(1.04); }
-.hero-img-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 4rem;
-    color: var(--text-dim);
-    background: linear-gradient(135deg, var(--bg-panel-2), var(--bg-panel-3));
-}
-.hero-body {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    padding: 3rem;
-    max-width: 800px;
-}
-.article-cat-badge {
-    display: inline-flex;
-    width: fit-content;
-    align-self: flex-start;
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 0.35rem 0.8rem;
-    border-radius: 999px;
-    background: rgba(139, 92, 246, 0.12);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    color: rgba(216, 180, 254, 0.95);
-    border: 1px solid rgba(167, 139, 250, 0.22);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-.hero-body .article-cat-badge {
-    margin-bottom: 0.85rem;
-}
-.hero-body h2 {
-    font-family: 'Sora', sans-serif;
-    font-size: clamp(1.5rem, 3vw, 2.2rem);
-    font-weight: 800;
-    line-height: 1.2;
-    color: #ffffff;
-    margin-bottom: 0.75rem;
-    text-decoration: none;
-    display: block;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.5);
-}
-.hero-body h2 a {
-    color: inherit;
-    text-decoration: none;
-}
-.hero-body h2 a:hover { color: var(--text-violet); }
-.hero-excerpt {
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 1rem;
-    line-height: 1.6;
-    margin-bottom: 1.25rem;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.6);
-}
-.article-meta-line {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    flex-wrap: wrap;
-    font-size: 0.8rem;
-    color: rgba(255, 255, 255, 0.7);
-    font-weight: 500;
-}
-.article-meta-line .dot { width: 3px; height: 3px; border-radius: 50%; background: rgba(255, 255, 255, 0.3); }
-.reading-time { display: flex; align-items: center; gap: 0.3rem; }
+        .news-nav-brand .nx-accent {
+            color: var(--violet);
+        }
 
-/* ── Article grid ─────────────────────────── */
-.news-grid-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1.25rem;
-}
-.news-grid-header h3 {
-    font-family: 'Sora', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-.news-grid-header h3::before {
-    content: '';
-    display: block;
-    width: 4px;
-    height: 18px;
-    background: var(--violet);
-    border-radius: 2px;
-}
+        .news-nav-brand .nx-news {
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            background: rgba(139, 92, 246, .12);
+            border: 1px solid rgba(139, 92, 246, .25);
+            padding: 2px 6px;
+            border-radius: 4px;
+            align-self: flex-end;
+            margin-bottom: 2px;
+        }
 
-.articles-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
-}
+        .news-nav-links {
+            display: flex;
+            gap: 0.25rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
 
-/* ── Article card ─────────────────────────── */
-.article-card {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: var(--radius);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    text-decoration: none;
-    transition: all 0.3s ease;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-.article-card:hover {
-    background: rgba(255, 255, 255, 0.045);
-    border-color: rgba(255, 255, 255, 0.15);
-    transform: translateY(-3px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-.card-img-wrap {
-    position: relative;
-    aspect-ratio: 16/9;
-    overflow: hidden;
-    background: var(--bg-panel-2);
-    flex-shrink: 0;
-}
-.card-img-wrap::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to bottom, rgba(8, 11, 20, 0.4) 0%, transparent 35%, transparent 65%, rgba(8, 11, 20, 0.6) 100%);
-    pointer-events: none;
-}
-.card-img-wrap img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.6s ease;
-    display: block;
-}
-.article-card:hover .card-img-wrap img { transform: scale(1.04); }
-.card-img-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5rem;
-    color: var(--text-dim);
-    background: linear-gradient(135deg, var(--bg-panel-2), var(--bg-panel-3));
-}
-.card-img-badge {
-    position: absolute;
-    bottom: 0.75rem;
-    left: 1.25rem;
-    z-index: 2;
-}
-.card-body-content {
-    padding: 1.25rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    flex: 1;
-}
-.card-title {
-    font-family: 'Sora', sans-serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--text);
-    line-height: 1.4;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-    margin-bottom: 0.4rem;
-}
-.card-excerpt {
-    font-size: 0.82rem;
-    color: var(--text-muted);
-    line-height: 1.6;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
-.card-meta {
-    margin-top: auto;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
-}
+        .news-nav-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 500;
+            padding: 0.35rem 0.7rem;
+            border-radius: var(--radius-sm);
+            transition: all 0.18s;
+        }
 
-/* ── Pagination ─────────────────────────── */
-.pagination-wrap {
-    display: flex;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-top: 2rem;
-}
-.page-btn {
-    padding: 0.45rem 0.9rem;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--line);
-    background: var(--bg-panel);
-    color: var(--text-muted);
-    font-size: 0.82rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.18s;
-    font-family: 'Inter', sans-serif;
-}
-.page-btn:hover { border-color: var(--violet); color: var(--text); }
-.page-btn.active { background: var(--violet); border-color: var(--violet); color: #fff; }
-.page-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+        .news-nav-links a:hover,
+        .news-nav-links a.active {
+            color: var(--text);
+            background: var(--bg-panel-2);
+        }
 
-/* ── Empty / Loading states ─────────────────────────── */
-.state-block {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    padding: 4rem 2rem;
-    color: var(--text-muted);
-    text-align: center;
-}
-.state-block .state-icon { font-size: 3rem; opacity: 0.35; }
-.state-block h4 { font-family: 'Sora', sans-serif; font-size: 1.1rem; color: var(--text); margin: 0; }
-.state-block p { font-size: 0.85rem; margin: 0; }
+        .news-nav-back {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            text-decoration: none;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 500;
+            padding: 0.3rem 0.7rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--line);
+            transition: all 0.18s;
+        }
 
-/* Skeleton loader */
-.skeleton {
-    background: linear-gradient(90deg, var(--bg-panel-2) 25%, var(--bg-panel-3) 50%, var(--bg-panel-2) 75%);
-    background-size: 200% 100%;
-    animation: skeleton-shimmer 1.4s infinite;
-    border-radius: 6px;
-}
-@keyframes skeleton-shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
-.skeleton-card {
-    background: var(--bg-panel);
-    border: 1px solid var(--line);
-    border-radius: var(--radius);
-    overflow: hidden;
-}
-.skeleton-img { aspect-ratio: 16/9; }
-.skeleton-body { padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.6rem; }
-.skeleton-line { height: 12px; }
-.skeleton-line.lg { height: 16px; }
-.skeleton-line.sm { height: 10px; width: 50%; }
+        .news-nav-back:hover {
+            color: var(--text);
+            border-color: var(--violet);
+        }
 
-/* ── Featured badge ─────────────────────────── */
-.featured-ring {
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--violet), var(--cyan));
-}
+        /* ── Main container ─────────────────────────── */
+        .news-main {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem);
+        }
 
-/* ── Footer nav ─────────────────────────── */
-.news-footer {
-    text-align: center;
-    padding: 2rem;
-    color: var(--text-dim);
-    font-size: 0.78rem;
-    border-top: 1px solid var(--line);
-    margin-top: 3rem;
-}
-.news-footer a { color: var(--violet); text-decoration: none; }
-.news-footer a:hover { text-decoration: underline; }
+        /* ── Category filter ─────────────────────────── */
+        .cat-filter-wrap {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--line);
+        }
 
-/* ── Responsive ─────────────────────────── */
-@media (max-width: 768px) {
-    .hero-article { min-height: 400px; margin-bottom: 2rem; }
-    .hero-body { padding: 2rem 1.5rem; }
-    .hero-body h2 { font-size: 1.4rem; }
-    .news-nav-links { display: none; }
-    .articles-grid { grid-template-columns: 1fr; }
-}
-@media (max-width: 480px) {
-    .hero-article { min-height: 350px; }
-    .hero-body { padding: 1.5rem 1.25rem; }
-    .hero-body h2 { font-size: 1.25rem; }
-    .hero-excerpt { -webkit-line-clamp: 2; }
-}
-</style>
+        .cat-btn {
+            padding: 0.45rem 1rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.02);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.02em;
+        }
+
+        .cat-btn:hover {
+            border-color: rgba(139, 92, 246, 0.4);
+            color: var(--text);
+            background: rgba(139, 92, 246, 0.05);
+        }
+
+        .cat-btn.active {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: rgba(139, 92, 246, 0.4);
+            color: var(--violet);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
+        }
+
+        /* ── Hero article ─────────────────────────── */
+        .hero-article {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            min-height: 480px;
+            background: rgba(18, 23, 41, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 3rem;
+            transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            text-decoration: none;
+        }
+
+        .hero-article:hover {
+            border-color: rgba(139, 92, 246, .4);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(139, 92, 246, 0.15);
+        }
+
+        .hero-img-wrap {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+            background: var(--bg-panel-2);
+            overflow: hidden;
+        }
+
+        .hero-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+        }
+
+        .hero-img-wrap::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(8, 11, 20, 0.95) 0%, rgba(8, 11, 20, 0.6) 40%, rgba(8, 11, 20, 0.2) 100%);
+            pointer-events: none;
+        }
+
+        .hero-article:hover .hero-img-wrap img {
+            transform: scale(1.04);
+        }
+
+        .hero-img-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+            color: var(--text-dim);
+            background: linear-gradient(135deg, var(--bg-panel-2), var(--bg-panel-3));
+        }
+
+        .hero-body {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 3rem;
+            max-width: 800px;
+        }
+
+        .article-cat-badge {
+            display: inline-flex;
+            width: fit-content;
+            align-self: flex-start;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.35rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(139, 92, 246, 0.12);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            color: rgba(216, 180, 254, 0.95);
+            border: 1px solid rgba(167, 139, 250, 0.22);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .hero-body .article-cat-badge {
+            margin-bottom: 0.85rem;
+        }
+
+        .hero-body h2 {
+            font-family: 'Sora', sans-serif;
+            font-size: clamp(1.5rem, 3vw, 2.2rem);
+            font-weight: 800;
+            line-height: 1.2;
+            color: #ffffff;
+            margin-bottom: 0.75rem;
+            text-decoration: none;
+            display: block;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .hero-body h2 a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .hero-body h2 a:hover {
+            color: var(--text-violet);
+        }
+
+        .hero-excerpt {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 1.25rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+        }
+
+        .article-meta-line {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 500;
+        }
+
+        .article-meta-line .dot {
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .reading-time {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* ── Article grid ─────────────────────────── */
+        .news-grid-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+        }
+
+        .news-grid-header h3 {
+            font-family: 'Sora', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .news-grid-header h3::before {
+            content: '';
+            display: block;
+            width: 4px;
+            height: 18px;
+            background: var(--violet);
+            border-radius: 2px;
+        }
+
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        /* ── Article card ─────────────────────────── */
+        .article-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: var(--radius);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .article-card:hover {
+            background: rgba(255, 255, 255, 0.045);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .card-img-wrap {
+            position: relative;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+            background: var(--bg-panel-2);
+            flex-shrink: 0;
+        }
+
+        .card-img-wrap::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(8, 11, 20, 0.4) 0%, transparent 35%, transparent 65%, rgba(8, 11, 20, 0.6) 100%);
+            pointer-events: none;
+        }
+
+        .card-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.6s ease;
+            display: block;
+        }
+
+        .article-card:hover .card-img-wrap img {
+            transform: scale(1.04);
+        }
+
+        .card-img-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: var(--text-dim);
+            background: linear-gradient(135deg, var(--bg-panel-2), var(--bg-panel-3));
+        }
+
+        .card-img-badge {
+            position: absolute;
+            bottom: 0.75rem;
+            left: 1.25rem;
+            z-index: 2;
+        }
+
+        .card-body-content {
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .card-title {
+            font-family: 'Sora', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 0.4rem;
+        }
+
+        .card-excerpt {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-meta {
+            margin-top: auto;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* ── Pagination ─────────────────────────── */
+        .pagination-wrap {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 2rem;
+        }
+
+        .page-btn {
+            padding: 0.45rem 0.9rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--line);
+            background: var(--bg-panel);
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.18s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .page-btn:hover {
+            border-color: var(--violet);
+            color: var(--text);
+        }
+
+        .page-btn.active {
+            background: var(--violet);
+            border-color: var(--violet);
+            color: #fff;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+        }
+
+        /* ── Empty / Loading states ─────────────────────────── */
+        .state-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .state-block .state-icon {
+            font-size: 3rem;
+            opacity: 0.35;
+        }
+
+        .state-block h4 {
+            font-family: 'Sora', sans-serif;
+            font-size: 1.1rem;
+            color: var(--text);
+            margin: 0;
+        }
+
+        .state-block p {
+            font-size: 0.85rem;
+            margin: 0;
+        }
+
+        /* Skeleton loader */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-panel-2) 25%, var(--bg-panel-3) 50%, var(--bg-panel-2) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.4s infinite;
+            border-radius: 6px;
+        }
+
+        @keyframes skeleton-shimmer {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        .skeleton-card {
+            background: var(--bg-panel);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .skeleton-img {
+            aspect-ratio: 16/9;
+        }
+
+        .skeleton-body {
+            padding: 1rem 1.1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .skeleton-line {
+            height: 12px;
+        }
+
+        .skeleton-line.lg {
+            height: 16px;
+        }
+
+        .skeleton-line.sm {
+            height: 10px;
+            width: 50%;
+        }
+
+        /* ── Featured badge ─────────────────────────── */
+        .featured-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--violet), var(--cyan));
+        }
+
+        /* ── Footer nav ─────────────────────────── */
+        .news-footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-dim);
+            font-size: 0.78rem;
+            border-top: 1px solid var(--line);
+            margin-top: 3rem;
+        }
+
+        .news-footer a {
+            color: var(--violet);
+            text-decoration: none;
+        }
+
+        .news-footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Responsive ─────────────────────────── */
+        @media (max-width: 768px) {
+            .hero-article {
+                min-height: 400px;
+                margin-bottom: 2rem;
+            }
+
+            .hero-body {
+                padding: 2rem 1.5rem;
+            }
+
+            .hero-body h2 {
+                font-size: 1.4rem;
+            }
+
+            .news-nav-links {
+                display: none;
+            }
+
+            .articles-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-article {
+                min-height: 350px;
+            }
+
+            .hero-body {
+                padding: 1.5rem 1.25rem;
+            }
+
+            .hero-body h2 {
+                font-size: 1.25rem;
+            }
+
+            .hero-excerpt {
+                -webkit-line-clamp: 2;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<!-- Navigation -->
-<nav class="news-nav" role="navigation" aria-label="Navigasi NexShop News">
-    <a href="/berita" class="news-nav-brand" aria-label="NexShop News - Halaman Utama Berita">
-        <span>Nex<span class="nx-accent">Shop</span></span>
-        <span class="nx-news">News</span>
-    </a>
-
-    <ul class="news-nav-links" id="catNavLinks">
-        <li><a href="/">Beranda</a></li>
-        <li><a href="/berita" class="active">Berita</a></li>
-        <li style="color:var(--line);margin:0 0.25rem;">|</li>
-        <li><a href="#" data-cat="">Semua</a></li>
-        <li><a href="#" data-cat="Esports">Esports</a></li>
-        <li><a href="#" data-cat="Gaming">Gaming</a></li>
-        <li><a href="#" data-cat="Teknologi">Teknologi</a></li>
-        <li><a href="#" data-cat="Xbox">Xbox</a></li>
-        <li><a href="#" data-cat="PlayStation">PlayStation</a></li>
-    </ul>
-
-    <a href="/" class="news-nav-back" aria-label="Kembali ke toko NexShop">
-        <i class="fa-solid fa-store" aria-hidden="true"></i>
-        <span>Ke Toko</span>
-    </a>
-</nav>
-
-<!-- Main content -->
-<main class="news-main" id="main-content">
-
-    <!-- Category filter chips -->
-    <div class="cat-filter-wrap" role="group" aria-label="Filter kategori berita" id="catFilterWrap">
-        <button class="cat-btn active" data-cat="" aria-pressed="true">Semua</button>
-        <button class="cat-btn" data-cat="Esports" aria-pressed="false">Esports</button>
-        <button class="cat-btn" data-cat="Gaming" aria-pressed="false">Gaming</button>
-        <button class="cat-btn" data-cat="Xbox" aria-pressed="false">Xbox</button>
-        <button class="cat-btn" data-cat="PlayStation" aria-pressed="false">PlayStation</button>
-        <button class="cat-btn" data-cat="PC" aria-pressed="false">PC</button>
-        <button class="cat-btn" data-cat="Mobile" aria-pressed="false">Mobile</button>
-        <button class="cat-btn" data-cat="Teknologi" aria-pressed="false">Teknologi</button>
-        <button class="cat-btn" data-cat="Update Game" aria-pressed="false">Update Game</button>
-        <button class="cat-btn" data-cat="Industri Game" aria-pressed="false">Industri Game</button>
-    </div>
-
-    <!-- Hero article -->
-    <section id="heroSection" aria-label="Artikel utama" aria-live="polite"></section>
-
-    <!-- Latest articles grid -->
-    <section id="latestSection" aria-label="Artikel terbaru">
-        <div class="news-grid-header">
-            <h3>Artikel Terbaru</h3>
-            <span id="totalCount" style="font-size:0.78rem; color: var(--text-dim);"></span>
-        </div>
-        <div class="articles-grid" id="articlesGrid" aria-live="polite"></div>
-        <div class="pagination-wrap" id="paginationWrap" aria-label="Navigasi halaman"></div>
-    </section>
-
-</main>
-
-<footer class="nx-footer nx-footer--news">
-    <div class="nx-footer__container">
-        <div class="nx-footer__grid">
-            <!-- Brand -->
-            <div>
-                <div class="nx-footer__brand-logo">NEXSHOP NEWS</div>
-                <p class="nx-footer__brand-desc" style="text-transform: none; text-align: left;">
-                    Portal berita gaming dan esports original NexShop.
-                </p>
+    <div class="app-loader is-visible" id="appLoader" role="status" aria-live="polite" aria-busy="true">
+        <div class="app-loader-glow app-loader-glow--violet"></div>
+        <div class="app-loader-glow app-loader-glow--cyan"></div>
+        <div class="app-loader-card">
+            <div class="app-loader-logo-wrap">
+                <span class="app-loader-orbit app-loader-orbit--one"></span>
+                <span class="app-loader-orbit app-loader-orbit--two"></span>
+                <img class="app-loader-logo" src="/images/nexshop-icon.svg" alt="NexShop">
             </div>
-            
-            <!-- Navigasi -->
-            <div>
-                <h4 class="nx-footer__heading" style="text-align: left;">Navigasi</h4>
-                <ul class="nx-footer__link-list" style="text-align: left;">
-                    <li><a href="/" class="nx-footer__link">Beranda</a></li>
-                    <li><a href="/berita" class="nx-footer__link">Berita</a></li>
-                </ul>
-            </div>
-            
-            <!-- Legalitas -->
-            <div class="nx-footer__legal" style="align-items: flex-start;">
-                <h4 class="nx-footer__heading">Legalitas</h4>
-                
-                <div class="nx-footer__legal-name">
-                    <strong>NexShop</strong>
-                    <span>&middot;</span>
-                    <span>Usaha Mikro</span>
-                </div>
-                
-                <div class="nx-footer__legal-ids">
-                    <span>NIB 1408260072494</span>
-                    <span>KBLI 60390</span>
-                </div>
-                
-                <div class="nx-footer__legal-oss">
-                    <img src="/images/oss-logo.png" alt="OSS Logo">
-                    <span>Terdaftar melalui OSS</span>
-                </div>
-
-                <a href="/legalitas.html" class="nx-footer__legal-link">
-                    Informasi legalitas <i class="fa-solid fa-arrow-right"></i>
-                </a>
-            </div>
-        </div>
-        
-        <div class="nx-footer__bottom">
-            <p>&copy; 2026 NexShop. All Rights Reserved.</p>
-            <p class="nx-footer__bottom-note">Berita dan informasi gaming original. Semua artikel merupakan karya editorial NexShop.</p>
+            <div class="app-loader-brand">Nex<span>Shop</span></div>
+            <p class="app-loader-message" id="appLoaderMessage">Menyiapkan berita kamu...</p>
+            <div class="app-loader-progress" aria-hidden="true"><span></span></div>
+            <div class="app-loader-dots" aria-hidden="true"><i></i><i></i><i></i></div>
         </div>
     </div>
-</footer>
 
-<script>
-// ──────────────────────────────────────────────────────────────
-// NexShop News — berita.html client-side logic
-// ──────────────────────────────────────────────────────────────
-const API_BASE = (() => {
-    const hostname = window.location.hostname;
-    if (hostname === "nexshop.cloud" || hostname === "www.nexshop.cloud") {
-        return "https://nexshop.cloud/api";
-    }
-    return "http://localhost:3000/api";
-})();
+    <!-- Navigation -->
+    <nav class="news-nav" role="navigation" aria-label="Navigasi NexShop News">
+        <a href="/berita" class="news-nav-brand" aria-label="NexShop News - Halaman Utama Berita">
+            <span>Nex<span class="nx-accent">Shop</span></span>
+            <span class="nx-news">News</span>
+        </a>
 
-const NEWS_API = `${API_BASE}/news/articles`;
-const PAGE_SIZE = 12;
+        <ul class="news-nav-links" id="catNavLinks">
+            <li><a href="/">Beranda</a></li>
+            <li><a href="/berita" class="active">Berita</a></li>
+            <li style="color:var(--line);margin:0 0.25rem;">|</li>
+            <li><a href="#" data-cat="">Semua</a></li>
+            <li><a href="#" data-cat="Esports">Esports</a></li>
+            <li><a href="#" data-cat="Gaming">Gaming</a></li>
+            <li><a href="#" data-cat="Teknologi">Teknologi</a></li>
+            <li><a href="#" data-cat="Xbox">Xbox</a></li>
+            <li><a href="#" data-cat="PlayStation">PlayStation</a></li>
+        </ul>
 
-let currentPage    = 1;
-let currentCat     = "";
-let totalPages     = 1;
-let heroRendered   = false;
-let isFetching     = false;
+        <a href="/" class="news-nav-back" aria-label="Kembali ke toko NexShop">
+            <i class="fa-solid fa-store" aria-hidden="true"></i>
+            <span>Ke Toko</span>
+        </a>
+    </nav>
 
-// ── Helpers ─────────────────────────────────────────────
-function relativeDate(iso) {
-    if (!iso) return "";
-    const d    = new Date(iso);
-    const now  = new Date();
-    const diff = Math.floor((now - d) / 1000);
-    if (diff < 60)    return "baru saja";
-    if (diff < 3600)  return `${Math.floor(diff/60)} menit lalu`;
-    if (diff < 86400) return `${Math.floor(diff/3600)} jam lalu`;
-    if (diff < 604800)return `${Math.floor(diff/86400)} hari lalu`;
-    return d.toLocaleDateString("id-ID", { day:"numeric", month:"short", year:"numeric" });
-}
+    <!-- Main content -->
+    <main class="news-main" id="main-content">
 
-function readingTime(wordCount) {
-    if (!wordCount || wordCount <= 0) return "1 mnt";
-    const wpm   = 200;
-    const mins  = Math.max(1, Math.ceil(wordCount / wpm));
-    return `${mins} mnt`;
-}
+        <!-- Category filter chips -->
+        <div class="cat-filter-wrap" role="group" aria-label="Filter kategori berita" id="catFilterWrap">
+            <button class="cat-btn active" data-cat="" aria-pressed="true">Semua</button>
+            <button class="cat-btn" data-cat="Esports" aria-pressed="false">Esports</button>
+            <button class="cat-btn" data-cat="Gaming" aria-pressed="false">Gaming</button>
+            <button class="cat-btn" data-cat="Xbox" aria-pressed="false">Xbox</button>
+            <button class="cat-btn" data-cat="PlayStation" aria-pressed="false">PlayStation</button>
+            <button class="cat-btn" data-cat="PC" aria-pressed="false">PC</button>
+            <button class="cat-btn" data-cat="Mobile" aria-pressed="false">Mobile</button>
+            <button class="cat-btn" data-cat="Teknologi" aria-pressed="false">Teknologi</button>
+            <button class="cat-btn" data-cat="Update Game" aria-pressed="false">Update Game</button>
+            <button class="cat-btn" data-cat="Industri Game" aria-pressed="false">Industri Game</button>
+        </div>
 
-function safeText(str, maxLen) {
-    if (!str) return "";
-    const div = document.createElement("div");
-    div.textContent = str;
-    return div.innerHTML.slice(0, maxLen || 9999);
-}
+        <!-- Hero article -->
+        <section id="heroSection" aria-label="Artikel utama" aria-live="polite"></section>
 
-function articlePath(slug) {
-    return `/berita-artikel.html?slug=${encodeURIComponent(slug)}`;
-}
+        <!-- Latest articles grid -->
+        <section id="latestSection" aria-label="Artikel terbaru">
+            <div class="news-grid-header">
+                <h3>Artikel Terbaru</h3>
+                <span id="totalCount" style="font-size:0.78rem; color: var(--text-dim);"></span>
+            </div>
+            <div class="articles-grid" id="articlesGrid" aria-live="polite"></div>
+            <div class="pagination-wrap" id="paginationWrap" aria-label="Navigasi halaman"></div>
+        </section>
 
-function imgOrPlaceholder(imageUrl, alt, icon = "fa-gamepad") {
-    if (imageUrl) {
-        return `<img src="${safeText(imageUrl,500)}" alt="${safeText(alt||'',120)}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\\'card-img-placeholder\\'><i class=\\'fa-solid ${icon}\\' aria-hidden=\\'true\\'></i></div>'">`;
-    }
-    return `<div class="card-img-placeholder"><i class="fa-solid ${icon}" aria-hidden="true"></i></div>`;
-}
+    </main>
 
-function categoryIcon(cat) {
-    const map = {
-        "Esports": "fa-trophy", "Gaming": "fa-gamepad", "Xbox": "fa-xbox",
-        "PlayStation": "fa-playstation", "PC": "fa-computer", "Mobile": "fa-mobile-screen",
-        "Teknologi": "fa-microchip", "Update Game": "fa-rotate", "Industri Game": "fa-building",
-        "Berita": "fa-newspaper"
-    };
-    return map[cat] || "fa-newspaper";
-}
+    <footer class="nx-footer nx-footer--news">
+        <div class="nx-footer__container">
+            <div class="nx-footer__grid">
+                <!-- Brand -->
+                <div>
+                    <div class="nx-footer__brand-logo">NEXSHOP NEWS</div>
+                    <p class="nx-footer__brand-desc" style="text-transform: none; text-align: left;">
+                        Portal berita gaming dan esports original NexShop.
+                    </p>
+                </div>
 
-// ── Skeleton loader ─────────────────────────────────────────────
-function renderSkeletons(count = 6) {
-    const grid = document.getElementById("articlesGrid");
-    grid.innerHTML = Array.from({ length: count }, () => `
+                <!-- Navigasi -->
+                <div>
+                    <h4 class="nx-footer__heading" style="text-align: left;">Navigasi</h4>
+                    <ul class="nx-footer__link-list" style="text-align: left;">
+                        <li><a href="/" class="nx-footer__link">Beranda</a></li>
+                        <li><a href="/berita" class="nx-footer__link">Berita</a></li>
+                    </ul>
+                </div>
+
+                <!-- Legalitas -->
+                <div class="nx-footer__legal" style="align-items: flex-start;">
+                    <h4 class="nx-footer__heading">Legalitas</h4>
+
+                    <div class="nx-footer__legal-name">
+                        <strong>NexShop</strong>
+                        <span>&middot;</span>
+                        <span>Usaha Mikro</span>
+                    </div>
+
+                    <div class="nx-footer__legal-ids">
+                        <span>NIB 1408260072494</span>
+                        <span>KBLI 60390</span>
+                    </div>
+
+                    <div class="nx-footer__legal-oss">
+                        <img src="/images/oss-logo.png" alt="OSS Logo">
+                        <span>Terdaftar melalui OSS</span>
+                    </div>
+
+                    <a href="/legalitas.html" class="nx-footer__legal-link">
+                        Informasi legalitas <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nx-footer__bottom">
+                <p>&copy; 2026 NexShop. All Rights Reserved.</p>
+                <p class="nx-footer__bottom-note">Berita dan informasi gaming original. Semua artikel merupakan karya
+                    editorial NexShop.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ──────────────────────────────────────────────────────────────
+        // NexShop News — berita.html client-side logic
+        // ──────────────────────────────────────────────────────────────
+        const API_BASE = (() => {
+            const hostname = window.location.hostname;
+            if (hostname === "nexshop.cloud" || hostname === "www.nexshop.cloud") {
+                return "https://nexshop.cloud/api";
+            }
+            return "http://localhost:3000/api";
+        })();
+
+        const NEWS_API = `${API_BASE}/news/articles`;
+        const PAGE_SIZE = 12;
+
+        let currentPage = 1;
+        let currentCat = "";
+        let totalPages = 1;
+        let heroRendered = false;
+        let isFetching = false;
+        let isInitialLoad = true; // loader layar penuh cuma buat load pertama, bukan tiap ganti halaman/kategori
+
+        function hideAppLoader() {
+            const loader = document.getElementById("appLoader");
+            if (!loader) return;
+            loader.classList.remove("is-visible");
+            loader.setAttribute("aria-busy", "false");
+        }
+        // Jaring pengaman: kalau fetch macet/lambat, loader tetap ilang maksimal
+        // 5 detik biar halaman gak nyangkut nutupin daftar berita.
+        window.setTimeout(hideAppLoader, 5000);
+
+        // ── Helpers ─────────────────────────────────────────────
+        function relativeDate(iso) {
+            if (!iso) return "";
+            const d = new Date(iso);
+            const now = new Date();
+            const diff = Math.floor((now - d) / 1000);
+            if (diff < 60) return "baru saja";
+            if (diff < 3600) return `${Math.floor(diff / 60)} menit lalu`;
+            if (diff < 86400) return `${Math.floor(diff / 3600)} jam lalu`;
+            if (diff < 604800) return `${Math.floor(diff / 86400)} hari lalu`;
+            return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+        }
+
+        function readingTime(wordCount) {
+            if (!wordCount || wordCount <= 0) return "1 mnt";
+            const wpm = 200;
+            const mins = Math.max(1, Math.ceil(wordCount / wpm));
+            return `${mins} mnt`;
+        }
+
+        function safeText(str, maxLen) {
+            if (!str) return "";
+            const div = document.createElement("div");
+            div.textContent = str;
+            return div.innerHTML.slice(0, maxLen || 9999);
+        }
+
+        function articlePath(slug) {
+            return `/berita-artikel.html?slug=${encodeURIComponent(slug)}`;
+        }
+
+        function imgOrPlaceholder(imageUrl, alt, icon = "fa-gamepad") {
+            if (imageUrl) {
+                return `<img src="${safeText(imageUrl, 500)}" alt="${safeText(alt || '', 120)}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\\'card-img-placeholder\\'><i class=\\'fa-solid ${icon}\\' aria-hidden=\\'true\\'></i></div>'">`;
+            }
+            return `<div class="card-img-placeholder"><i class="fa-solid ${icon}" aria-hidden="true"></i></div>`;
+        }
+
+        function categoryIcon(cat) {
+            const map = {
+                "Esports": "fa-trophy", "Gaming": "fa-gamepad", "Xbox": "fa-xbox",
+                "PlayStation": "fa-playstation", "PC": "fa-computer", "Mobile": "fa-mobile-screen",
+                "Teknologi": "fa-microchip", "Update Game": "fa-rotate", "Industri Game": "fa-building",
+                "Berita": "fa-newspaper"
+            };
+            return map[cat] || "fa-newspaper";
+        }
+
+        // ── Skeleton loader ─────────────────────────────────────────────
+        function renderSkeletons(count = 6) {
+            const grid = document.getElementById("articlesGrid");
+            grid.innerHTML = Array.from({ length: count }, () => `
         <div class="skeleton-card" aria-hidden="true">
             <div class="skeleton skeleton-img"></div>
             <div class="skeleton-body">
@@ -713,60 +903,60 @@ function renderSkeletons(count = 6) {
             </div>
         </div>
     `).join("");
-}
+        }
 
-// ── Hero render ─────────────────────────────────────────────
-function renderHero(article) {
-    const hero = document.getElementById("heroSection");
-    if (!article) { hero.innerHTML = ""; return; }
+        // ── Hero render ─────────────────────────────────────────────
+        function renderHero(article) {
+            const hero = document.getElementById("heroSection");
+            if (!article) { hero.innerHTML = ""; return; }
 
-    const path = articlePath(article.slug);
-    const rt   = readingTime(article.word_count);
+            const path = articlePath(article.slug);
+            const rt = readingTime(article.word_count);
 
-    hero.innerHTML = `
+            hero.innerHTML = `
         <a href="${path}" class="hero-article" aria-label="Baca artikel: ${safeText(article.title, 120)}">
             ${article.is_featured ? '<div class="featured-ring"></div>' : ""}
             <div class="hero-img-wrap">
                 ${article.image_url
-                    ? `<img src="${safeText(article.image_url,500)}" alt="${safeText(article.image_alt||article.title||'',120)}" loading="eager" onerror="this.parentNode.innerHTML='<div class=\\'hero-img-placeholder\\'><i class=\\'fa-solid fa-gamepad\\' aria-hidden=\\'true\\'></i></div>'">`
+                    ? `<img src="${safeText(article.image_url, 500)}" alt="${safeText(article.image_alt || article.title || '', 120)}" loading="eager" onerror="this.parentNode.innerHTML='<div class=\\'hero-img-placeholder\\'><i class=\\'fa-solid fa-gamepad\\' aria-hidden=\\'true\\'></i></div>'">`
                     : `<div class="hero-img-placeholder"><i class="fa-solid ${categoryIcon(article.category)}" aria-hidden="true"></i></div>`
                 }
             </div>
             <div class="hero-body">
-                <span class="article-cat-badge">${safeText(article.category,40)}</span>
-                <h2><span>${safeText(article.title,200)}</span></h2>
-                ${article.excerpt ? `<p class="hero-excerpt">${safeText(article.excerpt,300)}</p>` : ""}
+                <span class="article-cat-badge">${safeText(article.category, 40)}</span>
+                <h2><span>${safeText(article.title, 200)}</span></h2>
+                ${article.excerpt ? `<p class="hero-excerpt">${safeText(article.excerpt, 300)}</p>` : ""}
                 <div class="article-meta-line">
                     <i class="fa-regular fa-user" aria-hidden="true"></i>
-                    <span>${safeText(article.author||"NexShop Editorial",60)}</span>
+                    <span>${safeText(article.author || "NexShop Editorial", 60)}</span>
                     <span class="dot" aria-hidden="true"></span>
-                    <time datetime="${article.published_at||""}">${relativeDate(article.published_at)}</time>
+                    <time datetime="${article.published_at || ""}">${relativeDate(article.published_at)}</time>
                     <span class="dot" aria-hidden="true"></span>
                     <span class="reading-time"><i class="fa-regular fa-clock" aria-hidden="true"></i> ${rt}</span>
                 </div>
             </div>
         </a>
     `;
-}
+        }
 
-// ── Article card ─────────────────────────────────────────────
-function renderCard(article) {
-    const path = articlePath(article.slug);
-    const rt   = readingTime(article.word_count);
-    return `
-        <a href="${path}" class="article-card" aria-label="Baca: ${safeText(article.title,120)}">
+        // ── Article card ─────────────────────────────────────────────
+        function renderCard(article) {
+            const path = articlePath(article.slug);
+            const rt = readingTime(article.word_count);
+            return `
+        <a href="${path}" class="article-card" aria-label="Baca: ${safeText(article.title, 120)}">
             <div class="card-img-wrap">
-                ${imgOrPlaceholder(article.image_url, article.image_alt||article.title, categoryIcon(article.category))}
+                ${imgOrPlaceholder(article.image_url, article.image_alt || article.title, categoryIcon(article.category))}
                 <div class="card-img-badge">
-                    <span class="article-cat-badge">${safeText(article.category,40)}</span>
+                    <span class="article-cat-badge">${safeText(article.category, 40)}</span>
                 </div>
                 ${article.is_featured ? '<div class="featured-ring"></div>' : ""}
             </div>
             <div class="card-body-content">
-                <div class="card-title">${safeText(article.title,200)}</div>
-                ${article.excerpt ? `<div class="card-excerpt">${safeText(article.excerpt,200)}</div>` : ""}
+                <div class="card-title">${safeText(article.title, 200)}</div>
+                ${article.excerpt ? `<div class="card-excerpt">${safeText(article.excerpt, 200)}</div>` : ""}
                 <div class="card-meta">
-                    <time datetime="${article.published_at||""}">${relativeDate(article.published_at)}</time>
+                    <time datetime="${article.published_at || ""}">${relativeDate(article.published_at)}</time>
                     <span class="dot" aria-hidden="true" style="width:3px;height:3px;border-radius:50%;background:var(--text-dim)"></span>
                     <span><i class="fa-regular fa-clock" aria-hidden="true"></i> ${rt}</span>
                     ${article.view_count > 0 ? `<span style="margin-left:auto"><i class="fa-regular fa-eye" aria-hidden="true"></i> ${article.view_count}</span>` : ""}
@@ -774,150 +964,155 @@ function renderCard(article) {
             </div>
         </a>
     `;
-}
+        }
 
-// ── Pagination ─────────────────────────────────────────────
-function renderPagination(meta) {
-    const wrap = document.getElementById("paginationWrap");
-    const { page, total_pages } = meta;
-    if (total_pages <= 1) { wrap.innerHTML = ""; return; }
+        // ── Pagination ─────────────────────────────────────────────
+        function renderPagination(meta) {
+            const wrap = document.getElementById("paginationWrap");
+            const { page, total_pages } = meta;
+            if (total_pages <= 1) { wrap.innerHTML = ""; return; }
 
-    let html = "";
+            let html = "";
 
-    html += `<button class="page-btn" ${page <= 1 ? "disabled" : ""} onclick="goToPage(${page-1})" aria-label="Halaman sebelumnya">
+            html += `<button class="page-btn" ${page <= 1 ? "disabled" : ""} onclick="goToPage(${page - 1})" aria-label="Halaman sebelumnya">
                 <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
              </button>`;
 
-    for (let i = Math.max(1, page-2); i <= Math.min(total_pages, page+2); i++) {
-        html += `<button class="page-btn ${i===page?"active":""}" onclick="goToPage(${i})" aria-label="Halaman ${i}" ${i===page?'aria-current="page"':""}>
+            for (let i = Math.max(1, page - 2); i <= Math.min(total_pages, page + 2); i++) {
+                html += `<button class="page-btn ${i === page ? "active" : ""}" onclick="goToPage(${i})" aria-label="Halaman ${i}" ${i === page ? 'aria-current="page"' : ""}>
                     ${i}
                  </button>`;
-    }
+            }
 
-    html += `<button class="page-btn" ${page >= total_pages ? "disabled" : ""} onclick="goToPage(${page+1})" aria-label="Halaman berikutnya">
+            html += `<button class="page-btn" ${page >= total_pages ? "disabled" : ""} onclick="goToPage(${page + 1})" aria-label="Halaman berikutnya">
                 <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
              </button>`;
 
-    wrap.innerHTML = html;
-}
+            wrap.innerHTML = html;
+        }
 
-// ── Fetch & render ─────────────────────────────────────────────
-async function loadArticles(page = 1) {
-    if (isFetching) return;
-    isFetching = true;
+        // ── Fetch & render ─────────────────────────────────────────────
+        async function loadArticles(page = 1) {
+            if (isFetching) return;
+            isFetching = true;
 
-    currentPage = page;
-    renderSkeletons();
-    document.getElementById("paginationWrap").innerHTML = "";
+            currentPage = page;
+            renderSkeletons();
+            document.getElementById("paginationWrap").innerHTML = "";
 
-    const params = new URLSearchParams({ page, limit: PAGE_SIZE });
-    if (currentCat) params.set("category", currentCat);
+            const params = new URLSearchParams({ page, limit: PAGE_SIZE });
+            if (currentCat) params.set("category", currentCat);
 
-    try {
-        const res  = await fetch(`${NEWS_API}?${params.toString()}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
+            try {
+                const res = await fetch(`${NEWS_API}?${params.toString()}`);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const json = await res.json();
 
-        const articles = json.data || [];
-        const meta     = json.meta || { page:1, total:0, total_pages:1 };
+                const articles = json.data || [];
+                const meta = json.meta || { page: 1, total: 0, total_pages: 1 };
 
-        // Hero: gunakan artikel pinned/featured atau artikel pertama
-        const hero = (!currentCat && page === 1)
-            ? (articles.find(a => a.is_pinned) || articles.find(a => a.is_featured) || articles[0])
-            : null;
+                // Hero: gunakan artikel pinned/featured atau artikel pertama
+                const hero = (!currentCat && page === 1)
+                    ? (articles.find(a => a.is_pinned) || articles.find(a => a.is_featured) || articles[0])
+                    : null;
 
-        renderHero(hero || null);
+                renderHero(hero || null);
 
-        // Grid: tampilkan semua artikel sesuai data dari API
-        // Agar counter "2 artikel" benar-benar match dengan 2 card yang dirender
-        const gridArticles = articles;
+                // Grid: tampilkan semua artikel sesuai data dari API
+                // Agar counter "2 artikel" benar-benar match dengan 2 card yang dirender
+                const gridArticles = articles;
 
-        const grid = document.getElementById("articlesGrid");
-        if (!gridArticles.length && !hero) {
-            grid.innerHTML = `
+                const grid = document.getElementById("articlesGrid");
+                if (!gridArticles.length && !hero) {
+                    grid.innerHTML = `
                 <div class="state-block" style="grid-column:1/-1" role="status">
                     <div class="state-icon"><i class="fa-regular fa-newspaper" aria-hidden="true"></i></div>
                     <h4>Belum ada artikel</h4>
-                    <p>${currentCat ? `Tidak ada artikel di kategori "${safeText(currentCat,40)}" saat ini.` : "Belum ada artikel yang dipublikasikan."}</p>
+                    <p>${currentCat ? `Tidak ada artikel di kategori "${safeText(currentCat, 40)}" saat ini.` : "Belum ada artikel yang dipublikasikan."}</p>
                 </div>`;
-            document.getElementById("paginationWrap").innerHTML = "";
-            document.getElementById("totalCount").textContent = "";
-        } else {
-            grid.innerHTML = gridArticles.map(renderCard).join("");
-            document.getElementById("totalCount").textContent = `${meta.total} artikel`;
-            totalPages = meta.total_pages;
-            renderPagination(meta);
-        }
+                    document.getElementById("paginationWrap").innerHTML = "";
+                    document.getElementById("totalCount").textContent = "";
+                } else {
+                    grid.innerHTML = gridArticles.map(renderCard).join("");
+                    document.getElementById("totalCount").textContent = `${meta.total} artikel`;
+                    totalPages = meta.total_pages;
+                    renderPagination(meta);
+                }
 
-    } catch (err) {
-        document.getElementById("articlesGrid").innerHTML = `
+            } catch (err) {
+                document.getElementById("articlesGrid").innerHTML = `
             <div class="state-block" style="grid-column:1/-1" role="alert">
                 <div class="state-icon"><i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i></div>
                 <h4>Gagal memuat artikel</h4>
                 <p>Periksa koneksi internet atau coba beberapa saat lagi.</p>
                 <button class="cat-btn" onclick="loadArticles(1)" style="margin-top:0.5rem">Coba Lagi</button>
             </div>`;
-        console.error("NexShop News fetch error:", err);
-    } finally {
-        isFetching = false;
-    }
-}
+                console.error("NexShop News fetch error:", err);
+            } finally {
+                isFetching = false;
+                if (isInitialLoad) {
+                    isInitialLoad = false;
+                    hideAppLoader();
+                }
+            }
+        }
 
-function goToPage(page) {
-    if (page < 1 || page > totalPages) return;
-    loadArticles(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-}
+        function goToPage(page) {
+            if (page < 1 || page > totalPages) return;
+            loadArticles(page);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
 
-// ── Category filter ─────────────────────────────────────────────
-function initCategoryFilter() {
-    document.querySelectorAll(".cat-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-            const cat = btn.dataset.cat || "";
-            if (cat === currentCat) return;
-            currentCat = cat;
+        // ── Category filter ─────────────────────────────────────────────
+        function initCategoryFilter() {
+            document.querySelectorAll(".cat-btn").forEach(btn => {
+                btn.addEventListener("click", () => {
+                    const cat = btn.dataset.cat || "";
+                    if (cat === currentCat) return;
+                    currentCat = cat;
 
+                    document.querySelectorAll(".cat-btn").forEach(b => {
+                        b.classList.toggle("active", b.dataset.cat === cat);
+                        b.setAttribute("aria-pressed", b.dataset.cat === cat ? "true" : "false");
+                    });
+                    document.querySelectorAll("#catNavLinks a[data-cat]").forEach(a => {
+                        a.classList.toggle("active", (a.dataset.cat || "") === cat);
+                    });
+
+                    loadArticles(1);
+                });
+            });
+
+            // Nav links
+            document.querySelectorAll("#catNavLinks a[data-cat]").forEach(a => {
+                a.addEventListener("click", e => {
+                    e.preventDefault();
+                    const cat = a.dataset.cat || "";
+                    document.querySelector(`.cat-btn[data-cat="${cat}"]`)?.click();
+                });
+            });
+        }
+
+        // ── Init ─────────────────────────────────────────────
+        initCategoryFilter();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const qsCat = urlParams.get("cat");
+        const validCats = ["Esports", "Gaming", "Xbox", "PlayStation", "PC", "Mobile", "Teknologi", "Update Game", "Industri Game"];
+
+        if (qsCat && validCats.includes(qsCat)) {
+            currentCat = qsCat;
             document.querySelectorAll(".cat-btn").forEach(b => {
-                b.classList.toggle("active", b.dataset.cat === cat);
-                b.setAttribute("aria-pressed", b.dataset.cat === cat ? "true" : "false");
+                b.classList.toggle("active", b.dataset.cat === currentCat);
+                b.setAttribute("aria-pressed", b.dataset.cat === currentCat ? "true" : "false");
             });
             document.querySelectorAll("#catNavLinks a[data-cat]").forEach(a => {
-                a.classList.toggle("active", (a.dataset.cat||"") === cat);
+                a.classList.toggle("active", (a.dataset.cat || "") === currentCat);
             });
+        }
 
-            loadArticles(1);
-        });
-    });
-
-    // Nav links
-    document.querySelectorAll("#catNavLinks a[data-cat]").forEach(a => {
-        a.addEventListener("click", e => {
-            e.preventDefault();
-            const cat = a.dataset.cat || "";
-            document.querySelector(`.cat-btn[data-cat="${cat}"]`)?.click();
-        });
-    });
-}
-
-// ── Init ─────────────────────────────────────────────
-initCategoryFilter();
-
-const urlParams = new URLSearchParams(window.location.search);
-const qsCat = urlParams.get("cat");
-const validCats = ["Esports", "Gaming", "Xbox", "PlayStation", "PC", "Mobile", "Teknologi", "Update Game", "Industri Game"];
-
-if (qsCat && validCats.includes(qsCat)) {
-    currentCat = qsCat;
-    document.querySelectorAll(".cat-btn").forEach(b => {
-        b.classList.toggle("active", b.dataset.cat === currentCat);
-        b.setAttribute("aria-pressed", b.dataset.cat === currentCat ? "true" : "false");
-    });
-    document.querySelectorAll("#catNavLinks a[data-cat]").forEach(a => {
-        a.classList.toggle("active", (a.dataset.cat||"") === currentCat);
-    });
-}
-
-loadArticles(1);
-</script>
+        loadArticles(1);
+    </script>
 </body>
+
 </html>
