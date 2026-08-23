@@ -4777,6 +4777,13 @@ function initWalletUI() {
         openTopupBtn.addEventListener("click", () => {
             document.getElementById("walletViewOverview").style.display = "none";
             document.getElementById("walletViewTopup").style.display = "block";
+            document.getElementById("walletViewQris").style.display = "none";
+            document.getElementById("walletViewSuccess").style.display = "none";
+            const expView = document.getElementById("walletViewExpired");
+            if (expView) expView.style.display = "none";
+            
+            // Default select Rp 100.000 on open
+            selectPresetAmount(100000);
         });
     }
 
@@ -4788,54 +4795,166 @@ function initWalletUI() {
         });
     }
 
-    // Presets
-    document.querySelectorAll(".topup-preset-pill").forEach(btn => {
+    // --- Currency Formatter & Presets Helpers ---
+    const customInput = document.getElementById("inputCustomTopupAmount");
+    const clearBtn = document.getElementById("btnClearCustomAmount");
+    const helperText = document.getElementById("amountHelperText");
+    const errorText = document.getElementById("amountErrorText");
+    const submitBtn = document.getElementById("btnSubmitTopup");
+    const wrapper = customInput ? customInput.closest(".nx-custom-amount-wrapper") : null;
+
+    function formatNumberThousand(val) {
+        if (!val && val !== 0) return "";
+        return val.toString().replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function getNumericAmount() {
+        if (!customInput) return 0;
+        const clean = customInput.value.replace(/\D/g, "");
+        return parseInt(clean, 10) || 0;
+    }
+
+    function validateAmount() {
+        const amount = getNumericAmount();
+        if (clearBtn) {
+            clearBtn.style.display = amount > 0 ? "inline-block" : "none";
+        }
+
+        if (amount === 0) {
+            if (wrapper) wrapper.classList.remove("invalid");
+            if (errorText) errorText.style.display = "none";
+            if (helperText) helperText.style.display = "inline";
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                const textSpan = document.getElementById("btnSubmitTopupText");
+                if (textSpan) textSpan.textContent = "Pilih / Masukkan Nominal";
+            }
+            return false;
+        }
+
+        if (amount < 10000) {
+            if (wrapper) wrapper.classList.add("invalid");
+            if (errorText) {
+                errorText.textContent = "Minimal top up Rp 10.000";
+                errorText.style.display = "inline";
+            }
+            if (helperText) helperText.style.display = "none";
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                const textSpan = document.getElementById("btnSubmitTopupText");
+                if (textSpan) textSpan.textContent = "Minimal Rp 10.000";
+            }
+            return false;
+        }
+
+        if (amount > 10000000) {
+            if (wrapper) wrapper.classList.add("invalid");
+            if (errorText) {
+                errorText.textContent = "Maksimal top up Rp 10.000.000";
+                errorText.style.display = "inline";
+            }
+            if (helperText) helperText.style.display = "none";
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                const textSpan = document.getElementById("btnSubmitTopupText");
+                if (textSpan) textSpan.textContent = "Maksimal Rp 10.000.000";
+            }
+            return false;
+        }
+
+        // Valid
+        if (wrapper) wrapper.classList.remove("invalid");
+        if (errorText) errorText.style.display = "none";
+        if (helperText) {
+            helperText.style.display = "inline";
+            helperText.textContent = "Min. Rp 10.000 • Maks. Rp 10.000.000";
+        }
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            const textSpan = document.getElementById("btnSubmitTopupText");
+            if (textSpan) textSpan.textContent = "Lanjutkan Pembayaran";
+        }
+        return true;
+    }
+
+    function selectPresetAmount(amount) {
+        if (!customInput) return;
+        customInput.value = formatNumberThousand(amount);
+        document.querySelectorAll(".nx-preset-card").forEach(btn => {
+            const btnAmt = parseInt(btn.dataset.amount, 10);
+            btn.classList.toggle("selected", btnAmt === amount);
+        });
+        validateAmount();
+    }
+
+    // Preset cards click
+    document.querySelectorAll(".nx-preset-card").forEach(btn => {
         btn.addEventListener("click", () => {
-            document.querySelectorAll(".topup-preset-pill").forEach(b => b.classList.remove("selected"));
-            btn.classList.add("selected");
-            const input = document.getElementById("inputCustomTopupAmount");
-            if (input) input.value = btn.dataset.amount;
+            const amount = parseInt(btn.dataset.amount, 10);
+            selectPresetAmount(amount);
         });
     });
 
-    // Method Cards
+    // Custom input real-time typing
+    if (customInput) {
+        customInput.addEventListener("input", () => {
+            const rawDigits = customInput.value.replace(/\D/g, "");
+            customInput.value = formatNumberThousand(rawDigits);
+
+            const amt = parseInt(rawDigits, 10) || 0;
+            document.querySelectorAll(".nx-preset-card").forEach(btn => {
+                const btnAmt = parseInt(btn.dataset.amount, 10);
+                btn.classList.toggle("selected", btnAmt === amt);
+            });
+
+            validateAmount();
+        });
+    }
+
+    if (clearBtn) {
+        clearBtn.addEventListener("click", () => {
+            if (customInput) customInput.value = "";
+            document.querySelectorAll(".nx-preset-card").forEach(btn => btn.classList.remove("selected"));
+            validateAmount();
+            if (customInput) customInput.focus();
+        });
+    }
+
+    // Payment Method Cards
     const cardQris = document.getElementById("cardMethodQris");
     const cardVa = document.getElementById("cardMethodVa");
     if (cardQris && cardVa) {
         cardQris.addEventListener("click", () => {
             cardQris.classList.add("active");
             cardVa.classList.remove("active");
-            cardQris.querySelector("input").checked = true;
+            const inp = cardQris.querySelector("input");
+            if (inp) inp.checked = true;
         });
         cardVa.addEventListener("click", () => {
             cardVa.classList.add("active");
             cardQris.classList.remove("active");
-            cardVa.querySelector("input").checked = true;
+            const inp = cardVa.querySelector("input");
+            if (inp) inp.checked = true;
         });
     }
 
     // Submit Top Up
-    const submitBtn = document.getElementById("btnSubmitTopup");
     if (submitBtn) {
         submitBtn.addEventListener("click", async () => {
-            const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
-            if (!token) return;
+            const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) || localStorage.getItem("nexshop-public-token") || localStorage.getItem("token");
+            if (!token) {
+                if (typeof toast === "function") toast("Silakan login terlebih dahulu.", "info");
+                return;
+            }
 
-            const amount = parseInt(document.getElementById("inputCustomTopupAmount")?.value, 10);
-            if (!amount || isNaN(amount) || amount < 10000) {
-                alert("Nominal top up minimal Rp 10.000");
-                return;
-            }
-            if (amount > 10000000) {
-                alert("Nominal top up maksimal Rp 10.000.000 per transaksi");
-                return;
-            }
+            if (!validateAmount()) return;
+            const amount = getNumericAmount();
 
             const methodInput = document.querySelector("input[name='walletTopupPaymentMethod']:checked");
             const paymentMethod = methodInput ? methodInput.value : "qris";
 
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1rem;">progress_activity</span> Menyiapkan Tagihan...`;
+            submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Menyiapkan Tagihan...</span>`;
 
             try {
                 const res = await fetch(`${API_BASE}/wallet/topup`, {
@@ -4870,6 +4989,11 @@ function initWalletUI() {
                         if (pollCount > 60) {
                             clearInterval(activeUserWalletTopupPoll);
                             activeUserWalletTopupPoll = null;
+                            const expView = document.getElementById("walletViewExpired");
+                            if (expView) {
+                                document.getElementById("walletViewQris").style.display = "none";
+                                expView.style.display = "block";
+                            }
                             return;
                         }
                         try {
@@ -4884,7 +5008,8 @@ function initWalletUI() {
                                 // Tampilkan layar sukses
                                 document.getElementById("walletViewQris").style.display = "none";
                                 document.getElementById("walletViewSuccess").style.display = "block";
-                                document.getElementById("successTopupCopy").textContent = `Saldo sebesar ${rupiah(amount)} telah berhasil ditambahkan ke dompet kamu.`;
+                                const copyEl = document.getElementById("successTopupCopy");
+                                if (copyEl) copyEl.textContent = `Saldo sebesar ${rupiah(amount)} telah berhasil ditambahkan ke dompet kamu.`;
 
                                 fetchUserWallet().then(() => {
                                     const successNewBal = document.getElementById("successNewBalance");
@@ -4896,9 +5021,13 @@ function initWalletUI() {
                             } else if (checkData.status === "FAILED" || checkData.status === "EXPIRED" || checkData.status === "CANCELLED") {
                                 clearInterval(activeUserWalletTopupPoll);
                                 activeUserWalletTopupPoll = null;
-                                alert("Top up " + checkData.status);
+                                const expView = document.getElementById("walletViewExpired");
+                                const expTitle = document.getElementById("expiredViewTitle");
+                                const expCopy = document.getElementById("expiredViewCopy");
+                                if (expTitle) expTitle.textContent = checkData.status === "EXPIRED" ? "Pembayaran Kedaluwarsa" : "Pembayaran Gagal / Dibatalkan";
+                                if (expCopy) expCopy.textContent = "Waktu pembayaran QRIS telah habis atau invoice telah dibatalkan.";
                                 document.getElementById("walletViewQris").style.display = "none";
-                                document.getElementById("walletViewOverview").style.display = "block";
+                                if (expView) expView.style.display = "block";
                             }
                         } catch (_) {}
                     }, 3500);
@@ -4906,10 +5035,11 @@ function initWalletUI() {
                     window.location.href = data.payment_url;
                 }
             } catch (err) {
-                alert("Gagal memproses top up: " + err.message);
+                if (typeof toast === "function") toast("Gagal memproses top up: " + err.message, "error");
+                else alert("Gagal memproses top up: " + err.message);
             } finally {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = `<span>Lanjutkan Pembayaran</span><span class="material-symbols-outlined" style="font-size:1rem;">arrow_forward</span>`;
+                submitBtn.innerHTML = `<span id="btnSubmitTopupText">Lanjutkan Pembayaran</span> <i class="fa-solid fa-arrow-right nx-cta-arrow"></i>`;
             }
         });
     }
@@ -4927,6 +5057,17 @@ function initWalletUI() {
         });
     }
 
+    // Retry from expired
+    const retryBtn = document.getElementById("btnRetryTopup");
+    if (retryBtn) {
+        retryBtn.addEventListener("click", () => {
+            const expView = document.getElementById("walletViewExpired");
+            if (expView) expView.style.display = "none";
+            document.getElementById("walletViewTopup").style.display = "block";
+            selectPresetAmount(100000);
+        });
+    }
+
     // Close Success
     const closeSuccessBtn = document.getElementById("btnCloseSuccessWallet");
     if (closeSuccessBtn) {
@@ -4938,7 +5079,7 @@ function initWalletUI() {
         });
     }
 
-    // Initial Load
+    // Initial Load & default preset
     fetchUserWallet();
 }
 

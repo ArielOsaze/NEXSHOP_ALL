@@ -8032,25 +8032,780 @@ html:not(.dark) .home-glass-badge {
         font-size: 0.78rem;
     }
 
-    .wallet-modal-overlay {
-        align-items: flex-end !important;
-        padding: 0 !important;
+/* ==========================================================================
+   PREMIUM NEXSHOP WALLET MODAL DESIGN SYSTEM
+   ========================================================================== */
+.nx-wallet-modal-card {
+    max-width: 580px !important;
+    width: 100% !important;
+    border-radius: 24px !important;
+    background: #0c1220 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+}
+
+.nx-wallet-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 20px 24px 18px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: #0f172a !important;
+}
+
+.nx-wallet-header-brand {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+}
+
+.nx-wallet-header-icon-box {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 14px !important;
+    background: linear-gradient(135deg, #0ea5e9, #6366f1) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.2rem !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35) !important;
+    flex-shrink: 0 !important;
+}
+
+.nx-wallet-header-title {
+    font-size: 1.15rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    margin: 0 0 2px !important;
+    letter-spacing: -0.02em !important;
+    font-family: inherit !important;
+}
+
+.nx-wallet-header-subtitle {
+    font-size: 0.76rem !important;
+    color: #94a3b8 !important;
+    margin: 0 !important;
+    line-height: 1.35 !important;
+}
+
+.nx-wallet-close-btn {
+    position: static !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #cbd5e1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.nx-wallet-close-btn:hover {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+    border-color: transparent !important;
+}
+
+.nx-wallet-modal-body {
+    padding: 22px 24px !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+}
+
+/* Custom Scrollbar */
+.nx-wallet-modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+.nx-wallet-modal-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+}
+
+.nx-wallet-balance-card {
+    position: relative !important;
+    border-radius: 20px !important;
+    background: linear-gradient(135deg, #18223d 0%, #0d1527 100%) !important;
+    border: 1.5px solid rgba(56, 189, 248, 0.3) !important;
+    padding: 20px 22px !important;
+    margin-bottom: 16px !important;
+    overflow: hidden !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+.nx-balance-eyebrow {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    font-size: 0.74rem !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: #94a3b8 !important;
+    margin-bottom: 6px !important;
+}
+
+.nx-verified-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    color: #38bdf8 !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    text-transform: none !important;
+}
+
+.nx-balance-val {
+    font-size: 2.1rem !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.03em !important;
+    margin-bottom: 6px !important;
+}
+
+.nx-balance-card-footer {
+    font-size: 0.74rem !important;
+    color: #64748b !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.nx-wallet-actions-row {
+    display: flex !important;
+    gap: 10px !important;
+    margin-bottom: 20px !important;
+}
+
+.nx-btn-wallet-action.primary {
+    flex: 1 !important;
+    padding: 12px 18px !important;
+    border-radius: 12px !important;
+    background: linear-gradient(135deg, #0ea5e9, #6366f1) !important;
+    color: #ffffff !important;
+    font-size: 0.88rem !important;
+    font-weight: 800 !important;
+    border: none !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3) !important;
+    transition: all 0.18s ease !important;
+}
+
+.nx-btn-wallet-action.primary:hover {
+    background: linear-gradient(135deg, #0284c7, #4f46e5) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 6px 18px rgba(14, 165, 233, 0.4) !important;
+}
+
+.nx-btn-wallet-action.secondary {
+    width: 48px !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+    font-size: 1rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: all 0.18s ease !important;
+}
+
+.nx-btn-wallet-action.secondary:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+}
+
+.nx-wallet-mutations-section {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 16px !important;
+    padding: 16px !important;
+}
+
+.nx-mutations-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 12px !important;
+    padding-bottom: 8px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.nx-mutations-header h4 {
+    font-size: 0.86rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    margin: 0 !important;
+}
+
+.nx-mutations-header span {
+    font-size: 0.7rem !important;
+    color: #64748b !important;
+}
+
+.nx-mutations-loading {
+    text-align: center !important;
+    padding: 1.5rem !important;
+    font-size: 0.8rem !important;
+    color: #94a3b8 !important;
+}
+
+/* View 2: Form Top Up */
+.nx-view-top-bar {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 18px !important;
+}
+
+.nx-wallet-back-btn {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 8px 16px !important;
+    border-radius: 999px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #cbd5e1 !important;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.18s ease !important;
+    min-height: 38px !important;
+}
+
+.nx-wallet-back-btn:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+    transform: translateX(-2px) !important;
+}
+
+.nx-view-tag {
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.1) !important;
+    padding: 4px 10px !important;
+    border-radius: 8px !important;
+    border: 1px solid rgba(56, 189, 248, 0.2) !important;
+}
+
+.nx-form-section {
+    margin-bottom: 18px !important;
+}
+
+.nx-section-header {
+    margin-bottom: 8px !important;
+}
+
+.nx-section-title {
+    font-size: 0.74rem !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    color: #94a3b8 !important;
+}
+
+.nx-presets-grid {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+}
+
+.nx-preset-card {
+    position: relative !important;
+    padding: 14px 10px !important;
+    border-radius: 14px !important;
+    background: #111827 !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+    font-size: 0.86rem !important;
+    font-weight: 800 !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    min-height: 48px !important;
+}
+
+.nx-preset-card:hover {
+    border-color: rgba(56, 189, 248, 0.4) !important;
+    background: #172236 !important;
+    transform: translateY(-2px) !important;
+    color: #ffffff !important;
+}
+
+.nx-preset-card.selected {
+    border-color: #38bdf8 !important;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.16), rgba(99, 102, 241, 0.1)) !important;
+    color: #38bdf8 !important;
+    box-shadow: 0 0 0 1px #38bdf8, 0 6px 18px rgba(14, 165, 233, 0.2) !important;
+    transform: translateY(-2px) !important;
+}
+
+.nx-preset-check {
+    position: absolute !important;
+    top: 6px !important;
+    right: 6px !important;
+    width: 16px !important;
+    height: 16px !important;
+    border-radius: 50% !important;
+    background: #38bdf8 !important;
+    color: #04141a !important;
+    font-size: 9px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    opacity: 0 !important;
+    transform: scale(0.5) !important;
+    transition: all 0.18s ease !important;
+}
+
+.nx-preset-card.selected .nx-preset-check {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+}
+
+.nx-custom-amount-wrapper {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    border-radius: 14px !important;
+    background: #111827 !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
+    padding: 0 14px !important;
+    transition: all 0.18s ease !important;
+    min-height: 50px !important;
+}
+
+.nx-custom-amount-wrapper:focus-within {
+    border-color: #38bdf8 !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+    background: #131d30 !important;
+}
+
+.nx-custom-amount-wrapper.invalid {
+    border-color: #f87171 !important;
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.2) !important;
+}
+
+.nx-currency-prefix {
+    font-size: 0.95rem !important;
+    font-weight: 800 !important;
+    color: #94a3b8 !important;
+    margin-right: 8px !important;
+    user-select: none !important;
+}
+
+.nx-custom-amount-input {
+    width: 100% !important;
+    border: none !important;
+    background: transparent !important;
+    color: #ffffff !important;
+    font-size: 1.05rem !important;
+    font-weight: 800 !important;
+    outline: none !important;
+    padding: 12px 0 !important;
+    font-family: inherit !important;
+}
+
+.nx-custom-amount-input::-webkit-inner-spin-button,
+.nx-custom-amount-input::-webkit-outer-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+.nx-custom-amount-input[type=number] {
+    -moz-appearance: textfield !important;
+}
+
+.nx-clear-amount-btn {
+    background: none !important;
+    border: none !important;
+    color: #64748b !important;
+    font-size: 1rem !important;
+    cursor: pointer !important;
+    padding: 4px !important;
+    transition: color 0.15s !important;
+}
+
+.nx-clear-amount-btn:hover {
+    color: #f87171 !important;
+}
+
+.nx-amount-helper-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-top: 6px !important;
+    padding: 0 2px !important;
+}
+
+.nx-amount-helper-text {
+    font-size: 0.72rem !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+}
+
+.nx-amount-error-text {
+    font-size: 0.72rem !important;
+    color: #f87171 !important;
+    font-weight: 700 !important;
+}
+
+.nx-payment-methods-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+}
+
+.nx-payment-method-card {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    padding: 12px 14px !important;
+    border-radius: 16px !important;
+    background: #111827 !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.08) !important;
+    cursor: pointer !important;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    min-height: 64px !important;
+    user-select: none !important;
+}
+
+.nx-payment-method-card:hover {
+    border-color: rgba(56, 189, 248, 0.4) !important;
+    background: #172236 !important;
+}
+
+.nx-payment-method-card.active {
+    border-color: #38bdf8 !important;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.14), rgba(99, 102, 241, 0.08)) !important;
+    box-shadow: 0 0 0 1px #38bdf8, 0 6px 18px rgba(14, 165, 233, 0.15) !important;
+}
+
+.nx-pm-icon-box {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.1rem !important;
+    flex-shrink: 0 !important;
+}
+
+.nx-pm-icon-box.qris {
+    background: rgba(56, 189, 248, 0.15) !important;
+    color: #38bdf8 !important;
+}
+
+.nx-pm-icon-box.va {
+    background: rgba(168, 85, 247, 0.15) !important;
+    color: #c084fc !important;
+}
+
+.nx-pm-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+
+.nx-pm-title {
+    display: block !important;
+    font-size: 0.84rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    line-height: 1.2 !important;
+    margin-bottom: 2px !important;
+}
+
+.nx-pm-desc {
+    display: block !important;
+    font-size: 0.68rem !important;
+    color: #94a3b8 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+.nx-pm-radio {
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 50% !important;
+    border: 2px solid rgba(255, 255, 255, 0.2) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.65rem !important;
+    color: transparent !important;
+    flex-shrink: 0 !important;
+    transition: all 0.15s ease !important;
+}
+
+.nx-payment-method-card.active .nx-pm-radio {
+    background: #38bdf8 !important;
+    border-color: #38bdf8 !important;
+    color: #04141a !important;
+    font-weight: 900 !important;
+}
+
+.nx-wallet-primary-cta {
+    width: 100% !important;
+    height: 50px !important;
+    border-radius: 14px !important;
+    background: linear-gradient(135deg, #0ea5e9, #4f46e5) !important;
+    color: #ffffff !important;
+    font-size: 0.92rem !important;
+    font-weight: 800 !important;
+    border: none !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    box-shadow: 0 8px 24px rgba(14, 165, 233, 0.35) !important;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.nx-wallet-primary-cta:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0284c7, #4338ca) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 28px rgba(14, 165, 233, 0.45) !important;
+}
+
+.nx-wallet-primary-cta:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* View 3: QRIS Display */
+.nx-qris-top-banner {
+    margin-bottom: 14px !important;
+}
+
+.nx-qris-heading {
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: #94a3b8 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 4px !important;
+}
+
+.nx-qris-amount-val {
+    font-size: 1.9rem !important;
+    font-weight: 900 !important;
+    color: #38bdf8 !important;
+    letter-spacing: -0.02em !important;
+}
+
+.nx-qris-code-container {
+    display: inline-block !important;
+    padding: 14px !important;
+    background: #ffffff !important;
+    border-radius: 20px !important;
+    border: 2px solid rgba(56, 189, 248, 0.5) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45) !important;
+    margin-bottom: 14px !important;
+}
+
+.nx-qris-img {
+    width: 210px !important;
+    height: 210px !important;
+    display: block !important;
+    object-fit: contain !important;
+    border-radius: 8px !important;
+}
+
+.nx-qris-status-box {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 14px !important;
+    border-radius: 999px !important;
+    background: rgba(251, 191, 36, 0.12) !important;
+    border: 1px solid rgba(251, 191, 36, 0.3) !important;
+    color: #fbbf24 !important;
+    font-size: 0.8rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 12px !important;
+}
+
+.nx-qris-pulse-indicator {
+    position: relative !important;
+    width: 10px !important;
+    height: 10px !important;
+}
+
+.nx-pulse-ring {
+    position: absolute !important;
+    inset: -3px !important;
+    border-radius: 50% !important;
+    background: rgba(251, 191, 36, 0.4) !important;
+    animation: nxPulse 1.5s cubic-bezier(0.24, 0, 0.38, 1) infinite !important;
+}
+
+.nx-pulse-core {
+    position: absolute !important;
+    inset: 0 !important;
+    border-radius: 50% !important;
+    background: #fbbf24 !important;
+}
+
+@keyframes nxPulse {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.6); opacity: 0; }
+    100% { transform: scale(0.95); opacity: 0; }
+}
+
+.nx-qris-instructions {
+    font-size: 0.74rem !important;
+    color: #94a3b8 !important;
+    line-height: 1.45 !important;
+    max-width: 400px !important;
+    margin: 0 auto 16px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    text-align: left !important;
+}
+
+.nx-btn-cancel-qris {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 8px 18px !important;
+    border-radius: 10px !important;
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #94a3b8 !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+}
+
+.nx-btn-cancel-qris:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    color: #ffffff !important;
+}
+
+/* View 4: Success */
+.nx-success-icon-badge {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 50% !important;
+    background: rgba(16, 185, 129, 0.15) !important;
+    border: 2px solid #10b981 !important;
+    color: #10b981 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.8rem !important;
+    margin: 0 auto 12px !important;
+    box-shadow: 0 0 24px rgba(16, 185, 129, 0.3) !important;
+}
+
+.nx-success-title {
+    font-size: 1.25rem !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    margin: 0 0 4px !important;
+}
+
+.nx-success-copy {
+    font-size: 0.82rem !important;
+    color: #94a3b8 !important;
+    margin: 0 0 16px !important;
+}
+
+.nx-success-balance-box {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 14px !important;
+    padding: 14px !important;
+    margin-bottom: 18px !important;
+}
+
+.nx-success-balance-label {
+    display: block !important;
+    font-size: 0.72rem !important;
+    color: #94a3b8 !important;
+    margin-bottom: 2px !important;
+}
+
+.nx-success-balance-val {
+    font-size: 1.55rem !important;
+    font-weight: 900 !important;
+    color: #10b981 !important;
+}
+
+/* View 5: Expired */
+.nx-expired-icon-badge {
+    width: 64px !important;
+    height: 64px !important;
+    border-radius: 50% !important;
+    background: rgba(239, 68, 68, 0.15) !important;
+    border: 2px solid #ef4444 !important;
+    color: #ef4444 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1.8rem !important;
+    margin: 0 auto 12px !important;
+}
+
+.nx-expired-title {
+    font-size: 1.25rem !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    margin: 0 0 4px !important;
+}
+
+.nx-expired-copy {
+    font-size: 0.82rem !important;
+    color: #94a3b8 !important;
+    margin: 0 0 16px !important;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+    .nx-presets-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
     }
 
-    .wallet-modal {
-        width: 100% !important;
-        max-width: 100% !important;
+    .nx-payment-methods-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .nx-wallet-modal-card {
         border-radius: 24px 24px 0 0 !important;
         max-height: 90vh !important;
-        display: flex;
-        flex-direction: column;
-        animation: slideUpBottomSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        padding-bottom: env(safe-area-inset-bottom, 20px) !important;
     }
 
-    @keyframes slideUpBottomSheet {
-        from { transform: translateY(100%); }
-        to { transform: translateY(0); }
+    .nx-wallet-header {
+        padding: 16px 18px 14px !important;
+    }
+
+    .nx-wallet-modal-body {
+        padding: 18px 16px !important;
     }
 }
 
