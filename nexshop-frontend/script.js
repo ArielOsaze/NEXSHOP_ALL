@@ -3295,6 +3295,48 @@ function renderTwSummary() {
     const discount = twState.promo ? twState.promo.discount : 0;
     const total = Math.max(subtotal - discount, 0);
 
+    const isWallet = twState.payment === "wallet";
+    const userBal = window.currentUserWallet ? window.currentUserWallet.balance : 0;
+    const hasSufficientBalance = isWallet && window.currentUserWallet && userBal >= total;
+    const shortage = total - userBal;
+
+    let walletExtraSummary = "";
+    if (isWallet) {
+        if (!localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY)) {
+            walletExtraSummary = `
+                <div class="tw-summary-row" style="color:#f59e0b;font-weight:700;">
+                    <span>Status Wallet</span>
+                    <strong>Silakan login untuk membayar via Saldo</strong>
+                </div>
+            `;
+        } else if (window.currentUserWallet) {
+            if (hasSufficientBalance) {
+                walletExtraSummary = `
+                    <div class="tw-summary-row" style="color:#38bdf8;">
+                        <span>Saldo NexShop Wallet</span>
+                        <strong>${rupiah(userBal)}</strong>
+                    </div>
+                    <div class="tw-summary-row" style="color:#34d399;font-weight:800;">
+                        <span>Saldo Setelah Transaksi</span>
+                        <strong>${rupiah(userBal - total)}</strong>
+                    </div>
+                `;
+            } else {
+                walletExtraSummary = `
+                    <div class="tw-summary-row" style="color:#ef4444;font-weight:800;">
+                        <span>Saldo Kurang</span>
+                        <strong>${rupiah(shortage)}</strong>
+                    </div>
+                    <div style="text-align:right;margin-top:6px;">
+                        <button type="button" class="btn-wallet-action primary" data-wallet-trigger style="padding:0.4rem 0.85rem;font-size:0.78rem;border-radius:10px;display:inline-flex;align-items:center;gap:6px;">
+                            <i class="fa-solid fa-plus"></i> + Top Up Saldo Sekarang
+                        </button>
+                    </div>
+                `;
+            }
+        }
+    }
+
     el.innerHTML = `
         <div class="tw-summary-row"><span>Game</span><strong>${escapeHtml(twState.kategori)}</strong></div>
         ${twState.nicknameSupported && twState.nickname ? `<div class="tw-summary-row"><span>Nickname</span><strong>${escapeHtml(twState.nickname)}</strong></div>` : ""}
@@ -3303,10 +3345,16 @@ function renderTwSummary() {
         <div class="tw-summary-row"><span>Harga</span><strong>${rupiah(subtotal)}</strong></div>
         ${twState.promo ? `<div class="tw-summary-row"><span>Diskon (${escapeHtml(twState.promo.code)})</span><strong>-${rupiah(discount)}</strong></div>` : ""}
         <div class="tw-summary-row"><span>Metode Pembayaran</span><strong>${escapeHtml(paymentLabel)}</strong></div>
+        ${walletExtraSummary}
         <div class="tw-summary-row"><span>Total Bayar</span><strong>${rupiah(total)}</strong></div>
     `;
     document.getElementById("twConfirmCheck").checked = false;
     document.getElementById("twStep3Error").textContent = "";
+
+    const nextBtn = document.getElementById("twNextBtn");
+    if (nextBtn) {
+        nextBtn.textContent = isWallet ? "Bayar dengan NexShop Wallet" : "Bayar Sekarang";
+    }
 }
 
 // Submit topup lalu buka iPaymu dengan kanal yang sudah dipilih user di web.
@@ -4530,12 +4578,14 @@ let activeUserWalletTopupPoll = null;
 
 async function fetchUserWallet() {
     const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
-    const navWalletBalance = document.getElementById("mktNavWalletBalance");
+    const balanceElements = document.querySelectorAll(".headerWalletBalanceVal");
     const modalBalanceEl = document.getElementById("walletUserBalance");
+    const oldMktNavBalance = document.getElementById("mktNavWalletBalance");
 
     if (!token) {
         window.currentUserWallet = null;
-        if (navWalletBalance) navWalletBalance.textContent = "💰 Login Saldo";
+        balanceElements.forEach(el => { el.textContent = "Masuk Saldo"; });
+        if (oldMktNavBalance) oldMktNavBalance.textContent = "Masuk Saldo";
         if (modalBalanceEl) modalBalanceEl.textContent = "Rp 0";
         return;
     }
@@ -4547,7 +4597,8 @@ async function fetchUserWallet() {
         if (!res.ok) {
             if (res.status === 401) {
                 window.currentUserWallet = null;
-                if (navWalletBalance) navWalletBalance.textContent = "💰 Login Saldo";
+                balanceElements.forEach(el => { el.textContent = "Masuk Saldo"; });
+                if (oldMktNavBalance) oldMktNavBalance.textContent = "Masuk Saldo";
             }
             return;
         }
@@ -4555,9 +4606,18 @@ async function fetchUserWallet() {
         const data = await res.json();
         if (data && data.wallet) {
             window.currentUserWallet = data.wallet;
-            const formatted = "💰 " + rupiah(data.wallet.balance);
-            if (navWalletBalance) navWalletBalance.textContent = formatted;
-            if (modalBalanceEl) modalBalanceEl.textContent = rupiah(data.wallet.balance);
+            const formatted = rupiah(data.wallet.balance);
+            balanceElements.forEach(el => { el.textContent = formatted; });
+            if (oldMktNavBalance) oldMktNavBalance.textContent = formatted;
+            if (modalBalanceEl) modalBalanceEl.textContent = formatted;
+
+            // Re-render checkout balance jika checkout topup sedang terbuka
+            if (typeof renderTwSummary === "function" && document.getElementById("twSummary")) {
+                renderTwSummary();
+            }
+            if (typeof renderTopupPaymentGrid === "function" && document.getElementById("twPaymentGrid")) {
+                renderTopupPaymentGrid();
+            }
         }
     } catch (err) {
         console.warn("Gagal memuat saldo wallet:", err.message);
@@ -4600,11 +4660,17 @@ async function loadWalletMutations() {
             const isIn = m.direction === "IN";
             const label = TYPE_LABELS[m.type] || m.type;
             const dateStr = m.created_at ? new Date(m.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "-";
+            const iconClass = isIn ? "fa-arrow-trend-up" : "fa-arrow-trend-down";
             return `
                 <div class="wallet-mutation-item">
-                    <div>
-                        <div class="wallet-mutation-desc">${escapeHtml(label)}</div>
-                        <div class="wallet-mutation-meta">${dateStr} · Ref: ${escapeHtml(m.reference_id || "-")}</div>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <div class="wallet-mutation-icon ${isIn ? 'in' : 'out'}">
+                            <i class="fa-solid ${iconClass}"></i>
+                        </div>
+                        <div>
+                            <div class="wallet-mutation-desc">${escapeHtml(label)}</div>
+                            <div class="wallet-mutation-meta">${dateStr} · Ref: ${escapeHtml(m.reference_id || "-")}</div>
+                        </div>
                     </div>
                     <div class="wallet-mutation-amount ${isIn ? 'in' : 'out'}">
                         ${isIn ? '+' : '-'} ${rupiah(m.amount)}
@@ -4650,9 +4716,14 @@ function closeWalletModal() {
 }
 
 function initWalletUI() {
-    // Nav Button
-    const navBtn = document.getElementById("mktWalletNavBtn");
-    if (navBtn) navBtn.addEventListener("click", openWalletModal);
+    // Global Event Delegation for ANY wallet trigger
+    document.addEventListener("click", (event) => {
+        const trigger = event.target.closest("[data-wallet-trigger]");
+        if (trigger) {
+            event.preventDefault();
+            openWalletModal();
+        }
+    });
 
     // Close Button
     const closeBtn = document.getElementById("closeWalletModalBtn");
@@ -4846,4 +4917,5 @@ function initWalletUI() {
 }
 
 document.addEventListener("DOMContentLoaded", initWalletUI);
+
 

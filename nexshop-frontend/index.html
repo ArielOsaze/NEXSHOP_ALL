@@ -231,21 +231,30 @@
 <button type="button" class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors truncate" id="trackOrderBtn">Cek Transaksi</button>
 </div>
 <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-<button class="lg:hidden min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors" id="mobileMenuBtn">
+<button class="lg:hidden min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors" id="mobileMenuBtn" aria-label="Menu Navigasi">
 <span class="material-symbols-outlined text-gray-600 dark:text-gray-300 text-xl">menu</span>
 </button>
-<button class="min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors relative" id="cartBtn">
+<button class="min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors relative" id="cartBtn" aria-label="Keranjang Belanja">
 <span class="material-symbols-outlined text-gray-600 dark:text-gray-300 text-xl">shopping_bag</span>
 <span class="absolute top-2 right-2 w-2 h-2 bg-brand-cyan rounded-full animate-ping hidden" id="cartCount"></span>
 </button>
-<button class="theme-toggle min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors" id="themeToggle">
+<button class="theme-toggle min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors" id="themeToggle" aria-label="Ganti Tema">
 <span class="theme-toggle-icon text-gray-600 dark:text-gray-300 text-xl" id="theme-toggle-icon"><i class="fa-solid fa-moon"></i></span>
 </button>
-<button type="button" class="mkt-nav-wallet-btn hidden sm:inline-flex" id="mktWalletNavBtn" title="Buka NexShop Wallet">
-    <span class="material-symbols-outlined" style="font-size:1.1rem;color:#38bdf8;">account_balance_wallet</span>
-    <span id="mktNavWalletBalance">💰 Rp 0</span>
+
+<!-- Premium NexShop Wallet Header Button -->
+<button type="button" class="nx-wallet-nav-btn" data-wallet-trigger aria-label="Buka NexShop Wallet" aria-haspopup="dialog" title="Buka NexShop Wallet">
+    <div class="nx-wallet-nav-icon-wrap" aria-hidden="true">
+        <i class="fa-solid fa-wallet"></i>
+    </div>
+    <div class="nx-wallet-nav-info">
+        <span class="nx-wallet-nav-label">NexShop Wallet</span>
+        <span class="nx-wallet-nav-val headerWalletBalanceVal">Rp 0</span>
+    </div>
+    <i class="fa-solid fa-chevron-right nx-wallet-nav-chevron" aria-hidden="true"></i>
 </button>
-<div class="h-9 sm:h-10 px-4 rounded-full border border-gray-200 dark:border-white/10 cursor-pointer hover:border-brand-indigo transition-colors ml-1 sm:ml-2 shrink-0 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap max-w-[110px] truncate" id="accountBtn">Login</div>
+
+<div class="h-9 sm:h-10 px-4 rounded-full border border-gray-200 dark:border-white/10 cursor-pointer hover:border-brand-indigo transition-colors ml-1 shrink-0 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap max-w-[110px] truncate" id="accountBtn">Login</div>
 </div>
 </div>
 </nav>
@@ -258,6 +267,26 @@
             <button class="modal-close" data-close="mobileMenuOverlay" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         </div>
         <div class="drawer-body flex flex-col gap-4 p-6">
+            <!-- Mobile Drawer Quick Wallet Card -->
+            <div class="drawer-wallet-card" data-wallet-trigger role="button" tabindex="0" aria-label="Buka NexShop Wallet">
+                <div class="drawer-wallet-card-header">
+                    <div class="drawer-wallet-card-brand">
+                        <span class="drawer-wallet-icon-box"><i class="fa-solid fa-wallet"></i></span>
+                        <div>
+                            <div class="drawer-wallet-title">NexShop Wallet</div>
+                            <div class="drawer-wallet-subtitle">Saldo Siap Pakai</div>
+                        </div>
+                    </div>
+                    <button type="button" class="drawer-wallet-topup-btn" data-wallet-trigger aria-label="Top Up Saldo">
+                        <i class="fa-solid fa-plus"></i> Top Up
+                    </button>
+                </div>
+                <div class="drawer-wallet-amount-row">
+                    <div class="drawer-wallet-amount headerWalletBalanceVal">Rp 0</div>
+                    <div class="drawer-wallet-action-link">Buka Dompet <i class="fa-solid fa-chevron-right"></i></div>
+                </div>
+            </div>
+
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="#games" id="menuKatalogBtn">Katalog</a>
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="#topup" id="menuTopupBtn">Topup Diamond</a>
             <a class="text-lg font-bold text-gray-900 dark:text-white" href="/berita">Portal Berita</a>

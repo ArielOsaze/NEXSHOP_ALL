@@ -197,10 +197,16 @@
                 <span>Harga Reseller</span>
             </span>
 
-            <!-- NexShop Wallet Header Button -->
-            <button type="button" class="mkt-nav-wallet-btn" id="mktWalletNavBtn" title="Buka NexShop Wallet">
-                <span class="material-symbols-outlined" aria-hidden="true">account_balance_wallet</span>
-                <span id="mktNavWalletBalance">💰 Rp 0</span>
+            <!-- Premium NexShop Wallet Header Button -->
+            <button type="button" class="nx-wallet-nav-btn" data-wallet-trigger aria-label="Buka NexShop Wallet" aria-haspopup="dialog" title="Buka NexShop Wallet">
+                <div class="nx-wallet-nav-icon-wrap" aria-hidden="true">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+                <div class="nx-wallet-nav-info">
+                    <span class="nx-wallet-nav-label">NexShop Wallet</span>
+                    <span class="nx-wallet-nav-val headerWalletBalanceVal">Rp 0</span>
+                </div>
+                <i class="fa-solid fa-chevron-right nx-wallet-nav-chevron" aria-hidden="true"></i>
             </button>
 
             <button type="button" class="mkt-nav-track-btn" id="mktTrackNavBtn">
