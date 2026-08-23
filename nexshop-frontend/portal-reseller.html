@@ -84,7 +84,7 @@
             position: relative;
         }
 
-        /* ── Left Sidebar (TokoVoucher Gold Dark Console Style) ── */
+        /* ── Left Sidebar ── */
         .tv-sidebar {
             width: 260px;
             background-color: var(--tv-navy-sidebar);
@@ -115,20 +115,6 @@
             gap: 12px;
             text-decoration: none;
             color: #ffffff;
-        }
-
-        .tv-brand-emblem {
-            width: 40px;
-            height: 40px;
-            background: linear-gradient(135deg, #3b82f6, #6366f1);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 1.15rem;
-            color: #ffffff;
-            box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
         }
 
         .tv-brand-text {
@@ -328,7 +314,7 @@
             background: rgba(239, 68, 68, 0.15);
         }
 
-        /* ── Main Console Content (Full-Screen Width) ── */
+        /* ── Main Console Content ── */
         .tv-console-main {
             flex: 1;
             padding: 1.75rem 2.25rem 5rem;
@@ -338,7 +324,7 @@
             box-sizing: border-box;
         }
 
-        /* ── Top Header Widgets (3 Columns) ── */
+        /* ── Top Header Widgets ── */
         .tv-top-widgets-grid {
             display: grid;
             grid-template-columns: 1.25fr 1fr 1.2fr;
@@ -366,7 +352,6 @@
             box-shadow: var(--tv-shadow-hover);
         }
 
-        /* Top Widget 1: Profile & Member Code */
         .tv-widget-user-wrap {
             display: flex;
             align-items: center;
@@ -425,7 +410,6 @@
             gap: 5px;
         }
 
-        /* Top Widget 2: Kredit / Saldo */
         .tv-widget-balance-wrap {
             display: flex;
             align-items: center;
@@ -471,7 +455,6 @@
             box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
         }
 
-        /* Top Widget 3: Indikator Keamanan */
         .tv-widget-security-wrap {
             display: flex;
             align-items: center;
@@ -547,7 +530,7 @@
             font-weight: 900;
         }
 
-        /* ── Main Dashboard 2-Column Grid (Transaksi & News) ── */
+        /* ── Main Dashboard 2-Column Grid ── */
         .tv-main-grid-row {
             display: grid;
             grid-template-columns: 2.2fr 1fr;
@@ -556,7 +539,6 @@
             width: 100%;
         }
 
-        /* Card Section Component */
         .tv-section-card {
             background-color: var(--tv-card-bg);
             backdrop-filter: blur(20px);
@@ -578,7 +560,6 @@
             justify-content: space-between;
         }
 
-        /* 4-Column Transaction Metrics Header */
         .tv-transaksi-stats-row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -622,7 +603,6 @@
             border-radius: 6px;
         }
 
-        /* Chart Date Picker & Canvas */
         .tv-chart-controls-bar {
             display: flex;
             align-items: center;
@@ -654,7 +634,6 @@
             height: 100% !important;
         }
 
-        /* News & Updates Card (Right Column) */
         .tv-news-list {
             display: flex;
             flex-direction: column;
@@ -709,6 +688,165 @@
             margin-top: 6px;
         }
 
+        /* ── TOKOVOUCHER PRODUCT MATRIX STYLES ── */
+        .tv-prod-category-tabs-scroll {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 1.25rem;
+            scrollbar-width: thin;
+        }
+
+        .tv-cat-tab-btn {
+            padding: 0.55rem 1.15rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            color: #94a3b8;
+            font-size: 0.84rem;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .tv-cat-tab-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+
+        .tv-cat-tab-btn.active {
+            background: #2563eb;
+            color: #ffffff;
+            border-color: #3b82f6;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+        }
+
+        .tv-operator-grid-box {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+            gap: 8px;
+            margin-bottom: 1.25rem;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .tv-operator-pill {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 0.5rem 0.85rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #cbd5e1;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: left;
+        }
+
+        .tv-operator-pill:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(56, 189, 248, 0.3);
+            color: #ffffff;
+        }
+
+        .tv-operator-pill.active {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.45), rgba(30, 64, 175, 0.65));
+            border-color: #38bdf8;
+            color: #ffffff;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
+        }
+
+        .tv-operator-thumb {
+            width: 26px;
+            height: 26px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #0f172a;
+            flex-shrink: 0;
+        }
+
+        .tv-subvariant-tabs-scroll {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+            margin-bottom: 1.25rem;
+        }
+
+        .tv-subvariant-btn {
+            padding: 0.45rem 0.95rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            color: #94a3b8;
+            font-size: 0.78rem;
+            font-weight: 700;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .tv-subvariant-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+        }
+
+        .tv-subvariant-btn.active {
+            background: rgba(56, 189, 248, 0.2);
+            color: #38bdf8;
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        .tv-product-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.15rem;
+        }
+
+        .tv-product-card-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 1.2rem;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .tv-product-card-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(56, 189, 248, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+        }
+
+        .tv-prod-photo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 0.95rem;
+        }
+
+        .tv-product-photo {
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
+            object-fit: cover;
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
         /* ── Floating Help Action Button ── */
         .tv-fab-help {
             position: fixed;
@@ -756,7 +894,7 @@
             display: block;
         }
 
-        /* ── Table Styling (Produk, Transaksi, Mutasi) ── */
+        /* ── Table Styling ── */
         .tv-table-card {
             background-color: var(--tv-card-bg);
             backdrop-filter: blur(20px);
@@ -1139,7 +1277,7 @@
             </div>
         </aside>
 
-        <!-- ── Main Content Area (Full Screen Expansion) ── -->
+        <!-- ── Main Content Area ── -->
         <main class="tv-console-main">
 
             <!-- ── Top Header Widgets Row (3 Cards) ── -->
@@ -1151,11 +1289,11 @@
                             <span class="material-symbols-outlined" style="font-size:1.7rem;">military_tech</span>
                         </div>
                         <div class="tv-widget-user-meta">
-                            <div class="tv-widget-user-name" id="topWidgetFullName">Ariel Osaze Koinda Budi</div>
-                            <div class="tv-widget-user-email" id="topWidgetEmail">arielbudinex@gmail.com</div>
+                            <div class="tv-widget-user-name" id="topWidgetFullName">Memuat akun mitra...</div>
+                            <div class="tv-widget-user-email" id="topWidgetEmail">...</div>
                             <div class="tv-widget-member-code">
                                 <span style="color:#94a3b8;font-weight:600;">Member Code</span>
-                                <span id="topWidgetMemberCode" style="color:#60a5fa;">M260718QCNW1292PT</span>
+                                <span id="topWidgetMemberCode" style="color:#60a5fa;">...</span>
                                 <span class="material-symbols-outlined" style="font-size:0.85rem;cursor:pointer;" onclick="copyValue('topWidgetMemberCode','Member Code')">content_copy</span>
                             </div>
                         </div>
@@ -1166,8 +1304,8 @@
                 <div class="tv-card-widget">
                     <div class="tv-widget-balance-wrap">
                         <div>
-                            <div class="tv-widget-balance-label">Kredit / Saldo</div>
-                            <div class="tv-widget-balance-amount" id="topWidgetBalance">Rp 77.590</div>
+                            <div class="tv-widget-balance-label">Kredit / Saldo Modal</div>
+                            <div class="tv-widget-balance-amount" id="topWidgetBalance">Rp 0</div>
                         </div>
                         <button type="button" class="tv-btn-deposit-action" onclick="switchConsoleView('view-deposit')">
                             <span class="material-symbols-outlined" style="font-size:1rem;color:#38bdf8;">add_circle</span>
@@ -1206,10 +1344,10 @@
                 </div>
                 <div style="flex:1;">
                     <div style="font-size:0.95rem;font-weight:800;color:#fbbf24;margin-bottom:2px;">
-                        Status Kemitraan: Sedang Ditinjau Admin (Maksimal 3x24 Jam Kerja)
+                        ⚠️ Akun Belum Diverifikasi oleh Admin (Maksimal 3x24 Jam Kerja)
                     </div>
                     <div style="font-size:0.84rem;color:#cbd5e1;line-height:1.5;margin-bottom:8px;">
-                        Akun kemitraan Anda saat ini sedang dalam proses verifikasi berkas KYC KTP. Anda dapat menjelajahi seluruh menu katalog produk harga modal, dokumentasi REST API, dan riwayat. Pembuatan/generate API Key dan transaksi resmi akan aktif otomatis setelah akun disetujui.
+                        Akun kemitraan Anda saat ini sedang dalam proses verifikasi berkas KYC KTP oleh admin. Anda dapat menjelajahi seluruh menu katalog produk harga modal dan dokumentasi REST API. Pembuatan API Key dan transaksi resmi akan aktif otomatis setelah akun disetujui.
                     </div>
                     <div style="display:flex;gap:8px;flex-wrap:wrap;">
                         <a href="https://wa.me/6281234567890?text=Halo%20Admin%20NexShop,%20saya%20sudah%20mendaftar%20reseller%20dan%20sedang%20menunggu%20verifikasi" target="_blank" rel="noopener" class="tv-btn-deposit-action" style="text-decoration:none;">
@@ -1237,31 +1375,31 @@
                         <!-- 4-Column Summary Metrics -->
                         <div class="tv-transaksi-stats-row">
                             <div class="tv-stat-metric-col">
-                                <div class="tv-stat-metric-date" id="dateLabelToday">Hari ini, 23 Agustus</div>
+                                <div class="tv-stat-metric-date" id="dateLabelToday">Hari ini</div>
                                 <div class="tv-stat-metric-values">
-                                    <span class="tv-stat-count" id="statTodayCount">7</span>
-                                    <span class="tv-stat-nominal-pill" id="statTodayAmount">Rp 47.329</span>
+                                    <span class="tv-stat-count" id="statTodayCount">0</span>
+                                    <span class="tv-stat-nominal-pill" id="statTodayAmount">Rp 0</span>
                                 </div>
                             </div>
                             <div class="tv-stat-metric-col">
-                                <div class="tv-stat-metric-date" id="dateLabelYesterday">Kemarin, 22 Agustus</div>
+                                <div class="tv-stat-metric-date" id="dateLabelYesterday">Kemarin</div>
                                 <div class="tv-stat-metric-values">
-                                    <span class="tv-stat-count" id="statYesterdayCount">3</span>
-                                    <span class="tv-stat-nominal-pill" id="statYesterdayAmount">Rp 131.701</span>
+                                    <span class="tv-stat-count" id="statYesterdayCount">0</span>
+                                    <span class="tv-stat-nominal-pill" id="statYesterdayAmount">Rp 0</span>
                                 </div>
                             </div>
                             <div class="tv-stat-metric-col">
-                                <div class="tv-stat-metric-date" id="dateLabelThisMonth">Bulan ini, Agustus</div>
+                                <div class="tv-stat-metric-date" id="dateLabelThisMonth">Bulan ini</div>
                                 <div class="tv-stat-metric-values">
-                                    <span class="tv-stat-count" id="statThisMonthCount">19</span>
-                                    <span class="tv-stat-nominal-pill" id="statThisMonthAmount">Rp 219.663</span>
+                                    <span class="tv-stat-count" id="statThisMonthCount">0</span>
+                                    <span class="tv-stat-nominal-pill" id="statThisMonthAmount">Rp 0</span>
                                 </div>
                             </div>
                             <div class="tv-stat-metric-col">
-                                <div class="tv-stat-metric-date" id="dateLabelLastMonth">Bulan lalu, Juli</div>
+                                <div class="tv-stat-metric-date" id="dateLabelLastMonth">Bulan lalu</div>
                                 <div class="tv-stat-metric-values">
-                                    <span class="tv-stat-count" id="statLastMonthCount">1</span>
-                                    <span class="tv-stat-nominal-pill" id="statLastMonthAmount">Rp 2.847</span>
+                                    <span class="tv-stat-count" id="statLastMonthCount">0</span>
+                                    <span class="tv-stat-nominal-pill" id="statLastMonthAmount">Rp 0</span>
                                 </div>
                             </div>
                         </div>
@@ -1270,10 +1408,10 @@
                         <div class="tv-chart-controls-bar">
                             <div class="tv-date-range-badge">
                                 <span class="material-symbols-outlined" style="font-size:1.05rem;color:#38bdf8;">calendar_month</span>
-                                <span id="chartDateRangeLabel">2026-08-16 - 2026-08-23</span>
+                                <span id="chartDateRangeLabel">7 Hari Terakhir</span>
                             </div>
                             <div style="display:flex;gap:6px;">
-                                <button type="button" class="tv-btn-deposit-action" style="padding:4px 8px;" onclick="renderSampleChart()" title="Perbarui Grafik">
+                                <button type="button" class="tv-btn-deposit-action" style="padding:4px 8px;" onclick="loadPortalOverview()" title="Perbarui Grafik">
                                     <span class="material-symbols-outlined" style="font-size:1rem;">refresh</span>
                                 </button>
                             </div>
@@ -1292,41 +1430,7 @@
                         </div>
 
                         <div class="tv-news-list" id="tvNewsFeedList">
-                            <!-- News Item 1 -->
-                            <div class="tv-news-item">
-                                <div class="tv-news-top-flex">
-                                    <h5 class="tv-news-item-title">Produk Pascabayar sudah dapat digunakan</h5>
-                                    <span class="tv-news-blue-dot"></span>
-                                </div>
-                                <div class="tv-news-meta">
-                                    <span>2 bulan yang lalu</span>
-                                    <span>17 Juni 2026</span>
-                                </div>
-                            </div>
-
-                            <!-- News Item 2 -->
-                            <div class="tv-news-item">
-                                <div class="tv-news-top-flex">
-                                    <h5 class="tv-news-item-title">Perubahan akun telegram Customer care</h5>
-                                    <span class="tv-news-blue-dot"></span>
-                                </div>
-                                <div class="tv-news-meta">
-                                    <span>setahun yang lalu</span>
-                                    <span>10 April 2025</span>
-                                </div>
-                            </div>
-
-                            <!-- News Item 3 -->
-                            <div class="tv-news-item">
-                                <div class="tv-news-top-flex">
-                                    <h5 class="tv-news-item-title">Api Deposit Saldo Sudah Tersedia</h5>
-                                    <span class="tv-news-blue-dot"></span>
-                                </div>
-                                <div class="tv-news-meta">
-                                    <span>2 tahun yang lalu</span>
-                                    <span>22 April 2024</span>
-                                </div>
-                            </div>
+                            <div style="color:#94a3b8;font-size:0.84rem;padding:1rem;">Memuat berita terbaru...</div>
                         </div>
                     </div>
 
@@ -1334,42 +1438,110 @@
             </div>
 
             <!-- =========================================================== -->
-            <!-- VIEW 2: PRODUK (KATALOG HARGA MODAL DISTRIBUTOR)            -->
+            <!-- VIEW 2: PRODUK (KATALOG TOKOVOUCHER GOLD PRODUCT MATRIX)   -->
             <!-- =========================================================== -->
             <div id="view-products" class="tv-console-view">
-                <div class="tv-table-card">
-                    <div class="tv-table-header-bar">
+                <div class="tv-table-card" style="padding:1.4rem 1.6rem;">
+                    
+                    <!-- 1. Header Row (Title & Action Buttons) -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:12px;">
                         <div>
-                            <h3 style="font-size:1.1rem;font-weight:800;color:#ffffff;margin:0 0 2px;">Daftar Produk &amp; Harga Modal Reseller</h3>
-                            <p style="font-size:0.8rem;color:#94a3b8;margin:0;">Harga modal otomatis terpotong sesuai tingkatan tier aktif Anda.</p>
+                            <h2 style="font-size:1.35rem;font-weight:900;color:#ffffff;margin:0 0 4px;">Katalog Produk &amp; Harga Modal Reseller</h2>
+                            <p style="font-size:0.84rem;color:#94a3b8;margin:0;">Jelajahi harga modal termurah se-Indonesia dengan filter kategori &amp; game real-time.</p>
                         </div>
-                        <div class="tv-search-input-wrap">
-                            <span class="material-symbols-outlined">search</span>
-                            <input type="text" id="inputSearchProduct" placeholder="Cari SKU, Nama Game, PLN..." oninput="filterPortalProducts()">
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <button type="button" class="tv-btn-deposit-action" onclick="openRequestProductModal()" style="border-color:#38bdf8;color:#38bdf8;background:rgba(56,189,248,0.1);">
+                                <span class="material-symbols-outlined" style="font-size:1.1rem;">add_circle</span>
+                                <span>Request Produk</span>
+                            </button>
+                            <button type="button" class="tv-btn-deposit-action" onclick="downloadProductsExcel()" style="border-color:#10b981;color:#10b981;background:rgba(16,185,129,0.1);">
+                                <span class="material-symbols-outlined" style="font-size:1.1rem;">download</span>
+                                <span>Download Excel</span>
+                            </button>
                         </div>
                     </div>
 
-                    <div style="overflow-x:auto;">
+                    <!-- 2. Horizontal Category Tabs Filter -->
+                    <div class="tv-prod-category-tabs-scroll" id="tvCategoryTabsScroll">
+                        <button type="button" class="tv-cat-tab-btn active" onclick="selectProductCategory('all', this)">Semua Kategori</button>
+                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Topup Game', this)">Topup Game</button>
+                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Voucher Game', this)">Voucher Game</button>
+                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Hiburan', this)">Hiburan</button>
+                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Pulsa', this)">Pulsa</button>
+                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Paket Data', this)">Paket Data</button>
+                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Voucher Data', this)">Voucher Data</button>
+                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Telpon & SMS', this)">Telpon &amp; SMS</button>
+                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('PLN', this)">PLN</button>
+                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('E-Money', this)">E-Money</button>
+                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Pascabayar', this)">Pascabayar</button>
+                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Transfer Dana', this)">Transfer Dana</button>
+                    </div>
+
+                    <!-- 3. Operator Search Bar -->
+                    <div style="margin-bottom:1.1rem;">
+                        <div class="tv-search-input-wrap" style="max-width:100%;">
+                            <span class="material-symbols-outlined">sports_esports</span>
+                            <input type="text" id="inputSearchOperator" placeholder="Cari Operator / Game (misal: Free Fire, Mobile Legends, Telkomsel, PLN, DANA)..." oninput="filterOperatorGrid()">
+                        </div>
+                    </div>
+
+                    <!-- 4. Interactive Operator Badges Grid (With Logos) -->
+                    <div class="tv-operator-grid-box" id="tvOperatorGridBox">
+                        <div style="color:#94a3b8;font-size:0.84rem;padding:1rem;">Memuat daftar operator &amp; game...</div>
+                    </div>
+
+                    <!-- 5. Sub-variant / Denom Tabs Bar -->
+                    <div class="tv-subvariant-tabs-scroll" id="tvSubvariantTabsScroll" style="display:none;">
+                        <!-- Generated Dynamically -->
+                    </div>
+
+                    <!-- 6. View Mode Toggle & SKU Search -->
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.15rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.08);flex-wrap:wrap;gap:10px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:0.84rem;font-weight:700;color:#94a3b8;">Tampilan:</span>
+                            <button type="button" id="btnViewGrid" class="tv-btn-deposit-action" style="padding:4px 10px;border-color:#3b82f6;background:rgba(37,99,235,0.25);color:#fff;" onclick="setProductDisplayMode('grid')">
+                                <span class="material-symbols-outlined" style="font-size:1rem;">grid_view</span> Grid Foto
+                            </button>
+                            <button type="button" id="btnViewTable" class="tv-btn-deposit-action" style="padding:4px 10px;" onclick="setProductDisplayMode('table')">
+                                <span class="material-symbols-outlined" style="font-size:1rem;">table_rows</span> Tabel Rinci
+                            </button>
+                            <span id="labelTotalFilteredProducts" style="font-size:0.8rem;color:#60a5fa;font-weight:700;margin-left:8px;">0 Produk</span>
+                        </div>
+                        <div class="tv-search-input-wrap" style="max-width:320px;">
+                            <span class="material-symbols-outlined">search</span>
+                            <input type="text" id="inputSearchProduct" placeholder="Cari Kode SKU / Denom..." oninput="filterPortalProducts()">
+                        </div>
+                    </div>
+
+                    <!-- 7. Product Cards Grid View -->
+                    <div id="tvProductsGridView" class="tv-product-cards-grid">
+                        <div style="grid-column:1/-1;text-align:center;padding:3rem;color:#94a3b8;">Memuat katalog produk dengan foto...</div>
+                    </div>
+
+                    <!-- 8. Dense Table View -->
+                    <div id="tvProductsTableView" style="display:none;overflow-x:auto;">
                         <table class="tv-data-table">
                             <thead>
                                 <tr>
+                                    <th>Foto</th>
                                     <th>Kode SKU</th>
                                     <th>Nama Produk</th>
-                                    <th>Kategori / Operator</th>
+                                    <th>Operator</th>
                                     <th>Harga Normal</th>
                                     <th>Harga Modal Reseller</th>
-                                    <th>Diskon Tier</th>
+                                    <th>Diskon</th>
                                     <th>Status</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
                             <tbody id="tvProductsTableBody">
                                 <tr>
-                                    <td colspan="8" style="text-align:center;padding:2rem;color:#94a3b8;">Memuat data katalog produk...</td>
+                                    <td colspan="9" style="text-align:center;padding:2rem;color:#94a3b8;">Memuat katalog produk...</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
+
                 </div>
             </div>
 
@@ -1611,7 +1783,6 @@
             <!-- =========================================================== -->
             <div id="view-tiers" class="tv-console-view">
                 <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:1.35rem;">
-                    <!-- Tier 1: Silver -->
                     <div class="tv-section-card" style="border-top:4px solid #94a3b8;">
                         <h4 style="font-size:1.2rem;font-weight:900;color:#ffffff;margin:0 0 4px;">Tier Silver</h4>
                         <div style="font-size:1.55rem;font-weight:900;color:#38bdf8;margin-bottom:8px;">Diskon 2.0%</div>
@@ -1619,7 +1790,6 @@
                         <div class="tv-badge-status tv-badge-sukses" style="margin-top:1rem;">Aktif Default</div>
                     </div>
 
-                    <!-- Tier 2: Gold -->
                     <div class="tv-section-card" style="border-top:4px solid #f59e0b;background:rgba(245,158,11,0.06);">
                         <h4 style="font-size:1.2rem;font-weight:900;color:#ffffff;margin:0 0 4px;">Tier Gold ⭐</h4>
                         <div style="font-size:1.55rem;font-weight:900;color:#fbbf24;margin-bottom:8px;">Diskon 3.5%</div>
@@ -1627,7 +1797,6 @@
                         <div class="tv-badge-status tv-badge-pending" style="margin-top:1rem;">Target: 50 Trx/Bln</div>
                     </div>
 
-                    <!-- Tier 3: Platinum -->
                     <div class="tv-section-card" style="border-top:4px solid #a855f7;background:rgba(168,85,247,0.06);">
                         <h4 style="font-size:1.2rem;font-weight:900;color:#ffffff;margin:0 0 4px;">Tier Platinum 👑</h4>
                         <div style="font-size:1.55rem;font-weight:900;color:#c084fc;margin-bottom:8px;">Diskon 5.0%</div>
@@ -1659,8 +1828,55 @@
         let cachedSecret = "";
         let isSecretRevealed = false;
         let currentResellerStatus = "none";
+        let lastDailyChartData = [];
+        
         let allProducts = [];
         let allOrders = [];
+        let activeCategory = "all";
+        let activeOperator = "all";
+        let activeSubvariant = "all";
+        let productDisplayMode = "grid"; // "grid" or "table"
+
+        // Comprehensive Logo and Image Helpers
+        const LOGO_PRESETS = {
+            "free fire": "https://img.icons8.com/color/96/free-fire.png",
+            "mobile legends": "https://img.icons8.com/color/96/mobile-legends.png",
+            "pubg": "https://img.icons8.com/color/96/pubg.png",
+            "genshin": "https://img.icons8.com/color/96/genshin-impact.png",
+            "valorant": "https://img.icons8.com/color/96/valorant.png",
+            "call of duty": "https://img.icons8.com/color/96/call-of-duty-warzone.png",
+            "arena of valor": "https://img.icons8.com/color/96/shield.png",
+            "point blank": "https://img.icons8.com/color/96/target.png",
+            "sausage man": "https://img.icons8.com/color/96/sausage.png",
+            "honkai": "https://img.icons8.com/color/96/planet.png",
+            "ragnarok": "https://img.icons8.com/color/96/sword.png",
+            "pln": "https://img.icons8.com/color/96/flash-on.png",
+            "telkomsel": "https://img.icons8.com/color/96/sim-card.png",
+            "indosat": "https://img.icons8.com/color/96/sim-card.png",
+            "xl": "https://img.icons8.com/color/96/sim-card.png",
+            "tri": "https://img.icons8.com/color/96/sim-card.png",
+            "axis": "https://img.icons8.com/color/96/sim-card.png",
+            "smartfren": "https://img.icons8.com/color/96/sim-card.png",
+            "dana": "https://img.icons8.com/color/96/wallet.png",
+            "gopay": "https://img.icons8.com/color/96/bank-card.png",
+            "ovo": "https://img.icons8.com/color/96/money-bag.png",
+            "shopeepay": "https://img.icons8.com/color/96/shopping-bag.png"
+        };
+
+        function getOperatorLogo(opName, fallbackLogo) {
+            if (fallbackLogo && fallbackLogo.startsWith("http")) return fallbackLogo;
+            const lower = String(opName || "").toLowerCase();
+            for (const key in LOGO_PRESETS) {
+                if (lower.includes(key)) return LOGO_PRESETS[key];
+            }
+            return "/images/nexshop-icon.svg";
+        }
+
+        function getProductPhoto(prod) {
+            if (prod.item_icon && prod.item_icon.startsWith("http")) return prod.item_icon;
+            if (prod.operator_logo && prod.operator_logo.startsWith("http")) return prod.operator_logo;
+            return getOperatorLogo(prod.operator || prod.kategori);
+        }
 
         function showToast(msg) {
             const toast = document.getElementById("mktToast");
@@ -1733,7 +1949,7 @@
             } else if (viewId === "view-transactions" && !allOrders.length) {
                 loadPortalOrders();
             } else if (viewId === "view-dashboard") {
-                renderSampleChart();
+                renderDynamicChart(lastDailyChartData);
             }
         }
 
@@ -1745,6 +1961,309 @@
                 showToast(`${label} berhasil disalin!`);
             }).catch(() => {
                 showToast(`Gagal menyalin ${label}`);
+            });
+        }
+
+        // ── Load Products Catalog & Build Matrix ──
+        async function loadPortalProducts() {
+            const token = getResellerToken();
+            const gridView = document.getElementById("tvProductsGridView");
+            if (!gridView) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/products`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json().catch(() => ({}));
+                allProducts = data.products || [];
+
+                buildOperatorGrid();
+                filterAndRenderProducts();
+            } catch (e) {
+                gridView.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#ef4444;padding:2rem;">Gagal memuat produk: ${e.message}</div>`;
+            }
+        }
+
+        function buildOperatorGrid() {
+            const gridBox = document.getElementById("tvOperatorGridBox");
+            if (!gridBox) return;
+
+            // Extract unique operators based on active category
+            const filteredByCat = activeCategory === "all" 
+                ? allProducts 
+                : allProducts.filter(p => (p.kategori || "").toLowerCase().includes(activeCategory.toLowerCase()));
+
+            const opMap = {};
+            filteredByCat.forEach(p => {
+                const op = p.operator || p.kategori || "Lainnya";
+                if (!opMap[op]) {
+                    opMap[op] = { name: op, logo: getOperatorLogo(op, p.operator_logo), count: 0 };
+                }
+                opMap[op].count++;
+            });
+
+            const operators = Object.values(opMap).sort((a, b) => b.count - a.count);
+
+            if (!operators.length) {
+                gridBox.innerHTML = `<div style="grid-column:1/-1;color:#94a3b8;font-size:0.84rem;padding:1rem;">Tidak ada operator pada kategori ini.</div>`;
+                return;
+            }
+
+            let html = `
+                <button type="button" class="tv-operator-pill ${activeOperator === 'all' ? 'active' : ''}" onclick="selectOperator('all', this)">
+                    <img src="/images/nexshop-icon.svg" class="tv-operator-thumb" alt="Semua">
+                    <span style="flex:1;">Semua Operator</span>
+                    <span style="font-size:0.7rem;opacity:0.7;">(${filteredByCat.length})</span>
+                </button>
+            `;
+
+            operators.forEach(op => {
+                const isActive = activeOperator === op.name ? 'active' : '';
+                html += `
+                    <button type="button" class="tv-operator-pill ${isActive}" onclick="selectOperator('${escapeHtml(op.name)}', this)">
+                        <img src="${op.logo}" class="tv-operator-thumb" alt="${op.name}" onerror="this.src='/images/nexshop-icon.svg'">
+                        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${op.name}</span>
+                        <span style="font-size:0.7rem;opacity:0.7;">(${op.count})</span>
+                    </button>
+                `;
+            });
+
+            gridBox.innerHTML = html;
+        }
+
+        function selectProductCategory(catName, btnEl) {
+            activeCategory = catName;
+            activeOperator = "all";
+            activeSubvariant = "all";
+
+            document.querySelectorAll(".tv-cat-tab-btn").forEach(b => b.classList.remove("active"));
+            if (btnEl) btnEl.classList.add("active");
+
+            buildOperatorGrid();
+            filterAndRenderProducts();
+        }
+
+        function selectOperator(opName, btnEl) {
+            activeOperator = opName;
+            activeSubvariant = "all";
+
+            document.querySelectorAll(".tv-operator-pill").forEach(b => b.classList.remove("active"));
+            if (btnEl) btnEl.classList.add("active");
+
+            buildSubvariantsTabs();
+            filterAndRenderProducts();
+        }
+
+        function buildSubvariantsTabs() {
+            const subBar = document.getElementById("tvSubvariantTabsScroll");
+            if (!subBar) return;
+
+            if (activeOperator === "all") {
+                subBar.style.display = "none";
+                return;
+            }
+
+            const opProducts = allProducts.filter(p => (p.operator || p.kategori) === activeOperator);
+            const variantKeywords = ["Fast", "Promo", "Murah", "Super Murah", "Pass", "Membership", "Denom"];
+            const detectedVariants = new Set();
+
+            opProducts.forEach(p => {
+                variantKeywords.forEach(k => {
+                    if (p.nama.toLowerCase().includes(k.toLowerCase()) || p.kode_produk.toLowerCase().includes(k.toLowerCase())) {
+                        detectedVariants.add(k);
+                    }
+                });
+            });
+
+            if (detectedVariants.size > 1) {
+                let html = `<button type="button" class="tv-subvariant-btn ${activeSubvariant === 'all' ? 'active' : ''}" onclick="selectSubvariant('all', this)">Semua Varian</button>`;
+                detectedVariants.forEach(v => {
+                    html += `<button type="button" class="tv-subvariant-btn ${activeSubvariant === v ? 'active' : ''}" onclick="selectSubvariant('${v}', this)">${v}</button>`;
+                });
+                subBar.innerHTML = html;
+                subBar.style.display = "flex";
+            } else {
+                subBar.style.display = "none";
+            }
+        }
+
+        function selectSubvariant(variantName, btnEl) {
+            activeSubvariant = variantName;
+            document.querySelectorAll(".tv-subvariant-btn").forEach(b => b.classList.remove("active"));
+            if (btnEl) btnEl.classList.add("active");
+            filterAndRenderProducts();
+        }
+
+        function setProductDisplayMode(mode) {
+            productDisplayMode = mode;
+            const btnGrid = document.getElementById("btnViewGrid");
+            const btnTable = document.getElementById("btnViewTable");
+            const gridView = document.getElementById("tvProductsGridView");
+            const tableView = document.getElementById("tvProductsTableView");
+
+            if (mode === "grid") {
+                btnGrid.style.background = "rgba(37,99,235,0.25)";
+                btnGrid.style.borderColor = "#3b82f6";
+                btnTable.style.background = "rgba(255,255,255,0.06)";
+                btnTable.style.borderColor = "rgba(255,255,255,0.12)";
+                gridView.style.display = "grid";
+                tableView.style.display = "none";
+            } else {
+                btnTable.style.background = "rgba(37,99,235,0.25)";
+                btnTable.style.borderColor = "#3b82f6";
+                btnGrid.style.background = "rgba(255,255,255,0.06)";
+                btnGrid.style.borderColor = "rgba(255,255,255,0.12)";
+                gridView.style.display = "none";
+                tableView.style.display = "block";
+            }
+            filterAndRenderProducts();
+        }
+
+        function filterOperatorGrid() {
+            const q = (document.getElementById("inputSearchOperator")?.value || "").toLowerCase().trim();
+            document.querySelectorAll(".tv-operator-pill").forEach(pill => {
+                const text = pill.textContent.toLowerCase();
+                pill.style.display = text.includes(q) ? "flex" : "none";
+            });
+        }
+
+        function filterPortalProducts() {
+            filterAndRenderProducts();
+        }
+
+        function filterAndRenderProducts() {
+            const q = (document.getElementById("inputSearchProduct")?.value || "").toLowerCase().trim();
+
+            const filtered = allProducts.filter(p => {
+                const matchCat = activeCategory === "all" || (p.kategori || "").toLowerCase().includes(activeCategory.toLowerCase());
+                const matchOp = activeOperator === "all" || (p.operator || p.kategori) === activeOperator;
+                const matchVar = activeSubvariant === "all" || p.nama.toLowerCase().includes(activeSubvariant.toLowerCase()) || p.kode_produk.toLowerCase().includes(activeSubvariant.toLowerCase());
+                const matchQuery = !q || p.kode_produk.toLowerCase().includes(q) || p.nama.toLowerCase().includes(q) || (p.operator || "").toLowerCase().includes(q);
+                return matchCat && matchOp && matchVar && matchQuery;
+            });
+
+            const countEl = document.getElementById("labelTotalFilteredProducts");
+            if (countEl) countEl.textContent = `${filtered.length} Produk Ditemukan`;
+
+            renderGridCards(filtered);
+            renderTableRows(filtered);
+        }
+
+        function renderGridCards(products) {
+            const gridView = document.getElementById("tvProductsGridView");
+            if (!gridView) return;
+
+            if (!products.length) {
+                gridView.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#94a3b8;">Tidak ada produk yang cocok dengan filter.</div>`;
+                return;
+            }
+
+            gridView.innerHTML = products.map(p => {
+                const photo = getProductPhoto(p);
+                return `
+                    <div class="tv-product-card-item">
+                        <div class="tv-prod-photo-wrap">
+                            <img src="${photo}" class="tv-product-photo" alt="${p.nama}" onerror="this.src='/images/nexshop-icon.svg'">
+                            <div style="min-width:0;flex:1;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;">
+                                    <code style="font-weight:800;color:#60a5fa;font-size:0.8rem;">${p.kode_produk}</code>
+                                    <span class="tv-badge-status tv-badge-sukses">-${p.diskon_persen || 2}%</span>
+                                </div>
+                                <div style="font-size:0.75rem;color:#94a3b8;margin-top:2px;">${p.operator || p.kategori}</div>
+                            </div>
+                        </div>
+
+                        <div style="font-size:0.92rem;font-weight:800;color:#ffffff;margin-bottom:8px;line-height:1.3;min-height:38px;">
+                            ${p.nama}
+                        </div>
+
+                        <div style="margin-top:auto;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);">
+                            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px;">
+                                <span style="font-size:0.74rem;color:#94a3b8;text-decoration:line-through;">Rp ${(p.harga_normal || 0).toLocaleString("id-ID")}</span>
+                                <span style="font-size:1.15rem;font-weight:900;color:#38bdf8;">Rp ${(p.harga_modal_reseller || 0).toLocaleString("id-ID")}</span>
+                            </div>
+                            <button type="button" class="tv-btn-deposit-action" style="width:100%;justify-content:center;padding:0.5rem;" onclick="navigator.clipboard.writeText('${p.kode_produk}');showToast('SKU ${p.kode_produk} disalin!');">
+                                <span class="material-symbols-outlined" style="font-size:0.95rem;">content_copy</span>
+                                <span>Salin SKU</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function renderTableRows(products) {
+            const tbody = document.getElementById("tvProductsTableBody");
+            if (!tbody) return;
+
+            if (!products.length) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:2rem;color:#94a3b8;">Tidak ada produk ditemukan.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = products.map(p => {
+                const photo = getProductPhoto(p);
+                return `
+                    <tr>
+                        <td><img src="${photo}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;background:#0f172a;" onerror="this.src='/images/nexshop-icon.svg'"></td>
+                        <td><code style="font-weight:700;color:#60a5fa;">${p.kode_produk}</code></td>
+                        <td style="font-weight:700;color:#ffffff;">${p.nama}</td>
+                        <td><span class="tv-stat-nominal-pill">${p.operator || p.kategori}</span></td>
+                        <td style="color:#94a3b8;text-decoration:line-through;">Rp ${(p.harga_normal || 0).toLocaleString("id-ID")}</td>
+                        <td style="font-weight:800;color:#38bdf8;">Rp ${(p.harga_modal_reseller || 0).toLocaleString("id-ID")}</td>
+                        <td><span class="tv-badge-status tv-badge-sukses">-${p.diskon_persen || 2}%</span></td>
+                        <td><span class="tv-badge-status tv-badge-sukses">Tersedia</span></td>
+                        <td>
+                            <button type="button" class="tv-btn-deposit-action" onclick="navigator.clipboard.writeText('${p.kode_produk}');showToast('SKU ${p.kode_produk} disalin!');">
+                                Salin
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+        }
+
+        // ── Download Excel / CSV ──
+        function downloadProductsExcel() {
+            if (!allProducts.length) {
+                showToast("Tidak ada produk untuk diunduh.");
+                return;
+            }
+            const headers = ["Kode SKU", "Nama Produk", "Kategori", "Operator", "Harga Normal", "Harga Modal Reseller", "Diskon %", "Status"];
+            const rows = allProducts.map(p => [
+                `"${p.kode_produk}"`,
+                `"${(p.nama || '').replace(/"/g, '""')}"`,
+                `"${p.kategori || ''}"`,
+                `"${p.operator || ''}"`,
+                p.harga_normal || 0,
+                p.harga_modal_reseller || 0,
+                p.diskon_persen || 0,
+                `"${p.status || 'tersedia'}"`
+            ]);
+            const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\r\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Katalog_Reseller_NexShop_${new Date().toISOString().slice(0, 10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("File Katalog Excel/CSV berhasil diunduh!");
+        }
+
+        // ── Request Product Modal ──
+        function openRequestProductModal() {
+            const reqGame = prompt("Masukkan nama game/produk atau SKU yang ingin Anda request ke admin NexShop:");
+            if (reqGame && reqGame.trim()) {
+                const url = `https://wa.me/6281234567890?text=${encodeURIComponent('Halo Admin NexShop, saya mitra reseller ingin request penambahan produk baru: ' + reqGame.trim())}`;
+                window.open(url, "_blank");
+            }
+        }
+
+        function escapeHtml(str) {
+            return String(str || "").replace(/[&<>"']/g, function(m) {
+                return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
             });
         }
 
@@ -1891,7 +2410,20 @@
             const secDash = document.getElementById("sectionDashboard");
             const pendingBanner = document.getElementById("tvPendingBanner");
 
-            // Populate cached user if available
+            // Format tanggal lokal dinamis
+            const now = new Date();
+            const yest = new Date(Date.now() - 86400000);
+            const lastM = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+            const elToday = document.getElementById("dateLabelToday");
+            if (elToday) elToday.textContent = `Hari ini, ${now.toLocaleDateString("id-ID", { day: "numeric", month: "long" })}`;
+            const elYest = document.getElementById("dateLabelYesterday");
+            if (elYest) elYest.textContent = `Kemarin, ${yest.toLocaleDateString("id-ID", { day: "numeric", month: "long" })}`;
+            const elThisM = document.getElementById("dateLabelThisMonth");
+            if (elThisM) elThisM.textContent = `Bulan ini, ${now.toLocaleDateString("id-ID", { month: "long" })}`;
+            const elLastM = document.getElementById("dateLabelLastMonth");
+            if (elLastM) elLastM.textContent = `Bulan lalu, ${lastM.toLocaleDateString("id-ID", { month: "long" })}`;
+
             try {
                 const cachedUser = JSON.parse(localStorage.getItem("nexshop-reseller-user") || "{}");
                 if (cachedUser.fullname) {
@@ -1927,10 +2459,11 @@
                 const data = await res.json().catch(() => ({}));
                 if (data.user) {
                     currentResellerStatus = data.user.reseller_status || "none";
-                    const fullname = data.user.fullname || "Partner Reseller";
+                    const isApproved = (currentResellerStatus === "approved");
+                    const fullname = data.user.fullname || "Mitra Reseller";
                     const email = data.user.email || "";
                     const memberCode = data.user.member_code || "NX-MITRA-001";
-                    const balance = data.user.balance || 77590;
+                    const balance = Number(data.user.balance) || 0;
 
                     // Update Top Header Widgets
                     document.getElementById("topWidgetFullName").textContent = fullname;
@@ -1949,54 +2482,63 @@
                     const setEm = document.getElementById("settingsEmail");
                     if (setEm) setEm.value = email;
 
-                    if (currentResellerStatus === "approved") {
-                        if (pendingBanner) pendingBanner.style.display = "none";
-                        document.getElementById("sidebarTierBadge").textContent = (data.user.reseller_tier?.name || "GOLD") + " ⭐";
+                    // Update Status Banner & API Credentials
+                    if (pendingBanner) {
+                        pendingBanner.style.display = isApproved ? "none" : "flex";
+                    }
+
+                    if (isApproved) {
+                        const tierName = data.user.reseller_tier?.name || "GOLD";
+                        document.getElementById("sidebarTierBadge").textContent = `${tierName} ⭐`;
 
                         if (data.api_credentials) {
-                            document.getElementById("inputApiKey").value = data.api_credentials.api_key;
-                            document.getElementById("inputSecretKey").value = data.api_credentials.masked_secret;
+                            document.getElementById("inputApiKey").value = data.api_credentials.api_key || "Belum ada key";
+                            document.getElementById("inputSecretKey").value = data.api_credentials.masked_secret || "••••••••••••••••";
                             document.getElementById("inputIpWhitelist").value = data.api_credentials.ip_whitelist || "";
                             document.getElementById("inputWebhookUrl").value = data.api_credentials.webhook_url || "";
                         }
                     } else {
-                        // Pending KYC Notice
-                        if (pendingBanner) pendingBanner.style.display = "flex";
                         document.getElementById("sidebarTierBadge").textContent = "PENDING ⏳";
                         document.getElementById("inputApiKey").value = "Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja)";
                         document.getElementById("inputSecretKey").value = "••••••••••••••••";
                     }
 
-                    // Update Metrics if available
+                    // Update Real Metrics
                     if (data.metrics) {
                         const m = data.metrics;
-                        document.getElementById("statTodayCount").textContent = m.today?.count || 7;
-                        document.getElementById("statTodayAmount").textContent = "Rp " + (m.today?.amount || 47329).toLocaleString("id-ID");
+                        document.getElementById("statTodayCount").textContent = m.today?.count || 0;
+                        document.getElementById("statTodayAmount").textContent = "Rp " + (m.today?.amount || 0).toLocaleString("id-ID");
 
-                        document.getElementById("statYesterdayCount").textContent = m.yesterday?.count || 3;
-                        document.getElementById("statYesterdayAmount").textContent = "Rp " + (m.yesterday?.amount || 131701).toLocaleString("id-ID");
+                        document.getElementById("statYesterdayCount").textContent = m.yesterday?.count || 0;
+                        document.getElementById("statYesterdayAmount").textContent = "Rp " + (m.yesterday?.amount || 0).toLocaleString("id-ID");
 
-                        document.getElementById("statThisMonthCount").textContent = m.this_month?.count || 19;
-                        document.getElementById("statThisMonthAmount").textContent = "Rp " + (m.this_month?.amount || 219663).toLocaleString("id-ID");
+                        document.getElementById("statThisMonthCount").textContent = m.this_month?.count || 0;
+                        document.getElementById("statThisMonthAmount").textContent = "Rp " + (m.this_month?.amount || 0).toLocaleString("id-ID");
 
-                        document.getElementById("statLastMonthCount").textContent = m.last_month?.count || 1;
-                        document.getElementById("statLastMonthAmount").textContent = "Rp " + (m.last_month?.amount || 2847).toLocaleString("id-ID");
+                        document.getElementById("statLastMonthCount").textContent = m.last_month?.count || 0;
+                        document.getElementById("statLastMonthAmount").textContent = "Rp " + (m.last_month?.amount || 0).toLocaleString("id-ID");
+
+                        lastDailyChartData = m.daily_chart || [];
+                        renderDynamicChart(lastDailyChartData);
+                    } else {
+                        lastDailyChartData = [];
+                        renderDynamicChart([]);
                     }
 
-                    renderSampleChart();
+                    // Update Real News
+                    renderNewsFeed(data.news || []);
                 }
             } catch (err) {
                 console.error("loadPortalOverview error:", err);
             }
         }
 
-        // ── Render Chart (TokoVoucher Neon Cyan Curve) ──
-        function renderSampleChart() {
+        // ── Render Dynamic Chart From Real Data ──
+        function renderDynamicChart(dailyData) {
             const canvas = document.getElementById("tvTransactionChart");
             if (!canvas) return;
             const ctx = canvas.getContext("2d");
 
-            // Set canvas resolution
             const rect = canvas.getBoundingClientRect();
             canvas.width = rect.width * window.devicePixelRatio;
             canvas.height = 260 * window.devicePixelRatio;
@@ -2010,12 +2552,28 @@
 
             ctx.clearRect(0, 0, w, h);
 
-            // Data Points (Date vs Transactions)
-            const labels = ["16 Agt", "17 Agt", "18 Agt", "19 Agt", "20 Agt", "21 Agt", "22 Agt", "23 Agt"];
-            const values = [1, 2, 2, 3, 3, 4, 3, 7];
-            const maxVal = 8;
+            let list = dailyData;
+            if (!list || !list.length) {
+                const now = new Date();
+                list = [];
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+                    list.push({
+                        date: d.toLocaleDateString("id-ID", { day: "numeric", month: "short" }),
+                        full_date: d.toISOString().slice(0, 10),
+                        count: 0,
+                        amount: 0
+                    });
+                }
+            }
 
-            // Draw Grid Lines (Subtle dark glass lines)
+            if (list.length >= 2 && document.getElementById("chartDateRangeLabel")) {
+                document.getElementById("chartDateRangeLabel").textContent = `${list[0].full_date || list[0].date} - ${list[list.length - 1].full_date || list[list.length - 1].date}`;
+            }
+
+            const rawMax = Math.max(...list.map(d => Number(d.count) || 0));
+            const maxVal = rawMax > 0 ? (rawMax % 2 === 0 ? rawMax : rawMax + 1) : 4;
+
             ctx.strokeStyle = "rgba(255, 255, 255, 0.07)";
             ctx.lineWidth = 1;
             for (let i = 0; i <= 4; i++) {
@@ -2028,30 +2586,28 @@
                 ctx.fillStyle = "#94a3b8";
                 ctx.font = "11px 'Plus Jakarta Sans', sans-serif";
                 ctx.textAlign = "right";
-                ctx.fillText(String(maxVal - (maxVal / 4) * i), padding.left - 8, y + 4);
+                const valLabel = Math.round(maxVal - (maxVal / 4) * i);
+                ctx.fillText(String(valLabel), padding.left - 8, y + 4);
             }
 
-            // Draw X-Axis Labels
             ctx.textAlign = "center";
-            const xStep = plotW / (values.length - 1);
-            labels.forEach((lbl, idx) => {
+            const xStep = plotW / (list.length - 1);
+            list.forEach((item, idx) => {
                 const x = padding.left + xStep * idx;
-                ctx.fillText(lbl, x, h - 10);
+                ctx.fillText(item.date, x, h - 10);
             });
 
-            // Prepare Points Coordinates
-            const points = values.map((val, idx) => ({
+            const points = list.map((item, idx) => ({
                 x: padding.left + xStep * idx,
-                y: padding.top + plotH - (val / maxVal) * plotH
+                y: padding.top + plotH - ((Number(item.count) || 0) / maxVal) * plotH,
+                count: Number(item.count) || 0
             }));
 
-            // Create Smooth Glow Gradient Fill
             const grad = ctx.createLinearGradient(0, padding.top, 0, h - padding.bottom);
             grad.addColorStop(0, "rgba(56, 189, 248, 0.35)");
             grad.addColorStop(0.7, "rgba(56, 189, 248, 0.08)");
             grad.addColorStop(1, "rgba(56, 189, 248, 0.0)");
 
-            // Draw Area
             ctx.beginPath();
             ctx.moveTo(points[0].x, points[0].y);
             for (let i = 0; i < points.length - 1; i++) {
@@ -2066,7 +2622,6 @@
             ctx.fillStyle = grad;
             ctx.fill();
 
-            // Draw Neon Curve Line
             ctx.beginPath();
             ctx.moveTo(points[0].x, points[0].y);
             for (let i = 0; i < points.length - 1; i++) {
@@ -2082,7 +2637,6 @@
             ctx.stroke();
             ctx.shadowBlur = 0;
 
-            // Draw Points
             points.forEach(p => {
                 ctx.beginPath();
                 ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
@@ -2094,60 +2648,26 @@
             });
         }
 
-        // ── Load Products Catalog ──
-        async function loadPortalProducts() {
-            const token = getResellerToken();
-            const tbody = document.getElementById("tvProductsTableBody");
-            if (!tbody) return;
-
-            try {
-                const res = await fetch(`${API_BASE}/reseller/portal/products`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                const data = await res.json().catch(() => ({}));
-                allProducts = data.products || [];
-
-                renderProductsTable(allProducts);
-            } catch (e) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#ef4444;padding:1.5rem;">Gagal memuat produk: ${e.message}</td></tr>`;
-            }
-        }
-
-        function renderProductsTable(products) {
-            const tbody = document.getElementById("tvProductsTableBody");
-            if (!tbody) return;
-
-            if (!products.length) {
-                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#94a3b8;">Tidak ada produk ditemukan.</td></tr>`;
+        // ── Render Real News Feed ──
+        function renderNewsFeed(newsList) {
+            const listEl = document.getElementById("tvNewsFeedList");
+            if (!listEl) return;
+            if (!newsList || !newsList.length) {
+                listEl.innerHTML = `<div style="color:#94a3b8;font-size:0.84rem;padding:1rem;">Belum ada pengumuman terbaru.</div>`;
                 return;
             }
-
-            tbody.innerHTML = products.map(p => `
-                <tr>
-                    <td><code style="font-weight:700;color:#60a5fa;">${p.kode_produk}</code></td>
-                    <td style="font-weight:700;color:#ffffff;">${p.nama}</td>
-                    <td><span class="tv-stat-nominal-pill">${p.kategori}</span></td>
-                    <td style="color:#94a3b8;text-decoration:line-through;">Rp ${(p.harga_normal || 0).toLocaleString("id-ID")}</td>
-                    <td style="font-weight:800;color:#38bdf8;">Rp ${(p.harga_modal_reseller || 0).toLocaleString("id-ID")}</td>
-                    <td><span class="tv-badge-status tv-badge-sukses">-${p.diskon_persen || 2}%</span></td>
-                    <td><span class="tv-badge-status tv-badge-sukses">Tersedia</span></td>
-                    <td>
-                        <button type="button" class="tv-btn-deposit-action" onclick="navigator.clipboard.writeText('${p.kode_produk}');showToast('SKU disalin!');">
-                            Salin SKU
-                        </button>
-                    </td>
-                </tr>
+            listEl.innerHTML = newsList.map(n => `
+                <div class="tv-news-item">
+                    <div class="tv-news-top-flex">
+                        <h5 class="tv-news-item-title">${escapeHtml(n.title)}</h5>
+                        <span class="tv-news-blue-dot"></span>
+                    </div>
+                    <div class="tv-news-meta">
+                        <span>${n.time_ago || 'Baru saja'}</span>
+                        <span>${n.date || ''}</span>
+                    </div>
+                </div>
             `).join("");
-        }
-
-        function filterPortalProducts() {
-            const q = (document.getElementById("inputSearchProduct")?.value || "").toLowerCase().trim();
-            const filtered = allProducts.filter(p => 
-                p.kode_produk.toLowerCase().includes(q) ||
-                p.nama.toLowerCase().includes(q) ||
-                p.kategori.toLowerCase().includes(q)
-            );
-            renderProductsTable(filtered);
         }
 
         // ── Load Orders List ──
@@ -2337,14 +2857,13 @@
             showToast("Profil berhasil diperbarui!");
         }
 
-        // Init on page load
         document.addEventListener("DOMContentLoaded", () => {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get("mode") === "register") {
                 switchAuthTab("register");
             }
             loadPortalOverview();
-            window.addEventListener("resize", () => { renderSampleChart(); });
+            window.addEventListener("resize", () => { renderDynamicChart(lastDailyChartData); });
         });
     </script>
 </body>

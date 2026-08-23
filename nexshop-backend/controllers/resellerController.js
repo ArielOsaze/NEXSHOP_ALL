@@ -811,15 +811,30 @@ const RESELLER_PORTAL_NEWS = [
 
 async function getResellerDashboardMetrics(userId) {
     const now = new Date();
-    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-    const yesterdayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).toISOString();
-    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const yesterdayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
+    const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime();
 
     let todayCount = 0, todayAmount = 0;
     let yesterdayCount = 0, yesterdayAmount = 0;
     let thisMonthCount = 0, thisMonthAmount = 0;
     let lastMonthCount = 0, lastMonthAmount = 0;
+
+    // Inisialisasi array 7 hari terakhir
+    const dailyChart = [];
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+        const dayLabel = d.toLocaleDateString("id-ID", { day: "numeric", month: "short" });
+        dailyChart.push({
+            date: dayLabel,
+            full_date: d.toISOString().slice(0, 10),
+            day_timestamp: new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(),
+            next_day_timestamp: new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime(),
+            count: 0,
+            amount: 0
+        });
+    }
 
     try {
         const { data: orders } = await supabase
@@ -830,21 +845,31 @@ async function getResellerDashboardMetrics(userId) {
         if (orders && orders.length > 0) {
             orders.forEach(o => {
                 const total = Number(o.total) || 0;
-                const d = new Date(o.created_at);
-                if (d >= new Date(todayStart)) {
+                const ot = new Date(o.created_at).getTime();
+
+                if (ot >= todayStart) {
                     todayCount++;
                     todayAmount += total;
-                } else if (d >= new Date(yesterdayStart) && d < new Date(todayStart)) {
+                } else if (ot >= yesterdayStart && ot < todayStart) {
                     yesterdayCount++;
                     yesterdayAmount += total;
                 }
-                if (d >= new Date(thisMonthStart)) {
+
+                if (ot >= thisMonthStart) {
                     thisMonthCount++;
                     thisMonthAmount += total;
-                } else if (d >= new Date(lastMonthStart) && d < new Date(thisMonthStart)) {
+                } else if (ot >= lastMonthStart && ot < thisMonthStart) {
                     lastMonthCount++;
                     lastMonthAmount += total;
                 }
+
+                // Masukkan ke daily chart
+                dailyChart.forEach(day => {
+                    if (ot >= day.day_timestamp && ot < day.next_day_timestamp) {
+                        day.count++;
+                        day.amount += total;
+                    }
+                });
             });
         }
     } catch (_) {}
@@ -853,8 +878,51 @@ async function getResellerDashboardMetrics(userId) {
         today: { count: todayCount, amount: todayAmount },
         yesterday: { count: yesterdayCount, amount: yesterdayAmount },
         this_month: { count: thisMonthCount, amount: thisMonthAmount },
-        last_month: { count: lastMonthCount, amount: lastMonthAmount }
+        last_month: { count: lastMonthCount, amount: lastMonthAmount },
+        daily_chart: dailyChart.map(d => ({
+            date: d.date,
+            full_date: d.full_date,
+            count: d.count,
+            amount: d.amount
+        }))
     };
+}
+
+async function getResellerPortalNews() {
+    try {
+        const { data: articles } = await supabase
+            .from("news_articles")
+            .select("id, title, published_at, category, excerpt, slug")
+            .eq("is_published", true)
+            .order("published_at", { ascending: false })
+            .limit(5);
+
+        if (articles && articles.length > 0) {
+            return articles.map(a => ({
+                id: a.id,
+                title: a.title,
+                date: a.published_at ? new Date(a.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : "Baru",
+                time_ago: getTimeAgoIndo(a.published_at),
+                badge: a.category || "Berita",
+                slug: a.slug
+            }));
+        }
+    } catch (_) {}
+
+    return RESELLER_PORTAL_NEWS;
+}
+
+function getTimeAgoIndo(dateStr) {
+    if (!dateStr) return "baru saja";
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin < 60) return `${diffMin} menit yang lalu`;
+    const diffHours = Math.floor(diffMin / 60);
+    if (diffHours < 24) return `${diffHours} jam yang lalu`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 30) return `${diffDays} hari yang lalu`;
+    const diffMonths = Math.floor(diffDays / 30);
+    return `${diffMonths} bulan yang lalu`;
 }
 
 /**
@@ -888,6 +956,7 @@ exports.getPortalOverview = async (req, res) => {
         const memberCode = getResellerMemberCode(user);
         const metrics = await getResellerDashboardMetrics(user.id);
         const balance = Number(user.balance) || 0;
+        const portalNews = await getResellerPortalNews();
 
         // Jika akun belum approved (misal pending / none), tetap berikan akses portal untuk lihat dokumentasi & katalog
         if (status !== "approved") {
@@ -903,7 +972,7 @@ exports.getPortalOverview = async (req, res) => {
                     reseller_since: null
                 },
                 metrics,
-                news: RESELLER_PORTAL_NEWS,
+                news: portalNews,
                 security_indicator: {
                     two_factor: false,
                     ip_whitelist_active: false
@@ -972,7 +1041,7 @@ exports.getPortalOverview = async (req, res) => {
                 reseller_since: user.reseller_since
             },
             metrics,
-            news: RESELLER_PORTAL_NEWS,
+            news: portalNews,
             security_indicator: {
                 two_factor: false,
                 ip_whitelist_active: !!(apiKeyRow && apiKeyRow.ip_whitelist)
