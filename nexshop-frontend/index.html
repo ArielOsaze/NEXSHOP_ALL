@@ -78,7 +78,7 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <script src="/theme-init.js?v=20260812-otp-security"></script>
-<link rel="stylesheet" href="/style.css?v=20260823-pln-token">
+<link rel="stylesheet" href="/style.css?v=20260823-wallet-fix">
 <link rel="stylesheet" href="/tailwind.css?v=20260812-otp-security">
 
 <style>
@@ -231,19 +231,19 @@
 <button type="button" class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors truncate" id="trackOrderBtn">Cek Transaksi</button>
 </div>
 <div class="flex items-center gap-1 sm:gap-2 shrink-0">
-<button class="lg:hidden min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors" id="mobileMenuBtn" aria-label="Menu Navigasi">
+<button class="lg:hidden min-w-[38px] min-h-[38px] sm:min-w-[44px] sm:min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors shrink-0" id="mobileMenuBtn" aria-label="Menu Navigasi">
 <span class="material-symbols-outlined text-gray-600 dark:text-gray-300 text-xl">menu</span>
 </button>
-<button class="min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors relative" id="cartBtn" aria-label="Keranjang Belanja">
+<button class="min-w-[38px] min-h-[38px] sm:min-w-[44px] sm:min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors relative shrink-0" id="cartBtn" aria-label="Keranjang Belanja">
 <span class="material-symbols-outlined text-gray-600 dark:text-gray-300 text-xl">shopping_bag</span>
 <span class="absolute top-2 right-2 w-2 h-2 bg-brand-cyan rounded-full animate-ping hidden" id="cartCount"></span>
 </button>
-<button class="theme-toggle min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors" id="themeToggle" aria-label="Ganti Tema">
+<button class="theme-toggle min-w-[38px] min-h-[38px] sm:min-w-[44px] sm:min-h-[44px] rounded-full hidden md:flex items-center justify-center hover:bg-gray-200 dark:hover:bg-white/10 transition-colors shrink-0" id="themeToggle" aria-label="Ganti Tema">
 <span class="theme-toggle-icon text-gray-600 dark:text-gray-300 text-xl" id="theme-toggle-icon"><i class="fa-solid fa-moon"></i></span>
 </button>
 
 <!-- Premium NexShop Wallet Header Button -->
-<button type="button" class="nx-wallet-nav-btn" data-wallet-trigger aria-label="Buka NexShop Wallet" aria-haspopup="dialog" title="Buka NexShop Wallet">
+<button type="button" class="nx-wallet-nav-btn shrink-0" data-wallet-trigger aria-label="Buka NexShop Wallet" aria-haspopup="dialog" title="Buka NexShop Wallet">
     <div class="nx-wallet-nav-icon-wrap" aria-hidden="true">
         <i class="fa-solid fa-wallet"></i>
     </div>
@@ -254,7 +254,7 @@
     <i class="fa-solid fa-chevron-right nx-wallet-nav-chevron" aria-hidden="true"></i>
 </button>
 
-<div class="h-9 sm:h-10 px-4 rounded-full border border-gray-200 dark:border-white/10 cursor-pointer hover:border-brand-indigo transition-colors ml-1 shrink-0 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap max-w-[110px] truncate" id="accountBtn">Login</div>
+<div class="h-8 sm:h-10 px-2.5 sm:px-4 rounded-full border border-gray-200 dark:border-white/10 cursor-pointer hover:border-brand-indigo transition-colors ml-0.5 sm:ml-1 shrink-0 flex items-center justify-center text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap max-w-[90px] sm:max-w-[120px] truncate" id="accountBtn">Login</div>
 </div>
 </div>
 </nav>
@@ -1210,14 +1210,14 @@ Cek Transaksi
 </div>
 
 <!-- NexShop Wallet Modal -->
-<div class="overlay" id="walletModalOverlay" style="display:none;">
+<div class="overlay wallet-modal-overlay" id="walletModalOverlay" aria-hidden="true">
     <div class="modal wallet-modal" role="dialog" aria-modal="true" aria-labelledby="walletModalTitle">
         <div class="modal-header">
             <div style="display:flex;align-items:center;gap:8px;">
                 <span class="material-symbols-outlined" style="color:#38bdf8;font-size:1.4rem;">account_balance_wallet</span>
                 <h3 id="walletModalTitle" style="font-weight:800;letter-spacing:-0.02em;margin:0;font-size:1.1rem;color:#fff;">NexShop Wallet</h3>
             </div>
-            <button class="modal-close" id="closeWalletModalBtn" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+            <button class="modal-close" data-close="walletModalOverlay" id="closeWalletModalBtn" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
         </div>
 
         <div class="modal-body" style="padding:1.25rem;">
@@ -1347,6 +1347,6 @@ Cek Transaksi
 </div>
 
 <script src="/nexbot.js?v=20260823-nexbot"></script>
-<script src="/script.js?v=20260823-pln-token"></script>
+<script src="/script.js?v=20260823-wallet-fix"></script>
 </body>
 </html>

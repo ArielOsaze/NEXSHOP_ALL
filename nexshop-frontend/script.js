@@ -4684,11 +4684,14 @@ async function loadWalletMutations() {
 }
 
 function openWalletModal(e) {
-    if (e) e.preventDefault();
-    const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+    if (e && typeof e.preventDefault === "function") e.preventDefault();
+    const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) || localStorage.getItem("nexshop-public-token") || localStorage.getItem("token");
     if (!token) {
-        if (typeof openLoginModal === "function") openLoginModal();
-        else if (typeof showToast === "function") showToast("Info", "Silakan login terlebih dahulu untuk mengakses NexShop Wallet.");
+        if (typeof toast === "function") {
+            toast("Silakan login terlebih dahulu untuk mengakses NexShop Wallet.", "info");
+        }
+        const accBtn = document.getElementById("accountBtn");
+        if (accBtn) accBtn.click();
         return;
     }
 
@@ -4696,19 +4699,42 @@ function openWalletModal(e) {
     if (!overlay) return;
 
     // Reset views
-    document.getElementById("walletViewOverview").style.display = "block";
-    document.getElementById("walletViewTopup").style.display = "none";
-    document.getElementById("walletViewQris").style.display = "none";
-    document.getElementById("walletViewSuccess").style.display = "none";
+    const viewOverview = document.getElementById("walletViewOverview");
+    const viewTopup = document.getElementById("walletViewTopup");
+    const viewQris = document.getElementById("walletViewQris");
+    const viewSuccess = document.getElementById("walletViewSuccess");
 
-    overlay.style.display = "flex";
+    if (viewOverview) viewOverview.style.display = "block";
+    if (viewTopup) viewTopup.style.display = "none";
+    if (viewQris) viewQris.style.display = "none";
+    if (viewSuccess) viewSuccess.style.display = "none";
+
+    overlay.style.display = "";
+    if (typeof openOverlay === "function") {
+        openOverlay("walletModalOverlay");
+    } else {
+        overlay.classList.add("active");
+        overlay.classList.add("is-visible");
+        document.body.style.overflow = "hidden";
+    }
+
     fetchUserWallet();
     loadWalletMutations();
 }
 
-function closeWalletModal() {
-    const overlay = document.getElementById("walletModalOverlay");
-    if (overlay) overlay.style.display = "none";
+function closeWalletModal(e) {
+    if (e && typeof e.preventDefault === "function") e.preventDefault();
+    if (typeof closeOverlay === "function") {
+        closeOverlay("walletModalOverlay");
+    } else {
+        const overlay = document.getElementById("walletModalOverlay");
+        if (overlay) {
+            overlay.classList.remove("active");
+            overlay.classList.remove("is-visible");
+            document.body.style.overflow = "";
+        }
+    }
+
     if (activeUserWalletTopupPoll) {
         clearInterval(activeUserWalletTopupPoll);
         activeUserWalletTopupPoll = null;

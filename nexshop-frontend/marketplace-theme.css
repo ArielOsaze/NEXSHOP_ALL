@@ -3298,3 +3298,17 @@ body {
     margin: 0 auto 0.75rem;
     font-size: 1.6rem;
 }
+
+.wallet-modal-overlay.active,
+.wallet-modal-overlay.is-visible {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    display: flex !important;
+}
+
+.wallet-modal-overlay:not(.active):not(.is-visible) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}

@@ -8053,3 +8053,16 @@ html:not(.dark) .home-glass-badge {
         to { transform: translateY(0); }
     }
 }
+
+.wallet-modal-overlay.active {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    display: flex !important;
+}
+
+.wallet-modal-overlay:not(.active) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
