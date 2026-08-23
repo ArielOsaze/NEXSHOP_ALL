@@ -1289,7 +1289,12 @@
                             <span class="material-symbols-outlined" style="font-size:1.7rem;">military_tech</span>
                         </div>
                         <div class="tv-widget-user-meta">
-                            <div class="tv-widget-user-name" id="topWidgetFullName">Memuat akun mitra...</div>
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                                <div class="tv-widget-user-name" id="topWidgetFullName">Memuat akun mitra...</div>
+                                <div id="topWidgetStatusChip">
+                                    <span class="tv-badge-status tv-badge-pending">⏳ Menunggu Verifikasi</span>
+                                </div>
+                            </div>
                             <div class="tv-widget-user-email" id="topWidgetEmail">...</div>
                             <div class="tv-widget-member-code">
                                 <span style="color:#94a3b8;font-weight:600;">Member Code</span>
@@ -1338,23 +1343,24 @@
             </div>
 
             <!-- ── Alert Banner Saat Akun Belum Diverifikasi (Pending KYC) ── -->
-            <div id="tvPendingBanner" class="tv-pending-banner" style="display:none;">
+            <div id="tvPendingBanner" class="tv-pending-banner" style="display:flex;">
                 <div class="tv-pending-badge-icon">
                     <span class="material-symbols-outlined">hourglass_top</span>
                 </div>
                 <div style="flex:1;">
-                    <div style="font-size:0.95rem;font-weight:800;color:#fbbf24;margin-bottom:2px;">
-                        ⚠️ Akun Belum Diverifikasi oleh Admin (Maksimal 3x24 Jam Kerja)
+                    <div style="font-size:0.98rem;font-weight:900;color:#fbbf24;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:1.2rem;color:#f59e0b;">warning</span>
+                        <span>Akun Belum Diverifikasi oleh Admin (Maksimal 3x24 Jam Kerja)</span>
                     </div>
-                    <div style="font-size:0.84rem;color:#cbd5e1;line-height:1.5;margin-bottom:8px;">
-                        Akun kemitraan Anda saat ini sedang dalam proses verifikasi berkas KYC KTP oleh admin. Anda dapat menjelajahi seluruh menu katalog produk harga modal dan dokumentasi REST API. Pembuatan API Key dan transaksi resmi akan aktif otomatis setelah akun disetujui.
+                    <div style="font-size:0.86rem;color:#e2e8f0;line-height:1.6;margin-bottom:10px;">
+                        Pendaftaran kemitraan Anda telah diterima dan saat ini sedang menunggu tinjauan berkas KYC KTP oleh tim admin NexShop. <strong>Notifikasi ini akan otomatis hilang setelah pengajuan Anda disetujui (ACC) oleh admin</strong>. Selama masa peninjauan, Anda tetap dapat melihat seluruh katalog harga modal reseller dan mempelajari dokumentasi REST API.
                     </div>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                        <a href="https://wa.me/6281234567890?text=Halo%20Admin%20NexShop,%20saya%20sudah%20mendaftar%20reseller%20dan%20sedang%20menunggu%20verifikasi" target="_blank" rel="noopener" class="tv-btn-deposit-action" style="text-decoration:none;">
-                            <span class="material-symbols-outlined" style="font-size:0.95rem;color:#22c55e;">chat</span> Hubungi CS WhatsApp
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+                        <a href="https://wa.me/6281234567890?text=Halo%20Admin%20NexShop,%20saya%20sudah%20mendaftar%20reseller%20dan%20sedang%20menunggu%20verifikasi%20KYC" target="_blank" rel="noopener" class="tv-btn-deposit-action" style="text-decoration:none;background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#4ade80;">
+                            <span class="material-symbols-outlined" style="font-size:1rem;color:#22c55e;">chat</span> Konfirmasi via WhatsApp
                         </a>
                         <button type="button" class="tv-btn-deposit-action" onclick="loadPortalOverview()">
-                            <span class="material-symbols-outlined" style="font-size:0.95rem;">refresh</span> Periksa Status Terkini
+                            <span class="material-symbols-outlined" style="font-size:1rem;">refresh</span> Cek Status Verifikasi Terkini
                         </button>
                     </div>
                 </div>
@@ -1716,6 +1722,21 @@
             <!-- VIEW 7: INTEGRASI API (API KEY, WEBHOOK & DOCS)             -->
             <!-- =========================================================== -->
             <div id="view-api" class="tv-console-view">
+                <!-- Banner Khusus View API Jika Belum Di-ACC -->
+                <div id="apiPendingNotice" class="tv-pending-banner" style="display:flex;margin-bottom:1.35rem;">
+                    <div class="tv-pending-badge-icon">
+                        <span class="material-symbols-outlined">lock_clock</span>
+                    </div>
+                    <div style="flex:1;">
+                        <div style="font-size:0.95rem;font-weight:800;color:#fbbf24;margin-bottom:3px;">
+                            Akses Kredensial API Terkunci Sementara (Menunggu ACC Admin)
+                        </div>
+                        <div style="font-size:0.84rem;color:#cbd5e1;line-height:1.5;">
+                            Pembuatan Secret Key production dan Webhook Relay otomatis aktif setelah permohonan kemitraan Anda disetujui (ACC) oleh admin NexShop (maksimal 3x24 jam). Anda tetap dapat membaca dokumentasi endpoint REST API di bawah ini.
+                        </div>
+                    </div>
+                </div>
+
                 <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:1.35rem;">
                     <div class="tv-section-card">
                         <div class="tv-section-title">
@@ -2482,9 +2503,19 @@
                     const setEm = document.getElementById("settingsEmail");
                     if (setEm) setEm.value = email;
 
-                    // Update Status Banner & API Credentials
+                    // Update Status Banner, Chip & API Credentials
                     if (pendingBanner) {
                         pendingBanner.style.display = isApproved ? "none" : "flex";
+                    }
+                    const apiNotice = document.getElementById("apiPendingNotice");
+                    if (apiNotice) {
+                        apiNotice.style.display = isApproved ? "none" : "flex";
+                    }
+                    const statusChip = document.getElementById("topWidgetStatusChip");
+                    if (statusChip) {
+                        statusChip.innerHTML = isApproved 
+                            ? `<span class="tv-badge-status tv-badge-sukses">✅ Akun Terverifikasi</span>` 
+                            : `<span class="tv-badge-status tv-badge-pending">⏳ Menunggu Verifikasi</span>`;
                     }
 
                     if (isApproved) {
