@@ -156,10 +156,109 @@ body {
         var(--mkt-bg);
 }
 
-.mkt-bg-layer canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
+/* ── Ambient marketplace assets (dompet, kartu, uang, dst -- jatuh
+   pelan kayak hujan gak beraturan, gantiin shader biru yang lama).
+   Base .ambient-asset/.ambient-asset-glyph + animasi ambient-rain-nya
+   dari style.css; di sini cuma nambah varian ikon yang relevan sama
+   marketplace (beberapa ikon dipakai bareng sama halaman utama, warnanya
+   udah cocok karena --text-violet/--text-cyan/dst gak ditimpa di sini). */
+.ambient-asset--wallet {
+    color: var(--text-cyan);
+    font-size: 46px;
+    --rain-bounce-a: 24px;
+    --rain-bounce-b: -18px;
+    --rain-bounce-c: 30px;
+    --rain-bounce-d: -14px;
+}
+
+.ambient-asset--card {
+    color: var(--text-violet);
+    font-size: 44px;
+    --rain-bounce-a: -22px;
+    --rain-bounce-b: 18px;
+    --rain-bounce-c: -30px;
+    --rain-bounce-d: 16px;
+}
+
+.ambient-asset--cash {
+    color: var(--text-success);
+    font-size: 42px;
+    --rain-bounce-a: 20px;
+    --rain-bounce-b: -26px;
+    --rain-bounce-c: 16px;
+    --rain-bounce-d: -22px;
+}
+
+.ambient-asset--qr {
+    color: var(--text-cyan);
+    font-size: 38px;
+    --rain-bounce-a: -18px;
+    --rain-bounce-b: 24px;
+    --rain-bounce-c: -28px;
+    --rain-bounce-d: 12px;
+}
+
+.ambient-asset--bank {
+    color: var(--text-violet);
+    font-size: 40px;
+    --rain-bounce-a: 26px;
+    --rain-bounce-b: -14px;
+    --rain-bounce-c: 20px;
+    --rain-bounce-d: -28px;
+}
+
+.ambient-asset--simcard {
+    color: var(--text-violet);
+    font-size: 34px;
+    --rain-bounce-a: -24px;
+    --rain-bounce-b: 20px;
+    --rain-bounce-c: -16px;
+    --rain-bounce-d: 28px;
+}
+
+.ambient-asset--invoice {
+    color: var(--text-magenta);
+    font-size: 36px;
+    --rain-bounce-a: 18px;
+    --rain-bounce-b: -30px;
+    --rain-bounce-c: 24px;
+    --rain-bounce-d: -18px;
+}
+
+.ambient-asset--toll {
+    color: var(--text-success);
+    font-size: 36px;
+    --rain-bounce-a: -28px;
+    --rain-bounce-b: 16px;
+    --rain-bounce-c: -20px;
+    --rain-bounce-d: 24px;
+}
+
+.ambient-asset--piggy {
+    color: var(--text-warning);
+    font-size: 38px;
+    --rain-bounce-a: 22px;
+    --rain-bounce-b: -16px;
+    --rain-bounce-c: 28px;
+    --rain-bounce-d: -24px;
+}
+
+.ambient-asset--receipt {
+    color: var(--text-magenta);
+    font-size: 34px;
+    --rain-bounce-a: -20px;
+    --rain-bounce-b: 28px;
+    --rain-bounce-c: -14px;
+    --rain-bounce-d: 22px;
+}
+
+.ambient-asset--transfer {
+    color: var(--text-success);
+    font-size: 36px;
+    --rain-bounce-a: 24px;
+    --rain-bounce-b: -20px;
+    --rain-bounce-c: 18px;
+    --rain-bounce-d: -26px;
 }
 
 .mkt-bg-veil {
@@ -2369,6 +2468,43 @@ body {
     .mkt-detail-products {
         grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
         gap: 0.6rem;
+    }
+
+    /* Ikon hujan: dikecilin dan sebagian disembunyiin biar gak penuh
+       di layar sempit -- pola yang sama kayak halaman utama di style.css. */
+    .ambient-asset {
+        opacity: .08;
+    }
+
+    .ambient-asset--wallet,
+    .ambient-asset--card {
+        font-size: 30px;
+    }
+
+    .ambient-asset--cash,
+    .ambient-asset--coins,
+    .ambient-asset--bank {
+        font-size: 26px;
+    }
+
+    .ambient-asset--qr,
+    .ambient-asset--bolt,
+    .ambient-asset--invoice {
+        font-size: 24px;
+    }
+
+    .ambient-asset--simcard,
+    .ambient-asset--gift,
+    .ambient-asset--shield {
+        font-size: 22px;
+    }
+
+    .ambient-asset--toll,
+    .ambient-asset--piggy,
+    .ambient-asset--receipt,
+    .ambient-asset--transfer,
+    .ambient-asset--cart {
+        display: none;
     }
 }
 
