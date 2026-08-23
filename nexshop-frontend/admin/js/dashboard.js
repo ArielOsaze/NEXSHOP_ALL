@@ -33,12 +33,12 @@ async function loadCurrentUser() {
         if (res.ok) {
             currentUser = await res.json();
             document.getElementById("topbarUserName").textContent = currentUser.fullname || currentUser.name || "Admin";
-            
+
             const roleBadge = document.getElementById("topbarUserRole");
             if (currentUser.role === "staff") {
                 roleBadge.textContent = "Staff";
                 roleBadge.classList.replace("bg-primary", "bg-secondary");
-                
+
                 // Hide restricted menus
                 document.querySelectorAll('.nav-link[data-view="settings"], .nav-link[data-view="aimgmt"]').forEach(el => {
                     el.closest('.nav-item').style.display = 'none';
@@ -150,9 +150,8 @@ function requestAdminPin(setup, purpose = "melanjutkan tindakan sensitif ini") {
     document.getElementById("adminPinModalTitle").textContent = setup ? "Buat Security PIN Admin" : "Security PIN Admin";
     document.getElementById("adminPinHelp").textContent = setup
         ? "Buat PIN 6 digit terpisah dari password login. PIN ini wajib untuk membuka atau mengubah konfigurasi sensitif."
-        : `Masukkan Security PIN 6 digit untuk ${purpose}.${
-              purpose && purpose.includes("dashboard") ? "" : " PIN hanya berlaku untuk tindakan ini."
-          }`;
+        : `Masukkan Security PIN 6 digit untuk ${purpose}.${purpose && purpose.includes("dashboard") ? "" : " PIN hanya berlaku untuk tindakan ini."
+        }`;
     document.getElementById("adminPinConfirmation").classList.toggle("d-none", !setup);
     document.getElementById("adminPinSubmit").textContent = setup ? "Simpan Security PIN" : "Verifikasi PIN";
     document.getElementById("adminPinInput").value = "";
@@ -243,6 +242,25 @@ const ADMIN_IDLE_LIMIT_MS = 15 * 60 * 1000;
 const ADMIN_IDLE_WARNING_MS = 60 * 1000; // peringatan 1 menit sebelum habis
 const ADMIN_LAST_ACTIVITY_KEY = "nexshop_admin_last_activity";
 
+// Dulu gak ada apa pun yang diingat setelah Security PIN diverifikasi --
+// bootAdminGate() jalan dari nol tiap kali script dimuat, jadi REFRESH
+// HALAMAN BIASA pun dianggap sesi baru dan PIN ditanya lagi. Flag ini
+// sengaja pakai sessionStorage (bukan localStorage): bertahan lewat
+// refresh, tapi otomatis hilang begitu tab/browser ditutup -- dan
+// forceAdminLogout() ikut menghapusnya begitu sesi berakhir (logout
+// manual maupun idle timeout), jadi login baru selalu minta PIN lagi.
+// Verifikasi PIN per-aksi sensitif lain (withAdminPin) TIDAK kepengaruh
+// oleh flag ini -- itu tetap minta PIN setiap kali sesuai desain awal.
+const ADMIN_PIN_TRUST_KEY = "nexshop_admin_pin_trusted";
+
+function markAdminPinTrusted() {
+    try { sessionStorage.setItem(ADMIN_PIN_TRUST_KEY, "1"); } catch (e) { /* sessionStorage diblokir -- gerbang tetap jalan, cuma gak ke-skip pas refresh */ }
+}
+
+function isAdminPinTrusted() {
+    try { return sessionStorage.getItem(ADMIN_PIN_TRUST_KEY) === "1"; } catch (e) { return false; }
+}
+
 let adminGateOpen = false;
 let openAdminGate;
 const adminGateReady = new Promise((resolve) => {
@@ -261,6 +279,7 @@ function setAdminGateStatus(html, isError = false) {
 function forceAdminLogout(reason = "expired") {
     localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
     localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY);
+    try { sessionStorage.removeItem(ADMIN_PIN_TRUST_KEY); } catch (e) { /* noop */ }
     if (reason !== "manual") localStorage.setItem("nexshop_admin_logout_reason", reason);
     window.location.replace("login.html");
     // Dilempar biar pemanggilnya berhenti; semua caller udah nge-handle
@@ -310,9 +329,15 @@ async function bootAdminGate() {
             // Berhasil membuat PIN = identitas sudah terbukti di sesi ini,
             // jadi gak perlu langsung disuruh mengetik PIN yang sama lagi.
             await requestAdminPin(true, "mengaktifkan Security PIN dashboard");
+            markAdminPinTrusted();
+        } else if (isAdminPinTrusted()) {
+            // PIN dashboard sudah diverifikasi sebelumnya di tab ini (mis.
+            // user cuma nge-refresh) -- gak perlu nanya lagi tiap reload.
+            setAdminGateStatus("Membuka dashboard…");
         } else {
             setAdminGateStatus("Masukkan Security PIN untuk membuka dashboard.");
             await requestAdminPin(false, "membuka dashboard admin");
+            markAdminPinTrusted();
         }
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -398,7 +423,7 @@ function markAdminActivity() {
 function keepAdminSessionAlive() {
     markAdminActivity();
     // Sekalian "sentuh" server biar hitungan idle di sana ikut ke-reset.
-    apiFetch("/settings/me").catch(() => {});
+    apiFetch("/settings/me").catch(() => { });
 }
 
 // Tab yang disembunyiin bikin setTimeout diperlambat browser, jadi pas tab
@@ -614,7 +639,7 @@ function switchView(view) {
     document.querySelectorAll(".view-section").forEach(sec => sec.classList.add("d-none"));
     const target = document.getElementById(`view-${view}`);
     if (target) target.classList.remove("d-none");
-    
+
     currentView = view; // Ensure currentView is synced (if it wasn't already)
     if (view !== "topup" && typeof topupAutoRefreshTimer !== "undefined") clearTimeout(topupAutoRefreshTimer);
 
@@ -690,8 +715,8 @@ function renderProducts() {
             <td>${idx + 1}<div class="text-muted small">#${escapeHtml(product.id)} · urutan: ${escapeHtml(product.sort_order ?? "-")}</div></td>
             <td>
                 ${product.image
-                    ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" style="width:70px;height:70px;object-fit:cover;border-radius:10px;">`
-                    : "-"}
+            ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" style="width:70px;height:70px;object-fit:cover;border-radius:10px;">`
+            : "-"}
             </td>
             <td><strong>${escapeHtml(product.name)}</strong>${product.is_flash_sale ? ' <span class="badge bg-danger">🔥 Flash Sale</span>' : ""}</td>
             <td>Rp ${Number(product.price).toLocaleString("id-ID")}</td>
@@ -1132,7 +1157,7 @@ function exportOrdersCsv() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `nexshop-orders-${new Date().toISOString().slice(0,10)}.csv`;
+    anchor.download = `nexshop-orders-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
@@ -1185,8 +1210,8 @@ async function loadUsers(security_pin) {
                 <thead><tr><th>ID</th><th>Nama</th><th>Email</th><th>Role</th><th>Status</th><th>Aksi</th></tr></thead>
                 <tbody>
                     ${users.map(u => {
-                        const isStaff = currentUser && currentUser.role === "staff";
-                        return `
+            const isStaff = currentUser && currentUser.role === "staff";
+            return `
                         <tr>
                             <td>${escapeHtml(u.id)}</td>
                             <td>${escapeHtml(u.name || "-")}</td>
@@ -1200,8 +1225,8 @@ async function loadUsers(security_pin) {
                             </td>
                             <td>
                                 ${u.is_blacklisted
-                                    ? `<span class="badge bg-danger">Diblokir</span>`
-                                    : `<span class="badge bg-success">Aktif</span>`}
+                    ? `<span class="badge bg-danger">Diblokir</span>`
+                    : `<span class="badge bg-success">Aktif</span>`}
                             </td>
                             <td>
                                 <button class="btn btn-sm ${u.is_blacklisted ? "btn-success" : "btn-outline-danger"}"
@@ -1218,7 +1243,7 @@ async function loadUsers(security_pin) {
                             </td>
                         </tr>
                     `;
-                    }).join("")}
+        }).join("")}
                 </tbody>
             </table>
             </div>
@@ -1237,21 +1262,21 @@ async function loadUsers(security_pin) {
 async function openUserDetail(id) {
     try {
         await withAdminPin(async (security_pin) => {
-        const modalEl = document.getElementById("userDetailModal");
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-        const body = document.getElementById("userDetailBody");
-        body.innerHTML = `<div class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</div>`;
-        modal.show();
-        const res = await apiFetch(`/users/${id}/detail`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
-        if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.message || "Gagal memuat riwayat pelanggan");
-        }
-        const { user, stats, history } = await res.json();
-        const rupiah = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
-        const statusColors = { paid: "success", sukses: "success", pending: "warning", processing: "info", failed: "danger", gagal: "danger" };
+            const modalEl = document.getElementById("userDetailModal");
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            const body = document.getElementById("userDetailBody");
+            body.innerHTML = `<div class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</div>`;
+            modal.show();
+            const res = await apiFetch(`/users/${id}/detail`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
+            if (!res.ok) {
+                const data = await res.json().catch(() => ({}));
+                throw new Error(data.message || "Gagal memuat riwayat pelanggan");
+            }
+            const { user, stats, history } = await res.json();
+            const rupiah = (n) => "Rp " + Number(n || 0).toLocaleString("id-ID");
+            const statusColors = { paid: "success", sukses: "success", pending: "warning", processing: "info", failed: "danger", gagal: "danger" };
 
-        body.innerHTML = `
+            body.innerHTML = `
             <div class="mb-3">
                 <h5 class="mb-0">${escapeHtml(user.name || "-")}</h5>
                 <span class="text-muted small">${escapeHtml(user.email || "-")} · Bergabung ${user.created_at ? new Date(user.created_at).toLocaleDateString("id-ID") : "-"}</span>
@@ -1307,15 +1332,15 @@ async function openUserDetail(id) {
 async function changeUserRole(id, role) {
     try {
         await withAdminPin(async (security_pin) => {
-        const res = await apiFetch(`/users/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ role, security_pin })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal mengubah role");
+            const res = await apiFetch(`/users/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ role, security_pin })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal mengubah role");
 
-        showToast(`Role berhasil diubah jadi "${role}"`);
+            showToast(`Role berhasil diubah jadi "${role}"`);
         }, "mengubah role akun");
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -1333,16 +1358,16 @@ async function toggleUserBlacklist(id, newValue) {
 
     try {
         await withAdminPin(async (security_pin) => {
-        const res = await apiFetch(`/users/${id}`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ is_blacklisted: newValue, security_pin })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal mengubah status user");
+            const res = await apiFetch(`/users/${id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ is_blacklisted: newValue, security_pin })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal mengubah status user");
 
-        showToast(newValue ? "Akun berhasil diblokir" : "Blokir berhasil dibuka");
-        await Promise.all([loadUsers(security_pin), loadPendingOtp(security_pin)]);
+            showToast(newValue ? "Akun berhasil diblokir" : "Blokir berhasil dibuka");
+            await Promise.all([loadUsers(security_pin), loadPendingOtp(security_pin)]);
         }, newValue ? "memblokir akun" : "membuka blokir akun");
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -1357,12 +1382,12 @@ async function deleteUser(id, email) {
 
     try {
         await withAdminPin(async (security_pin) => {
-        const res = await apiFetch(`/users/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal menghapus user");
+            const res = await apiFetch(`/users/${id}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal menghapus user");
 
-        showToast("User berhasil dihapus");
-        await Promise.all([loadUsers(security_pin), loadPendingOtp(security_pin)]);
+            showToast("User berhasil dihapus");
+            await Promise.all([loadUsers(security_pin), loadPendingOtp(security_pin)]);
         }, "menghapus akun permanen");
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -1405,8 +1430,8 @@ async function loadPendingOtp(security_pin) {
                             <td>${u.otp_expires_at ? new Date(u.otp_expires_at).toLocaleString("id-ID") : "-"}</td>
                             <td>
                                 ${u.is_expired
-                                    ? `<span class="badge bg-secondary">Kedaluwarsa</span>`
-                                    : `<span class="badge bg-success">Berlaku</span>`}
+                ? `<span class="badge bg-secondary">Kedaluwarsa</span>`
+                : `<span class="badge bg-success">Berlaku</span>`}
                             </td>
                             <td>
                                 <button class="btn btn-sm btn-outline-primary" onclick="adminResendOtp(${Number(u.id)})">
@@ -1428,16 +1453,16 @@ async function loadPendingOtp(security_pin) {
 async function adminResendOtp(id) {
     try {
         await withAdminPin(async (security_pin) => {
-        const res = await apiFetch(`/users/${id}/resend-otp`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal mengirim ulang OTP");
+            const res = await apiFetch(`/users/${id}/resend-otp`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal mengirim ulang OTP");
 
-        if (data.deliverySent === false) {
-            showToast(data.message || "OTP dibuat tapi gagal terkirim.", true);
-        } else {
-            showToast(data.message || "Kode OTP baru berhasil dikirim");
-        }
-        await Promise.all([loadUsers(security_pin), loadPendingOtp(security_pin)]);
+            if (data.deliverySent === false) {
+                showToast(data.message || "OTP dibuat tapi gagal terkirim.", true);
+            } else {
+                showToast(data.message || "Kode OTP baru berhasil dikirim");
+            }
+            await Promise.all([loadUsers(security_pin), loadPendingOtp(security_pin)]);
         }, "mengirim ulang OTP akun");
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -1484,15 +1509,15 @@ function renderPromoSlides() {
             <td>${escapeHtml(slide.sort_order ?? 0)}</td>
             <td>
                 ${slide.image_url
-                    ? `<img src="${escapeHtml(slide.image_url)}" alt="${escapeHtml(slide.title)}" style="width:70px;height:44px;object-fit:cover;border-radius:8px;">`
-                    : "-"}
+            ? `<img src="${escapeHtml(slide.image_url)}" alt="${escapeHtml(slide.title)}" style="width:70px;height:44px;object-fit:cover;border-radius:8px;">`
+            : "-"}
             </td>
             <td><span class="badge bg-secondary text-capitalize">${escapeHtml(slide.type || "promo")}</span></td>
             <td><strong>${escapeHtml(slide.title)}</strong></td>
             <td>
                 ${slide.is_active
-                    ? `<span class="badge bg-success">Aktif</span>`
-                    : `<span class="badge bg-secondary">Nonaktif</span>`}
+            ? `<span class="badge bg-success">Aktif</span>`
+            : `<span class="badge bg-secondary">Nonaktif</span>`}
             </td>
             <td>
                 <button class="btn btn-warning btn-sm" onclick="editPromoSlide(${Number(slide.id)})">
@@ -1810,7 +1835,7 @@ async function unlockLoginIp(ip) {
             successEl.textContent = data.message;
             showToast(data.message);
             document.getElementById("unlockLoginIp").value = "";
-            withAdminPin(loadBlockedIps, "memuat daftar IP diblokir").catch(() => {});
+            withAdminPin(loadBlockedIps, "memuat daftar IP diblokir").catch(() => { });
         }, "membuka blokir IP");
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -2060,18 +2085,18 @@ async function saveApiKeys() {
 
     try {
         await withAdminPin(async (security_pin) => {
-        const res = await apiFetch("/settings/api-keys", {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ ...payload, security_pin })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal menyimpan API keys");
+            const res = await apiFetch("/settings/api-keys", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ...payload, security_pin })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal menyimpan API keys");
 
-        showToast("API keys berhasil disimpan");
-        // Reuse PIN yang sudah diverifikasi di request Save ini — jangan minta
-        // PIN lagi cuma buat reload form (dulu ini penyebab PIN muncul 2x).
-        loadApiKeys(security_pin).catch(() => {});
+            showToast("API keys berhasil disimpan");
+            // Reuse PIN yang sudah diverifikasi di request Save ini — jangan minta
+            // PIN lagi cuma buat reload form (dulu ini penyebab PIN muncul 2x).
+            loadApiKeys(security_pin).catch(() => { });
         }, "menyimpan API Keys");
     } catch (err) {
         if (err.message === "unauthorized") return;
@@ -2468,10 +2493,10 @@ async function smartActivateAllTopup() {
     if (
         !confirm(
             "Jalankan aktivasi cerdas ke SELURUH katalog?\n\n" +
-                "• Produk game: cuma varian termurah per nominal yang aktif\n" +
-                "• Produk non-game (Pulsa/PLN/E-Wallet/Tagihan): duplikat dimatiin, sisanya diaktifkan\n" +
-                "• Produk yang statusnya udah diatur manual tetap dilindungi\n\n" +
-                "Aksi ini bisa di-undo."
+            "• Produk game: cuma varian termurah per nominal yang aktif\n" +
+            "• Produk non-game (Pulsa/PLN/E-Wallet/Tagihan): duplikat dimatiin, sisanya diaktifkan\n" +
+            "• Produk yang statusnya udah diatur manual tetap dilindungi\n\n" +
+            "Aksi ini bisa di-undo."
         )
     )
         return;
@@ -2585,7 +2610,7 @@ async function exportOrdersCsv() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = `laporan_penjualan_nexshop_${new Date().toISOString().slice(0,10)}.csv`;
+        a.download = `laporan_penjualan_nexshop_${new Date().toISOString().slice(0, 10)}.csv`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -2923,6 +2948,7 @@ function renderPromoCodes() {
 function logout() {
     localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
     localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY);
+    try { sessionStorage.removeItem(ADMIN_PIN_TRUST_KEY); } catch (e) { /* noop */ }
     window.location.href = "login.html";
 }
 
@@ -3005,9 +3031,8 @@ function renderActivityFeed() {
     }
     feed.innerHTML = latestNotifications.slice(0, 8).map(n => `
         <div class="activity-feed-item">
-            <span class="dot ${n.type}" style="margin-top:6px;width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${
-                n.type === "order" ? "#22C55E" : n.type === "topup" ? "#22D3EE" : n.type === "security" ? "#F0475C" : "#8B5CF6"
-            }"></span>
+            <span class="dot ${n.type}" style="margin-top:6px;width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${n.type === "order" ? "#22C55E" : n.type === "topup" ? "#22D3EE" : n.type === "security" ? "#F0475C" : "#8B5CF6"
+        }"></span>
             <div>
                 <div style="font-size:13px;">${escapeHtml(n.message)}</div>
                 <div class="text-muted" style="font-size:11px;">${timeAgo(n.created_at)}</div>
@@ -3183,7 +3208,7 @@ function initThemeToggle() {
         // Tanpa ini, komponen Bootstrap (tabel, form, dropdown, offcanvas,
         // utility *-subtle) tetap ngerender versi terang di tema gelap.
         document.documentElement.setAttribute("data-bs-theme", theme);
-        try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch (e) {}
+        try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch (e) { }
         const isLight = theme === "light";
 
         // Chart.js nge-bake warna sumbu waktu chart dibuat, jadi grafik yang
@@ -3500,11 +3525,11 @@ async function loadSystemHealth() {
         const res = await apiFetch("/admin/stats/system-health");
         if (!res.ok) return;
         const data = await res.json();
-        
+
         document.getElementById("sysStatusBadge").textContent = data.status === "online" ? "Online" : "Warning";
         document.getElementById("sysRamHeap").textContent = (data.memory?.heap_used_mb || 0) + " MB";
         document.getElementById("sysNodeVer").textContent = data.node_version || "-";
-        
+
         const uptimeMins = Math.floor((data.uptime_seconds || 0) / 60);
         document.getElementById("sysUptime").textContent = `${uptimeMins} m`;
         document.getElementById("sysDbLatency").textContent = `${data.database?.latency_ms || 0} ms`;
@@ -3600,7 +3625,7 @@ function filterKnowledgeTable() {
     const selectedCat = (document.getElementById("kbCategoryFilter")?.value || "").toLowerCase().trim();
 
     const filtered = knowledgeBaseList.filter(item => {
-        const matchesQuery = !query || 
+        const matchesQuery = !query ||
             (item.title && item.title.toLowerCase().includes(query)) ||
             (item.keywords && item.keywords.toLowerCase().includes(query)) ||
             (item.content && item.content.toLowerCase().includes(query));
@@ -4261,7 +4286,7 @@ async function loadMultiAiLogs() {
             const badgeClass = log.is_success ? "bg-success" : "bg-danger";
             const badgeText = log.is_success ? "Berhasil" : "Gagal";
             const promptTrunc = escapeHtml(log.user_prompt || "-").slice(0, 50);
-            
+
             let tokenStr = "-";
             if (log.token_usage) {
                 if (typeof log.token_usage === "object") {
@@ -4314,7 +4339,7 @@ async function loadAdminTopSpenders() {
 function renderTopSpendersTable() {
     const tbody = document.getElementById("topSpendersTableBody");
     if (!tbody) return;
-    
+
     if (adminTopSpenders.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Belum ada Top Spender manual</td></tr>`;
         return;
@@ -4363,7 +4388,7 @@ function openTopSpenderModal(id = null) {
     }
     const title = document.getElementById("topSpenderModalTitle");
     const form = document.getElementById("topSpenderForm");
-    
+
     if (form) form.reset();
     document.getElementById("tsId").value = "";
     document.getElementById("tsActive").checked = true;
@@ -4384,7 +4409,7 @@ function openTopSpenderModal(id = null) {
     } else {
         if (title) title.innerHTML = '<i class="bi bi-trophy me-2"></i>Tambah Top Spender';
     }
-    
+
     if (topSpenderModalInstance) {
         topSpenderModalInstance.show();
     }
@@ -4417,21 +4442,21 @@ async function handleTopSpenderSubmit(e) {
     try {
         const url = id ? `${API_BASE}/stats/admin/leaderboard/${id}` : `${API_BASE}/stats/admin/leaderboard`;
         const method = id ? "PUT" : "POST";
-        
+
         const res = await fetch(url, {
             method,
-            headers: { 
+            headers: {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify(payload)
         });
-        
+
         if (!res.ok) {
             const data = await res.json();
             throw new Error(data.message || "Gagal menyimpan");
         }
-        
+
         Swal.fire({
             icon: "success",
             title: "Berhasil",
@@ -4440,7 +4465,7 @@ async function handleTopSpenderSubmit(e) {
             color: '#fff',
             confirmButtonColor: '#8b5cf6'
         });
-        
+
         closeTopSpenderModal();
         loadAdminTopSpenders();
     } catch (err) {
@@ -4473,7 +4498,7 @@ async function deleteTopSpender(id) {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Gagal menghapus");
-            
+
             Swal.fire({
                 icon: "success",
                 title: "Terhapus",
@@ -4513,7 +4538,7 @@ async function loadAdminRatings(page = 1) {
     currentRatingPage = page;
     const tbody = document.getElementById("adminRatingsTbody");
     tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>`;
-    
+
     const search = document.getElementById("searchRating").value.trim();
     const score = document.getElementById("filterRatingScore").value;
     const buyerType = document.getElementById("filterRatingBuyer").value;
@@ -4535,23 +4560,23 @@ async function loadAdminRatings(page = 1) {
         const res = await apiFetch(`/ratings/admin?${query.toString()}`);
         if (!res.ok) throw new Error("Gagal mengambil data rating");
         const json = await res.json();
-        
+
         tbody.innerHTML = "";
-        
+
         if (json.data.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Tidak ada ulasan ditemukan.</td></tr>`;
         } else {
             json.data.forEach(r => {
                 const tr = document.createElement("tr");
                 const dt = new Date(r.created_at).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" });
-                
+
                 let starsHtml = "";
-                for(let i=1; i<=5; i++) {
+                for (let i = 1; i <= 5; i++) {
                     if (i <= r.score) starsHtml += `<i class="bi bi-star-fill text-warning me-1"></i>`;
                     else starsHtml += `<i class="bi bi-star text-muted me-1"></i>`;
                 }
 
-                const buyerTypeBadge = r.is_guest 
+                const buyerTypeBadge = r.is_guest
                     ? `<span class="badge bg-secondary ms-2">Guest</span>`
                     : `<span class="badge bg-primary ms-2">Login</span>`;
 
@@ -4565,9 +4590,9 @@ async function loadAdminRatings(page = 1) {
                 tbody.appendChild(tr);
             });
         }
-        
+
         document.getElementById("ratingPageInfo").textContent = `Halaman ${json.meta.page} dari ${json.meta.totalPages || 1} (${json.meta.total} ulasan)`;
-        
+
         document.getElementById("btnRatingPrev").disabled = json.meta.page <= 1;
         document.getElementById("btnRatingNext").disabled = json.meta.page >= json.meta.totalPages;
 
@@ -4829,20 +4854,20 @@ if (musicModalEl) {
 async function loadMusicList() {
     const tbody = document.getElementById("musicList");
     tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4"><div class="spinner-border text-primary" role="status"></div></td></tr>`;
-    
+
     try {
         const res = await apiFetch("/music/admin");
         if (!res.ok) throw new Error("Gagal mengambil data lagu");
         const json = await res.json();
-        
+
         musicList = json.musicList;
         document.getElementById("masterMusicToggle").checked = json.enabled;
-        
+
         if (musicList.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Belum ada lagu.</td></tr>`;
             return;
         }
-        
+
         tbody.innerHTML = musicList.map((m) => `
             <tr>
                 <td><img src="${escapeHtml(m.cover_url)}" style="width:50px;height:50px;object-fit:cover;border-radius:50%;"></td>
@@ -4851,9 +4876,9 @@ async function loadMusicList() {
                     <audio controls src="${escapeHtml(m.audio_url)}" style="height:32px; max-width:200px;"></audio>
                 </td>
                 <td>
-                    ${m.is_active 
-                        ? '<span class="badge bg-success"><i class="bi bi-play-circle"></i> Aktif Tampil</span>' 
-                        : '<span class="badge bg-secondary">Tidak Aktif</span>'}
+                    ${m.is_active
+                ? '<span class="badge bg-success"><i class="bi bi-play-circle"></i> Aktif Tampil</span>'
+                : '<span class="badge bg-secondary">Tidak Aktif</span>'}
                 </td>
                 <td>
                     ${!m.is_active ? `<button class="btn btn-sm btn-outline-success me-1" onclick="setActiveMusic(${m.id})" title="Jadikan Lagu Aktif"><i class="bi bi-check-circle"></i></button>` : ''}
@@ -4862,7 +4887,7 @@ async function loadMusicList() {
                 </td>
             </tr>
         `).join("");
-        
+
     } catch (e) {
         tbody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Error: ${escapeHtml(e.message)}</td></tr>`;
     }
@@ -4880,7 +4905,7 @@ function editMusic(id) {
 
     document.getElementById("musicId").value = music.id;
     document.getElementById("musicTitle").value = music.title;
-    
+
     // Preview current audio/cover
     musicAudioElement.src = music.audio_url;
     musicAudioPreview.classList.remove("d-none");
@@ -4897,9 +4922,9 @@ async function saveMusic() {
     const audioFile = musicAudioInput.files[0];
     const coverFile = musicCoverInput.files[0];
     const errorEl = document.getElementById("musicError");
-    
+
     errorEl.textContent = "";
-    
+
     if (!title) {
         errorEl.textContent = "Judul lagu wajib diisi!";
         return;
@@ -4909,12 +4934,12 @@ async function saveMusic() {
         errorEl.textContent = "File audio dan gambar cover wajib diisi untuk lagu baru!";
         return;
     }
-    
+
     const saveBtn = document.getElementById("saveMusicBtn");
     const originalHtml = saveBtn.innerHTML;
     saveBtn.disabled = true;
     saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Menyimpan...`;
-    
+
     try {
         let audioUrl = "";
         let coverUrl = "";
@@ -4956,13 +4981,13 @@ async function saveMusic() {
             body: JSON.stringify({ title, audio_url: audioUrl, cover_url: coverUrl })
         });
         const json = await res.json().catch(() => ({}));
-        
+
         if (!res.ok) throw new Error(json.message || "Gagal menyimpan lagu");
-        
+
         musicModal.hide();
         showToast(id ? "Lagu berhasil diupdate" : "Lagu berhasil ditambahkan");
         loadMusicList();
-        
+
     } catch (e) {
         errorEl.textContent = e.message;
     } finally {
@@ -5014,4 +5039,3 @@ async function toggleMasterMusicPlayer(enabled) {
         showToast(e.message, true);
     }
 }
-
