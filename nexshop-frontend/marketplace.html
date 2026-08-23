@@ -91,7 +91,8 @@
                  gak ada dua sumber kebenaran buat kata kunci pencarian. -->
             <div class="mkt-nav-search">
                 <span class="material-symbols-outlined" aria-hidden="true">search</span>
-                <input type="text" id="mktNavSearchInput" placeholder="Cari layanan..." aria-label="Cari layanan digital">
+                <input type="text" id="mktNavSearchInput" placeholder="Cari layanan..."
+                    aria-label="Cari layanan digital">
             </div>
 
             <!-- Muncul otomatis kalau katalog yang diterima berisi harga reseller -->
@@ -163,8 +164,10 @@
 
             <ul class="mkt-trust-strip">
                 <li><span class="material-symbols-outlined" aria-hidden="true">bolt</span> Proses otomatis 24 jam</li>
-                <li><span class="material-symbols-outlined" aria-hidden="true">verified_user</span> Legal &amp; berbadan usaha</li>
-                <li><span class="material-symbols-outlined" aria-hidden="true">payments</span> QRIS, VA &amp; E-Wallet</li>
+                <li><span class="material-symbols-outlined" aria-hidden="true">verified_user</span> Legal &amp; berbadan
+                    usaha</li>
+                <li><span class="material-symbols-outlined" aria-hidden="true">payments</span> QRIS, VA &amp; E-Wallet
+                </li>
             </ul>
         </section>
 
@@ -175,10 +178,28 @@
                     <div class="mkt-rail-head">
                         <h2 class="mkt-section-title">Kategori</h2>
                         <p>Jelajahi seluruh layanan digital</p>
+                        <!-- Dekorasi doang (aria-hidden): padanan asset "diamond" yang
+                             ada di alur Topup Game, versi Marketplace -- dompet, kartu,
+                             e-toll, voucher, melayang pelan + glow. -->
+                        <div class="mkt-rail-deco" aria-hidden="true">
+                            <span class="mkt-rail-deco-item mkt-rail-deco-item--wallet" title="E-Wallet">
+                                <span class="material-symbols-outlined is-filled">account_balance_wallet</span>
+                            </span>
+                            <span class="mkt-rail-deco-item mkt-rail-deco-item--card" title="Kartu">
+                                <span class="material-symbols-outlined is-filled">credit_card</span>
+                            </span>
+                            <span class="mkt-rail-deco-item mkt-rail-deco-item--etoll" title="E-Toll">
+                                <span class="material-symbols-outlined is-filled">toll</span>
+                            </span>
+                            <span class="mkt-rail-deco-item mkt-rail-deco-item--voucher" title="Voucher">
+                                <span class="material-symbols-outlined is-filled">confirmation_number</span>
+                            </span>
+                        </div>
                     </div>
                     <div class="cat-filter-wrap" id="catFilterWrap"></div>
                     <div class="mkt-rail-foot">
-                        <button type="button" class="mkt-rail-reset" id="mktRailResetBtn">Tampilkan Semua Layanan</button>
+                        <button type="button" class="mkt-rail-reset" id="mktRailResetBtn">Tampilkan Semua
+                            Layanan</button>
                     </div>
                 </div>
             </aside>
@@ -278,7 +299,8 @@
                         <span>Terdaftar melalui OSS</span>
                     </div>
                     <a href="/legalitas.html" class="nx-footer__legal-link">
-                        Informasi legalitas <span class="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                        Informasi legalitas <span class="material-symbols-outlined"
+                            aria-hidden="true">arrow_forward</span>
                     </a>
                 </div>
             </div>
@@ -407,7 +429,8 @@
             </div>
 
             <p class="mkt-payment-status" id="mktPaymentStatus">
-                <span class="material-symbols-outlined mkt-spin" aria-hidden="true">progress_activity</span> Menunggu pembayaran, jangan tutup halaman ini...
+                <span class="material-symbols-outlined mkt-spin" aria-hidden="true">progress_activity</span> Menunggu
+                pembayaran, jangan tutup halaman ini...
             </p>
         </div>
     </div>
@@ -474,24 +497,29 @@
             }
         }
 
-        // Ikon Material per kategori. Kategorinya datang dari mapping admin
-        // (bisa berubah kapan saja), makanya dicocokin pakai kata kunci --
-        // kalau gak ada yang cocok, jatuh ke ikon umum, bukan kosong.
+        // Ikon + "tone" warna per kategori. Kategorinya datang dari mapping
+        // admin (bisa berubah kapan saja), makanya dicocokin pakai kata kunci
+        // -- kalau gak ada yang cocok, jatuh ke ikon umum, bukan kosong.
+        // Urutan sengaja dari yang paling spesifik ke paling umum (mis. "kartu
+        // perdana"/SIM harus kena ikon pulsa duluan, bukan ikon kartu generik).
         const CATEGORY_ICONS = [
-            { test: /e-?wallet|e-?money|dompet|saldo/i, icon: "account_balance_wallet" },
-            { test: /paket\s*data|voucher\s*data|internet/i, icon: "wifi" },
-            { test: /pulsa|telpon|sms/i, icon: "phone_iphone" },
-            { test: /pln|listrik|token/i, icon: "electric_bolt" },
-            { test: /tagihan|pascabayar|pdam|bpjs/i, icon: "receipt_long" },
-            { test: /game|voucher/i, icon: "sports_esports" },
-            { test: /hiburan|tv|streaming/i, icon: "live_tv" },
-            { test: /transfer|bank/i, icon: "swap_horiz" }
+            { test: /e-?wallet|e-?money|dompet|saldo/i, icon: "account_balance_wallet", tone: "wallet" },
+            { test: /e-?toll|etoll/i, icon: "toll", tone: "etoll" },
+            { test: /pulsa|telpon|sms|perdana|kartu\s*sim/i, icon: "phone_iphone", tone: "pulsa" },
+            { test: /paket\s*data|internet/i, icon: "wifi", tone: "data" },
+            { test: /pln|listrik|token/i, icon: "electric_bolt", tone: "pln" },
+            { test: /tagihan|pascabayar|pdam|bpjs/i, icon: "receipt_long", tone: "tagihan" },
+            { test: /voucher/i, icon: "confirmation_number", tone: "voucher" },
+            { test: /game/i, icon: "sports_esports", tone: "game" },
+            { test: /hiburan|tv|streaming/i, icon: "live_tv", tone: "hiburan" },
+            { test: /transfer|bank/i, icon: "swap_horiz", tone: "transfer" },
+            { test: /kartu|debit|kredit|\batm\b/i, icon: "credit_card", tone: "card" }
         ];
 
         function categoryIcon(name) {
-            if (!name) return "grid_view";
+            if (!name) return { icon: "grid_view", tone: "" };
             const found = CATEGORY_ICONS.find((c) => c.test.test(name));
-            return found ? found.icon : "apps";
+            return found ? found : { icon: "apps", tone: "" };
         }
 
         function renderCategoryChips() {
@@ -501,13 +529,16 @@
                 { label: "Semua Layanan", value: "", count: totalOperator },
                 ...catalog.map((c) => ({ label: c.category, value: c.category, count: c.operators.length }))
             ];
-            wrap.innerHTML = chips.map((c) => `
+            wrap.innerHTML = chips.map((c) => {
+                const { icon, tone } = categoryIcon(c.value);
+                return `
         <button type="button" class="cat-btn ${activeCategory === c.value ? "active" : ""}" data-cat="${escapeHtml(c.value)}">
-            <span class="cat-btn-icon"><span class="material-symbols-outlined is-filled" aria-hidden="true">${categoryIcon(c.value)}</span></span>
+            <span class="cat-btn-icon" data-tone="${tone}"><span class="material-symbols-outlined is-filled" aria-hidden="true">${icon}</span></span>
             <span class="cat-btn-label">${escapeHtml(c.label)}</span>
             <span class="cat-btn-count">${c.count}</span>
         </button>
-    `).join("");
+    `;
+            }).join("");
             wrap.querySelectorAll(".cat-btn").forEach((btn) => {
                 btn.addEventListener("click", () => {
                     activeCategory = btn.dataset.cat;

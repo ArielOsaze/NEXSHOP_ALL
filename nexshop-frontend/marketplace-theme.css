@@ -470,7 +470,7 @@ body {
     box-shadow: 0 18px 45px rgba(0, 0, 0, 0.32), 0 0 0 4px var(--mkt-glow-soft);
 }
 
-.mkt-search-wrap > .material-symbols-outlined {
+.mkt-search-wrap>.material-symbols-outlined {
     flex: 0 0 auto;
     margin-left: 0.85rem;
     color: var(--mkt-text-muted);
@@ -816,6 +816,167 @@ body {
     color: var(--mkt-primary);
 }
 
+/* ── Ikon kategori berwarna + micro-glow ─────────────────────── */
+/* Tiap kategori dapat warna sendiri ("tone", di-set lewat data-tone dari
+   JS) biar rail-nya gak monoton satu warna kayak sebelumnya. */
+.cat-btn-icon[data-tone="wallet"] {
+    background: rgba(139, 92, 246, 0.16);
+    color: #A78BFA;
+}
+
+.cat-btn-icon[data-tone="etoll"] {
+    background: rgba(45, 212, 191, 0.16);
+    color: #2DD4BF;
+}
+
+.cat-btn-icon[data-tone="pulsa"] {
+    background: rgba(129, 140, 248, 0.16);
+    color: #818CF8;
+}
+
+.cat-btn-icon[data-tone="data"] {
+    background: rgba(34, 211, 238, 0.16);
+    color: #22D3EE;
+}
+
+.cat-btn-icon[data-tone="pln"] {
+    background: rgba(251, 191, 36, 0.16);
+    color: #FBBF24;
+}
+
+.cat-btn-icon[data-tone="tagihan"] {
+    background: rgba(52, 211, 153, 0.16);
+    color: #34D399;
+}
+
+.cat-btn-icon[data-tone="voucher"] {
+    background: rgba(240, 57, 154, 0.16);
+    color: #F0399A;
+}
+
+.cat-btn-icon[data-tone="game"] {
+    background: rgba(244, 114, 182, 0.16);
+    color: #F472B6;
+}
+
+.cat-btn-icon[data-tone="hiburan"] {
+    background: rgba(96, 165, 250, 0.16);
+    color: #60A5FA;
+}
+
+.cat-btn-icon[data-tone="transfer"] {
+    background: rgba(148, 163, 184, 0.18);
+    color: #CBD5E1;
+}
+
+.cat-btn-icon[data-tone="card"] {
+    background: rgba(56, 189, 248, 0.16);
+    color: #38BDF8;
+}
+
+.cat-btn.active .cat-btn-icon[data-tone] {
+    box-shadow: 0 0 0 1px currentColor inset;
+}
+
+/* Napas pelan tiap ikon kategori -- padanan halus dari glow yang dipakai
+   ikon diamond di alur Topup, cuma jauh lebih tenang biar gak ganggu waktu
+   dipakai buat filter. Delay digeser per posisi tombol biar gak nyala
+   bareng (efek "konstelasi", bukan kedip serempak). */
+@keyframes cat-icon-breathe {
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 0 transparent);
+    }
+
+    50% {
+        filter: drop-shadow(0 0 5px currentColor);
+    }
+}
+
+.cat-btn-icon .material-symbols-outlined {
+    animation: cat-icon-breathe 3.6s ease-in-out infinite;
+}
+
+.cat-btn:nth-child(3n+1) .cat-btn-icon .material-symbols-outlined {
+    animation-delay: 0s;
+}
+
+.cat-btn:nth-child(3n+2) .cat-btn-icon .material-symbols-outlined {
+    animation-delay: 1.2s;
+}
+
+.cat-btn:nth-child(3n+3) .cat-btn-icon .material-symbols-outlined {
+    animation-delay: 2.4s;
+}
+
+/* ── Strip ikon dekoratif di atas rail kategori ──────────────── */
+/* Padanan asset "diamond" yang dipakai alur Topup Game, versi
+   Marketplace: dompet, kartu, e-toll, voucher -- ikon doang yang melayang
+   pelan + glow warna-warni. Murni dekoratif (aria-hidden), gak nyambung ke
+   filter kategori manapun. */
+.mkt-rail-deco {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-top: 0.75rem;
+}
+
+.mkt-rail-deco-item {
+    width: 2.35rem;
+    height: 2.35rem;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: mkt-deco-float 3.6s ease-in-out infinite;
+}
+
+.mkt-rail-deco-item .material-symbols-outlined {
+    font-size: 1.15rem;
+}
+
+.mkt-rail-deco-item--wallet {
+    background: radial-gradient(circle at 30% 30%, rgba(167, 139, 250, 0.4), rgba(139, 92, 246, 0.1));
+    color: #C4B5FD;
+    box-shadow: 0 0 16px rgba(139, 92, 246, 0.35);
+    animation-delay: 0s;
+}
+
+.mkt-rail-deco-item--card {
+    background: radial-gradient(circle at 30% 30%, rgba(56, 189, 248, 0.4), rgba(34, 211, 238, 0.1));
+    color: #A5F3FC;
+    box-shadow: 0 0 16px rgba(34, 211, 238, 0.32);
+    animation-delay: 0.5s;
+}
+
+.mkt-rail-deco-item--etoll {
+    background: radial-gradient(circle at 30% 30%, rgba(45, 212, 191, 0.4), rgba(45, 212, 191, 0.1));
+    color: #99F6E4;
+    box-shadow: 0 0 16px rgba(45, 212, 191, 0.3);
+    animation-delay: 1s;
+}
+
+.mkt-rail-deco-item--voucher {
+    background: radial-gradient(circle at 30% 30%, rgba(240, 57, 154, 0.4), rgba(240, 57, 154, 0.1));
+    color: #FBCFE8;
+    box-shadow: 0 0 16px rgba(240, 57, 154, 0.3);
+    animation-delay: 1.5s;
+}
+
+@keyframes mkt-deco-float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
 /* ── Header etalase + grid operator ──────────────────────────── */
 .mkt-grid-header {
     display: flex;
@@ -896,8 +1057,15 @@ body {
 }
 
 @keyframes mkt-card-in {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .market-card:hover,
@@ -1061,8 +1229,13 @@ body {
 }
 
 @keyframes mkt-shimmer {
-    0% { background-position: 100% 50%; }
-    100% { background-position: 0 50%; }
+    0% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0 50%;
+    }
 }
 
 /* ── Blok pendukung: promo reseller + kartu bantuan ──────────── */
@@ -1436,8 +1609,15 @@ body {
 }
 
 @keyframes mkt-modal-in {
-    from { opacity: 0; transform: translateY(14px) scale(0.98); }
-    to { opacity: 1; transform: none; }
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(0.98);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
 }
 
 .mkt-modal-close {
@@ -1590,12 +1770,12 @@ body {
     border-color: var(--mkt-line-strong);
 }
 
-.mkt-pay-option input:checked + .mkt-pay-card {
+.mkt-pay-option input:checked+.mkt-pay-card {
     border-color: var(--mkt-primary);
     background: rgba(139, 92, 246, 0.08);
 }
 
-.mkt-pay-option input:focus-visible + .mkt-pay-card {
+.mkt-pay-option input:focus-visible+.mkt-pay-card {
     box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.35);
 }
 
@@ -1668,7 +1848,9 @@ body {
 }
 
 @keyframes mkt-rotate {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .mkt-inquiry-btn:disabled {
@@ -2040,9 +2222,13 @@ body {
         position: static;
     }
 
-    /* Rail berubah jadi barisan pill yang digeser horizontal: di layar
-       sempit, daftar vertikal berisi belasan kategori bakal ngedorong
-       etalase produk turun jauh ke bawah layar. */
+    /* Sebelumnya rail ini jadi barisan pill yang digeser horizontal
+       (overflow-x: auto + nowrap). Masalahnya scrollbar disembunyikan
+       total di seluruh halaman (lihat "* { scrollbar-width: none }" di
+       atas), jadi di HP gak ada tanda visual apapun kalau ada kategori
+       lain di luar layar -- kelihatannya cuma 1-2 kategori doang yang
+       "ada". Diganti wrap ke bawah supaya SEMUA kategori langsung
+       kebaca tanpa perlu discroll atau nebak-nebak. */
     .mkt-rail-panel {
         padding: 0.85rem;
         gap: 0.7rem;
@@ -2050,11 +2236,10 @@ body {
 
     .cat-filter-wrap {
         flex-direction: row;
-        flex-wrap: nowrap;
-        overflow-x: auto;
+        flex-wrap: wrap;
+        overflow-x: visible;
         gap: 0.5rem;
-        padding-bottom: 0.25rem;
-        scroll-snap-type: x proximity;
+        padding-bottom: 0;
     }
 
     .cat-btn {
@@ -2063,7 +2248,6 @@ body {
         border-radius: 999px;
         border-color: var(--mkt-stroke);
         background: var(--mkt-surface-2);
-        scroll-snap-align: start;
     }
 
     .cat-btn-icon {
@@ -2074,6 +2258,15 @@ body {
 
     .cat-btn-icon .material-symbols-outlined {
         font-size: 0.95rem;
+    }
+
+    .mkt-rail-deco-item {
+        width: 2.1rem;
+        height: 2.1rem;
+    }
+
+    .mkt-rail-deco-item .material-symbols-outlined {
+        font-size: 1.05rem;
     }
 
     .mkt-rail-foot {
