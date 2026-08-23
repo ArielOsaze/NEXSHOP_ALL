@@ -3144,15 +3144,51 @@ body {
 /* ==========================================================================
    PREMIUM NEXSHOP WALLET MODAL DESIGN SYSTEM (MARKETPLACE)
    ========================================================================== */
+.wallet-modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 10000 !important;
+    background: rgba(3, 7, 18, 0.78) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 16px !important;
+    box-sizing: border-box !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+    transition: opacity 0.22s ease, visibility 0.22s ease !important;
+}
+
+.wallet-modal-overlay.active,
+.wallet-modal-overlay.is-visible {
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+    display: flex !important;
+}
+
+.wallet-modal-overlay:not(.active):not(.is-visible) {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
 .nx-wallet-modal-card {
-    max-width: 580px !important;
-    width: 100% !important;
-    border-radius: 24px !important;
+    width: min(560px, calc(100vw - 32px)) !important;
+    max-width: 560px !important;
     background: #0c1220 !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    padding: 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 24px !important;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(56, 189, 248, 0.1) !important;
     overflow: hidden !important;
-    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    animation: nxWalletModalPop 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-sizing: border-box !important;
+    margin: auto !important;
 }
 
 .nx-wallet-header {
@@ -3162,6 +3198,7 @@ body {
     padding: 20px 24px 18px !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     background: #0f172a !important;
+    box-sizing: border-box !important;
 }
 
 .nx-wallet-header-brand {
@@ -3178,30 +3215,29 @@ body {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    font-size: 1.2rem !important;
+    font-size: 1.25rem !important;
     color: #ffffff !important;
     box-shadow: 0 4px 14px rgba(14, 165, 233, 0.35) !important;
     flex-shrink: 0 !important;
 }
 
 .nx-wallet-header-title {
-    font-size: 1.15rem !important;
+    font-size: 1.22rem !important;
     font-weight: 800 !important;
     color: #ffffff !important;
     margin: 0 0 2px !important;
     letter-spacing: -0.02em !important;
-    font-family: inherit !important;
+    line-height: 1.2 !important;
 }
 
 .nx-wallet-header-subtitle {
-    font-size: 0.76rem !important;
+    font-size: 0.8rem !important;
     color: #94a3b8 !important;
     margin: 0 !important;
     line-height: 1.35 !important;
 }
 
 .nx-wallet-close-btn {
-    position: static !important;
     width: 36px !important;
     height: 36px !important;
     border-radius: 10px !important;
@@ -3213,6 +3249,8 @@ body {
     justify-content: center !important;
     cursor: pointer !important;
     transition: all 0.15s ease !important;
+    flex-shrink: 0 !important;
+    font-size: 1rem !important;
 }
 
 .nx-wallet-close-btn:hover {
@@ -3223,40 +3261,40 @@ body {
 
 .nx-wallet-modal-body {
     padding: 22px 24px !important;
-    max-height: 80vh !important;
+    max-height: calc(85vh - 85px) !important;
     overflow-y: auto !important;
+    box-sizing: border-box !important;
 }
 
-/* Custom Scrollbar */
 .nx-wallet-modal-body::-webkit-scrollbar {
-    width: 6px;
+    width: 5px;
 }
 .nx-wallet-modal-body::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 4px;
 }
 
+/* View 1: Overview */
 .nx-wallet-balance-card {
-    position: relative !important;
     border-radius: 20px !important;
     background: linear-gradient(135deg, #18223d 0%, #0d1527 100%) !important;
     border: 1.5px solid rgba(56, 189, 248, 0.3) !important;
-    padding: 20px 22px !important;
-    margin-bottom: 16px !important;
-    overflow: hidden !important;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+    padding: 22px 24px !important;
+    margin-bottom: 14px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4) !important;
+    box-sizing: border-box !important;
 }
 
 .nx-balance-eyebrow {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    font-size: 0.74rem !important;
+    font-size: 0.76rem !important;
     font-weight: 700 !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
+    letter-spacing: 0.06em !important;
     color: #94a3b8 !important;
-    margin-bottom: 6px !important;
+    margin-bottom: 8px !important;
 }
 
 .nx-verified-badge {
@@ -3264,109 +3302,253 @@ body {
     align-items: center !important;
     gap: 5px !important;
     color: #38bdf8 !important;
-    font-size: 0.72rem !important;
+    font-size: 0.74rem !important;
     font-weight: 700 !important;
     text-transform: none !important;
+    background: rgba(56, 189, 248, 0.12) !important;
+    padding: 3px 9px !important;
+    border-radius: 999px !important;
+    border: 1px solid rgba(56, 189, 248, 0.25) !important;
 }
 
 .nx-balance-val {
-    font-size: 2.1rem !important;
+    font-size: 2.25rem !important;
     font-weight: 900 !important;
     color: #ffffff !important;
     letter-spacing: -0.03em !important;
-    margin-bottom: 6px !important;
+    line-height: 1.1 !important;
+    margin: 4px 0 0 !important;
 }
 
-.nx-balance-card-footer {
-    font-size: 0.74rem !important;
-    color: #64748b !important;
+.nx-wallet-security-card {
     display: flex !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 12px !important;
+    padding: 12px 16px !important;
+    border-radius: 14px !important;
+    background: rgba(16, 185, 129, 0.08) !important;
+    border: 1px solid rgba(16, 185, 129, 0.2) !important;
+    margin-bottom: 16px !important;
+}
+
+.nx-security-icon-box {
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 9px !important;
+    background: rgba(16, 185, 129, 0.18) !important;
+    color: #34d399 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 1rem !important;
+    flex-shrink: 0 !important;
+}
+
+.nx-security-title {
+    display: block !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin-bottom: 2px !important;
+    line-height: 1.2 !important;
+}
+
+.nx-security-desc {
+    display: block !important;
+    font-size: 0.72rem !important;
+    color: #94a3b8 !important;
+    line-height: 1.3 !important;
 }
 
 .nx-wallet-actions-row {
     display: flex !important;
     gap: 10px !important;
-    margin-bottom: 20px !important;
+    margin-bottom: 24px !important;
 }
 
 .nx-btn-wallet-action.primary {
     flex: 1 !important;
-    padding: 12px 18px !important;
-    border-radius: 12px !important;
+    height: 48px !important;
+    border-radius: 14px !important;
     background: linear-gradient(135deg, #0ea5e9, #6366f1) !important;
     color: #ffffff !important;
-    font-size: 0.88rem !important;
+    font-size: 0.92rem !important;
     font-weight: 800 !important;
     border: none !important;
     cursor: pointer !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    gap: 8px !important;
-    box-shadow: 0 4px 14px rgba(14, 165, 233, 0.3) !important;
+    gap: 10px !important;
+    box-shadow: 0 4px 16px rgba(14, 165, 233, 0.35) !important;
     transition: all 0.18s ease !important;
 }
 
 .nx-btn-wallet-action.primary:hover {
     background: linear-gradient(135deg, #0284c7, #4f46e5) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 6px 18px rgba(14, 165, 233, 0.4) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(14, 165, 233, 0.45) !important;
+}
+
+.nx-btn-arrow {
+    font-size: 0.82rem !important;
+    transition: transform 0.18s ease !important;
+}
+
+.nx-btn-wallet-action.primary:hover .nx-btn-arrow {
+    transform: translateX(4px) !important;
 }
 
 .nx-btn-wallet-action.secondary {
     width: 48px !important;
-    border-radius: 12px !important;
+    height: 48px !important;
+    border-radius: 14px !important;
     background: rgba(255, 255, 255, 0.06) !important;
     border: 1px solid rgba(255, 255, 255, 0.12) !important;
     color: #cbd5e1 !important;
-    font-size: 1rem !important;
+    font-size: 1.05rem !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer !important;
     transition: all 0.18s ease !important;
+    flex-shrink: 0 !important;
 }
 
 .nx-btn-wallet-action.secondary:hover {
     background: rgba(255, 255, 255, 0.12) !important;
     color: #ffffff !important;
+    transform: translateY(-2px) !important;
 }
 
 .nx-wallet-mutations-section {
     background: rgba(255, 255, 255, 0.02) !important;
     border: 1px solid rgba(255, 255, 255, 0.06) !important;
-    border-radius: 16px !important;
-    padding: 16px !important;
+    border-radius: 18px !important;
+    padding: 18px !important;
+    box-sizing: border-box !important;
 }
 
 .nx-mutations-header {
     display: flex !important;
-    align-items: center !important;
+    align-items: baseline !important;
     justify-content: space-between !important;
-    margin-bottom: 12px !important;
-    padding-bottom: 8px !important;
+    margin-bottom: 14px !important;
+    padding-bottom: 10px !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
 }
 
 .nx-mutations-header h4 {
-    font-size: 0.86rem !important;
+    font-size: 0.9rem !important;
     font-weight: 800 !important;
     color: #ffffff !important;
     margin: 0 !important;
 }
 
 .nx-mutations-header span {
+    font-size: 0.72rem !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+}
+
+.nx-mutations-empty {
+    text-align: center !important;
+    padding: 28px 16px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+}
+
+.nx-empty-icon-box {
+    width: 46px !important;
+    height: 46px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #64748b !important;
+    font-size: 1.2rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 6px !important;
+}
+
+.nx-empty-title {
+    font-size: 0.86rem !important;
+    font-weight: 700 !important;
+    color: #94a3b8 !important;
+}
+
+.nx-empty-desc {
+    font-size: 0.74rem !important;
+    color: #64748b !important;
+    max-width: 280px !important;
+}
+
+.wallet-mutation-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    margin-bottom: 8px !important;
+    transition: background 0.15s ease !important;
+}
+
+.wallet-mutation-item:hover {
+    background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.wallet-mutation-icon {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.95rem !important;
+    flex-shrink: 0 !important;
+}
+
+.wallet-mutation-icon.in {
+    background: rgba(34, 197, 94, 0.15) !important;
+    color: #22c55e !important;
+}
+
+.wallet-mutation-icon.out {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: #ef4444 !important;
+}
+
+.wallet-mutation-desc {
+    font-size: 0.84rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    line-height: 1.2 !important;
+    margin-bottom: 2px !important;
+}
+
+.wallet-mutation-meta {
     font-size: 0.7rem !important;
     color: #64748b !important;
 }
 
-.nx-mutations-loading {
-    text-align: center !important;
-    padding: 1.5rem !important;
-    font-size: 0.8rem !important;
-    color: #94a3b8 !important;
+.wallet-mutation-amount {
+    font-size: 0.9rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.01em !important;
+}
+
+.wallet-mutation-amount.in {
+    color: #22c55e !important;
+}
+
+.wallet-mutation-amount.out {
+    color: #ef4444 !important;
 }
 
 /* View 2: Form Top Up */
@@ -3449,6 +3631,7 @@ body {
     justify-content: center !important;
     transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
     min-height: 48px !important;
+    box-sizing: border-box !important;
 }
 
 .nx-preset-card:hover {
@@ -3499,6 +3682,7 @@ body {
     padding: 0 14px !important;
     transition: all 0.18s ease !important;
     min-height: 50px !important;
+    box-sizing: border-box !important;
 }
 
 .nx-custom-amount-wrapper:focus-within {
@@ -3595,6 +3779,7 @@ body {
     transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
     min-height: 64px !important;
     user-select: none !important;
+    box-sizing: border-box !important;
 }
 
 .nx-payment-method-card:hover {
@@ -3689,6 +3874,7 @@ body {
     gap: 8px !important;
     box-shadow: 0 8px 24px rgba(14, 165, 233, 0.35) !important;
     transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    box-sizing: border-box !important;
 }
 
 .nx-wallet-primary-cta:hover:not(:disabled) {
@@ -3890,15 +4076,14 @@ body {
 
 /* Mobile Responsiveness */
 @media (max-width: 640px) {
-    .nx-presets-grid {
-        grid-template-columns: repeat(2, 1fr) !important;
-    }
-
-    .nx-payment-methods-grid {
-        grid-template-columns: 1fr !important;
+    .wallet-modal-overlay {
+        align-items: flex-end !important;
+        padding: 0 !important;
     }
 
     .nx-wallet-modal-card {
+        width: 100% !important;
+        max-width: 100% !important;
         border-radius: 24px 24px 0 0 !important;
         max-height: 90vh !important;
     }
@@ -3909,6 +4094,14 @@ body {
 
     .nx-wallet-modal-body {
         padding: 18px 16px !important;
+    }
+
+    .nx-presets-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    .nx-payment-methods-grid {
+        grid-template-columns: 1fr !important;
     }
 }
 

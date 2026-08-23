@@ -2180,7 +2180,15 @@
                 const mutations = data.transactions || [];
 
                 if (!mutations.length) {
-                    listEl.innerHTML = `<div style="text-align:center;padding:1.5rem;font-size:0.8rem;color:var(--mkt-text-dim,#94a3b8);">Belum ada riwayat transaksi saldo.</div>`;
+                    listEl.innerHTML = `
+                        <div class="nx-mutations-empty">
+                            <div class="nx-empty-icon-box">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                            </div>
+                            <span class="nx-empty-title">Belum Ada Riwayat Transaksi</span>
+                            <span class="nx-empty-desc">Transaksi dan top up saldo kamu akan tercatat di sini.</span>
+                        </div>
+                    `;
                     return;
                 }
 
@@ -2610,15 +2618,20 @@
                 <!-- View 1: Overview & Mutations -->
                 <div id="walletViewOverview" class="nx-wallet-view">
                     <div class="nx-wallet-balance-card">
-                        <div class="nx-balance-card-inner">
-                            <div class="nx-balance-eyebrow">
-                                <span>Saldo Tersedia</span>
-                                <span class="nx-verified-badge"><i class="fa-solid fa-circle-check"></i> Resmi NexShop</span>
-                            </div>
-                            <div class="nx-balance-val" id="walletUserBalance">Rp 0</div>
-                            <div class="nx-balance-card-footer">
-                                <span class="nx-balance-info-text"><i class="fa-solid fa-shield-halved"></i> Dompet Digital Aman & Terenkripsi</span>
-                            </div>
+                        <div class="nx-balance-eyebrow">
+                            <span>Saldo Tersedia</span>
+                            <span class="nx-verified-badge"><i class="fa-solid fa-circle-check"></i> Resmi NexShop</span>
+                        </div>
+                        <div class="nx-balance-val" id="walletUserBalance">Rp 0</div>
+                    </div>
+
+                    <div class="nx-wallet-security-card">
+                        <div class="nx-security-icon-box">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div class="nx-security-text">
+                            <strong class="nx-security-title">Dompet Digital Aman &amp; Terenkripsi</strong>
+                            <span class="nx-security-desc">Transaksi saldo diproses secara otomatis &amp; terverifikasi.</span>
                         </div>
                     </div>
 
@@ -2626,6 +2639,7 @@
                         <button type="button" class="nx-btn-wallet-action primary" id="btnOpenTopupView">
                             <i class="fa-solid fa-circle-plus"></i>
                             <span>+ Top Up Saldo</span>
+                            <i class="fa-solid fa-arrow-right nx-btn-arrow"></i>
                         </button>
                         <button type="button" class="nx-btn-wallet-action secondary" id="btnRefreshWallet" title="Perbarui Saldo" aria-label="Perbarui Saldo">
                             <i class="fa-solid fa-arrows-rotate"></i>
@@ -2638,8 +2652,12 @@
                             <span>Ledger Pembukuan</span>
                         </div>
                         <div class="nx-wallet-mutations-list" id="walletMutationsList">
-                            <div class="nx-mutations-loading">
-                                <i class="fa-solid fa-circle-notch fa-spin"></i> Memuat mutasi saldo...
+                            <div class="nx-mutations-empty">
+                                <div class="nx-empty-icon-box">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                </div>
+                                <span class="nx-empty-title">Belum Ada Riwayat Transaksi</span>
+                                <span class="nx-empty-desc">Transaksi dan top up saldo kamu akan tercatat di sini.</span>
                             </div>
                         </div>
                     </div>

@@ -4642,7 +4642,15 @@ async function loadWalletMutations() {
         const mutations = data.transactions || [];
 
         if (!mutations.length) {
-            listEl.innerHTML = `<div style="text-align:center;padding:1.5rem;font-size:0.8rem;color:var(--mkt-text-dim,#94a3b8);">Belum ada riwayat transaksi saldo.</div>`;
+            listEl.innerHTML = `
+                <div class="nx-mutations-empty">
+                    <div class="nx-empty-icon-box">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <span class="nx-empty-title">Belum Ada Riwayat Transaksi</span>
+                    <span class="nx-empty-desc">Transaksi dan top up saldo kamu akan tercatat di sini.</span>
+                </div>
+            `;
             return;
         }
 
