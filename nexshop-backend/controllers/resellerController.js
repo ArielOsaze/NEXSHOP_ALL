@@ -177,7 +177,7 @@ exports.resellerRegister = async (req, res) => {
             }
         }
 
-        // Simpan pengajuan ke reseller_applications
+        // Simpan atau perbarui pengajuan ke reseller_applications
         const appPayload = {
             user_id: userId,
             fullname,
@@ -191,20 +191,57 @@ exports.resellerRegister = async (req, res) => {
             status: "pending"
         };
 
-        let { error: appErr } = await supabase
+        // Cek apakah user sudah punya pengajuan berstatus pending
+        const { data: existingApp } = await supabase
             .from("reseller_applications")
-            .insert([appPayload]);
+            .select("id")
+            .eq("user_id", userId)
+            .eq("status", "pending")
+            .maybeSingle();
 
-        // Fallback jika migrasi 010 (kolom ktp_url atau nik) belum di-apply
-        if (appErr && (String(appErr.message || "").toLowerCase().includes("ktp_url") || String(appErr.message || "").toLowerCase().includes("nik") || appErr.code === "42703")) {
-            delete appPayload.ktp_url;
-            delete appPayload.nik;
-            const retryApp = await supabase.from("reseller_applications").insert([appPayload]);
-            appErr = retryApp.error;
+        let appErr;
+        if (existingApp) {
+            // Update pengajuan pending yang sudah ada
+            const updateAppRes = await supabase
+                .from("reseller_applications")
+                .update(appPayload)
+                .eq("id", existingApp.id);
+            appErr = updateAppRes.error;
+
+            if (appErr && (String(appErr.message || "").toLowerCase().includes("ktp_url") || String(appErr.message || "").toLowerCase().includes("nik") || appErr.code === "42703")) {
+                delete appPayload.ktp_url;
+                delete appPayload.nik;
+                const retryUpdate = await supabase.from("reseller_applications").update(appPayload).eq("id", existingApp.id);
+                appErr = retryUpdate.error;
+            }
+        } else {
+            // Insert pengajuan baru
+            const insertAppRes = await supabase
+                .from("reseller_applications")
+                .insert([appPayload]);
+            appErr = insertAppRes.error;
+
+            // Fallback jika migrasi 010 (kolom ktp_url atau nik) belum di-apply
+            if (appErr && (String(appErr.message || "").toLowerCase().includes("ktp_url") || String(appErr.message || "").toLowerCase().includes("nik") || appErr.code === "42703")) {
+                delete appPayload.ktp_url;
+                delete appPayload.nik;
+                const retryApp = await supabase.from("reseller_applications").insert([appPayload]);
+                appErr = retryApp.error;
+            }
+
+            // Jika terkena unique constraint idx_reseller_app_one_pending karena race condition, fallback update
+            if (appErr && (appErr.code === "23505" || String(appErr.message || "").includes("idx_reseller_app_one_pending"))) {
+                const fallbackUpdate = await supabase
+                    .from("reseller_applications")
+                    .update(appPayload)
+                    .eq("user_id", userId)
+                    .eq("status", "pending");
+                appErr = fallbackUpdate.error;
+            }
         }
 
         if (appErr) {
-            console.error("resellerRegister application insert error:", appErr);
+            console.error("resellerRegister application insert/update error:", appErr);
             if (isMissingTableError(appErr)) {
                 return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
             }
