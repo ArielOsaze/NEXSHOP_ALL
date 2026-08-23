@@ -1556,7 +1556,8 @@
             <!-- =========================================================== -->
             <div id="view-deposit" class="tv-console-view">
                 <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:1.35rem;">
-                    <div class="tv-section-card">
+                    <!-- CARD 1: FORM PENGISIAN DEPOSIT -->
+                    <div class="tv-section-card" id="depositFormCard">
                         <div class="tv-section-title">
                             <span>Form Pengisian Saldo Deposit Modal</span>
                         </div>
@@ -1564,11 +1565,11 @@
                             <div style="margin-bottom:1.15rem;">
                                 <label class="form-label">Pilih Metode Pembayaran Deposit</label>
                                 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-                                    <button type="button" class="tv-btn-deposit-action" style="justify-content:center;padding:0.75rem;border-color:#3b82f6;background:rgba(37,99,235,0.2);" onclick="selectPaymentMethod('qris')">
+                                    <button type="button" class="tv-btn-deposit-action" style="justify-content:center;padding:0.75rem;border-color:#3b82f6;background:rgba(37,99,235,0.25);" onclick="selectPaymentMethod('qris')">
                                         <span class="material-symbols-outlined" style="font-size:1.1rem;color:#38bdf8;">qr_code_scanner</span> QRIS Instan
                                     </button>
                                     <button type="button" class="tv-btn-deposit-action" style="justify-content:center;padding:0.75rem;" onclick="selectPaymentMethod('bca')">
-                                        BCA Virtual Account
+                                        BCA VA
                                     </button>
                                     <button type="button" class="tv-btn-deposit-action" style="justify-content:center;padding:0.75rem;" onclick="selectPaymentMethod('mandiri')">
                                         Mandiri VA
@@ -1589,21 +1590,63 @@
                                 <button type="button" class="tv-btn-deposit-action" onclick="setDepositPreset(1000000)">Rp 1.000.000</button>
                             </div>
 
-                            <button type="submit" style="width:100%;padding:0.85rem;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-weight:800;font-size:0.95rem;cursor:pointer;box-shadow:0 4px 16px rgba(37,99,235,0.4);">
-                                Lanjutkan Pembayaran Deposit
+                            <button type="submit" id="btnSubmitDeposit" style="width:100%;padding:0.85rem;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-weight:800;font-size:0.95rem;cursor:pointer;box-shadow:0 4px 16px rgba(37,99,235,0.4);display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+                                <span>Lanjutkan Pembayaran Deposit</span>
+                                <span class="material-symbols-outlined" style="font-size:1.1rem;">arrow_forward</span>
                             </button>
                         </form>
                     </div>
 
+                    <!-- CARD 2: DIRECT QRIS DISPLAY -->
+                    <div class="tv-section-card" id="depositQrisCard" style="display:none;text-align:center;">
+                        <div class="tv-section-title" style="justify-content:center;">
+                            <span>Scan QRIS untuk Deposit Saldo</span>
+                        </div>
+                        <div style="font-size:1.6rem;font-weight:900;color:#38bdf8;margin:0.5rem 0;" id="resellerQrisAmount">Rp 0</div>
+                        <div style="background:#ffffff;padding:12px;border-radius:16px;display:inline-block;margin-bottom:12px;border:2px solid #38bdf8;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
+                            <img id="resellerQrisImage" src="" alt="QRIS Code" style="width:230px;height:230px;object-fit:contain;display:block;border-radius:8px;">
+                        </div>
+                        <div style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:0.85rem;color:#fbbf24;font-weight:800;margin-bottom:6px;">
+                            <span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">hourglass_top</span>
+                            <span>Menunggu Pembayaran...</span>
+                        </div>
+                        <div style="font-size:0.78rem;color:#94a3b8;margin-bottom:1.2rem;line-height:1.4;">
+                            Buka aplikasi BCA Mobile, GoPay, OVO, Dana, ShopeePay atau mobile banking apa saja lalu scan QR di atas.
+                        </div>
+                        <button type="button" class="tv-btn-deposit-action" onclick="cancelDepositQris()" style="margin:0 auto;color:#f87171;border-color:rgba(248,113,113,0.3);">
+                            Batalkan Deposit
+                        </button>
+                    </div>
+
+                    <!-- CARD 3: DEPOSIT SUCCESS -->
+                    <div class="tv-section-card" id="depositSuccessCard" style="display:none;text-align:center;padding:2rem 1.5rem;">
+                        <div style="width:64px;height:64px;border-radius:50%;background:rgba(52,211,153,0.15);border:2px solid #34d399;color:#34d399;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <h3 style="font-size:1.25rem;font-weight:900;color:#ffffff;margin:0 0 6px;">Deposit Berhasil!</h3>
+                        <p style="font-size:0.85rem;color:#94a3b8;margin:0 0 1.25rem;" id="resellerDepositSuccessMsg">Saldo deposit modal berhasil ditambahkan ke akun reseller kamu.</p>
+                        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:0.85rem;border-radius:12px;margin-bottom:1.5rem;display:inline-block;min-width:200px;">
+                            <span style="font-size:0.75rem;color:#94a3b8;display:block;">Saldo Modal Sekarang</span>
+                            <strong style="font-size:1.45rem;font-weight:900;color:#34d399;" id="resellerDepositNewBalance">Rp 0</strong>
+                        </div>
+                        <div>
+                            <button type="button" class="tv-btn-deposit-action" onclick="resetDepositView()" style="background:#2563eb;color:#fff;border-color:#3b82f6;padding:0.75rem 1.5rem;margin:0 auto;">
+                                Selesai &amp; Kembali ke Konsol
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- PETUNJUK DEPOSIT -->
                     <div class="tv-section-card">
                         <div class="tv-section-title">
                             <span>Petunjuk Pembayaran Saldo</span>
                         </div>
                         <div style="font-size:0.86rem;color:#cbd5e1;line-height:1.7;">
                             <ul style="padding-left:1.2rem;margin:0;">
-                                <li style="margin-bottom:8px;">Pembayaran via QRIS terverifikasi otomatis dalam 1-3 detik tanpa biaya admin tambahan.</li>
+                                <li style="margin-bottom:8px;">Pembayaran via QRIS terverifikasi otomatis secara instan dalam hitungan detik tanpa biaya admin tambahan.</li>
                                 <li style="margin-bottom:8px;">Saldo deposit langsung bertambah di konsol Anda dan siap digunakan untuk transaksi API.</li>
                                 <li style="margin-bottom:8px;">Minimal deposit Rp 20.000. Tidak ada batas masa berlaku saldo.</li>
+                                <li style="margin-bottom:8px;">Setelah transfer, status pembayaran akan otomatis terdeteksi tanpa perlu refresh halaman.</li>
                             </ul>
                         </div>
                     </div>
@@ -2871,6 +2914,7 @@
         });
 
         let selectedDepositMethod = "qris";
+        let activeResellerTopupPoll = null;
 
         function selectPaymentMethod(method) {
             selectedDepositMethod = method;
@@ -2890,6 +2934,28 @@
             if (input) input.value = amount;
         }
 
+        function cancelDepositQris() {
+            if (activeResellerTopupPoll) {
+                clearInterval(activeResellerTopupPoll);
+                activeResellerTopupPoll = null;
+            }
+            document.getElementById("depositQrisCard").style.display = "none";
+            document.getElementById("depositSuccessCard").style.display = "none";
+            document.getElementById("depositFormCard").style.display = "block";
+            showToast("Deposit QRIS dibatalkan");
+        }
+
+        function resetDepositView() {
+            if (activeResellerTopupPoll) {
+                clearInterval(activeResellerTopupPoll);
+                activeResellerTopupPoll = null;
+            }
+            document.getElementById("depositQrisCard").style.display = "none";
+            document.getElementById("depositSuccessCard").style.display = "none";
+            document.getElementById("depositFormCard").style.display = "block";
+            switchConsoleView("view-overview");
+        }
+
         async function handleDepositSubmit(e) {
             e.preventDefault();
             const token = getResellerToken();
@@ -2904,10 +2970,10 @@
                 return;
             }
 
-            const submitBtn = e.target.querySelector("button[type='submit']");
+            const submitBtn = document.getElementById("btnSubmitDeposit");
             const origText = submitBtn.innerHTML;
             submitBtn.disabled = true;
-            submitBtn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Membuat Tagihan iPaymu...`;
+            submitBtn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Menyiapkan Tagihan...`;
 
             try {
                 const res = await fetch(`${API_BASE}/wallet/topup`, {
@@ -2925,40 +2991,57 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.message || "Gagal membuat invoice deposit");
 
-                if (data.is_direct && data.qr_content) {
-                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(data.qr_content)}`;
-                    const win = window.open("", "_blank");
-                    win.document.write(`
-                        <html><head><title>Deposit QRIS NexShop</title><style>body{font-family:sans-serif;background:#090e1a;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;text-align:center;}img{background:#fff;padding:12px;border-radius:12px;margin:15px 0;}h2{margin-bottom:5px;color:#38bdf8;}p{color:#94a3b8;margin:5px 0;}</style></head><body>
-                        <h2>Scan QRIS untuk Deposit Saldo</h2>
-                        <p>Total Bayar: <strong>Rp ${amount.toLocaleString('id-ID')}</strong></p>
-                        <img src="${qrUrl}" alt="QRIS Code">
-                        <p>Buka BCA Mobile, GoPay, OVO, Dana, ShopeePay atau aplikasi m-banking apa saja lalu scan QR ini.</p>
-                        </body></html>
-                    `);
-                } else if (data.payment_url) {
-                    window.open(data.payment_url, "_blank");
-                }
+                if (selectedDepositMethod === "qris" || (data.is_direct && data.qr_content)) {
+                    // DIRECT QRIS — Tampilkan langsung di dalam kartu view deposit tanpa redirect/window.open!
+                    const qrUrl = data.qr_image || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.qr_content)}`;
+                    document.getElementById("resellerQrisImage").src = qrUrl;
+                    document.getElementById("resellerQrisAmount").textContent = "Rp " + Number(amount).toLocaleString("id-ID");
 
-                showToast("Invoice deposit berhasil dibuat! Menunggu pembayaran.");
-                // Mulai polling status saldo
-                let pollCount = 0;
-                const pollInterval = setInterval(async () => {
-                    pollCount++;
-                    if (pollCount > 60) { clearInterval(pollInterval); return; }
-                    try {
-                        const checkRes = await fetch(`${API_BASE}/wallet/topup/${data.topup_id}`, {
-                            headers: { "Authorization": `Bearer ${token}` }
-                        });
-                        const checkData = await checkRes.json();
-                        if (checkData.status === "PAID") {
-                            clearInterval(pollInterval);
-                            showToast("🎉 Saldo deposit berhasil masuk ke dompet Anda!");
-                            loadPortalOverview();
-                            loadPortalMutations();
+                    document.getElementById("depositFormCard").style.display = "none";
+                    document.getElementById("depositSuccessCard").style.display = "none";
+                    document.getElementById("depositQrisCard").style.display = "block";
+
+                    showToast("QRIS berhasil dibuat! Silakan scan untuk membayar.");
+
+                    // Mulai polling status pembayaran ke /api/wallet/topup/:id
+                    if (activeResellerTopupPoll) clearInterval(activeResellerTopupPoll);
+                    let pollCount = 0;
+                    activeResellerTopupPoll = setInterval(async () => {
+                        pollCount++;
+                        if (pollCount > 60) {
+                            clearInterval(activeResellerTopupPoll);
+                            activeResellerTopupPoll = null;
+                            showToast("Waktu menunggu pembayaran habis. Silakan coba lagi.");
+                            return;
                         }
-                    } catch (_) {}
-                }, 4000);
+                        try {
+                            const checkRes = await fetch(`${API_BASE}/wallet/topup/${data.topup_id}`, {
+                                headers: { "Authorization": `Bearer ${token}` }
+                            });
+                            const checkData = await checkRes.json();
+                            if (checkData.status === "PAID") {
+                                clearInterval(activeResellerTopupPoll);
+                                activeResellerTopupPoll = null;
+
+                                // Tampilkan layar sukses
+                                document.getElementById("depositQrisCard").style.display = "none";
+                                document.getElementById("depositSuccessCard").style.display = "block";
+                                document.getElementById("resellerDepositSuccessMsg").textContent = `Deposit saldo sebesar Rp ${Number(amount).toLocaleString('id-ID')} berhasil diverifikasi.`;
+
+                                loadPortalOverview();
+                                loadPortalMutations();
+                                showToast("🎉 Pembayaran QRIS Berhasil! Saldo deposit telah masuk.");
+                            } else if (checkData.status === "FAILED" || checkData.status === "EXPIRED" || checkData.status === "CANCELLED") {
+                                clearInterval(activeResellerTopupPoll);
+                                activeResellerTopupPoll = null;
+                                showToast("Status deposit: " + checkData.status);
+                                cancelDepositQris();
+                            }
+                        } catch (_) {}
+                    }, 3500);
+                } else if (data.payment_url) {
+                    window.location.href = data.payment_url;
+                }
 
             } catch (err) {
                 showToast("Gagal deposit: " + err.message);

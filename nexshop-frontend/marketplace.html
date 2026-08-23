@@ -197,6 +197,12 @@
                 <span>Harga Reseller</span>
             </span>
 
+            <!-- NexShop Wallet Header Button -->
+            <button type="button" class="mkt-nav-wallet-btn" id="mktWalletNavBtn" title="Buka NexShop Wallet">
+                <span class="material-symbols-outlined" aria-hidden="true">account_balance_wallet</span>
+                <span id="mktNavWalletBalance">💰 Rp 0</span>
+            </button>
+
             <button type="button" class="mkt-nav-track-btn" id="mktTrackNavBtn">
                 <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
                 <span>Cek Transaksi</span>
@@ -2108,6 +2114,144 @@
         document.addEventListener("DOMContentLoaded", loadCatalog);
         document.addEventListener("DOMContentLoaded", loadMktStoreSettings);
     </script>
+
+    <!-- NexShop Wallet Modal -->
+    <div class="overlay" id="walletModalOverlay" style="display:none;">
+        <div class="modal wallet-modal" role="dialog" aria-modal="true" aria-labelledby="walletModalTitle">
+            <div class="modal-header">
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span class="material-symbols-outlined" style="color:var(--mkt-accent,#38bdf8);font-size:1.4rem;">account_balance_wallet</span>
+                    <h3 id="walletModalTitle" style="font-weight:800;letter-spacing:-0.02em;margin:0;font-size:1.1rem;color:var(--mkt-text,#fff);">NexShop Wallet</h3>
+                </div>
+                <button class="modal-close" id="closeWalletModalBtn" aria-label="Tutup"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            <div class="modal-body" style="padding:1.25rem;">
+                <!-- View 1: Overview & Mutations -->
+                <div id="walletViewOverview">
+                    <div class="wallet-balance-card">
+                        <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.05em;color:rgba(255,255,255,0.7);font-weight:700;margin-bottom:4px;">Saldo Tersedia</div>
+                        <div class="wallet-balance-val" id="walletUserBalance">Rp 0</div>
+                        <div style="font-size:0.75rem;color:#38bdf8;margin-top:6px;display:flex;align-items:center;gap:4px;font-weight:600;">
+                            <span class="material-symbols-outlined" style="font-size:0.9rem;">verified</span> Dompet Digital Resmi NexShop
+                        </div>
+                    </div>
+
+                    <div style="display:flex;gap:8px;margin-bottom:1.25rem;">
+                        <button type="button" class="btn-wallet-action primary" id="btnOpenTopupView">
+                            <span class="material-symbols-outlined" style="font-size:1.1rem;">add_circle</span>
+                            <span>+ Top Up Saldo</span>
+                        </button>
+                        <button type="button" class="btn-wallet-action secondary" id="btnRefreshWallet" title="Perbarui Saldo">
+                            <span class="material-symbols-outlined" style="font-size:1.1rem;">refresh</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                            <h4 style="font-size:0.88rem;font-weight:800;color:var(--mkt-text,#fff);margin:0;">Mutasi Terakhir</h4>
+                            <span style="font-size:0.72rem;color:var(--mkt-text-dim,#94a3b8);">Ledger Pembukuan</span>
+                        </div>
+                        <div class="wallet-mutations-list" id="walletMutationsList">
+                            <div style="text-align:center;padding:1.5rem;font-size:0.8rem;color:var(--mkt-text-dim,#94a3b8);">Memuat mutasi saldo...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- View 2: Form Top Up Saldo -->
+                <div id="walletViewTopup" style="display:none;">
+                    <button type="button" class="btn-wallet-back" id="btnBackToWalletOverview">
+                        <span class="material-symbols-outlined" style="font-size:1rem;">arrow_back</span> Kembali
+                    </button>
+
+                    <div style="margin-bottom:1rem;">
+                        <label style="display:block;font-size:0.75rem;font-weight:800;color:var(--mkt-text-dim,#94a3b8);text-transform:uppercase;margin-bottom:6px;">Pilih Nominal Top Up</label>
+                        <div class="wallet-presets-grid" id="topupPresetGrid">
+                            <button type="button" class="topup-preset-pill" data-amount="10000">Rp 10.000</button>
+                            <button type="button" class="topup-preset-pill" data-amount="25000">Rp 25.000</button>
+                            <button type="button" class="topup-preset-pill selected" data-amount="50000">Rp 50.000</button>
+                            <button type="button" class="topup-preset-pill" data-amount="100000">Rp 100.000</button>
+                            <button type="button" class="topup-preset-pill" data-amount="250000">Rp 250.000</button>
+                            <button type="button" class="topup-preset-pill" data-amount="500000">Rp 500.000</button>
+                        </div>
+                        <div style="position:relative;margin-top:8px;">
+                            <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);font-weight:700;color:var(--mkt-text-dim,#94a3b8);font-size:0.85rem;">Rp</span>
+                            <input type="number" id="inputCustomTopupAmount" value="50000" min="10000" max="10000000" step="5000" class="wallet-input-amount" placeholder="Nominal lainnya...">
+                        </div>
+                        <small style="font-size:0.7rem;color:var(--mkt-text-dim,#94a3b8);display:block;margin-top:4px;">Minimal Rp 10.000, maksimal Rp 10.000.000 per transaksi</small>
+                    </div>
+
+                    <div style="margin-bottom:1.25rem;">
+                        <label style="display:block;font-size:0.75rem;font-weight:800;color:var(--mkt-text-dim,#94a3b8);text-transform:uppercase;margin-bottom:6px;">Metode Pembayaran</label>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            <label class="wallet-method-card active" id="cardMethodQris">
+                                <input type="radio" name="walletTopupPaymentMethod" value="qris" checked style="display:none;">
+                                <span class="material-symbols-outlined" style="color:#38bdf8;font-size:1.3rem;">qr_code_scanner</span>
+                                <div>
+                                    <strong style="font-size:0.8rem;display:block;color:var(--mkt-text,#fff);">QRIS Instan</strong>
+                                    <span style="font-size:0.68rem;color:var(--mkt-text-dim,#94a3b8);">BCA, GoPay, OVO, Dana</span>
+                                </div>
+                            </label>
+                            <label class="wallet-method-card" id="cardMethodVa">
+                                <input type="radio" name="walletTopupPaymentMethod" value="va" style="display:none;">
+                                <span class="material-symbols-outlined" style="color:#c084fc;font-size:1.3rem;">account_balance</span>
+                                <div>
+                                    <strong style="font-size:0.8rem;display:block;color:var(--mkt-text,#fff);">Virtual Account</strong>
+                                    <span style="font-size:0.68rem;color:var(--mkt-text-dim,#94a3b8);">Transfer Otomatis</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn-wallet-submit" id="btnSubmitTopup">
+                        <span>Lanjutkan Pembayaran</span>
+                        <span class="material-symbols-outlined" style="font-size:1rem;">arrow_forward</span>
+                    </button>
+                </div>
+
+                <!-- View 3: Direct QRIS Display (Active Scan & Live Polling) -->
+                <div id="walletViewQris" style="display:none;text-align:center;">
+                    <div style="font-size:0.88rem;font-weight:800;color:var(--mkt-text,#fff);margin-bottom:2px;">Scan QRIS untuk Bayar</div>
+                    <div style="font-size:1.55rem;font-weight:900;color:#38bdf8;margin-bottom:12px;" id="qrisDisplayAmount">Rp 0</div>
+
+                    <div class="wallet-qris-container">
+                        <img id="qrisImageElement" src="" alt="QRIS Code" class="wallet-qris-img">
+                    </div>
+
+                    <div style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:0.8rem;color:#fbbf24;font-weight:700;margin-bottom:6px;">
+                        <span class="material-symbols-outlined mkt-spin" style="font-size:1rem;">hourglass_top</span>
+                        <span>Menunggu Pembayaran...</span>
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--mkt-text-dim,#94a3b8);margin-bottom:1rem;line-height:1.4;">
+                        Buka aplikasi BCA Mobile, GoPay, OVO, Dana, ShopeePay atau m-banking apa saja lalu scan QR di atas.
+                    </div>
+
+                    <button type="button" class="btn-wallet-cancel" id="btnCancelQris">
+                        Batalkan Top Up
+                    </button>
+                </div>
+
+                <!-- View 4: Top Up Success -->
+                <div id="walletViewSuccess" style="display:none;text-align:center;padding:1rem 0;">
+                    <div class="wallet-success-badge">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                    <h4 style="font-size:1.15rem;font-weight:900;color:var(--mkt-text,#fff);margin:0 0 4px;">Top Up Saldo Berhasil!</h4>
+                    <p style="font-size:0.8rem;color:var(--mkt-text-dim,#94a3b8);margin:0 0 1rem;" id="successTopupCopy">Saldo telah berhasil ditambahkan ke NexShop Wallet kamu.</p>
+                    
+                    <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:0.75rem;border-radius:12px;margin-bottom:1.25rem;">
+                        <span style="font-size:0.72rem;color:var(--mkt-text-dim,#94a3b8);display:block;">Saldo Baru</span>
+                        <strong style="font-size:1.35rem;font-weight:900;color:#34d399;" id="successNewBalance">Rp 0</strong>
+                    </div>
+
+                    <button type="button" class="btn-wallet-submit" id="btnCloseSuccessWallet">
+                        Selesai
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Asisten NexBot, modul yang sama dengan halaman utama -->
     <script src="/nexbot.js?v=20260823-nexbot"></script>
 </body>

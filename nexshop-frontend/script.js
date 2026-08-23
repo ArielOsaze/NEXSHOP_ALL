@@ -3193,6 +3193,27 @@ function renderTopupPaymentGrid() {
             </span>
             <span class="tw-payment-check" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
         </button>
+        ${method.id === "wallet" && twState.payment === "wallet" ? `
+            <div class="mt-1 mb-3 p-3 rounded-xl border border-brand-indigo/30 bg-brand-indigo/10 text-xs">
+                <div class="flex items-center justify-between font-bold mb-1">
+                    <span class="text-gray-600 dark:text-gray-300">Saldo NexShop Wallet:</span>
+                    <span class="text-brand-indigo dark:text-brand-cyan text-sm font-black">${window.currentUserWallet ? rupiah(window.currentUserWallet.balance) : (localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) ? "Memuat..." : "Login untuk cek saldo")}</span>
+                </div>
+                ${window.currentUserWallet && twState.product ? (
+                    window.currentUserWallet.balance >= twState.product.harga_jual ? `
+                        <div class="text-emerald-500 font-semibold mt-1 flex items-center gap-1">
+                            <span class="material-symbols-outlined text-xs">check_circle</span>
+                            <span>Saldo mencukupi. Sisa setelah transaksi: <strong>${rupiah(window.currentUserWallet.balance - twState.product.harga_jual)}</strong></span>
+                        </div>
+                    ` : `
+                        <div class="text-amber-500 font-bold mt-1.5 flex items-center justify-between">
+                            <span>Saldo kurang ${rupiah(twState.product.harga_jual - window.currentUserWallet.balance)}</span>
+                            <button type="button" class="py-1 px-3 bg-brand-indigo hover:bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-sm transition-all" onclick="openWalletModal(event)">+ Top Up</button>
+                        </div>
+                    `
+                ) : ''}
+            </div>
+        ` : ''}
         ${method.id === "va" && twState.payment === "va" ? `
             <div class="mt-1 mb-4 p-4 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/5">
                 <label class="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Pilih Bank</label>
@@ -3344,6 +3365,16 @@ async function submitTopupOrder() {
             errorEl.textContent = data.message || "Gagal membuat pesanan topup";
             btn.disabled = false;
             btn.textContent = "Bayar Sekarang";
+            return;
+        }
+
+        if (twState.payment === "wallet" || data.payment_method === "wallet") {
+            closeModal("topupWizardModal");
+            if (typeof fetchUserWallet === "function") fetchUserWallet();
+            if (typeof showToast === "function") {
+                showToast("Pembayaran Berhasil", "Pesanan berhasil dibayar menggunakan Saldo NexShop Wallet!");
+            }
+            openTrackModal(data.order_id || data.orderId);
             return;
         }
 
@@ -4489,3 +4520,330 @@ function closeOneStopView() {
 // toggle section tersembunyi di halaman ini (openOneStopView/closeOneStopView
 // & section #view-onestop di bawah ini jadi gak kepakai lagi, sengaja
 // dibiarin dulu -- gak ganggu, bisa dibersihin belakangan).
+
+/* ==========================================================================
+   NEXSHOP WALLET & DIRECT QRIS CONTROLLER (FRONTEND)
+   ========================================================================== */
+
+window.currentUserWallet = null;
+let activeUserWalletTopupPoll = null;
+
+async function fetchUserWallet() {
+    const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+    const navWalletBalance = document.getElementById("mktNavWalletBalance");
+    const modalBalanceEl = document.getElementById("walletUserBalance");
+
+    if (!token) {
+        window.currentUserWallet = null;
+        if (navWalletBalance) navWalletBalance.textContent = "💰 Login Saldo";
+        if (modalBalanceEl) modalBalanceEl.textContent = "Rp 0";
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/wallet/me`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        if (!res.ok) {
+            if (res.status === 401) {
+                window.currentUserWallet = null;
+                if (navWalletBalance) navWalletBalance.textContent = "💰 Login Saldo";
+            }
+            return;
+        }
+
+        const data = await res.json();
+        if (data && data.wallet) {
+            window.currentUserWallet = data.wallet;
+            const formatted = "💰 " + rupiah(data.wallet.balance);
+            if (navWalletBalance) navWalletBalance.textContent = formatted;
+            if (modalBalanceEl) modalBalanceEl.textContent = rupiah(data.wallet.balance);
+        }
+    } catch (err) {
+        console.warn("Gagal memuat saldo wallet:", err.message);
+    }
+}
+
+async function loadWalletMutations() {
+    const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+    const listEl = document.getElementById("walletMutationsList");
+    if (!listEl) return;
+
+    if (!token) {
+        listEl.innerHTML = `<div style="text-align:center;padding:1.5rem;font-size:0.8rem;color:var(--mkt-text-dim,#94a3b8);">Silakan login untuk melihat mutasi saldo.</div>`;
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_BASE}/wallet/mutations?limit=15`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        const mutations = data.transactions || [];
+
+        if (!mutations.length) {
+            listEl.innerHTML = `<div style="text-align:center;padding:1.5rem;font-size:0.8rem;color:var(--mkt-text-dim,#94a3b8);">Belum ada riwayat transaksi saldo.</div>`;
+            return;
+        }
+
+        const TYPE_LABELS = {
+            TOPUP: "Top Up Saldo",
+            PURCHASE: "Pembelian Produk",
+            REFUND: "Pengembalian Dana (Refund)",
+            ADMIN_ADJUSTMENT: "Penyesuaian Admin",
+            RESELLER_DEPOSIT: "Deposit Modal Reseller",
+            RESELLER_PURCHASE: "Pembelian Reseller API",
+            RESELLER_REFUND: "Refund Pesanan Reseller"
+        };
+
+        listEl.innerHTML = mutations.map(m => {
+            const isIn = m.direction === "IN";
+            const label = TYPE_LABELS[m.type] || m.type;
+            const dateStr = m.created_at ? new Date(m.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "-";
+            return `
+                <div class="wallet-mutation-item">
+                    <div>
+                        <div class="wallet-mutation-desc">${escapeHtml(label)}</div>
+                        <div class="wallet-mutation-meta">${dateStr} · Ref: ${escapeHtml(m.reference_id || "-")}</div>
+                    </div>
+                    <div class="wallet-mutation-amount ${isIn ? 'in' : 'out'}">
+                        ${isIn ? '+' : '-'} ${rupiah(m.amount)}
+                    </div>
+                </div>
+            `;
+        }).join("");
+    } catch (err) {
+        listEl.innerHTML = `<div style="text-align:center;padding:1.5rem;font-size:0.8rem;color:#f87171;">Gagal memuat mutasi.</div>`;
+    }
+}
+
+function openWalletModal(e) {
+    if (e) e.preventDefault();
+    const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+    if (!token) {
+        if (typeof openLoginModal === "function") openLoginModal();
+        else if (typeof showToast === "function") showToast("Info", "Silakan login terlebih dahulu untuk mengakses NexShop Wallet.");
+        return;
+    }
+
+    const overlay = document.getElementById("walletModalOverlay");
+    if (!overlay) return;
+
+    // Reset views
+    document.getElementById("walletViewOverview").style.display = "block";
+    document.getElementById("walletViewTopup").style.display = "none";
+    document.getElementById("walletViewQris").style.display = "none";
+    document.getElementById("walletViewSuccess").style.display = "none";
+
+    overlay.style.display = "flex";
+    fetchUserWallet();
+    loadWalletMutations();
+}
+
+function closeWalletModal() {
+    const overlay = document.getElementById("walletModalOverlay");
+    if (overlay) overlay.style.display = "none";
+    if (activeUserWalletTopupPoll) {
+        clearInterval(activeUserWalletTopupPoll);
+        activeUserWalletTopupPoll = null;
+    }
+}
+
+function initWalletUI() {
+    // Nav Button
+    const navBtn = document.getElementById("mktWalletNavBtn");
+    if (navBtn) navBtn.addEventListener("click", openWalletModal);
+
+    // Close Button
+    const closeBtn = document.getElementById("closeWalletModalBtn");
+    if (closeBtn) closeBtn.addEventListener("click", closeWalletModal);
+
+    const overlay = document.getElementById("walletModalOverlay");
+    if (overlay) {
+        overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) closeWalletModal();
+        });
+    }
+
+    // Refresh Button
+    const refreshBtn = document.getElementById("btnRefreshWallet");
+    if (refreshBtn) {
+        refreshBtn.addEventListener("click", () => {
+            fetchUserWallet();
+            loadWalletMutations();
+        });
+    }
+
+    // View Navigation
+    const openTopupBtn = document.getElementById("btnOpenTopupView");
+    if (openTopupBtn) {
+        openTopupBtn.addEventListener("click", () => {
+            document.getElementById("walletViewOverview").style.display = "none";
+            document.getElementById("walletViewTopup").style.display = "block";
+        });
+    }
+
+    const backBtn = document.getElementById("btnBackToWalletOverview");
+    if (backBtn) {
+        backBtn.addEventListener("click", () => {
+            document.getElementById("walletViewTopup").style.display = "none";
+            document.getElementById("walletViewOverview").style.display = "block";
+        });
+    }
+
+    // Presets
+    document.querySelectorAll(".topup-preset-pill").forEach(btn => {
+        btn.addEventListener("click", () => {
+            document.querySelectorAll(".topup-preset-pill").forEach(b => b.classList.remove("selected"));
+            btn.classList.add("selected");
+            const input = document.getElementById("inputCustomTopupAmount");
+            if (input) input.value = btn.dataset.amount;
+        });
+    });
+
+    // Method Cards
+    const cardQris = document.getElementById("cardMethodQris");
+    const cardVa = document.getElementById("cardMethodVa");
+    if (cardQris && cardVa) {
+        cardQris.addEventListener("click", () => {
+            cardQris.classList.add("active");
+            cardVa.classList.remove("active");
+            cardQris.querySelector("input").checked = true;
+        });
+        cardVa.addEventListener("click", () => {
+            cardVa.classList.add("active");
+            cardQris.classList.remove("active");
+            cardVa.querySelector("input").checked = true;
+        });
+    }
+
+    // Submit Top Up
+    const submitBtn = document.getElementById("btnSubmitTopup");
+    if (submitBtn) {
+        submitBtn.addEventListener("click", async () => {
+            const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+            if (!token) return;
+
+            const amount = parseInt(document.getElementById("inputCustomTopupAmount")?.value, 10);
+            if (!amount || isNaN(amount) || amount < 10000) {
+                alert("Nominal top up minimal Rp 10.000");
+                return;
+            }
+            if (amount > 10000000) {
+                alert("Nominal top up maksimal Rp 10.000.000 per transaksi");
+                return;
+            }
+
+            const methodInput = document.querySelector("input[name='walletTopupPaymentMethod']:checked");
+            const paymentMethod = methodInput ? methodInput.value : "qris";
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1rem;">progress_activity</span> Menyiapkan Tagihan...`;
+
+            try {
+                const res = await fetch(`${API_BASE}/wallet/topup`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ amount, payment_method: paymentMethod })
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Gagal membuat invoice top up");
+
+                if (paymentMethod === "qris" || (data.is_direct && data.qr_content)) {
+                    // DIRECT QRIS — Render langsung di dalam modal tanpa redirect!
+                    const qrUrl = data.qr_image || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.qr_content)}`;
+                    const qrImg = document.getElementById("qrisImageElement");
+                    if (qrImg) qrImg.src = qrUrl;
+
+                    const dispAmount = document.getElementById("qrisDisplayAmount");
+                    if (dispAmount) dispAmount.textContent = rupiah(amount);
+
+                    document.getElementById("walletViewTopup").style.display = "none";
+                    document.getElementById("walletViewQris").style.display = "block";
+
+                    // Polling status transaksi tiap 3.5 detik
+                    if (activeUserWalletTopupPoll) clearInterval(activeUserWalletTopupPoll);
+                    let pollCount = 0;
+                    activeUserWalletTopupPoll = setInterval(async () => {
+                        pollCount++;
+                        if (pollCount > 60) {
+                            clearInterval(activeUserWalletTopupPoll);
+                            activeUserWalletTopupPoll = null;
+                            return;
+                        }
+                        try {
+                            const checkRes = await fetch(`${API_BASE}/wallet/topup/${data.topup_id}`, {
+                                headers: { "Authorization": `Bearer ${token}` }
+                            });
+                            const checkData = await checkRes.json();
+                            if (checkData.status === "PAID") {
+                                clearInterval(activeUserWalletTopupPoll);
+                                activeUserWalletTopupPoll = null;
+
+                                // Tampilkan layar sukses
+                                document.getElementById("walletViewQris").style.display = "none";
+                                document.getElementById("walletViewSuccess").style.display = "block";
+                                document.getElementById("successTopupCopy").textContent = `Saldo sebesar ${rupiah(amount)} telah berhasil ditambahkan ke dompet kamu.`;
+
+                                fetchUserWallet().then(() => {
+                                    const successNewBal = document.getElementById("successNewBalance");
+                                    if (successNewBal && window.currentUserWallet) {
+                                        successNewBal.textContent = rupiah(window.currentUserWallet.balance);
+                                    }
+                                });
+                                loadWalletMutations();
+                            } else if (checkData.status === "FAILED" || checkData.status === "EXPIRED" || checkData.status === "CANCELLED") {
+                                clearInterval(activeUserWalletTopupPoll);
+                                activeUserWalletTopupPoll = null;
+                                alert("Top up " + checkData.status);
+                                document.getElementById("walletViewQris").style.display = "none";
+                                document.getElementById("walletViewOverview").style.display = "block";
+                            }
+                        } catch (_) {}
+                    }, 3500);
+                } else if (data.payment_url) {
+                    window.location.href = data.payment_url;
+                }
+            } catch (err) {
+                alert("Gagal memproses top up: " + err.message);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = `<span>Lanjutkan Pembayaran</span><span class="material-symbols-outlined" style="font-size:1rem;">arrow_forward</span>`;
+            }
+        });
+    }
+
+    // Cancel QRIS
+    const cancelQrisBtn = document.getElementById("btnCancelQris");
+    if (cancelQrisBtn) {
+        cancelQrisBtn.addEventListener("click", () => {
+            if (activeUserWalletTopupPoll) {
+                clearInterval(activeUserWalletTopupPoll);
+                activeUserWalletTopupPoll = null;
+            }
+            document.getElementById("walletViewQris").style.display = "none";
+            document.getElementById("walletViewOverview").style.display = "block";
+        });
+    }
+
+    // Close Success
+    const closeSuccessBtn = document.getElementById("btnCloseSuccessWallet");
+    if (closeSuccessBtn) {
+        closeSuccessBtn.addEventListener("click", () => {
+            document.getElementById("walletViewSuccess").style.display = "none";
+            document.getElementById("walletViewOverview").style.display = "block";
+            fetchUserWallet();
+            loadWalletMutations();
+        });
+    }
+
+    // Initial Load
+    fetchUserWallet();
+}
+
+document.addEventListener("DOMContentLoaded", initWalletUI);
+

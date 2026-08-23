@@ -166,6 +166,7 @@ exports.createTopup = async (req, res) => {
                     transaction_id: directRes.transactionId,
                     payment_no: directRes.paymentNo,
                     qr_content: directRes.qrContent,
+                    qr_image: directRes.qrImage,
                     expired: directRes.expired,
                     payment_url: directRes.url
                 };

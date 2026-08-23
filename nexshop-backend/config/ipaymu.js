@@ -222,14 +222,15 @@ async function createDirectPayment({ referenceId, amount, buyerName, buyerEmail,
     }
 
     return {
-        transactionId: data.Data.TransactionId,
-        paymentNo: data.Data.PaymentNo,
-        qrContent: data.Data.QrString || data.Data.QrContent, // iPaymu kadang pakai nama QrString / QrContent
-        expired: data.Data.Expired,
-        amount: data.Data.Amount,
-        fee: data.Data.Fee,
-        status: data.Data.Status,
-        url: data.Data.Url
+        transactionId: data.Data.TransactionId || data.Data.transactionId,
+        paymentNo: data.Data.PaymentNo || data.Data.paymentNo,
+        qrContent: data.Data.QrString || data.Data.QrContent || data.Data.QrCode || data.Data.qrString || data.Data.qrContent || null,
+        qrImage: data.Data.QrImage || data.Data.QrTemplate || data.Data.qrImage || null,
+        expired: data.Data.Expired || data.Data.expired,
+        amount: data.Data.Amount || data.Data.amount,
+        fee: data.Data.Fee || data.Data.fee || 0,
+        status: data.Data.Status || data.Data.status,
+        url: data.Data.Url || data.Data.url
     };
 }
 

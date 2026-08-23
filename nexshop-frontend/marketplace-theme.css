@@ -2968,3 +2968,302 @@ body {
     from { opacity: 0; transform: translateY(-4px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ==========================================================================
+   NEXSHOP WALLET & DIRECT QRIS THEME
+   ========================================================================== */
+.mkt-nav-wallet-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.42rem 0.85rem;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(99, 102, 241, 0.15));
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 999px;
+    color: var(--mkt-text, #ffffff);
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.mkt-nav-wallet-btn:hover {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(99, 102, 241, 0.25));
+    border-color: rgba(56, 189, 248, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.2);
+}
+
+.wallet-modal {
+    max-width: 440px;
+    width: 92%;
+    border-radius: 20px;
+    background: var(--mkt-surface, #13111c);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.wallet-balance-card {
+    padding: 1.25rem;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #1e1b4b, #312e81);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    box-shadow: 0 8px 24px rgba(30, 27, 75, 0.4);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.wallet-balance-val {
+    font-size: 1.85rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: #ffffff;
+    line-height: 1.1;
+}
+
+.btn-wallet-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border: none;
+}
+
+.btn-wallet-action.primary {
+    flex: 1;
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35);
+}
+
+.btn-wallet-action.primary:hover {
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    transform: translateY(-1px);
+}
+
+.btn-wallet-action.secondary {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--mkt-text, #ffffff);
+}
+
+.btn-wallet-action.secondary:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.wallet-mutations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 2px;
+}
+
+.wallet-mutation-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.85rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 10px;
+    font-size: 0.8rem;
+    transition: background 0.15s ease;
+}
+
+.wallet-mutation-item:hover {
+    background: rgba(255, 255, 255, 0.07);
+}
+
+.wallet-mutation-desc {
+    font-weight: 700;
+    color: var(--mkt-text, #ffffff);
+    margin-bottom: 2px;
+}
+
+.wallet-mutation-meta {
+    font-size: 0.7rem;
+    color: var(--mkt-text-dim, #94a3b8);
+}
+
+.wallet-mutation-amount {
+    font-weight: 900;
+    text-align: right;
+}
+
+.wallet-mutation-amount.in {
+    color: #34d399;
+}
+
+.wallet-mutation-amount.out {
+    color: #f87171;
+}
+
+.wallet-presets-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.45rem;
+    margin-bottom: 0.5rem;
+}
+
+.topup-preset-pill {
+    padding: 0.55rem 0.25rem;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--mkt-text, #ffffff);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: center;
+}
+
+.topup-preset-pill:hover,
+.topup-preset-pill.selected {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: #38bdf8;
+    color: #38bdf8;
+}
+
+.wallet-input-amount {
+    width: 100%;
+    padding: 0.65rem 0.75rem 0.65rem 2.2rem;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 0.92rem;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.wallet-input-amount:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+.wallet-method-card {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.75rem 0.85rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.wallet-method-card:hover,
+.wallet-method-card.active {
+    background: rgba(99, 102, 241, 0.14);
+    border-color: #6366f1;
+}
+
+.btn-wallet-submit {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+    transition: all 0.18s ease;
+}
+
+.btn-wallet-submit:hover:not(:disabled) {
+    background: linear-gradient(135deg, #1d4ed8, #4338ca);
+    transform: translateY(-1px);
+}
+
+.btn-wallet-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-wallet-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: none;
+    border: none;
+    color: var(--mkt-text-dim, #94a3b8);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 0.75rem;
+    padding: 0;
+}
+
+.btn-wallet-back:hover {
+    color: #ffffff;
+}
+
+.wallet-qris-container {
+    display: inline-block;
+    padding: 0.85rem;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+    margin-bottom: 0.85rem;
+    border: 2px solid rgba(56, 189, 248, 0.5);
+}
+
+.wallet-qris-img {
+    width: 220px;
+    height: 220px;
+    object-fit: contain;
+    display: block;
+    border-radius: 8px;
+}
+
+.btn-wallet-cancel {
+    padding: 0.55rem 1rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: var(--mkt-text-dim, #94a3b8);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.btn-wallet-cancel:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+}
+
+.wallet-success-badge {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(52, 211, 153, 0.15);
+    border: 2px solid #34d399;
+    color: #34d399;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    font-size: 1.6rem;
+}
