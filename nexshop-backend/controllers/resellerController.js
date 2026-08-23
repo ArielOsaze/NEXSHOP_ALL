@@ -249,17 +249,8 @@ exports.resellerRegister = async (req, res) => {
         }
 
         try {
-            if (notify && notify.telegram) {
-                notify.telegram(
-                    `🤝 <b>PENDAFTARAN RESELLER & KYC BARU</b>\n` +
-                    `Pemohon: <b>${fullname}</b> (${email})\n` +
-                    `WhatsApp: <b>${whatsapp}</b>\n` +
-                    `NIK: <b>${nik}</b>\n` +
-                    `Toko/Brand: ${storeName || "-"}\n` +
-                    `Kanal: ${channel || "-"}\n` +
-                    `Estimasi: ${monthlyEstimate || "-"}\n` +
-                    `Status: Menunggu tinjauan berkas KTP di Admin Dashboard`
-                ).catch(() => {});
+            if (typeof notify === "function") {
+                notify("reseller", `🤝 Pengajuan reseller baru (+KYC KTP) dari ${fullname} (${email}) — WhatsApp: ${whatsapp}`).catch(() => {});
             }
         } catch (_) {}
 

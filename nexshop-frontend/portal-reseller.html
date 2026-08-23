@@ -1441,6 +1441,19 @@
 
                 setResellerSession(data.token, data.user);
                 showToast("Pendaftaran akun berhasil!");
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined">how_to_reg</span> <span>Daftar Akun Mitra &amp; Kirim Berkas KYC</span>`;
+
+                // Langsung switch tampilan ke layar status verifikasi tanpa delay
+                document.getElementById("sectionAuth").style.display = "none";
+                if (data.status === "approved") {
+                    document.getElementById("sectionDashboard").style.display = "block";
+                    document.getElementById("sectionStatusNotice").style.display = "none";
+                } else {
+                    document.getElementById("sectionStatusNotice").style.display = "block";
+                    document.getElementById("sectionDashboard").style.display = "none";
+                }
+
                 loadPortalOverview();
             } catch (err) {
                 errEl.textContent = err.message;
@@ -1478,6 +1491,19 @@
 
                 setResellerSession(data.token, data.user);
                 showToast("Login mitra berhasil!");
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined">login</span> <span>Masuk ke Partner Portal</span>`;
+
+                // Langsung switch tampilan secara instan
+                document.getElementById("sectionAuth").style.display = "none";
+                if (data.status === "approved") {
+                    document.getElementById("sectionDashboard").style.display = "block";
+                    document.getElementById("sectionStatusNotice").style.display = "none";
+                } else {
+                    document.getElementById("sectionStatusNotice").style.display = "block";
+                    document.getElementById("sectionDashboard").style.display = "none";
+                }
+
                 loadPortalOverview();
             } catch (err) {
                 errEl.textContent = err.message;
