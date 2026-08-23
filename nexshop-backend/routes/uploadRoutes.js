@@ -1,5 +1,6 @@
 const express = require("express");
 const multer = require("multer");
+const jwt = require("jsonwebtoken");
 const { uploadImage, uploadAudio } = require("../controllers/uploadController");
 const authMiddleware = require("../middleware/authMiddleware");
 
@@ -28,15 +29,31 @@ function handleUploadError(err, req, res, next) {
     next();
 }
 
-// Sebelumnya endpoint ini publik total (gak ada authMiddleware) — siapapun
-// di internet bisa upload file ke storage kita tanpa login sama sekali.
-// Dipakai cuma buat gambar produk/promo/logo dari admin dashboard, jadi
-// wajib login (role admin dicek di uploadController).
-router.post("/image", authMiddleware, uploadImageConfig.single("image"), handleUploadError, uploadImage);
+// Middleware upload auth: Izinkan pendaftar mitra baru mengunggah foto KTP (type=kyc / type=ktp)
+// tanpa harus login terlebih dahulu. Untuk type lainnya, tetap wajib auth (admin/user).
+function uploadImageAuth(req, res, next) {
+    const type = req.query.type || "product";
+    if (type === "kyc" || type === "ktp") {
+        const authHeader = req.headers.authorization;
+        if (authHeader) {
+            const match = authHeader.match(/^Bearer\s+(.+)$/i);
+            if (match) {
+                try {
+                    req.user = jwt.verify(match[1], process.env.JWT_SECRET);
+                } catch (_) {}
+            }
+        }
+        return next();
+    }
+    return authMiddleware(req, res, next);
+}
+
+router.post("/image", uploadImageAuth, uploadImageConfig.single("image"), handleUploadError, uploadImage);
 // Note: Backwards compatibility untuk endpoint lama ("/")
-router.post("/", authMiddleware, uploadImageConfig.single("image"), handleUploadError, uploadImage);
+router.post("/", uploadImageAuth, uploadImageConfig.single("image"), handleUploadError, uploadImage);
 
 // Khusus untuk audio music player
 router.post("/audio", authMiddleware, uploadAudioConfig.single("audio"), handleUploadError, uploadAudio);
 
 module.exports = router;
+

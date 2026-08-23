@@ -28,7 +28,34 @@
     <link rel="stylesheet" href="/marketplace-theme.css?v=20260823-kinetic">
 
     <style>
-        /* ── Custom Partner Portal Design Tokens ─────────────────────── */
+        /* ── Override label inheritance from style.css to keep labels clean & left-aligned ── */
+        .portal-container label,
+        .portal-container .form-label,
+        .portal-auth-card label,
+        .portal-auth-card .form-label,
+        .card-surface label,
+        .card-surface .form-label {
+            display: block !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            text-align: left !important;
+            justify-content: flex-start !important;
+            font-size: 0.82rem !important;
+            font-weight: 600 !important;
+            color: #cbd5e1 !important;
+            margin-bottom: 0.45rem !important;
+            letter-spacing: 0.01em;
+        }
+
+        .portal-container .form-label .req-star,
+        .portal-auth-card .req-star {
+            display: inline !important;
+            color: #f43f5e !important;
+            font-weight: 700 !important;
+            margin-left: 3px !important;
+            font-size: 0.9rem !important;
+        }
+
         .portal-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -40,7 +67,7 @@
         /* ── Hero Tag & Header ───────────────────────────────────────── */
         .portal-header-banner {
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: 2.25rem;
             padding-top: 0.5rem;
         }
 
@@ -63,17 +90,18 @@
 
         /* ── Auth Screen (Login & Register Form) ─────────────────────── */
         .portal-auth-card {
-            max-width: 660px;
+            max-width: 640px;
             margin: 0 auto;
-            background: rgba(18, 23, 41, 0.75);
+            background: rgba(15, 20, 36, 0.85);
             backdrop-filter: blur(28px);
             -webkit-backdrop-filter: blur(28px);
-            border: 1px solid var(--mkt-line-strong);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: var(--mkt-radius-lg);
             padding: 2.25rem 2rem;
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55), 0 0 35px rgba(139, 92, 246, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 35px rgba(139, 92, 246, 0.1);
             position: relative;
             overflow: hidden;
+            box-sizing: border-box;
         }
 
         .portal-auth-card::before {
@@ -90,24 +118,24 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 6px;
-            background: rgba(8, 11, 20, 0.75);
-            border: 1px solid var(--mkt-line);
+            background: rgba(7, 10, 20, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             padding: 5px;
             border-radius: 12px;
             margin-bottom: 1.75rem;
         }
 
         .portal-auth-tab {
-            padding: 0.7rem 1rem;
+            padding: 0.75rem 1rem;
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 0.88rem;
             font-weight: 700;
-            color: var(--mkt-text-dim);
+            color: #94a3b8;
             background: transparent;
             border: none;
             border-radius: 9px;
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -115,11 +143,12 @@
         }
 
         .portal-auth-tab:hover {
-            color: var(--mkt-text);
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.04);
         }
 
         .portal-auth-tab.active {
-            background: var(--mkt-primary);
+            background: #8b5cf6;
             color: #ffffff;
             box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
         }
@@ -127,8 +156,9 @@
         .portal-form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1rem;
+            gap: 1.1rem;
+            margin-bottom: 1.1rem;
+            text-align: left;
         }
 
         @media (max-width: 600px) {
@@ -142,68 +172,56 @@
         }
 
         .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.4rem;
-            margin-bottom: 1rem;
-        }
-
-        .form-label {
-            font-size: 0.82rem;
-            font-weight: 600;
-            color: var(--mkt-text);
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-
-        .req-star {
-            color: #f43f5e;
-            font-weight: 700;
+            display: block !important;
+            text-align: left !important;
+            margin-bottom: 1.1rem !important;
         }
 
         .form-control {
-            width: 100%;
-            padding: 0.72rem 0.95rem;
-            background: rgba(10, 13, 24, 0.85);
-            border: 1px solid var(--mkt-line);
-            border-radius: 10px;
-            color: var(--mkt-text);
-            font-size: 0.88rem;
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s ease;
-            box-sizing: border-box;
+            display: block !important;
+            width: 100% !important;
+            text-align: left !important;
+            padding: 0.75rem 1rem !important;
+            background: rgba(9, 13, 26, 0.9) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            border-radius: 10px !important;
+            color: #ffffff !important;
+            font-size: 0.88rem !important;
+            font-family: 'Inter', sans-serif !important;
+            transition: all 0.2s ease !important;
+            box-sizing: border-box !important;
         }
 
         .form-control:focus {
-            outline: none;
-            border-color: var(--mkt-secondary);
-            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.18);
-            background: rgba(14, 19, 36, 0.95);
+            outline: none !important;
+            border-color: var(--mkt-secondary) !important;
+            box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.18) !important;
+            background: rgba(13, 18, 36, 0.98) !important;
         }
 
         .form-control-mono {
-            font-family: 'Fira Code', monospace;
-            font-size: 0.84rem;
-            letter-spacing: 0.5px;
+            font-family: 'Fira Code', monospace !important;
+            font-size: 0.84rem !important;
+            letter-spacing: 0.5px !important;
         }
 
         /* ── Dropzone KTP Upload ───────────────────────────────────────── */
         .ktp-upload-zone {
-            border: 2px dashed rgba(139, 92, 246, 0.35);
+            border: 2px dashed rgba(139, 92, 246, 0.4);
             border-radius: 12px;
             padding: 1.5rem 1rem;
             text-align: center;
-            background: rgba(139, 92, 246, 0.03);
+            background: rgba(139, 92, 246, 0.04);
             cursor: pointer;
             transition: all 0.25s ease;
             position: relative;
+            box-sizing: border-box;
         }
 
         .ktp-upload-zone:hover {
             border-color: var(--mkt-secondary);
-            background: rgba(34, 211, 238, 0.05);
-            box-shadow: 0 0 20px rgba(34, 211, 238, 0.1);
+            background: rgba(34, 211, 238, 0.06);
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.12);
         }
 
         .ktp-upload-zone .material-symbols-outlined {
@@ -232,7 +250,7 @@
             position: absolute;
             top: 6px;
             right: 6px;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.25);
             color: #fff;
             border-radius: 50%;
@@ -252,7 +270,7 @@
         /* ── Submit Action Buttons ────────────────────────────────────── */
         .btn-portal-primary {
             width: 100%;
-            padding: 0.8rem 1.5rem;
+            padding: 0.82rem 1.5rem;
             font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 0.94rem;
             font-weight: 700;
@@ -465,6 +483,7 @@
             border-radius: var(--mkt-radius);
             padding: 1.5rem;
             margin-bottom: 1.5rem;
+            text-align: left;
         }
 
         .card-header-flex {
@@ -532,6 +551,7 @@
             color: #cbd5e1;
             overflow-x: auto;
             line-height: 1.55;
+            text-align: left;
         }
 
         .toast-msg {
@@ -648,16 +668,14 @@
 
                     <div class="form-group">
                         <label class="form-label" for="loginEmail">
-                            <span>Email Akun Mitra</span>
-                            <span class="req-star">*</span>
+                            Email Akun Mitra <span class="req-star">*</span>
                         </label>
                         <input type="email" id="loginEmail" class="form-control" placeholder="nama@tokoanda.com" required>
                     </div>
 
                     <div class="form-group">
                         <label class="form-label" for="loginPassword">
-                            <span>Password</span>
-                            <span class="req-star">*</span>
+                            Password <span class="req-star">*</span>
                         </label>
                         <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required>
                     </div>
@@ -680,15 +698,13 @@
                     <div class="portal-form-grid">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" for="regEmail">
-                                <span>Email Mitra</span>
-                                <span class="req-star">*</span>
+                                Email Mitra <span class="req-star">*</span>
                             </label>
                             <input type="email" id="regEmail" class="form-control" placeholder="email@tokoanda.com" required>
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" for="regPassword">
-                                <span>Password Akun</span>
-                                <span class="req-star">*</span>
+                                Password Akun <span class="req-star">*</span>
                             </label>
                             <input type="password" id="regPassword" class="form-control" placeholder="Min. 6 Karakter" minlength="6" required>
                         </div>
@@ -697,15 +713,13 @@
                     <div class="portal-form-grid">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" for="regFullname">
-                                <span>Nama Lengkap (Sesuai KTP)</span>
-                                <span class="req-star">*</span>
+                                Nama Lengkap (Sesuai KTP) <span class="req-star">*</span>
                             </label>
                             <input type="text" id="regFullname" class="form-control" placeholder="Nama sesuai identitas" required>
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" for="regWhatsapp">
-                                <span>Nomor WhatsApp Aktif</span>
-                                <span class="req-star">*</span>
+                                Nomor WhatsApp Aktif <span class="req-star">*</span>
                             </label>
                             <input type="tel" id="regWhatsapp" class="form-control" placeholder="08xxxxxxxxxx" required>
                         </div>
@@ -714,14 +728,13 @@
                     <div class="portal-form-grid">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" for="regNik">
-                                <span>NIK KTP (16 Digit)</span>
-                                <span class="req-star">*</span>
+                                NIK KTP (16 Digit) <span class="req-star">*</span>
                             </label>
                             <input type="text" id="regNik" class="form-control form-control-mono" placeholder="3201012304980001" maxlength="20" required>
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" for="regStoreName">
-                                <span>Nama Usaha / Toko / Brand</span>
+                                Nama Usaha / Toko / Brand
                             </label>
                             <input type="text" id="regStoreName" class="form-control" placeholder="mis. Berkah Game Store">
                         </div>
@@ -730,7 +743,7 @@
                     <div class="portal-form-grid">
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" for="regChannel">
-                                <span>Kanal Penjualan Utama</span>
+                                Kanal Penjualan Utama
                             </label>
                             <select id="regChannel" class="form-control">
                                 <option value="Website Sendiri (API/Integrasi)">Website Sendiri (API/Integrasi)</option>
@@ -743,7 +756,7 @@
                         </div>
                         <div class="form-group" style="margin-bottom:0;">
                             <label class="form-label" for="regMonthly">
-                                <span>Estimasi Transaksi Bulanan</span>
+                                Estimasi Transaksi Bulanan
                             </label>
                             <select id="regMonthly" class="form-control">
                                 <option value="Baru Memulai / < Rp 1 Juta">Baru Memulai / &lt; Rp 1 Juta</option>
@@ -758,15 +771,14 @@
                     <!-- Upload Foto KTP Dropzone -->
                     <div class="form-group">
                         <label class="form-label">
-                            <span>Foto KTP Asli (KYC)</span>
-                            <span class="req-star">*</span>
+                            Foto KTP Asli (KYC) <span class="req-star">*</span>
                         </label>
                         <input type="file" id="regKtpFile" accept="image/jpeg,image/png,image/webp" style="display:none;">
                         <div id="regKtpDropzone" class="ktp-upload-zone">
                             <div id="regKtpPlaceholder">
                                 <span class="material-symbols-outlined">badge</span>
-                                <div style="font-weight:700;color:var(--mkt-text);font-size:0.9rem;">Klik untuk Pilih atau Tarik Foto KTP ke Sini</div>
-                                <div style="font-size:0.75rem;color:var(--mkt-text-dim);margin-top:0.25rem;">Format JPG, PNG, WEBP (Maksimal 10MB). Pastikan NIK &amp; foto terbaca jelas.</div>
+                                <div style="font-weight:700;color:#ffffff;font-size:0.88rem;">Klik untuk Pilih atau Tarik Foto KTP ke Sini</div>
+                                <div style="font-size:0.75rem;color:#94a3b8;margin-top:0.25rem;">Format JPG, PNG, WEBP (Maksimal 10MB). Pastikan NIK &amp; foto terbaca jelas.</div>
                             </div>
                             <div id="regKtpPreviewWrap" class="ktp-preview-container">
                                 <img id="regKtpPreviewImg" src="" alt="Preview KTP" class="ktp-preview-image">
@@ -779,7 +791,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="regNote">
-                            <span>Catatan Tambahan (Opsional)</span>
+                            Catatan Tambahan (Opsional)
                         </label>
                         <textarea id="regNote" class="form-control" rows="2" placeholder="Ceritakan singkat tentang website toko Anda atau kebutuhan integrasi API..."></textarea>
                     </div>
@@ -924,7 +936,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="inputApiKey">
-                            <span>API KEY (Header: <code>X-NexShop-Api-Key</code>)</span>
+                            API KEY (Header: <code>X-NexShop-Api-Key</code>)
                         </label>
                         <div class="input-copy-wrap">
                             <input type="text" id="inputApiKey" class="form-control form-control-mono" readonly value="Memuat API Key...">
@@ -937,7 +949,7 @@
 
                     <div class="form-group">
                         <label class="form-label" for="inputSecretKey">
-                            <span>SECRET KEY (Header: <code>X-NexShop-Secret</code>)</span>
+                            SECRET KEY (Header: <code>X-NexShop-Secret</code>)
                         </label>
                         <div class="input-copy-wrap">
                             <input type="password" id="inputSecretKey" class="form-control form-control-mono" readonly value="••••••••••••••••">
@@ -964,8 +976,7 @@
                     <form id="formPortalSettings">
                         <div class="form-group">
                             <label class="form-label" for="inputIpWhitelist">
-                                <span>IP Whitelist Server Anda</span>
-                                <span style="color:var(--mkt-secondary);font-size:0.75rem;">(Pisahkan koma jika lebih dari satu)</span>
+                                IP Whitelist Server Anda <span style="color:var(--mkt-secondary);font-size:0.75rem;">(Pisahkan koma jika lebih dari satu)</span>
                             </label>
                             <input type="text" id="inputIpWhitelist" class="form-control form-control-mono" placeholder="Contoh: 103.123.45.67, 192.168.1.100">
                             <span style="font-size:0.75rem;color:var(--mkt-text-dim);">Jika diisi, NexShop HANYA akan memproses request API yang berasal dari alamat IP yang terdaftar.</span>
@@ -973,7 +984,7 @@
 
                         <div class="form-group">
                             <label class="form-label" for="inputWebhookUrl">
-                                <span>Webhook Callback URL (Notifikasi Otomatis Transaksi Selesai)</span>
+                                Webhook Callback URL (Notifikasi Otomatis Transaksi Selesai)
                             </label>
                             <div style="display:flex;gap:0.5rem;">
                                 <input type="url" id="inputWebhookUrl" class="form-control form-control-mono" placeholder="https://tokoanda.com/api/nexshop-webhook">
@@ -987,7 +998,7 @@
 
                         <div class="form-group">
                             <label class="form-label" for="inputWebhookSecret">
-                                <span>Webhook Signing Secret (HMAC SHA-256)</span>
+                                Webhook Signing Secret (HMAC SHA-256)
                             </label>
                             <div class="input-copy-wrap">
                                 <input type="text" id="inputWebhookSecret" class="form-control form-control-mono" readonly value="Memuat...">
@@ -1289,12 +1300,12 @@
             });
 
             dropzone.addEventListener("dragleave", () => {
-                dropzone.style.borderColor = "rgba(139, 92, 246, 0.35)";
+                dropzone.style.borderColor = "rgba(139, 92, 246, 0.4)";
             });
 
             dropzone.addEventListener("drop", (e) => {
                 e.preventDefault();
-                dropzone.style.borderColor = "rgba(139, 92, 246, 0.35)";
+                dropzone.style.borderColor = "rgba(139, 92, 246, 0.4)";
                 if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                     fileInput.files = e.dataTransfer.files;
                     handleKtpSelected(e.dataTransfer.files[0]);

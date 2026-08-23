@@ -21,10 +21,14 @@ const ALLOWED_AUDIO_MIME_TYPES = ["audio/mpeg", "audio/wav", "audio/ogg"];
 async function uploadImage(req, res) {
     try {
         const type = req.query.type || "product";
+        const isKycType = ["kyc", "ktp"].includes(type);
         const isUserAllowedType = ["avatar", "kyc", "ktp"].includes(type);
         
-        if (!["admin", "staff"].includes(req.user.role) && !isUserAllowedType) {
-            return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+        if (!isKycType) {
+            const role = req.user && req.user.role;
+            if (!["admin", "staff"].includes(role) && !isUserAllowedType) {
+                return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+            }
         }
 
         if (!req.file) {
