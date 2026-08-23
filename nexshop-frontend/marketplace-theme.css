@@ -727,42 +727,66 @@ body {
 }
 
 .mkt-detail-products {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.7rem;
 }
 
-.mkt-product-row {
+/* Grid tile nominal -- seluruh tile adalah tombol beli (button asli,
+   jadi otomatis aksesibel & attribute `disabled` langsung berfungsi
+   buat produk yang harganya kosong / out-of-stock). */
+.mkt-product-tile {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 0.9rem 1.1rem;
+    gap: 0.6rem;
+    width: 100%;
+    min-height: 5.4rem;
+    padding: 0.9rem 1rem;
     border-radius: var(--mkt-radius-sm);
     background: var(--mkt-glass);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--mkt-line);
-    transition: border-color 0.18s, background 0.18s;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s, transform 0.15s;
 }
 
-.mkt-product-row:hover {
+.mkt-product-tile:hover {
     border-color: rgba(139, 92, 246, 0.35);
     background: rgba(255, 255, 255, 0.04);
 }
 
-.mkt-product-name {
-    font-size: 0.88rem;
-    font-weight: 500;
-    color: var(--mkt-text);
-    min-width: 0;
+.mkt-product-tile:active {
+    transform: scale(0.97);
 }
 
-.mkt-product-action {
-    display: flex;
-    align-items: center;
-    gap: 0.9rem;
-    flex: 0 0 auto;
+.mkt-product-tile-name {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--mkt-text-dim);
+    line-height: 1.3;
+}
+
+.mkt-product-tile-price {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--mkt-secondary);
+}
+
+.mkt-product-tile--disabled,
+.mkt-product-tile--disabled:hover {
+    background: var(--mkt-surface-4);
+    border-color: var(--mkt-line);
+    cursor: not-allowed;
+    transform: none;
+}
+
+.mkt-product-tile--disabled .mkt-product-tile-price {
+    color: var(--mkt-text-muted);
 }
 
 .mkt-price-normal {
@@ -811,42 +835,6 @@ body {
 
 .mkt-reseller-banner a:hover {
     text-decoration: underline;
-}
-
-.mkt-product-price {
-    font-size: 0.88rem;
-    font-weight: 700;
-    color: var(--mkt-secondary);
-    white-space: nowrap;
-}
-
-.mkt-buy-btn {
-    padding: 0.5rem 1.1rem;
-    border-radius: var(--mkt-radius-sm);
-    border: none;
-    background: var(--mkt-primary-strong);
-    color: #fff;
-    font-family: inherit;
-    font-size: 0.78rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: filter 0.18s, transform 0.15s;
-}
-
-.mkt-buy-btn:hover {
-    filter: brightness(1.12);
-}
-
-.mkt-buy-btn:active {
-    transform: scale(0.97);
-}
-
-.mkt-buy-btn--disabled,
-.mkt-buy-btn--disabled:hover {
-    background: var(--mkt-surface-4);
-    color: var(--mkt-text-muted);
-    cursor: not-allowed;
-    filter: none;
 }
 
 /* ── Modal (checkout & pembayaran) ───────────────────────────── */
@@ -1460,15 +1448,9 @@ body {
         max-height: 92vh;
     }
 
-    .mkt-product-row {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.7rem;
-    }
-
-    .mkt-product-action {
-        width: 100%;
-        justify-content: space-between;
+    .mkt-detail-products {
+        grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+        gap: 0.6rem;
     }
 }
 

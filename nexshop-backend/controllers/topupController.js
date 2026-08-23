@@ -25,6 +25,7 @@ const {
     AUTO_MARKUP_ROUND,
     isTopupGameCategory,
     isGameProduct,
+    isCheckerUtilityProduct,
     isPascabayarProduct,
     resolveNexshopCategory,
     resolveOperator,
@@ -882,7 +883,13 @@ exports.getProducts = async (req, res) => {
         // Marketplace sudah menolak semua produk game, produk-produk itu
         // malah hilang dari DUA etalase sekaligus.
         const gameOnly = indoOnly.filter((p) => isGameProduct(p, p.kategori));
-        res.json(gameOnly);
+
+        // Buang SKU utilitas "Cek Nama/ID/Nickname/..." (lihat
+        // isCheckerUtilityProduct) -- ini API verifikasi akun TokoVoucher,
+        // bukan produk jualan, tapi bisa kelanjur aktif kayak baris lama
+        // di DB atau ke-aktifin gak sengaja lewat bulk-activate.
+        const sellableOnly = gameOnly.filter((p) => !isCheckerUtilityProduct(p.nama));
+        res.json(sellableOnly);
     } catch (err) {
         console.log(err);
         res.status(500).json({ message: "Server Error" });
@@ -2961,6 +2968,13 @@ exports.getPublicCatalog = async (req, res) => {
             // (tergantung mapping admin & fallback DEFAULT_CATEGORY_MAP)
             // tetap lolos dan nyasar ke Marketplace.
             if (isGameProduct(p, displayCategory)) return;
+
+            // Buang SKU utilitas "Cek Nama/ID/Nickname/..." (lihat
+            // isCheckerUtilityProduct di topupHelpers.js) -- SKU ini API
+            // verifikasi akun TokoVoucher, bukan produk jualan beneran,
+            // tapi bisa nongol di sini kalau kelanjur ke-aktifin (baris
+            // lama di DB atau ke-aktifin gak sengaja lewat bulk-activate).
+            if (isCheckerUtilityProduct(p.nama)) return;
             
             // Operator Mapping Logic (Use explicit operator name, fallback to legacy kategori)
             const displayOperator = p.source_operator_name || p.kategori || "Unknown";

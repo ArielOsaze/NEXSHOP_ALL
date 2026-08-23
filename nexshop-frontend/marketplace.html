@@ -482,35 +482,40 @@
         </div>
     `;
 
+            // Grid tile nominal: seluruh tile jadi tombol beli (gak ada
+            // tombol "Beli" terpisah lagi), nama produk kecil di atas,
+            // harga besar di bawah -- tapi nama produk TETAP ditampilin
+            // (beda dari grid nominal murni) karena NexShop bisa punya
+            // varian sumber beda harga buat nama yang mirip (mis. "DANA
+            // 1.000" vs "Dana 1.000"), jadi pembeli perlu lihat nama
+            // persis sebelum checkout.
             let productsHtml = "";
             operatorObj.products.forEach(p => {
-                const harga = p.harga_jual !== undefined && p.harga_jual !== null ? rupiah(p.harga_jual) : "Harga tidak tersedia";
-                const btnHtml = p.harga_jual !== undefined && p.harga_jual !== null
-                    ? `<button type="button" class="mkt-buy-btn" data-id="${p.id}" data-kode="${escapeHtml(p.kode_produk)}" data-nama="${escapeHtml(p.nama)}" data-harga="${p.harga_jual}" data-server="${p.butuh_server_id ? 'true' : 'false'}" data-cek-tagihan="${p.cek_tagihan ? 'true' : 'false'}">Beli</button>`
-                    : `<button type="button" class="mkt-buy-btn mkt-buy-btn--disabled" disabled>Tidak Tersedia</button>`;
+                const tersedia = p.harga_jual !== undefined && p.harga_jual !== null;
+                const harga = tersedia ? rupiah(p.harga_jual) : "Tidak tersedia";
 
                 productsHtml += `
-            <div class="mkt-product-row">
-                <div class="mkt-product-name">${escapeHtml(p.nama)}</div>
-                <div class="mkt-product-action">
-                    <span class="mkt-product-price">${harga}${hargaCoretHtml(p)}</span>
-                    ${btnHtml}
-                </div>
-            </div>
+            <button type="button" class="mkt-product-tile${tersedia ? "" : " mkt-product-tile--disabled"}" ${tersedia ? "" : "disabled"}
+                data-id="${p.id}" data-kode="${escapeHtml(p.kode_produk)}" data-nama="${escapeHtml(p.nama)}"
+                data-harga="${tersedia ? p.harga_jual : ""}" data-server="${p.butuh_server_id ? 'true' : 'false'}"
+                data-cek-tagihan="${p.cek_tagihan ? 'true' : 'false'}">
+                <span class="mkt-product-tile-name">${escapeHtml(p.nama)}</span>
+                <span class="mkt-product-tile-price">${harga}${tersedia ? hargaCoretHtml(p) : ""}</span>
+            </button>
         `;
             });
 
             document.getElementById("mktDetailProducts").innerHTML = productsHtml;
 
-            document.getElementById("mktDetailProducts").querySelectorAll(".mkt-buy-btn").forEach(btn => {
-                btn.addEventListener("click", () => {
+            document.getElementById("mktDetailProducts").querySelectorAll(".mkt-product-tile:not(:disabled)").forEach(tile => {
+                tile.addEventListener("click", () => {
                     openMarketplaceCheckout({
-                        id: btn.dataset.id,
-                        kode_produk: btn.dataset.kode,
-                        nama: btn.dataset.nama,
-                        harga_jual: parseInt(btn.dataset.harga, 10),
-                        butuh_server_id: btn.dataset.server === "true",
-                        cek_tagihan: btn.dataset.cekTagihan === "true",
+                        id: tile.dataset.id,
+                        kode_produk: tile.dataset.kode,
+                        nama: tile.dataset.nama,
+                        harga_jual: parseInt(tile.dataset.harga, 10),
+                        butuh_server_id: tile.dataset.server === "true",
+                        cek_tagihan: tile.dataset.cekTagihan === "true",
                         kategori: operatorCategory,
                         operator: operatorObj.operator
                     });

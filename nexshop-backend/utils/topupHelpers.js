@@ -155,6 +155,29 @@ function isGameProduct(product, displayCategory) {
 }
 
 // ===========================================================
+// FILTER PRODUK "CEK AKUN" (UTILITY, BUKAN PRODUK JUALAN) -- katalog
+// TokoVoucher nyampur SKU utilitas kayak "Cek Nama Akun Dana" (Rp4),
+// "Cek ID Free Fire", "Cek Nickname Mobile Legends" di hasil pencarian
+// yang sama kayak produk jualan beneran. SKU ini sebenarnya API
+// verifikasi akun (buat validasi nomor/ID tujuan sebelum checkout),
+// BUKAN barang yang boleh dibeli sendiri -- tapi kalau ke-aktifin
+// (manual atau lewat bulk-activate), dia nongol persis kayak produk
+// asli di etalase publik.
+//
+// Polanya konsisten: nama produk DIAWALI kata "Cek" diikuti salah satu
+// dari "Nama/ID/Nickname/Akun/Nomor/Saldo". Sengaja gak pakai substring
+// match (bukan `nama.includes("cek")`) supaya produk jualan beneran yang
+// kebetulan ngandung kata "cek" di tengah nama gak ikut kefilter.
+// ===========================================================
+const CHECKER_UTILITY_NAME_PATTERN = /^cek\s+(nama|id|nickname|akun|nomor|saldo)\b/i;
+
+function isCheckerUtilityProduct(nama) {
+    const n = String(nama || "").trim();
+    if (!n) return false;
+    return CHECKER_UTILITY_NAME_PATTERN.test(n);
+}
+
+// ===========================================================
 // RESOLUSI KATEGORI — SATU sumber kebenaran buat "produk ini masuk
 // kategori NexShop yang mana". Sebelumnya logika ini di-copy-paste di 3
 // tempat (getCatalogSummary, getPublicCatalog, dan renderProductTable di
@@ -299,6 +322,8 @@ module.exports = {
     POLA_KATEGORI_GAME,
     isGameCategoryName,
     isGameProduct,
+    CHECKER_UTILITY_NAME_PATTERN,
+    isCheckerUtilityProduct,
     PASCABAYAR_CATEGORY_ID,
     isPascabayarProduct,
     resolveNexshopCategory,
