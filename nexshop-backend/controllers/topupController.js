@@ -37,6 +37,8 @@ const {
 const { fetchAllRows } = require("../utils/supabasePaginate");
 const { getResellerContext } = require("../services/resellerService");
 const { hitungHargaReseller } = require("../utils/resellerPricing");
+const walletService = require("../services/walletService");
+const { dispatchResellerWebhook } = require("../services/resellerWebhookService");
 
 const IPAYMU_PAYMENT_METHODS = Object.freeze({
     qris: "qris",
@@ -1662,9 +1664,17 @@ exports.create = async (req, res) => {
     }
 
     const normalizedPaymentMethod = String(payment_method || "").trim().toLowerCase();
-    const ipaymuPaymentMethod = IPAYMU_PAYMENT_METHODS[normalizedPaymentMethod];
-    if (!ipaymuPaymentMethod) {
-        return res.status(400).json({ message: "Pilih metode pembayaran terlebih dahulu" });
+    const isWalletPayment = (normalizedPaymentMethod === "wallet" || normalizedPaymentMethod === "saldo");
+
+    if (isWalletPayment) {
+        if (!userId) {
+            return res.status(401).json({ message: "Anda harus login untuk menggunakan saldo NexShop Wallet" });
+        }
+    } else {
+        const ipaymuPaymentMethod = IPAYMU_PAYMENT_METHODS[normalizedPaymentMethod];
+        if (!ipaymuPaymentMethod) {
+            return res.status(400).json({ message: "Pilih metode pembayaran terlebih dahulu" });
+        }
     }
 
     try {
@@ -1731,6 +1741,93 @@ exports.create = async (req, res) => {
         // Endpoint tracking guest bersifat publik, jadi ID harus benar-benar
         // tidak dapat ditebak dari waktu checkout.
         const orderId = "TP" + crypto.randomBytes(12).toString("hex").toUpperCase();
+
+        // JALUR PEMBAYARAN 1: MENGGUNAKAN SALDO NEXSHOP WALLET
+        if (isWalletPayment) {
+            const debitRef = `PUR-${orderId}-${Date.now()}`;
+            let debitResult;
+            try {
+                debitResult = await walletService.debitWallet({
+                    userId,
+                    type: konteksReseller.isReseller ? "RESELLER_PURCHASE" : "PURCHASE",
+                    amount: total,
+                    referenceId: debitRef,
+                    externalTransactionId: orderId,
+                    description: `Pembelian ${product.nama} (${tujuan}) via Saldo`,
+                    metadata: {
+                        order_id: orderId,
+                        kode_produk: product.kode_produk,
+                        target: tujuan,
+                        server_id: server_id || null
+                    }
+                });
+            } catch (wErr) {
+                return res.status(400).json({
+                    message: wErr.message || "Saldo NexShop Wallet tidak mencukupi",
+                    code: "INSUFFICIENT_BALANCE"
+                });
+            }
+
+            const { error: insertErr } = await supabase.from("topup_orders").insert([{
+                id: orderId,
+                user_id: userId,
+                kode_produk: product.kode_produk,
+                nama_produk: product.nama,
+                tujuan,
+                server_id: server_id || null,
+                recipient_email: recipient_email || null,
+                recipient_phone: normalizedPhone,
+                harga: total,
+                subtotal: product.harga_jual,
+                promo_code: appliedPromoCode,
+                discount_amount: discountAmount,
+                payment_method: "wallet",
+                payment_status: "paid",
+                status: "processing"
+            }]);
+
+            if (insertErr) {
+                await walletService.refundWallet({
+                    userId,
+                    amount: total,
+                    referenceId: `REFUND-INS-${orderId}`,
+                    originalOrderId: orderId,
+                    reason: "Gagal membuat baris pesanan di database"
+                });
+                return res.status(500).json({ message: "Gagal membuat pesanan topup" });
+            }
+
+            if (appliedPromoCode) {
+                await incrementUsage(appliedPromoCode, recipient_email, orderId);
+            }
+
+            // Eksekusi transaksi TokoVoucher (TokoVoucher processing - JANGAN refund jika timeout/pending)
+            await fulfillOrder({
+                id: orderId,
+                user_id: userId,
+                kode_produk: product.kode_produk,
+                nama_produk: product.nama,
+                tujuan,
+                server_id: server_id || null,
+                recipient_email: recipient_email || null,
+                recipient_phone: normalizedPhone,
+                harga: total,
+                payment_method: "wallet",
+                status: "processing"
+            });
+
+            return res.status(201).json({
+                message: "Pesanan berhasil dibayar menggunakan saldo dan sedang diproses",
+                order_id: orderId,
+                total: total,
+                balance_remaining: debitResult.balance_after,
+                payment_method: "wallet",
+                status: "processing"
+            });
+        }
+
+        // JALUR PEMBAYARAN 2: GATEWAY IPAYMU (GUEST ATAU USER)
+        const ipaymuPaymentMethod = IPAYMU_PAYMENT_METHODS[normalizedPaymentMethod];
 
         const { error: insertErr } = await supabase.from("topup_orders").insert([{
             id: orderId,
@@ -2099,7 +2196,7 @@ exports.getAllOrders = async (req, res) => {
     }
 };
 
-// Fulfill: dipanggil setelah pembayaran iPaymu "paid" — eksekusi transaksi
+// Fulfill: dipanggil setelah pembayaran iPaymu "paid" atau checkout via Wallet — eksekusi transaksi
 // nyata ke TokoVoucher supaya diamond benar-benar terkirim
 async function fulfillOrder(order) {
     try {
@@ -2110,10 +2207,27 @@ async function fulfillOrder(order) {
             serverId: order.server_id
         });
 
-        // TokoVoucher mengembalikan status: 0 dan error_msg jika terjadi error (misal IP tidak diizinkan, saldo habis)
+        // TokoVoucher mengembalikan status: 0 dan error_msg jika terjadi error final (misal IP tidak diizinkan, saldo habis)
         let finalStatus = "processing";
-        if (result.status === 0 || result.status === "0") finalStatus = "gagal";
-        else finalStatus = TOKOVOUCHER_STATUS_MAP[result.status] || "processing";
+        if (result.status === 0 || result.status === "0") {
+            finalStatus = "gagal";
+
+            // FINAL FAILURE seketika dari provider: refund saldo wallet jika dibayar via saldo
+            if (order.user_id && (order.payment_method === "wallet" || order.payment_method === "reseller_wallet")) {
+                const refundRef = `RF-TV0-${order.id}-${Date.now()}`;
+                await walletService.refundWallet({
+                    userId: order.user_id,
+                    amount: order.harga,
+                    referenceId: refundRef,
+                    originalOrderId: order.id,
+                    reason: result.error_msg || result.message || "Ditolak oleh provider TokoVoucher"
+                }).then(() => {
+                    supabase.from("topup_orders").update({ refunded_at: new Date().toISOString() }).eq("id", order.id);
+                }).catch(e => console.log("Refund wallet gagal:", e.message));
+            }
+        } else {
+            finalStatus = TOKOVOUCHER_STATUS_MAP[result.status] || "processing";
+        }
 
         await supabase.from("topup_orders").update({
             status: finalStatus,
@@ -2153,24 +2267,23 @@ async function fulfillOrder(order) {
             const { processNotificationEvent } = require('../services/notificationDeliveryService');
             processNotificationEvent(order.id, "success").catch(e => console.log("Gagal trigger notif WA Topup:", e));
         }
+
+        // Jika order milik reseller Open API, dispatch webhook
+        if (order.reseller_user_id) {
+            dispatchResellerWebhook({ ...order, status: finalStatus, tv_sn: result.sn, tv_message: result.message || result.error_msg });
+        }
     } catch (err) {
-        // Sesuai catatan TokoVoucher: HTTP error / timeout HARUS dianggap PENDING,
-        // bukan gagal — jangan tandai gagal di sini, biarkan admin/webhook/polling
-        // yang menentukan status final belakangan.
-        console.log("TokoVoucher fulfill error (dianggap pending):", err.response?.data || err.message);
+        // ATURAN 9 & 11: HTTP error / timeout HARUS dianggap PENDING/PROCESSING,
+        // JANGAN REFUND LANGSUNG. Biarkan rekonsiliasi atau callback yang menentukan status final.
+        console.log("TokoVoucher fulfill error (dianggap pending/processing):", err.response?.data || err.message);
         await supabase.from("topup_orders").update({
             status: "processing",
             tv_message: "Menunggu konfirmasi TokoVoucher",
             updated_at: new Date().toISOString()
         }).eq("id", order.id);
 
-        // Kalau errornya BUKAN error jaringan/HTTP biasa ke TokoVoucher
-        // (misal bug kode kayak "statusMap is not defined" yang sempet
-        // kejadian), langsung kabarin admin -- soalnya kalau ini bug beneran,
-        // order bisa nyangkut lama di "processing" walau diamond-nya udah
-        // kekirim, dan gak akan kelihatan sampai poller jalan 5-10 menit lagi.
         if (!err.response && !err.request && err.code !== "ECONNABORTED") {
-            notify("security", `⚠️ Error internal (bukan error jaringan TokoVoucher) saat fulfill topup ${order.id}: ${err.message}. Cek log server & status order ini manual.`);
+            notify("security", `⚠️ Error internal saat fulfill topup ${order.id}: ${err.message}. Cek log server.`);
         }
     }
 }
@@ -2339,6 +2452,22 @@ async function reconcileTopupOrder(order, result) {
         return finalStatus;
     }
 
+    // JIKA TRANSAKSI FINAL GAGAL: Refund saldo wallet secara otomatis jika pembayaran menggunakan saldo
+    if (finalStatus === "gagal" && (order.payment_method === "wallet" || order.payment_method === "reseller_wallet")) {
+        if (order.user_id && !order.refunded_at) {
+            const refundRef = `RF-REC-${order.id}-${Date.now()}`;
+            await walletService.refundWallet({
+                userId: order.user_id,
+                amount: order.harga,
+                referenceId: refundRef,
+                originalOrderId: order.id,
+                reason: result.error_msg || result.message || "Transaksi gagal di provider TokoVoucher"
+            }).then(() => {
+                supabase.from("topup_orders").update({ refunded_at: new Date().toISOString() }).eq("id", order.id);
+            }).catch(e => console.log("Reconcile refund wallet error:", e.message));
+        }
+    }
+
     if (finalStatus === "sukses" && order.recipient_email) {
         try {
             await sendTopupInvoiceEmail(order.recipient_email, {
@@ -2364,6 +2493,11 @@ async function reconcileTopupOrder(order, result) {
         // Fonnte user WA delivery idempotency
         const { processNotificationEvent } = require('../services/notificationDeliveryService');
         processNotificationEvent(order.id, "success").catch(e => console.log("Gagal trigger notif WA Topup:", e));
+    }
+
+    // Jika order berasal dari Reseller API, kirim webhook ber-tanda tangan HMAC
+    if (order.reseller_user_id) {
+        dispatchResellerWebhook({ ...order, status: finalStatus, tv_sn: result.sn, tv_message: result.error_msg || result.message });
     }
 
     return finalStatus;

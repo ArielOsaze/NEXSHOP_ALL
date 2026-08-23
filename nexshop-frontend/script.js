@@ -17,6 +17,7 @@ const THEME_STORAGE_KEY = "nexshop-public-theme";
 const PUBLIC_TOKEN_STORAGE_KEY = "nexshop-public-token";
 
 const PAYMENT_METHODS = [
+    { id: "wallet", label: "NexShop Wallet", desc: "Bayar instan pakai Saldo Akun", icon: "fa-wallet" },
     { id: "qris", label: "QRIS", desc: "Scan dengan m-banking atau e-wallet", icon: "fa-qrcode" },
     { id: "va", label: "Virtual Account", desc: "BCA, BRI, Mandiri, dan bank lain", icon: "fa-building-columns" },
     { id: "banktransfer", label: "Transfer Bank", desc: "Transfer langsung dari rekening bank", icon: "fa-money-bill-transfer" },
