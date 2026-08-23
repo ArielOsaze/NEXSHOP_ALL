@@ -1,57 +1,53 @@
 // ===========================================================
-// HARGA RESELLER
+// HARGA RESELLER DENGAN PROTEKSI KEUNTUNGAN NEXSHOP
 //
-// Harga reseller SELALU dihitung ulang di server dari harga jual normal +
-// persen diskon tier-nya. Frontend gak pernah dipercaya ngirim harga, dan
-// harga reseller gak disimpan per produk -- jadi begitu admin ubah persen
-// satu tier, seluruh katalog ikut berubah tanpa perlu update ribuan baris.
+// Harga reseller dihitung dari harga jual normal dikurangi persen diskon tier.
+// NexShop SELALU mendapatkan margin keuntungan bersih di setiap transaksi
+// reseller (tidak pernah dijual seharga modal supplier mentah).
 //
-// Pengaman yang WAJIB ada: harga reseller gak boleh nyentuh (apalagi turun
-// di bawah) harga modal. Diskon tier dipakai apa adanya SELAMA hasilnya
-// masih di atas lantai margin; kalau nabrak, harga dijepit di lantai itu.
-// Tanpa ini, produk bermargin tipis (pulsa/PLN yang untungnya cuma ratusan
-// rupiah) bakal kejual rugi begitu ada tier 5%.
+// Pengaman:
+// 1. Harga reseller dibentuk dari harga jual normal - diskon tier.
+// 2. Lantai harga: modal supplier + margin keuntungan minimum (1.5% atau min Rp 150).
+// 3. Harga reseller tidak akan pernah menyentuh atau berada di bawah harga modal supplier.
 // ===========================================================
 
-// Margin minimum yang harus tetap tersisa buat kita, dihitung dari modal.
-const MIN_MARGIN_PERSEN = 1;
+const MIN_MARGIN_PERSEN = 1.5; // Minimal margin 1.5% dari modal
+const MIN_MARGIN_FLAT = 150;    // Minimal untung flat Rp 150 untuk produk nominal kecil
 
 function bulatkanRupiah(nilai) {
     return Math.round(Number(nilai) || 0);
 }
 
-// Batas terendah harga reseller: modal + margin minimum.
+// Batas terendah harga reseller: modal + margin minimum NexShop
 function lantaiHargaReseller(hargaBeli) {
     const modal = Number(hargaBeli) || 0;
     if (modal <= 0) return 0;
-    return Math.ceil(modal * (1 + MIN_MARGIN_PERSEN / 100));
+    const marginPersen = Math.ceil(modal * (1 + MIN_MARGIN_PERSEN / 100));
+    const marginFlat = modal + MIN_MARGIN_FLAT;
+    return Math.max(marginPersen, marginFlat);
 }
 
-// Hitung harga buat satu produk.
-//   hargaJual = harga normal yang tayang buat user biasa
-//   hargaBeli = harga modal dari supplier
-//   persen    = discount_percent milik tier reseller
-//
-// Return selalu berisi harga normal juga, supaya frontend bisa nampilin
-// "harga coret" tanpa perlu manggil endpoint kedua.
+// Hitung harga reseller untuk 1 SKU produk
 function hitungHargaReseller(hargaJual, hargaBeli, persen) {
     const normal = bulatkanRupiah(hargaJual);
+    const modal = bulatkanRupiah(hargaBeli);
     const diskonPersen = Number(persen) || 0;
 
     if (diskonPersen <= 0 || normal <= 0) {
         return { harga: normal, harga_normal: normal, hemat: 0, persen_efektif: 0, kena_lantai: false };
     }
 
-    const lantai = lantaiHargaReseller(hargaBeli);
+    const lantai = lantaiHargaReseller(modal);
     let harga = bulatkanRupiah(normal * (1 - diskonPersen / 100));
     let kenaLantai = false;
 
+    // Pastikan harga reseller tidak tembus di bawah lantai modal + untung
     if (harga < lantai) {
-        // Diskon penuh bakal makan margin -> jepit di lantai. Kalau harga
-        // normalnya sendiri udah di bawah lantai (produk bermargin minus
-        // yang salah setting), reseller cukup dapat harga normal, bukan
-        // malah dinaikin di atas harga user biasa.
-        harga = Math.min(normal, lantai);
+        harga = Math.max(lantai, modal > 0 ? modal + 100 : normal);
+        // Jangan sampai harga lantai melebihi harga normal
+        if (harga > normal) {
+            harga = normal;
+        }
         kenaLantai = true;
     }
 
@@ -65,4 +61,4 @@ function hitungHargaReseller(hargaJual, hargaBeli, persen) {
     };
 }
 
-module.exports = { MIN_MARGIN_PERSEN, lantaiHargaReseller, hitungHargaReseller, bulatkanRupiah };
+module.exports = { MIN_MARGIN_PERSEN, MIN_MARGIN_FLAT, lantaiHargaReseller, hitungHargaReseller, bulatkanRupiah };

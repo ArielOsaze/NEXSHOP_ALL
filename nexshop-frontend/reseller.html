@@ -556,46 +556,78 @@
 
                 <form class="rs-form" id="rsForm">
                     <div class="rs-form-row">
-                        <label>Nama Lengkap
+                        <label>Nama Lengkap (Sesuai KTP)
                             <input type="text" id="rsFullname" required maxlength="120" placeholder="Nama sesuai identitas">
                         </label>
-                        <label>Nomor WhatsApp
+                        <label>Nomor WhatsApp Aktif
                             <input type="tel" id="rsWhatsapp" required placeholder="08xxxxxxxxxx" pattern="[0-9+ -]{9,20}">
                         </label>
                     </div>
+
                     <div class="rs-form-row">
-                        <label><span>Nama Toko / Brand <span class="mkt-optional">(opsional)</span></span>
-                            <input type="text" id="rsStoreName" maxlength="120" placeholder="mis. Kios Digital Andi">
+                        <label><span>Nomor NIK KTP <span class="mkt-optional">(16 digit)</span></span>
+                            <input type="text" id="rsNik" maxlength="16" placeholder="Contoh: 3201012304980001">
                         </label>
-                        <label>Jualan lewat mana?
+                        <label><span>Nama Usaha / Toko / Brand <span class="mkt-optional">(opsional)</span></span>
+                            <input type="text" id="rsStoreName" maxlength="120" placeholder="mis. Berkah Topup / Web Saya">
+                        </label>
+                    </div>
+
+                    <div class="rs-form-row">
+                        <label>Kanal Penjualan Utama
                             <select id="rsChannel">
                                 <option value="">Pilih kanal utama</option>
+                                <option value="Website / Bot API Sendiri">Website / Bot API Sendiri</option>
                                 <option value="WhatsApp">WhatsApp</option>
                                 <option value="Instagram / TikTok">Instagram / TikTok</option>
                                 <option value="Marketplace (Shopee/Tokopedia)">Marketplace (Shopee/Tokopedia)</option>
-                                <option value="Website / Aplikasi sendiri">Website / Aplikasi sendiri</option>
                                 <option value="Toko fisik / konter">Toko fisik / konter</option>
                                 <option value="Lainnya">Lainnya</option>
                             </select>
                         </label>
+                        <label>Perkiraan Transaksi Bulanan
+                            <select id="rsMonthly">
+                                <option value="">Pilih perkiraan</option>
+                                <option value="< 50 transaksi">Kurang dari 50 transaksi</option>
+                                <option value="50-200 transaksi">50 - 200 transaksi</option>
+                                <option value="200-1000 transaksi">200 - 1.000 transaksi</option>
+                                <option value="> 1000 transaksi">Lebih dari 1.000 transaksi</option>
+                            </select>
+                        </label>
                     </div>
-                    <label>Perkiraan transaksi per bulan
-                        <select id="rsMonthly">
-                            <option value="">Pilih perkiraan</option>
-                            <option value="< 50 transaksi">Kurang dari 50 transaksi</option>
-                            <option value="50-200 transaksi">50 - 200 transaksi</option>
-                            <option value="200-1000 transaksi">200 - 1.000 transaksi</option>
-                            <option value="> 1000 transaksi">Lebih dari 1.000 transaksi</option>
-                        </select>
-                    </label>
+
+                    <!-- Upload Foto KTP KYC -->
+                    <div style="display:flex;flex-direction:column;gap:0.4rem;">
+                        <label style="font-weight:700;color:var(--mkt-text);display:flex;align-items:center;gap:0.35rem;">
+                            <span>Foto KTP / Identitas (KYC)</span>
+                            <span style="color:#f43f5e;font-size:0.78rem;">*wajib</span>
+                        </label>
+                        <p style="font-size:0.78rem;color:var(--mkt-text-dim);margin:0 0 0.35rem;">
+                            Unggah foto e-KTP asli yang jelas dan terbaca untuk verifikasi kemitraan resmi dan persetujuan API.
+                        </p>
+                        <div id="rsKtpDropzone" style="border:2px dashed var(--mkt-line);border-radius:12px;padding:1.4rem 1rem;text-align:center;cursor:pointer;background:rgba(255,255,255,0.02);transition:all 0.2s;">
+                            <input type="file" id="rsKtpFile" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                            <div id="rsKtpPlaceholder">
+                                <span class="material-symbols-outlined" style="font-size:2.4rem;color:var(--mkt-accent);display:block;margin-bottom:0.25rem;">badge</span>
+                                <span style="font-size:0.88rem;font-weight:600;color:var(--mkt-text);display:block;">Klik untuk Pilih Foto KTP</span>
+                                <span style="font-size:0.75rem;color:var(--mkt-text-dim);display:block;margin-top:0.2rem;">Format JPG, PNG, WEBP (Maks. 10MB)</span>
+                            </div>
+                            <div id="rsKtpPreviewWrap" style="display:none;position:relative;max-width:340px;margin:0 auto;">
+                                <img id="rsKtpPreviewImg" src="" alt="Preview KTP" style="width:100%;border-radius:8px;border:1px solid var(--mkt-line);max-height:190px;object-fit:cover;">
+                                <button type="button" id="rsKtpRemoveBtn" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:50%;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+                                    <span class="material-symbols-outlined" style="font-size:1rem;">close</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <label><span>Catatan tambahan <span class="mkt-optional">(opsional)</span></span>
                         <textarea id="rsNote" maxlength="500"
-                            placeholder="Ceritakan singkat soal jualan kamu, atau produk yang paling sering dibeli."></textarea>
+                            placeholder="Ceritakan singkat soal jualan Anda, website Anda, atau produk yang paling sering ditransaksikan."></textarea>
                     </label>
                     <p class="mkt-checkout-error" id="rsError"></p>
-                    <button type="submit" class="mkt-btn-primary" id="rsSubmitBtn">Kirim Pengajuan</button>
-                    <p class="rs-form-note">Dengan mengirim formulir ini kamu setuju dihubungi admin NexShop lewat
-                        WhatsApp untuk verifikasi.</p>
+                    <button type="submit" class="mkt-btn-primary" id="rsSubmitBtn">Kirim Pengajuan &amp; KYC</button>
+                    <p class="rs-form-note">Dengan mengirim formulir ini Anda setuju data identitas diverifikasi oleh admin NexShop.</p>
                 </form>
             </div>
         </section>
@@ -831,10 +863,16 @@
                 if (data.status === "approved" && data.tier) {
                     tampilkanStatus(
                         `<span class="material-symbols-outlined" aria-hidden="true">verified</span>
-                         <div><strong>Kamu sudah jadi reseller ${escapeHtml(data.tier.name)}</strong><br>
-                         Potongan ${String(data.tier.discount_percent).replace(".", ",")}% otomatis berlaku di
-                         <a href="/marketplace">Marketplace</a> dan <a href="/#topup">Topup Diamond</a> selama kamu login.
-                         <div class="rs-status-meta"><span>Tier ${escapeHtml(data.tier.name)}</span><span>Diskon ${String(data.tier.discount_percent).replace(".", ",")}%</span></div></div>`,
+                         <div><strong>Selamat! Anda adalah Reseller Resmi ${escapeHtml(data.tier.name)}</strong><br>
+                         Potongan harga otomatis ${String(data.tier.discount_percent).replace(".", ",")}% aktif di seluruh etalase marketplace &amp; topup game.
+                         <div class="rs-status-meta"><span>Tier ${escapeHtml(data.tier.name)}</span><span>Diskon ${String(data.tier.discount_percent).replace(".", ",")}%</span></div>
+                         <div style="margin-top:1rem;">
+                             <a href="/portal-reseller.html" class="mkt-btn-primary" style="display:inline-flex;align-items:center;gap:0.45rem;text-decoration:none;padding:0.55rem 1.15rem;font-size:0.86rem;border-radius:8px;">
+                                 <span class="material-symbols-outlined" style="font-size:1.1rem;" aria-hidden="true">dashboard</span>
+                                 <span>Buka Partner Portal &amp; API Key</span>
+                             </a>
+                         </div>
+                         </div>`,
                         "rs-alert--sukses"
                     );
                     kunciForm("Sudah terdaftar sebagai reseller");
@@ -844,8 +882,8 @@
                 if (data.status === "pending") {
                     tampilkanStatus(
                         `<span class="material-symbols-outlined" aria-hidden="true">hourglass_top</span>
-                         <div><strong>Pengajuan kamu sedang ditinjau</strong><br>
-                         Admin bakal menghubungi lewat WhatsApp maksimal 1x24 jam.</div>`,
+                         <div><strong>Pengajuan &amp; Berkas KYC Sedang Ditinjau</strong><br>
+                         Admin NexShop sedang memverifikasi data identitas Anda (Maksimal 1x24 Jam). Kami akan menghubungi WhatsApp Anda setelah disetujui.</div>`,
                         "rs-alert--tunggu"
                     );
                     kunciForm("Pengajuan sedang ditinjau");
@@ -855,8 +893,8 @@
                 if (data.status === "suspended") {
                     tampilkanStatus(
                         `<span class="material-symbols-outlined" aria-hidden="true">block</span>
-                         <div><strong>Status reseller kamu sedang dibekukan</strong><br>
-                         Hubungi Customer Service NexShop untuk penjelasan lebih lanjut.</div>`,
+                         <div><strong>Status Reseller Sedang Dibekukan</strong><br>
+                         Hubungi Customer Service NexShop untuk informasi reaktivasi akun kemitraan Anda.</div>`,
                         "rs-alert--gagal"
                     );
                     kunciForm("Hubungi Customer Service");
@@ -868,14 +906,100 @@
                     tampilkanStatus(
                         `<span class="material-symbols-outlined" aria-hidden="true">info</span>
                          <div><strong>Pengajuan sebelumnya belum disetujui</strong><br>
-                         ${catatan ? "Catatan admin: " + escapeHtml(catatan) + "<br>" : ""}Kamu masih boleh mengirim pengajuan baru dengan data yang lebih lengkap.</div>`,
+                         ${catatan ? "Catatan admin: " + escapeHtml(catatan) + "<br>" : ""}Anda dapat mengirimkan ulang formulir dan foto KTP yang lebih jelas.</div>`,
                         "rs-alert--tunggu"
                     );
                 }
             } catch (err) {
-                // Diamkan: form tetap bisa dipakai, error sebenarnya bakal
-                // muncul saat submit kalau memang ada masalah.
+                // diamkan
             }
+        }
+
+        // ── Dropzone & Upload KTP ─────────────────────────────────────────
+        let uploadedKtpUrl = "";
+        const dropzone = document.getElementById("rsKtpDropzone");
+        const fileInput = document.getElementById("rsKtpFile");
+        const placeholder = document.getElementById("rsKtpPlaceholder");
+        const previewWrap = document.getElementById("rsKtpPreviewWrap");
+        const previewImg = document.getElementById("rsKtpPreviewImg");
+        const removeBtn = document.getElementById("rsKtpRemoveBtn");
+
+        if (dropzone && fileInput) {
+            dropzone.addEventListener("click", (e) => {
+                if (e.target === removeBtn || removeBtn.contains(e.target)) return;
+                fileInput.click();
+            });
+
+            dropzone.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                dropzone.style.borderColor = "var(--mkt-accent)";
+                dropzone.style.background = "rgba(34, 211, 238, 0.06)";
+            });
+
+            dropzone.addEventListener("dragleave", () => {
+                dropzone.style.borderColor = "var(--mkt-line)";
+                dropzone.style.background = "rgba(255,255,255,0.02)";
+            });
+
+            dropzone.addEventListener("drop", (e) => {
+                e.preventDefault();
+                dropzone.style.borderColor = "var(--mkt-line)";
+                dropzone.style.background = "rgba(255,255,255,0.02)";
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleKtpSelected(e.dataTransfer.files[0]);
+                }
+            });
+
+            fileInput.addEventListener("change", () => {
+                if (fileInput.files && fileInput.files[0]) {
+                    handleKtpSelected(fileInput.files[0]);
+                }
+            });
+
+            removeBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                fileInput.value = "";
+                uploadedKtpUrl = "";
+                previewImg.src = "";
+                previewWrap.style.display = "none";
+                placeholder.style.display = "block";
+            });
+        }
+
+        async function handleKtpSelected(file) {
+            if (!file) return;
+            if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+                alert("Format file harus berupa gambar (JPG, PNG, atau WEBP)");
+                fileInput.value = "";
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert("Ukuran foto KTP maksimal 10MB");
+                fileInput.value = "";
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                placeholder.style.display = "none";
+                previewWrap.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function uploadKtpFileDirectly(file, token) {
+            const formData = new FormData();
+            formData.append("image", file);
+            const res = await fetch(`${API_BASE}/upload/image?type=kyc`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+                body: formData
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal mengunggah foto KTP");
+            return data.url;
         }
 
         // ── Kirim pengajuan ──────────────────────────────────────────────
@@ -888,23 +1012,37 @@
             errEl.textContent = "";
 
             if (!token) {
-                errEl.textContent = "Kamu perlu masuk ke akun NexShop dulu.";
+                errEl.textContent = "Anda perlu masuk ke akun NexShop terlebih dahulu.";
                 return;
             }
 
-            const payload = {
-                fullname: document.getElementById("rsFullname").value.trim(),
-                whatsapp: document.getElementById("rsWhatsapp").value.trim(),
-                store_name: document.getElementById("rsStoreName").value.trim(),
-                channel: document.getElementById("rsChannel").value,
-                monthly_estimate: document.getElementById("rsMonthly").value,
-                note: document.getElementById("rsNote").value.trim()
-            };
+            const file = fileInput.files && fileInput.files[0];
+            if (!file && !uploadedKtpUrl) {
+                errEl.textContent = "Foto KTP (KYC) wajib dipilih dan diunggah untuk verifikasi kemitraan.";
+                return;
+            }
 
             btn.disabled = true;
-            btn.textContent = "Mengirim...";
+            btn.textContent = "Mengunggah berkas KTP...";
 
             try {
+                if (file && !uploadedKtpUrl) {
+                    uploadedKtpUrl = await uploadKtpFileDirectly(file, token);
+                }
+
+                btn.textContent = "Mengirim data pengajuan...";
+
+                const payload = {
+                    fullname: document.getElementById("rsFullname").value.trim(),
+                    whatsapp: document.getElementById("rsWhatsapp").value.trim(),
+                    nik: document.getElementById("rsNik").value.trim(),
+                    store_name: document.getElementById("rsStoreName").value.trim(),
+                    channel: document.getElementById("rsChannel").value,
+                    monthly_estimate: document.getElementById("rsMonthly").value,
+                    note: document.getElementById("rsNote").value.trim(),
+                    ktp_url: uploadedKtpUrl
+                };
+
                 const res = await fetch(`${API_BASE}/reseller/apply`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -915,7 +1053,7 @@
 
                 tampilkanStatus(
                     `<span class="material-symbols-outlined" aria-hidden="true">task_alt</span>
-                     <div><strong>Pengajuan terkirim!</strong><br>${escapeHtml(data.message || "")}</div>`,
+                     <div><strong>Pengajuan &amp; Berkas KYC Terkirim!</strong><br>${escapeHtml(data.message || "")}</div>`,
                     "rs-alert--sukses"
                 );
                 kunciForm("Pengajuan sedang ditinjau");
@@ -923,7 +1061,7 @@
             } catch (err) {
                 errEl.textContent = err.message;
                 btn.disabled = false;
-                btn.textContent = "Kirim Pengajuan";
+                btn.textContent = "Kirim Pengajuan & KYC";
             }
         });
 

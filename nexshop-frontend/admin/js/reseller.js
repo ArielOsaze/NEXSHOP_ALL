@@ -1,38 +1,33 @@
 // ===========================================================
-// PANEL RESELLER (dashboard admin)
+// RESELLER DASHBOARD (ADMIN)
 //
-// Dipisah dari dashboard.js karena file itu udah kelewat besar. Semua
-// pemanggilan API lewat apiFetch() milik dashboard.js, jadi gerbang akses
-// (verifikasi role + Security PIN) dan batas sesi idle otomatis berlaku
-// di sini juga.
-//
-// Catatan penting soal harga: file ini CUMA ngatur persen diskon per
-// tingkatan. Perhitungan harga resellernya sendiri ada di server
-// (utils/resellerPricing.js) dan selalu dijaga supaya gak pernah turun di
-// bawah harga modal -- jadi menaikkan persen di sini gak bisa bikin produk
-// kejual rugi.
+// Mengelola tingkatan, pengajuan (lengkap dengan tinjauan foto KTP KYC),
+// dan reseller terdaftar beserta status API Key mereka.
 // ===========================================================
 
 let resellerTiers = [];
 let resellerLoaded = false;
 
 function rsPersen(nilai) {
-    return `${Number(nilai || 0).toFixed(2).replace(/\.?0+$/, "")}%`;
+    const n = Number(nilai) || 0;
+    return `${String(n).replace(".", ",")}%`;
 }
 
-function rsTanggal(nilai) {
-    if (!nilai) return "-";
-    return new Date(nilai).toLocaleDateString("id-ID", { day: "2-digit", month: "short", year: "numeric" });
+function rsTanggal(iso) {
+    if (!iso) return "-";
+    try {
+        const d = new Date(iso);
+        return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+    } catch {
+        return "-";
+    }
 }
 
-// Tabel reseller belum dibuat (migration 008 belum dijalankan). Backend
-// balas 503 + code RESELLER_NOT_SETUP -- ditampilkan sebagai peringatan
-// yang menjelaskan langkahnya, bukan toast error yang bikin bingung.
 function rsTampilkanSetupWarning(pesan) {
     const box = document.getElementById("resellerSetupWarning");
     const teks = document.getElementById("resellerSetupWarningText");
     if (!box || !teks) return;
-    teks.textContent = pesan || "Fitur reseller belum di-setup di database.";
+    teks.textContent = pesan || "Fitur reseller belum di-setup di database. Jalankan migration 008 & 010 di Supabase.";
     box.classList.remove("d-none");
 }
 
@@ -40,17 +35,20 @@ function rsSembunyikanSetupWarning() {
     document.getElementById("resellerSetupWarning")?.classList.add("d-none");
 }
 
-async function rsFetch(path, options) {
-    const res = await apiFetch(path, options);
+async function rsFetch(endpoint, options = {}) {
+    const token = localStorage.getItem("adminToken");
+    const headers = { Authorization: `Bearer ${token}`, ...(options.headers || {}) };
+    const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+    if (res.status === 401) throw new Error("unauthorized");
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-        if (data.code === "RESELLER_NOT_SETUP") {
+        if (data.code === "RESELLER_NOT_SETUP" || res.status === 503) {
             rsTampilkanSetupWarning(data.message);
             const err = new Error(data.message || "Fitur reseller belum di-setup");
             err.notSetup = true;
             throw err;
         }
-        throw new Error(data.message || "Permintaan gagal");
+        throw new Error(data.message || `Request gagal (${res.status})`);
     }
     return data;
 }
@@ -65,44 +63,52 @@ async function loadResellerTiers() {
         rsSembunyikanSetupWarning();
 
         body.innerHTML = resellerTiers.map((t) => `
-            <tr data-tier="${escapeHtml(t.code)}">
-                <td class="fw-semibold">${escapeHtml(t.name)}<div class="text-muted small">${escapeHtml(t.code)}</div></td>
+            <tr>
+                <td class="fw-semibold">${escapeHtml(t.name)}</td>
                 <td>
-                    <input type="number" class="form-control form-control-sm" min="0" max="30" step="0.25"
-                        value="${Number(t.discount_percent)}" id="rsTierPercent-${escapeHtml(t.code)}">
-                </td>
-                <td><input type="text" class="form-control form-control-sm" maxlength="200"
-                        value="${escapeHtml(t.description || "")}" id="rsTierDesc-${escapeHtml(t.code)}"></td>
-                <td><span class="badge bg-secondary">${t.jumlah_reseller || 0}</span></td>
-                <td>
-                    <div class="form-check form-switch mb-0">
-                        <input class="form-check-input" type="checkbox" id="rsTierActive-${escapeHtml(t.code)}" ${t.is_active ? "checked" : ""}>
+                    <div class="input-group input-group-sm">
+                        <input type="number" class="form-control" id="rsTierPct-${t.code}"
+                            value="${t.discount_percent}" min="0" max="30" step="0.1">
+                        <span class="input-group-text">%</span>
                     </div>
                 </td>
-                <td class="text-end">
-                    <button class="btn btn-sm btn-primary" onclick="simpanResellerTier('${escapeHtml(t.code)}')">Simpan</button>
+                <td class="small text-muted">${escapeHtml(t.description || "-")}</td>
+                <td><span class="badge bg-secondary">${t.jumlah_reseller || 0}</span></td>
+                <td>
+                    <div class="form-check form-switch m-0">
+                        <input class="form-check-input" type="checkbox" id="rsTierActive-${t.code}"
+                            ${t.is_active ? "checked" : ""}>
+                    </div>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-primary" onclick="simpanTier('${t.code}')">Simpan</button>
                 </td>
             </tr>
         `).join("");
 
         const tertinggi = resellerTiers.filter((t) => t.is_active).reduce((max, t) => Math.max(max, Number(t.discount_percent) || 0), 0);
-        document.getElementById("rsStatDiskon").textContent = tertinggi ? rsPersen(tertinggi) : "-";
+        document.getElementById("rsStatDiskon").textContent = tertinggi > 0 ? rsPersen(tertinggi) : "-";
     } catch (err) {
         if (err.message === "unauthorized") return;
         body.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">${escapeHtml(err.message)}</td></tr>`;
     }
 }
 
-async function simpanResellerTier(code) {
-    const persen = document.getElementById(`rsTierPercent-${code}`).value;
-    const deskripsi = document.getElementById(`rsTierDesc-${code}`).value;
-    const aktif = document.getElementById(`rsTierActive-${code}`).checked;
+async function simpanTier(code) {
+    const persenEl = document.getElementById(`rsTierPct-${code}`);
+    const activeEl = document.getElementById(`rsTierActive-${code}`);
+    const persen = parseFloat(persenEl?.value);
+    const is_active = !!activeEl?.checked;
+
+    if (isNaN(persen) || persen < 0 || persen > 30) {
+        return showToast("Diskon harus angka 0 sampai 30%", true);
+    }
 
     try {
         const data = await rsFetch(`/reseller/admin/tiers/${encodeURIComponent(code)}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ discount_percent: Number(persen), description: deskripsi, is_active: aktif })
+            body: JSON.stringify({ discount_percent: persen, is_active })
         });
         showToast(data.message || "Tingkatan diperbarui");
         loadResellerTiers();
@@ -112,7 +118,7 @@ async function simpanResellerTier(code) {
     }
 }
 
-// ── Pengajuan ────────────────────────────────────────────────────────
+// ── Pengajuan (dengan Foto KTP KYC) ──────────────────────────────────
 async function loadResellerApplications() {
     const body = document.getElementById("resellerAppBody");
     if (!body) return;
@@ -139,6 +145,12 @@ async function loadResellerApplications() {
 
         body.innerHTML = rows.map((a) => {
             const waHref = `https://wa.me/${String(a.whatsapp || "").replace(/\D/g, "")}`;
+            const ktpBtn = a.ktp_url
+                ? `<button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 mt-1" onclick="showKtpModal('${escapeHtml(a.ktp_url)}', '${escapeHtml(a.fullname)}', '${escapeHtml(a.nik || '-')}')">
+                       <i class="bi bi-person-badge"></i> Lihat KTP
+                   </button>`
+                : `<span class="text-muted small d-block mt-1"><i class="bi bi-x-circle me-1"></i>Tanpa KTP</span>`;
+
             const aksi = a.status === "pending"
                 ? `
                     <div class="d-flex flex-column gap-1">
@@ -161,7 +173,9 @@ async function loadResellerApplications() {
                     <td>
                         <div class="fw-semibold">${escapeHtml(a.fullname)}</div>
                         <div class="text-muted small">${escapeHtml(a.email || "-")}</div>
+                        ${a.nik ? `<div class="small text-muted font-monospace"><i class="bi bi-card-heading me-1"></i>NIK: ${escapeHtml(a.nik)}</div>` : ""}
                         ${a.store_name ? `<div class="text-muted small"><i class="bi bi-shop me-1"></i>${escapeHtml(a.store_name)}</div>` : ""}
+                        ${ktpBtn}
                     </td>
                     <td><a href="${waHref}" target="_blank" rel="noopener" class="text-decoration-none">
                         <i class="bi bi-whatsapp text-success me-1"></i>${escapeHtml(a.whatsapp)}</a></td>
@@ -181,6 +195,20 @@ async function loadResellerApplications() {
     }
 }
 
+function showKtpModal(url, nama, nik) {
+    document.getElementById("modalKtpNama").textContent = nama || "-";
+    document.getElementById("modalKtpNik").textContent = nik || "-";
+    const img = document.getElementById("modalKtpImg");
+    img.src = url;
+    const dLink = document.getElementById("modalKtpDownload");
+    dLink.href = url;
+    const modalEl = document.getElementById("modalKtpPreview");
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
 async function putusanReseller(id, action) {
     let tierCode = "";
     let adminNote = "";
@@ -192,7 +220,7 @@ async function putusanReseller(id, action) {
         if (!confirm(`Setujui pemohon ini sebagai reseller ${tier ? tier.name : tierCode} (diskon ${rsPersen(tier?.discount_percent)})?`)) return;
     } else {
         const alasan = prompt("Alasan penolakan (opsional, akan terlihat oleh pemohon):", "");
-        if (alasan === null) return; // batal
+        if (alasan === null) return;
         adminNote = alasan.trim();
     }
 
@@ -232,10 +260,17 @@ async function loadResellerList() {
                 .map((t) => `<option value="${escapeHtml(t.code)}" ${r.reseller_tier === t.code ? "selected" : ""}>${escapeHtml(t.name)} (${rsPersen(t.discount_percent)})</option>`)
                 .join("");
             const dibekukan = r.reseller_status === "suspended";
+            const apiBadge = r.api_info
+                ? `<div class="small text-success mt-1"><i class="bi bi-key-fill me-1"></i>API Key Aktif (${r.api_info.total_requests || 0} req)</div>`
+                : `<div class="small text-muted mt-1"><i class="bi bi-key me-1"></i>Belum dibuat</div>`;
+
             return `
                 <tr>
                     <td class="fw-semibold">${escapeHtml(r.fullname || "-")}</td>
-                    <td class="small">${escapeHtml(r.email || "-")}</td>
+                    <td class="small">
+                        <div>${escapeHtml(r.email || "-")}</div>
+                        ${apiBadge}
+                    </td>
                     <td><select class="form-select form-select-sm" id="rsUserTier-${r.id}">${opsi}</select></td>
                     <td class="small text-muted">${rsTanggal(r.reseller_since)}</td>
                     <td><span class="badge ${dibekukan ? "bg-warning text-dark" : "bg-success"}">${dibekukan ? "Dibekukan" : "Aktif"}</span></td>
@@ -297,7 +332,6 @@ async function ubahStatusReseller(id, status) {
     }
 }
 
-// Tingkatan dimuat DULUAN karena dropdown di dua tabel lain butuh daftarnya.
 async function loadResellerAll() {
     await loadResellerTiers();
     await Promise.all([loadResellerApplications(), loadResellerList()]);
@@ -306,3 +340,8 @@ async function loadResellerAll() {
 
 window.loadResellerAll = loadResellerAll;
 window.loadResellerApplications = loadResellerApplications;
+window.showKtpModal = showKtpModal;
+window.simpanTier = simpanTier;
+window.putusanReseller = putusanReseller;
+window.simpanTierReseller = simpanTierReseller;
+window.ubahStatusReseller = ubahStatusReseller;

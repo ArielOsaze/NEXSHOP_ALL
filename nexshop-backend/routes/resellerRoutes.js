@@ -12,6 +12,15 @@ router.get("/tiers", resellerController.getPublicTiers);
 router.get("/me", authMiddleware, resellerController.getMyResellerStatus);
 router.post("/apply", authMiddleware, resellerApplyLimiter, resellerController.applyReseller);
 
+// Partner Portal — Reseller Aktif
+router.get("/portal/overview", authMiddleware, resellerController.getPortalOverview);
+router.get("/portal/secret", authMiddleware, resellerController.revealSecretKey);
+router.post("/portal/api-key/generate", authMiddleware, resellerController.generateOrRotateApiKey);
+router.put("/portal/settings", authMiddleware, resellerController.updatePortalSettings);
+router.get("/portal/products", authMiddleware, resellerController.getPortalProducts);
+router.get("/portal/orders", authMiddleware, resellerController.getPortalOrders);
+router.post("/portal/test-webhook", authMiddleware, resellerController.testPortalWebhook);
+
 // Admin & staff
 router.get("/admin/applications", authMiddleware, adminMiddleware, resellerController.listApplications);
 router.post("/admin/applications/:id/decision", authMiddleware, adminMiddleware, resellerController.decideApplication);

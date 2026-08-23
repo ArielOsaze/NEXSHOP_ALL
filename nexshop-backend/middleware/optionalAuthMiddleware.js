@@ -1,59 +1,99 @@
 const jwt = require("jsonwebtoken");
+const supabase = require("../config/db");
+const { isMissingTableError } = require("../services/resellerService");
 
-// Beda sama authMiddleware biasa: kalau TIDAK ada token, tetap lanjut
-// (req.user = null) — dipakai buat endpoint yang boleh diakses guest
-// maupun user login (misal checkout tanpa akun).
-//
-// BUG FIX (audit Agustus 2026): sebelumnya, kalau ADA token tapi ternyata
-// tidak valid/kadaluarsa, request langsung ditolak 401 -- termasuk di
-// endpoint publik seperti checkout (POST /orders, POST /topup) dan cek
-// eligibility rating (GET /ratings/eligibility/:orderId).
-//
-// Masalahnya: token JWT di app ini kadaluarsa otomatis dalam 7 hari
-// (lihat authController.js, jwt.sign expiresIn: "7d"), TAPI frontend
-// TIDAK PERNAH menghapus token dari localStorage secara otomatis saat
-// kadaluarsa -- token cuma dihapus kalau user klik tombol Logout secara
-// eksplisit. Akibatnya, user yang pernah login lalu kembali ke situs
-// setelah >7 hari (skenario umum untuk pengunjung yang tidak setiap hari
-// belanja) akan selalu terkirim token basi di header Authorization, dan:
-//   1. Checkout (produk maupun topup) GAGAL TOTAL dengan pesan "Token
-//      tidak valid" -- padahal endpoint ini seharusnya tetap bisa diakses
-//      sebagai guest.
-//   2. Cek eligibility rating gagal (401) -- frontend (renderRatingPrompt)
-//      diam-diam menyembunyikan form rating tanpa pesan error apa pun,
-//      sehingga rating TIDAK PERNAH muncul walau order sudah "paid".
-//
-// Endpoint ini secara desain OPSIONAL (guest boleh akses), jadi token yang
-// tidak valid/kadaluarsa seharusnya diperlakukan sama seperti TIDAK ADA
-// token -- lanjut sebagai guest (req.user = null) -- bukan menolak
-// request sepenuhnya. Ini tidak mengurangi keamanan: jwt.verify() yang
-// gagal tetap berarti req.user TIDAK PERNAH diisi dari token yang tak
-// terpercaya (tidak ada spoofing identitas); satu-satunya perubahan
-// adalah request tetap diproses sebagai anonymous, bukan diblokir.
-// Endpoint yang benar-benar WAJIB login (mis. /orders/my, admin routes)
-// tetap memakai authMiddleware biasa yang tegas menolak token invalid.
-module.exports = (req, res, next) => {
-    const authHeader = req.headers.authorization;
+function cleanIp(rawIp) {
+    if (!rawIp) return "";
+    let ip = String(rawIp).trim();
+    if (ip.startsWith("::ffff:")) ip = ip.slice(7);
+    if (ip === "::1") ip = "127.0.0.1";
+    return ip;
+}
 
-    if (!authHeader) {
-        req.user = null;
-        return next();
+function getClientIp(req) {
+    const forwarded = req.headers["x-forwarded-for"];
+    if (forwarded) {
+        const first = forwarded.split(",")[0].trim();
+        if (first) return cleanIp(first);
+    }
+    const cfIp = req.headers["cf-connecting-ip"];
+    if (cfIp) return cleanIp(cfIp);
+    const realIp = req.headers["x-real-ip"];
+    if (realIp) return cleanIp(realIp);
+    return cleanIp(req.ip || req.connection?.remoteAddress || "");
+}
+
+module.exports = async (req, res, next) => {
+    const headerApiKey = req.headers["x-nexshop-api-key"] || req.headers["x-api-key"];
+    const headerSecret = req.headers["x-nexshop-secret"] || req.headers["x-api-secret"];
+    const authHeader = req.headers.authorization || "";
+
+    let token = "";
+    if (authHeader) {
+        const match = authHeader.match(/^Bearer\s+(.+)$/i);
+        if (match) token = match[1].trim();
     }
 
-    const match = authHeader.match(/^Bearer\s+(.+)$/i);
-    if (!match) {
-        req.user = null;
-        return next();
-    }
-    const token = match[1];
+    // 1. Dukungan API Key Reseller
+    const targetApiKey = (headerApiKey ? String(headerApiKey).trim() : "") || (token.startsWith("nx_live_") ? token : "");
+    if (targetApiKey) {
+        try {
+            const { data: keyRecord, error } = await supabase
+                .from("reseller_api_keys")
+                .select("id, user_id, api_key, secret_key, ip_whitelist, is_active, total_requests")
+                .eq("api_key", targetApiKey)
+                .maybeSingle();
 
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = decoded;
-    } catch (err) {
-        // Token kadaluarsa/rusak/tidak valid -> perlakukan sebagai guest,
-        // JANGAN blokir request (lihat penjelasan di atas).
-        req.user = null;
+            if (!error && keyRecord && keyRecord.is_active) {
+                let ipAllowed = true;
+                if (keyRecord.ip_whitelist && keyRecord.ip_whitelist.trim()) {
+                    const clientIp = getClientIp(req);
+                    const allowedIps = keyRecord.ip_whitelist
+                        .split(",")
+                        .map((item) => cleanIp(item))
+                        .filter(Boolean);
+                    ipAllowed = allowedIps.some((allowed) => allowed === clientIp || allowed === "*" || clientIp === "127.0.0.1");
+                }
+
+                if (ipAllowed) {
+                    const { data: user } = await supabase
+                        .from("users")
+                        .select("id, email, fullname, role, reseller_status, reseller_tier")
+                        .eq("id", keyRecord.user_id)
+                        .maybeSingle();
+
+                    if (user && user.reseller_status === "approved") {
+                        req.user = {
+                            id: user.id,
+                            email: user.email,
+                            fullname: user.fullname,
+                            role: user.role,
+                            reseller_status: user.reseller_status,
+                            reseller_tier: user.reseller_tier,
+                            is_api_key: true,
+                            api_key_id: keyRecord.id
+                        };
+                        return next();
+                    }
+                }
+            }
+        } catch {
+            /* lanjut ke JWT atau guest */
+        }
     }
+
+    // 2. JWT Bearer Token standar
+    if (token && !token.startsWith("nx_live_")) {
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET || "nexshop-secret-jwt-key-2026");
+            req.user = decoded;
+            return next();
+        } catch {
+            req.user = null;
+            return next();
+        }
+    }
+
+    req.user = null;
     next();
 };

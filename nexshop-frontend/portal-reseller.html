@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Partner Portal Reseller &amp; API Dashboard — NexShop</title>
+    <meta name="description"
+        content="Portal resmi mitra reseller NexShop: kelola API Key, Secret Key, IP Whitelist, Webhook Endpoint, dan pantau harga modal seluruh produk secara real-time.">
+    <link rel="canonical" href="https://nexshop.cloud/portal-reseller">
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="manifest" href="/manifest.json">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lexend:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=block"
+        rel="stylesheet">
+    <script src="/theme-init.js"></script>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/marketplace-theme.css?v=20260823-kinetic">
+
+    <style>
+        .portal-layout {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+        }
+
+        /* ── Profile & Tier Overview Banner ── */
+        .portal-hero {
+            background: linear-gradient(135deg,
+                color-mix(in srgb, var(--mkt-accent) 18%, transparent),
+                color-mix(in srgb, var(--mkt-primary) 12%, transparent));
+            border: 1px solid color-mix(in srgb, var(--mkt-accent) 35%, transparent);
+            border-radius: var(--mkt-radius);
+            padding: 1.75rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .portal-hero-left {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .portal-avatar {
+            width: 58px;
+            height: 58px;
+            border-radius: 16px;
+            background: color-mix(in srgb, var(--mkt-accent) 25%, transparent);
+            border: 2px solid var(--mkt-accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--mkt-accent);
+            font-size: 1.8rem;
+            flex-shrink: 0;
+        }
+
+        .portal-user-name {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 800;
+            color: var(--mkt-text);
+            margin: 0 0 0.25rem;
+        }
+
+        .portal-user-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            font-size: 0.84rem;
+            color: var(--mkt-text-dim);
+        }
+
+        .portal-tier-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: color-mix(in srgb, var(--mkt-accent) 20%, transparent);
+            color: var(--mkt-accent);
+            border: 1px solid color-mix(in srgb, var(--mkt-accent) 40%, transparent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 100px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .portal-hero-right {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* ── Tabs Bar ── */
+        .portal-nav-tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--mkt-line);
+            padding-bottom: 0.25rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .portal-tab-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.65rem 1.15rem;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--mkt-text-dim);
+            background: none;
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .portal-tab-btn:hover {
+            color: var(--mkt-text);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .portal-tab-btn.active {
+            color: var(--mkt-accent);
+            background: color-mix(in srgb, var(--mkt-accent) 12%, transparent);
+            border-color: color-mix(in srgb, var(--mkt-accent) 30%, transparent);
+        }
+
+        .portal-tab-pane {
+            display: none;
+            animation: portalFade 0.2s ease-in-out;
+        }
+
+        .portal-tab-pane.active {
+            display: block;
+        }
+
+        @keyframes portalFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Cards & Forms ── */
+        .portal-card {
+            background: var(--mkt-glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--mkt-line);
+            border-radius: var(--mkt-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .portal-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--mkt-line);
+        }
+
+        .portal-card-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--mkt-text);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+        }
+
+        .portal-card-title .material-symbols-outlined {
+            color: var(--mkt-accent);
+            font-size: 1.25rem;
+        }
+
+        .portal-form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            margin-bottom: 1.15rem;
+        }
+
+        .portal-form-group label {
+            font-size: 0.84rem;
+            font-weight: 600;
+            color: var(--mkt-text);
+        }
+
+        .portal-input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .portal-input {
+            flex: 1;
+            padding: 0.65rem 0.9rem;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--mkt-line);
+            color: var(--mkt-text);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .portal-input:focus {
+            border-color: var(--mkt-accent);
+        }
+
+        .portal-input-btn {
+            padding: 0.65rem 0.95rem;
+            border-radius: 8px;
+            background: color-mix(in srgb, var(--mkt-accent) 15%, transparent);
+            border: 1px solid color-mix(in srgb, var(--mkt-accent) 35%, transparent);
+            color: var(--mkt-accent);
+            font-weight: 600;
+            font-size: 0.82rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+
+        .portal-input-btn:hover {
+            background: color-mix(in srgb, var(--mkt-accent) 25%, transparent);
+        }
+
+        /* ── Product Table ── */
+        .portal-table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--mkt-line);
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.15);
+        }
+
+        .portal-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.86rem;
+            text-align: left;
+        }
+
+        .portal-table th {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.75rem 1rem;
+            font-weight: 700;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--mkt-text-dim);
+            border-bottom: 1px solid var(--mkt-line);
+            white-space: nowrap;
+        }
+
+        .portal-table td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid color-mix(in srgb, var(--mkt-line) 40%, transparent);
+            color: var(--mkt-text-dim);
+            vertical-align: middle;
+        }
+
+        .portal-table tr:hover td {
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        .portal-sku-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--mkt-line);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: var(--mkt-text);
+        }
+
+        .portal-sku-copy {
+            background: none;
+            border: none;
+            padding: 0;
+            color: var(--mkt-accent);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .portal-price-normal {
+            text-decoration: line-through;
+            font-size: 0.78rem;
+            color: var(--mkt-text-muted);
+        }
+
+        .portal-price-reseller {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: #34d399;
+        }
+
+        .portal-status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.2rem 0.55rem;
+            border-radius: 999px;
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.3);
+        }
+
+        /* ── Search & Filter Controls ── */
+        .portal-controls {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .portal-search-input {
+            flex: 1;
+            min-width: 240px;
+            padding: 0.6rem 0.9rem;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--mkt-line);
+            color: var(--mkt-text);
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .portal-select {
+            padding: 0.6rem 0.9rem;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 1px solid var(--mkt-line);
+            color: var(--mkt-text);
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* ── Alert Toast ── */
+        .portal-toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: #111827;
+            border: 1px solid var(--mkt-accent);
+            color: #fff;
+            padding: 0.75rem 1.25rem;
+            border-radius: 10px;
+            font-size: 0.86rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.2s ease;
+            pointer-events: none;
+        }
+
+        .portal-toast.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+    </style>
+</head>
+
+<body data-nexbot="auto">
+
+    <div class="mkt-bg-layer" aria-hidden="true">
+        <div class="mkt-bg-veil"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="mkt-nav" role="navigation" aria-label="Navigasi NexShop">
+        <a href="/" class="mkt-nav-brand" aria-label="NexShop - Beranda">
+            <span class="mkt-brand-mark">
+                <img src="/images/nexshop-icon.svg" alt="NexShop" width="40" height="40">
+            </span>
+            <span class="mkt-brand-text">NexShop</span>
+            <span class="nx-tag">Partner Portal</span>
+        </a>
+
+        <ul class="mkt-nav-links" id="catNavLinks">
+            <li><a href="/">Beranda</a></li>
+            <li><a href="/marketplace">Marketplace</a></li>
+            <li><a href="/#topup">Topup Diamond</a></li>
+            <li><a href="/docs-reseller.html">Dokumentasi API</a></li>
+            <li><a href="/portal-reseller.html" class="active">Partner Portal</a></li>
+        </ul>
+
+        <div class="mkt-nav-actions">
+            <button type="button" class="mkt-nav-toggle" id="mktNavToggle" aria-label="Buka menu navigasi"
+                aria-expanded="false" aria-controls="catNavLinks">
+                <span class="material-symbols-outlined mkt-nav-toggle-open" aria-hidden="true">menu</span>
+                <span class="material-symbols-outlined mkt-nav-toggle-close" aria-hidden="true">close</span>
+            </button>
+            <a href="/docs-reseller.html" class="mkt-nav-back" aria-label="Lihat Docs API">
+                <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
+                <span>Docs API</span>
+            </a>
+        </div>
+    </nav>
+    <div class="mkt-nav-scrim" id="mktNavScrim" aria-hidden="true"></div>
+
+    <main class="portal-layout" id="main-content">
+
+        <!-- ── Top Hero: Reseller Profile & Tier Status ── -->
+        <header class="portal-hero" id="portalHero">
+            <div class="portal-hero-left">
+                <div class="portal-avatar">
+                    <span class="material-symbols-outlined">workspace_premium</span>
+                </div>
+                <div>
+                    <h1 class="portal-user-name" id="portalFullName">Partner Reseller NexShop</h1>
+                    <div class="portal-user-meta">
+                        <span id="portalEmail">memuat data...</span>
+                        <span>&bull;</span>
+                        <span class="portal-tier-pill" id="portalTierBadge">
+                            <span class="material-symbols-outlined" style="font-size:0.95rem;">verified</span>
+                            <span id="portalTierText">Tier Reseller</span>
+                        </span>
+                        <span id="portalDiscountText" style="color:var(--mkt-accent);font-weight:700;">Diskon Otomatis Aktif</span>
+                    </div>
+                </div>
+            </div>
+            <div class="portal-hero-right">
+                <a href="/docs-reseller.html" class="mkt-btn-secondary" style="display:inline-flex;align-items:center;gap:0.4rem;text-decoration:none;font-size:0.84rem;padding:0.55rem 1rem;">
+                    <span class="material-symbols-outlined" style="font-size:1.1rem;">api</span>
+                    Panduan &amp; SDK
+                </a>
+                <a href="/marketplace" class="mkt-btn-primary" style="display:inline-flex;align-items:center;gap:0.4rem;text-decoration:none;font-size:0.84rem;padding:0.55rem 1rem;">
+                    <span class="material-symbols-outlined" style="font-size:1.1rem;">shopping_bag</span>
+                    Belanja di Web
+                </a>
+            </div>
+        </header>
+
+        <!-- ── Navigation Tabs ── -->
+        <div class="portal-nav-tabs" role="tablist">
+            <button type="button" class="portal-tab-btn active" data-tab="tab-api">
+                <span class="material-symbols-outlined">key</span>
+                Kredensial API &amp; Keamanan
+            </button>
+            <button type="button" class="portal-tab-btn" data-tab="tab-products">
+                <span class="material-symbols-outlined">inventory_2</span>
+                Daftar Produk &amp; Harga Modal
+            </button>
+            <button type="button" class="portal-tab-btn" data-tab="tab-orders">
+                <span class="material-symbols-outlined">history</span>
+                Riwayat Transaksi API
+            </button>
+            <button type="button" class="portal-tab-btn" data-tab="tab-test">
+                <span class="material-symbols-outlined">terminal</span>
+                API Testing Tool
+            </button>
+        </div>
+
+        <!-- ── TAB 1: Kredensial API & Keamanan ── -->
+        <section id="tab-api" class="portal-tab-pane active">
+            
+            <!-- API Key & Secret -->
+            <div class="portal-card">
+                <div class="portal-card-header">
+                    <h2 class="portal-card-title">
+                        <span class="material-symbols-outlined">lock</span>
+                        Kredensial API Toko Anda
+                    </h2>
+                    <button type="button" id="btnRotateApiKey" class="portal-input-btn" style="background:rgba(239, 68, 68, 0.15);border-color:rgba(239, 68, 68, 0.4);color:#f87171;">
+                        <span class="material-symbols-outlined" style="font-size:1.05rem;">autorenew</span>
+                        Rotate / Buat Key Baru
+                    </button>
+                </div>
+
+                <div class="portal-form-group">
+                    <label for="inputApiKey">API Key (X-NexShop-Api-Key)</label>
+                    <div class="portal-input-group">
+                        <input type="text" id="inputApiKey" class="portal-input" readonly value="nx_live_...">
+                        <button type="button" class="portal-input-btn" onclick="copyValue('inputApiKey', 'API Key')">
+                            <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span>
+                            Salin
+                        </button>
+                    </div>
+                </div>
+
+                <div class="portal-form-group">
+                    <label for="inputSecretKey">Secret Key (X-NexShop-Secret)</label>
+                    <div class="portal-input-group">
+                        <input type="password" id="inputSecretKey" class="portal-input" readonly value="nx_sec_••••••••••••••••">
+                        <button type="button" class="portal-input-btn" id="btnToggleSecret" onclick="toggleSecretKey()">
+                            <span class="material-symbols-outlined" style="font-size:1rem;">visibility</span>
+                            Buka
+                        </button>
+                        <button type="button" class="portal-input-btn" onclick="copyValue('inputSecretKey', 'Secret Key')">
+                            <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span>
+                            Salin
+                        </button>
+                    </div>
+                    <span style="font-size:0.75rem;color:var(--mkt-text-dim);margin-top:0.25rem;">
+                        Simpan Secret Key di file <span class="docs-code">.env</span> server Anda. Jangan pernah bagikan Secret Key di frontend/publik!
+                    </span>
+                </div>
+            </div>
+
+            <!-- IP Whitelist & Webhook Configuration -->
+            <div class="portal-card">
+                <div class="portal-card-header">
+                    <h2 class="portal-card-title">
+                        <span class="material-symbols-outlined">security</span>
+                        Pengaturan IP Whitelist &amp; Webhook Callback
+                    </h2>
+                </div>
+
+                <form id="formPortalSettings">
+                    <div class="portal-form-group">
+                        <label for="inputIpWhitelist">
+                            IP Whitelist Server Anda <span class="mkt-optional">(Pisahkan dengan koma jika lebih dari 1 IP)</span>
+                        </label>
+                        <input type="text" id="inputIpWhitelist" class="portal-input" placeholder="Contoh: 103.123.45.67, 192.168.1.1 (Kosongkan jika ingin izinkan semua IP)">
+                        <span style="font-size:0.75rem;color:var(--mkt-text-dim);">
+                            Jika diisi, server NexShop hanya akan menerima request API yang berasal dari alamat IP yang terdaftar.
+                        </span>
+                    </div>
+
+                    <div class="portal-form-group">
+                        <label for="inputWebhookUrl">
+                            Webhook Callback URL Toko Anda (HTTPS)
+                        </label>
+                        <div class="portal-input-group">
+                            <input type="url" id="inputWebhookUrl" class="portal-input" placeholder="https://tokosaya.com/api/webhook/nexshop">
+                            <button type="button" id="btnTestWebhook" class="portal-input-btn" style="background:rgba(16, 185, 129, 0.15);border-color:rgba(16, 185, 129, 0.4);color:#34d399;">
+                                <span class="material-symbols-outlined" style="font-size:1rem;">send</span>
+                                Tes Kirim Webhook
+                            </button>
+                        </div>
+                        <span style="font-size:0.75rem;color:var(--mkt-text-dim);">
+                            NexShop akan mengirimkan notifikasi HTTP POST real-time saat status transaksi berubah (sukses/gagal/SN tersedia).
+                        </span>
+                    </div>
+
+                    <div class="portal-form-group">
+                        <label for="inputWebhookSecret">Webhook Signature Secret (whsec_...)</label>
+                        <div class="portal-input-group">
+                            <input type="text" id="inputWebhookSecret" class="portal-input" readonly value="whsec_...">
+                            <button type="button" class="portal-input-btn" onclick="copyValue('inputWebhookSecret', 'Webhook Secret')">
+                                <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span>
+                                Salin
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display:flex;justify-content:flex-end;margin-top:1.25rem;">
+                        <button type="submit" class="mkt-btn-primary" id="btnSaveSettings" style="display:inline-flex;align-items:center;gap:0.4rem;">
+                            <span class="material-symbols-outlined" style="font-size:1.1rem;">save</span>
+                            Simpan Pengaturan Keamanan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ── TAB 2: Daftar Produk & Harga Modal ── -->
+        <section id="tab-products" class="portal-tab-pane">
+            <div class="portal-card">
+                <div class="portal-card-header">
+                    <div>
+                        <h2 class="portal-card-title">
+                            <span class="material-symbols-outlined">view_list</span>
+                            Katalog Produk &amp; Harga Modal Reseller
+                        </h2>
+                        <p style="margin:0.25rem 0 0;font-size:0.84rem;color:var(--mkt-text-dim);">
+                            Harga modal di bawah ini telah terpotong otomatis sesuai tingkatan tier akun Anda dan dijamin menguntungkan untuk dijual kembali.
+                        </p>
+                    </div>
+                    <div id="productCountBadge" style="font-size:0.82rem;font-weight:700;color:var(--mkt-accent);">
+                        Memuat produk...
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="portal-controls">
+                    <input type="text" id="productSearchInput" class="portal-search-input" placeholder="Cari nama produk, SKU kode produk, atau operator...">
+                    <select id="productCategoryFilter" class="portal-select">
+                        <option value="all">Semua Kategori</option>
+                        <option value="Game">Topup Game</option>
+                        <option value="E-Wallet">E-Wallet (DANA/OVO/GoPay/ShopeePay)</option>
+                        <option value="Pulsa">Pulsa &amp; Paket Data</option>
+                        <option value="PLN">PLN (Token &amp; Tagihan)</option>
+                        <option value="Transfer Bank">Transfer Antar Bank</option>
+                    </select>
+                </div>
+
+                <!-- Table -->
+                <div class="portal-table-wrap">
+                    <table class="portal-table" id="portalProductTable">
+                        <thead>
+                            <tr>
+                                <th>Kategori / Operator</th>
+                                <th>Kode Produk (SKU)</th>
+                                <th>Nama Produk</th>
+                                <th>Harga Normal</th>
+                                <th>Harga Modal Reseller</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portalProductTbody">
+                            <tr>
+                                <td colspan="6" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);">
+                                    <span class="material-symbols-outlined mkt-spin" style="vertical-align:middle;">progress_activity</span>
+                                    Memuat daftar produk &amp; harga modal...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── TAB 3: Riwayat Transaksi API ── -->
+        <section id="tab-orders" class="portal-tab-pane">
+            <div class="portal-card">
+                <div class="portal-card-header">
+                    <h2 class="portal-card-title">
+                        <span class="material-symbols-outlined">receipt_long</span>
+                        Riwayat Transaksi Akun Reseller
+                    </h2>
+                    <button type="button" class="portal-input-btn" onclick="loadPortalOrders()">
+                        <span class="material-symbols-outlined" style="font-size:1rem;">refresh</span>
+                        Refresh
+                    </button>
+                </div>
+
+                <div class="portal-table-wrap">
+                    <table class="portal-table">
+                        <thead>
+                            <tr>
+                                <th>Waktu</th>
+                                <th>Ref ID / Order ID</th>
+                                <th>Produk</th>
+                                <th>Tujuan</th>
+                                <th>Total Bayar</th>
+                                <th>Status</th>
+                                <th>Serial Number (SN)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portalOrdersTbody">
+                            <tr>
+                                <td colspan="7" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);">
+                                    Memuat riwayat transaksi...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── TAB 4: API Testing Tool ── -->
+        <section id="tab-test" class="portal-tab-pane">
+            <div class="portal-card">
+                <div class="portal-card-header">
+                    <h2 class="portal-card-title">
+                        <span class="material-symbols-outlined">play_circle</span>
+                        Uji Coba Endpoint API Langsung
+                    </h2>
+                </div>
+
+                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:1.5rem;">
+                    <!-- Test Check Nickname -->
+                    <div style="border:1px solid var(--mkt-line);border-radius:10px;padding:1.25rem;background:rgba(0,0,0,0.2);">
+                        <h3 style="font-size:0.95rem;font-weight:700;color:var(--mkt-text);margin:0 0 0.5rem;display:flex;align-items:center;gap:0.4rem;">
+                            <span class="material-symbols-outlined" style="color:var(--mkt-accent);font-size:1.1rem;">person_search</span>
+                            Test Check Nickname Game
+                        </h3>
+                        <p style="font-size:0.8rem;color:var(--mkt-text-dim);margin:0 0 1rem;">
+                            Cek validitas Player ID sebelum membuat transaksi.
+                        </p>
+                        <div class="portal-form-group">
+                            <label>Kode Produk</label>
+                            <input type="text" id="testNickProduct" class="portal-input" value="ML86" placeholder="ML86 / FF100 / etc">
+                        </div>
+                        <div class="portal-form-group">
+                            <label>User ID</label>
+                            <input type="text" id="testNickUserId" class="portal-input" placeholder="12345678">
+                        </div>
+                        <div class="portal-form-group">
+                            <label>Zone / Server ID</label>
+                            <input type="text" id="testNickZoneId" class="portal-input" placeholder="2123">
+                        </div>
+                        <button type="button" class="portal-input-btn" id="btnRunTestNick" style="width:100%;justify-content:center;margin-top:0.5rem;">
+                            Jalankan Cek Nickname
+                        </button>
+                        <pre id="testNickResult" style="background:#0d111e;border:1px solid var(--mkt-line);border-radius:8px;padding:0.75rem;font-family:'Fira Code',monospace;font-size:0.78rem;color:#34d399;margin-top:0.75rem;display:none;white-space:pre-wrap;"></pre>
+                    </div>
+
+                    <!-- Test Create Order Snippet -->
+                    <div style="border:1px solid var(--mkt-line);border-radius:10px;padding:1.25rem;background:rgba(0,0,0,0.2);">
+                        <h3 style="font-size:0.95rem;font-weight:700;color:var(--mkt-text);margin:0 0 0.5rem;display:flex;align-items:center;gap:0.4rem;">
+                            <span class="material-symbols-outlined" style="color:var(--mkt-accent);font-size:1.1rem;">code</span>
+                            Contoh Request CURL
+                        </h3>
+                        <p style="font-size:0.8rem;color:var(--mkt-text-dim);margin:0 0 1rem;">
+                            Salin perintah ini untuk menguji dari terminal / Postman:
+                        </p>
+                        <pre style="background:#0d111e;border:1px solid var(--mkt-line);border-radius:8px;padding:0.85rem;font-family:'Fira Code',monospace;font-size:0.78rem;color:#d1d5db;overflow-x:auto;white-space:pre-wrap;line-height:1.6;"><code>curl -X POST https://nexshop.cloud/api/topup \
+  -H "Content-Type: application/json" \
+  -H "X-NexShop-Api-Key: <span id="curlApiKeyPlaceholder">nx_live_...</span>" \
+  -d '{
+    "kode_produk": "ML86",
+    "tujuan": "12345678",
+    "server_id": "2123",
+    "payment_method": "qris"
+  }'</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="portalToast" class="portal-toast">
+        <span class="material-symbols-outlined" style="color:var(--mkt-accent);font-size:1.2rem;">check_circle</span>
+        <span id="portalToastMsg">Tersalin ke clipboard!</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="nx-footer nx-footer--market">
+        <div class="nx-footer__container">
+            <div class="nx-footer__grid">
+                <div>
+                    <a href="/" class="nx-footer__brand" aria-label="NexShop - Beranda">
+                        <span class="nx-footer__brand-mark">
+                            <img src="/images/nexshop-icon.svg" alt="" width="38" height="38" loading="lazy">
+                        </span>
+                        <span class="nx-footer__brand-logo">NEXSHOP<span>PARTNER</span></span>
+                    </a>
+                    <p class="nx-footer__brand-desc" style="text-transform:none;text-align:left;">
+                        Portal Kemitraan &amp; Developer API NexShop.
+                    </p>
+                </div>
+                <div>
+                    <h4 class="nx-footer__heading" style="text-align:left;">Tautan</h4>
+                    <ul class="nx-footer__link-list" style="text-align:left;">
+                        <li><a href="/docs-reseller.html" class="nx-footer__link">Dokumentasi API</a></li>
+                        <li><a href="/marketplace" class="nx-footer__link">Marketplace</a></li>
+                        <li><a href="/reseller.html" class="nx-footer__link">Program Reseller</a></li>
+                    </ul>
+                </div>
+                <div class="nx-footer__legal" style="align-items:flex-start;">
+                    <h4 class="nx-footer__heading">Legalitas</h4>
+                    <div class="nx-footer__legal-name"><strong>NexShop</strong> <span>&middot;</span> <span>Usaha Mikro</span></div>
+                    <div class="nx-footer__legal-ids"><span>NIB 1408260072494</span> <span>KBLI 60390</span></div>
+                </div>
+            </div>
+            <div class="nx-footer__bottom">
+                <p>&copy; 2026 NexShop. All Rights Reserved.</p>
+                <p class="nx-footer__bottom-note">Portal Partner &amp; API NexShop.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const API_BASE = (() => {
+            const host = window.location.hostname;
+            if (host === "localhost" || host === "127.0.0.1") {
+                return window.location.port === "3000" ? "/api" : "http://localhost:3000/api";
+            }
+            return "/api";
+        })();
+
+        const PUBLIC_TOKEN_STORAGE_KEY = "nexshop-public-token";
+
+        function getToken() {
+            return localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) || localStorage.getItem("token");
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById("portalToast");
+            const msgEl = document.getElementById("portalToastMsg");
+            msgEl.textContent = msg;
+            toast.classList.add("show");
+            setTimeout(() => toast.classList.remove("show"), 2500);
+        }
+
+        function copyValue(elementId, label) {
+            const el = document.getElementById(elementId);
+            if (!el || !el.value) return;
+            navigator.clipboard.writeText(el.value).then(() => {
+                showToast(`${label} berhasil disalin!`);
+            });
+        }
+
+        function copyText(text, label) {
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(`${label} disalin: ${text}`);
+            });
+        }
+
+        function formatRupiah(num) {
+            return "Rp " + Number(num || 0).toLocaleString("id-ID");
+        }
+
+        function escapeHtml(str) {
+            return String(str || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+        }
+
+        // Tab Switching
+        (function setupTabs() {
+            const tabBtns = document.querySelectorAll(".portal-tab-btn");
+            tabBtns.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    tabBtns.forEach(b => b.classList.remove("active"));
+                    document.querySelectorAll(".portal-tab-pane").forEach(p => p.classList.remove("active"));
+
+                    btn.classList.add("active");
+                    const targetId = btn.dataset.tab;
+                    const pane = document.getElementById(targetId);
+                    if (pane) pane.classList.add("active");
+
+                    if (targetId === "tab-products" && !allProducts.length) {
+                        loadPortalProducts();
+                    } else if (targetId === "tab-orders") {
+                        loadPortalOrders();
+                    }
+                });
+            });
+        })();
+
+        // ── Load Portal Overview ──────────────────────────────────────────
+        let cachedSecret = "";
+        let isSecretRevealed = false;
+
+        async function loadPortalOverview() {
+            const token = getToken();
+            if (!token) {
+                alert("Silakan masuk terlebih dahulu dengan akun reseller Anda.");
+                window.location.href = "/login.html?redirect=" + encodeURIComponent(window.location.pathname);
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/overview`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (res.status === 401) {
+                    alert("Sesi login berakhir. Silakan login kembali.");
+                    window.location.href = "/login.html";
+                    return;
+                }
+
+                if (res.status === 403) {
+                    alert("Akun Anda belum berstatus Reseller Aktif. Silakan daftar di halaman Program Reseller.");
+                    window.location.href = "/reseller.html";
+                    return;
+                }
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Gagal memuat portal");
+
+                // Update Profile
+                document.getElementById("portalFullName").textContent = data.user.fullname || "Partner Reseller";
+                document.getElementById("portalEmail").textContent = data.user.email;
+                if (data.user.reseller_tier) {
+                    document.getElementById("portalTierText").textContent = `Tier ${data.user.reseller_tier.name}`;
+                    document.getElementById("portalDiscountText").textContent = `Potongan ${String(data.user.reseller_tier.discount_percent).replace(".", ",")}% Otomatis Aktif`;
+                }
+
+                // Update API Credentials
+                if (data.api_credentials) {
+                    const creds = data.api_credentials;
+                    document.getElementById("inputApiKey").value = creds.api_key;
+                    document.getElementById("inputSecretKey").value = creds.masked_secret;
+                    document.getElementById("inputIpWhitelist").value = creds.ip_whitelist || "";
+                    document.getElementById("inputWebhookUrl").value = creds.webhook_url || "";
+                    document.getElementById("inputWebhookSecret").value = creds.webhook_secret || "";
+                    document.getElementById("curlApiKeyPlaceholder").textContent = creds.api_key;
+                }
+            } catch (err) {
+                console.error("Portal overview error:", err);
+            }
+        }
+
+        async function toggleSecretKey() {
+            const secretInput = document.getElementById("inputSecretKey");
+            const toggleBtn = document.getElementById("btnToggleSecret");
+            const token = getToken();
+
+            if (!isSecretRevealed) {
+                if (!cachedSecret) {
+                    try {
+                        const res = await fetch(`${API_BASE}/reseller/portal/secret`, {
+                            headers: { Authorization: `Bearer ${token}` }
+                        });
+                        const data = await res.json();
+                        if (data.secret_key) {
+                            cachedSecret = data.secret_key;
+                        }
+                    } catch (e) {
+                        alert("Gagal mengambil Secret Key");
+                        return;
+                    }
+                }
+                secretInput.type = "text";
+                secretInput.value = cachedSecret;
+                toggleBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:1rem;">visibility_off</span> Sembunyikan`;
+                isSecretRevealed = true;
+            } else {
+                secretInput.type = "password";
+                secretInput.value = cachedSecret.slice(0, 7) + "••••••••••••••••" + cachedSecret.slice(-4);
+                toggleBtn.innerHTML = `<span class="material-symbols-outlined" style="font-size:1rem;">visibility</span> Buka`;
+                isSecretRevealed = false;
+            }
+        }
+
+        // ── Rotate API Key ───────────────────────────────────────────────
+        document.getElementById("btnRotateApiKey").addEventListener("click", async () => {
+            if (!confirm("PERINGATAN: Me-rotate API Key akan menonaktifkan API Key lama. Aplikasi atau bot yang menggunakan Key lama akan berhenti berfungsi sampai Anda memperbaruinya. Lanjutkan?")) {
+                return;
+            }
+
+            const token = getToken();
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/api-key/generate`, {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Gagal rotate key");
+
+                document.getElementById("inputApiKey").value = data.api_key;
+                document.getElementById("inputSecretKey").value = data.secret_key;
+                document.getElementById("inputSecretKey").type = "text";
+                cachedSecret = data.secret_key;
+                isSecretRevealed = true;
+                document.getElementById("curlApiKeyPlaceholder").textContent = data.api_key;
+
+                showToast("API Key baru berhasil di-generate!");
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+
+        // ── Save Settings ────────────────────────────────────────────────
+        document.getElementById("formPortalSettings").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const token = getToken();
+            const btn = document.getElementById("btnSaveSettings");
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Menyimpan...`;
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/settings`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({
+                        ip_whitelist: document.getElementById("inputIpWhitelist").value.trim(),
+                        webhook_url: document.getElementById("inputWebhookUrl").value.trim()
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Gagal menyimpan pengaturan");
+
+                showToast("Pengaturan IP Whitelist & Webhook tersimpan!");
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:1.1rem;">save</span> Simpan Pengaturan Keamanan`;
+            }
+        });
+
+        // ── Test Webhook ─────────────────────────────────────────────────
+        document.getElementById("btnTestWebhook").addEventListener("click", async () => {
+            const webhookUrl = document.getElementById("inputWebhookUrl").value.trim();
+            if (!webhookUrl) {
+                alert("Masukkan URL Webhook Anda terlebih dahulu lalu klik Simpan.");
+                return;
+            }
+
+            const token = getToken();
+            const btn = document.getElementById("btnTestWebhook");
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1rem;">progress_activity</span> Mengirim...`;
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/test-webhook`, {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                alert(data.message + "\n\nRespon Server:\n" + data.response_body);
+            } catch (err) {
+                alert("Gagal kirim tes webhook: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:1rem;">send</span> Tes Kirim Webhook`;
+            }
+        });
+
+        // ── Products Table ───────────────────────────────────────────────
+        let allProducts = [];
+
+        async function loadPortalProducts() {
+            const token = getToken();
+            const tbody = document.getElementById("portalProductTbody");
+            const badge = document.getElementById("productCountBadge");
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/products`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.message || "Gagal memuat produk");
+
+                allProducts = data.products || [];
+                badge.textContent = `${allProducts.length} SKU Tersedia`;
+                renderProductTable();
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#f87171;">Gagal memuat produk: ${escapeHtml(err.message)}</td></tr>`;
+            }
+        }
+
+        function renderProductTable() {
+            const tbody = document.getElementById("portalProductTbody");
+            const search = document.getElementById("productSearchInput").value.toLowerCase().trim();
+            const cat = document.getElementById("productCategoryFilter").value;
+
+            const filtered = allProducts.filter(p => {
+                const matchSearch = !search || p.nama.toLowerCase().includes(search) || p.kode_produk.toLowerCase().includes(search) || p.operator.toLowerCase().includes(search);
+                const matchCat = cat === "all" || p.kategori.toLowerCase().includes(cat.toLowerCase());
+                return matchSearch && matchCat;
+            });
+
+            if (!filtered.length) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);">Tidak ada produk yang cocok dengan pencarian.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(p => `
+                <tr>
+                    <td>
+                        <strong style="color:var(--mkt-text);display:block;">${escapeHtml(p.operator)}</strong>
+                        <span style="font-size:0.75rem;color:var(--mkt-text-dim);">${escapeHtml(p.kategori)}</span>
+                    </td>
+                    <td>
+                        <span class="portal-sku-badge">
+                            <span>${escapeHtml(p.kode_produk)}</span>
+                            <button type="button" class="portal-sku-copy" onclick="copyText('${escapeHtml(p.kode_produk)}', 'Kode Produk')" title="Salin SKU">
+                                <span class="material-symbols-outlined" style="font-size:0.95rem;">content_copy</span>
+                            </button>
+                        </span>
+                    </td>
+                    <td>
+                        <span style="color:var(--mkt-text);font-weight:600;">${escapeHtml(p.nama)}</span>
+                        ${p.butuh_server_id ? `<span style="font-size:0.72rem;background:rgba(240,57,154,0.15);color:var(--mkt-tertiary);padding:2px 6px;border-radius:4px;margin-left:4px;">+Server ID</span>` : ""}
+                    </td>
+                    <td><span class="portal-price-normal">${formatRupiah(p.harga_normal)}</span></td>
+                    <td><span class="portal-price-reseller">${formatRupiah(p.harga_modal_reseller)}</span></td>
+                    <td>
+                        <span class="portal-status-badge">
+                            <span class="material-symbols-outlined" style="font-size:0.85rem;">check_circle</span>
+                            Tersedia
+                        </span>
+                    </td>
+                </tr>
+            `).join("");
+        }
+
+        document.getElementById("productSearchInput").addEventListener("input", renderProductTable);
+        document.getElementById("productCategoryFilter").addEventListener("change", renderProductTable);
+
+        // ── Orders History ───────────────────────────────────────────────
+        async function loadPortalOrders() {
+            const token = getToken();
+            const tbody = document.getElementById("portalOrdersTbody");
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);"><span class="material-symbols-outlined mkt-spin" style="vertical-align:middle;">progress_activity</span> Memuat...</td></tr>`;
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/orders`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const orders = await res.json();
+                if (!Array.isArray(orders) || !orders.length) {
+                    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);">Belum ada riwayat transaksi dari akun reseller Anda.</td></tr>`;
+                    return;
+                }
+
+                tbody.innerHTML = orders.map(o => {
+                    const statusColor = o.status === "sukses" ? "#34d399" : (o.status === "gagal" ? "#f87171" : "#f59e0b");
+                    return `
+                        <tr>
+                            <td style="font-size:0.78rem;">${new Date(o.created_at).toLocaleString("id-ID")}</td>
+                            <td><strong style="color:var(--mkt-text);">${escapeHtml(o.ref_id || o.id)}</strong></td>
+                            <td>${escapeHtml(o.produk)}</td>
+                            <td>${escapeHtml(o.tujuan)}${o.server_id ? ` (${escapeHtml(o.server_id)})` : ""}</td>
+                            <td><strong style="color:var(--mkt-text);">${formatRupiah(o.total)}</strong></td>
+                            <td><span style="font-weight:700;color:${statusColor};text-transform:uppercase;">${escapeHtml(o.status)}</span></td>
+                            <td><code style="font-size:0.8rem;color:var(--mkt-text);">${escapeHtml(o.sn || "-")}</code></td>
+                        </tr>
+                    `;
+                }).join("");
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:#f87171;">Gagal memuat: ${escapeHtml(err.message)}</td></tr>`;
+            }
+        }
+
+        // ── Test Check Nickname Tool ─────────────────────────────────────
+        document.getElementById("btnRunTestNick").addEventListener("click", async () => {
+            const prod = document.getElementById("testNickProduct").value.trim();
+            const user = document.getElementById("testNickUserId").value.trim();
+            const zone = document.getElementById("testNickZoneId").value.trim();
+            const resBox = document.getElementById("testNickResult");
+
+            if (!prod || !user) {
+                alert("Masukkan Kode Produk dan User ID");
+                return;
+            }
+
+            resBox.style.display = "block";
+            resBox.textContent = "Memeriksa...";
+
+            try {
+                const res = await fetch(`${API_BASE}/topup/check-nickname`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ kode_produk: prod, user_id: user, server_id: zone })
+                });
+                const data = await res.json();
+                resBox.textContent = JSON.stringify(data, null, 2);
+            } catch (err) {
+                resBox.textContent = "Error: " + err.message;
+            }
+        });
+
+        // Initialize
+        loadPortalOverview();
+    </script>
+    <script src="/nexbot.js?v=20260823-nexbot"></script>
+</body>
+
+</html>

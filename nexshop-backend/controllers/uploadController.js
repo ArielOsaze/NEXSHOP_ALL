@@ -9,6 +9,8 @@ const BUCKETS = {
     logo: "logos",
     mascot: "mascots",
     avatar: "avatars",
+    kyc: "avatars",
+    ktp: "avatars",
     music: "music",
     music_cover: "music"
 };
@@ -19,8 +21,9 @@ const ALLOWED_AUDIO_MIME_TYPES = ["audio/mpeg", "audio/wav", "audio/ogg"];
 async function uploadImage(req, res) {
     try {
         const type = req.query.type || "product";
+        const isUserAllowedType = ["avatar", "kyc", "ktp"].includes(type);
         
-        if (!["admin", "staff"].includes(req.user.role) && type !== "avatar") {
+        if (!["admin", "staff"].includes(req.user.role) && !isUserAllowedType) {
             return res.status(403).json({ message: "Akses ditolak, khusus admin" });
         }
 
@@ -36,9 +39,13 @@ async function uploadImage(req, res) {
             return res.status(400).json({ message: "Ukuran foto profil maksimal 5MB" });
         }
 
+        if ((type === "kyc" || type === "ktp") && req.file.size > 10 * 1024 * 1024) {
+            return res.status(400).json({ message: "Ukuran foto KTP maksimal 10MB" });
+        }
+
         const bucket = BUCKETS[type] || BUCKETS.product;
 
-        const PRESET_MAP = { logo: "logo", promo: "promo", avatar: "avatar" };
+        const PRESET_MAP = { logo: "logo", promo: "promo", avatar: "avatar", kyc: "product", ktp: "product" };
         const preset = PRESET_MAP[type] || "product";
         const optimizedImage = await optimizeImageToWebp(req.file.buffer, preset);
         const fileName = createWebpFileName();

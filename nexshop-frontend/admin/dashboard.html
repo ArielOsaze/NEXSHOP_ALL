@@ -934,7 +934,7 @@
                     <thead>
                         <tr>
                             <th>Nama</th>
-                            <th>Email</th>
+                            <th>Email &amp; API Key</th>
                             <th style="width:170px;">Tingkatan</th>
                             <th>Sejak</th>
                             <th style="width:120px;">Status</th>
@@ -945,6 +945,37 @@
                         <tr><td colspan="6" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Preview Foto KTP (KYC) -->
+    <div class="modal fade" id="modalKtpPreview" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-person-badge me-2"></i>Verifikasi Berkas KTP (KYC)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <div class="mb-3 text-start bg-light p-3 rounded d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <strong>Nama Pemohon:</strong> <span id="modalKtpNama">-</span>
+                        </div>
+                        <div>
+                            <strong>NIK:</strong> <span id="modalKtpNik" class="badge bg-secondary font-monospace">-</span>
+                        </div>
+                    </div>
+                    <div style="background:#0d111e;border-radius:10px;padding:10px;border:1px solid #374151;display:inline-block;max-width:100%;">
+                        <img id="modalKtpImg" src="" alt="Foto KTP" style="max-width:100%;max-height:480px;border-radius:6px;object-fit:contain;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a id="modalKtpDownload" href="#" target="_blank" rel="noopener" class="btn btn-outline-primary">
+                        <i class="bi bi-box-arrow-up-right me-1"></i> Buka Ukuran Asli
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
             </div>
         </div>
     </div>
