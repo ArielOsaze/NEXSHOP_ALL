@@ -8,6 +8,7 @@
     <meta name="description"
         content="Daftar jadi reseller NexShop dan dapatkan harga khusus untuk topup game, e-wallet, pulsa, paket data, PLN, dan tagihan. Tanpa biaya pendaftaran.">
     <link rel="canonical" href="https://nexshop.cloud/reseller">
+    <meta name="author" content="Ariel">
 
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://nexshop.cloud/reseller">
@@ -16,6 +17,25 @@
         content="Harga khusus untuk topup game, e-wallet, pulsa, dan tagihan. Daftar gratis, tanpa minimum deposit.">
     <meta property="og:image" content="https://nexshop.cloud/images/nexshop-og-v2.jpg">
     <meta property="og:site_name" content="NexShop">
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Program Reseller NexShop",
+  "description": "Daftar jadi reseller NexShop dan dapatkan harga khusus untuk topup game, e-wallet, pulsa, paket data, PLN, dan tagihan.",
+  "url": "https://nexshop.cloud/reseller",
+  "publisher": {
+    "@type": "Organization",
+    "name": "NexShop",
+    "url": "https://nexshop.cloud",
+    "logo": { "@type": "ImageObject", "url": "https://nexshop.cloud/favicon.ico" },
+    "founder": { "@type": "Person", "name": "Ariel" }
+  },
+  "creator": { "@type": "Person", "name": "Ariel" }
+}
+</script>
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
@@ -402,7 +422,7 @@
             <span class="nx-tag">Reseller</span>
         </a>
 
-        <ul class="mkt-nav-links">
+        <ul class="mkt-nav-links" id="catNavLinks">
             <li><a href="/">Beranda</a></li>
             <li><a href="/marketplace">Marketplace</a></li>
             <li><a href="/#topup">Topup Diamond</a></li>
@@ -410,11 +430,23 @@
             <li><a href="/reseller.html" class="active">Reseller</a></li>
         </ul>
 
-        <a href="/" class="mkt-nav-back" aria-label="Kembali ke toko NexShop">
-            <span class="material-symbols-outlined" aria-hidden="true">arrow_outward</span>
-            <span>Ke Toko</span>
-        </a>
+        <div class="mkt-nav-actions">
+            <!-- Cuma kelihatan di mobile: buka/tutup panel dropdown yang
+                 isinya .mkt-nav-links di atas (lihat @media 768px di
+                 marketplace-theme.css). -->
+            <button type="button" class="mkt-nav-toggle" id="mktNavToggle" aria-label="Buka menu navigasi"
+                aria-expanded="false" aria-controls="catNavLinks">
+                <span class="material-symbols-outlined mkt-nav-toggle-open" aria-hidden="true">menu</span>
+                <span class="material-symbols-outlined mkt-nav-toggle-close" aria-hidden="true">close</span>
+            </button>
+
+            <a href="/" class="mkt-nav-back" aria-label="Kembali ke toko NexShop">
+                <span class="material-symbols-outlined" aria-hidden="true">arrow_outward</span>
+                <span>Ke Toko</span>
+            </a>
+        </div>
     </nav>
+    <div class="mkt-nav-scrim" id="mktNavScrim" aria-hidden="true"></div>
 
     <main class="mkt-main" id="main-content">
         <section class="mkt-hero">
@@ -641,7 +673,7 @@
             </div>
 
             <div class="nx-footer__bottom">
-                <p>&copy; 2026 NexShop. All Rights Reserved.</p>
+                <p>&copy; 2026 NexShop. All Rights Reserved. <span class="nx-footer__credit">Dikembangkan oleh Ariel.</span></p>
                 <p class="nx-footer__bottom-note">Potongan harga reseller mengikuti tingkatan yang berlaku dan dapat
                     berubah sewaktu-waktu.</p>
             </div>
@@ -658,6 +690,38 @@
         })();
 
         const PUBLIC_TOKEN_STORAGE_KEY = "nexshop-public-token";
+
+        // Buka/tutup panel dropdown kategori di mobile (nav-nya sendiri
+        // sudah tinggi tetap lewat CSS, gak perlu sinkronisasi JS lagi).
+        (function setupMktNavToggle() {
+            const nav = document.querySelector(".mkt-nav");
+            const toggleBtn = document.getElementById("mktNavToggle");
+            const scrim = document.getElementById("mktNavScrim");
+            if (!nav || !toggleBtn) return;
+
+            function closeNav() {
+                nav.classList.remove("is-open");
+                toggleBtn.setAttribute("aria-expanded", "false");
+            }
+            function openNav() {
+                nav.classList.add("is-open");
+                toggleBtn.setAttribute("aria-expanded", "true");
+            }
+
+            toggleBtn.addEventListener("click", () => {
+                nav.classList.contains("is-open") ? closeNav() : openNav();
+            });
+            if (scrim) scrim.addEventListener("click", closeNav);
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "Escape") closeNav();
+            });
+            nav.querySelectorAll(".mkt-nav-links a").forEach((a) => {
+                a.addEventListener("click", closeNav);
+            });
+            window.addEventListener("resize", () => {
+                if (window.innerWidth > 768) closeNav();
+            });
+        })();
 
         function escapeHtml(str) {
             return String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

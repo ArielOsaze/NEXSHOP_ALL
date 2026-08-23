@@ -7489,6 +7489,14 @@ input::placeholder {
     font-style: italic;
 }
 
+/* Kredit developer -- kecil & senada dengan baris copyright, bukan
+   banner terpisah. */
+.nx-footer__credit {
+    opacity: 0.65;
+    font-size: 0.9em;
+    font-weight: 400;
+}
+
 /* ==========================================================================
    NEXSHOP NEWS FOOTER VARIANT (3-Column Layout)
    ========================================================================== */
