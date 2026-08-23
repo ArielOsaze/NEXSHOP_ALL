@@ -27,7 +27,10 @@ const {
     isGameProduct,
     isPascabayarProduct,
     resolveNexshopCategory,
-    resolveOperator
+    resolveOperator,
+    getTargetFieldMeta,
+    parsePlnTokenSn,
+    getSerialInstruction
 } = require("../utils/topupHelpers");
 const { fetchAllRows } = require("../utils/supabasePaginate");
 const { getResellerContext } = require("../services/resellerService");
@@ -1924,11 +1927,50 @@ exports.getPublicDetail = async (req, res) => {
     try {
         const { data: order, error } = await supabase
             .from("topup_orders")
-            .select("id, status, harga, subtotal, discount_amount, promo_code, nama_produk, tujuan, server_id, payment_method, tv_sn, created_at, updated_at")
+            .select("id, status, harga, subtotal, discount_amount, promo_code, nama_produk, kode_produk, tujuan, server_id, payment_method, tv_sn, created_at, updated_at")
             .eq("id", req.params.id)
             .maybeSingle();
 
         if (error || !order) return res.status(404).json({ message: "Transaksi tidak ditemukan" });
+
+        // Resolusi kategori NexShop produk ini (PLN/Pulsa/E-Wallet/dst) supaya
+        // frontend "Cek Status Transaksi" bisa nampilin label field & instruksi
+        // kode/SN yang SESUAI produknya -- bukan hardcode "User ID" buat semua
+        // jenis produk kayak sebelumnya. resolveNexshopCategory & isPascabayarProduct
+        // butuh baris topup_products + category map, jadi diambil di sini.
+        let displayCategory = "Lainnya";
+        let isPascabayar = false;
+        if (order.kode_produk) {
+            const [{ data: productRow }, categoryMap] = await Promise.all([
+                supabase
+                    .from("topup_products")
+                    .select("kategori, source_category_id, source_category_name, manual_category_override")
+                    .eq("kode_produk", order.kode_produk)
+                    .maybeSingle(),
+                loadCategoryMap()
+            ]);
+            if (productRow) {
+                displayCategory = resolveNexshopCategory(productRow, categoryMap);
+                isPascabayar = isPascabayarProduct(productRow);
+            }
+        }
+
+        const targetMeta = getTargetFieldMeta(displayCategory, isPascabayar);
+        const serialNumber = order.status === "sukses" ? order.tv_sn : null;
+
+        // PLN Prabayar: SN-nya gabungan "<no token>/<keterangan pelanggan>" --
+        // dipisah supaya nampil sebagai "No Token" + "Keterangan" terpisah,
+        // bukan satu baris mentah yang bikin orang gak ngeh mana yang harus
+        // dimasukin ke meteran.
+        let tokenNumber = null;
+        let tokenKeterangan = null;
+        if (serialNumber && displayCategory.toLowerCase() === "pln" && !isPascabayar) {
+            const parsed = parsePlnTokenSn(serialNumber);
+            if (parsed) {
+                tokenNumber = parsed.token;
+                tokenKeterangan = parsed.keterangan || null;
+            }
+        }
 
         res.json({
             id: order.id,
@@ -1936,10 +1978,14 @@ exports.getPublicDetail = async (req, res) => {
             status: order.status,
             nama_produk: order.nama_produk,
             tujuan: order.tujuan,
+            target_label: targetMeta.resultLabel,
             server_id: order.server_id,
             payment_method: order.payment_method,
             // SN cuma ditampilin kalau statusnya udah sukses
-            serial_number: order.status === "sukses" ? order.tv_sn : null,
+            serial_number: serialNumber,
+            token_number: tokenNumber,
+            token_keterangan: tokenKeterangan,
+            serial_instruction: serialNumber ? getSerialInstruction(displayCategory, isPascabayar) : null,
             subtotal: order.subtotal || order.harga,
             discount_amount: order.discount_amount || 0,
             promo_code: order.promo_code || null,

@@ -1552,6 +1552,25 @@ input::placeholder{ color:var(--text-dim); }
 .track-wa-cta{ margin-top:14px; padding-top:14px; border-top:1px solid var(--line); }
 .track-wa-btn{ display:block; text-align:center; text-decoration:none; }
 
+/* Kotak "No. Token/Kode & Keterangan" + instruksi cara pakai -- dibedain
+   dari baris .row biasa (yang buat detail transaksi umum) supaya kode yang
+   HARUS dipakai pembeli (token PLN, voucher, dst) kelihatan menonjol dan
+   gampang dicopy, bukan ketimbun di antara baris Order ID/Tanggal/dll. */
+.track-token-box{
+    background:color-mix(in srgb, var(--violet) 8%, var(--bg-panel-2));
+    border:1px solid color-mix(in srgb, var(--violet) 35%, var(--line));
+    border-radius:var(--radius-sm); padding:12px 14px; margin-top:12px;
+}
+.track-token-box .row{ padding:3px 0; }
+.track-token-box .row span:first-child{ color:var(--text-muted); }
+.track-token-box .row span:last-child{ color:var(--text); font-weight:700; }
+.track-token-note{
+    display:flex; align-items:flex-start; gap:8px; margin-top:10px; padding-top:10px;
+    border-top:1px dashed color-mix(in srgb, var(--violet) 30%, var(--line));
+    font-size:12.5px; line-height:1.5; color:var(--text-muted);
+}
+.track-token-note i{ color:var(--violet); margin-top:2px; flex-shrink:0; }
+
 .track-mine-item{
     display:flex; align-items:center; justify-content:space-between; gap:12px;
     background:var(--bg-panel-2); border:1px solid var(--line); border-radius:var(--radius-sm);
@@ -1813,7 +1832,18 @@ input::placeholder{ color:var(--text-dim); }
 .nexbot-float-btn:hover:not(.expanding){ transform:scale(1.05); box-shadow:0 12px 30px rgba(240,57,154,0.55); }
 .nexbot-float-btn-icon{ font-size:24px; display:flex; align-items:center; justify-content:center; }
 
-.nexbot-window{ position:absolute; bottom:64px; right:0; width:370px; height:530px; background:var(--bg-panel); backdrop-filter:blur(16px); border:1px solid var(--line); border-radius:20px; box-shadow:0 20px 50px rgba(0,0,0,0.65); display:flex; flex-direction:column; overflow:hidden; animation:nexbot-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1); opacity:1!important; }
+/* pointer-events:auto WAJIB di sini — .nexbot-widget (parent) sengaja
+   pointer-events:none biar ruang kosong di sekitar tombol float gak nutup
+   klik ke konten di belakangnya, tapi itu KE-WARISI ke semua descendant
+   termasuk window ini. Tanpa override ini, window yang udah kebuka gak
+   bisa di-scroll/diklik sama sekali (cuma tombol float-nya yang responsif,
+   karena .nexbot-float-btn punya override sendiri). Sebelumnya ini
+   "ketutupan" secara gak sengaja di index.html doang lewat inline style
+   `pointerEvents = "auto"` yang di-set script.js ke wrapper .nexbot-widget
+   pas app loader selesai (efek samping, bukan fix asli) — makanya cuma
+   marketplace.html (yang gak load script.js) yang kena.
+*/
+.nexbot-window{ position:absolute; bottom:64px; right:0; width:370px; height:530px; background:var(--bg-panel); backdrop-filter:blur(16px); border:1px solid var(--line); border-radius:20px; box-shadow:0 20px 50px rgba(0,0,0,0.65); display:flex; flex-direction:column; overflow:hidden; animation:nexbot-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1); opacity:1!important; pointer-events:auto; }
 .nexbot-window.closing { animation:nexbot-close 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 @keyframes nexbot-pop{ from{ opacity:0; transform:translateY(20px) scale(0.95); } to{ opacity:1; transform:translateY(0) scale(1); } }
 @keyframes nexbot-close{ from{ opacity:1; transform:translateY(0) scale(1); } to{ opacity:0; transform:translateY(20px) scale(0.95); } }

@@ -52,7 +52,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <script src="/theme-init.js"></script>
-    <link rel="stylesheet" href="/style.css">
+    <link rel="stylesheet" href="/style.css?v=20260823-pln-token">
     <link rel="stylesheet" href="/marketplace-theme.css?v=20260822-reseller">
 </head>
 
@@ -533,6 +533,38 @@
         // ── Checkout ─────────────────────────────────────────────────────
         let currentMktCheckoutProduct = null;
 
+        // ── Label field "tujuan" per kategori ───────────────────────────
+        // SATU sumber buat label + placeholder form checkout, per kategori
+        // NexShop. SALINAN dari getTargetFieldMeta() di
+        // nexshop-backend/utils/topupHelpers.js — kalau nambah/ubah kategori
+        // di sana, samain juga di sini (gak bisa import module Node ke
+        // <script> browser biasa).
+        function getMarketplaceTargetFieldMeta(kategori, cekTagihan) {
+            const kat = String(kategori || "").trim().toLowerCase();
+
+            if (kat === "pln") {
+                return cekTagihan
+                    ? { label: "ID Pelanggan / No Meter PLN", placeholder: "Masukkan ID Pelanggan PLN" }
+                    : { label: "ID Pelanggan PLN", placeholder: "Contoh: 520551398488" };
+            }
+            if (kat === "tagihan") {
+                return { label: "ID Pelanggan / Nomor Tujuan", placeholder: "Masukkan ID Pelanggan" };
+            }
+            if (kat === "pulsa" || kat === "paket data") {
+                return { label: "Nomor HP Tujuan", placeholder: "08xxxxxxxxxx" };
+            }
+            if (kat === "e-wallet") {
+                return { label: "Nomor HP / Akun E-Wallet Tujuan", placeholder: "08xxxxxxxxxx" };
+            }
+            if (kat === "voucher game" || kat === "gaming") {
+                return { label: "Player ID / User ID", placeholder: "Masukkan Player ID" };
+            }
+            if (kat === "hiburan") {
+                return { label: "Nomor HP / Akun Tujuan", placeholder: "Masukkan nomor HP / akun tujuan" };
+            }
+            return { label: "Nomor / ID Tujuan", placeholder: "Masukkan nomor atau ID tujuan" };
+        }
+
         function openMarketplaceCheckout(product) {
             currentMktCheckoutProduct = product;
 
@@ -558,17 +590,13 @@
             document.getElementById("mktCheckoutInquiryGroup").classList.toggle("hidden", !product.cek_tagihan);
 
             const isGame = product.kategori.toLowerCase() === "gaming" || product.kategori.toLowerCase() === "voucher game";
-            if (isGame) {
-                document.getElementById("mktCheckoutTargetLabel").textContent = "Player ID / User ID";
-                document.getElementById("mktCheckoutTarget").placeholder = "Masukkan Player ID";
-                if (product.butuh_server_id) {
-                    document.getElementById("mktCheckoutServerGroup").classList.remove("hidden");
-                } else {
-                    document.getElementById("mktCheckoutServerGroup").classList.add("hidden");
-                }
+            const targetMeta = getMarketplaceTargetFieldMeta(product.kategori, product.cek_tagihan);
+            document.getElementById("mktCheckoutTargetLabel").textContent = targetMeta.label;
+            document.getElementById("mktCheckoutTarget").placeholder = targetMeta.placeholder;
+
+            if (isGame && product.butuh_server_id) {
+                document.getElementById("mktCheckoutServerGroup").classList.remove("hidden");
             } else {
-                document.getElementById("mktCheckoutTargetLabel").textContent = "Nomor Handphone / Tujuan";
-                document.getElementById("mktCheckoutTarget").placeholder = "0812xxxxxxx";
                 document.getElementById("mktCheckoutServerGroup").classList.add("hidden");
             }
 

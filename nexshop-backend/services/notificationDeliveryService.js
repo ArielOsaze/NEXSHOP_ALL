@@ -1,9 +1,67 @@
 const supabase = require('../config/db');
 const { sendUserWhatsApp } = require('./userWhatsAppService');
 const crypto = require('crypto');
+const {
+    resolveNexshopCategory,
+    isPascabayarProduct,
+    getTargetFieldMeta,
+    parsePlnTokenSn,
+    getSerialInstruction
+} = require('../utils/topupHelpers');
 
 function rupiahLog(n) {
     return "Rp" + Number(n).toLocaleString("id-ID");
+}
+
+// ===========================================================
+// Blok detail transaksi yang ditempel ke notif WA sukses topup — nama
+// produk, label field tujuan yang SESUAI kategori produknya (ID
+// Pelanggan/Nomor HP/Player ID, dst — bukan cuma "Nomor Tujuan" generik),
+// dan kalau sudah ada No. Token/SN, dipisah jadi baris sendiri + instruksi
+// cara pakainya (khusus token PLN Prabayar: SN gabungan dipecah jadi "No.
+// Token" & "Keterangan" biar gak nyampur sama nomor yang harus dimasukin
+// ke meteran).
+// ===========================================================
+async function buildTopupDetailBlock(topup) {
+    if (!topup) return "";
+
+    let displayCategory = "Lainnya";
+    let isPascabayar = false;
+    if (topup.kode_produk) {
+        const [{ data: productRow }, { data: categoryRows }] = await Promise.all([
+            supabase
+                .from('topup_products')
+                .select('kategori, source_category_id, source_category_name, manual_category_override')
+                .eq('kode_produk', topup.kode_produk)
+                .maybeSingle(),
+            supabase.from('topup_category_map').select('tokovoucher_category_name, nexshop_category_name')
+        ]);
+        if (productRow) {
+            const categoryMap = new Map((categoryRows || []).map(r => [r.tokovoucher_category_name, r.nexshop_category_name]));
+            displayCategory = resolveNexshopCategory(productRow, categoryMap);
+            isPascabayar = isPascabayarProduct(productRow);
+        }
+    }
+
+    const meta = getTargetFieldMeta(displayCategory, isPascabayar);
+    const lines = [`Produk: ${topup.nama_produk || "-"}`];
+    lines.push(`${meta.resultLabel}: ${topup.tujuan || "-"}${topup.server_id ? ` (Server: ${topup.server_id})` : ""}`);
+
+    if (topup.tv_sn) {
+        if (displayCategory.toLowerCase() === "pln" && !isPascabayar) {
+            const parsed = parsePlnTokenSn(topup.tv_sn);
+            lines.push("");
+            lines.push(`No. Token : ${parsed.token}`);
+            if (parsed.keterangan) lines.push(`Keterangan : ${parsed.keterangan}`);
+        } else {
+            lines.push("");
+            lines.push(`Kode/SN : ${topup.tv_sn}`);
+        }
+        lines.push("");
+        lines.push(getSerialInstruction(displayCategory, isPascabayar));
+    }
+
+    return lines.join("\n");
 }
 
 async function fetchNotificationPayload(orderId, notificationType) {
@@ -11,16 +69,19 @@ async function fetchNotificationPayload(orderId, notificationType) {
     if (orderId.startsWith("TP")) {
         const { data: topup } = await supabase.from('topup_orders').select('*').eq('id', orderId).maybeSingle();
         if (!topup) return null;
+        const extraMessage = notificationType === "success" ? await buildTopupDetailBlock(topup) : "";
         return {
             targetNumber: topup.recipient_phone,
-            variables: { name: "Pelanggan", order_id: orderId, total: rupiahLog(topup.harga) }
+            variables: { name: "Pelanggan", order_id: orderId, total: rupiahLog(topup.harga) },
+            extraMessage
         };
     } else {
         const { data: order } = await supabase.from('orders').select('*').eq('id', orderId).maybeSingle();
         if (!order) return null;
         return {
             targetNumber: order.recipient_phone,
-            variables: { name: order.recipient_name, order_id: orderId, total: rupiahLog(order.total) }
+            variables: { name: order.recipient_name, order_id: orderId, total: rupiahLog(order.total) },
+            extraMessage: ""
         };
     }
 }
@@ -102,7 +163,7 @@ async function processNotificationEvent(orderId, notificationType, type = "succe
     }
 
     // 4. Send WhatsApp
-    const result = await sendUserWhatsApp(payload.targetNumber, type, payload.variables);
+    const result = await sendUserWhatsApp(payload.targetNumber, type, payload.variables, payload.extraMessage);
 
     // 5. Update Status based on Lock Ownership
     await finalizeNotificationResult(eventId, lockToken, claimedEvent.attempt_count, result);
@@ -142,7 +203,7 @@ async function processRetryDelivery(candidate) {
         return;
     }
 
-    const result = await sendUserWhatsApp(payload.targetNumber, candidate.notification_type, payload.variables);
+    const result = await sendUserWhatsApp(payload.targetNumber, candidate.notification_type, payload.variables, payload.extraMessage);
     await finalizeNotificationResult(candidate.id, lockToken, newAttemptCount, result);
 }
 
@@ -206,5 +267,6 @@ async function finalizeNotificationResult(eventId, lockToken, attemptCount, resu
 
 module.exports = {
     processNotificationEvent,
-    processRetryDelivery
+    processRetryDelivery,
+    buildTopupDetailBlock
 };

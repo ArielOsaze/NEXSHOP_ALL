@@ -16,8 +16,15 @@ function parseTemplate(template, data) {
 /**
  * Fungsi utama untuk kirim WA ke user via Fonnte
  * tipe: 'pending' | 'success' | 'otp'
+ *
+ * extraMessage (opsional): blok teks tambahan yang DITEMPEL setelah hasil
+ * template admin, dipakai buat detail transaksi yang otomatis (nama produk,
+ * ID Pelanggan/Nomor Tujuan, No. Token/SN + instruksi cara pakai). Ini
+ * SENGAJA ditempel di KODE, bukan lewat placeholder {xxx} di template admin
+ * -- supaya tetap terkirim walau admin belum pernah edit template WA-nya
+ * dari default.
  */
-async function sendUserWhatsApp(targetNumber, type, variables = {}) {
+async function sendUserWhatsApp(targetNumber, type, variables = {}, extraMessage = "") {
     try {
         const apiKeys = await getApiKeys();
         const settings = await getStoreSettings();
@@ -51,7 +58,8 @@ async function sendUserWhatsApp(targetNumber, type, variables = {}) {
             return { success: false, reason: "missing_template" };
         }
 
-        const message = parseTemplate(template, variables);
+        let message = parseTemplate(template, variables);
+        if (extraMessage) message += `\n\n${extraMessage}`;
 
         const response = await axios.post(
             "https://api.fonnte.com/send",

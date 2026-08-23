@@ -2041,10 +2041,34 @@ function renderTrackResult(data, options = {}) {
             itemsHtml += `<div class="row discount"><span>Diskon${data.promo_code ? ` (${escapeHtml(data.promo_code)})` : ""}</span><span>-${rupiah(data.discount_amount)}</span></div>`;
         }
     } else {
+        // Kode/SN: kalau ini token PLN Prabayar, backend udah misahin jadi
+        // token_number (20 digit yang HARUS dimasukin ke meteran) & token_keterangan
+        // (nama pelanggan/daya/tarif/kwh) -- ditampilin sebagai "No Token" &
+        // "Keterangan" terpisah, bukan satu baris mentah gabungan kayak
+        // sebelumnya. Produk lain yang keluarin kode/SN (voucher game, dst)
+        // tetap tampil sebagai baris "Kode/SN" biasa.
+        let serialHtml = "";
+        if (data.token_number) {
+            serialHtml = `
+                <div class="track-token-box">
+                    <div class="row"><span>No Token</span><span>${escapeHtml(data.token_number)}</span></div>
+                    ${data.token_keterangan ? `<div class="row"><span>Keterangan</span><span>${escapeHtml(data.token_keterangan)}</span></div>` : ""}
+                    ${data.serial_instruction ? `<div class="track-token-note"><i class="fa-solid fa-circle-info"></i><span>${escapeHtml(data.serial_instruction)}</span></div>` : ""}
+                </div>
+            `;
+        } else if (data.serial_number) {
+            serialHtml = `
+                <div class="track-token-box">
+                    <div class="row"><span>Kode/SN</span><span>${escapeHtml(data.serial_number)}</span></div>
+                    ${data.serial_instruction ? `<div class="track-token-note"><i class="fa-solid fa-circle-info"></i><span>${escapeHtml(data.serial_instruction)}</span></div>` : ""}
+                </div>
+            `;
+        }
+
         itemsHtml = `
             <div class="row"><span>Produk</span><span>${escapeHtml(data.nama_produk || "-")}</span></div>
-            <div class="row"><span>User ID</span><span>${escapeHtml(String(data.tujuan || "-"))}${data.server_id ? " (" + escapeHtml(String(data.server_id)) + ")" : ""}</span></div>
-            ${data.serial_number ? `<div class="row"><span>Kode/SN</span><span>${escapeHtml(data.serial_number)}</span></div>` : ""}
+            <div class="row"><span>${escapeHtml(data.target_label || "User ID")}</span><span>${escapeHtml(String(data.tujuan || "-"))}${data.server_id ? " (" + escapeHtml(String(data.server_id)) + ")" : ""}</span></div>
+            ${serialHtml}
         `;
         if (data.discount_amount > 0) {
             itemsHtml += `<div class="row"><span>Harga Awal</span><span>${rupiah(data.subtotal || 0)}</span></div>`;

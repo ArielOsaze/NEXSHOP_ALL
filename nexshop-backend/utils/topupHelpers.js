@@ -203,6 +203,86 @@ function resolveOperator(product) {
     return { id, name };
 }
 
+// ===========================================================
+// TAMPILAN FIELD "TUJUAN" PER KATEGORI — SATU sumber kebenaran buat label +
+// placeholder yang ditampilin di form checkout Marketplace, DAN label yang
+// dipakai lagi pas nampilin hasil di "Cek Status Transaksi" / notif WA
+// sukses. Sebelumnya cuma ada 1 pembagian biner (game vs bukan-game), jadi
+// SEMUA produk non-game (Pulsa, PLN, E-Wallet, Tagihan, dst) kepukul rata
+// minta "Nomor Handphone / Tujuan" -- padahal PLN misalnya butuhnya ID
+// Pelanggan, bukan nomor HP.
+//
+// PENTING: marketplace.html PUNYA SALINAN mapping yang setara di JS
+// browser (gak bisa import module Node langsung ke <script> biasa) --
+// kalau nambah/ubah kategori di sini, samain juga di sana biar konsisten.
+// ===========================================================
+function getTargetFieldMeta(displayCategory, isPascabayar) {
+    const kat = String(displayCategory || "").trim().toLowerCase();
+
+    if (kat === "pln") {
+        return isPascabayar
+            ? { formLabel: "ID Pelanggan / No Meter PLN", placeholder: "Masukkan ID Pelanggan PLN", resultLabel: "ID Pelanggan" }
+            : { formLabel: "ID Pelanggan PLN", placeholder: "Contoh: 520551398488", resultLabel: "ID Pelanggan" };
+    }
+    if (kat === "tagihan") {
+        return { formLabel: "ID Pelanggan / Nomor Tujuan", placeholder: "Masukkan ID Pelanggan", resultLabel: "ID Pelanggan" };
+    }
+    if (kat === "pulsa" || kat === "paket data") {
+        return { formLabel: "Nomor HP Tujuan", placeholder: "08xxxxxxxxxx", resultLabel: "Nomor HP Tujuan" };
+    }
+    if (kat === "e-wallet") {
+        return { formLabel: "Nomor HP / Akun E-Wallet Tujuan", placeholder: "08xxxxxxxxxx", resultLabel: "Nomor Tujuan" };
+    }
+    if (kat === "voucher game" || kat === "gaming") {
+        return { formLabel: "Player ID / User ID", placeholder: "Masukkan Player ID", resultLabel: "Player ID / User ID" };
+    }
+    if (kat === "hiburan") {
+        return { formLabel: "Nomor HP / Akun Tujuan", placeholder: "Masukkan nomor HP / akun tujuan", resultLabel: "Akun Tujuan" };
+    }
+    return { formLabel: "Nomor / ID Tujuan", placeholder: "Masukkan nomor atau ID tujuan", resultLabel: "Nomor / ID Tujuan" };
+}
+
+// ===========================================================
+// TOKEN PLN PRABAYAR — TokoVoucher balikin field `sn` PLN Prabayar sebagai
+// SATU string gabungan: "<20 digit no. token>/<Nama Pelanggan> <Daya
+// terpasang>/<Golongan Tarif>/<Estimasi kWh>", contoh:
+//   "5595-5001-5488-1855-2757/BAMBANG DALYONO 5/R1M/900VA/13.5kwh"
+// Dipisah cuma di garis miring PERTAMA -- sisanya (keterangan pelanggan +
+// daya + tarif + kwh, yang juga makai "/" sebagai pemisah internal) tetap
+// utuh apa adanya, bukan ikut kepotong.
+// ===========================================================
+function parsePlnTokenSn(serialNumber) {
+    const raw = String(serialNumber || "").trim();
+    if (!raw) return null;
+    const idx = raw.indexOf("/");
+    if (idx === -1) return { token: raw, keterangan: "" };
+    return { token: raw.slice(0, idx).trim(), keterangan: raw.slice(idx + 1).trim() };
+}
+
+// ===========================================================
+// INSTRUKSI KODE/SN PER KATEGORI — dipakai di "Cek Status Transaksi" DAN di
+// notifikasi WA sukses, supaya pembeli awam yang gak ngerti PPOB tahu kode
+// yang dia terima itu buat apa (khususnya token listrik PLN 20 digit yang
+// harus dia MASUKIN SENDIRI ke meteran -- tanpa keterangan ini banyak yang
+// gak sadar itu bukan cuma nomor referensi).
+// ===========================================================
+function getSerialInstruction(displayCategory, isPascabayar) {
+    const kat = String(displayCategory || "").trim().toLowerCase();
+    if (kat === "pln" && !isPascabayar) {
+        return "Masukkan 20 digit No. Token di atas ke meteran listrik prabayar Anda menggunakan tombol angka pada meteran, lalu tekan \"Enter\"/\"Accept\". Token akan otomatis menambah sisa kWh Anda.";
+    }
+    if (kat === "voucher game" || kat === "gaming") {
+        return "Ini adalah kode voucher/serial number Anda. Redeem kode ini sesuai petunjuk pada game atau platform terkait.";
+    }
+    if (kat === "hiburan") {
+        return "Ini adalah kode voucher Anda. Gunakan kode ini sesuai petunjuk redeem pada aplikasi/layanan terkait.";
+    }
+    if (kat === "tagihan") {
+        return "Ini adalah nomor referensi pembayaran Anda. Simpan sebagai bukti pembayaran tagihan.";
+    }
+    return "Simpan kode/SN ini sebagai bukti transaksi Anda.";
+}
+
 module.exports = {
     FOREIGN_REGION_KATEGORI,
     FOREIGN_REGION_CODE_PATTERNS,
@@ -222,5 +302,8 @@ module.exports = {
     PASCABAYAR_CATEGORY_ID,
     isPascabayarProduct,
     resolveNexshopCategory,
-    resolveOperator
+    resolveOperator,
+    getTargetFieldMeta,
+    parsePlnTokenSn,
+    getSerialInstruction
 };
