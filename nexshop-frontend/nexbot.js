@@ -55,6 +55,13 @@ function ensureNexBotWidget() {
     const wrap = document.createElement("div");
     wrap.className = "nexbot-widget";
     wrap.id = "nexbotWidget";
+    // Mulai tersembunyi -- persis kayak markup bawaan index.html -- biar
+    // halaman yang injeksi widget ini (mis. marketplace.html) yang
+    // mengendalikan kapan dia layak muncul, bukan langsung nongol full
+    // begitu script ini jalan.
+    wrap.style.opacity = "0";
+    wrap.style.pointerEvents = "none";
+    wrap.style.transition = "opacity 0.5s ease-in-out";
     wrap.innerHTML = `
         <button type="button" class="nexbot-float-btn group" id="nexbotFloatBtn" aria-label="Buka NexBot">
             <span class="nexbot-float-btn-icon"><i class="fa-solid fa-robot"></i></span>
@@ -407,7 +414,7 @@ function updateNexBotGreeting() {
             try {
                 const parsed = JSON.parse(storedUser);
                 userName = parsed.name || parsed.fullname || "";
-            } catch (e) {}
+            } catch (e) { }
         }
     }
 

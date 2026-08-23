@@ -460,9 +460,9 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    background: transparent;
-    border: 1px solid var(--mkt-stroke);
-    color: var(--mkt-text);
+    background: var(--mkt-primary-tint);
+    border: 1px solid var(--mkt-line-strong);
+    color: var(--mkt-primary);
     font-family: inherit;
     font-size: 0.8rem;
     font-weight: 600;
@@ -470,7 +470,7 @@ body {
     border-radius: var(--mkt-radius-sm);
     cursor: pointer;
     white-space: nowrap;
-    transition: border-color 0.18s, color 0.18s;
+    transition: border-color 0.18s, color 0.18s, background 0.18s;
 }
 
 .mkt-nav-track-btn .material-symbols-outlined {
@@ -479,7 +479,8 @@ body {
 
 .mkt-nav-track-btn:hover {
     border-color: var(--mkt-primary);
-    color: var(--mkt-primary);
+    color: var(--mkt-primary-soft);
+    background: var(--mkt-primary-tint);
 }
 
 .mkt-modal--wide {
@@ -2448,7 +2449,10 @@ body {
     }
 
     .mkt-main {
-        padding-top: 8.5rem;
+        /* --mkt-nav-h diisi via JS (offsetHeight nav yang sebenarnya),
+           karena nav fixed ini bisa jadi 2-3 baris tergantung device --
+           angka 9.5rem cuma fallback kalau JS-nya belum sempat jalan. */
+        padding-top: calc(var(--mkt-nav-h, 9.5rem) + 1.25rem);
         gap: 2.5rem;
     }
 
