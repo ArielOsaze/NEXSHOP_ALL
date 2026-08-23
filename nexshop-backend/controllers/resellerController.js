@@ -102,13 +102,19 @@ exports.resellerRegister = async (req, res) => {
             userId = existingUser.id;
             userRole = existingUser.role || "user";
 
-            // Update user reseller_status menjadi pending
+            // Update user reseller_status & password menjadi data pendaftaran terbaru
+            const hashedPassword = await bcrypt.hash(password, 10);
             const updatePayload = {
+                password: hashedPassword,
                 reseller_status: "pending",
                 phone: whatsapp || existingUser.phone,
                 fullname: fullname || existingUser.fullname
             };
-            await supabase.from("users").update(updatePayload).eq("id", userId).catch(() => {});
+            const { error: updErr } = await supabase.from("users").update(updatePayload).eq("id", userId);
+            if (updErr && String(updErr.message || "").toLowerCase().includes("reseller_status")) {
+                delete updatePayload.reseller_status;
+                await supabase.from("users").update(updatePayload).eq("id", userId);
+            }
         } else {
             const hashedPassword = await bcrypt.hash(password, 10);
             const insertUserPayload = {
