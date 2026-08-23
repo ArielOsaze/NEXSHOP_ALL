@@ -93,87 +93,132 @@ exports.resellerRegister = async (req, res) => {
 
         if (findErr && !isMissingTableError(findErr)) {
             console.error("resellerRegister find user error:", findErr);
-            return res.status(500).json({ message: "Database Error" });
         }
 
         let userId;
         let userRole = "user";
 
         if (existingUser) {
-            if (existingUser.reseller_status === "approved") {
-                return res.status(400).json({ message: "Akun dengan email ini sudah terdaftar sebagai reseller aktif. Silakan masuk." });
-            }
-            if (existingUser.reseller_status === "pending") {
-                return res.status(400).json({ message: "Email ini sudah memiliki pengajuan kemitraan yang sedang ditinjau. Silakan masuk untuk mengecek status." });
-            }
             userId = existingUser.id;
             userRole = existingUser.role || "user";
 
-            await supabase.from("users").update({
+            // Update user reseller_status menjadi pending
+            const updatePayload = {
                 reseller_status: "pending",
                 phone: whatsapp || existingUser.phone,
                 fullname: fullname || existingUser.fullname
-            }).eq("id", userId);
+            };
+            await supabase.from("users").update(updatePayload).eq("id", userId).catch(() => {});
         } else {
             const hashedPassword = await bcrypt.hash(password, 10);
-            const { data: newUser, error: insertUserErr } = await supabase
+            const insertUserPayload = {
+                fullname,
+                email,
+                password: hashedPassword,
+                phone: whatsapp,
+                role: "user",
+                email_verified: true,
+                reseller_status: "pending"
+            };
+
+            let { data: newUser, error: insertUserErr } = await supabase
                 .from("users")
-                .insert([{
-                    fullname,
-                    email,
-                    password: hashedPassword,
-                    phone: whatsapp,
-                    role: "user",
-                    email_verified: true,
-                    reseller_status: "pending"
-                }])
+                .insert([insertUserPayload])
                 .select("id, email, fullname, role")
-                .single();
+                .maybeSingle();
+
+            // Fallback jika kolom reseller_status belum ada di tabel users
+            if (insertUserErr && String(insertUserErr.message || "").toLowerCase().includes("reseller_status")) {
+                delete insertUserPayload.reseller_status;
+                const retry = await supabase
+                    .from("users")
+                    .insert([insertUserPayload])
+                    .select("id, email, fullname, role")
+                    .maybeSingle();
+                newUser = retry.data;
+                insertUserErr = retry.error;
+            }
 
             if (insertUserErr) {
                 console.error("resellerRegister insert user error:", insertUserErr);
                 if (insertUserErr.code === "23505") {
-                    return res.status(400).json({ message: "Email atau nomor telepon sudah terdaftar." });
+                    // Jika email atau nomor telp sudah ada, ambil id user tersebut
+                    const { data: fetchExisting } = await supabase.from("users").select("id, role, fullname").eq("email", email).maybeSingle();
+                    if (fetchExisting) {
+                        userId = fetchExisting.id;
+                        userRole = fetchExisting.role || "user";
+                    } else {
+                        return res.status(400).json({ message: "Nomor WhatsApp atau Email sudah terdaftar pada akun lain." });
+                    }
+                } else {
+                    return res.status(400).json({ message: "Gagal membuat akun user: " + (insertUserErr.message || "Periksa data Anda") });
                 }
-                return res.status(500).json({ message: "Gagal membuat akun reseller" });
             }
-            userId = newUser.id;
-            userRole = newUser.role;
+
+            if (newUser) {
+                userId = newUser.id;
+                userRole = newUser.role || "user";
+            }
         }
 
-        const { error: appErr } = await supabase
+        if (!userId) {
+            const { data: fallbackUser } = await supabase.from("users").select("id, role").eq("email", email).maybeSingle();
+            if (fallbackUser) {
+                userId = fallbackUser.id;
+                userRole = fallbackUser.role || "user";
+            } else {
+                return res.status(500).json({ message: "Gagal memproses data akun pengguna." });
+            }
+        }
+
+        // Simpan pengajuan ke reseller_applications
+        const appPayload = {
+            user_id: userId,
+            fullname,
+            whatsapp,
+            store_name: storeName || null,
+            channel: channel || null,
+            monthly_estimate: monthlyEstimate || null,
+            note: note || null,
+            ktp_url: ktpUrl || null,
+            nik: nik || null,
+            status: "pending"
+        };
+
+        let { error: appErr } = await supabase
             .from("reseller_applications")
-            .insert([{
-                user_id: userId,
-                fullname,
-                whatsapp,
-                store_name: storeName || null,
-                channel: channel || null,
-                monthly_estimate: monthlyEstimate || null,
-                note: note || null,
-                ktp_url: ktpUrl || null,
-                nik: nik || null,
-                status: "pending"
-            }]);
+            .insert([appPayload]);
+
+        // Fallback jika migrasi 010 (kolom ktp_url atau nik) belum di-apply
+        if (appErr && (String(appErr.message || "").toLowerCase().includes("ktp_url") || String(appErr.message || "").toLowerCase().includes("nik") || appErr.code === "42703")) {
+            delete appPayload.ktp_url;
+            delete appPayload.nik;
+            const retryApp = await supabase.from("reseller_applications").insert([appPayload]);
+            appErr = retryApp.error;
+        }
 
         if (appErr) {
             console.error("resellerRegister application insert error:", appErr);
             if (isMissingTableError(appErr)) {
                 return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
             }
-            return res.status(500).json({ message: "Gagal menyimpan pengajuan kemitraan" });
+            return res.status(500).json({ message: "Gagal menyimpan pengajuan kemitraan: " + (appErr.message || "") });
         }
 
-        notify.telegram(
-            `🤝 <b>PENDAFTARAN RESELLER & KYC BARU</b>\n` +
-            `Pemohon: <b>${fullname}</b> (${email})\n` +
-            `WhatsApp: <b>${whatsapp}</b>\n` +
-            `NIK: <b>${nik}</b>\n` +
-            `Toko/Brand: ${storeName || "-"}\n` +
-            `Kanal: ${channel || "-"}\n` +
-            `Estimasi: ${monthlyEstimate || "-"}\n` +
-            `Status: Menunggu tinjauan berkas KTP di Admin Dashboard`
-        ).catch(() => {});
+        try {
+            if (notify && notify.telegram) {
+                notify.telegram(
+                    `🤝 <b>PENDAFTARAN RESELLER & KYC BARU</b>\n` +
+                    `Pemohon: <b>${fullname}</b> (${email})\n` +
+                    `WhatsApp: <b>${whatsapp}</b>\n` +
+                    `NIK: <b>${nik}</b>\n` +
+                    `Toko/Brand: ${storeName || "-"}\n` +
+                    `Kanal: ${channel || "-"}\n` +
+                    `Estimasi: ${monthlyEstimate || "-"}\n` +
+                    `Status: Menunggu tinjauan berkas KTP di Admin Dashboard`
+                ).catch(() => {});
+            }
+        } catch (_) {}
 
         const token = jwt.sign(
             { id: userId, email, fullname, role: userRole, is_reseller: true, reseller_status: "pending" },
@@ -182,7 +227,7 @@ exports.resellerRegister = async (req, res) => {
         );
 
         return res.status(201).json({
-            message: "Pendaftaran akun mitra reseller berhasil! Pengajuan & berkas KYC Anda sedang ditinjau admin.",
+            message: "Pendaftaran akun mitra reseller berhasil! Pengajuan identitas (KYC) Anda sedang diverifikasi admin (Maksimal 3x24 Jam kerja).",
             token,
             status: "pending",
             user: {
@@ -196,7 +241,7 @@ exports.resellerRegister = async (req, res) => {
         });
     } catch (err) {
         console.error("resellerRegister error:", err);
-        return res.status(500).json({ message: "Terjadi kesalahan server saat mendaftar reseller" });
+        return res.status(500).json({ message: "Terjadi kesalahan server saat mendaftar reseller: " + (err.message || "") });
     }
 };
 
@@ -221,35 +266,52 @@ exports.resellerLogin = async (req, res) => {
         }
 
         if (!user) {
-            return res.status(401).json({ message: "Email atau password salah" });
+            return res.status(401).json({ message: "Email atau password salah. Pastikan Anda sudah mendaftar pada tab 'Daftar Akun Baru & KYC'." });
         }
 
         const validPassword = await bcrypt.compare(password, user.password);
         if (!validPassword) {
-            return res.status(401).json({ message: "Email atau password salah" });
+            return res.status(401).json({ message: "Email atau password salah." });
         }
 
         if (user.is_blacklisted) {
-            return res.status(403).json({ message: "Akun kamu telah diblokir. Hubungi admin NexShop." });
+            return res.status(403).json({ message: "Akun Anda telah diblokir. Hubungi admin NexShop." });
+        }
+
+        // Tentukan status reseller: jika di users bernilai none, cek riwayat pengajuan di reseller_applications
+        let status = user.reseller_status || "none";
+        if (status === "none") {
+            const { data: latestApp } = await supabase
+                .from("reseller_applications")
+                .select("status")
+                .eq("user_id", user.id)
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .maybeSingle();
+            if (latestApp && latestApp.status) {
+                status = latestApp.status;
+            }
         }
 
         const token = jwt.sign(
-            { id: user.id, email: user.email, fullname: user.fullname, role: user.role, is_reseller: true, reseller_status: user.reseller_status || "none" },
+            { id: user.id, email: user.email, fullname: user.fullname, role: user.role, is_reseller: true, reseller_status: status },
             process.env.JWT_SECRET,
             { expiresIn: "14d" }
         );
 
         return res.json({
-            message: "Login Partner Portal berhasil",
+            message: status === "approved" 
+                ? "Login Partner Portal berhasil" 
+                : "Login berhasil. Akun Anda saat ini sedang dalam proses verifikasi identitas (KYC) oleh admin (Maksimal 3x24 Jam kerja).",
             token,
-            status: user.reseller_status || "none",
+            status,
             user: {
                 id: user.id,
                 fullname: user.fullname,
                 email: user.email,
                 phone: user.phone,
                 role: user.role,
-                reseller_status: user.reseller_status || "none"
+                reseller_status: status
             }
         });
     } catch (err) {

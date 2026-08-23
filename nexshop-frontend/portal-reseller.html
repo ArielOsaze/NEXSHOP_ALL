@@ -848,10 +848,10 @@
                     <!-- Diisi via JavaScript -->
                 </div>
                 <h2 id="statusNoticeTitle" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:800;color:var(--mkt-text);margin:0 0 0.5rem;">
-                    Pengajuan Sedang Ditinjau Admin
+                    Pengajuan Kemitraan Sedang Ditinjau Admin
                 </h2>
                 <p id="statusNoticeDesc" style="color:var(--mkt-text-dim);font-size:0.92rem;max-width:580px;margin:0 auto 1.5rem;line-height:1.6;">
-                    Admin NexShop sedang memverifikasi data identitas dan foto KTP Anda.
+                    Akun kemitraan Anda saat ini belum diverifikasi oleh admin. Berkas foto KTP dan profil usaha Anda sedang dalam proses peninjauan KYC. Mohon menunggu maksimal 3x24 Jam kerja.
                 </p>
 
                 <!-- Status Step Timeline -->
@@ -867,7 +867,7 @@
                         <div id="stepDotKyc" class="step-bubble current"><span class="material-symbols-outlined" style="font-size:1rem;">hourglass_top</span></div>
                         <div>
                             <div id="stepTextKyc" style="font-weight:700;color:var(--mkt-secondary);font-size:0.9rem;">2. Verifikasi Berkas KYC KTP</div>
-                            <div style="font-size:0.78rem;color:var(--mkt-text-dim);">Peninjauan berkas oleh admin (Maksimal 1x24 Jam kerja).</div>
+                            <div style="font-size:0.78rem;color:var(--mkt-text-dim);">Peninjauan berkas identitas oleh admin (Maksimal 3x24 Jam kerja).</div>
                         </div>
                     </div>
                     <div class="timeline-step">
@@ -1545,7 +1545,7 @@
                             document.getElementById("inputWebhookSecret").value = creds.webhook_secret || "";
                         }
                     }
-                } else if (status === "pending") {
+                } else if (status === "pending" || status === "none") {
                     secAuth.style.display = "none";
                     secDash.style.display = "none";
                     secStatus.style.display = "block";
@@ -1556,7 +1556,7 @@
                     iconBox.innerHTML = `<span class="material-symbols-outlined" style="font-size:2.6rem;">hourglass_top</span>`;
 
                     document.getElementById("statusNoticeTitle").textContent = "Pengajuan Kemitraan Sedang Ditinjau Admin";
-                    document.getElementById("statusNoticeDesc").innerHTML = "Terima kasih telah mendaftar sebagai mitra reseller NexShop. Berkas foto KTP dan data usaha Anda sedang diverifikasi oleh admin (Maksimal 1x24 Jam kerja).";
+                    document.getElementById("statusNoticeDesc").innerHTML = "Akun kemitraan Anda saat ini belum diverifikasi oleh admin. Berkas foto KTP dan data profil usaha Anda sedang dalam proses peninjauan KYC. Mohon menunggu maksimal 3x24 Jam kerja.";
                 } else if (status === "suspended") {
                     secAuth.style.display = "none";
                     secDash.style.display = "none";
