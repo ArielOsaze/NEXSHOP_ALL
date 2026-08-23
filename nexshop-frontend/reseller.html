@@ -701,351 +701,53 @@
         }
 
         // ── Tingkatan reseller ───────────────────────────────────────────
-        // Tingkatan diambil dari server (bukan di-hardcode di HTML) supaya
-        // begitu admin ubah persen diskon di dashboard, halaman ini ikut
-        // berubah tanpa perlu deploy ulang.
+        const DEFAULT_TIERS = [
+            { name: "Silver", discount_percent: 3, description: "Potongan harga otomatis langsung aktif untuk transaksi awal mitra." },
+            { name: "Gold", discount_percent: 6, description: "Potongan lebih besar untuk mitra dengan transaksi rutin bulanan." },
+            { name: "Platinum", discount_percent: 10, description: "Tingkat tertinggi dengan potongan harga maksimal dan prioritas proses API." }
+        ];
+
+        function renderTiersHtml(tiers) {
+            const grid = document.getElementById("rsTierGrid");
+            if (!grid) return;
+            const tertinggi = Math.max(...tiers.map((t) => Number(t.discount_percent) || 0));
+            grid.innerHTML = tiers.map((t) => {
+                const persen = Number(t.discount_percent) || 0;
+                const sorot = persen === tertinggi && tiers.length > 1;
+                return `
+                    <article class="rs-tier ${sorot ? "rs-tier--sorot" : ""}">
+                        <div class="rs-tier-name">${escapeHtml(t.name)}</div>
+                        <div class="rs-tier-percent">${String(persen).replace(".", ",")}<span>% off</span></div>
+                        <p>${escapeHtml(t.description || "Potongan berlaku otomatis di seluruh katalog.")}</p>
+                    </article>
+                `;
+            }).join("");
+        }
+
         async function loadTiers() {
             const grid = document.getElementById("rsTierGrid");
+            if (!grid) return;
             try {
                 const res = await fetch(`${API_BASE}/reseller/tiers`);
-                if (!res.ok) throw new Error("gagal");
+                if (!res.ok) throw new Error("Gagal memuat tiers");
                 const tiers = await res.json();
-
-                if (!Array.isArray(tiers) || tiers.length === 0) {
-                    grid.innerHTML = `<p class="rs-form-note" style="grid-column:1/-1;text-align:center;">Tingkatan reseller belum diumumkan. Hubungi admin untuk informasi terbaru.</p>`;
+                if (Array.isArray(tiers) && tiers.length > 0) {
+                    renderTiersHtml(tiers);
                     return;
-                }
-
-                const tertinggi = Math.max(...tiers.map((t) => Number(t.discount_percent) || 0));
-                grid.innerHTML = tiers.map((t) => {
-                    const persen = Number(t.discount_percent) || 0;
-                    const sorot = persen === tertinggi && tiers.length > 1;
-                    return `
-                        <article class="rs-tier ${sorot ? "rs-tier--sorot" : ""}">
-                            <div class="rs-tier-name">${escapeHtml(t.name)}</div>
-                            <div class="rs-tier-percent">${String(persen).replace(".", ",")}<span>% off</span></div>
-                            <p>${escapeHtml(t.description || "Potongan berlaku otomatis di seluruh katalog.")}</p>
-                        </article>
-                    `;
-                }).join("");
-            } catch (err) {
-                grid.innerHTML = `<p class="rs-form-note" style="grid-column:1/-1;text-align:center;">Gagal memuat tingkatan reseller. Coba muat ulang halaman.</p>`;
-            }
-        }
-
-        // ── Status pengajuan milik user ──────────────────────────────────
-        function tampilkanStatus(html, jenis = "") {
-            const box = document.getElementById("rsStatusBox");
-            box.innerHTML = html
-                ? `<div class="rs-alert ${jenis}" style="margin-bottom:1.25rem;">${html}</div>`
-                : "";
-        }
-
-        function kunciForm(alasanTombol) {
-            const form = document.getElementById("rsForm");
-            form.querySelectorAll("input, select, textarea, button").forEach((el) => { el.disabled = true; });
-            const btn = document.getElementById("rsSubmitBtn");
-            if (alasanTombol) btn.textContent = alasanTombol;
-        }
-
-        function bukaKunciForm() {
-            const form = document.getElementById("rsForm");
-            form.querySelectorAll("input, select, textarea, button").forEach((el) => { el.disabled = false; });
-            const btn = document.getElementById("rsSubmitBtn");
-            btn.textContent = "Kirim Pengajuan & KYC";
-        }
-
-        // Restore draft dari sessionStorage jika ada
-        function restoreDraftForm() {
-            try {
-                const draft = JSON.parse(sessionStorage.getItem("rs_draft_form") || "null");
-                if (draft) {
-                    if (draft.fullname) document.getElementById("rsFullname").value = draft.fullname;
-                    if (draft.whatsapp) document.getElementById("rsWhatsapp").value = draft.whatsapp;
-                    if (draft.nik) document.getElementById("rsNik").value = draft.nik;
-                    if (draft.store_name) document.getElementById("rsStoreName").value = draft.store_name;
-                    if (draft.channel) document.getElementById("rsChannel").value = draft.channel;
-                    if (draft.monthly_estimate) document.getElementById("rsMonthly").value = draft.monthly_estimate;
-                    if (draft.note) document.getElementById("rsNote").value = draft.note;
-                }
-            } catch (e) {
-                // ignore
-            }
-        }
-
-        function saveDraftForm() {
-            try {
-                const draft = {
-                    fullname: document.getElementById("rsFullname").value.trim(),
-                    whatsapp: document.getElementById("rsWhatsapp").value.trim(),
-                    nik: document.getElementById("rsNik").value.trim(),
-                    store_name: document.getElementById("rsStoreName").value.trim(),
-                    channel: document.getElementById("rsChannel").value,
-                    monthly_estimate: document.getElementById("rsMonthly").value,
-                    note: document.getElementById("rsNote").value.trim()
-                };
-                sessionStorage.setItem("rs_draft_form", JSON.stringify(draft));
-            } catch (e) {
-                // ignore
-            }
-        }
-
-        async function loadMyStatus() {
-            bukaKunciForm();
-            restoreDraftForm();
-
-            const token = getToken();
-
-            if (!token) {
-                tampilkanStatus(
-                    `<span class="material-symbols-outlined" aria-hidden="true" style="font-size:1.4rem;color:var(--mkt-accent);">info</span>
-                     <div><strong>Informasi Pendaftaran Reseller</strong><br>
-                     Anda dapat mengisi formulir dan data identitas di bawah ini. Jika belum memiliki akun, Anda akan diarahkan masuk/daftar saat mengirim formulir.
-                     </div>`,
-                    "rs-alert--tunggu"
-                );
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_BASE}/reseller/me`, { headers: { Authorization: `Bearer ${token}` } });
-                if (res.status === 401) {
-                    localStorage.removeItem(PUBLIC_TOKEN_STORAGE_KEY);
-                    localStorage.removeItem("token");
-                    tampilkanStatus(
-                        `<span class="material-symbols-outlined" aria-hidden="true" style="font-size:1.4rem;color:var(--mkt-accent);">info</span>
-                         <div><strong>Sesi Perlu Diperbarui</strong><br>
-                         Silakan isi formulir di bawah ini. Anda dapat masuk ke akun NexShop Anda kapan saja untuk menyelesaikan pendaftaran.
-                         </div>`,
-                        "rs-alert--tunggu"
-                    );
-                    return;
-                }
-
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) {
-                    return;
-                }
-
-                // Prefill dari profil akun jika field masih kosong
-                if (data.profil) {
-                    const nama = document.getElementById("rsFullname");
-                    const wa = document.getElementById("rsWhatsapp");
-                    if (!nama.value && data.profil.fullname) nama.value = data.profil.fullname;
-                    if (!wa.value && data.profil.phone) wa.value = data.profil.phone;
-                }
-
-                if (data.status === "approved" && data.tier) {
-                    tampilkanStatus(
-                        `<span class="material-symbols-outlined" aria-hidden="true">verified</span>
-                         <div><strong>Selamat! Anda adalah Reseller Resmi ${escapeHtml(data.tier.name)}</strong><br>
-                         Potongan harga otomatis ${String(data.tier.discount_percent).replace(".", ",")}% aktif di seluruh etalase marketplace &amp; topup game.
-                         <div class="rs-status-meta"><span>Tier ${escapeHtml(data.tier.name)}</span><span>Diskon ${String(data.tier.discount_percent).replace(".", ",")}%</span></div>
-                         <div style="margin-top:1rem;">
-                             <a href="/portal-reseller.html" class="mkt-btn-primary" style="display:inline-flex;align-items:center;gap:0.45rem;text-decoration:none;padding:0.55rem 1.15rem;font-size:0.86rem;border-radius:8px;">
-                                 <span class="material-symbols-outlined" style="font-size:1.1rem;" aria-hidden="true">dashboard</span>
-                                 <span>Buka Partner Portal &amp; API Key</span>
-                             </a>
-                         </div>
-                         </div>`,
-                        "rs-alert--sukses"
-                    );
-                    kunciForm("Sudah terdaftar sebagai reseller");
-                    return;
-                }
-
-                if (data.status === "pending") {
-                    tampilkanStatus(
-                        `<span class="material-symbols-outlined" aria-hidden="true">hourglass_top</span>
-                         <div><strong>Pengajuan &amp; Berkas KYC Sedang Ditinjau</strong><br>
-                         Admin NexShop sedang memverifikasi data identitas Anda (Maksimal 1x24 Jam). Kami akan menghubungi WhatsApp Anda setelah disetujui.</div>`,
-                        "rs-alert--tunggu"
-                    );
-                    kunciForm("Pengajuan sedang ditinjau");
-                    return;
-                }
-
-                if (data.status === "suspended") {
-                    tampilkanStatus(
-                        `<span class="material-symbols-outlined" aria-hidden="true">block</span>
-                         <div><strong>Status Reseller Sedang Dibekukan</strong><br>
-                         Hubungi Customer Service NexShop untuk informasi reaktivasi akun kemitraan Anda.</div>`,
-                        "rs-alert--gagal"
-                    );
-                    kunciForm("Hubungi Customer Service");
-                    return;
-                }
-
-                if (data.status === "rejected") {
-                    const catatan = data.pengajuan_terakhir && data.pengajuan_terakhir.admin_note;
-                    tampilkanStatus(
-                        `<span class="material-symbols-outlined" aria-hidden="true">info</span>
-                         <div><strong>Pengajuan sebelumnya belum disetujui</strong><br>
-                         ${catatan ? "Catatan admin: " + escapeHtml(catatan) + "<br>" : ""}Anda dapat mengirimkan ulang formulir dan foto KTP yang lebih jelas.</div>`,
-                        "rs-alert--tunggu"
-                    );
                 }
             } catch (err) {
-                // diamkan
+                console.warn("loadTiers fallback to default:", err.message);
             }
+            // Fallback tiers jika server belum mengembalikan data
+            renderTiersHtml(DEFAULT_TIERS);
         }
 
-        // ── Dropzone & Upload KTP ─────────────────────────────────────────
-        let uploadedKtpUrl = "";
-        const dropzone = document.getElementById("rsKtpDropzone");
-        const fileInput = document.getElementById("rsKtpFile");
-        const placeholder = document.getElementById("rsKtpPlaceholder");
-        const previewWrap = document.getElementById("rsKtpPreviewWrap");
-        const previewImg = document.getElementById("rsKtpPreviewImg");
-        const removeBtn = document.getElementById("rsKtpRemoveBtn");
-
-        if (dropzone && fileInput) {
-            dropzone.addEventListener("click", (e) => {
-                if (e.target === removeBtn || removeBtn.contains(e.target)) return;
-                fileInput.click();
-            });
-
-            dropzone.addEventListener("dragover", (e) => {
-                e.preventDefault();
-                dropzone.style.borderColor = "var(--mkt-accent)";
-                dropzone.style.background = "rgba(34, 211, 238, 0.06)";
-            });
-
-            dropzone.addEventListener("dragleave", () => {
-                dropzone.style.borderColor = "var(--mkt-line)";
-                dropzone.style.background = "rgba(255,255,255,0.02)";
-            });
-
-            dropzone.addEventListener("drop", (e) => {
-                e.preventDefault();
-                dropzone.style.borderColor = "var(--mkt-line)";
-                dropzone.style.background = "rgba(255,255,255,0.02)";
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    fileInput.files = e.dataTransfer.files;
-                    handleKtpSelected(e.dataTransfer.files[0]);
-                }
-            });
-
-            fileInput.addEventListener("change", () => {
-                if (fileInput.files && fileInput.files[0]) {
-                    handleKtpSelected(fileInput.files[0]);
-                }
-            });
-
-            removeBtn.addEventListener("click", (e) => {
-                e.stopPropagation();
-                fileInput.value = "";
-                uploadedKtpUrl = "";
-                previewImg.src = "";
-                previewWrap.style.display = "none";
-                placeholder.style.display = "block";
-            });
+        // Jalankan saat dokumen siap
+        if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", loadTiers);
+        } else {
+            loadTiers();
         }
-
-        async function handleKtpSelected(file) {
-            if (!file) return;
-            if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-                alert("Format file harus berupa gambar (JPG, PNG, atau WEBP)");
-                fileInput.value = "";
-                return;
-            }
-            if (file.size > 10 * 1024 * 1024) {
-                alert("Ukuran foto KTP maksimal 10MB");
-                fileInput.value = "";
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImg.src = e.target.result;
-                placeholder.style.display = "none";
-                previewWrap.style.display = "block";
-            };
-            reader.readAsDataURL(file);
-        }
-
-        async function uploadKtpFileDirectly(file, token) {
-            const formData = new FormData();
-            formData.append("image", file);
-            const res = await fetch(`${API_BASE}/upload/image?type=kyc`, {
-                method: "POST",
-                headers: { Authorization: `Bearer ${token}` },
-                body: formData
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.message || "Gagal mengunggah foto KTP");
-            return data.url;
-        }
-
-        // ── Kirim pengajuan ──────────────────────────────────────────────
-        document.getElementById("rsForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const token = getToken();
-            const errEl = document.getElementById("rsError");
-            const btn = document.getElementById("rsSubmitBtn");
-            errEl.textContent = "";
-
-            if (!token) {
-                saveDraftForm();
-                errEl.innerHTML = `Anda perlu masuk ke akun NexShop terlebih dahulu untuk mengirim pengajuan. <a href="/login.html?redirect=/reseller.html#form-daftar" style="color:var(--mkt-accent);font-weight:700;text-decoration:underline;">Klik di sini untuk Masuk / Buat Akun</a>`;
-                return;
-            }
-
-            const file = fileInput.files && fileInput.files[0];
-            if (!file && !uploadedKtpUrl) {
-                errEl.textContent = "Foto KTP (KYC) wajib dipilih dan diunggah untuk verifikasi kemitraan.";
-                return;
-            }
-
-            btn.disabled = true;
-            btn.textContent = "Mengunggah berkas KTP...";
-
-            try {
-                if (file && !uploadedKtpUrl) {
-                    uploadedKtpUrl = await uploadKtpFileDirectly(file, token);
-                }
-
-                btn.textContent = "Mengirim data pengajuan...";
-
-                const payload = {
-                    fullname: document.getElementById("rsFullname").value.trim(),
-                    whatsapp: document.getElementById("rsWhatsapp").value.trim(),
-                    nik: document.getElementById("rsNik").value.trim(),
-                    store_name: document.getElementById("rsStoreName").value.trim(),
-                    channel: document.getElementById("rsChannel").value,
-                    monthly_estimate: document.getElementById("rsMonthly").value,
-                    note: document.getElementById("rsNote").value.trim(),
-                    ktp_url: uploadedKtpUrl
-                };
-
-                const res = await fetch(`${API_BASE}/reseller/apply`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.message || "Gagal mengirim pengajuan");
-
-                // Hapus draft setelah berhasil kirim
-                sessionStorage.removeItem("rs_draft_form");
-
-                tampilkanStatus(
-                    `<span class="material-symbols-outlined" aria-hidden="true">task_alt</span>
-                     <div><strong>Pengajuan &amp; Berkas KYC Terkirim!</strong><br>${escapeHtml(data.message || "")}</div>`,
-                    "rs-alert--sukses"
-                );
-                kunciForm("Pengajuan sedang ditinjau");
-                window.scrollTo({ top: document.getElementById("form-daftar").offsetTop - 120, behavior: "smooth" });
-            } catch (err) {
-                errEl.textContent = err.message;
-                btn.disabled = false;
-                btn.textContent = "Kirim Pengajuan & KYC";
-            }
-        });
-
-        loadTiers();
-        loadMyStatus();
     </script>
     <script src="/nexbot.js?v=20260823-nexbot"></script>
 </body>
