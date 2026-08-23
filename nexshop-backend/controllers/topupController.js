@@ -516,15 +516,36 @@ exports.smartActivateProducts = async (req, res) => {
             items.forEach((p) => target.set(p.id, winnerIds.has(p.id)));
         }
 
+// Kategori NexShop yang produknya FUNGIBLE murni berdasarkan nominal --
+        // beda "jenis"/jalur supplier TIDAK dianggap SKU yang beda secara bisnis
+        // buat kategori ini, karena hasil akhir yang diterima pembeli PERSIS sama
+        // gak peduli lewat jalur mana (top up DANA Rp1.000 ya tetap nambah saldo
+        // Rp1.000, gak ada bedanya biar lewat jalur A atau B). Makanya jenis
+        // SENGAJA dikeluarkan dari kunci dedup buat kategori-kategori ini -- beda
+        // sama Pulsa (Reguler vs Transfer beneran beda cara kerja ke nomor tujuan)
+        // yang TETAP mempertahankan jenis di kunci (lihat komentar di bawah).
+        //
+        // Tanpa ini: TokoVoucher sering nyediain nominal yang PERSIS sama (mis.
+        // "DANA 1.000" & "Dana 1.000") lewat jenis produk yang beda-beda per
+        // supplier -- dedup yang jenis-aware jadi nganggep itu 2 grup terpisah,
+        // masing-masing tetap dapet 1 produk aktif sendiri-sendiri, jadi nominal
+        // yang sama nongol dobel/triple di etalase padahal harusnya cuma 1 (yang
+        // paling murah).
+        const NOMINAL_FUNGIBLE_CATEGORIES = new Set(["e-wallet"]);
+
         // ---------- JALUR 2: produk non-game (Marketplace) ----------
-        // Kunci grup: operator + jenis produk + sidik jari nominal/nama.
-        // Jenis ikut masuk kunci biar "Pulsa Reguler 10rb" gak diadu sama
-        // "Pulsa Transfer 10rb" -- itu dua produk beda walau nominalnya sama.
+        // Kunci grup: operator + (jenis produk, KECUALI kategori fungible
+        // di atas) + sidik jari nominal/nama. Jenis ikut masuk kunci buat
+        // kategori lain (Pulsa, dst) biar "Pulsa Reguler 10rb" gak diadu
+        // sama "Pulsa Transfer 10rb" -- itu dua produk beda walau
+        // nominalnya sama.
         const byMarketplaceGroup = new Map();
         produkMarketplace.forEach((p) => {
+            const kategoriNexshop = String(p.nexshop_category || "").trim().toLowerCase();
+            const abaikanJenis = NOMINAL_FUNGIBLE_CATEGORIES.has(kategoriNexshop);
             const key = [
                 p.operator_id || p.kategori || "(tanpa operator)",
-                String(p.source_jenis_name || "").trim().toLowerCase(),
+                abaikanJenis ? "" : String(p.source_jenis_name || "").trim().toLowerCase(),
                 marketplaceSignature(p.nama)
             ].join("||");
             if (!byMarketplaceGroup.has(key)) byMarketplaceGroup.set(key, []);
