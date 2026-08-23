@@ -185,6 +185,11 @@
                 <span>Harga Reseller</span>
             </span>
 
+            <button type="button" class="mkt-nav-track-btn" id="mktTrackNavBtn">
+                <span class="material-symbols-outlined" aria-hidden="true">receipt_long</span>
+                <span>Cek Transaksi</span>
+            </button>
+
             <a href="/" class="mkt-nav-back" aria-label="Kembali ke toko NexShop">
                 <span class="material-symbols-outlined" aria-hidden="true">arrow_outward</span>
                 <span>Ke Toko</span>
@@ -364,7 +369,28 @@
                         <li><a href="/marketplace" class="nx-footer__link">Marketplace</a></li>
                         <li><a href="/#topup" class="nx-footer__link">Topup Diamond</a></li>
                         <li><a href="/berita" class="nx-footer__link">Portal Berita</a></li>
+                        <li><button type="button" id="mktTrackFooterBtn" class="nx-footer__link">Cek Transaksi</button></li>
                     </ul>
+                </div>
+
+                <div>
+                    <h4 class="nx-footer__heading" style="text-align: left;">Bantuan</h4>
+                    <ul class="nx-footer__link-list" style="text-align: left;">
+                        <li><button type="button" class="nx-footer__link" data-mkt-policy-tab="faq">FAQ</button></li>
+                        <li><button type="button" class="nx-footer__link" data-mkt-policy-tab="terms">Syarat &amp; Ketentuan</button></li>
+                        <li><button type="button" class="nx-footer__link" data-mkt-policy-tab="refund">Kebijakan Refund</button></li>
+                        <li><button type="button" class="nx-footer__link" data-mkt-policy-tab="contact">Hubungi Kami</button></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="nx-footer__heading" style="text-align: left;">Pembayaran Aman</h4>
+                    <div class="nx-footer__link-list" style="text-align: left;">
+                        <span class="nx-footer__link" style="cursor:default;">QRIS</span>
+                        <span class="nx-footer__link" style="cursor:default;">E-Wallet</span>
+                        <span class="nx-footer__link" style="cursor:default;">Virtual Account</span>
+                        <span class="nx-footer__link" style="cursor:default;">Transfer Bank</span>
+                    </div>
                 </div>
 
                 <div class="nx-footer__legal" style="align-items: flex-start;">
@@ -396,6 +422,98 @@
             </div>
         </div>
     </footer>
+
+    <!-- Cek Transaksi Modal — cek status transaksi langsung di Marketplace,
+         tidak redirect ke web utama. Pakai endpoint publik yang sama
+         (/api/orders/track/:id & /api/topup/track/:id) dengan modal
+         "Cek Transaksi" di index.html. -->
+    <div class="mkt-overlay" id="mktTrackOverlay">
+        <div class="mkt-modal" role="dialog" aria-modal="true" aria-labelledby="mktTrackTitle">
+            <button type="button" class="mkt-modal-close" id="mktTrackCloseBtn" aria-label="Tutup">
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab active" data-mkt-track-tab="byid">Cek by Order ID</button>
+                <button type="button" class="auth-tab" data-mkt-track-tab="mine">Riwayat Saya</button>
+            </div>
+
+            <form id="mktTrackForm" class="auth-form" data-mkt-track-panel="byid">
+                <h3 id="mktTrackTitle">Cek Status Transaksi</h3>
+                <p class="otp-info">Masukkan Order ID kamu (contoh: <strong>TP1234567890</strong> untuk topup, atau ID pesanan produk biasa).</p>
+                <label>Order ID
+                    <input type="text" id="mktTrackOrderId" required placeholder="Masukkan Order ID">
+                </label>
+                <p class="auth-error" id="mktTrackError"></p>
+                <button type="submit" class="mkt-btn-primary" id="mktTrackSubmitBtn">Cek Transaksi</button>
+            </form>
+            <div class="track-result hidden" id="mktTrackResult"></div>
+
+            <div class="auth-form hidden" data-mkt-track-panel="mine">
+                <h3>Riwayat Transaksi Saya</h3>
+                <div id="mktTrackMineBody"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bantuan Modal (FAQ / Syarat & Ketentuan / Refund / Kontak) — konten
+         sama dengan modal kebijakan di index.html, dibuka langsung dari
+         footer Marketplace tanpa pindah halaman. -->
+    <div class="mkt-overlay" id="mktPolicyOverlay">
+        <div class="mkt-modal mkt-modal--wide" role="dialog" aria-modal="true" aria-labelledby="mktPolicyTitle">
+            <button type="button" class="mkt-modal-close" id="mktPolicyCloseBtn" aria-label="Tutup">
+                <span class="material-symbols-outlined" aria-hidden="true">close</span>
+            </button>
+            <div class="policy-tabs">
+                <button type="button" class="policy-tab active" data-mkt-policy-tab="faq">FAQ</button>
+                <button type="button" class="policy-tab" data-mkt-policy-tab="terms">Syarat &amp; Ketentuan</button>
+                <button type="button" class="policy-tab" data-mkt-policy-tab="refund">Kebijakan Refund</button>
+                <button type="button" class="policy-tab" data-mkt-policy-tab="contact">Hubungi Kami</button>
+            </div>
+
+            <div class="policy-panel" id="mktPolicyFaq">
+                <h3 id="mktPolicyTitle">Pertanyaan yang Sering Diajukan (FAQ)</h3>
+                <div class="faq-list" id="mktFaqList"></div>
+            </div>
+
+            <div class="policy-panel hidden" id="mktPolicyTerms">
+                <h3>Syarat &amp; Ketentuan</h3>
+                <div class="policy-content" id="mktTermsContent">
+                    <ol class="policy-list">
+                        <li>Dengan melakukan pemesanan di NexShop Marketplace, kamu dianggap telah membaca dan menyetujui seluruh syarat &amp; ketentuan ini.</li>
+                        <li>Seluruh transaksi diproses melalui payment gateway resmi <strong>iPaymu</strong> (QRIS, Virtual Account/Transfer Bank, E-Wallet, dan Kartu Kredit/Debit). NexShop tidak menerima pembayaran manual di luar sistem.</li>
+                        <li>Pastikan nomor HP/ID tujuan yang kamu masukkan sudah benar. Pesanan diproses otomatis setelah pembayaran terverifikasi.</li>
+                        <li>Waktu proses pesanan umumnya beberapa menit hingga maksimal 24 jam pada jam kerja, tergantung ketersediaan layanan operator/provider.</li>
+                        <li>NexShop tidak bertanggung jawab atas kesalahan input nomor/ID tujuan dari pembeli.</li>
+                        <li>NexShop berhak menolak atau membatalkan pesanan yang terindikasi penyalahgunaan, transaksi mencurigakan, atau melanggar kebijakan ini.</li>
+                        <li>Untuk pertanyaan seputar transaksi, hubungi admin melalui WhatsApp atau email yang tercantum pada tab Hubungi Kami.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="policy-panel hidden" id="mktPolicyRefund">
+                <h3>Kebijakan Refund</h3>
+                <div class="policy-content" id="mktRefundContent">
+                    <ol class="policy-list">
+                        <li>Refund/pengembalian dana dapat diajukan apabila: pembayaran berhasil terpotong namun pesanan tidak diproses, atau layanan yang diterima tidak sesuai deskripsi.</li>
+                        <li>Pengajuan refund wajib disertai bukti pembayaran (Order ID) dan dilaporkan ke admin maksimal <strong>1x24 jam</strong> setelah transaksi.</li>
+                        <li>Refund <strong>tidak berlaku</strong> untuk kesalahan input nomor/ID tujuan dari pembeli setelah pesanan berhasil diproses.</li>
+                        <li>Dana yang disetujui untuk direfund akan dikembalikan ke metode pembayaran asal melalui sistem iPaymu, estimasi proses 3–14 hari kerja.</li>
+                        <li>Untuk mengajukan refund atau komplain, hubungi admin melalui tab Hubungi Kami dengan menyertakan Order ID.</li>
+                    </ol>
+                </div>
+            </div>
+
+            <div class="policy-content hidden" id="mktPolicyContact">
+                <h3 style="margin-bottom:1rem;">Hubungi Kami</h3>
+                <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.9rem;">
+                    <span>Telepon / WhatsApp: <a href="https://wa.me/6287792634063" id="mktContactWaLink" target="_blank" rel="noopener">0877-9263-4063</a></span>
+                    <span style="color:var(--text-muted); font-size:0.8rem; margin-top:-0.3rem;">(Jam Kerja: 08.00 - 22.00 WIB)</span>
+                    <span>Email: <a href="mailto:nexshop.my.id@gmail.com" id="mktContactEmailLink">nexshop.my.id@gmail.com</a></span>
+                    <span>Instagram: <a href="https://www.instagram.com/nexshop_id" id="mktContactIgLink" target="_blank" rel="noopener">@nexshop_id</a></span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Checkout Modal -->
     <div class="mkt-overlay" id="mktCheckoutOverlay">
@@ -1280,7 +1398,335 @@
             window.location.href = "/#kontak";
         });
 
+        // ── Cek Transaksi & Bantuan — kedua fitur ini berjalan mandiri di
+        // Marketplace (fetch langsung ke API publik yang sama dipakai
+        // index.html), jadi user gak perlu pindah/redirect ke web utama
+        // cuma buat cek status transaksi atau baca FAQ/kebijakan. ──────────
+
+        let cachedMktStoreSettings = null;
+
+        async function loadMktStoreSettings() {
+            if (cachedMktStoreSettings) return cachedMktStoreSettings;
+            try {
+                const res = await fetch(`${API_BASE}/settings/store`);
+                if (!res.ok) return null;
+                cachedMktStoreSettings = await res.json();
+
+                if (cachedMktStoreSettings.contact_whatsapp) {
+                    const cleanWa = cachedMktStoreSettings.contact_whatsapp.replace(/\D/g, "");
+                    const waUrl = `https://wa.me/${cleanWa}`;
+                    const displayLabel = cachedMktStoreSettings.contact_phone || cachedMktStoreSettings.contact_whatsapp;
+                    const waLink = document.getElementById("mktContactWaLink");
+                    if (waLink) { waLink.href = waUrl; waLink.textContent = displayLabel; }
+                }
+                if (cachedMktStoreSettings.contact_email) {
+                    const emailLink = document.getElementById("mktContactEmailLink");
+                    if (emailLink) {
+                        emailLink.href = `mailto:${cachedMktStoreSettings.contact_email}`;
+                        emailLink.textContent = cachedMktStoreSettings.contact_email;
+                    }
+                }
+                if (cachedMktStoreSettings.contact_instagram) {
+                    const handle = String(cachedMktStoreSettings.contact_instagram)
+                        .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "").replace(/\/$/, "").replace(/^@/, "");
+                    const igLink = document.getElementById("mktContactIgLink");
+                    if (igLink) { igLink.href = `https://www.instagram.com/${handle}`; igLink.textContent = `@${handle}`; }
+                }
+                if (Array.isArray(cachedMktStoreSettings.faq) && cachedMktStoreSettings.faq.length > 0) {
+                    renderMktFaqList(cachedMktStoreSettings.faq);
+                }
+                // Kalau admin sudah kustom Syarat & Ketentuan / Refund lewat
+                // Settings, tampilkan itu -- biar isinya selalu sinkron
+                // dengan yang tampil di web utama (bukan teks bawaan yang
+                // di-hardcode di halaman ini).
+                if (cachedMktStoreSettings.terms_content) {
+                    const el = document.getElementById("mktTermsContent");
+                    if (el) el.innerHTML = formatMktPolicyText(cachedMktStoreSettings.terms_content);
+                }
+                if (cachedMktStoreSettings.refund_content) {
+                    const el = document.getElementById("mktRefundContent");
+                    if (el) el.innerHTML = formatMktPolicyText(cachedMktStoreSettings.refund_content);
+                }
+                return cachedMktStoreSettings;
+            } catch (err) {
+                return null;
+            }
+        }
+
+        function renderMktFaqList(faq) {
+            const list = document.getElementById("mktFaqList");
+            if (!list) return;
+            if (!faq.length) {
+                list.innerHTML = `<p class="faq-empty">Belum ada FAQ.</p>`;
+                return;
+            }
+            list.innerHTML = faq.map(item => `
+                <details class="faq-item">
+                    <summary>${escapeHtml(item.q || "")}</summary>
+                    <p>${escapeHtml(item.a || "")}</p>
+                </details>
+            `).join("");
+        }
+
+        // ── Bantuan (policy) modal ──────────────────────────────────────
+        function openMktPolicyModal(tab) {
+            loadMktStoreSettings();
+            switchMktPolicyTab(tab || "faq");
+            document.getElementById("mktPolicyOverlay").classList.add("is-visible");
+        }
+        function closeMktPolicyModal() {
+            document.getElementById("mktPolicyOverlay").classList.remove("is-visible");
+        }
+        function switchMktPolicyTab(tab) {
+            document.querySelectorAll("[data-mkt-policy-tab]").forEach(el => {
+                el.classList.toggle("active", el.dataset.mktPolicyTab === tab);
+            });
+            document.getElementById("mktPolicyFaq").classList.toggle("hidden", tab !== "faq");
+            document.getElementById("mktPolicyTerms").classList.toggle("hidden", tab !== "terms");
+            document.getElementById("mktPolicyRefund").classList.toggle("hidden", tab !== "refund");
+            document.getElementById("mktPolicyContact").classList.toggle("hidden", tab !== "contact");
+        }
+        document.querySelectorAll("[data-mkt-policy-tab]").forEach(btn => {
+            btn.addEventListener("click", () => openMktPolicyModal(btn.dataset.mktPolicyTab));
+        });
+        document.getElementById("mktPolicyCloseBtn").addEventListener("click", closeMktPolicyModal);
+        document.getElementById("mktPolicyOverlay").addEventListener("click", (e) => {
+            if (e.target.id === "mktPolicyOverlay") closeMktPolicyModal();
+        });
+
+        // ── Cek Transaksi modal ──────────────────────────────────────────
+        const MKT_STATUS_LABEL = {
+            paid: "Dibayar — Diproses", sukses: "Sukses", processing: "Diproses",
+            pending: "Menunggu Pembayaran", failed: "Gagal", gagal: "Gagal", cancel: "Dibatalkan"
+        };
+        const MKT_STATUS_CLASS = {
+            paid: "success", sukses: "success", processing: "info",
+            pending: "warning", failed: "danger", gagal: "danger", cancel: "danger"
+        };
+
+        function renderMktTrackResult(data) {
+            const label = MKT_STATUS_LABEL[data.status] || data.status;
+            const cls = MKT_STATUS_CLASS[data.status] || "info";
+            const tanggal = data.created_at ? new Date(data.created_at).toLocaleString("id-ID") : "-";
+
+            let itemsHtml = "";
+            if (data.type === "order") {
+                itemsHtml = (data.items || []).map(i =>
+                    `<div class="row"><span>${escapeHtml(i.name)}${i.quantity > 1 ? ` ×${i.quantity}` : ""}</span></div>`
+                ).join("");
+                if (data.discount_amount > 0) {
+                    itemsHtml += `<div class="row discount"><span>Diskon${data.promo_code ? ` (${escapeHtml(data.promo_code)})` : ""}</span><span>-${rupiah(data.discount_amount)}</span></div>`;
+                }
+            } else {
+                let serialHtml = "";
+                if (data.token_number) {
+                    serialHtml = `
+                        <div class="track-token-box">
+                            <div class="row"><span>No Token</span><span>${escapeHtml(data.token_number)}</span></div>
+                            ${data.token_keterangan ? `<div class="row"><span>Keterangan</span><span>${escapeHtml(data.token_keterangan)}</span></div>` : ""}
+                            ${data.serial_instruction ? `<div class="track-token-note"><i class="fa-solid fa-circle-info"></i><span>${escapeHtml(data.serial_instruction)}</span></div>` : ""}
+                        </div>
+                    `;
+                } else if (data.serial_number) {
+                    serialHtml = `
+                        <div class="track-token-box">
+                            <div class="row"><span>Kode/SN</span><span>${escapeHtml(data.serial_number)}</span></div>
+                            ${data.serial_instruction ? `<div class="track-token-note"><i class="fa-solid fa-circle-info"></i><span>${escapeHtml(data.serial_instruction)}</span></div>` : ""}
+                        </div>
+                    `;
+                }
+                itemsHtml = `
+                    <div class="row"><span>Produk</span><span>${escapeHtml(data.nama_produk || "-")}</span></div>
+                    <div class="row"><span>${escapeHtml(data.target_label || "User ID")}</span><span>${escapeHtml(String(data.tujuan || "-"))}${data.server_id ? " (" + escapeHtml(String(data.server_id)) + ")" : ""}</span></div>
+                    ${serialHtml}
+                `;
+                if (data.discount_amount > 0) {
+                    itemsHtml += `<div class="row"><span>Harga Awal</span><span>${rupiah(data.subtotal || 0)}</span></div>`;
+                    itemsHtml += `<div class="row discount"><span>Diskon${data.promo_code ? ` (${escapeHtml(data.promo_code)})` : ""}</span><span>-${rupiah(data.discount_amount)}</span></div>`;
+                }
+            }
+
+            // Produk "biasa" (bukan topup otomatis) diproses manual via WA --
+            // begitu statusnya "paid", kasih tombol WA dengan No. Transaksi
+            // ter-prefill biar pembeli gampang follow up tanpa keluar Marketplace.
+            let waCta = "";
+            const isPaid = data.status === "paid" || data.status === "sukses";
+            const configuredWhatsApp = cachedMktStoreSettings?.contact_whatsapp || "";
+            if (data.type === "order" && isPaid && configuredWhatsApp) {
+                const waDigits = configuredWhatsApp.replace(/\D/g, "");
+                const prefill = `Halo admin, saya sudah bayar pesanan dengan No. Transaksi ${data.id}. Saya akan melampirkan bukti pembayaran iPaymu di chat ini. Mohon diproses ya 🙏`;
+                const waHref = `https://wa.me/${waDigits}?text=${encodeURIComponent(prefill)}`;
+                waCta = `
+                    <div class="track-wa-cta">
+                        <p class="otp-info">🎮 Pembayaran sudah terverifikasi. Produk ini diproses manual oleh admin. Sertakan <strong>No. Transaksi ${escapeHtml(data.id)}</strong> saat chat admin.</p>
+                        <a href="${waHref}" target="_blank" rel="noopener" class="mkt-btn-secondary">Chat Admin via WhatsApp</a>
+                    </div>
+                `;
+            }
+
+            document.getElementById("mktTrackResult").innerHTML = `
+                <div class="track-status-badge ${cls}">${escapeHtml(label)}</div>
+                <div class="row"><span>Order ID</span><span>${escapeHtml(data.id)}</span></div>
+                <div class="row"><span>Tanggal</span><span>${tanggal}</span></div>
+                ${itemsHtml}
+                <div class="row total"><span>Total</span><span>${rupiah(data.total || 0)}</span></div>
+                ${waCta}
+            `;
+            document.getElementById("mktTrackResult").classList.remove("hidden");
+
+            if (window.mktTrackPollingTimer) clearTimeout(window.mktTrackPollingTimer);
+            if ((data.status === "pending" || data.status === "0") && document.getElementById("mktTrackOverlay").classList.contains("is-visible")) {
+                window.mktTrackPollingTimer = setTimeout(async () => {
+                    if (!document.getElementById("mktTrackOverlay").classList.contains("is-visible")) return;
+                    const isTopupPolled = data.id.toUpperCase().startsWith("TP");
+                    const endpoint = isTopupPolled
+                        ? `${API_BASE}/topup/track/${encodeURIComponent(data.id)}`
+                        : `${API_BASE}/orders/track/${encodeURIComponent(data.id)}`;
+                    try {
+                        const res = await fetch(endpoint);
+                        if (res.ok) {
+                            const newData = await res.json();
+                            renderMktTrackResult(newData);
+                        }
+                    } catch (e) {}
+                }, 5000);
+            }
+        }
+
+        document.getElementById("mktTrackForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const errorEl = document.getElementById("mktTrackError");
+            const resultEl = document.getElementById("mktTrackResult");
+            const btn = document.getElementById("mktTrackSubmitBtn");
+            const orderId = document.getElementById("mktTrackOrderId").value.trim();
+
+            errorEl.textContent = "";
+            resultEl.classList.add("hidden");
+            if (!orderId) return;
+
+            const isTopup = orderId.toUpperCase().startsWith("TP");
+            const endpoint = isTopup ? `${API_BASE}/topup/track/${encodeURIComponent(orderId)}` : `${API_BASE}/orders/track/${encodeURIComponent(orderId)}`;
+
+            btn.disabled = true;
+            btn.textContent = "Mengecek...";
+            try {
+                const res = await fetch(endpoint);
+                const data = await res.json();
+                if (!res.ok) {
+                    errorEl.textContent = data.message || "Transaksi tidak ditemukan. Periksa kembali Order ID kamu.";
+                    return;
+                }
+                if (!cachedMktStoreSettings) await loadMktStoreSettings();
+                renderMktTrackResult(data);
+            } catch (err) {
+                errorEl.textContent = "Gagal menghubungi server. Coba lagi sebentar.";
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Cek Transaksi";
+            }
+        });
+
+        function openMktTrackModal(tab) {
+            document.getElementById("mktTrackForm").reset();
+            document.getElementById("mktTrackError").textContent = "";
+            document.getElementById("mktTrackResult").classList.add("hidden");
+            switchMktTrackTab(tab || "byid");
+            document.getElementById("mktTrackOverlay").classList.add("is-visible");
+        }
+        function closeMktTrackModal() {
+            document.getElementById("mktTrackOverlay").classList.remove("is-visible");
+            if (window.mktTrackPollingTimer) { clearTimeout(window.mktTrackPollingTimer); window.mktTrackPollingTimer = null; }
+        }
+        document.getElementById("mktTrackNavBtn").addEventListener("click", () => openMktTrackModal("byid"));
+        document.getElementById("mktTrackFooterBtn").addEventListener("click", () => openMktTrackModal("byid"));
+        document.getElementById("mktTrackCloseBtn").addEventListener("click", closeMktTrackModal);
+        document.getElementById("mktTrackOverlay").addEventListener("click", (e) => {
+            if (e.target.id === "mktTrackOverlay") closeMktTrackModal();
+        });
+
+        function switchMktTrackTab(tab) {
+            document.querySelectorAll("[data-mkt-track-tab]").forEach(t => {
+                t.classList.toggle("active", t.dataset.mktTrackTab === tab);
+            });
+            document.querySelectorAll("[data-mkt-track-panel]").forEach(p => {
+                p.classList.toggle("hidden", p.dataset.mktTrackPanel !== tab);
+            });
+            document.getElementById("mktTrackForm").classList.toggle("hidden", tab !== "byid");
+            document.getElementById("mktTrackResult").classList.toggle("hidden", tab !== "byid");
+            if (tab === "mine") loadMktMyTransactions();
+        }
+        document.querySelectorAll("[data-mkt-track-tab]").forEach(btn => {
+            btn.addEventListener("click", () => switchMktTrackTab(btn.dataset.mktTrackTab));
+        });
+
+        // "Riwayat Saya" pakai token akun yang sama (localStorage dishare satu
+        // domain dengan web utama) -- jadi kalau user sudah login sebelumnya
+        // di halaman utama, riwayatnya otomatis kebaca di sini juga, tanpa
+        // perlu login ulang atau pindah halaman.
+        async function loadMktMyTransactions() {
+            const body = document.getElementById("mktTrackMineBody");
+            const token = localStorage.getItem("nexshop-public-token") || localStorage.getItem("token");
+
+            if (!token) {
+                body.innerHTML = `<p class="otp-info">Login dulu di NexShop buat lihat riwayat transaksi kamu. Sesi login kamu otomatis kepakai di sini kalau sudah login lewat halaman utama.</p>`;
+                return;
+            }
+
+            body.innerHTML = `<p class="otp-info">Memuat riwayat transaksi...</p>`;
+            try {
+                const [ordersRes, topupRes] = await Promise.all([
+                    fetch(`${API_BASE}/orders/my`, { headers: { "Authorization": `Bearer ${token}` } }),
+                    fetch(`${API_BASE}/topup/my`, { headers: { "Authorization": `Bearer ${token}` } })
+                ]);
+                const orders = ordersRes.ok ? await ordersRes.json() : [];
+                const topups = topupRes.ok ? await topupRes.json() : [];
+
+                const merged = [
+                    ...(Array.isArray(orders) ? orders : []).map(o => ({
+                        id: o.id, type: "order", status: o.status, total: o.total, created_at: o.created_at
+                    })),
+                    ...(Array.isArray(topups) ? topups : []).map(t => ({
+                        id: t.id, type: "topup", status: t.status, total: t.harga, label: t.nama_produk, created_at: t.created_at
+                    }))
+                ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+                if (merged.length === 0) {
+                    body.innerHTML = `<p class="otp-info">Belum ada transaksi tercatat.</p>`;
+                    return;
+                }
+
+                body.innerHTML = `<div class="track-mine-list">${merged.map(t => {
+                    const label = MKT_STATUS_LABEL[t.status] || t.status;
+                    const cls = MKT_STATUS_CLASS[t.status] || "info";
+                    const tanggal = t.created_at ? new Date(t.created_at).toLocaleDateString("id-ID") : "-";
+                    return `
+                        <button type="button" class="track-mine-item" data-order-id="${escapeHtml(t.id)}">
+                            <div>
+                                <div class="track-mine-id">${escapeHtml(t.id)}</div>
+                                <div class="track-mine-sub">${escapeHtml(t.label || (t.type === "topup" ? "Topup" : "Pesanan Produk"))} · ${tanggal}</div>
+                            </div>
+                            <div class="track-mine-right">
+                                <span class="track-status-badge ${cls}">${escapeHtml(label)}</span>
+                                <span class="track-mine-total">${rupiah(t.total || 0)}</span>
+                            </div>
+                        </button>
+                    `;
+                }).join("")}</div>`;
+
+                body.querySelectorAll(".track-mine-item").forEach(item => {
+                    item.addEventListener("click", () => {
+                        document.getElementById("mktTrackOrderId").value = item.dataset.orderId;
+                        switchMktTrackTab("byid");
+                        document.getElementById("mktTrackForm").requestSubmit();
+                    });
+                });
+            } catch (err) {
+                body.innerHTML = `<p class="auth-error">Gagal memuat riwayat transaksi. Coba lagi sebentar.</p>`;
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", loadCatalog);
+        document.addEventListener("DOMContentLoaded", loadMktStoreSettings);
     </script>
     <!-- Asisten NexBot, modul yang sama dengan halaman utama -->
     <script src="/nexbot.js?v=20260823-nexbot"></script>

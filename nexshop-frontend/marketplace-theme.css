@@ -456,6 +456,36 @@ body {
     font-size: 1rem;
 }
 
+.mkt-nav-track-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: transparent;
+    border: 1px solid var(--mkt-stroke);
+    color: var(--mkt-text);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--mkt-radius-sm);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.18s, color 0.18s;
+}
+
+.mkt-nav-track-btn .material-symbols-outlined {
+    font-size: 1.05rem;
+}
+
+.mkt-nav-track-btn:hover {
+    border-color: var(--mkt-primary);
+    color: var(--mkt-primary);
+}
+
+.mkt-modal--wide {
+    max-width: 38rem;
+}
+
 .mkt-nav-back {
     display: inline-flex;
     align-items: center;
