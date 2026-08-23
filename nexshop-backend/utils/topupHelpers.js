@@ -96,8 +96,81 @@ function bulatkanKeAtas(nilai, round) {
     return Math.ceil(nilai / round - EPS) * round;
 }
 
-function hitungMarkupWajar(hargaBeli) {
+// ===========================================================
+// MARKUP KHUSUS E-WALLET — skema di atas (persen dari modal) TIDAK cocok
+// dipakai buat E-Wallet. Nominal top up e-wallet bisa nyampe ratusan
+// ribu/jutaan, tapi di dunia nyata biaya admin top up e-wallet di
+// marketplace besar SELALU flat/nyaris-flat -- gak pernah ikut naik
+// proporsional sama nominalnya (top up Rp1jt gak mungkin kena admin
+// Rp50rb kayak hasil skema persen di atas). Pembanding per Agustus 2026:
+// admin GoPay/DANA sekitar Rp1.000, OVO sekitar Rp1.500, ShopeePay
+// sekitar Rp2.500, top up lewat Alfamart/Indomaret flat Rp2.500 berapa
+// pun nominalnya.
+//
+// Makanya E-Wallet dikasih skema SENDIRI: FLAT per operator (beda-beda,
+// nyontoin kenyataan tiap e-wallet emang beda biaya adminnya -- bukan
+// disamain rata kayak skema persen di atas), dengan fallback tertier
+// (naik sedikit tiap kelipatan modal, BUKAN persen) buat operator yang
+// belum ke-daftar, dan HARD CAP di EWALLET_ADMIN_MAX supaya berapa pun
+// hasil hitungannya gak akan pernah lebih dari itu.
+const EWALLET_ADMIN_MIN = 1000;
+const EWALLET_ADMIN_MAX = 5000;
+
+// Admin fee flat per operator e-wallet. Sengaja beda-beda per operator
+// (bukan satu angka buat semua) -- kalau mau nyesuain, ubah di sini,
+// tapi tetap keclamp ke EWALLET_ADMIN_MIN..EWALLET_ADMIN_MAX di
+// hitungAdminEwallet() di bawah, jadi gak akan pernah "ngaco" gara-gara
+// typo angka gede di sini.
+const EWALLET_ADMIN_PER_OPERATOR = {
+    dana: 1000,
+    gopay: 1000,
+    ovo: 1500,
+    shopeepay: 2500,
+    linkaja: 2000
+};
+
+// Fallback buat operator e-wallet yang belum ke-daftar di atas: admin
+// naik Rp1.000 tiap kelipatan modal Rp100.000 (BUKAN persen dari modal),
+// tetap diclamp ke MIN..MAX di bawah.
+const EWALLET_ADMIN_FALLBACK_STEP = 100000;
+const EWALLET_ADMIN_FALLBACK_PER_STEP = 1000;
+
+function normalisasiNamaOperator(nama) {
+    return String(nama || "").trim().toLowerCase().replace(/[^a-z]/g, "");
+}
+
+function hitungAdminEwallet(hargaBeli, namaOperator) {
     const modal = Number(hargaBeli) || 0;
+    if (modal <= 0) return 0;
+    const op = normalisasiNamaOperator(namaOperator);
+    let admin = EWALLET_ADMIN_PER_OPERATOR[op];
+    if (admin === undefined) {
+        const steps = Math.max(1, Math.ceil(modal / EWALLET_ADMIN_FALLBACK_STEP));
+        admin = steps * EWALLET_ADMIN_FALLBACK_PER_STEP;
+    }
+    return Math.min(Math.max(admin, EWALLET_ADMIN_MIN), EWALLET_ADMIN_MAX);
+}
+
+// Pengenalan kategori E-Wallet lewat pola (bukan cuma samain persis
+// "e-wallet") -- soalnya penamaan kategori sumbernya bisa beda-beda
+// tergantung mapping admin (kadang "E-Wallet", kadang ke-mapping
+// "E-Money"), padahal dua-duanya produk yang sama: top up saldo dompet
+// digital.
+const POLA_KATEGORI_EWALLET = /e[-\s]?wallet|e[-\s]?money|dompet\s*digital/i;
+
+function isEwalletCategoryName(nama) {
+    return POLA_KATEGORI_EWALLET.test(String(nama || "").trim());
+}
+
+// `kategori` & `namaOperator` OPSIONAL -- kalau kosong (caller lama yang
+// belum di-update), fungsi ini tetap jalan pakai skema persen umum di
+// atas, PERSIS kayak sebelumnya (gak ada perilaku yang tiba-tiba
+// berubah diam-diam kalau parameternya kelewat).
+function hitungMarkupWajar(hargaBeli, kategori, namaOperator) {
+    const modal = Number(hargaBeli) || 0;
+    if (isEwalletCategoryName(kategori)) {
+        return bulatkanKeAtas(modal + hitungAdminEwallet(modal, namaOperator), AUTO_MARKUP_ROUND);
+    }
     const tier = MARKUP_TIERS.find((t) => modal <= t.max) || MARKUP_TIERS[MARKUP_TIERS.length - 1];
     const jualPersen = modal * (1 + tier.percent / 100);
     const jual = MARKUP_CAP_ABSOLUT !== null ? Math.min(jualPersen, modal + MARKUP_CAP_ABSOLUT) : jualPersen;
@@ -317,6 +390,14 @@ module.exports = {
     AUTO_MARKUP_ROUND,
     bulatkanKeAtas,
     hitungMarkupWajar,
+    EWALLET_ADMIN_MIN,
+    EWALLET_ADMIN_MAX,
+    EWALLET_ADMIN_PER_OPERATOR,
+    EWALLET_ADMIN_FALLBACK_STEP,
+    EWALLET_ADMIN_FALLBACK_PER_STEP,
+    hitungAdminEwallet,
+    POLA_KATEGORI_EWALLET,
+    isEwalletCategoryName,
     TOPUP_GAME_CATEGORIES,
     isTopupGameCategory,
     POLA_KATEGORI_GAME,
