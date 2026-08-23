@@ -312,6 +312,7 @@ body {
     font-size: 1.15rem;
     color: var(--mkt-text);
     white-space: nowrap;
+    flex-shrink: 0;
 }
 
 /* Logo NexShop asli, dibingkai gradien seperti di nav halaman utama --
@@ -369,6 +370,16 @@ body {
     list-style: none;
     margin: 0;
     padding: 0;
+    /* Kalau nav-brand + nav-actions udah makan banyak ruang (mis. lebar
+       laptop, 768-1200px), baris link ini yang menyusut & jadi bisa
+       digeser horizontal duluan -- bukan malah dorong tombol lain
+       sampai nyembul keluar kotak nav. Scrollbar-nya gak kelihatan
+       karena scrollbar disembunyikan situs-wide (lihat komentar di
+       @media 1024px), sama kayak perilaku versi mobile. */
+    min-width: 0;
+    flex-shrink: 1;
+    overflow-x: auto;
+    flex-wrap: nowrap;
 }
 
 .mkt-nav-links a {
@@ -399,6 +410,7 @@ body {
     align-items: center;
     gap: 0.6rem;
     min-width: 0;
+    flex-shrink: 0;
 }
 
 .mkt-nav-search {
