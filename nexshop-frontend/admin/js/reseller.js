@@ -8,6 +8,12 @@
 let resellerTiers = [];
 let resellerLoaded = false;
 
+function rsGetAdminToken() {
+    return localStorage.getItem("nexshop-admin-token") ||
+           localStorage.getItem("adminToken") ||
+           localStorage.getItem("token") || "";
+}
+
 function rsPersen(nilai) {
     const n = Number(nilai) || 0;
     return `${String(n).replace(".", ",")}%`;
@@ -17,7 +23,7 @@ function rsTanggal(iso) {
     if (!iso) return "-";
     try {
         const d = new Date(iso);
-        return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
+        return d.toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
     } catch {
         return "-";
     }
@@ -36,10 +42,13 @@ function rsSembunyikanSetupWarning() {
 }
 
 async function rsFetch(endpoint, options = {}) {
-    const token = localStorage.getItem("adminToken");
+    const token = rsGetAdminToken();
     const headers = { Authorization: `Bearer ${token}`, ...(options.headers || {}) };
     const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
-    if (res.status === 401) throw new Error("unauthorized");
+    if (res.status === 401) {
+        console.warn("rsFetch 401 unauthorized for", endpoint);
+        throw new Error("Sesi admin telah berakhir atau token tidak valid. Silakan login ulang.");
+    }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
         if (data.code === "RESELLER_NOT_SETUP" || res.status === 503) {
@@ -61,6 +70,11 @@ async function loadResellerTiers() {
     try {
         resellerTiers = await rsFetch("/reseller/admin/tiers");
         rsSembunyikanSetupWarning();
+
+        if (!Array.isArray(resellerTiers) || resellerTiers.length === 0) {
+            body.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">Belum ada data tingkatan reseller.</td></tr>`;
+            return;
+        }
 
         body.innerHTML = resellerTiers.map((t) => `
             <tr>
@@ -89,8 +103,8 @@ async function loadResellerTiers() {
         const tertinggi = resellerTiers.filter((t) => t.is_active).reduce((max, t) => Math.max(max, Number(t.discount_percent) || 0), 0);
         document.getElementById("rsStatDiskon").textContent = tertinggi > 0 ? rsPersen(tertinggi) : "-";
     } catch (err) {
-        if (err.message === "unauthorized") return;
-        body.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">${escapeHtml(err.message)}</td></tr>`;
+        console.error("loadResellerTiers error:", err);
+        body.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3"><i class="bi bi-exclamation-triangle me-1"></i> ${escapeHtml(err.message)}</td></tr>`;
     }
 }
 
@@ -113,7 +127,6 @@ async function simpanTier(code) {
         showToast(data.message || "Tingkatan diperbarui");
         loadResellerTiers();
     } catch (err) {
-        if (err.message === "unauthorized" || err.notSetup) return;
         showToast(err.message, true);
     }
 }
@@ -124,16 +137,16 @@ async function loadResellerApplications() {
     if (!body) return;
     const filter = document.getElementById("resellerAppFilter")?.value ?? "pending";
 
-    body.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm"></span></td></tr>`;
+    body.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-2"></span>Memuat pengajuan...</td></tr>`;
 
     try {
         const rows = await rsFetch(`/reseller/admin/applications${filter ? `?status=${encodeURIComponent(filter)}` : ""}`);
         rsSembunyikanSetupWarning();
 
         document.getElementById("rsStatPending").textContent =
-            filter === "pending" ? rows.length : document.getElementById("rsStatPending").textContent;
+            filter === "pending" ? rows.length : (document.getElementById("rsStatPending")?.textContent || "0");
 
-        if (!rows.length) {
+        if (!Array.isArray(rows) || !rows.length) {
             body.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Belum ada pengajuan di kategori ini.</td></tr>`;
             return;
         }
@@ -155,10 +168,10 @@ async function loadResellerApplications() {
                 ? `
                     <div class="d-flex flex-column gap-1">
                         <select class="form-select form-select-sm" id="rsAppTier-${a.id}">
-                            ${opsiTier || `<option value="">Tidak ada tingkatan aktif</option>`}
+                            ${opsiTier || `<option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option>`}
                         </select>
                         <div class="d-flex gap-1">
-                            <button class="btn btn-sm btn-success flex-grow-1" onclick="putusanReseller('${a.id}', 'approve')" ${opsiTier ? "" : "disabled"}>
+                            <button class="btn btn-sm btn-success flex-grow-1" onclick="putusanReseller('${a.id}', 'approve')">
                                 <i class="bi bi-check-lg"></i> Setujui
                             </button>
                             <button class="btn btn-sm btn-outline-danger" onclick="putusanReseller('${a.id}', 'reject')">Tolak</button>
@@ -190,8 +203,8 @@ async function loadResellerApplications() {
             `;
         }).join("");
     } catch (err) {
-        if (err.message === "unauthorized") return;
-        body.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">${escapeHtml(err.message)}</td></tr>`;
+        console.error("loadResellerApplications error:", err);
+        body.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3"><i class="bi bi-exclamation-triangle me-1"></i> ${escapeHtml(err.message)}</td></tr>`;
     }
 }
 
@@ -214,10 +227,10 @@ async function putusanReseller(id, action) {
     let adminNote = "";
 
     if (action === "approve") {
-        tierCode = document.getElementById(`rsAppTier-${id}`)?.value || "";
-        if (!tierCode) return showToast("Pilih tingkatan dulu", true);
+        tierCode = document.getElementById(`rsAppTier-${id}`)?.value || "silver";
         const tier = resellerTiers.find((t) => t.code === tierCode);
-        if (!confirm(`Setujui pemohon ini sebagai reseller ${tier ? tier.name : tierCode} (diskon ${rsPersen(tier?.discount_percent)})?`)) return;
+        const tierName = tier ? tier.name : tierCode;
+        if (!confirm(`Setujui pemohon ini sebagai reseller ${tierName}? Akun API dan diskon akan langsung aktif.`)) return;
     } else {
         const alasan = prompt("Alasan penolakan (opsional, akan terlihat oleh pemohon):", "");
         if (alasan === null) return;
@@ -233,7 +246,6 @@ async function putusanReseller(id, action) {
         showToast(data.message || "Pengajuan diproses");
         loadResellerAll();
     } catch (err) {
-        if (err.message === "unauthorized" || err.notSetup) return;
         showToast(err.message, true);
     }
 }
@@ -243,6 +255,8 @@ async function loadResellerList() {
     const body = document.getElementById("resellerListBody");
     if (!body) return;
 
+    body.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3"><span class="spinner-border spinner-border-sm me-2"></span>Memuat daftar reseller...</td></tr>`;
+
     try {
         const rows = await rsFetch("/reseller/admin/resellers");
         rsSembunyikanSetupWarning();
@@ -250,7 +264,7 @@ async function loadResellerList() {
         document.getElementById("rsStatAktif").textContent = rows.filter((r) => r.reseller_status === "approved").length;
         document.getElementById("rsStatBeku").textContent = rows.filter((r) => r.reseller_status === "suspended").length;
 
-        if (!rows.length) {
+        if (!Array.isArray(rows) || !rows.length) {
             body.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Belum ada reseller terdaftar.</td></tr>`;
             return;
         }
@@ -271,7 +285,7 @@ async function loadResellerList() {
                         <div>${escapeHtml(r.email || "-")}</div>
                         ${apiBadge}
                     </td>
-                    <td><select class="form-select form-select-sm" id="rsUserTier-${r.id}">${opsi}</select></td>
+                    <td><select class="form-select form-select-sm" id="rsUserTier-${r.id}">${opsi || `<option value="silver">Silver</option>`}</select></td>
                     <td class="small text-muted">${rsTanggal(r.reseller_since)}</td>
                     <td><span class="badge ${dibekukan ? "bg-warning text-dark" : "bg-success"}">${dibekukan ? "Dibekukan" : "Aktif"}</span></td>
                     <td>
@@ -288,8 +302,8 @@ async function loadResellerList() {
             `;
         }).join("");
     } catch (err) {
-        if (err.message === "unauthorized") return;
-        body.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">${escapeHtml(err.message)}</td></tr>`;
+        console.error("loadResellerList error:", err);
+        body.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3"><i class="bi bi-exclamation-triangle me-1"></i> ${escapeHtml(err.message)}</td></tr>`;
     }
 }
 
@@ -305,7 +319,6 @@ async function simpanTierReseller(id) {
         showToast(data.message || "Tingkatan reseller diperbarui");
         loadResellerList();
     } catch (err) {
-        if (err.message === "unauthorized" || err.notSetup) return;
         showToast(err.message, true);
     }
 }
@@ -327,19 +340,27 @@ async function ubahStatusReseller(id, status) {
         showToast(data.message || "Status reseller diperbarui");
         loadResellerList();
     } catch (err) {
-        if (err.message === "unauthorized" || err.notSetup) return;
         showToast(err.message, true);
     }
 }
 
 async function loadResellerAll() {
-    await loadResellerTiers();
-    await Promise.all([loadResellerApplications(), loadResellerList()]);
+    try {
+        await loadResellerTiers();
+    } catch (e) {
+        console.error("loadResellerTiers failed in loadResellerAll:", e);
+    }
+    try {
+        await Promise.all([loadResellerApplications(), loadResellerList()]);
+    } catch (e) {
+        console.error("loadResellerApplications / loadResellerList failed:", e);
+    }
     resellerLoaded = true;
 }
 
 window.loadResellerAll = loadResellerAll;
 window.loadResellerApplications = loadResellerApplications;
+window.loadResellerList = loadResellerList;
 window.showKtpModal = showKtpModal;
 window.simpanTier = simpanTier;
 window.putusanReseller = putusanReseller;

@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Partner Portal Reseller &amp; API Dashboard — NexShop</title>
     <meta name="description"
-        content="Portal resmi mitra reseller NexShop: kelola API Key, Secret Key, IP Whitelist, Webhook Endpoint, dan pantau harga modal seluruh produk secara real-time.">
+        content="Portal resmi mitra reseller NexShop: registrasi &amp; login khusus reseller, kelola API Key, Secret Key, IP Whitelist, Webhook Relay, dan pantau katalog harga modal secara real-time.">
     <link rel="canonical" href="https://nexshop.cloud/portal-reseller">
 
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
@@ -199,180 +199,198 @@
             margin-bottom: 1.15rem;
         }
 
-        .portal-form-group label {
+        .portal-label {
             font-size: 0.84rem;
             font-weight: 600;
             color: var(--mkt-text);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .portal-input-group {
+        .portal-input-wrap {
+            position: relative;
             display: flex;
-            gap: 0.5rem;
             align-items: center;
         }
 
         .portal-input {
-            flex: 1;
-            padding: 0.65rem 0.9rem;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.25);
+            width: 100%;
+            padding: 0.65rem 0.95rem;
+            background: rgba(13, 17, 30, 0.7);
             border: 1px solid var(--mkt-line);
+            border-radius: 8px;
             color: var(--mkt-text);
-            font-family: 'Fira Code', monospace;
-            font-size: 0.85rem;
-            outline: none;
-            transition: border-color 0.15s;
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
         }
 
         .portal-input:focus {
+            outline: none;
             border-color: var(--mkt-accent);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--mkt-accent) 20%, transparent);
+        }
+
+        .portal-input-mono {
+            font-family: 'Fira Code', monospace;
+            letter-spacing: 0.5px;
+            font-size: 0.85rem;
         }
 
         .portal-input-btn {
-            padding: 0.65rem 0.95rem;
-            border-radius: 8px;
+            position: absolute;
+            right: 6px;
             background: color-mix(in srgb, var(--mkt-accent) 15%, transparent);
-            border: 1px solid color-mix(in srgb, var(--mkt-accent) 35%, transparent);
+            border: 1px solid color-mix(in srgb, var(--mkt-accent) 30%, transparent);
             color: var(--mkt-accent);
+            border-radius: 6px;
+            padding: 0.35rem 0.65rem;
+            font-size: 0.78rem;
             font-weight: 600;
-            font-size: 0.82rem;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 0.35rem;
-            white-space: nowrap;
-            transition: all 0.15s;
+            gap: 0.3rem;
+            transition: all 0.15s ease;
         }
 
         .portal-input-btn:hover {
-            background: color-mix(in srgb, var(--mkt-accent) 25%, transparent);
+            background: var(--mkt-accent);
+            color: #0b0f19;
         }
 
-        /* ── Product Table ── */
+        .portal-hint {
+            font-size: 0.78rem;
+            color: var(--mkt-text-dim);
+            line-height: 1.4;
+        }
+
+        /* ── Product Catalog Table ── */
         .portal-table-wrap {
             overflow-x: auto;
+            border-radius: 8px;
             border: 1px solid var(--mkt-line);
-            border-radius: 12px;
-            background: rgba(0, 0, 0, 0.15);
+            background: rgba(13, 17, 30, 0.5);
         }
 
         .portal-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.86rem;
             text-align: left;
+            font-size: 0.85rem;
         }
 
         .portal-table th {
             background: rgba(255, 255, 255, 0.03);
-            padding: 0.75rem 1rem;
-            font-weight: 700;
-            font-size: 0.78rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
             color: var(--mkt-text-dim);
+            font-weight: 600;
+            padding: 0.75rem 1rem;
             border-bottom: 1px solid var(--mkt-line);
+            text-transform: uppercase;
+            font-size: 0.72rem;
+            letter-spacing: 0.5px;
             white-space: nowrap;
         }
 
         .portal-table td {
-            padding: 0.85rem 1rem;
-            border-bottom: 1px solid color-mix(in srgb, var(--mkt-line) 40%, transparent);
-            color: var(--mkt-text-dim);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: var(--mkt-text);
             vertical-align: middle;
         }
 
         .portal-table tr:hover td {
-            background: rgba(255, 255, 255, 0.015);
+            background: rgba(255, 255, 255, 0.02);
         }
 
         .portal-sku-badge {
+            font-family: 'Fira Code', monospace;
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid var(--mkt-line);
+            padding: 0.25rem 0.55rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: var(--mkt-accent);
             display: inline-flex;
             align-items: center;
-            gap: 0.4rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--mkt-line);
-            padding: 0.2rem 0.5rem;
-            border-radius: 6px;
-            font-family: 'Fira Code', monospace;
-            font-size: 0.8rem;
-            color: var(--mkt-text);
+            gap: 0.35rem;
         }
 
         .portal-sku-copy {
+            cursor: pointer;
             background: none;
             border: none;
-            padding: 0;
-            color: var(--mkt-accent);
-            cursor: pointer;
+            color: var(--mkt-text-dim);
             display: inline-flex;
-            align-items: center;
+            padding: 0;
+            transition: color 0.15s ease;
+        }
+
+        .portal-sku-copy:hover {
+            color: var(--mkt-accent);
         }
 
         .portal-price-normal {
             text-decoration: line-through;
+            color: var(--mkt-text-dim);
             font-size: 0.78rem;
-            color: var(--mkt-text-muted);
+            display: block;
         }
 
         .portal-price-reseller {
+            color: #34d399;
             font-weight: 700;
             font-size: 0.95rem;
-            color: #34d399;
         }
 
         .portal-status-badge {
             display: inline-flex;
             align-items: center;
-            gap: 0.3rem;
-            font-size: 0.75rem;
-            font-weight: 700;
+            gap: 0.25rem;
             padding: 0.2rem 0.55rem;
-            border-radius: 999px;
-            background: rgba(52, 211, 153, 0.15);
+            border-radius: 100px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: rgba(52, 211, 153, 0.12);
             color: #34d399;
-            border: 1px solid rgba(52, 211, 153, 0.3);
+            border: 1px solid rgba(52, 211, 153, 0.25);
         }
 
-        /* ── Search & Filter Controls ── */
-        .portal-controls {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            margin-bottom: 1rem;
-        }
-
-        .portal-search-input {
-            flex: 1;
-            min-width: 240px;
-            padding: 0.6rem 0.9rem;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.25);
+        /* ── Code snippets ── */
+        .portal-code-block {
+            background: #090d16;
             border: 1px solid var(--mkt-line);
-            color: var(--mkt-text);
-            font-size: 0.85rem;
-            outline: none;
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.82rem;
+            color: #cbd5e1;
+            overflow-x: auto;
+            line-height: 1.5;
+            position: relative;
         }
 
-        .portal-select {
-            padding: 0.6rem 0.9rem;
-            border-radius: 8px;
-            background: rgba(0, 0, 0, 0.25);
-            border: 1px solid var(--mkt-line);
+        .portal-code-copy {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
             color: var(--mkt-text);
-            font-size: 0.85rem;
-            outline: none;
+            border-radius: 6px;
+            padding: 0.3rem 0.55rem;
+            font-size: 0.72rem;
             cursor: pointer;
         }
 
-        /* ── Alert Toast ── */
         .portal-toast {
             position: fixed;
-            bottom: 2rem;
-            right: 2rem;
-            background: #111827;
+            bottom: 24px;
+            right: 24px;
+            background: #0f172a;
             border: 1px solid var(--mkt-accent);
-            color: #fff;
+            color: #f8fafc;
             padding: 0.75rem 1.25rem;
             border-radius: 10px;
             font-size: 0.86rem;
@@ -380,367 +398,680 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            z-index: 9999;
+            z-index: 99999;
+            transform: translateY(100px);
             opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.2s ease;
-            pointer-events: none;
+            transition: all 0.3s ease;
         }
 
         .portal-toast.show {
-            opacity: 1;
             transform: translateY(0);
-            pointer-events: auto;
+            opacity: 1;
+        }
+
+        /* ── Dedicated Reseller Auth Box ── */
+        .reseller-auth-container {
+            max-width: 680px;
+            margin: 2rem auto;
+            width: 100%;
+        }
+
+        .reseller-auth-card {
+            background: var(--mkt-glass);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--mkt-line);
+            border-radius: var(--mkt-radius);
+            padding: 2.25rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+        }
+
+        .reseller-auth-nav {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--mkt-line);
+            margin-bottom: 1.75rem;
+        }
+
+        .reseller-auth-tab {
+            padding: 0.65rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--mkt-text-dim);
+            background: none;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+
+        .reseller-auth-tab.active {
+            background: var(--mkt-accent);
+            color: #0b0f19;
+            box-shadow: 0 2px 10px rgba(34, 211, 238, 0.25);
+        }
+
+        .reseller-dropzone {
+            border: 2px dashed var(--mkt-line);
+            border-radius: 12px;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .reseller-dropzone:hover {
+            border-color: var(--mkt-accent);
+            background: rgba(34, 211, 238, 0.05);
+        }
+
+        .reseller-step-timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+            margin: 1.75rem 0;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .reseller-step-timeline::before {
+            content: '';
+            position: absolute;
+            left: 14px;
+            top: 10px;
+            bottom: 10px;
+            width: 2px;
+            background: var(--mkt-line);
+        }
+
+        .reseller-step-item {
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .reseller-step-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            z-index: 2;
+        }
+
+        .reseller-step-dot.done {
+            background: #10b981;
+            color: white;
+        }
+
+        .reseller-step-dot.current {
+            background: var(--mkt-accent);
+            color: #0b0f19;
+            box-shadow: 0 0 15px var(--mkt-accent);
+        }
+
+        .reseller-step-dot.pending {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--mkt-text-dim);
+            border: 1px solid var(--mkt-line);
         }
     </style>
 </head>
 
-<body data-nexbot="auto">
-
-    <div class="mkt-bg-layer" aria-hidden="true">
-        <div class="mkt-bg-veil"></div>
-    </div>
-
-    <!-- Navigation -->
-    <nav class="mkt-nav" role="navigation" aria-label="Navigasi NexShop">
-        <a href="/" class="mkt-nav-brand" aria-label="NexShop - Beranda">
-            <span class="mkt-brand-mark">
-                <img src="/images/nexshop-icon.svg" alt="NexShop" width="40" height="40">
-            </span>
-            <span class="mkt-brand-text">NexShop</span>
-            <span class="nx-tag">Partner Portal</span>
-        </a>
-
-        <ul class="mkt-nav-links" id="catNavLinks">
-            <li><a href="/">Beranda</a></li>
-            <li><a href="/marketplace">Marketplace</a></li>
-            <li><a href="/#topup">Topup Diamond</a></li>
-            <li><a href="/docs-reseller.html">Dokumentasi API</a></li>
-            <li><a href="/portal-reseller.html" class="active">Partner Portal</a></li>
-        </ul>
-
-        <div class="mkt-nav-actions">
-            <button type="button" class="mkt-nav-toggle" id="mktNavToggle" aria-label="Buka menu navigasi"
-                aria-expanded="false" aria-controls="catNavLinks">
-                <span class="material-symbols-outlined mkt-nav-toggle-open" aria-hidden="true">menu</span>
-                <span class="material-symbols-outlined mkt-nav-toggle-close" aria-hidden="true">close</span>
-            </button>
-            <a href="/docs-reseller.html" class="mkt-nav-back" aria-label="Lihat Docs API">
-                <span class="material-symbols-outlined" aria-hidden="true">menu_book</span>
-                <span>Docs API</span>
+<body class="mkt-page">
+    <header class="mkt-header">
+        <div class="mkt-header-inner">
+            <a href="/" class="mkt-logo" aria-label="NexShop Beranda">
+                <span class="mkt-logo-icon">
+                    <img src="/images/nexshop-icon.svg" alt="" width="28" height="28">
+                </span>
+                <span>NEXSHOP<span class="mkt-logo-gradient">PARTNER</span></span>
             </a>
-        </div>
-    </nav>
-    <div class="mkt-nav-scrim" id="mktNavScrim" aria-hidden="true"></div>
 
-    <main class="portal-layout" id="main-content">
+            <div class="mkt-header-center">
+                <a href="/portal-reseller" class="mkt-nav-link active">Partner Portal</a>
+                <a href="/docs-reseller.html" class="mkt-nav-link">Dokumentasi API</a>
+                <a href="/marketplace" class="mkt-nav-link">Marketplace</a>
+                <a href="/reseller.html" class="mkt-nav-link">Tentang Program</a>
+            </div>
 
-        <!-- ── Top Hero: Reseller Profile & Tier Status ── -->
-        <header class="portal-hero" id="portalHero">
-            <div class="portal-hero-left">
-                <div class="portal-avatar">
-                    <span class="material-symbols-outlined">workspace_premium</span>
+            <div class="mkt-header-right">
+                <div id="portalHeaderAuth">
+                    <!-- Dinamis via JS: Tombol Masuk/Daftar atau Profile & Keluar -->
                 </div>
-                <div>
-                    <h1 class="portal-user-name" id="portalFullName">Partner Reseller NexShop</h1>
-                    <div class="portal-user-meta">
-                        <span id="portalEmail">memuat data...</span>
-                        <span>&bull;</span>
-                        <span class="portal-tier-pill" id="portalTierBadge">
-                            <span class="material-symbols-outlined" style="font-size:0.95rem;">verified</span>
-                            <span id="portalTierText">Tier Reseller</span>
-                        </span>
-                        <span id="portalDiscountText" style="color:var(--mkt-accent);font-weight:700;">Diskon Otomatis Aktif</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="portal-layout">
+
+        <!-- =============================================================== -->
+        <!-- SECTION 1: AUTHENTICATION (LOGIN & REGISTER KHUSUS RESELLER)    -->
+        <!-- =============================================================== -->
+        <section id="sectionAuth" class="reseller-auth-container" style="display:none;">
+            <div class="reseller-auth-card">
+                <div style="text-align:center;margin-bottom:1.5rem;">
+                    <div style="display:inline-flex;padding:12px;border-radius:16px;background:rgba(34,211,238,0.12);color:var(--mkt-accent);margin-bottom:0.75rem;">
+                        <span class="material-symbols-outlined" style="font-size:2.2rem;">handshake</span>
                     </div>
-                </div>
-            </div>
-            <div class="portal-hero-right">
-                <a href="/docs-reseller.html" class="mkt-btn-secondary" style="display:inline-flex;align-items:center;gap:0.4rem;text-decoration:none;font-size:0.84rem;padding:0.55rem 1rem;">
-                    <span class="material-symbols-outlined" style="font-size:1.1rem;">api</span>
-                    Panduan &amp; SDK
-                </a>
-                <a href="/marketplace" class="mkt-btn-primary" style="display:inline-flex;align-items:center;gap:0.4rem;text-decoration:none;font-size:0.84rem;padding:0.55rem 1rem;">
-                    <span class="material-symbols-outlined" style="font-size:1.1rem;">shopping_bag</span>
-                    Belanja di Web
-                </a>
-            </div>
-        </header>
-
-        <!-- ── Navigation Tabs ── -->
-        <div class="portal-nav-tabs" role="tablist">
-            <button type="button" class="portal-tab-btn active" data-tab="tab-api">
-                <span class="material-symbols-outlined">key</span>
-                Kredensial API &amp; Keamanan
-            </button>
-            <button type="button" class="portal-tab-btn" data-tab="tab-products">
-                <span class="material-symbols-outlined">inventory_2</span>
-                Daftar Produk &amp; Harga Modal
-            </button>
-            <button type="button" class="portal-tab-btn" data-tab="tab-orders">
-                <span class="material-symbols-outlined">history</span>
-                Riwayat Transaksi API
-            </button>
-            <button type="button" class="portal-tab-btn" data-tab="tab-test">
-                <span class="material-symbols-outlined">terminal</span>
-                API Testing Tool
-            </button>
-        </div>
-
-        <!-- ── TAB 1: Kredensial API & Keamanan ── -->
-        <section id="tab-api" class="portal-tab-pane active">
-            
-            <!-- API Key & Secret -->
-            <div class="portal-card">
-                <div class="portal-card-header">
-                    <h2 class="portal-card-title">
-                        <span class="material-symbols-outlined">lock</span>
-                        Kredensial API Toko Anda
+                    <h2 style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.5rem;font-weight:800;color:var(--mkt-text);margin:0 0 0.4rem;">
+                        NexShop Partner Portal
                     </h2>
-                    <button type="button" id="btnRotateApiKey" class="portal-input-btn" style="background:rgba(239, 68, 68, 0.15);border-color:rgba(239, 68, 68, 0.4);color:#f87171;">
-                        <span class="material-symbols-outlined" style="font-size:1.05rem;">autorenew</span>
-                        Rotate / Buat Key Baru
+                    <p style="color:var(--mkt-text-dim);font-size:0.86rem;margin:0;">
+                        Portal mandiri khusus mitra reseller, developer web, dan integrasi API.
+                    </p>
+                </div>
+
+                <div class="reseller-auth-nav">
+                    <button type="button" id="tabAuthLogin" class="reseller-auth-tab active" onclick="switchAuthMode('login')">
+                        Masuk Mitra
+                    </button>
+                    <button type="button" id="tabAuthRegister" class="reseller-auth-tab" onclick="switchAuthMode('register')">
+                        Daftar Akun Baru &amp; KYC
                     </button>
                 </div>
 
-                <div class="portal-form-group">
-                    <label for="inputApiKey">API Key (X-NexShop-Api-Key)</label>
-                    <div class="portal-input-group">
-                        <input type="text" id="inputApiKey" class="portal-input" readonly value="nx_live_...">
-                        <button type="button" class="portal-input-btn" onclick="copyValue('inputApiKey', 'API Key')">
-                            <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span>
-                            Salin
-                        </button>
-                    </div>
-                </div>
+                <!-- Form Login Reseller -->
+                <form id="formResellerLogin">
+                    <div id="loginErrorMsg" class="rs-alert rs-alert--gagal" style="display:none;margin-bottom:1.25rem;"></div>
 
-                <div class="portal-form-group">
-                    <label for="inputSecretKey">Secret Key (X-NexShop-Secret)</label>
-                    <div class="portal-input-group">
-                        <input type="password" id="inputSecretKey" class="portal-input" readonly value="nx_sec_••••••••••••••••">
-                        <button type="button" class="portal-input-btn" id="btnToggleSecret" onclick="toggleSecretKey()">
-                            <span class="material-symbols-outlined" style="font-size:1rem;">visibility</span>
-                            Buka
-                        </button>
-                        <button type="button" class="portal-input-btn" onclick="copyValue('inputSecretKey', 'Secret Key')">
-                            <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span>
-                            Salin
-                        </button>
-                    </div>
-                    <span style="font-size:0.75rem;color:var(--mkt-text-dim);margin-top:0.25rem;">
-                        Simpan Secret Key di file <span class="docs-code">.env</span> server Anda. Jangan pernah bagikan Secret Key di frontend/publik!
-                    </span>
-                </div>
-            </div>
-
-            <!-- IP Whitelist & Webhook Configuration -->
-            <div class="portal-card">
-                <div class="portal-card-header">
-                    <h2 class="portal-card-title">
-                        <span class="material-symbols-outlined">security</span>
-                        Pengaturan IP Whitelist &amp; Webhook Callback
-                    </h2>
-                </div>
-
-                <form id="formPortalSettings">
                     <div class="portal-form-group">
-                        <label for="inputIpWhitelist">
-                            IP Whitelist Server Anda <span class="mkt-optional">(Pisahkan dengan koma jika lebih dari 1 IP)</span>
-                        </label>
-                        <input type="text" id="inputIpWhitelist" class="portal-input" placeholder="Contoh: 103.123.45.67, 192.168.1.1 (Kosongkan jika ingin izinkan semua IP)">
-                        <span style="font-size:0.75rem;color:var(--mkt-text-dim);">
-                            Jika diisi, server NexShop hanya akan menerima request API yang berasal dari alamat IP yang terdaftar.
-                        </span>
+                        <label class="portal-label" for="loginEmail">Email Terdaftar</label>
+                        <input type="email" id="loginEmail" class="portal-input" placeholder="contoh: reseller@store.com" required>
                     </div>
 
                     <div class="portal-form-group">
-                        <label for="inputWebhookUrl">
-                            Webhook Callback URL Toko Anda (HTTPS)
-                        </label>
-                        <div class="portal-input-group">
-                            <input type="url" id="inputWebhookUrl" class="portal-input" placeholder="https://tokosaya.com/api/webhook/nexshop">
-                            <button type="button" id="btnTestWebhook" class="portal-input-btn" style="background:rgba(16, 185, 129, 0.15);border-color:rgba(16, 185, 129, 0.4);color:#34d399;">
-                                <span class="material-symbols-outlined" style="font-size:1rem;">send</span>
-                                Tes Kirim Webhook
-                            </button>
+                        <label class="portal-label" for="loginPassword">Password</label>
+                        <input type="password" id="loginPassword" class="portal-input" placeholder="••••••••" required>
+                    </div>
+
+                    <button type="submit" id="btnLoginSubmit" class="mkt-btn-primary" style="width:100%;justify-content:center;padding:0.75rem;font-size:0.92rem;margin-top:0.5rem;">
+                        <span class="material-symbols-outlined" style="font-size:1.15rem;">login</span>
+                        <span>Masuk ke Partner Portal</span>
+                    </button>
+
+                    <div style="text-align:center;margin-top:1.25rem;font-size:0.82rem;color:var(--mkt-text-dim);">
+                        Belum punya akun mitra? <a href="javascript:void(0)" onclick="switchAuthMode('register')" style="color:var(--mkt-accent);font-weight:700;text-decoration:none;">Daftar di sini</a>
+                    </div>
+                </form>
+
+                <!-- Form Register Reseller + KYC -->
+                <form id="formResellerRegister" style="display:none;">
+                    <div id="regErrorMsg" class="rs-alert rs-alert--gagal" style="display:none;margin-bottom:1.25rem;"></div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;">
+                        <div class="portal-form-group">
+                            <label class="portal-label" for="regEmail">Email Mitra <span style="color:#f87171;">*</span></label>
+                            <input type="email" id="regEmail" class="portal-input" placeholder="nama@tokoanda.com" required>
                         </div>
-                        <span style="font-size:0.75rem;color:var(--mkt-text-dim);">
-                            NexShop akan mengirimkan notifikasi HTTP POST real-time saat status transaksi berubah (sukses/gagal/SN tersedia).
-                        </span>
-                    </div>
-
-                    <div class="portal-form-group">
-                        <label for="inputWebhookSecret">Webhook Signature Secret (whsec_...)</label>
-                        <div class="portal-input-group">
-                            <input type="text" id="inputWebhookSecret" class="portal-input" readonly value="whsec_...">
-                            <button type="button" class="portal-input-btn" onclick="copyValue('inputWebhookSecret', 'Webhook Secret')">
-                                <span class="material-symbols-outlined" style="font-size:1rem;">content_copy</span>
-                                Salin
-                            </button>
+                        <div class="portal-form-group">
+                            <label class="portal-label" for="regPassword">Buat Password <span style="color:#f87171;">*</span></label>
+                            <input type="password" id="regPassword" class="portal-input" placeholder="Min. 6 Karakter" minlength="6" required>
                         </div>
                     </div>
 
-                    <div style="display:flex;justify-content:flex-end;margin-top:1.25rem;">
-                        <button type="submit" class="mkt-btn-primary" id="btnSaveSettings" style="display:inline-flex;align-items:center;gap:0.4rem;">
-                            <span class="material-symbols-outlined" style="font-size:1.1rem;">save</span>
-                            Simpan Pengaturan Keamanan
-                        </button>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;">
+                        <div class="portal-form-group">
+                            <label class="portal-label" for="regFullname">Nama Lengkap (Sesuai KTP) <span style="color:#f87171;">*</span></label>
+                            <input type="text" id="regFullname" class="portal-input" placeholder="Nama sesuai identitas" required>
+                        </div>
+                        <div class="portal-form-group">
+                            <label class="portal-label" for="regWhatsapp">Nomor WhatsApp Aktif <span style="color:#f87171;">*</span></label>
+                            <input type="tel" id="regWhatsapp" class="portal-input" placeholder="08xxxxxxxxxx" required>
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;">
+                        <div class="portal-form-group">
+                            <label class="portal-label" for="regNik">NIK KTP (16 Digit) <span style="color:#f87171;">*</span></label>
+                            <input type="text" id="regNik" class="portal-input portal-input-mono" placeholder="320xxxxxxxxxxxxx" maxlength="20" required>
+                        </div>
+                        <div class="portal-form-group">
+                            <label class="portal-label" for="regStoreName">Nama Toko / Website / Brand</label>
+                            <input type="text" id="regStoreName" class="portal-input" placeholder="Contoh: TokoGame ID">
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.9rem;">
+                        <div class="portal-form-group">
+                            <label class="portal-label" for="regChannel">Kanal Penjualan Utama</label>
+                            <select id="regChannel" class="portal-input">
+                                <option value="Website Sendiri (API/Integrasi)">Website Sendiri (API/Integrasi)</option>
+                                <option value="Marketplace (Shopee/Tokopedia/TikTok)">Marketplace (Shopee/Tokopedia/TikTok)</option>
+                                <option value="Sosial Media / WhatsApp / Telegram">Sosial Media / WhatsApp / Telegram</option>
+                                <option value="Counter Pulsa / Toko Fisik">Counter Pulsa / Toko Fisik</option>
+                                <option value="Komunitas Gamers">Komunitas Gamers</option>
+                                <option value="Lainnya">Lainnya</option>
+                            </select>
+                        </div>
+                        <div class="portal-form-group">
+                            <label class="portal-label" for="regMonthly">Estimasi Transaksi Bulanan</label>
+                            <select id="regMonthly" class="portal-input">
+                                <option value="Baru Memulai / < Rp 1 Juta">Baru Memulai / &lt; Rp 1 Juta</option>
+                                <option value="Rp 1 - 5 Juta / Bulan">Rp 1 - 5 Juta / Bulan</option>
+                                <option value="Rp 5 - 20 Juta / Bulan">Rp 5 - 20 Juta / Bulan</option>
+                                <option value="Rp 20 - 50 Juta / Bulan">Rp 20 - 50 Juta / Bulan</option>
+                                <option value="> Rp 50 Juta / Bulan">&gt; Rp 50 Juta / Bulan</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Upload KTP Dropzone -->
+                    <div class="portal-form-group">
+                        <label class="portal-label">Foto KTP Asli (KYC) <span style="color:#f87171;">*</span></label>
+                        <input type="file" id="regKtpFile" accept="image/jpeg,image/png,image/webp" style="display:none;">
+                        <div id="regKtpDropzone" class="reseller-dropzone">
+                            <div id="regKtpPlaceholder">
+                                <span class="material-symbols-outlined" style="font-size:2.2rem;color:var(--mkt-accent);margin-bottom:0.4rem;">add_photo_alternate</span>
+                                <div style="font-weight:700;color:var(--mkt-text);font-size:0.9rem;">Klik atau Tarik Foto KTP ke Sini</div>
+                                <div class="portal-hint">Format JPG/PNG/WEBP, maksimal 10MB. Foto jelas &amp; NIK terbaca.</div>
+                            </div>
+                            <div id="regKtpPreviewWrap" style="display:none;position:relative;">
+                                <img id="regKtpPreviewImg" src="" alt="Preview KTP" style="max-height:160px;border-radius:8px;object-fit:contain;border:1px solid var(--mkt-line);">
+                                <div style="margin-top:0.5rem;">
+                                    <button type="button" id="regKtpRemoveBtn" class="portal-input-btn" style="position:static;">
+                                        <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span> Ganti Foto
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="portal-form-group">
+                        <label class="portal-label" for="regNote">Catatan Tambahan (Opsional)</label>
+                        <textarea id="regNote" class="portal-input" rows="2" placeholder="Ceritakan singkat tentang rencana bisnis atau integrasi web Anda..."></textarea>
+                    </div>
+
+                    <button type="submit" id="btnRegisterSubmit" class="mkt-btn-primary" style="width:100%;justify-content:center;padding:0.75rem;font-size:0.92rem;">
+                        <span class="material-symbols-outlined" style="font-size:1.15rem;">how_to_reg</span>
+                        <span>Daftar Akun Mitra &amp; Kirim Berkas KYC</span>
+                    </button>
+
+                    <div style="text-align:center;margin-top:1.25rem;font-size:0.82rem;color:var(--mkt-text-dim);">
+                        Sudah memiliki akun reseller? <a href="javascript:void(0)" onclick="switchAuthMode('login')" style="color:var(--mkt-accent);font-weight:700;text-decoration:none;">Masuk di sini</a>
                     </div>
                 </form>
             </div>
         </section>
 
-        <!-- ── TAB 2: Daftar Produk & Harga Modal ── -->
-        <section id="tab-products" class="portal-tab-pane">
-            <div class="portal-card">
-                <div class="portal-card-header">
-                    <div>
-                        <h2 class="portal-card-title">
-                            <span class="material-symbols-outlined">view_list</span>
-                            Katalog Produk &amp; Harga Modal Reseller
-                        </h2>
-                        <p style="margin:0.25rem 0 0;font-size:0.84rem;color:var(--mkt-text-dim);">
-                            Harga modal di bawah ini telah terpotong otomatis sesuai tingkatan tier akun Anda dan dijamin menguntungkan untuk dijual kembali.
-                        </p>
+        <!-- =============================================================== -->
+        <!-- SECTION 2: STATUS VERIFIKASI (PENDING / SUSPENDED / REJECTED)   -->
+        <!-- =============================================================== -->
+        <section id="sectionStatusNotice" style="display:none;">
+            <div class="portal-card" style="max-width:800px;margin:1rem auto;text-align:center;padding:2.5rem 2rem;">
+                <div id="statusNoticeIcon" style="display:inline-flex;padding:16px;border-radius:20px;margin-bottom:1rem;">
+                    <!-- Icon via JS -->
+                </div>
+                <h3 id="statusNoticeTitle" style="font-family:'Plus Jakarta Sans',sans-serif;font-size:1.4rem;font-weight:800;color:var(--mkt-text);margin:0 0 0.5rem;">
+                    Pengajuan Sedang Ditinjau
+                </h3>
+                <p id="statusNoticeDesc" style="color:var(--mkt-text-dim);font-size:0.92rem;max-width:600px;margin:0 auto 1.5rem;line-height:1.6;">
+                    Admin NexShop sedang memverifikasi data identitas dan foto KTP Anda.
+                </p>
+
+                <!-- Step Progress -->
+                <div class="reseller-step-timeline" style="text-align:left;max-width:480px;margin:1.5rem auto;">
+                    <div class="reseller-step-item">
+                        <div class="reseller-step-dot done"><span class="material-symbols-outlined" style="font-size:1rem;">check</span></div>
+                        <div>
+                            <div style="font-weight:700;color:var(--mkt-text);font-size:0.9rem;">1. Pendaftaran Akun Mitra</div>
+                            <div class="portal-hint">Akun mitra berhasil dibuat di sistem NexShop.</div>
+                        </div>
                     </div>
-                    <div id="productCountBadge" style="font-size:0.82rem;font-weight:700;color:var(--mkt-accent);">
-                        Memuat produk...
+                    <div class="reseller-step-item">
+                        <div id="stepDotKyc" class="reseller-step-dot current"><span class="material-symbols-outlined" style="font-size:1rem;">hourglass_top</span></div>
+                        <div>
+                            <div id="stepTextKyc" style="font-weight:700;color:var(--mkt-accent);font-size:0.9rem;">2. Verifikasi Berkas KYC KTP</div>
+                            <div class="portal-hint">Peninjauan berkas oleh admin (Maksimal 1x24 Jam kerja).</div>
+                        </div>
+                    </div>
+                    <div class="reseller-step-item">
+                        <div class="reseller-step-dot pending"><span class="material-symbols-outlined" style="font-size:1rem;">lock</span></div>
+                        <div>
+                            <div style="font-weight:700;color:var(--mkt-text-dim);font-size:0.9rem;">3. Aktivasi API Key &amp; Harga Modal</div>
+                            <div class="portal-hint">Kredensial API Key, IP Whitelist, dan diskon reseller aktif otomatis.</div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Filters -->
-                <div class="portal-controls">
-                    <input type="text" id="productSearchInput" class="portal-search-input" placeholder="Cari nama produk, SKU kode produk, atau operator...">
-                    <select id="productCategoryFilter" class="portal-select">
-                        <option value="all">Semua Kategori</option>
-                        <option value="Game">Topup Game</option>
-                        <option value="E-Wallet">E-Wallet (DANA/OVO/GoPay/ShopeePay)</option>
-                        <option value="Pulsa">Pulsa &amp; Paket Data</option>
-                        <option value="PLN">PLN (Token &amp; Tagihan)</option>
-                        <option value="Transfer Bank">Transfer Antar Bank</option>
-                    </select>
-                </div>
-
-                <!-- Table -->
-                <div class="portal-table-wrap">
-                    <table class="portal-table" id="portalProductTable">
-                        <thead>
-                            <tr>
-                                <th>Kategori / Operator</th>
-                                <th>Kode Produk (SKU)</th>
-                                <th>Nama Produk</th>
-                                <th>Harga Normal</th>
-                                <th>Harga Modal Reseller</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="portalProductTbody">
-                            <tr>
-                                <td colspan="6" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);">
-                                    <span class="material-symbols-outlined mkt-spin" style="vertical-align:middle;">progress_activity</span>
-                                    Memuat daftar produk &amp; harga modal...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <!-- ── TAB 3: Riwayat Transaksi API ── -->
-        <section id="tab-orders" class="portal-tab-pane">
-            <div class="portal-card">
-                <div class="portal-card-header">
-                    <h2 class="portal-card-title">
-                        <span class="material-symbols-outlined">receipt_long</span>
-                        Riwayat Transaksi Akun Reseller
-                    </h2>
-                    <button type="button" class="portal-input-btn" onclick="loadPortalOrders()">
-                        <span class="material-symbols-outlined" style="font-size:1rem;">refresh</span>
-                        Refresh
+                <div style="display:flex;justify-content:center;gap:0.75rem;flex-wrap:wrap;margin-top:1.5rem;">
+                    <button type="button" class="mkt-btn-secondary" onclick="loadPortalOverview()">
+                        <span class="material-symbols-outlined" style="font-size:1.1rem;">refresh</span>
+                        <span>Periksa Status Sekarang</span>
+                    </button>
+                    <a href="https://wa.me/6281234567890?text=Halo%20Admin%20NexShop,%20saya%20sudah%20mengajukan%20kemitraan%20reseller" target="_blank" rel="noopener" class="mkt-btn-primary">
+                        <span class="material-symbols-outlined" style="font-size:1.1rem;">chat</span>
+                        <span>Hubungi CS WhatsApp</span>
+                    </a>
+                    <button type="button" class="mkt-btn-secondary" onclick="logoutReseller()" style="color:#f87171;">
+                        <span class="material-symbols-outlined" style="font-size:1.1rem;">logout</span>
+                        <span>Keluar Akun</span>
                     </button>
                 </div>
-
-                <div class="portal-table-wrap">
-                    <table class="portal-table">
-                        <thead>
-                            <tr>
-                                <th>Waktu</th>
-                                <th>Ref ID / Order ID</th>
-                                <th>Produk</th>
-                                <th>Tujuan</th>
-                                <th>Total Bayar</th>
-                                <th>Status</th>
-                                <th>Serial Number (SN)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="portalOrdersTbody">
-                            <tr>
-                                <td colspan="7" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);">
-                                    Memuat riwayat transaksi...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
             </div>
         </section>
 
-        <!-- ── TAB 4: API Testing Tool ── -->
-        <section id="tab-test" class="portal-tab-pane">
-            <div class="portal-card">
-                <div class="portal-card-header">
-                    <h2 class="portal-card-title">
-                        <span class="material-symbols-outlined">play_circle</span>
-                        Uji Coba Endpoint API Langsung
-                    </h2>
+        <!-- =============================================================== -->
+        <!-- SECTION 3: DASHBOARD RESELLER AKTIF (APPROVED)                   -->
+        <!-- =============================================================== -->
+        <section id="sectionDashboard" style="display:none;">
+            <!-- Profile & Tier Hero Banner -->
+            <div class="portal-hero">
+                <div class="portal-hero-left">
+                    <div class="portal-avatar">
+                        <span class="material-symbols-outlined">shield_person</span>
+                    </div>
+                    <div>
+                        <h1 class="portal-user-name" id="portalFullName">Memuat Mitra...</h1>
+                        <div class="portal-user-meta">
+                            <span id="portalEmail">-</span>
+                            <span>&bull;</span>
+                            <span class="portal-tier-pill" id="portalTierText">Tier Silver</span>
+                            <span>&bull;</span>
+                            <span style="color:#34d399;font-weight:600;" id="portalDiscountText">Potongan Harga Otomatis Aktif</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(300px, 1fr));gap:1.5rem;">
-                    <!-- Test Check Nickname -->
-                    <div style="border:1px solid var(--mkt-line);border-radius:10px;padding:1.25rem;background:rgba(0,0,0,0.2);">
-                        <h3 style="font-size:0.95rem;font-weight:700;color:var(--mkt-text);margin:0 0 0.5rem;display:flex;align-items:center;gap:0.4rem;">
-                            <span class="material-symbols-outlined" style="color:var(--mkt-accent);font-size:1.1rem;">person_search</span>
-                            Test Check Nickname Game
+                <div class="portal-hero-right">
+                    <a href="/docs-reseller.html" class="mkt-btn-secondary">
+                        <span class="material-symbols-outlined" style="font-size:1.1rem;">menu_book</span>
+                        <span>Dokumentasi API</span>
+                    </a>
+                    <button type="button" class="mkt-btn-secondary" onclick="logoutReseller()" style="color:#f87171;">
+                        <span class="material-symbols-outlined" style="font-size:1.1rem;">logout</span>
+                        <span>Keluar</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="portal-nav-tabs" aria-label="Menu Partner Portal">
+                <button type="button" class="portal-tab-btn active" data-tab="tab-api-keys">
+                    <span class="material-symbols-outlined">key</span>
+                    <span>Kredensial API &amp; Webhook</span>
+                </button>
+                <button type="button" class="portal-tab-btn" data-tab="tab-products">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span>Daftar Produk &amp; Harga Modal</span>
+                </button>
+                <button type="button" class="portal-tab-btn" data-tab="tab-orders">
+                    <span class="material-symbols-outlined">receipt_long</span>
+                    <span>Riwayat Transaksi API</span>
+                </button>
+                <button type="button" class="portal-tab-btn" data-tab="tab-testing">
+                    <span class="material-symbols-outlined">terminal</span>
+                    <span>API Testing Tool</span>
+                </button>
+            </nav>
+
+            <!-- TAB 1: API KEYS & WEBHOOK -->
+            <div id="tab-api-keys" class="portal-tab-pane active">
+                <div class="portal-card">
+                    <div class="portal-card-header">
+                        <h3 class="portal-card-title">
+                            <span class="material-symbols-outlined">lock_open</span>
+                            <span>Kredensial API Mitra</span>
                         </h3>
-                        <p style="font-size:0.8rem;color:var(--mkt-text-dim);margin:0 0 1rem;">
-                            Cek validitas Player ID sebelum membuat transaksi.
-                        </p>
-                        <div class="portal-form-group">
-                            <label>Kode Produk</label>
-                            <input type="text" id="testNickProduct" class="portal-input" value="ML86" placeholder="ML86 / FF100 / etc">
-                        </div>
-                        <div class="portal-form-group">
-                            <label>User ID</label>
-                            <input type="text" id="testNickUserId" class="portal-input" placeholder="12345678">
-                        </div>
-                        <div class="portal-form-group">
-                            <label>Zone / Server ID</label>
-                            <input type="text" id="testNickZoneId" class="portal-input" placeholder="2123">
-                        </div>
-                        <button type="button" class="portal-input-btn" id="btnRunTestNick" style="width:100%;justify-content:center;margin-top:0.5rem;">
-                            Jalankan Cek Nickname
+                        <button type="button" id="btnRotateApiKey" class="mkt-btn-secondary" style="font-size:0.8rem;padding:0.4rem 0.8rem;">
+                            <span class="material-symbols-outlined" style="font-size:1rem;">sync</span>
+                            <span>Rotate / Buat Key Baru</span>
                         </button>
-                        <pre id="testNickResult" style="background:#0d111e;border:1px solid var(--mkt-line);border-radius:8px;padding:0.75rem;font-family:'Fira Code',monospace;font-size:0.78rem;color:#34d399;margin-top:0.75rem;display:none;white-space:pre-wrap;"></pre>
                     </div>
 
-                    <!-- Test Create Order Snippet -->
-                    <div style="border:1px solid var(--mkt-line);border-radius:10px;padding:1.25rem;background:rgba(0,0,0,0.2);">
-                        <h3 style="font-size:0.95rem;font-weight:700;color:var(--mkt-text);margin:0 0 0.5rem;display:flex;align-items:center;gap:0.4rem;">
-                            <span class="material-symbols-outlined" style="color:var(--mkt-accent);font-size:1.1rem;">code</span>
-                            Contoh Request CURL
+                    <div class="portal-form-group">
+                        <label class="portal-label" for="inputApiKey">
+                            <span>API KEY (Header: <code>X-NexShop-Api-Key</code>)</span>
+                        </label>
+                        <div class="portal-input-wrap">
+                            <input type="text" id="inputApiKey" class="portal-input portal-input-mono" readonly value="Memuat API Key...">
+                            <button type="button" class="portal-input-btn" onclick="copyValue('inputApiKey', 'API Key')">
+                                <span class="material-symbols-outlined" style="font-size:0.95rem;">content_copy</span> Salin
+                            </button>
+                        </div>
+                        <span class="portal-hint">Gunakan API Key ini untuk mengautentikasi seluruh request dari server atau website Anda ke NexShop.</span>
+                    </div>
+
+                    <div class="portal-form-group">
+                        <label class="portal-label" for="inputSecretKey">
+                            <span>SECRET KEY (Header: <code>X-NexShop-Secret</code>)</span>
+                        </label>
+                        <div class="portal-input-wrap">
+                            <input type="password" id="inputSecretKey" class="portal-input portal-input-mono" readonly value="••••••••••••••••">
+                            <button type="button" id="btnToggleSecret" class="portal-input-btn" onclick="toggleSecretKey()" style="right:78px;">
+                                <span class="material-symbols-outlined" style="font-size:0.95rem;">visibility</span> Buka
+                            </button>
+                            <button type="button" class="portal-input-btn" onclick="copyValue('inputSecretKey', 'Secret Key')">
+                                <span class="material-symbols-outlined" style="font-size:0.95rem;">content_copy</span> Salin
+                            </button>
+                        </div>
+                        <span class="portal-hint">Secret Key bersifat rahasia. Jangan pernah mempublikasikannya di frontend client atau repositori publik.</span>
+                    </div>
+                </div>
+
+                <!-- Keamanan IP Whitelist & Webhook Relay -->
+                <div class="portal-card">
+                    <div class="portal-card-header">
+                        <h3 class="portal-card-title">
+                            <span class="material-symbols-outlined">security</span>
+                            <span>Keamanan IP Whitelist &amp; Webhook Callback</span>
                         </h3>
-                        <p style="font-size:0.8rem;color:var(--mkt-text-dim);margin:0 0 1rem;">
-                            Salin perintah ini untuk menguji dari terminal / Postman:
-                        </p>
-                        <pre style="background:#0d111e;border:1px solid var(--mkt-line);border-radius:8px;padding:0.85rem;font-family:'Fira Code',monospace;font-size:0.78rem;color:#d1d5db;overflow-x:auto;white-space:pre-wrap;line-height:1.6;"><code>curl -X POST https://nexshop.cloud/api/topup \
+                    </div>
+
+                    <form id="formPortalSettings">
+                        <div class="portal-form-group">
+                            <label class="portal-label" for="inputIpWhitelist">
+                                <span>IP Whitelist Server Anda</span>
+                                <span style="color:var(--mkt-accent);font-weight:normal;font-size:0.75rem;">Pisahkan koma jika lebih dari satu</span>
+                            </label>
+                            <input type="text" id="inputIpWhitelist" class="portal-input portal-input-mono" placeholder="Contoh: 103.123.45.67, 192.168.1.100">
+                            <span class="portal-hint">Jika diisi, NexShop HANYA akan memproses request API yang berasal dari alamat IP yang terdaftar. Kosongkan jika IP server dinamis.</span>
+                        </div>
+
+                        <div class="portal-form-group">
+                            <label class="portal-label" for="inputWebhookUrl">
+                                <span>Webhook Callback URL (Notifikasi Otomatis Transaksi Selesai)</span>
+                            </label>
+                            <div style="display:flex;gap:0.5rem;">
+                                <input type="url" id="inputWebhookUrl" class="portal-input portal-input-mono" placeholder="https://tokoanda.com/api/nexshop-webhook">
+                                <button type="button" id="btnTestWebhook" class="mkt-btn-secondary" style="white-space:nowrap;padding:0 1rem;font-size:0.82rem;">
+                                    <span class="material-symbols-outlined" style="font-size:1rem;">send</span>
+                                    <span>Tes Webhook</span>
+                                </button>
+                            </div>
+                            <span class="portal-hint">Server NexShop akan menembak URL ini secara instan saat pesanan topup / marketplace Anda berstatus <code>sukses</code> atau <code>gagal</code>.</span>
+                        </div>
+
+                        <div class="portal-form-group">
+                            <label class="portal-label" for="inputWebhookSecret">
+                                <span>Webhook Signing Secret (HMAC SHA-256)</span>
+                            </label>
+                            <div class="portal-input-wrap">
+                                <input type="text" id="inputWebhookSecret" class="portal-input portal-input-mono" readonly value="Memuat...">
+                                <button type="button" class="portal-input-btn" onclick="copyValue('inputWebhookSecret', 'Webhook Secret')">
+                                    <span class="material-symbols-outlined" style="font-size:0.95rem;">content_copy</span> Salin
+                                </button>
+                            </div>
+                            <span class="portal-hint">Gunakan secret ini untuk memvalidasi header <code>X-NexShop-Signature</code> pada backend Anda.</span>
+                        </div>
+
+                        <div style="display:flex;justify-content:flex-end;margin-top:1.25rem;">
+                            <button type="submit" id="btnSaveSettings" class="mkt-btn-primary" style="padding:0.65rem 1.5rem;">
+                                <span class="material-symbols-outlined" style="font-size:1.1rem;">save</span>
+                                <span>Simpan Pengaturan Keamanan</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- TAB 2: PRODUCTS CATALOG & MODAL PRICES -->
+            <div id="tab-products" class="portal-tab-pane">
+                <div class="portal-card">
+                    <div class="portal-card-header">
+                        <div>
+                            <h3 class="portal-card-title">
+                                <span class="material-symbols-outlined">inventory</span>
+                                <span>Katalog Produk &amp; Harga Modal Reseller</span>
+                            </h3>
+                            <p class="portal-hint" style="margin:0.25rem 0 0;">
+                                Seluruh harga modal di bawah ini telah dikalkulasi khusus untuk tingkatan kemitraan Anda.
+                            </p>
+                        </div>
+                        <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+                            <span id="productCountBadge" class="portal-tier-pill">Memuat...</span>
+                        </div>
+                    </div>
+
+                    <!-- Search and Filter -->
+                    <div style="display:grid;grid-template-columns:1fr auto;gap:0.75rem;margin-bottom:1rem;">
+                        <input type="text" id="productSearchInput" class="portal-input" placeholder="Cari nama produk, SKU kode, atau operator (contoh: MLBB, TELKOMSEL, DANA)...">
+                        <select id="productCategoryFilter" class="portal-input" style="width:auto;min-width:160px;">
+                            <option value="all">Semua Kategori</option>
+                            <option value="Game">Top Up Game</option>
+                            <option value="Pulsa">Pulsa &amp; Paket Data</option>
+                            <option value="E-Money">E-Wallet &amp; Saldo</option>
+                            <option value="Voucher">Voucher Digital</option>
+                            <option value="PLN">Token Listrik PLN</option>
+                            <option value="Pascabayar">Tagihan Pascabayar</option>
+                        </select>
+                    </div>
+
+                    <div class="portal-table-wrap">
+                        <table class="portal-table">
+                            <thead>
+                                <tr>
+                                    <th>Operator / Kategori</th>
+                                    <th>Kode Produk (SKU)</th>
+                                    <th>Nama Produk</th>
+                                    <th>Harga Normal</th>
+                                    <th>Harga Modal Anda</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portalProductTbody">
+                                <tr>
+                                    <td colspan="6" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);">
+                                        <span class="material-symbols-outlined mkt-spin" style="vertical-align:middle;margin-right:0.3rem;">progress_activity</span>
+                                        Memuat seluruh produk katalog...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: ORDERS HISTORY -->
+            <div id="tab-orders" class="portal-tab-pane">
+                <div class="portal-card">
+                    <div class="portal-card-header">
+                        <h3 class="portal-card-title">
+                            <span class="material-symbols-outlined">history</span>
+                            <span>Riwayat Transaksi API Reseller</span>
+                        </h3>
+                        <button type="button" class="mkt-btn-secondary" onclick="loadPortalOrders()" style="font-size:0.8rem;padding:0.4rem 0.8rem;">
+                            <span class="material-symbols-outlined" style="font-size:1rem;">refresh</span> Muat Ulang
+                        </button>
+                    </div>
+
+                    <div class="portal-table-wrap">
+                        <table class="portal-table">
+                            <thead>
+                                <tr>
+                                    <th>Waktu</th>
+                                    <th>Ref ID / Order ID</th>
+                                    <th>Produk</th>
+                                    <th>Tujuan / Target</th>
+                                    <th>Harga Modal</th>
+                                    <th>Status</th>
+                                    <th>Serial Number (SN)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="portalOrdersTbody">
+                                <tr>
+                                    <td colspan="7" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);">
+                                        Klik tab ini untuk memuat riwayat transaksi Anda.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: API TESTING TOOL -->
+            <div id="tab-testing" class="portal-tab-pane">
+                <div class="portal-card">
+                    <div class="portal-card-header">
+                        <h3 class="portal-card-title">
+                            <span class="material-symbols-outlined">code</span>
+                            <span>API Testing &amp; Sandbox Tool</span>
+                        </h3>
+                    </div>
+
+                    <p class="portal-hint" style="margin-bottom:1.25rem;">
+                        Uji coba validasi Nickname game secara langsung tanpa memotong saldo/kuota.
+                    </p>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+                        <div>
+                            <div class="portal-form-group">
+                                <label class="portal-label">Kode Produk / Game</label>
+                                <input type="text" id="testNickProduct" class="portal-input" value="mobile-legends" placeholder="contoh: mobile-legends atau ff">
+                            </div>
+                            <div class="portal-form-group">
+                                <label class="portal-label">User ID</label>
+                                <input type="text" id="testNickUserId" class="portal-input" placeholder="contoh: 12345678">
+                            </div>
+                            <div class="portal-form-group">
+                                <label class="portal-label">Zone / Server ID (Jika Ada)</label>
+                                <input type="text" id="testNickZoneId" class="portal-input" placeholder="contoh: 2026">
+                            </div>
+                            <button type="button" id="btnRunTestNick" class="mkt-btn-primary" style="width:100%;justify-content:center;padding:0.65rem;">
+                                <span class="material-symbols-outlined" style="font-size:1.1rem;">play_arrow</span>
+                                <span>Cek Nickname Sekarang</span>
+                            </button>
+                        </div>
+
+                        <div>
+                            <label class="portal-label">Response JSON</label>
+                            <pre id="testNickResult" class="portal-code-block" style="min-height:160px;margin-top:0.4rem;white-space:pre-wrap;">(Hasil pengecekan akan tampil di sini)</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CURL Example Code -->
+                <div class="portal-card">
+                    <div class="portal-card-header">
+                        <h3 class="portal-card-title">
+                            <span class="material-symbols-outlined">terminal</span>
+                            <span>Contoh Header Autentikasi cURL</span>
+                        </h3>
+                    </div>
+
+                    <div class="portal-code-block">
+<pre>curl -X POST https://nexshop.cloud/api/topup/create-order \
   -H "Content-Type: application/json" \
-  -H "X-NexShop-Api-Key: <span id="curlApiKeyPlaceholder">nx_live_...</span>" \
+  -H "X-NexShop-Api-Key: <span id="curlApiKeyPlaceholder">nx_live_xxxxxxxxxxxxxxxxxxxxxxxx</span>" \
+  -H "X-NexShop-Secret: nx_sec_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
   -d '{
     "kode_produk": "ML86",
-    "tujuan": "12345678",
-    "server_id": "2123",
-    "payment_method": "qris"
-  }'</code></pre>
+    "user_id": "12345678",
+    "server_id": "2026",
+    "customer_phone": "081234567890",
+    "payment_method": "BALANCE"
+  }'</pre>
                     </div>
                 </div>
             </div>
@@ -799,10 +1130,26 @@
             return "/api";
         })();
 
-        const PUBLIC_TOKEN_STORAGE_KEY = "nexshop-public-token";
+        // Dedicated Storage Keys for Resellers (Terpisah dari akun toko biasa)
+        const RESELLER_TOKEN_KEY = "nexshop-reseller-token";
+        const RESELLER_USER_KEY = "nexshop-reseller-user";
 
-        function getToken() {
-            return localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) || localStorage.getItem("token");
+        function getResellerToken() {
+            return localStorage.getItem(RESELLER_TOKEN_KEY) || localStorage.getItem("token") || "";
+        }
+
+        function setResellerSession(token, user) {
+            localStorage.setItem(RESELLER_TOKEN_KEY, token);
+            if (user) localStorage.setItem(RESELLER_USER_KEY, JSON.stringify(user));
+        }
+
+        function logoutReseller() {
+            localStorage.removeItem(RESELLER_TOKEN_KEY);
+            localStorage.removeItem(RESELLER_USER_KEY);
+            showToast("Anda telah keluar dari Partner Portal");
+            setTimeout(() => {
+                window.location.reload();
+            }, 600);
         }
 
         function showToast(msg) {
@@ -836,7 +1183,313 @@
             return String(str || "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
         }
 
-        // Tab Switching
+        // ── Auth Mode Switching (Login / Register) ────────────────────────
+        function switchAuthMode(mode) {
+            const tabLogin = document.getElementById("tabAuthLogin");
+            const tabReg = document.getElementById("tabAuthRegister");
+            const formLogin = document.getElementById("formResellerLogin");
+            const formReg = document.getElementById("formResellerRegister");
+
+            if (mode === "register") {
+                tabLogin.classList.remove("active");
+                tabReg.classList.add("active");
+                formLogin.style.display = "none";
+                formReg.style.display = "block";
+            } else {
+                tabReg.classList.remove("active");
+                tabLogin.classList.add("active");
+                formReg.style.display = "none";
+                formLogin.style.display = "block";
+            }
+        }
+
+        // ── Dropzone & Upload KTP KYC ─────────────────────────────────────
+        let uploadedKtpUrl = "";
+        const dropzone = document.getElementById("regKtpDropzone");
+        const fileInput = document.getElementById("regKtpFile");
+        const placeholder = document.getElementById("regKtpPlaceholder");
+        const previewWrap = document.getElementById("regKtpPreviewWrap");
+        const previewImg = document.getElementById("regKtpPreviewImg");
+        const removeBtn = document.getElementById("regKtpRemoveBtn");
+
+        if (dropzone && fileInput) {
+            dropzone.addEventListener("click", (e) => {
+                if (e.target === removeBtn || removeBtn.contains(e.target)) return;
+                fileInput.click();
+            });
+
+            dropzone.addEventListener("dragover", (e) => {
+                e.preventDefault();
+                dropzone.style.borderColor = "var(--mkt-accent)";
+            });
+
+            dropzone.addEventListener("dragleave", () => {
+                dropzone.style.borderColor = "var(--mkt-line)";
+            });
+
+            dropzone.addEventListener("drop", (e) => {
+                e.preventDefault();
+                dropzone.style.borderColor = "var(--mkt-line)";
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    fileInput.files = e.dataTransfer.files;
+                    handleKtpSelected(e.dataTransfer.files[0]);
+                }
+            });
+
+            fileInput.addEventListener("change", () => {
+                if (fileInput.files && fileInput.files[0]) {
+                    handleKtpSelected(fileInput.files[0]);
+                }
+            });
+
+            removeBtn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                fileInput.value = "";
+                uploadedKtpUrl = "";
+                previewImg.src = "";
+                previewWrap.style.display = "none";
+                placeholder.style.display = "block";
+            });
+        }
+
+        function handleKtpSelected(file) {
+            if (!file) return;
+            if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+                alert("Format file KTP harus berupa gambar (JPG, PNG, atau WEBP)");
+                fileInput.value = "";
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                alert("Ukuran foto KTP maksimal 10MB");
+                fileInput.value = "";
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result;
+                placeholder.style.display = "none";
+                previewWrap.style.display = "block";
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function uploadKtpFile(file) {
+            const formData = new FormData();
+            formData.append("image", file);
+            const res = await fetch(`${API_BASE}/upload/image?type=kyc`, {
+                method: "POST",
+                body: formData
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal mengunggah foto KTP");
+            return data.url;
+        }
+
+        // ── Submit Register Reseller ──────────────────────────────────────
+        document.getElementById("formResellerRegister").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const errEl = document.getElementById("regErrorMsg");
+            const btn = document.getElementById("btnRegisterSubmit");
+            errEl.style.display = "none";
+            errEl.textContent = "";
+
+            const file = fileInput.files && fileInput.files[0];
+            if (!file && !uploadedKtpUrl) {
+                errEl.textContent = "Foto KTP (KYC) wajib dipilih untuk verifikasi kemitraan.";
+                errEl.style.display = "block";
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Mengunggah berkas KTP...`;
+
+            try {
+                if (file && !uploadedKtpUrl) {
+                    uploadedKtpUrl = await uploadKtpFile(file);
+                }
+
+                btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Mendaftarkan akun mitra...`;
+
+                const payload = {
+                    email: document.getElementById("regEmail").value.trim(),
+                    password: document.getElementById("regPassword").value,
+                    fullname: document.getElementById("regFullname").value.trim(),
+                    whatsapp: document.getElementById("regWhatsapp").value.trim(),
+                    nik: document.getElementById("regNik").value.trim(),
+                    store_name: document.getElementById("regStoreName").value.trim(),
+                    channel: document.getElementById("regChannel").value,
+                    monthly_estimate: document.getElementById("regMonthly").value,
+                    note: document.getElementById("regNote").value.trim(),
+                    ktp_url: uploadedKtpUrl
+                };
+
+                const res = await fetch(`${API_BASE}/reseller/auth/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || "Gagal mendaftar reseller");
+
+                setResellerSession(data.token, data.user);
+                showToast("Pendaftaran berhasil!");
+                loadPortalOverview();
+            } catch (err) {
+                errEl.textContent = err.message;
+                errEl.style.display = "block";
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:1.15rem;">how_to_reg</span> <span>Daftar Akun Mitra &amp; Kirim Berkas KYC</span>`;
+            }
+        });
+
+        // ── Submit Login Reseller ─────────────────────────────────────────
+        document.getElementById("formResellerLogin").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const errEl = document.getElementById("loginErrorMsg");
+            const btn = document.getElementById("btnLoginSubmit");
+            errEl.style.display = "none";
+            errEl.textContent = "";
+
+            btn.disabled = true;
+            btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Masuk...`;
+
+            try {
+                const payload = {
+                    email: document.getElementById("loginEmail").value.trim(),
+                    password: document.getElementById("loginPassword").value
+                };
+
+                const res = await fetch(`${API_BASE}/reseller/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || "Login gagal");
+
+                setResellerSession(data.token, data.user);
+                showToast("Login berhasil!");
+                loadPortalOverview();
+            } catch (err) {
+                errEl.textContent = err.message;
+                errEl.style.display = "block";
+                btn.disabled = false;
+                btn.innerHTML = `<span class="material-symbols-outlined" style="font-size:1.15rem;">login</span> <span>Masuk ke Partner Portal</span>`;
+            }
+        });
+
+        // ── Load Portal State (Auth / Pending / Approved) ─────────────────
+        let cachedSecret = "";
+        let isSecretRevealed = false;
+
+        async function loadPortalOverview() {
+            const token = getResellerToken();
+            const secAuth = document.getElementById("sectionAuth");
+            const secStatus = document.getElementById("sectionStatusNotice");
+            const secDash = document.getElementById("sectionDashboard");
+            const headerAuth = document.getElementById("portalHeaderAuth");
+
+            if (!token) {
+                secAuth.style.display = "block";
+                secStatus.style.display = "none";
+                secDash.style.display = "none";
+                headerAuth.innerHTML = `
+                    <button type="button" class="mkt-btn-primary" onclick="switchAuthMode('login');document.getElementById('sectionAuth').scrollIntoView({behavior:'smooth'});" style="padding:0.45rem 1rem;font-size:0.84rem;">
+                        <span class="material-symbols-outlined" style="font-size:1rem;">login</span> Masuk Mitra
+                    </button>
+                `;
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/reseller/me`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+
+                if (res.status === 401) {
+                    logoutReseller();
+                    return;
+                }
+
+                const meData = await res.json().catch(() => ({}));
+                const status = meData.status || "none";
+
+                headerAuth.innerHTML = `
+                    <div style="display:flex;align-items:center;gap:0.75rem;">
+                        <span style="font-size:0.84rem;color:var(--mkt-text);font-weight:600;">${escapeHtml(meData.profil?.fullname || "Mitra Reseller")}</span>
+                        <button type="button" class="mkt-btn-secondary" onclick="logoutReseller()" style="padding:0.35rem 0.75rem;font-size:0.8rem;color:#f87171;">
+                            Keluar
+                        </button>
+                    </div>
+                `;
+
+                if (status === "approved") {
+                    secAuth.style.display = "none";
+                    secStatus.style.display = "none";
+                    secDash.style.display = "block";
+
+                    // Fetch Overview Data API
+                    const ovRes = await fetch(`${API_BASE}/reseller/portal/overview`, {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const data = await ovRes.json().catch(() => ({}));
+
+                    if (ovRes.ok && data.user) {
+                        document.getElementById("portalFullName").textContent = data.user.fullname || "Partner Reseller";
+                        document.getElementById("portalEmail").textContent = data.user.email;
+                        if (data.user.reseller_tier) {
+                            document.getElementById("portalTierText").textContent = `Tier ${data.user.reseller_tier.name}`;
+                            document.getElementById("portalDiscountText").textContent = `Potongan ${String(data.user.reseller_tier.discount_percent).replace(".", ",")}% Otomatis Aktif`;
+                        }
+
+                        if (data.api_credentials) {
+                            const creds = data.api_credentials;
+                            document.getElementById("inputApiKey").value = creds.api_key;
+                            document.getElementById("inputSecretKey").value = creds.masked_secret;
+                            document.getElementById("inputIpWhitelist").value = creds.ip_whitelist || "";
+                            document.getElementById("inputWebhookUrl").value = creds.webhook_url || "";
+                            document.getElementById("inputWebhookSecret").value = creds.webhook_secret || "";
+                            document.getElementById("curlApiKeyPlaceholder").textContent = creds.api_key;
+                        }
+                    }
+                } else if (status === "pending") {
+                    secAuth.style.display = "none";
+                    secDash.style.display = "none";
+                    secStatus.style.display = "block";
+
+                    const iconBox = document.getElementById("statusNoticeIcon");
+                    iconBox.style.background = "rgba(245, 158, 11, 0.15)";
+                    iconBox.style.color = "#f59e0b";
+                    iconBox.innerHTML = `<span class="material-symbols-outlined" style="font-size:2.4rem;">hourglass_top</span>`;
+
+                    document.getElementById("statusNoticeTitle").textContent = "Pengajuan Kemitraan Sedang Ditinjau Admin";
+                    document.getElementById("statusNoticeDesc").innerHTML = "Terima kasih telah mendaftar sebagai mitra reseller NexShop. Berkas foto KTP dan data usaha Anda sedang diverifikasi oleh admin (Maksimal 1x24 Jam kerja).";
+                } else if (status === "suspended") {
+                    secAuth.style.display = "none";
+                    secDash.style.display = "none";
+                    secStatus.style.display = "block";
+
+                    const iconBox = document.getElementById("statusNoticeIcon");
+                    iconBox.style.background = "rgba(239, 68, 68, 0.15)";
+                    iconBox.style.color = "#ef4444";
+                    iconBox.innerHTML = `<span class="material-symbols-outlined" style="font-size:2.4rem;">block</span>`;
+
+                    document.getElementById("statusNoticeTitle").textContent = "Status Kemitraan Reseller Sedang Dibekukan";
+                    document.getElementById("statusNoticeDesc").innerHTML = "Akun kemitraan Anda saat ini sedang dibekukan. Silakan hubungi Customer Service NexShop untuk informasi reaktivasi.";
+                } else {
+                    secAuth.style.display = "block";
+                    secStatus.style.display = "none";
+                    secDash.style.display = "none";
+                }
+            } catch (err) {
+                console.error("loadPortalOverview error:", err);
+            }
+        }
+
+        // Tab Switching in Dashboard
         (function setupTabs() {
             const tabBtns = document.querySelectorAll(".portal-tab-btn");
             tabBtns.forEach(btn => {
@@ -858,65 +1511,10 @@
             });
         })();
 
-        // ── Load Portal Overview ──────────────────────────────────────────
-        let cachedSecret = "";
-        let isSecretRevealed = false;
-
-        async function loadPortalOverview() {
-            const token = getToken();
-            if (!token) {
-                alert("Silakan masuk terlebih dahulu dengan akun reseller Anda.");
-                window.location.href = "/login.html?redirect=" + encodeURIComponent(window.location.pathname);
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_BASE}/reseller/portal/overview`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-
-                if (res.status === 401) {
-                    alert("Sesi login berakhir. Silakan login kembali.");
-                    window.location.href = "/login.html";
-                    return;
-                }
-
-                if (res.status === 403) {
-                    alert("Akun Anda belum berstatus Reseller Aktif. Silakan daftar di halaman Program Reseller.");
-                    window.location.href = "/reseller.html";
-                    return;
-                }
-
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.message || "Gagal memuat portal");
-
-                // Update Profile
-                document.getElementById("portalFullName").textContent = data.user.fullname || "Partner Reseller";
-                document.getElementById("portalEmail").textContent = data.user.email;
-                if (data.user.reseller_tier) {
-                    document.getElementById("portalTierText").textContent = `Tier ${data.user.reseller_tier.name}`;
-                    document.getElementById("portalDiscountText").textContent = `Potongan ${String(data.user.reseller_tier.discount_percent).replace(".", ",")}% Otomatis Aktif`;
-                }
-
-                // Update API Credentials
-                if (data.api_credentials) {
-                    const creds = data.api_credentials;
-                    document.getElementById("inputApiKey").value = creds.api_key;
-                    document.getElementById("inputSecretKey").value = creds.masked_secret;
-                    document.getElementById("inputIpWhitelist").value = creds.ip_whitelist || "";
-                    document.getElementById("inputWebhookUrl").value = creds.webhook_url || "";
-                    document.getElementById("inputWebhookSecret").value = creds.webhook_secret || "";
-                    document.getElementById("curlApiKeyPlaceholder").textContent = creds.api_key;
-                }
-            } catch (err) {
-                console.error("Portal overview error:", err);
-            }
-        }
-
         async function toggleSecretKey() {
             const secretInput = document.getElementById("inputSecretKey");
             const toggleBtn = document.getElementById("btnToggleSecret");
-            const token = getToken();
+            const token = getResellerToken();
 
             if (!isSecretRevealed) {
                 if (!cachedSecret) {
@@ -951,7 +1549,7 @@
                 return;
             }
 
-            const token = getToken();
+            const token = getResellerToken();
             try {
                 const res = await fetch(`${API_BASE}/reseller/portal/api-key/generate`, {
                     method: "POST",
@@ -976,7 +1574,7 @@
         // ── Save Settings ────────────────────────────────────────────────
         document.getElementById("formPortalSettings").addEventListener("submit", async (e) => {
             e.preventDefault();
-            const token = getToken();
+            const token = getResellerToken();
             const btn = document.getElementById("btnSaveSettings");
             btn.disabled = true;
             btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1.1rem;">progress_activity</span> Menyimpan...`;
@@ -1010,7 +1608,7 @@
                 return;
             }
 
-            const token = getToken();
+            const token = getResellerToken();
             const btn = document.getElementById("btnTestWebhook");
             btn.disabled = true;
             btn.innerHTML = `<span class="material-symbols-outlined mkt-spin" style="font-size:1rem;">progress_activity</span> Mengirim...`;
@@ -1034,7 +1632,7 @@
         let allProducts = [];
 
         async function loadPortalProducts() {
-            const token = getToken();
+            const token = getResellerToken();
             const tbody = document.getElementById("portalProductTbody");
             const badge = document.getElementById("productCountBadge");
 
@@ -1104,7 +1702,7 @@
 
         // ── Orders History ───────────────────────────────────────────────
         async function loadPortalOrders() {
-            const token = getToken();
+            const token = getResellerToken();
             const tbody = document.getElementById("portalOrdersTbody");
             tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--mkt-text-dim);"><span class="material-symbols-outlined mkt-spin" style="vertical-align:middle;">progress_activity</span> Memuat...</td></tr>`;
 
@@ -1165,7 +1763,14 @@
             }
         });
 
-        // Initialize
+        // Initialize URL query params
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get("mode") === "register" || window.location.hash === "#register") {
+            switchAuthMode("register");
+        } else {
+            switchAuthMode("login");
+        }
+
         loadPortalOverview();
     </script>
     <script src="/nexbot.js?v=20260823-nexbot"></script>

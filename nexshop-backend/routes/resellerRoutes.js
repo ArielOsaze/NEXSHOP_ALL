@@ -5,6 +5,10 @@ const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 const { resellerApplyLimiter } = require("../middleware/rateLimiter");
 
+// Publik — autentikasi mandiri khusus mitra reseller
+router.post("/auth/register", resellerApplyLimiter, resellerController.resellerRegister);
+router.post("/auth/login", resellerController.resellerLogin);
+
 // Publik — dipakai halaman info reseller buat nampilin tabel tingkatan
 router.get("/tiers", resellerController.getPublicTiers);
 
