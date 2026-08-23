@@ -953,12 +953,24 @@ exports.getPortalOverview = async (req, res) => {
             if (latestApp && latestApp.status) status = latestApp.status;
         }
 
+        // User ini belum pernah mendaftar jadi reseller sama sekali (gak ada
+        // di users.reseller_status maupun di reseller_applications). Bedain
+        // dari "pending" -- jangan kasih akses portal, minta daftar dulu.
+        if (status === "none") {
+            return res.status(403).json({
+                message: "Kamu belum terdaftar sebagai reseller NexShop. Silakan daftar terlebih dahulu.",
+                code: "RESELLER_NOT_REGISTERED",
+                reseller_status: "none"
+            });
+        }
+
         const memberCode = getResellerMemberCode(user);
         const metrics = await getResellerDashboardMetrics(user.id);
         const balance = Number(user.balance) || 0;
         const portalNews = await getResellerPortalNews();
 
-        // Jika akun belum approved (misal pending / none), tetap berikan akses portal untuk lihat dokumentasi & katalog
+        // Jika akun sudah pernah mendaftar tapi belum approved (pending / rejected
+        // / suspended), tetap berikan akses portal untuk lihat dokumentasi & katalog
         if (status !== "approved") {
             return res.json({
                 user: {

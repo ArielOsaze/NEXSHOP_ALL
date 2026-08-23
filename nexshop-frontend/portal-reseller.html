@@ -1951,13 +1951,20 @@
         }
 
         function getResellerToken() {
-            return localStorage.getItem("nexshop-reseller-token") || localStorage.getItem("token") || "";
+            // PENTING: jangan fallback ke localStorage "token" biasa -- itu token
+            // login customer di toko utama (index.html/marketplace), bukan bukti
+            // bahwa orang ini sudah mendaftar sebagai reseller. Kalau di-fallback,
+            // SEMUA orang yang sekadar login belanja bakal otomatis "masuk" ke
+            // portal reseller tanpa pernah daftar/login lewat form reseller.
+            return localStorage.getItem("nexshop-reseller-token") || "";
         }
 
         function setResellerSession(token, user) {
             if (token) {
+                // Simpan cuma di key khusus reseller. JANGAN ikut nulis ke "token"
+                // biasa -- itu punya sesi customer di toko utama, kalau ketimpa
+                // token reseller, sesi belanja normal user bisa ikut kacau.
                 localStorage.setItem("nexshop-reseller-token", token);
-                localStorage.setItem("token", token);
             }
             if (user) {
                 localStorage.setItem("nexshop-reseller-user", JSON.stringify(user));
@@ -2520,6 +2527,23 @@
                 if (res.status === 401) {
                     logoutReseller();
                     return;
+                }
+
+                if (res.status === 403) {
+                    const errData = await res.json().catch(() => ({}));
+                    if (errData.code === "RESELLER_NOT_REGISTERED") {
+                        // Akun ini valid tapi belum pernah daftar jadi reseller sama
+                        // sekali -- jangan tampilkan dashboard, arahkan ke form daftar.
+                        localStorage.removeItem("nexshop-reseller-token");
+                        localStorage.removeItem("nexshop-reseller-user");
+                        secAuth.style.display = "block";
+                        secDash.style.display = "none";
+                        switchAuthTab("register");
+                        if (typeof showToast === "function") {
+                            showToast(errData.message || "Kamu belum terdaftar sebagai reseller. Silakan daftar dulu.");
+                        }
+                        return;
+                    }
                 }
 
                 const data = await res.json().catch(() => ({}));

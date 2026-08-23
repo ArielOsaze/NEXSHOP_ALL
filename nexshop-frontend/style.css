@@ -8026,6 +8026,35 @@ html:not(.dark) .home-glass-badge {
     .nx-wallet-nav-val {
         font-size: 0.78rem;
     }
+
+    .nx-wallet-nav-icon-wrap {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+/* Bug fix: di layar sempit, grup ikon navbar (menu, keranjang, saldo wallet,
+   avatar akun) bisa lebih lebar daripada sisa ruang yang ada setelah logo
+   -- apalagi kalau saldo nominalnya panjang (mis. "Rp 1.500.000") atau nama
+   user panjang. Sebelumnya elemen yang kepotong itu didorong ke luar
+   viewport (overflow-x default "visible") tanpa cara buat menjangkaunya:
+   avatar & saldo jadi kelihatan "keluar" dari kapsul navbar dan gak bisa
+   di-tap sama sekali di HP. Container ini sekarang dibatasi max-width-nya
+   dan boleh discroll horizontal sendiri, jadi wallet & avatar tetap bisa
+   dijangkau/di-klik walau ruangnya mepet. */
+@media (max-width: 1023px) {
+    .nx-nav-actions {
+        max-width: calc(100vw - 148px);
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .nx-nav-actions::-webkit-scrollbar {
+        display: none;
+    }
 }
 
 /* ==========================================================================
