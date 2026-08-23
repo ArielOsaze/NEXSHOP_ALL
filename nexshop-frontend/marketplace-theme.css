@@ -2621,11 +2621,18 @@ body {
         background: var(--mkt-primary-tint);
     }
 
-    /* Aksi kanan disederhanain di mobile: teks tombol "Cek Transaksi"
-       diringkas jadi ikon aja supaya satu baris nav gak sesak, sama
-       kayak pill reseller di bawah. */
+    /* Aksi kanan disederhanain di mobile: teks tombol "Cek Transaksi" DAN
+       "Ke Toko" diringkas jadi ikon aja supaya satu baris nav gak sesak.
+       ROOT CAUSE (sebelumnya): "Ke Toko" tetap nyimpen teksnya (cuma
+       font-size dikecilin), jadi begitu wallet button + toggle + track
+       button ikut ngambil tempat di layar sempit (<=412px), total lebar
+       4 elemen itu ngelewatin lebar nav -- browser motong "Ke Toko"
+       jadi "Ke T..." kepotong nempel di tepi layar (overflow-x:hidden di
+       body cuma nyembunyiin scrollbar-nya, bukan benerin overflow-nya).
+       Sekarang treatment-nya disamain kayak track-btn: ikon doang di
+       mobile, teks tetap kebaca lewat aria-label. */
     .mkt-nav-actions {
-        gap: 0.4rem;
+        gap: 0.35rem;
     }
 
     .mkt-nav-track-btn span:not(.material-symbols-outlined) {
@@ -2634,16 +2641,57 @@ body {
 
     .mkt-nav-track-btn {
         padding: 0.5rem;
+        min-width: 2.2rem;
+        justify-content: center;
     }
 
     .mkt-nav-back span:not(.material-symbols-outlined) {
-        font-size: 0.76rem;
+        display: none;
     }
 
     .mkt-nav-back {
-        padding: 0.5rem 0.75rem;
+        padding: 0.5rem;
+        min-width: 2.2rem;
+        justify-content: center;
+        gap: 0;
     }
 
+    .mkt-nav-back .material-symbols-outlined {
+        font-size: 1.2rem;
+    }
+
+    .mkt-nav-toggle {
+        width: 2.2rem;
+        height: 2.2rem;
+    }
+}
+
+/* Layar HP paling sempit (360-390px) -- setelah "Ke Toko"/"Cek Transaksi"
+   jadi ikon (lihat @media 768px di atas), masih ada 4 elemen berdempetan
+   (toggle + wallet + 2 ikon) di kanan nav. Di lebar <=400px, wordmark
+   "NEXSHOP" di brand dilepas duluan (logo mark-nya aja yang kepake, brand
+   tetap kebaca dari logo + konteks halaman) supaya actions selalu punya
+   ruang penuh dan gak pernah balik nabrak/kepotong lagi. */
+@media (max-width: 400px) {
+    .mkt-nav {
+        padding: 0 0.65rem;
+        gap: 0.5rem;
+    }
+
+    .mkt-nav-brand {
+        gap: 0;
+    }
+
+    .mkt-brand-text {
+        display: none;
+    }
+
+    .mkt-nav-actions {
+        gap: 0.3rem;
+    }
+}
+
+@media (max-width: 768px) {
     .mkt-main {
         padding-top: calc(var(--mkt-nav-h) + 1.5rem);
         gap: 2.5rem;
