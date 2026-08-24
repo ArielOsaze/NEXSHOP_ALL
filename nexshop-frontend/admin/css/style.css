@@ -81,6 +81,22 @@ h1,h2,h3,h4,h5,.sidebar h3{
 }
 .sidebar h3 .accent{ color:var(--violet); }
 
+.admin-sidebar-brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+}
+.admin-sidebar-brand img{
+    width:38px;
+    height:38px;
+    flex:0 0 38px;
+    object-fit:contain;
+    border-radius:11px;
+    border:1px solid rgba(34,211,238,.45);
+    box-shadow:0 0 18px rgba(0,194,232,.28);
+}
+
 .sidebar .nav-link{
     border-radius:10px;
     padding:12px 15px;
@@ -406,14 +422,23 @@ main{
     width:56px;
     height:56px;
     border-radius:14px;
-    background:linear-gradient(135deg,var(--violet),var(--cyan));
+    background:var(--bg-void);
     color:#fff;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:26px;
+    font-size:0;
     margin:0 auto 16px;
     box-shadow:0 0 30px rgba(0,194,232,.4);
+    overflow:hidden;
+    border:1px solid rgba(34,211,238,.5);
+}
+
+.login-logo img{
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    border-radius:13px;
 }
 
 .login-card h2{
@@ -726,8 +751,14 @@ main{
 .admin-gate-logo{
     width:56px; height:56px; margin:0 auto 16px;
     display:flex; align-items:center; justify-content:center;
-    border-radius:16px; font-size:24px; color:#fff;
-    background:linear-gradient(135deg,#00c2e8,#22d3ee);
+    border-radius:16px; font-size:0; color:#fff;
+    background:var(--bg-void);
+    overflow:hidden;
+    border:1px solid rgba(34,211,238,.5);
+    box-shadow:0 0 28px rgba(0,194,232,.35);
+}
+.admin-gate-logo img{
+    width:100%; height:100%; object-fit:contain; border-radius:15px;
 }
 .admin-gate-title{ font-weight:700; margin-bottom:6px; }
 .admin-gate-status{

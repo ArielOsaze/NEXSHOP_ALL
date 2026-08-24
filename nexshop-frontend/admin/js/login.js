@@ -52,16 +52,25 @@ form.addEventListener("submit", async (e) => {
     setLoading(true);
 
     try {
-        const res = await fetch(`${API_BASE}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
-        });
+        let res;
+        try {
+            res = await fetch(`${API_BASE}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+        } catch {
+            throw new Error("Tidak dapat terhubung ke server NexShop. Periksa status backend lalu coba lagi.");
+        }
 
         const data = await res.json().catch(() => ({}));
 
         if (!res.ok) {
-            throw new Error(data.message || "Login gagal. Periksa email dan password kamu.");
+            if (data.message) throw new Error(data.message);
+            if (res.status >= 500) {
+                throw new Error(`Server NexShop sedang tidak tersedia (HTTP ${res.status}). Coba lagi setelah backend aktif.`);
+            }
+            throw new Error("Login ditolak. Periksa email dan password kamu.");
         }
 
         if (!data.token || !data.user || !["admin", "staff"].includes(data.user.role)) {

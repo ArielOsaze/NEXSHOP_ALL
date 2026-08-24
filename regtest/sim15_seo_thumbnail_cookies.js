@@ -45,6 +45,9 @@ function assertStaticConfiguration() {
 
   const adminHtml = fs.readFileSync(path.join(frontendRoot, "admin", "dashboard.html"), "utf8");
   const adminScript = fs.readFileSync(path.join(frontendRoot, "admin", "js", "dashboard.js"), "utf8");
+  const adminLoginHtml = fs.readFileSync(path.join(frontendRoot, "admin", "login.html"), "utf8");
+  const adminLoginScript = fs.readFileSync(path.join(frontendRoot, "admin", "js", "login.js"), "utf8");
+  const seoServiceSource = fs.readFileSync(path.join(projectRoot, "nexshop-backend", "services", "seoThumbnailService.js"), "utf8");
   const settingsConfig = fs.readFileSync(path.join(projectRoot, "nexshop-backend", "config", "settings.js"), "utf8");
   const settingsController = fs.readFileSync(path.join(projectRoot, "nexshop-backend", "controllers", "settingsController.js"), "utf8");
   const migration = fs.readFileSync(path.join(projectRoot, "nexshop-backend", "migrations", "012_add_seo_thumbnail_settings.sql"), "utf8");
@@ -56,6 +59,11 @@ function assertStaticConfiguration() {
   }
   assert(adminHtml.includes("seoScreenshotBaseUrl"));
   assert(adminHtml.includes("chromeExecutablePath"));
+  assert(adminLoginHtml.includes("../images/nexshop-logo.webp"), "Login admin harus memakai logo resmi NexShop");
+  assert(!adminLoginHtml.includes("bi bi-shop"), "Ikon toko generik tidak boleh kembali ke login admin");
+  assert(adminLoginScript.includes("Server NexShop sedang tidak tersedia"), "Login admin harus membedakan error server dari password salah");
+  assert(!/^const puppeteer = require\("puppeteer-core"\);/m.test(seoServiceSource), "Puppeteer tidak boleh dimuat saat backend startup");
+  assert(seoServiceSource.includes("function getPuppeteer()"), "Puppeteer harus di-load hanya saat thumbnail diminta");
 }
 
 function contentType(filePath) {

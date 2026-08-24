@@ -2,7 +2,6 @@
 
 const fs = require("fs");
 const path = require("path");
-const puppeteer = require("puppeteer-core");
 const { getStoreSettings } = require("../config/settings");
 
 const THUMBNAIL_WIDTH = 1200;
@@ -23,6 +22,21 @@ const inFlightRenders = new Map();
 let browserPromise = null;
 let renderQueue = Promise.resolve();
 
+// Puppeteer hanya dibutuhkan saat crawler meminta thumbnail. Jangan require
+// saat server startup: deployment yang belum menjalankan `npm install` harus
+// tetap bisa melayani login/order, sementara endpoint SEO jatuh ke gambar
+// fallback statis lewat seoController.
+function getPuppeteer() {
+  try {
+    return require("puppeteer-core");
+  } catch (error) {
+    const dependencyError = new Error("puppeteer-core belum terpasang. Jalankan npm install di nexshop-backend.");
+    dependencyError.code = "SEO_BROWSER_DEPENDENCY_MISSING";
+    dependencyError.cause = error;
+    throw dependencyError;
+  }
+}
+
 function normalizePageKey(value) {
   const key = String(value || "").trim().toLowerCase();
   return Object.prototype.hasOwnProperty.call(PAGE_TARGETS, key) ? key : null;
@@ -33,7 +47,7 @@ async function getSeoRuntimeSettings() {
   return {
     baseUrl: settings?.seo_screenshot_base_url
       || process.env.SEO_SCREENSHOT_BASE_URL
-    || process.env.FRONTEND_URL
+      || process.env.FRONTEND_URL
       || "https://nexshop.cloud",
     executablePath: settings?.chrome_executable_path
       || process.env.CHROME_EXECUTABLE_PATH
@@ -96,6 +110,7 @@ async function getBrowser() {
   if (!browserPromise) {
     browserPromise = (async () => {
       const executablePath = await resolveChromeExecutable();
+      const puppeteer = getPuppeteer();
       return puppeteer.launch({
         executablePath,
         headless: true,
