@@ -2789,7 +2789,7 @@ function hargaResellerHtml(p, kelasCoret = "tw-price-normal") {
 // kebetulan sudah terunduh akan membuat game yang belum termuat mustahil
 // ditemukan, yaitu menukar masalah berat halaman dengan pencarian rusak.
 // ==============================================================
-const TOPUP_PAGE_SIZE = 18;
+const TOPUP_PAGE_SIZE = 20;
 let topupPage = 0;
 let topupHasMore = true;
 let topupLoading = false;
@@ -3076,10 +3076,15 @@ function renderTopupLoadMore() {
     }
 
     const sisa = Math.max(topupTotal - TOPUP_GAMES.length, 0);
+    // Tombol pertama (baru 20 game populer yang tampil) pakai label
+    // "Lihat Semua Produk" sesuai permintaan brief -- klik berikutnya
+    // (kalau user masih mau muat lebih jauh lagi) balik ke label netral
+    // "Muat lebih banyak" karena itu bukan lagi transisi populer -> semua.
+    const labelTombol = topupPage <= 1 ? "Lihat Semua Produk" : "Muat lebih banyak";
     zona.innerHTML = `
         <button type="button" class="topup-loadmore-btn" id="topupLoadMoreBtn">
             <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
-            <span class="topup-loadmore-label">Muat lebih banyak</span>
+            <span class="topup-loadmore-label">${labelTombol}</span>
             <span class="topup-loadmore-sisa">${sisa} lagi</span>
         </button>
         <div id="topupLoadSentinel" aria-hidden="true"></div>
@@ -3115,7 +3120,7 @@ function setTopupLoadMoreState(state) {
     } else {
         btn.disabled = false;
         btn.classList.remove("is-loading");
-        if (label) label.textContent = "Muat lebih banyak";
+        if (label) label.textContent = topupPage <= 1 ? "Lihat Semua Produk" : "Muat lebih banyak";
     }
 }
 

@@ -128,6 +128,12 @@ cek("'shopee pay' cocok di 'shopeepay'", nexbotCatalog.containsTerm(n("topup sho
 cek("'pulsa telkomsel' cocok utuh", nexbotCatalog.containsTerm(n("harga pulsa telkomsel"), n("Pulsa Telkomsel")), true);
 cek("term < 3 huruf ditolak", nexbotCatalog.containsTerm(n("beli ml"), n("ml")), false);
 
+console.log("\n=== 7. NexShop Wallet & definisi Game Pass (dulu 0 chunk terpilih) ===");
+cekRetrieval("apa itu nexshop wallet?", "builtin-wallet");
+cekRetrieval("cara isi saldo nexshop wallet gimana?", "builtin-wallet");
+cekRetrieval("gimana cara top up saldo wallet nexshop", "builtin-wallet");
+cekRetrieval("apa itu game pass?", "builtin-gamepass");
+
 console.log("\n==========================================");
 if (gagal === 0) {
     console.log("ALL TESTS PASSED");

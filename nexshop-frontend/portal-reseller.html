@@ -26,8 +26,8 @@
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <script src="/theme-init.js"></script>
-    <link rel="stylesheet" href="/style.css">
-    <link rel="stylesheet" href="/marketplace-theme.css?v=20260823-kinetic">
+    <link rel="stylesheet" href="/style.css?v=20260824-cyan-brand">
+    <link rel="stylesheet" href="/marketplace-theme.css?v=20260824-cyan-brand">
 
     <style>
         :root {
@@ -54,7 +54,7 @@
             background-color: var(--tv-bg-main);
             background-image: 
                 radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.18) 0%, transparent 45%),
-                radial-gradient(circle at 85% 85%, rgba(124, 58, 237, 0.14) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(0, 194, 232, 0.14) 0%, transparent 45%),
                 radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.6) 0%, transparent 100%);
             color: var(--tv-text-dark);
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -1229,7 +1229,7 @@
                         <textarea id="regNote" rows="2" placeholder="Catatan untuk verifikator..." style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;"></textarea>
                     </div>
 
-                    <button type="submit" id="btnRegisterSubmit" style="width:100%;padding:0.8rem;border:none;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;font-weight:800;font-size:0.94rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 16px rgba(124,58,237,0.4);">
+                    <button type="submit" id="btnRegisterSubmit" style="width:100%;padding:0.8rem;border:none;border-radius:12px;background:linear-gradient(135deg,#00c2e8,#0891b2);color:#fff;font-weight:800;font-size:0.94rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 16px rgba(0,194,232,0.4);">
                         <i class="fa-solid fa-user-check" aria-hidden="true"></i>
                         <span>Daftar Akun Mitra &amp; Kirim Berkas KYC</span>
                     </button>
@@ -1514,7 +1514,7 @@
                                 <button type="button" id="btnDownloadPriceList" class="tv-btn-deposit-action"
                                     onclick="downloadPriceListPerLevel('csv')"
                                     title="Unduh rincian harga untuk semua level reseller (CSV siap dibuka di Excel)"
-                                    style="border-color:#a78bfa;color:#c4b5fd;background:rgba(167,139,250,0.12);">
+                                    style="border-color:#00c2e8;color:#5eeafb;background:rgba(0,194,232,0.12);">
                                     <i class="fa-solid fa-table-list" style="font-size:1.1rem;" aria-hidden="true"></i>
                                     <span>Rincian Harga Semua Level</span>
                                 </button>
@@ -1522,7 +1522,7 @@
                                     onclick="downloadPriceListPerLevel('json')"
                                     title="Unduh versi JSON untuk diproses otomatis oleh sistem tokomu"
                                     aria-label="Unduh rincian harga semua level dalam format JSON"
-                                    style="border-color:#a78bfa;color:#c4b5fd;background:rgba(167,139,250,0.12);">
+                                    style="border-color:#00c2e8;color:#5eeafb;background:rgba(0,194,232,0.12);">
                                     <i class="fa-solid fa-code" style="font-size:1rem;" aria-hidden="true"></i>
                                     <span>JSON</span>
                                 </button>
@@ -2085,7 +2085,7 @@
             const paneReg = document.getElementById("authPaneRegister");
 
             if (mode === "register") {
-                btnReg.style.background = "#7c3aed";
+                btnReg.style.background = "#00c2e8";
                 btnReg.style.color = "#ffffff";
                 btnLogin.style.background = "transparent";
                 btnLogin.style.color = "#94a3b8";

@@ -6,12 +6,12 @@
    ========================================================= */
 :root {
     color-scheme: dark;
-    --bg-void: #080B14;
-    --bg-void-2: #0B0F1D;
-    --bg-panel: #121729;
-    --bg-panel-2: #1A2038;
-    --bg-panel-3: #212949;
-    --line: #242c4a;
+    --bg-void: #090B0F;
+    --bg-void-2: #0B0E14;
+    --bg-panel: #11151C;
+    --bg-panel-2: #181D26;
+    --bg-panel-3: #1E242C;
+    --line: #252C38;
 
     /* Sembunyikan scrollbar di seluruh browser tanpa mematikan fungsi scroll */
     html,
@@ -28,44 +28,44 @@
         height: 0 !important;
     }
 
-    --violet:#8B5CF6;
-    --violet-2:#6D28D9;
+    --violet:#00C2E8;
+    --violet-2:#0891B2;
     --cyan:#22D3EE;
-    --cyan-2:#0EA5C4;
-    --magenta:#F0399A;
+    --cyan-2:#0891B2;
+    --magenta:#0891B2;
 
-    --text:#EDEFF7;
-    --text-muted:#8891B0;
-    --text-dim:#5C6489;
+    --text:#F4F7FA;
+    --text-muted:#98A2B3;
+    --text-dim:#667085;
 
     --success:#22C55E;
-    --danger:#F0475C;
-    --warning:#F5A623;
+    --danger:#EF4444;
+    --warning:#F59E0B;
 
     --radius:16px;
     --radius-sm:10px;
 
-    --glow-violet:0 0 24px rgba(139, 92, 246, .35);
+    --glow-violet:0 0 24px rgba(0, 194, 232, .35);
     --glow-cyan:0 0 24px rgba(34, 211, 238, .35);
     --nav-bg:rgba(8, 11, 20, .75);
-    --ambient-violet:rgba(139, 92, 246, .21);
+    --ambient-violet:rgba(0, 194, 232, .21);
     --ambient-cyan:rgba(34, 211, 238, .15);
-    --ambient-magenta:rgba(240, 57, 154, .10);
-    --grid-line:rgba(139, 92, 246, .09);
+    --ambient-magenta:rgba(8, 145, 178, .10);
+    --grid-line:rgba(0, 194, 232, .09);
     --loader-bg:rgba(6, 8, 18, .96);
     --surface-highlight:rgba(255, 255, 255, .045);
-    --section-glow:rgba(139, 92, 246, .09);
+    --section-glow:rgba(0, 194, 232, .09);
 
     --glass-topup:rgba(26, 32, 56, .55);
     --glass-detail:rgba(18, 23, 41, .6);
     --overlay-bg:rgba(4, 6, 12, .7);
     --soft-border:rgba(255, 255, 255, .06);
-    --text-violet:#A78BFA;
+    --text-violet:#5EEAFB;
     --text-cyan:#22D3EE;
-    --text-magenta:#F0399A;
+    --text-magenta:#0891B2;
     --text-success:#22C55E;
-    --text-danger:#F0475C;
-    --text-warning:#F5A623;
+    --text-danger:#EF4444;
+    --text-warning:#F59E0B;
     --hero-text:#FFFFFF;
     --hero-text-muted:#CBD5E1;
     --xbox-green:#55C443;
@@ -76,69 +76,106 @@
     --footer-bg:linear-gradient(180deg, rgba(8, 11, 23, .96) 0%, rgba(11, 15, 30, .98) 100%);
     --hero-overlay:linear-gradient(90deg, rgba(8, 11, 20, .88) 18%, rgba(8, 11, 20, .32) 55%, rgba(8, 11, 20, .12));
     --trust-stats-bg:linear-gradient(135deg, rgba(18, 24, 44, .98), rgba(16, 20, 40, .92));
-    --loader-card-bg:linear-gradient(180deg, rgba(8, 11, 19, .98), rgba(20, 15, 46, .96));
+    --loader-card-bg:linear-gradient(180deg, rgba(8, 11, 19, .98), rgba(14, 18, 28, .96));
     --hero-arrow-bg:rgba(8, 11, 20, .72);
     --badge-tag-bg:rgba(15, 23, 42, .85);
-    --scroll-thumb:rgba(139, 92, 246, .28);
-    --scroll-thumb-hover:rgba(139, 92, 246, .45);
+    --scroll-thumb:rgba(0, 194, 232, .28);
+    --scroll-thumb-hover:rgba(0, 194, 232, .45);
+
+    /* ---------------------------------------------------------------
+       Canonical NexShop design tokens (brand redesign, no purple).
+       These are the source of truth going forward -- new components
+       should reference these names. Legacy --violet/--cyan/--magenta
+       above are kept only so existing rules that already reference
+       them keep working; they now resolve to the same cyan values.
+       --------------------------------------------------------------- */
+    --color-brand: #00C2E8;         /* Electric Cyan -- primary */
+    --color-brand-hover: #22D3EE;   /* Brand hover */
+    --color-brand-deep: #0891B2;    /* Deep Cyan -- secondary/pressed */
+    --color-bg: var(--bg-void);
+    --color-surface: var(--bg-panel);
+    --color-surface-elevated: var(--bg-panel-2);
+    --color-border: var(--line);
+    --color-text-primary: var(--text);
+    --color-text-secondary: var(--text-muted);
+    --color-text-muted: var(--text-dim);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-error: var(--danger);
+    --color-info: var(--cyan);
 }
 
 :root[data-theme="light"] {
     color-scheme: light;
-    --bg-void: #F4F0FC;
-    --bg-void-2: #EAE2F8;
-    --bg-panel: #FCFAFF;
-    --bg-panel-2: #F1EAFE;
-    --bg-panel-3: #E4D9F5;
-    --line: #D7C9EC;
+    --bg-void: #F8FAFC;
+    --bg-void-2: #F1F5F9;
+    --bg-panel: #FFFFFF;
+    --bg-panel-2: #F1F5F9;
+    --bg-panel-3: #E2E8F0;
+    --line: #E2E8F0;
 
-    --violet: #6D28D9;
-    --violet-2: #5B21B6;
+    --violet: #0891B2;
+    --violet-2: #0E7490;
     --cyan: #0E7490;
     --cyan-2: #155E75;
-    --magenta: #BE185D;
+    --magenta: #0E7490;
     --success: #15803D;
     --danger: #B91C1C;
     --warning: #B45309;
 
-    --text: #251B3B;
-    --text-muted: #655A7A;
-    --text-dim: #897E9E;
+    --text: #0F172A;
+    --text-muted: #475569;
+    --text-dim: #64748B;
 
-    --glow-violet: 0 0 24px rgba(109, 40, 217, .20);
+    --glow-violet: 0 0 24px rgba(8, 145, 178, .20);
     --glow-cyan: 0 0 24px rgba(14, 165, 196, .18);
-    --nav-bg: rgba(244, 240, 252, .9);
-    --ambient-violet: rgba(124, 58, 237, .22);
+    --nav-bg: rgba(248, 250, 252, .9);
+    --ambient-violet: rgba(8, 145, 178, .22);
     --ambient-cyan: rgba(14, 165, 196, .12);
-    --ambient-magenta: rgba(190, 24, 93, .07);
-    --grid-line: rgba(109, 40, 217, .14);
-    --loader-bg: rgba(244, 240, 252, .97);
+    --ambient-magenta: rgba(14, 116, 144, .07);
+    --grid-line: rgba(8, 145, 178, .14);
+    --loader-bg: rgba(248, 250, 252, .97);
     --surface-highlight: rgba(255, 255, 255, .78);
-    --section-glow: rgba(124, 58, 237, .11);
+    --section-glow: rgba(8, 145, 178, .11);
 
     --glass-topup: rgba(255, 255, 255, .72);
     --glass-detail: rgba(255, 255, 255, .84);
-    --overlay-bg: rgba(28, 19, 48, .48);
-    --soft-border: rgba(65, 42, 105, .12);
-    --text-violet: #6D28D9;
+    --overlay-bg: rgba(15, 23, 42, .48);
+    --soft-border: rgba(15, 23, 42, .12);
+    --text-violet: #0891B2;
     --text-cyan: #0E7490;
-    --text-magenta: #BE185D;
+    --text-magenta: #0E7490;
     --text-success: #15803D;
     --text-danger: #C6283D;
     --text-warning: #A16207;
     --hero-text: #FFFFFF;
-    --hero-text-muted: #F1EEFA;
+    --hero-text-muted: #F1F5F9;
 
     /* Theme-aware component backgrounds (light) */
-    --modal-bg: linear-gradient(180deg, rgba(252, 250, 255, .99), rgba(241, 234, 254, .98));
+    --modal-bg: linear-gradient(180deg, rgba(255, 255, 255, .99), rgba(241, 245, 249, .98));
     --footer-bg: linear-gradient(180deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
-    --hero-overlay: linear-gradient(90deg, rgba(37, 27, 59, .82) 18%, rgba(37, 27, 59, .42) 55%, rgba(37, 27, 59, .12));
-    --trust-stats-bg: linear-gradient(135deg, rgba(252, 250, 255, .98), rgba(241, 234, 254, .92));
-    --loader-card-bg: linear-gradient(180deg, rgba(252, 250, 255, .99), rgba(241, 234, 254, .97));
-    --hero-arrow-bg: rgba(252, 250, 255, .82);
-    --badge-tag-bg: rgba(252, 250, 255, .88);
-    --scroll-thumb: rgba(109, 40, 217, .22);
-    --scroll-thumb-hover: rgba(109, 40, 217, .38);
+    --hero-overlay: linear-gradient(90deg, rgba(15, 23, 42, .82) 18%, rgba(15, 23, 42, .42) 55%, rgba(15, 23, 42, .12));
+    --trust-stats-bg: linear-gradient(135deg, rgba(255, 255, 255, .98), rgba(241, 245, 249, .92));
+    --loader-card-bg: linear-gradient(180deg, rgba(255, 255, 255, .99), rgba(241, 245, 249, .97));
+    --hero-arrow-bg: rgba(255, 255, 255, .82);
+    --badge-tag-bg: rgba(255, 255, 255, .88);
+    --scroll-thumb: rgba(8, 145, 178, .22);
+    --scroll-thumb-hover: rgba(8, 145, 178, .38);
+
+    --color-brand: #0891B2;
+    --color-brand-hover: #0E7490;
+    --color-brand-deep: #155E75;
+    --color-bg: var(--bg-void);
+    --color-surface: var(--bg-panel);
+    --color-surface-elevated: var(--bg-panel-2);
+    --color-border: var(--line);
+    --color-text-primary: var(--text);
+    --color-text-secondary: var(--text-muted);
+    --color-text-muted: var(--text-dim);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
+    --color-error: var(--danger);
+    --color-info: var(--cyan);
 }
 
 * {
@@ -157,7 +194,7 @@
     outline: 2px solid var(--violet);
     outline-offset: 3px;
     border-radius: 6px;
-    box-shadow: 0 0 0 4px rgba(139, 92, 246, .18);
+    box-shadow: 0 0 0 4px rgba(0, 194, 232, .18);
     transition: outline-offset .12s ease, box-shadow .12s ease;
 }
 
@@ -168,7 +205,7 @@ select:focus-visible,
 textarea:focus-visible {
     outline: 2px solid var(--violet);
     outline-offset: 3px;
-    box-shadow: 0 0 0 4px rgba(139, 92, 246, .18);
+    box-shadow: 0 0 0 4px rgba(0, 194, 232, .18);
 }
 
 html {
@@ -733,7 +770,7 @@ img:not([src]) {
     width: 72px;
     height: 72px;
     border-radius: 22px;
-    filter: drop-shadow(0 0 32px rgba(139, 92, 246, .55));
+    filter: drop-shadow(0 0 32px rgba(0, 194, 232, .55));
     animation: loader-logo-pulse 2.2s ease-in-out infinite alternate;
 }
 
@@ -754,7 +791,7 @@ img:not([src]) {
 .app-loader-orbit--two {
     inset: 10px;
     border-bottom-color: var(--violet);
-    border-left-color: rgba(139, 92, 246, .22);
+    border-left-color: rgba(0, 194, 232, .22);
     animation-direction: reverse;
     animation-duration: 1.7s;
 }
@@ -793,7 +830,7 @@ img:not([src]) {
     width: 42%;
     height: 100%;
     border-radius: inherit;
-    background: linear-gradient(90deg, rgba(139, 92, 246, .98), rgba(34, 211, 238, .98));
+    background: linear-gradient(90deg, rgba(0, 194, 232, .98), rgba(34, 211, 238, .98));
     animation: loader-progress 1.35s ease-in-out infinite;
 }
 
@@ -1287,7 +1324,7 @@ nav#mainNav.nav-scrolled {
 
 .menu-account-btn:hover {
     transform: translateY(-1px);
-    box-shadow: 0 0 32px rgba(139, 92, 246, .5);
+    box-shadow: 0 0 32px rgba(0, 194, 232, .5);
 }
 
 .menu-account-btn.logged-in {
@@ -1393,7 +1430,7 @@ nav#mainNav.nav-scrolled {
     inset: 0;
     pointer-events: none;
     background: radial-gradient(circle at top left, rgba(34, 211, 238, .18), transparent 22%),
-        radial-gradient(circle at bottom right, rgba(139, 92, 246, .18), transparent 22%);
+        radial-gradient(circle at bottom right, rgba(0, 194, 232, .18), transparent 22%);
 }
 
 .hero-track {
@@ -1555,8 +1592,8 @@ nav#mainNav.nav-scrolled {
 }
 
 .hero-arrow:hover {
-    background: rgba(79, 70, 229, .96);
-    border-color: rgba(79, 70, 229, .96);
+    background: rgba(8, 145, 178, .96);
+    border-color: rgba(8, 145, 178, .96);
     transform: translateY(-2px);
 }
 
@@ -2062,7 +2099,7 @@ nav#mainNav.nav-scrolled {
 .card:hover {
     transform: translateY(-5px);
     border-color: color-mix(in srgb, var(--violet) 74%, var(--line));
-    box-shadow: 0 8px 18px rgba(0, 0, 0, .18), 0 18px 42px rgba(0, 0, 0, .14), 0 0 0 1px rgba(139, 92, 246, .08), 0 0 28px rgba(139, 92, 246, .09);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .18), 0 18px 42px rgba(0, 0, 0, .14), 0 0 0 1px rgba(0, 194, 232, .08), 0 0 28px rgba(0, 194, 232, .09);
 }
 
 .card:focus-visible {
@@ -2137,7 +2174,7 @@ nav#mainNav.nav-scrolled {
 
     .card:hover .buy-btn {
         transform: translateY(-1px);
-        box-shadow: 0 10px 26px rgba(139, 92, 246, .38), 0 0 18px rgba(34, 211, 238, .12);
+        box-shadow: 0 10px 26px rgba(0, 194, 232, .38), 0 0 18px rgba(34, 211, 238, .12);
     }
 }
 
@@ -2362,7 +2399,7 @@ nav#mainNav.nav-scrolled {
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 4px 12px rgba(139, 92, 246, .25);
+    box-shadow: 0 4px 12px rgba(0, 194, 232, .25);
     transition: transform .15s, box-shadow .15s;
 }
 
@@ -2377,7 +2414,7 @@ nav#mainNav.nav-scrolled {
 
 .buy-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(139, 92, 246, .30), 0 0 14px rgba(34, 211, 238, .08);
+    box-shadow: 0 12px 32px rgba(0, 194, 232, .30), 0 0 14px rgba(34, 211, 238, .08);
 }
 
 .buy-btn:hover::before {
@@ -2627,7 +2664,7 @@ nav#mainNav.nav-scrolled {
     inset: -1px;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, rgba(34, 211, 238, .28), rgba(139, 92, 246, .28));
+    background: linear-gradient(135deg, rgba(34, 211, 238, .28), rgba(0, 194, 232, .28));
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
@@ -2649,7 +2686,7 @@ nav#mainNav.nav-scrolled {
     height: 44px;
     min-width: 44px;
     border-radius: 12px;
-    background: linear-gradient(135deg, rgba(34, 211, 238, .16), rgba(139, 92, 246, .16));
+    background: linear-gradient(135deg, rgba(34, 211, 238, .16), rgba(0, 194, 232, .16));
     border: 1px solid rgba(34, 211, 238, .25);
     color: var(--text-cyan);
     display: flex;
@@ -2757,7 +2794,7 @@ nav#mainNav.nav-scrolled {
 
 .tw-check-btn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(139, 92, 246, .45);
+    box-shadow: 0 8px 24px rgba(0, 194, 232, .45);
 }
 
 .tw-check-btn:disabled {
@@ -2903,8 +2940,8 @@ nav#mainNav.nav-scrolled {
     font-size: 11px;
     font-weight: 700;
     letter-spacing: .02em;
-    background: linear-gradient(135deg, rgba(139, 92, 246, .18), rgba(34, 211, 238, .18));
-    border: 1px solid rgba(139, 92, 246, .35);
+    background: linear-gradient(135deg, rgba(0, 194, 232, .18), rgba(34, 211, 238, .18));
+    border: 1px solid rgba(0, 194, 232, .35);
     color: var(--text);
 }
 
@@ -3811,7 +3848,7 @@ nav#mainNav.nav-scrolled {
     top: -180px;
     transform: translateX(-50%);
     border-radius: 50%;
-    background: radial-gradient(ellipse, rgba(139, 92, 246, .18), rgba(34, 211, 238, .06) 46%, transparent 72%);
+    background: radial-gradient(ellipse, rgba(0, 194, 232, .18), rgba(34, 211, 238, .06) 46%, transparent 72%);
     pointer-events: none;
 }
 
@@ -3902,7 +3939,7 @@ nav#mainNav.nav-scrolled {
 }
 
 .footer-social-icon.icon-mail {
-    background: linear-gradient(135deg, #0EA5E9 0%, #2563EB 100%);
+    background: linear-gradient(135deg, #0EA5E9 0%, #0891B2 100%);
     box-shadow: 0 4px 14px rgba(14, 165, 233, .3);
 }
 
@@ -3912,8 +3949,8 @@ nav#mainNav.nav-scrolled {
 }
 
 .footer-social-icon.icon-pin {
-    background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
-    box-shadow: 0 4px 14px rgba(139, 92, 246, .3);
+    background: linear-gradient(135deg, #00C2E8 0%, #22D3EE 100%);
+    box-shadow: 0 4px 14px rgba(0, 194, 232, .3);
 }
 
 .footer-contact-copy {
@@ -4407,7 +4444,7 @@ nav#mainNav.nav-scrolled {
     padding: 18px;
     border: 1px solid color-mix(in srgb, var(--violet) 22%, var(--line));
     border-radius: 16px;
-    background: linear-gradient(155deg, rgba(139, 92, 246, .06), rgba(34, 211, 238, .04), rgba(139, 92, 246, .03));
+    background: linear-gradient(155deg, rgba(0, 194, 232, .06), rgba(34, 211, 238, .04), rgba(0, 194, 232, .03));
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -4611,7 +4648,7 @@ textarea:focus,
 select:focus {
     outline: none;
     border-color: var(--violet);
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, .18);
+    box-shadow: 0 0 0 3px rgba(0, 194, 232, .18);
 }
 
 input::placeholder {
@@ -5162,7 +5199,7 @@ input::placeholder {
 
 .checkout-payment-icon--va,
 .tw-payment-icon--va {
-    color: #7C3AED;
+    color: #22D3EE;
 }
 
 .checkout-payment-icon--banktransfer,
@@ -6310,7 +6347,7 @@ input::placeholder {
     color: #fff;
     border: 1px solid rgba(255, 255, 255, 0.15);
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 8px 24px rgba(0, 194, 232, 0.3);
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: auto;
     overflow: hidden;
@@ -6327,7 +6364,7 @@ input::placeholder {
 
 .nexbot-float-btn:hover:not(.expanding) {
     transform: scale(1.05);
-    box-shadow: 0 12px 30px rgba(240, 57, 154, 0.55);
+    box-shadow: 0 12px 30px rgba(8, 145, 178, 0.55);
 }
 
 .nexbot-float-btn-icon {
@@ -6999,7 +7036,7 @@ input::placeholder {
     color: #fff;
     border-color: var(--violet-2);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 194, 232, 0.3);
 }
 
 .nexbot-footer {
@@ -7587,7 +7624,7 @@ html:not(.dark) .home-glass-card {
 html:not(.dark) .home-glass-card:hover {
     transform: translateY(-3px);
     box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-    border-color: rgba(139, 92, 246, 0.3);
+    border-color: rgba(0, 194, 232, 0.3);
 }
 
 html.dark .home-glass-badge {
@@ -7599,7 +7636,7 @@ html.dark .home-glass-badge {
     text-transform: uppercase;
     padding: 0.35rem 0.8rem;
     border-radius: 999px;
-    background: rgba(139, 92, 246, 0.12);
+    background: rgba(0, 194, 232, 0.12);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     color: rgba(216, 180, 254, 0.95);
@@ -7616,11 +7653,11 @@ html:not(.dark) .home-glass-badge {
     text-transform: uppercase;
     padding: 0.35rem 0.8rem;
     border-radius: 999px;
-    background: rgba(139, 92, 246, 0.1);
+    background: rgba(0, 194, 232, 0.1);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     color: var(--violet-2);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(0, 194, 232, 0.2);
 }
 
 
@@ -7720,7 +7757,7 @@ html:not(.dark) .home-glass-badge {
 
 .testimonial-card--active {
     z-index: 5;
-    box-shadow: 0 0 0 2px rgba(139, 92, 246, .85), 0 20px 45px -12px rgba(139, 92, 246, .45);
+    box-shadow: 0 0 0 2px rgba(0, 194, 232, .85), 0 20px 45px -12px rgba(0, 194, 232, .45);
 }
 
 .testimonial-card__stars {
@@ -7862,8 +7899,8 @@ html:not(.dark) .home-glass-badge {
     align-items: center;
     gap: 0.55rem;
     padding: 0.35rem 0.7rem 0.35rem 0.45rem;
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(56, 189, 248, 0.15));
-    border: 1px solid rgba(99, 102, 241, 0.35);
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.15), rgba(56, 189, 248, 0.15));
+    border: 1px solid rgba(34, 211, 238, 0.35);
     border-radius: 999px;
     color: #ffffff;
     cursor: pointer;
@@ -7893,7 +7930,7 @@ html:not(.dark) .home-glass-badge {
 }
 
 .nx-wallet-nav-btn:hover {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.28), rgba(56, 189, 248, 0.28));
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.28), rgba(56, 189, 248, 0.28));
     border-color: rgba(56, 189, 248, 0.65);
     transform: translateY(-1px);
     box-shadow: 0 4px 16px rgba(56, 189, 248, 0.25);
@@ -7904,13 +7941,13 @@ html:not(.dark) .home-glass-badge {
 }
 
 :root[data-theme="light"] .nx-wallet-nav-btn {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(14, 165, 233, 0.1));
-    border-color: rgba(99, 102, 241, 0.3);
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.1), rgba(14, 165, 233, 0.1));
+    border-color: rgba(34, 211, 238, 0.3);
     color: #0f172a;
 }
 
 :root[data-theme="light"] .nx-wallet-nav-btn:hover {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(14, 165, 233, 0.18));
+    background: linear-gradient(135deg, rgba(34, 211, 238, 0.18), rgba(14, 165, 233, 0.18));
     border-color: rgba(14, 165, 233, 0.5);
 }
 
@@ -7918,13 +7955,13 @@ html:not(.dark) .home-glass-badge {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #4f46e5, #06b6d4);
+    background: linear-gradient(135deg, #0891b2, #06b6d4);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.75rem;
     color: #ffffff;
-    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.4);
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.4);
     flex-shrink: 0;
 }
 
@@ -8018,7 +8055,7 @@ html:not(.dark) .home-glass-badge {
     width: 34px;
     height: 34px;
     border-radius: 10px;
-    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    background: linear-gradient(135deg, #00c2e8, #22d3ee);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -8045,7 +8082,7 @@ html:not(.dark) .home-glass-badge {
     gap: 0.35rem;
     padding: 0.45rem 0.85rem;
     border-radius: 10px;
-    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    background: linear-gradient(135deg, #0891b2, #00c2e8);
     color: #ffffff;
     font-size: 0.75rem;
     font-weight: 800;
@@ -8091,6 +8128,28 @@ html:not(.dark) .home-glass-badge {
     .nx-wallet-nav-icon-wrap {
         width: 24px;
         height: 24px;
+    }
+}
+
+/* Layar sangat sempit (<=380px, mis. iPhone SE/Mini 375px, Galaxy Fold
+   luar 320px): label + nominal wallet di navbar dimatiin, sisain ikon +
+   panah aja. Ini nurunin lebar tombol wallet dari ~110px jadi ~48px,
+   jadi grup ikon (menu, keranjang, wallet, avatar) muat tanpa perlu
+   scroll horizontal di kebanyakan device -- scroll di .nx-nav-actions
+   di atas tetap jadi jaring pengaman buat device yang lebih sempit lagi.
+   Saldo & label tetap kebaca lewat aria-label tombolnya. */
+@media (max-width: 380px) {
+    .nx-wallet-nav-btn {
+        padding: 0.3rem 0.5rem 0.3rem 0.3rem;
+        gap: 0;
+    }
+
+    .nx-wallet-nav-info {
+        display: none;
+    }
+
+    .nx-wallet-nav-chevron {
+        display: none;
     }
 }
 
@@ -8199,7 +8258,7 @@ html:not(.dark) .home-glass-badge {
     width: 44px !important;
     height: 44px !important;
     border-radius: 14px !important;
-    background: linear-gradient(135deg, #0ea5e9, #6366f1) !important;
+    background: linear-gradient(135deg, #0ea5e9, #22d3ee) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -8358,7 +8417,7 @@ html:not(.dark) .home-glass-badge {
     flex: 1 !important;
     height: 48px !important;
     border-radius: 14px !important;
-    background: linear-gradient(135deg, #0ea5e9, #6366f1) !important;
+    background: linear-gradient(135deg, #0ea5e9, #22d3ee) !important;
     color: #ffffff !important;
     font-size: 0.92rem !important;
     font-weight: 800 !important;
@@ -8373,7 +8432,7 @@ html:not(.dark) .home-glass-badge {
 }
 
 .nx-btn-wallet-action.primary:hover {
-    background: linear-gradient(135deg, #0284c7, #4f46e5) !important;
+    background: linear-gradient(135deg, #0284c7, #0891b2) !important;
     transform: translateY(-2px) !important;
     box-shadow: 0 8px 24px rgba(14, 165, 233, 0.45) !important;
 }
@@ -8607,7 +8666,7 @@ html:not(.dark) .home-glass-badge {
     position: relative !important;
     padding: 14px 10px !important;
     border-radius: 14px !important;
-    background: #111827 !important;
+    background: #181D26 !important;
     border: 1.5px solid rgba(255, 255, 255, 0.08) !important;
     color: #cbd5e1 !important;
     font-size: 0.86rem !important;
@@ -8631,7 +8690,7 @@ html:not(.dark) .home-glass-badge {
 
 .nx-preset-card.selected {
     border-color: #38bdf8 !important;
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.16), rgba(99, 102, 241, 0.1)) !important;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.16), rgba(34, 211, 238, 0.1)) !important;
     color: #38bdf8 !important;
     box-shadow: 0 0 0 1px #38bdf8, 0 6px 18px rgba(14, 165, 233, 0.2) !important;
     transform: translateY(-2px) !important;
@@ -8665,7 +8724,7 @@ html:not(.dark) .home-glass-badge {
     display: flex !important;
     align-items: center !important;
     border-radius: 14px !important;
-    background: #111827 !important;
+    background: #181D26 !important;
     border: 1.5px solid rgba(255, 255, 255, 0.1) !important;
     padding: 0 14px !important;
     transition: all 0.18s ease !important;
@@ -8761,7 +8820,7 @@ html:not(.dark) .home-glass-badge {
     gap: 12px !important;
     padding: 12px 14px !important;
     border-radius: 16px !important;
-    background: #111827 !important;
+    background: #181D26 !important;
     border: 1.5px solid rgba(255, 255, 255, 0.08) !important;
     cursor: pointer !important;
     transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
@@ -8777,7 +8836,7 @@ html:not(.dark) .home-glass-badge {
 
 .nx-payment-method-card.active {
     border-color: #38bdf8 !important;
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.14), rgba(99, 102, 241, 0.08)) !important;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.14), rgba(34, 211, 238, 0.08)) !important;
     box-shadow: 0 0 0 1px #38bdf8, 0 6px 18px rgba(14, 165, 233, 0.15) !important;
 }
 
@@ -8850,7 +8909,7 @@ html:not(.dark) .home-glass-badge {
     width: 100% !important;
     height: 50px !important;
     border-radius: 14px !important;
-    background: linear-gradient(135deg, #0ea5e9, #4f46e5) !important;
+    background: linear-gradient(135deg, #0ea5e9, #0891b2) !important;
     color: #ffffff !important;
     font-size: 0.92rem !important;
     font-weight: 800 !important;

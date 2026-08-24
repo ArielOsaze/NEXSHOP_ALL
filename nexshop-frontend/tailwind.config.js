@@ -10,11 +10,12 @@ module.exports = {
             },
             colors: {
                 brand: {
-                    indigo: '#8B5CF6',
+                    indigo: '#0891B2',
                     cyan: '#22D3EE',
-                    dark: '#080B14',
-                    light: '#F4F0FC',
-                    muted: '#8891B0',
+                    electric: '#00C2E8',
+                    dark: '#090B0F',
+                    light: '#F8FAFC',
+                    muted: '#98A2B3',
                 }
             },
             backgroundImage: {

@@ -5,6 +5,7 @@
 const STOP_WORDS = new Set(["aku", "saya", "yang", "dan", "atau", "untuk", "di", "ke", "dari", "itu", "ini", "dong", "ya", "yah", "nih", "sih", "tolong", "mau", "ingin", "dengan", "pada", "aja", "saja", "kalo", "kalau", "nya", "apakah", "apa", "bagaimana", "mengapa", "kenapa", "kapan", "siapa", "ada", "punya", "pakai"]);
 
 const ALIASES = [
+    { canonical: "nexshop wallet", terms: ["nexshop wallet", "saldo nexshop", "dompet nexshop", "wallet nexshop"] },
     { canonical: "xbox game pass", terms: ["xbox game pass", "gamepass", "game pass", "gamepas", "gampass", "xgp", "xbox pass"] },
     { canonical: "mobile legends", terms: ["mobile legends", "mobile legend", "mobilelegend", "mlbb", "ml"] },
     { canonical: "free fire", terms: ["free fire", "freefire", "ff"] },
@@ -34,6 +35,7 @@ const ALIASES = [
 ];
 
 const ENTITY_CATALOG = [
+    { name: "NexShop Wallet", terms: ["nexshop wallet", "saldo nexshop", "dompet nexshop", "wallet nexshop"] },
     { name: "Xbox Game Pass Sharing", terms: ["game pass sharing", "xbox sharing", "sharing"] },
     { name: "Xbox Game Pass Private", terms: ["game pass private", "xbox private", "private", "personal"] },
     { name: "Xbox Game Pass", terms: ["xbox game pass", "gamepass", "game pass", "gamepas", "gampass", "xgp", "xbox pass"] },
