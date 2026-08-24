@@ -2848,7 +2848,7 @@ function openGameDetail(kategori, overrideGame = null, returnView = 'topup', pre
         if (found) twState.product = found;
     }
 
-    document.getElementById("twLogo").src = safeUrl(game.logo, "images/nexshop-icon.svg");
+    document.getElementById("twLogo").src = safeUrl(game.logo, "images/nexshop-logo.webp");
     document.getElementById("twLogo").alt = game.kategori;
     document.getElementById("twGameName").textContent = game.kategori;
     document.getElementById("twGameDesc").textContent = `Topup ${game.kategori} resmi & instan, diproses otomatis 24 jam.`;

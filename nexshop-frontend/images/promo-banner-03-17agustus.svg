@@ -81,7 +81,7 @@
     <circle cx="1420" cy="280" r="7" fill="#D8F5FF"/>
   </g>
   <g filter="url(#softGlow3)" stroke-linecap="round" opacity="0.5">
-    <g transform="translate(150,120) scale(0.5)" stroke="#8B5CF6" stroke-width="3">
+  <g transform="translate(150,120) scale(0.5)" stroke="#00C2E8" stroke-width="3">
       <line x1="0" y1="-70" x2="0" y2="-30"/>
       <line x1="0" y1="70" x2="0" y2="30"/>
       <line x1="-70" y1="0" x2="-30" y2="0"/>

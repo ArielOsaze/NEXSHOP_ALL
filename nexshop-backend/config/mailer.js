@@ -79,7 +79,7 @@ async function sendOtpEmail(to, otp) {
                 subject: "Kode Verifikasi NexShop",
                 htmlContent: `
                     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
-                        <h2 style="color:#7C3AED;">NexShop</h2>
+        <h2 style="color:#00C2E8;">NexShop</h2>
                         <p>Gunakan kode berikut untuk memverifikasi akun kamu:</p>
                         <div style="font-size: 32px; font-weight: bold; letter-spacing: 6px; background: #f2f1f8; padding: 16px; text-align: center; border-radius: 8px;">
                             ${otp}
@@ -109,7 +109,7 @@ async function sendAdminPinChangeOtpEmail(to, otp) {
             subject: "Kode perubahan Security PIN NexShop",
             htmlContent: `
                 <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;">
-                    <h2 style="color:#7C3AED;">NexShop</h2>
+        <h2 style="color:#00C2E8;">NexShop</h2>
                     <p>Ada permintaan untuk mengubah Security PIN admin.</p>
                     <div style="font-size:32px;font-weight:bold;letter-spacing:6px;background:#f2f1f8;padding:16px;text-align:center;border-radius:8px;">${otp}</div>
                     <p style="color:#666;font-size:13px;margin-top:16px;">Kode ini berlaku 5 menit dan hanya dapat dipakai sekali. Jangan bagikan kepada siapa pun. Jika ini bukan kamu, segera ganti password admin.</p>
@@ -173,7 +173,7 @@ async function sendOrderInvoiceEmail(to, { orderId, recipientName, items, subtot
                 subject: `Invoice Pesanan ${orderId} — Pembayaran Berhasil`,
                 htmlContent: `
                     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
-                        <h2 style="color:#7C3AED;">NexShop</h2>
+        <h2 style="color:#00C2E8;">NexShop</h2>
                         <p>Halo ${recipientName || "Kak"}, pembayaran kamu udah <strong style="color:#22C55E;">berhasil</strong>. Ini invoice-nya:</p>
                         <p style="color:#888; font-size:13px; margin-bottom:20px;">No. Pesanan: <strong>${orderId}</strong></p>
                         <table style="width:100%; border-collapse:collapse; font-size:14px;">
@@ -181,7 +181,7 @@ async function sendOrderInvoiceEmail(to, { orderId, recipientName, items, subtot
                             ${discountRow}
                             <tr>
                                 <td style="padding:12px 0 0; font-weight:bold;">Total</td>
-                                <td style="padding:12px 0 0; text-align:right; font-weight:bold; color:#7C3AED;">${rupiah(total)}</td>
+              <td style="padding:12px 0 0; text-align:right; font-weight:bold; color:#00C2E8;">${rupiah(total)}</td>
                             </tr>
                         </table>
                         ${waCta}
@@ -212,7 +212,7 @@ async function sendTopupInvoiceEmail(to, { orderId, namaProduk, tujuan, serverId
                 subject: `Invoice Topup ${orderId} — Diamond/Voucher Terkirim`,
                 htmlContent: `
                     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
-                        <h2 style="color:#7C3AED;">NexShop</h2>
+        <h2 style="color:#00C2E8;">NexShop</h2>
                         <p>Topup kamu <strong style="color:#22C55E;">berhasil terkirim</strong> ✅</p>
                         <p style="color:#888; font-size:13px; margin-bottom:20px;">No. Pesanan: <strong>${orderId}</strong></p>
                         <table style="width:100%; border-collapse:collapse; font-size:14px;">
@@ -222,7 +222,7 @@ async function sendTopupInvoiceEmail(to, { orderId, namaProduk, tujuan, serverId
                             ${serialNumber ? `<tr><td style="padding:6px 0; color:#888;">Kode/SN</td><td style="padding:6px 0; text-align:right;">${serialNumber}</td></tr>` : ""}
                             <tr>
                                 <td style="padding:12px 0 0; font-weight:bold; border-top:1px solid #eee;">Total Bayar</td>
-                                <td style="padding:12px 0 0; text-align:right; font-weight:bold; color:#7C3AED; border-top:1px solid #eee;">${rupiah(harga)}</td>
+              <td style="padding:12px 0 0; text-align:right; font-weight:bold; color:#00C2E8; border-top:1px solid #eee;">${rupiah(harga)}</td>
                             </tr>
                         </table>
                         <p style="color:#666; font-size:13px; margin-top:24px;">
@@ -252,9 +252,9 @@ async function sendPasswordResetEmail(to, resetLink) {
                 subject: "Reset Password NexShop",
                 htmlContent: `
                     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
-                        <h2 style="color:#7C3AED;">NexShop</h2>
+        <h2 style="color:#00C2E8;">NexShop</h2>
                         <p>Ada permintaan buat reset password akun kamu. Klik tombol di bawah buat bikin password baru:</p>
-                        <a href="${resetLink}" style="display:inline-block; margin:16px 0; padding:13px 28px; background:linear-gradient(135deg,#8B5CF6,#7C3AED); color:#fff; text-decoration:none; border-radius:100px; font-weight:bold; font-size:14px;">
+        <a href="${resetLink}" style="display:inline-block; margin:16px 0; padding:13px 28px; background:linear-gradient(135deg,#00C2E8,#0891B2); color:#fff; text-decoration:none; border-radius:100px; font-weight:bold; font-size:14px;">
                             Reset Password
                         </a>
                         <p style="color:#666; font-size:13px;">

@@ -1103,7 +1103,7 @@
     <div id="sectionAuth" style="display:none;padding:2rem 1.25rem;">
         <div class="tv-guest-auth-wrap">
             <div style="text-align:center;margin-bottom:1.75rem;">
-                <img src="/images/nexshop-icon.svg" alt="NexShop" style="width:52px;height:52px;object-fit:contain;margin-bottom:0.75rem;filter:drop-shadow(0 4px 14px rgba(59,130,246,0.5));">
+                <img src="/images/nexshop-logo.webp" alt="NexShop" style="width:52px;height:52px;object-fit:contain;margin-bottom:0.75rem;filter:drop-shadow(0 4px 14px rgba(59,130,246,0.5));">
                 <h2 style="font-size:1.5rem;font-weight:900;color:#ffffff;margin:0 0 4px;">NexShop Partner Portal</h2>
                 <p style="font-size:0.88rem;color:#94a3b8;margin:0;">Konsol distributor resmi &amp; integrasi API developer NexShop</p>
             </div>
@@ -1247,7 +1247,7 @@
         <aside class="tv-sidebar" id="tvSidebar">
             <div class="tv-sidebar-brand">
                 <a href="/portal-reseller.html" class="tv-brand-logo-wrap">
-                    <img src="/images/nexshop-icon.svg" alt="NexShop" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(59,130,246,0.5));">
+                    <img src="/images/nexshop-logo.webp" alt="NexShop" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(59,130,246,0.5));">
                     <div class="tv-brand-text">
                         <div class="tv-brand-title">
                             <span>NexShop</span> <span class="tv-brand-tag">GOLD</span>
@@ -1988,7 +1988,7 @@
             for (const key in LOGO_PRESETS) {
                 if (lower.includes(key)) return LOGO_PRESETS[key];
             }
-            return "/images/nexshop-icon.svg";
+            return "/images/nexshop-logo.webp";
         }
 
         function getProductPhoto(prod) {
@@ -2187,7 +2187,7 @@
 
             let html = `
                 <button type="button" class="tv-operator-pill ${activeOperator === 'all' ? 'active' : ''}" onclick="selectOperator('all', this)">
-                    <img src="/images/nexshop-icon.svg" class="tv-operator-thumb" alt="Semua">
+                        <img src="/images/nexshop-logo.webp" class="tv-operator-thumb" alt="Semua">
                     <span style="flex:1;">Semua Operator</span>
                     <span style="font-size:0.7rem;opacity:0.7;">(${filteredByCat.length})</span>
                 </button>
@@ -2197,7 +2197,7 @@
                 const isActive = activeOperator === op.name ? 'active' : '';
                 html += `
                     <button type="button" class="tv-operator-pill ${isActive}" onclick="selectOperator('${escapeHtml(op.name)}', this)">
-                        <img src="${op.logo}" class="tv-operator-thumb" alt="${op.name}" onerror="this.src='/images/nexshop-icon.svg'">
+                                <img src="${op.logo}" class="tv-operator-thumb" alt="${op.name}" onerror="this.src='/images/nexshop-logo.webp'">
                         <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${op.name}</span>
                         <span style="font-size:0.7rem;opacity:0.7;">(${op.count})</span>
                     </button>
@@ -2339,7 +2339,7 @@
                 return `
                     <div class="tv-product-card-item">
                         <div class="tv-prod-photo-wrap">
-                            <img src="${photo}" class="tv-product-photo" alt="${p.nama}" onerror="this.src='/images/nexshop-icon.svg'">
+                            <img src="${photo}" class="tv-product-photo" alt="${p.nama}" onerror="this.src='/images/nexshop-logo.webp'">
                             <div style="min-width:0;flex:1;">
                                 <div style="display:flex;align-items:center;justify-content:space-between;">
                                     <code style="font-weight:800;color:#60a5fa;font-size:0.8rem;">${p.kode_produk}</code>
@@ -2381,7 +2381,7 @@
                 const photo = getProductPhoto(p);
                 return `
                     <tr>
-                        <td><img src="${photo}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;background:#0f172a;" onerror="this.src='/images/nexshop-icon.svg'"></td>
+                            <td><img src="${photo}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;background:#0f172a;" onerror="this.src='/images/nexshop-logo.webp'"></td>
                         <td><code style="font-weight:700;color:#60a5fa;">${p.kode_produk}</code></td>
                         <td style="font-weight:700;color:#ffffff;">${p.nama}</td>
                         <td><span class="tv-stat-nominal-pill">${p.operator || p.kategori}</span></td>

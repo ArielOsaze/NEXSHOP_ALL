@@ -10,8 +10,8 @@
       <stop offset="100%" stop-color="#22D3EE" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="glowViolet2" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.4"/>
-      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#00C2E8" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#00C2E8" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="gemBig" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#D8F5FF"/>
@@ -67,7 +67,7 @@
     <circle cx="1550" cy="330" r="3" opacity="0.6"/>
     <circle cx="60" cy="80" r="3" opacity="0.5"/>
   </g>
-  <g fill="#8B5CF6">
+  <g fill="#00C2E8">
     <circle cx="700" cy="510" r="3.5" opacity="0.5"/>
   </g>
 </svg>

@@ -7,13 +7,13 @@
     </linearGradient>
 
     <linearGradient id="violetCyan" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#8B5CF6"/>
+      <stop offset="0%" stop-color="#00C2E8"/>
       <stop offset="100%" stop-color="#22D3EE"/>
     </linearGradient>
 
     <radialGradient id="glowViolet" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#8B5CF6" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#8B5CF6" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#00C2E8" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#00C2E8" stop-opacity="0"/>
     </radialGradient>
 
     <radialGradient id="glowCyan" cx="50%" cy="50%" r="50%">
@@ -23,7 +23,7 @@
 
     <linearGradient id="gemFace" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" stop-color="#B79CFF"/>
-      <stop offset="45%" stop-color="#8B5CF6"/>
+      <stop offset="45%" stop-color="#00C2E8"/>
       <stop offset="100%" stop-color="#22D3EE"/>
     </linearGradient>
 
@@ -33,7 +33,7 @@
     </linearGradient>
 
     <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M40 0H0V40" fill="none" stroke="#8B5CF6" stroke-opacity="0.08" stroke-width="1"/>
+    <path d="M40 0H0V40" fill="none" stroke="#00C2E8" stroke-opacity="0.08" stroke-width="1"/>
     </pattern>
 
     <mask id="gridMask">
@@ -92,14 +92,14 @@
       <circle cx="1520" cy="150" r="3" opacity="0.6"/>
       <circle cx="1330" cy="480" r="3.5" opacity="0.7"/>
     </g>
-    <g fill="#8B5CF6">
+  <g fill="#00C2E8">
       <circle cx="1470" cy="80" r="3" opacity="0.7"/>
       <circle cx="1170" cy="470" r="4" opacity="0.6"/>
     </g>
 
     <!-- eyebrow badge -->
     <g transform="translate(96,150)">
-      <rect width="230" height="38" rx="19" fill="#8B5CF6" fill-opacity="0.15" stroke="#8B5CF6" stroke-opacity="0.5"/>
+    <rect width="230" height="38" rx="19" fill="#00C2E8" fill-opacity="0.15" stroke="#00C2E8" stroke-opacity="0.5"/>
       <text x="115" y="25" text-anchor="middle" font-family="'Space Grotesk',sans-serif" font-size="13" font-weight="700" letter-spacing="1.5" fill="#B79CFF">🔥 PROMO MINGGU INI</text>
     </g>
 
@@ -124,6 +124,6 @@
     </g>
 
     <!-- brand mark, bottom corner -->
-    <text x="96" y="540" font-family="'Sora',sans-serif" font-weight="700" font-size="24" fill="#5C6489">Nex<tspan fill="#8B5CF6">Shop</tspan></text>
+  <text x="96" y="540" font-family="'Sora',sans-serif" font-weight="700" font-size="24" fill="#5C6489">Nex<tspan fill="#00C2E8">Shop</tspan></text>
   </g>
 </svg>
