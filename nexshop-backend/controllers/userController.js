@@ -374,13 +374,19 @@ exports.deleteUser = async (req, res) => {
 
 exports.updateOwnAvatar = async (req, res) => {
     const { avatar_url } = req.body;
-    if (typeof avatar_url !== "string" || !/^https:\/\//.test(avatar_url)) {
+    let cleanAvatarUrl = "";
+    try {
+        if (typeof avatar_url !== "string" || avatar_url.length > 2048 || /[\u0000-\u001f\u007f]/.test(avatar_url)) throw new Error();
+        const parsed = new URL(avatar_url.trim());
+        if (parsed.protocol !== "https:" || parsed.username || parsed.password) throw new Error();
+        cleanAvatarUrl = parsed.toString();
+    } catch (_) {
         return res.status(400).json({ message: "avatar_url tidak valid" });
     }
     try {
         const { data, error } = await supabase
             .from("users")
-            .update({ avatar_url })
+            .update({ avatar_url: cleanAvatarUrl })
             .eq("id", req.user.id)
             .select("id, avatar_url");
             

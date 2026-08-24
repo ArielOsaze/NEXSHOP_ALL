@@ -746,6 +746,31 @@ i[class*="fa-"] {
     color: var(--mkt-text-muted);
 }
 
+.mkt-search-wrap input::-webkit-search-cancel-button {
+    display: none;
+}
+
+.mkt-search-clear {
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: 0 0 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--mkt-text-muted);
+    cursor: pointer;
+}
+
+.mkt-search-clear:hover,
+.mkt-search-clear:focus-visible {
+    background: var(--mkt-surface-3);
+    color: var(--mkt-text);
+    outline: none;
+}
+
 .mkt-search-btn {
     flex: 0 0 auto;
     padding: 0.7rem 1.5rem;
@@ -953,6 +978,39 @@ i[class*="fa-"] {
     margin: 0.2rem 0 0;
     font-size: 0.76rem;
     color: var(--mkt-text-muted);
+}
+
+.mkt-rail-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.mkt-category-scroll-actions {
+    display: none;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.mkt-category-scroll-actions button {
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--mkt-stroke);
+    border-radius: 10px;
+    background: var(--mkt-surface-2);
+    color: var(--mkt-text-dim);
+    cursor: pointer;
+}
+
+.mkt-category-scroll-actions button:hover,
+.mkt-category-scroll-actions button:focus-visible {
+    border-color: var(--mkt-line-strong);
+    color: var(--mkt-primary);
+    outline: none;
 }
 
 .mkt-rail-foot {
@@ -4566,4 +4624,126 @@ i[class*="fa-"] {
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;
+}
+
+/* ==========================================================================
+   MARKETPLACE DISCOVERY UX
+   Ringkasan hasil, filter aktif, dan kategori ringkas untuk katalog besar.
+   ========================================================================== */
+.mkt-grid-header>div {
+    min-width: 0;
+}
+
+.mkt-grid-header p {
+    margin: 0.25rem 0 0;
+    color: var(--mkt-text-muted);
+    font-size: 0.78rem;
+    line-height: 1.5;
+}
+
+.mkt-active-filter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0.85rem 0 1rem;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--mkt-line-strong);
+    border-radius: 12px;
+    background: var(--mkt-primary-tint);
+    color: var(--mkt-text-dim);
+    font-size: 0.78rem;
+}
+
+.mkt-active-filter span {
+    min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-wrap: anywhere;
+}
+
+.mkt-active-filter i {
+    color: var(--mkt-primary);
+}
+
+.mkt-active-filter button {
+    min-height: 2.5rem;
+    flex: 0 0 auto;
+    padding: 0.45rem 0.75rem;
+    border: 1px solid var(--mkt-line-strong);
+    border-radius: 9px;
+    background: var(--mkt-surface-2);
+    color: var(--mkt-primary);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.mkt-active-filter button:hover,
+.mkt-active-filter button:focus-visible {
+    border-color: var(--mkt-primary);
+    outline: none;
+}
+
+#mktServicesSection {
+    scroll-margin-top: calc(var(--mkt-nav-h) + 1rem);
+}
+
+.market-card {
+    width: 100%;
+    min-width: 0;
+    color: inherit;
+    font-family: inherit;
+}
+
+@media (max-width: 1024px) {
+    .cat-filter-wrap {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 0.5rem;
+        padding: 0 0 0.55rem;
+        scroll-snap-type: x proximity;
+        scrollbar-width: thin;
+        scrollbar-color: var(--mkt-line-strong) transparent;
+        overscroll-behavior-inline: contain;
+    }
+
+    .cat-filter-wrap::-webkit-scrollbar {
+        display: block;
+        height: 4px;
+    }
+
+    .cat-filter-wrap::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: var(--mkt-line-strong);
+    }
+
+    .cat-btn {
+        min-height: 2.75rem;
+        scroll-snap-align: start;
+    }
+
+    .mkt-category-scroll-actions {
+        display: flex;
+    }
+
+    .mkt-rail-deco {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .mkt-active-filter {
+        align-items: flex-start;
+    }
+
+    .mkt-active-filter button {
+        min-height: 2.75rem;
+    }
+
+    .mkt-grid-header {
+        align-items: flex-start;
+    }
 }

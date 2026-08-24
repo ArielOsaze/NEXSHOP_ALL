@@ -36,7 +36,7 @@
     <script src="/theme-init.js"></script>
     <script defer src="/clean-url.js?v=20260825"></script>
     <script defer src="/cookie-consent.js?v=20260825"></script>
-    <link rel="stylesheet" href="/style.css?v=20260824-cyan-brand">
+    <link rel="stylesheet" href="/style.css?v=20260825-nexbot-legal">
     <link rel="stylesheet" href="/marketplace-theme.css?v=20260824-cyan-brand">
 
     <style>
@@ -1301,7 +1301,7 @@
                         </div>
                         <div>
                             <label class="form-label" for="regPassword">Password Akun <span style="color:#ef4444;">*</span></label>
-                            <input type="password" id="regPassword" required minlength="6" placeholder="Min. 6 Karakter" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
+                            <input type="password" id="regPassword" required minlength="8" placeholder="Min. 8 Karakter" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
                         </div>
                     </div>
 
@@ -2262,9 +2262,33 @@
             }
         }
 
-        function logoutReseller() {
+        function clearResellerSession() {
             localStorage.removeItem("nexshop-reseller-token");
             localStorage.removeItem("nexshop-reseller-user");
+        }
+
+        function showPortalAuth(message = "") {
+            const secAuth = document.getElementById("sectionAuth");
+            const secDash = document.getElementById("sectionDashboard");
+            if (secAuth) secAuth.style.display = "block";
+            if (secDash) secDash.style.display = "none";
+
+            const errEl = document.getElementById("loginErrorMsg");
+            if (errEl) {
+                errEl.textContent = message;
+                errEl.style.display = message ? "block" : "none";
+            }
+        }
+
+        function showPortalDashboard() {
+            const secAuth = document.getElementById("sectionAuth");
+            const secDash = document.getElementById("sectionDashboard");
+            if (secAuth) secAuth.style.display = "none";
+            if (secDash) secDash.style.display = "flex";
+        }
+
+        function logoutReseller() {
+            clearResellerSession();
             window.location.reload();
         }
 
@@ -2360,7 +2384,7 @@
                 buildOperatorGrid();
                 filterAndRenderProducts();
             } catch (e) {
-                gridView.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#ef4444;padding:2rem;">Gagal memuat produk: ${e.message}</div>`;
+                gridView.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#ef4444;padding:2rem;">Gagal memuat produk: ${escapeHtml(e.message)}</div>`;
             }
         }
 
@@ -3027,8 +3051,6 @@
         // ── Load Portal Overview ──
         async function loadPortalOverview() {
             const token = getResellerToken();
-            const secAuth = document.getElementById("sectionAuth");
-            const secDash = document.getElementById("sectionDashboard");
             const pendingBanner = document.getElementById("tvPendingBanner");
 
             // Format tanggal lokal dinamis
@@ -3059,43 +3081,48 @@
             } catch (_) {}
 
             if (!token) {
-                secAuth.style.display = "block";
-                secDash.style.display = "none";
+                showPortalAuth();
                 return;
             }
 
             try {
-                secAuth.style.display = "none";
-                secDash.style.display = "flex";
-
                 const res = await fetch(`${API_BASE}/reseller/portal/overview`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
 
+                const data = await res.json().catch(() => ({}));
+
                 if (res.status === 401) {
-                    logoutReseller();
+                    clearResellerSession();
+                    showPortalAuth(data.message || "Sesi reseller sudah berakhir. Silakan masuk kembali.");
                     return;
                 }
 
                 if (res.status === 403) {
-                    const errData = await res.json().catch(() => ({}));
-                    if (errData.code === "RESELLER_NOT_REGISTERED") {
+                    if (data.code === "RESELLER_NOT_REGISTERED") {
                         // Akun ini valid tapi belum pernah daftar jadi reseller sama
                         // sekali -- jangan tampilkan dashboard, arahkan ke form daftar.
-                        localStorage.removeItem("nexshop-reseller-token");
-                        localStorage.removeItem("nexshop-reseller-user");
-                        secAuth.style.display = "block";
-                        secDash.style.display = "none";
+                        clearResellerSession();
+                        showPortalAuth();
                         switchAuthTab("register");
                         if (typeof showToast === "function") {
-                            showToast(errData.message || "Kamu belum terdaftar sebagai reseller. Silakan daftar dulu.");
+                            showToast(data.message || "Kamu belum terdaftar sebagai reseller. Silakan daftar dulu.");
                         }
                         return;
                     }
                 }
 
-                const data = await res.json().catch(() => ({}));
-                if (data.user) {
+                if (!res.ok) {
+                    throw new Error(data.message || "Sesi reseller tidak dapat diverifikasi.");
+                }
+                if (!data.user) {
+                    throw new Error("Respons sesi reseller tidak valid.");
+                }
+
+                // Dashboard baru boleh terlihat setelah token diverifikasi server
+                // dan overview mengembalikan identitas reseller yang sah.
+                showPortalDashboard();
+                {
                     currentResellerStatus = String(data.user.reseller_status || "none").toLowerCase();
                     const isApproved = (currentResellerStatus === "approved");
                     currentResellerProfile = {
@@ -3202,6 +3229,7 @@
                 }
             } catch (err) {
                 console.error("loadPortalOverview error:", err);
+                showPortalAuth(err.message || "Portal reseller sedang tidak dapat diakses. Silakan coba lagi.");
             }
         }
 
@@ -3466,8 +3494,8 @@
                         <span class="tv-news-blue-dot"></span>
                     </div>
                     <div class="tv-news-meta">
-                        <span>${n.time_ago || 'Baru saja'}</span>
-                        <span>${n.date || ''}</span>
+                        <span>${escapeHtml(n.time_ago || 'Baru saja')}</span>
+                        <span>${escapeHtml(n.date || '')}</span>
                     </div>
                 </div>
             `).join("");
@@ -3486,7 +3514,7 @@
                 allOrders = await res.json().catch(() => ([]));
                 renderOrdersTable(allOrders);
             } catch (e) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:1.5rem;">Gagal memuat transaksi: ${e.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:1.5rem;">Gagal memuat transaksi: ${escapeHtml(e.message)}</td></tr>`;
             }
         }
 
@@ -3501,13 +3529,13 @@
 
             tbody.innerHTML = orders.map(o => `
                 <tr>
-                    <td><code style="color:#60a5fa;">${o.ref_id || o.id}</code></td>
+                    <td><code style="color:#60a5fa;">${escapeHtml(o.ref_id || o.id)}</code></td>
                     <td style="font-size:0.78rem;color:#94a3b8;">${new Date(o.created_at).toLocaleString("id-ID")}</td>
-                    <td style="font-weight:700;color:#ffffff;">${o.produk}</td>
-                    <td style="color:#cbd5e1;">${o.tujuan}${o.server_id ? ` (${o.server_id})` : ''}</td>
+                    <td style="font-weight:700;color:#ffffff;">${escapeHtml(o.produk)}</td>
+                    <td style="color:#cbd5e1;">${escapeHtml(o.tujuan)}${o.server_id ? ` (${escapeHtml(o.server_id)})` : ''}</td>
                     <td style="font-weight:800;color:#38bdf8;">Rp ${(o.total || 0).toLocaleString("id-ID")}</td>
-                    <td><span class="tv-badge-status ${o.status === 'success' ? 'tv-badge-sukses' : (o.status === 'pending' ? 'tv-badge-pending' : 'tv-badge-gagal')}">${o.status}</span></td>
-                    <td><code style="font-size:0.75rem;color:#cbd5e1;">${o.sn || '-'}</code></td>
+                    <td><span class="tv-badge-status ${o.status === 'success' ? 'tv-badge-sukses' : (o.status === 'pending' ? 'tv-badge-pending' : 'tv-badge-gagal')}">${escapeHtml(o.status)}</span></td>
+                    <td><code style="font-size:0.75rem;color:#cbd5e1;">${escapeHtml(o.sn || '-')}</code></td>
                 </tr>
             `).join("");
         }
@@ -3798,14 +3826,14 @@
                 tbody.innerHTML = mutations.map(m => `
                     <tr>
                         <td style="font-size:0.78rem;color:#94a3b8;">${new Date(m.created_at).toLocaleString("id-ID")}</td>
-                        <td><span class="tv-badge-status ${m.direction === 'IN' ? 'tv-badge-sukses' : 'tv-badge-gagal'}">${m.type}</span></td>
+                        <td><span class="tv-badge-status ${m.direction === 'IN' ? 'tv-badge-sukses' : 'tv-badge-gagal'}">${escapeHtml(m.type)}</span></td>
                         <td style="font-weight:800;color:${m.direction === 'IN' ? '#4ade80' : '#f87171'};">${m.direction === 'IN' ? '+' : '-'} Rp ${Number(m.amount).toLocaleString("id-ID")}</td>
                         <td style="font-weight:700;color:#38bdf8;">Rp ${Number(m.balance_after).toLocaleString("id-ID")}</td>
-                        <td style="color:#cbd5e1;font-size:0.82rem;">${m.description || m.reference_id}</td>
+                        <td style="color:#cbd5e1;font-size:0.82rem;">${escapeHtml(m.description || m.reference_id)}</td>
                     </tr>
                 `).join("");
             } catch (e) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#ef4444;padding:1.5rem;">Gagal memuat mutasi: ${e.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#ef4444;padding:1.5rem;">Gagal memuat mutasi: ${escapeHtml(e.message)}</td></tr>`;
             }
         }
 

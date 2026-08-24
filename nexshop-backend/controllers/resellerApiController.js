@@ -166,9 +166,14 @@ exports.createOrder = async (req, res) => {
                 }
             });
         } catch (walletErr) {
-            return res.status(400).json({
+            const code = walletErr.code === walletService.WALLET_NOT_SETUP_CODE
+                ? walletService.WALLET_NOT_SETUP_CODE
+                : "INSUFFICIENT_RESELLER_BALANCE";
+            const status = walletErr.status || (code === "INSUFFICIENT_RESELLER_BALANCE" ? 402 : 400);
+            return res.status(status).json({
                 success: false,
-                message: walletErr.message || "Saldo reseller tidak mencukupi untuk melakukan transaksi ini"
+                code,
+                message: walletErr.message || "Saldo deposit reseller tidak mencukupi untuk melakukan transaksi ini"
             });
         }
 

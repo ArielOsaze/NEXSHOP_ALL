@@ -1,0 +1,94 @@
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+
+const root = path.join(__dirname, "..");
+const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
+const portal = read("nexshop-frontend/portal-reseller.html");
+const legalModal = read("nexshop-frontend/legal-modal.js");
+const nexbot = read("nexshop-frontend/nexbot.js");
+const style = read("nexshop-frontend/style.css");
+const publicLegalPages = [
+    "berita-artikel.html",
+    "berita.html",
+    "docs-reseller.html",
+    "marketplace.html",
+    "reseller.html"
+].map((name) => read(`nexshop-frontend/${name}`));
+
+let passed = 0;
+function check(label, condition) {
+    if (!condition) {
+        console.error(`  [FAIL] ${label}`);
+        process.exitCode = 1;
+        return;
+    }
+    passed += 1;
+    console.log(`  [PASS] ${label}`);
+}
+
+console.log("NEXSHOP REGTEST 20: LEGALITAS, NEXBOT & AUTH PORTAL\n");
+
+check(
+    "semua footer publik memuat modal legalitas bersama",
+    publicLegalPages.every((html) => html.includes('/legal-modal.js?v=20260825'))
+);
+check(
+    "klik /legalitas dicegah agar tidak pindah ke halaman Top Up",
+    legalModal.includes('a[href="/legalitas"]') &&
+        legalModal.includes("event.preventDefault()") &&
+        legalModal.includes("openModal(trigger)") &&
+        !legalModal.includes("window.location")
+);
+check(
+    "modal legalitas dapat ditutup, mengembalikan fokus, dan mendukung Escape",
+    legalModal.includes('event.key === "Escape"') &&
+        legalModal.includes("lastTrigger.focus()") &&
+        legalModal.includes('aria-modal="true"')
+);
+
+const fetchPosition = portal.indexOf('fetch(`${API_BASE}/reseller/portal/overview`');
+const dashboardPosition = portal.indexOf("showPortalDashboard();", fetchPosition);
+check(
+    "dashboard reseller baru tampil setelah token diverifikasi server",
+    fetchPosition >= 0 &&
+        dashboardPosition > fetchPosition &&
+        portal.indexOf("if (!res.ok)", fetchPosition) < dashboardPosition &&
+        portal.indexOf("if (!data.user)", fetchPosition) < dashboardPosition
+);
+check(
+    "sesi kosong atau kedaluwarsa selalu gagal tertutup ke layar login",
+    portal.includes("if (!token) {") &&
+        portal.includes("clearResellerSession();\n                    showPortalAuth(data.message") &&
+        portal.includes('if (secDash) secDash.style.display = "none"')
+);
+check(
+    "token customer biasa tidak dipakai sebagai token portal reseller",
+    portal.includes('localStorage.getItem("nexshop-reseller-token")') &&
+        !/function getResellerToken\(\)[\s\S]{0,600}localStorage\.getItem\(["']token["']\)/.test(portal)
+);
+
+const mascotPath = path.join(root, "nexshop-frontend/images/nexbot-mascot.webp");
+const mascotHeader = fs.existsSync(mascotPath)
+    ? fs.readFileSync(mascotPath).subarray(0, 12).toString("ascii")
+    : "";
+check(
+    "maskot NexBot tersimpan sebagai aset WebP lokal",
+    mascotHeader.startsWith("RIFF") && mascotHeader.endsWith("WEBP")
+);
+check(
+    "semua avatar NexBot memakai satu aset maskot terpusat",
+    nexbot.includes('const NEXBOT_MASCOT_SRC = "/images/nexbot-mascot.webp"') &&
+        !nexbot.includes("fa-robot") &&
+        style.includes(".nexbot-mascot-image")
+);
+check(
+    "animasi idle maskot menghormati preferensi reduced motion",
+    style.includes("@keyframes nexbot-mascot-idle") &&
+        style.includes("@media (prefers-reduced-motion: reduce)")
+);
+
+if (!process.exitCode) {
+    console.log(`\nRINGKASAN: ${passed} pengujian lolos.`);
+}

@@ -4140,6 +4140,113 @@ nav#mainNav.nav-scrolled {
     max-width: 640px;
 }
 
+/* Legalitas lintas halaman. Markup-nya disediakan legal-modal.js supaya
+   footer Marketplace, Berita, Reseller, dan Docs membuka dialog lokal tanpa
+   menavigasi pengunjung kembali ke halaman Top Up. */
+.shared-legal-modal {
+    max-width: 680px;
+}
+
+.shared-legal-heading {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 0 40px 20px 0;
+}
+
+.shared-legal-heading p {
+    margin: 0 0 3px;
+    color: var(--cyan);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.shared-legal-heading h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: clamp(1.35rem, 4vw, 1.75rem);
+}
+
+.shared-legal-mark {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border: 1px solid rgba(34, 211, 238, 0.35);
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    color: var(--cyan);
+    background: rgba(8, 145, 178, 0.12);
+}
+
+.shared-legal-intro,
+.shared-legal-note {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+.shared-legal-details {
+    margin: 20px 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--bg-panel-2);
+}
+
+.shared-legal-details > div {
+    display: grid;
+    grid-template-columns: minmax(110px, 0.7fr) minmax(0, 1.7fr);
+    gap: 16px;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.shared-legal-details > div:last-child {
+    border-bottom: 0;
+}
+
+.shared-legal-details dt {
+    color: var(--text);
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+.shared-legal-details dd {
+    min-width: 0;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    line-height: 1.55;
+}
+
+.shared-legal-details code {
+    color: var(--text);
+}
+
+.shared-legal-details .shared-legal-status {
+    color: #22c55e;
+    font-weight: 700;
+}
+
+.shared-legal-note {
+    margin: 0;
+    font-size: 0.8rem;
+}
+
+@media (max-width: 540px) {
+    .shared-legal-modal {
+        padding: 28px 20px;
+    }
+
+    .shared-legal-details > div {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+}
+
 .policy-tabs {
     display: flex;
     gap: 8px;
@@ -6432,10 +6539,30 @@ input::placeholder {
 }
 
 .nexbot-float-btn-icon {
-    font-size: 24px;
+    width: clamp(48px, 5.6vw, 60px);
+    height: clamp(48px, 5.6vw, 60px);
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.nexbot-mascot-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    user-select: none;
+    pointer-events: none;
+    filter: drop-shadow(0 5px 10px rgba(0, 194, 232, 0.24));
+}
+
+.nexbot-mascot-image--float {
+    animation: nexbot-mascot-idle 3.2s ease-in-out infinite;
+}
+
+@keyframes nexbot-mascot-idle {
+    0%, 100% { transform: translateY(0) rotate(-1deg); }
+    50% { transform: translateY(-3px) rotate(1deg); }
 }
 
 /* pointer-events:auto WAJIB di sini — .nexbot-widget (parent) sengaja
@@ -6515,12 +6642,13 @@ input::placeholder {
     width: 36px;
     height: 36px;
     border-radius: 10px;
-    background: linear-gradient(135deg, var(--violet-2), var(--cyan));
+    background: rgba(8, 145, 178, 0.12);
     display: flex;
     align-items: center;
     justify-content: center;
     color: #fff;
-    font-size: 16px;
+    padding: 2px;
+    border: 1px solid rgba(34, 211, 238, 0.24);
 }
 
 .nexbot-badge {
@@ -6644,9 +6772,10 @@ input::placeholder {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 10px;
+    padding: 1px;
     color: #fff;
-    background: linear-gradient(135deg, var(--violet-2), var(--cyan));
+    background: rgba(8, 145, 178, 0.12);
+    border: 1px solid rgba(34, 211, 238, 0.2);
 }
 
 .nexbot-msg-name {
@@ -7158,7 +7287,8 @@ input::placeholder {
     }
 
     .nexbot-float-btn-icon {
-        font-size: 20px;
+        width: 45px;
+        height: 45px;
     }
 
     .nexbot-window {
@@ -7251,6 +7381,12 @@ input::placeholder {
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nexbot-mascot-image--float {
+        animation: none;
     }
 }
 

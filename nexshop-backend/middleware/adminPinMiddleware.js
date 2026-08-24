@@ -1,6 +1,25 @@
 const bcrypt = require("bcrypt");
 const supabase = require("../config/db");
 
+const PIN_WINDOW_MS = 15 * 60 * 1000;
+const PIN_MAX_FAILURES = 5;
+const pinFailures = new Map();
+
+function pinAttemptKey(req) {
+    return `${req.user?.id || "unknown"}:${req.ip || "unknown"}`;
+}
+
+function getPinAttempt(req) {
+    const key = pinAttemptKey(req);
+    const current = pinFailures.get(key);
+    if (!current || Date.now() - current.startedAt >= PIN_WINDOW_MS) {
+        const fresh = { count: 0, startedAt: Date.now() };
+        pinFailures.set(key, fresh);
+        return { key, entry: fresh };
+    }
+    return { key, entry: current };
+}
+
 function isValidSecurityPin(value) {
     return typeof value === "string" && /^\d{6}$/.test(value);
 }
@@ -23,15 +42,27 @@ async function logSensitiveAction(req, action, details = {}) {
 }
 
 async function verifyAdminPin(req, pin) {
+    const attempt = getPinAttempt(req);
+    if (attempt.entry.count >= PIN_MAX_FAILURES) {
+        return {
+            ok: false,
+            status: 429,
+            message: "Terlalu banyak Security PIN yang salah. Coba lagi dalam 15 menit.",
+            code: "ADMIN_PIN_RATE_LIMITED"
+        };
+    }
     if (!isValidSecurityPin(pin)) return { ok: false, status: 400, message: "Masukkan Security PIN 6 digit yang valid" };
     try {
         const { data: user, error } = await supabase.from("users").select("security_pin_hash").eq("id", req.user.id).maybeSingle();
         if (error) return { ok: false, status: 500, message: "Schema Security PIN belum tersedia. Jalankan migration Security PIN terbaru." };
         if (!user || !user.security_pin_hash) return { ok: false, status: 428, message: "Security PIN belum dibuat", code: "ADMIN_PIN_SETUP_REQUIRED" };
         if (!await bcrypt.compare(pin, user.security_pin_hash)) {
+            attempt.entry.count += 1;
+            pinFailures.set(attempt.key, attempt.entry);
             await logSensitiveAction(req, "PIN_VERIFICATION_FAILED");
             return { ok: false, status: 401, message: "Security PIN tidak sesuai" };
         }
+        pinFailures.delete(attempt.key);
         await logSensitiveAction(req, "PIN_VERIFIED");
         return { ok: true };
     } catch (err) {

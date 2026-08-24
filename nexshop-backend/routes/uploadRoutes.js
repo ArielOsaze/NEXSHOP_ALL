@@ -3,6 +3,7 @@ const multer = require("multer");
 const jwt = require("jsonwebtoken");
 const { uploadImage, uploadAudio } = require("../controllers/uploadController");
 const authMiddleware = require("../middleware/authMiddleware");
+const { kycUploadLimiter } = require("../middleware/rateLimiter");
 
 const router = express.Router();
 
@@ -11,7 +12,12 @@ const router = express.Router();
 // nginx maupun yang tidak.
 const uploadImageConfig = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 15 * 1024 * 1024 } // 15MB
+    limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
+    fileFilter: (_req, file, cb) => {
+        const allowed = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+        if (!allowed.has(file.mimetype)) return cb(new Error("File harus berupa gambar JPG, PNG, WEBP, atau GIF"));
+        cb(null, true);
+    }
 });
 
 const uploadAudioConfig = multer({
@@ -48,12 +54,17 @@ function uploadImageAuth(req, res, next) {
     return authMiddleware(req, res, next);
 }
 
-router.post("/image", uploadImageAuth, uploadImageConfig.single("image"), handleUploadError, uploadImage);
+function limitAnonymousKyc(req, res, next) {
+    const type = String(req.query.type || "").toLowerCase();
+    if (type === "kyc" || type === "ktp") return kycUploadLimiter(req, res, next);
+    next();
+}
+
+router.post("/image", limitAnonymousKyc, uploadImageAuth, uploadImageConfig.single("image"), handleUploadError, uploadImage);
 // Note: Backwards compatibility untuk endpoint lama ("/")
-router.post("/", uploadImageAuth, uploadImageConfig.single("image"), handleUploadError, uploadImage);
+router.post("/", limitAnonymousKyc, uploadImageAuth, uploadImageConfig.single("image"), handleUploadError, uploadImage);
 
 // Khusus untuk audio music player
 router.post("/audio", authMiddleware, uploadAudioConfig.single("audio"), handleUploadError, uploadAudio);
 
 module.exports = router;
-

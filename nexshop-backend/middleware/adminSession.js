@@ -46,7 +46,7 @@ function pruneStale(now) {
     }
 }
 
-async function resolveLiveRole(userId, roleDariToken) {
+async function resolveLiveRole(userId) {
     const cached = roleCache.get(userId);
     const now = Date.now();
     if (cached && now - cached.at < ROLE_CACHE_TTL_MS) return cached;
@@ -67,15 +67,14 @@ async function resolveLiveRole(userId, roleDariToken) {
         }
     }
 
-    // Pengecekan role masih gagal juga = masalah infrastruktur, BUKAN bukti
-    // bahwa user-nya gak berhak. Kalau di sini kita nolak, satu gangguan
-    // database sesaat bisa ngunci admin keluar dari dashboardnya sendiri.
-    // Jadi: pakai role dari token (sudah ditandatangani server) sebagai
-    // cadangan, catat di log, dan JANGAN di-cache supaya request berikutnya
-    // mencoba baca database lagi.
+    // Gagal membaca role live harus fail-closed. Memakai role lama yang
+    // tertanam di JWT akan menghidupkan kembali akses admin yang sudah
+    // dicabut persis ketika database sedang bermasalah.
     if (error) {
-        console.error("adminSession: gagal baca role user", userId, "-", error.message, "| sementara pakai role dari token");
-        return { role: roleDariToken || null, blacklisted: false, at: now, fallback: true };
+        const failure = new Error("Status akses admin tidak dapat diverifikasi");
+        failure.code = "ADMIN_AUTH_UNAVAILABLE";
+        failure.cause = error;
+        throw failure;
     }
 
     if (!data) return { role: null, blacklisted: false, at: now };
@@ -105,10 +104,14 @@ function buildAdminGuard(allowedRoles, deniedMessage, deniedCode = "ADMIN_ACCESS
 
         let live;
         try {
-            live = await resolveLiveRole(req.user.id, req.user.role);
+            live = await resolveLiveRole(req.user.id);
         } catch (err) {
-            console.error("adminSession:", err.message);
-            live = { role: req.user.role || null, blacklisted: false, at: Date.now(), fallback: true };
+            console.error("adminSession:", err.message, err.cause?.message || "");
+            return res.status(503).json({
+                success: false,
+                message: "Status akses admin sedang tidak dapat diverifikasi. Coba lagi sebentar.",
+                code: "ADMIN_AUTH_UNAVAILABLE"
+            });
         }
 
         if (live.blacklisted || !allowedRoles.includes(live.role)) {

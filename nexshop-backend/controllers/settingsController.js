@@ -7,6 +7,8 @@ const { sendAdminPinChangeOtpEmail } = require("../config/mailer");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
+const { assertSafeOutboundUrl, validateWebhookUrlShape } = require("../utils/safeOutboundUrl");
+const { isAllowedChromeExecutable } = require("../utils/chromeExecutable");
 
 const PIN_CHANGE_OTP_TTL_MS = 5 * 60 * 1000;
 const PIN_CHANGE_OTP_MAX_ATTEMPTS = 5;
@@ -51,6 +53,9 @@ function normalizeSeoSettings(payload) {
             }
             if (!fs.existsSync(executablePath)) {
                 throw new Error("Chrome Executable Path tidak ditemukan pada server backend.");
+            }
+            if (!isAllowedChromeExecutable(executablePath)) {
+                throw new Error("Chrome Executable Path harus menunjuk ke lokasi Chrome/Chromium sistem yang diizinkan.");
             }
             normalized.chrome_executable_path = path.normalize(executablePath);
         }
@@ -352,6 +357,15 @@ exports.updateApiKeysAdmin = async (req, res) => {
             }
         }
 
+        if (payload.waapi_url !== undefined && String(payload.waapi_url).trim()) {
+            const target = `${String(payload.waapi_url).trim().replace(/\/$/, "")}/api/whatsapp/send-message`;
+            const validation = validateWebhookUrlShape(target);
+            if (!validation.ok) {
+                return res.status(400).json({ message: `URL Gateway WA ditolak: ${validation.reason}` });
+            }
+            payload.waapi_url = String(payload.waapi_url).trim().replace(/\/$/, "");
+        }
+
         // Template pesan & toggle notifikasi Fonnte disimpan di store_settings,
         // bukan api_keys — tapi form-nya digabung 1 card di frontend. Pisahkan
         // di sini supaya masing-masing ditulis ke tabel yang benar, tetap dalam
@@ -371,6 +385,17 @@ exports.updateApiKeysAdmin = async (req, res) => {
                 storePayload[key] = payload[key];
                 delete payload[key];
             }
+        }
+
+        // Browser headless akan membuka origin ini dari jaringan server.
+        // Validasi DNS di production mencegah dashboard dipakai untuk
+        // mengakses localhost, metadata cloud, atau jaringan privat.
+        if (process.env.NODE_ENV === "production" && storePayload.seo_screenshot_base_url) {
+            const safeScreenshotOrigin = await assertSafeOutboundUrl(storePayload.seo_screenshot_base_url);
+            if (!safeScreenshotOrigin.ok) {
+                return res.status(400).json({ message: `SEO Screenshot Base URL ditolak: ${safeScreenshotOrigin.reason}` });
+            }
+            storePayload.seo_screenshot_base_url = new URL(safeScreenshotOrigin.url).origin;
         }
 
         const { data, error } = await updateApiKeys(payload);
@@ -433,10 +458,16 @@ exports.testWhatsAppAdmin = async (req, res) => {
             return res.status(400).json({ message: "Nomor tujuan belum diisi." });
         }
 
+        const outboundTarget = `${waapi_url.replace(/\/$/, "")}/api/whatsapp/send-message`;
+        const safeTarget = await assertSafeOutboundUrl(outboundTarget);
+        if (!safeTarget.ok) {
+            return res.status(400).json({ success: false, message: `URL Gateway WA ditolak: ${safeTarget.reason}` });
+        }
+
         const started = Date.now();
         try {
             const waRes = await axios.post(
-                `${waapi_url.replace(/\/$/, "")}/api/whatsapp/send-message`,
+                safeTarget.url,
                 { number, message },
                 {
                     headers: {
@@ -561,22 +592,35 @@ exports.updateMe = async (req, res) => {
         if (findErr || !user) return res.status(404).json({ message: "User tidak ditemukan" });
 
         const payload = {};
-        if (fullname) payload.fullname = fullname;
+        if (fullname !== undefined) {
+            const cleanFullname = typeof fullname === "string" ? fullname.trim() : "";
+            if (cleanFullname.length < 2 || cleanFullname.length > 100) {
+                return res.status(400).json({ message: "Nama harus 2–100 karakter" });
+            }
+            payload.fullname = cleanFullname;
+        }
 
-        if (email && email !== user.email) {
+        let cleanEmail = null;
+        if (email !== undefined) {
+            cleanEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail) || cleanEmail.length > 254) {
+                return res.status(400).json({ message: "Format email tidak valid" });
+            }
+        }
+        if (cleanEmail && cleanEmail !== String(user.email || "").toLowerCase()) {
             // cek dulu email itu belum dipakai akun lain, biar errornya jelas
             // (bukan cuma "Gagal update profil" generik dari duplicate key constraint)
             const { data: existing } = await supabase
                 .from("users")
                 .select("id")
-                .eq("email", email)
+                .eq("email", cleanEmail)
                 .neq("id", req.user.id)
                 .maybeSingle();
 
             if (existing) {
                 return res.status(400).json({ message: "Email sudah dipakai akun lain" });
             }
-            payload.email = email;
+            payload.email = cleanEmail;
         }
 
         if (new_password) {
@@ -587,8 +631,8 @@ exports.updateMe = async (req, res) => {
             if (!validPassword) {
                 return res.status(401).json({ message: "Password saat ini salah" });
             }
-            if (new_password.length < 4) {
-                return res.status(400).json({ message: "Password baru minimal 4 karakter" });
+            if (typeof new_password !== "string" || new_password.length < 8 || new_password.length > 128) {
+                return res.status(400).json({ message: "Password baru harus 8–128 karakter" });
             }
             payload.password = await bcrypt.hash(new_password, 10);
         }
@@ -608,7 +652,7 @@ exports.updateMe = async (req, res) => {
             // tampilkan pesan error asli dari Supabase (bukan generik) supaya
             // gampang di-diagnosis — misal RLS policy, kolom gak ada, dst.
             console.log("updateMe error:", error);
-            return res.status(500).json({ message: `Gagal update profil: ${error.message}` });
+            return res.status(500).json({ message: "Gagal update profil" });
         }
 
         if (!data) {
@@ -623,6 +667,6 @@ exports.updateMe = async (req, res) => {
         res.json({ message: "Profil berhasil diperbarui", data });
     } catch (err) {
         console.log(err);
-        res.status(500).json({ message: err.message || "Server Error" });
+        res.status(500).json({ message: "Server Error" });
     }
 };

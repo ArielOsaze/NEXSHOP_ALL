@@ -3,6 +3,8 @@
 const fs = require("fs");
 const path = require("path");
 const { getStoreSettings } = require("../config/settings");
+const { assertSafeOutboundUrl } = require("../utils/safeOutboundUrl");
+const { getKnownChromeExecutables, isAllowedChromeExecutable } = require("../utils/chromeExecutable");
 
 const THUMBNAIL_WIDTH = 1200;
 const THUMBNAIL_HEIGHT = 630;
@@ -67,6 +69,11 @@ async function getScreenshotBaseUrl() {
     throw new Error("SEO_SCREENSHOT_BASE_URL harus berupa origin HTTP(S) tanpa kredensial");
   }
 
+  if (process.env.NODE_ENV === "production") {
+    const safeOrigin = await assertSafeOutboundUrl(parsed.origin);
+    if (!safeOrigin.ok) throw new Error(`SEO_SCREENSHOT_BASE_URL ditolak: ${safeOrigin.reason}`);
+  }
+
   return parsed.origin;
 }
 
@@ -80,28 +87,14 @@ async function resolveChromeExecutable() {
   const runtimeSettings = await getSeoRuntimeSettings();
   const configured = runtimeSettings.executablePath;
   if (configured) {
-    if (fs.existsSync(configured)) return configured;
+    if (fs.existsSync(configured) && isAllowedChromeExecutable(configured)) return configured;
     // Path dashboard/.env bisa tertinggal setelah paket browser diganti
     // (mis. google-chrome-stable -> chromium). Jangan langsung menggagalkan
     // semua thumbnail/PDF; lanjutkan ke kandidat sistem yang aman.
     console.warn(`CHROME_EXECUTABLE_PATH tidak ditemukan: ${configured}. Mencoba deteksi otomatis.`);
   }
 
-  const candidates = process.platform === "win32"
-    ? [
-      path.join(process.env.PROGRAMFILES || "C:\\Program Files", "Google", "Chrome", "Application", "chrome.exe"),
-      path.join(process.env["PROGRAMFILES(X86)"] || "C:\\Program Files (x86)", "Google", "Chrome", "Application", "chrome.exe"),
-      path.join(process.env.LOCALAPPDATA || "", "Google", "Chrome", "Application", "chrome.exe"),
-      path.join(process.env.PROGRAMFILES || "C:\\Program Files", "Microsoft", "Edge", "Application", "msedge.exe"),
-    ]
-    : process.platform === "darwin"
-      ? ["/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"]
-      : [
-        "/usr/bin/google-chrome-stable",
-        "/usr/bin/google-chrome",
-        "/usr/bin/chromium",
-        "/usr/bin/chromium-browser",
-      ];
+  const candidates = getKnownChromeExecutables();
 
   const executable = candidates.find((candidate) => candidate && fs.existsSync(candidate));
   if (!executable) {

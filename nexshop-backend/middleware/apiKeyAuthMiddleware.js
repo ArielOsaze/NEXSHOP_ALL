@@ -1,6 +1,5 @@
 const crypto = require("crypto");
 const supabase = require("../config/db");
-const jwt = require("jsonwebtoken");
 const { isMissingTableError } = require("../services/resellerService");
 
 // ===========================================================
@@ -8,12 +7,9 @@ const { isMissingTableError } = require("../services/resellerService");
 //
 // Catatan keamanan penting (semuanya perbaikan dari versi sebelumnya):
 //
-// 1. JWT_SECRET tidak boleh punya nilai default hardcoded. Dulu file ini
-//    memakai fallback "nexshop-secret-jwt-key-2026" -- nilai yang ikut
-//    ter-commit ke repo. Kalau env JWT_SECRET lupa dipasang, semua orang
-//    yang pernah lihat repo ini bisa menandatangani token admin palsu.
-//    Sekarang: kalau secret-nya kosong, verifikasi JWT ditolak, bukan
-//    dilanjutkan memakai secret tebakan.
+// 1. Open API hanya menerima API Key + Secret Key. JWT sesi web tidak
+//    diterima di namespace ini, sehingga klien tidak dapat melewati kontrak
+//    Open API dan kewajiban saldo deposit lewat token login biasa.
 //
 // 2. IP client TIDAK boleh diambil langsung dari header X-Forwarded-For /
 //    X-Real-IP / CF-Connecting-IP. Header itu dikirim oleh client dan bisa
@@ -33,8 +29,6 @@ const { isMissingTableError } = require("../services/resellerService");
 //    nama reseller, sehingga Secret Key praktis tidak berfungsi sebagai
 //    faktor kedua. Perbandingannya juga dibuat timing-safe.
 // ===========================================================
-
-const JWT_SECRET = process.env.JWT_SECRET || "";
 
 function cleanIp(rawIp) {
     if (!rawIp) return "";
@@ -65,7 +59,6 @@ function secureCompare(a, b) {
  * Menerima:
  * 1. X-NexShop-Api-Key + X-NexShop-Secret  (dua-duanya wajib)
  * 2. Authorization: Bearer <api_key>       + X-NexShop-Secret (wajib)
- * 3. Authorization: Bearer <jwt>           (sesi login web biasa)
  */
 async function apiKeyAuthMiddleware(req, res, next) {
     const headerApiKey = req.headers["x-nexshop-api-key"] || req.headers["x-api-key"];
@@ -214,73 +207,14 @@ async function apiKeyAuthMiddleware(req, res, next) {
         }
     }
 
-    // ---- Jalur 2: JWT sesi web biasa ----
-    if (bearerToken) {
-        if (!JWT_SECRET) {
-            console.error("apiKeyAuthMiddleware: JWT_SECRET belum di-set, verifikasi token ditolak.");
-            return res.status(500).json({ success: false, message: "Konfigurasi server belum lengkap." });
-        }
-        try {
-            req.user = jwt.verify(bearerToken, JWT_SECRET);
-            return next();
-        } catch (_) {
-            return res.status(401).json({ success: false, message: "Sesi login kedaluwarsa atau token tidak valid." });
-        }
-    }
-
     return res.status(401).json({
         success: false,
-        message: "Kredensial API tidak ditemukan. Sertakan Bearer Token, atau pasangan X-NexShop-Api-Key + X-NexShop-Secret."
+        message: "Kredensial Open API tidak ditemukan. Sertakan pasangan API Key dan Secret Key reseller.",
+        code: "API_CREDENTIALS_REQUIRED"
     });
-}
-
-/**
- * Versi optional-auth untuk endpoint publik yang harganya menyesuaikan
- * kalau kebetulan pemanggilnya seorang reseller.
- *
- * Perbaikan: dulu fungsi ini memanggil apiKeyAuthMiddleware lalu berharap
- * kegagalan datang lewat callback -- padahal middleware itu MENGIRIM
- * respons 401/403 sendiri. Akibatnya kredensial yang salah/kedaluwarsa
- * bikin endpoint "opsional" ikut gagal keras, bukan lanjut sebagai tamu.
- * Sekarang respons di-intercept: kalau autentikasinya gagal, request
- * diteruskan sebagai guest tanpa pernah mengirim respons error.
- */
-async function optionalApiKeyOrJwtAuth(req, res, next) {
-    const headerApiKey = req.headers["x-nexshop-api-key"] || req.headers["x-api-key"];
-    const authHeader = req.headers["authorization"] || "";
-    const hasCreds = Boolean(headerApiKey || authHeader.startsWith("Bearer "));
-
-    if (!hasCreds) {
-        req.user = null;
-        return next();
-    }
-
-    let settled = false;
-    const finish = (asGuest) => {
-        if (settled) return;
-        settled = true;
-        if (asGuest) req.user = null;
-        next();
-    };
-
-    // Shim respons: apa pun yang coba dikirim middleware utama ditelan,
-    // lalu request diteruskan sebagai guest.
-    const fakeRes = {
-        status() { return this; },
-        json() { finish(true); return this; },
-        send() { finish(true); return this; }
-    };
-
-    try {
-        await apiKeyAuthMiddleware(req, fakeRes, () => finish(false));
-    } catch (_) {
-        finish(true);
-    }
-    finish(true);
 }
 
 module.exports = {
     apiKeyAuthMiddleware,
-    optionalApiKeyOrJwtAuth,
     getClientIp
 };

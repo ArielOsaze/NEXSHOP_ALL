@@ -1,6 +1,7 @@
 const axios = require("axios");
 require("dotenv").config();
 const { getApiKeys } = require("./settings");
+const { assertSafeOutboundUrl } = require("../utils/safeOutboundUrl");
 
 // Kirim notifikasi ke WhatsApp lewat WA Gateway (waapi.fyas.my.id), dipanggil
 // dari controller lain (order/topup) tiap ada event penting (pembelian sukses,
@@ -26,8 +27,14 @@ async function sendWhatsAppNotification(message) {
     }
 
     try {
+        const target = `${waapi_url.replace(/\/$/, "")}/api/whatsapp/send-message`;
+        const safeTarget = await assertSafeOutboundUrl(target);
+        if (!safeTarget.ok) {
+            console.log("URL WAAPI ditolak:", safeTarget.reason);
+            return;
+        }
         await axios.post(
-            `${waapi_url.replace(/\/$/, "")}/api/whatsapp/send-message`,
+            safeTarget.url,
             {
                 number: waapi_target_number,
                 message

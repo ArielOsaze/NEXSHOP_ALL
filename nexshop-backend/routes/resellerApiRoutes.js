@@ -5,7 +5,9 @@ const { apiKeyAuthMiddleware } = require("../middleware/apiKeyAuthMiddleware");
 const { resellerApiLimiter } = require("../middleware/rateLimiter");
 
 // Semua route Open API v1 reseller diproteksi oleh apiKeyAuthMiddleware
-// (Mendukung Header X-NexShop-Api-Key / X-RESELLER-KEY + Secret, IP Whitelist, dan Status APPROVED)
+// (Mendukung Header X-NexShop-Api-Key + Secret, IP Whitelist, dan Status APPROVED).
+// JWT sesi web tidak diterima di jalur Open API; pembelian dari Partner
+// Portal punya endpoint JWT sendiri dan tetap memakai saldo deposit.
 // Limiter DIPASANG SEBELUM autentikasi supaya percobaan tebak API Key
 // pun ikut kena batas -- kalau dipasang setelahnya, request yang gagal
 // auth tidak pernah terhitung dan brute-force jadi gratis.

@@ -152,6 +152,16 @@ const resellerApplyLimiter = rateLimit({
     message: { message: "Terlalu banyak percobaan pendaftaran reseller. Coba lagi nanti." }
 });
 
+// Upload KYC dapat dilakukan sebelum login agar pendaftar baru bisa mengisi
+// formulir, tetapi endpoint anonim dengan file besar perlu kuota tersendiri.
+const kycUploadLimiter = rateLimit({
+    windowMs: 60 * 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak upload dokumen identitas. Coba lagi satu jam lagi." }
+});
+
 // Login khusus Partner Portal reseller. Sebelumnya endpoint
 // POST /api/reseller/auth/login TIDAK punya limiter sama sekali, jadi
 // password akun mitra (yang saldonya bisa jutaan rupiah) bisa ditebak
@@ -210,4 +220,4 @@ const walletNotificationLimiter = rateLimit({
     message: { message: "Terlalu banyak notifikasi masuk." }
 });
 
-module.exports = { resellerLoginLimiter, resellerApiLimiter, resellerWebhookTestLimiter, walletNotificationLimiter, loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter };
+module.exports = { resellerLoginLimiter, resellerApiLimiter, resellerWebhookTestLimiter, walletNotificationLimiter, loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter, kycUploadLimiter };

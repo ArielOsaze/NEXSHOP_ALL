@@ -24,6 +24,7 @@
 const supabase = require("../config/db");
 const { notify } = require("../config/notify");
 const { marked } = require("marked");
+const cheerio = require("cheerio");
 
 marked.use({ breaks: true, gfm: true });
 
@@ -52,6 +53,16 @@ const MAX_TAG_LEN          = 50;
 const PUBLIC_PAGE_SIZE     = 12;
 const ADMIN_PAGE_SIZE      = 20;
 
+// Nilai yang ditempel ke string filter PostgREST harus dibatasi; koma dan
+// tanda kurung adalah sintaks operator `.or()`, bukan karakter pencarian.
+function sanitizePostgrestSearch(value) {
+    return String(value || "")
+        .replace(/[\u0000-\u001f\u007f,%_().]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 100);
+}
+
 // ─────────────────────────────────────────────
 // HTML Sanitizer — whitelist tag & atribut
 // ─────────────────────────────────────────────
@@ -72,120 +83,65 @@ const ALLOWED_ATTRS = {
     "*": ["class"]   // class global diizinkan untuk styling
 };
 
-// Pola berbahaya
-const DANGEROUS_PROTOCOLS = /^(javascript|vbscript|data|blob):/i;
-const DANGEROUS_EVENTS    = /\bon\w+\s*=/i;
-
 /**
- * Sanitasi HTML — hapus tag/atribut berbahaya, pertahankan konten teks.
- * Implementasi ringan berbasis regex untuk lingkungan server-side tanpa DOM.
- * Untuk produksi dengan konten sangat beragam, pertimbangkan DOMPurify (jsdom).
+ * Sanitasi HTML berbasis parser DOM. Regex tidak mampu mem-parsing HTML
+ * secara aman (atribut rusak, nesting aneh, dan entity encoding dapat
+ * mengubah maknanya), jadi seluruh elemen/atribut dinormalisasi oleh Cheerio.
  */
 function sanitizeHtml(raw) {
     if (!raw || typeof raw !== "string") return "";
+    const $ = cheerio.load(removeGeminiCitations(raw), null, false);
+    const destructive = "script,style,iframe,object,embed,link,meta,base,form,input,button,svg,math,template";
+    $(destructive).remove();
 
-    let html = removeGeminiCitations(raw);
-
-    // Wrap tables in responsive div before sanitizing, so the tags are recognized
-    html = html.replace(/<table/gi, '<div class="table-responsive"><table');
-    html = html.replace(/<\/table>/gi, '</table></div>');
-
-    // 1. Hapus seluruh script, style, iframe, object, embed beserta isinya
-    html = html
-        .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "")
-        .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, "")
-        .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, "")
-        .replace(/<object\b[^>]*>[\s\S]*?<\/object>/gi, "")
-        .replace(/<embed\b[^>]*>/gi, "")
-        .replace(/<link\b[^>]*>/gi, "")
-        .replace(/<meta\b[^>]*>/gi, "")
-        .replace(/<base\b[^>]*>/gi, "")
-        .replace(/<form\b[^>]*>[\s\S]*?<\/form>/gi, "")
-        .replace(/<input\b[^>]*>/gi, "")
-        .replace(/<button\b[^>]*>[\s\S]*?<\/button>/gi, "")
-        .replace(/<svg\b[^>]*>[\s\S]*?<\/svg>/gi, "")
-        .replace(/<math\b[^>]*>[\s\S]*?<\/math>/gi, "");
-
-    // 2. Hapus comment HTML (bisa menyembunyikan payload)
-    html = html.replace(/<!--[\s\S]*?-->/g, "");
-
-    // 3. Proses setiap tag yang tersisa
-    html = html.replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b([^>]*)>/g, (match, tagName, attrs) => {
-        const lower = tagName.toLowerCase();
-
-        // Closing tag — izinkan jika tag diizinkan
-        if (match.startsWith("</")) {
-            return ALLOWED_TAGS.has(lower) ? `</${lower}>` : "";
+    $("*").each((_, element) => {
+        const tagName = String(element.name || "").toLowerCase();
+        const node = $(element);
+        if (!ALLOWED_TAGS.has(tagName)) {
+            node.replaceWith(node.contents());
+            return;
         }
 
-        // Opening/self-closing tag — hanya izinkan jika tag diizinkan
-        if (!ALLOWED_TAGS.has(lower)) return "";
+        const originalAttrs = { ...(element.attribs || {}) };
+        for (const name of Object.keys(originalAttrs)) node.removeAttr(name);
+        const allowed = new Set([...(ALLOWED_ATTRS[tagName] || []), ...(ALLOWED_ATTRS["*"] || [])]);
 
-        // Sanitasi atribut
-        const cleanAttrs = sanitizeAttrs(lower, attrs);
-        const selfClosing = ["br", "hr", "img"].includes(lower);
+        for (const [rawName, rawValue] of Object.entries(originalAttrs)) {
+            const name = rawName.toLowerCase();
+            const value = String(rawValue || "").trim();
+            if (!allowed.has(name) || name.startsWith("on")) continue;
 
-        return selfClosing ? `<${lower}${cleanAttrs}>` : `<${lower}${cleanAttrs}>`;
-    });
-
-    return html.trim();
-}
-
-function sanitizeAttrs(tagName, attrsRaw) {
-    if (!attrsRaw || !attrsRaw.trim()) return "";
-
-    const allowed = new Set([...(ALLOWED_ATTRS[tagName] || []), ...(ALLOWED_ATTRS["*"] || [])]);
-    let result = "";
-
-    // Parse atribut sederhana
-    const attrPattern = /([a-zA-Z][a-zA-Z0-9\-]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|(\S+)))?/g;
-    let m;
-    while ((m = attrPattern.exec(attrsRaw)) !== null) {
-        const name  = m[1].toLowerCase();
-        const value = (m[2] !== undefined ? m[2] : m[3] !== undefined ? m[3] : m[4] !== undefined ? m[4] : "");
-
-        // Tolak event handler (onclick, onerror, dll)
-        if (DANGEROUS_EVENTS.test(`${name}=`)) continue;
-        if (!allowed.has(name)) continue;
-
-        // Validasi nilai URL
-        if (["href", "src", "action", "cite"].includes(name)) {
-            const trimmed = value.trim();
-            if (DANGEROUS_PROTOCOLS.test(trimmed)) continue;
-            // Untuk href/src: hanya izinkan http, https, atau path relatif
-            if (trimmed && !trimmed.startsWith("/") && !trimmed.startsWith("#")) {
-                try {
-                    const u = new URL(trimmed);
-                    if (!["http:", "https:"].includes(u.protocol)) continue;
-                } catch {
-                    // URL relatif atau fragment — izinkan
+            if (["href", "src", "cite"].includes(name)) {
+                if (!value || (!value.startsWith("/") && !value.startsWith("#"))) {
+                    try {
+                        const parsed = new URL(value);
+                        if (!["http:", "https:"].includes(parsed.protocol) || parsed.username || parsed.password) continue;
+                    } catch (_) {
+                        continue;
+                    }
                 }
             }
+            if (name === "class" && (!/^[a-zA-Z0-9 _-]{1,160}$/.test(value))) continue;
+            if (["width", "height", "colspan", "rowspan"].includes(name) && !/^\d{1,4}$/.test(value)) continue;
+            if (name === "align" && !/^(left|right|center|justify)$/i.test(value)) continue;
+            if (name === "loading" && !/^(lazy|eager)$/i.test(value)) continue;
+            if (tagName === "a" && ["rel", "target"].includes(name)) continue;
+
+            node.attr(name, value);
         }
 
-        // Paksa rel="noopener noreferrer" pada link eksternal
-        if (tagName === "a" && name === "href") {
-            result += ` href="${escapeAttr(value)}" rel="noopener noreferrer"`;
-            continue;
+        if (tagName === "a" && node.attr("href")) {
+            node.attr("rel", "noopener noreferrer");
         }
+        if (tagName === "img" && !node.attr("src")) node.remove();
+    });
 
-        // Target _blank dipaksa bersama rel (sudah ditambahkan di atas)
-        if (tagName === "a" && name === "target") continue;
-        if (tagName === "a" && name === "rel") continue;
+    $("table").each((_, table) => {
+        const parent = $(table).parent();
+        if (!parent.hasClass("table-responsive")) $(table).wrap('<div class="table-responsive"></div>');
+    });
 
-        result += ` ${name}="${escapeAttr(value)}"`;
-    }
-
-    return result;
-}
-
-function escapeAttr(value) {
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#x27;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;");
+    return $.root().html().trim();
 }
 
 function removeGeminiCitations(text) {
@@ -364,7 +320,7 @@ function publicArticleShape(article, sources = []) {
         slug:            article.slug,
         title:           removeGeminiCitations(article.title),
         excerpt:         removeGeminiCitations(article.excerpt || null),
-        content:         removeGeminiCitations(article.content || ""),
+        content:         sanitizeHtml(article.content || ""),
         category:        article.category,
         tags:            article.tags || [],
         author:          article.author,
@@ -403,7 +359,7 @@ exports.getPublicArticles = async (req, res) => {
         const limit    = Math.min(PUBLIC_PAGE_SIZE * 2, Math.max(1, parseInt(req.query.limit) || PUBLIC_PAGE_SIZE));
         const offset   = (page - 1) * limit;
         const category = String(req.query.category || "").trim();
-        const search   = String(req.query.search || "").trim().slice(0, 100);
+        const search   = sanitizePostgrestSearch(req.query.search);
         const featured = req.query.featured === "true";
         const pinned   = req.query.pinned   === "true";
 
@@ -527,7 +483,7 @@ exports.getAllArticles = async (req, res) => {
         const offset   = (page - 1) * limit;
         const status   = ["draft", "published", "scheduled"].includes(req.query.status) ? req.query.status : null;
         const category = String(req.query.category || "").trim();
-        const search   = String(req.query.search || "").trim().slice(0, 100);
+        const search   = sanitizePostgrestSearch(req.query.search);
 
         let query = supabase
             .from("news_articles")

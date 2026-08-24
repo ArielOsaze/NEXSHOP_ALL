@@ -287,7 +287,14 @@ exports.getAdminRatings = async (req, res) => {
         }
 
         if (search && search.trim() !== "") {
-            const safeSearch = search.trim();
+            const safeSearch = String(search)
+                .replace(/[\u0000-\u001f\u007f,%_().]/g, " ")
+                .replace(/\s+/g, " ")
+                .trim()
+                .slice(0, 100);
+            if (!safeSearch) {
+                return res.status(400).json({ message: "Kata pencarian tidak valid" });
+            }
             const { data: searchOrders } = await supabase
                 .from("orders")
                 .select("id")

@@ -42,6 +42,13 @@ const NEXBOT_QUICK_TOPICS = [
     { icon: "fa-brands fa-whatsapp", topic: "Hubungi Customer Service" }
 ];
 
+const NEXBOT_MASCOT_SRC = "/images/nexbot-mascot.webp";
+
+function nexbotMascotMarkup(extraClass = "") {
+    const className = ["nexbot-mascot-image", extraClass].filter(Boolean).join(" ");
+    return `<img src="${NEXBOT_MASCOT_SRC}" class="${className}" alt="" aria-hidden="true" draggable="false">`;
+}
+
 // Markup widget cuma disuntik kalau halamannya belum menyediakan sendiri
 // (index.html sudah punya versinya di HTML).
 function ensureNexBotWidget() {
@@ -64,12 +71,12 @@ function ensureNexBotWidget() {
     wrap.style.transition = "opacity 0.5s ease-in-out";
     wrap.innerHTML = `
         <button type="button" class="nexbot-float-btn group" id="nexbotFloatBtn" aria-label="Buka NexBot">
-            <span class="nexbot-float-btn-icon"><i class="fa-solid fa-robot"></i></span>
+            <span class="nexbot-float-btn-icon">${nexbotMascotMarkup("nexbot-mascot-image--float")}</span>
         </button>
         <div class="nexbot-window hidden" id="nexbotWindow">
             <div class="nexbot-header">
                 <div class="nexbot-header-info">
-                    <div class="nexbot-avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="nexbot-avatar">${nexbotMascotMarkup()}</div>
                     <div>
                         <strong>NexBot <span class="nexbot-badge">Official</span></strong>
                         <div class="nexbot-status"><span class="nexbot-status-dot"></span> Online 24/7</div>
@@ -80,7 +87,7 @@ function ensureNexBotWidget() {
             <div class="nexbot-body" id="nexbotBody">
                 <div class="nexbot-msg nexbot-msg--bot">
                     <div class="nexbot-msg-meta">
-                        <span class="nexbot-msg-avatar" aria-hidden="true"><i class="fa-solid fa-robot"></i></span>
+                        <span class="nexbot-msg-avatar" aria-hidden="true">${nexbotMascotMarkup()}</span>
                         <span class="nexbot-msg-name">NexBot</span>
                         <span class="nexbot-msg-time">Online</span>
                     </div>
@@ -628,7 +635,7 @@ function appendNexBotMessage(text, sender, cards = [], handoff = false) {
 
     if (isBot) {
         html += `<div class="nexbot-msg-meta">
-            <span class="nexbot-msg-avatar" aria-hidden="true"><i class="fa-solid fa-robot"></i></span>
+            <span class="nexbot-msg-avatar" aria-hidden="true">${nexbotMascotMarkup()}</span>
             <span class="nexbot-msg-name">NexBot</span>
             <span class="nexbot-msg-time">${nexbotTimeLabel()}</span>
         </div>`;
@@ -684,7 +691,7 @@ function appendNexBotTyping() {
     const div = document.createElement("div");
     div.className = "nexbot-msg nexbot-msg--bot nexbot-msg--typing";
     div.innerHTML = `<div class="nexbot-msg-meta">
-            <span class="nexbot-msg-avatar" aria-hidden="true"><i class="fa-solid fa-robot"></i></span>
+            <span class="nexbot-msg-avatar" aria-hidden="true">${nexbotMascotMarkup()}</span>
             <span class="nexbot-msg-name">NexBot</span>
             <span class="nexbot-msg-time">mengetik…</span>
         </div>

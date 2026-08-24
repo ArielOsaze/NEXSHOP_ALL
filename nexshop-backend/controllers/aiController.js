@@ -800,11 +800,11 @@ exports.deleteKnowledgeBase = async (req, res) => {
 
 exports.refreshKnowledgeBase = async (req, res) => {
     try {
-        const { exec } = require('child_process');
+        const { execFile } = require('child_process');
         const path = require('path');
         const scriptPath = path.join(__dirname, '../scripts/ingest-website.js');
         
-        exec(`node "${scriptPath}" web`, (error, stdout, stderr) => {
+        execFile(process.execPath, [scriptPath, "web"], { timeout: 10 * 60 * 1000, maxBuffer: 1024 * 1024 }, (error, stdout) => {
             if (error) {
                 console.error(`Ingestion Error: ${error.message}`);
             }

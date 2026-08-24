@@ -781,14 +781,14 @@ function refreshAccountUI() {
         const accountAvatar = document.getElementById("accountAvatar");
         if (currentUser.avatar_url) {
             accountAvatar.innerHTML = `
-                <img src="${currentUser.avatar_url}" alt="" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+                <img src="${escapeHtml(safeUrl(currentUser.avatar_url))}" alt="" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
                 <button type="button" class="account-avatar-edit" id="accountAvatarEditBtn" aria-label="Ganti foto profil">
                     <i class="fa-solid fa-camera"></i>
                 </button>
             `;
         } else {
             accountAvatar.innerHTML = `
-                ${currentUser.fullname.charAt(0).toUpperCase()}
+                ${escapeHtml(currentUser.fullname.charAt(0).toUpperCase())}
                 <button type="button" class="account-avatar-edit" id="accountAvatarEditBtn" aria-label="Ganti foto profil">
                     <i class="fa-solid fa-camera"></i>
                 </button>

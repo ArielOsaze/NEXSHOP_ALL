@@ -58,8 +58,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <script src="/theme-init.js"></script>
     <script defer src="/clean-url.js?v=20260825"></script>
+    <script defer src="/legal-modal.js?v=20260825"></script>
     <script defer src="/cookie-consent.js?v=20260825"></script>
-    <link rel="stylesheet" href="/style.css?v=20260824-cyan-brand">
+    <link rel="stylesheet" href="/style.css?v=20260825-nexbot-legal">
     <link rel="stylesheet" href="/marketplace-theme.css?v=20260824-product-search">
 </head>
 
@@ -249,8 +250,12 @@
                  nutup keyboard dan bawa layar ke hasil. -->
             <form class="mkt-search-wrap" id="mktSearchForm" role="search" autocomplete="off">
                 <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                <input type="text" id="mktSearchInput" placeholder="Cari DANA, OVO, PLN, pulsa, tagihan..."
-                    aria-label="Cari layanan digital">
+                <input type="search" id="mktSearchInput" placeholder="Cari DANA, OVO, PLN, pulsa, tagihan..."
+                    aria-label="Cari layanan digital" enterkeyhint="search" aria-controls="marketGrid">
+                <button type="button" class="mkt-search-clear hidden" id="mktSearchClearBtn"
+                    aria-label="Hapus pencarian">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
                 <button type="submit" class="mkt-search-btn">Cari</button>
             </form>
 
@@ -292,8 +297,18 @@
             <aside class="mkt-col-rail" id="mktRail">
                 <div class="mkt-rail-panel">
                     <div class="mkt-rail-head">
-                        <h2 class="mkt-section-title">Kategori</h2>
-                        <p>Jelajahi seluruh layanan digital</p>
+                        <div>
+                            <h2 class="mkt-section-title">Kategori</h2>
+                            <p>Geser atau pilih kategori layanan</p>
+                        </div>
+                        <div class="mkt-category-scroll-actions" aria-label="Navigasi kategori">
+                            <button type="button" id="mktCategoryPrev" aria-label="Kategori sebelumnya">
+                                <i class="fa-solid fa-chevron-left" aria-hidden="true"></i>
+                            </button>
+                            <button type="button" id="mktCategoryNext" aria-label="Kategori berikutnya">
+                                <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
+                            </button>
+                        </div>
                         <!-- Dekorasi doang (aria-hidden): padanan asset "diamond" yang
                              ada di alur Topup Game, versi Marketplace -- dompet, kartu,
                              e-toll, voucher, melayang pelan + glow. -->
@@ -322,11 +337,15 @@
 
             <!-- Kolom kanan: etalase operator / detail produk -->
             <div class="mkt-col-main">
-                <section id="mktServicesSection">
+                <section id="mktServicesSection" aria-labelledby="mktServicesTitle">
                     <div class="mkt-grid-header">
-                        <h3>Pilih Penyedia Layanan</h3>
-                        <span id="totalCount"></span>
+                        <div>
+                            <h3 id="mktServicesTitle">Pilih Penyedia Layanan</h3>
+                            <p id="mktResultContext">Pilih layanan untuk melihat produk dan harga.</p>
+                        </div>
+                        <span id="totalCount" aria-live="polite"></span>
                     </div>
+                    <div class="mkt-active-filter hidden" id="mktActiveFilter" aria-live="polite"></div>
                     <div class="market-grid" id="marketGrid" aria-live="polite"></div>
                     <!-- Zona kontrol pemuatan bertahap. Diisi renderLoadMore():
                          tombol "Muat lebih banyak" + sentinel untuk
@@ -756,8 +775,18 @@
         let activeMktDetail = null;
         let mktDetailRequestToken = 0;
         let mktDetailSearchTimer = null;
-        let activeCategory = "";
-        let searchQuery = "";
+        const initialMarketplaceParams = new URLSearchParams(window.location.search);
+        let activeCategory = String(initialMarketplaceParams.get("kategori") || "").slice(0, 80);
+        let searchQuery = String(initialMarketplaceParams.get("q") || "").slice(0, 120);
+
+        function syncMarketplaceUrl() {
+            const url = new URL(window.location.href);
+            if (searchQuery.trim()) url.searchParams.set("q", searchQuery.trim());
+            else url.searchParams.delete("q");
+            if (activeCategory) url.searchParams.set("kategori", activeCategory);
+            else url.searchParams.delete("kategori");
+            window.history.replaceState({ marketplace: true }, "", `${url.pathname}${url.search}${url.hash}`);
+        }
 
         function safeUrl(url, fallback = "") {
             if (!url || typeof url !== "string") return fallback;
@@ -844,11 +873,12 @@
         // browser atas data yang kebetulan sudah terunduh akan membuat
         // produk yang belum termuat mustahil ditemukan.
         // ==============================================================
-        const MKT_PAGE_SIZE = 24;
+        const MKT_PAGE_SIZE = 20;
         let mktPage = 0;
         let mktHasMore = true;
         let mktLoading = false;
         let mktTotal = 0;
+        let mktAbortController = null;
         // Token permintaan: melindungi dari respons yang datang tidak
         // berurutan. Tanpa ini, hasil pencarian lama yang datang terlambat
         // bisa menimpa hasil pencarian yang lebih baru.
@@ -874,12 +904,23 @@
          *                        kunci / kategori), false = tambah halaman
          *                        berikutnya ke daftar yang sudah ada.
          */
-        async function loadCatalogPage(reset) {
-            if (mktLoading) return;
+        async function loadCatalogPage(reset, focusFirstNew = false) {
+            if (mktLoading) {
+                if (!reset) return;
+                // Pencarian/kategori baru selalu menang atas request lama.
+                // Tanpa pembatalan ini, ketikan saat fetch masih berjalan
+                // bisa diabaikan dan hasil lama justru tampil kembali.
+                mktRequestToken++;
+                mktAbortController?.abort();
+                mktLoading = false;
+            }
             const grid = document.getElementById("marketGrid");
             if (!grid) return;
 
+            const previousCount = operators.length;
+
             if (reset) {
+                syncMarketplaceUrl();
                 mktPage = 0;
                 mktHasMore = true;
                 operators = [];
@@ -888,7 +929,9 @@
             if (!mktHasMore) return;
 
             mktLoading = true;
+            grid.setAttribute("aria-busy", "true");
             const tokenPermintaan = ++mktRequestToken;
+            mktAbortController = new AbortController();
             setLoadMoreState("loading");
 
             try {
@@ -900,7 +943,8 @@
                 if (activeCategory) params.set("kategori", activeCategory);
 
                 const res = await fetch(`${API_BASE}/topup/catalog/operators?${params}`, {
-                    headers: mktAuthHeaders()
+                    headers: mktAuthHeaders(),
+                    signal: mktAbortController.signal
                 });
                 if (!res.ok) throw new Error("Gagal mengambil katalog.");
                 const data = await res.json();
@@ -921,7 +965,14 @@
 
                 renderGrid();
                 renderResellerBanner();
+                if (focusFirstNew && !reset) {
+                    requestAnimationFrame(() => {
+                        const cards = grid.querySelectorAll(".market-card");
+                        cards[previousCount]?.focus();
+                    });
+                }
             } catch (err) {
+                if (err && err.name === "AbortError") return;
                 console.error("Gagal memuat katalog marketplace:", err);
                 if (tokenPermintaan !== mktRequestToken) return;
                 if (reset) {
@@ -939,6 +990,7 @@
             } finally {
                 if (tokenPermintaan === mktRequestToken) {
                     mktLoading = false;
+                    grid.setAttribute("aria-busy", "false");
                     setLoadMoreState(mktHasMore ? "idle" : "done");
                 }
                 hideAppLoader();
@@ -993,7 +1045,8 @@
             wrap.innerHTML = chips.map((c) => {
                 const { icon, tone } = categoryIcon(c.value);
                 return `
-        <button type="button" class="cat-btn ${activeCategory === c.value ? "active" : ""}" data-cat="${escapeHtml(c.value)}">
+        <button type="button" class="cat-btn ${activeCategory === c.value ? "active" : ""}" data-cat="${escapeHtml(c.value)}"
+            aria-pressed="${activeCategory === c.value ? "true" : "false"}">
             <span class="cat-btn-icon" data-tone="${tone}"><i class="${icon}" aria-hidden="true"></i></span>
             <span class="cat-btn-label">${escapeHtml(c.label)}</span>
             <span class="cat-btn-count">${c.count}</span>
@@ -1005,11 +1058,13 @@
                 btn.addEventListener("click", () => {
                     activeCategory = btn.dataset.cat;
                     renderCategoryChips();
+                    renderDiscoveryContext();
                     // Ganti kategori = query baru ke server, mulai dari
                     // halaman 1. Bukan sekadar menyembunyikan kartu yang
                     // sudah dimuat -- kategori ini bisa punya operator yang
                     // belum pernah terkirim ke browser.
                     loadCatalogPage(true);
+                    document.getElementById("mktServicesSection")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 });
             });
         }
@@ -1879,7 +1934,7 @@
                 ? `<span class="mkt-price-label">Mulai dari</span><span class="mkt-price">${rupiah(minPrice)}</span>`
                 : `<span class="mkt-price-label">Lihat daftar</span><span class="mkt-price mkt-price--muted">Cek harga</span>`;
             return `
-        <div class="market-card" data-operator="${operatorId}" role="button" tabindex="0">
+        <button type="button" class="market-card" data-operator="${operatorId}">
             <span class="market-card-sheen" aria-hidden="true"></span>
             <div class="market-card-icon">${iconHtml}</div>
             <div class="market-card-body">
@@ -1890,7 +1945,7 @@
                     <i class="fa-solid fa-chevron-right market-card-chevron" aria-hidden="true"></i>
                 </div>
             </div>
-        </div>
+        </button>
     `;
         }
 
@@ -1901,14 +1956,22 @@
 
             try {
                 if (!operators.length) {
+                    const konteks = searchQuery.trim()
+                        ? `Tidak ada layanan yang cocok dengan “${escapeHtml(searchQuery.trim())}”.`
+                        : activeCategory
+                            ? `Belum ada layanan aktif di kategori ${escapeHtml(activeCategory)}.`
+                            : "Katalog belum memiliki layanan aktif.";
                     grid.innerHTML = `
                 <div class="mkt-empty">
                     <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
                     <h3>Layanan yang kamu cari belum ada</h3>
-                    <p>Coba kata kunci lain atau pilih kategori yang tersedia di atas.</p>
+                    <p>${konteks} Coba kata kunci atau kategori lain.</p>
+                    <button type="button" class="mkt-btn-secondary" id="mktEmptyResetBtn">Lihat Semua Layanan</button>
                 </div>
             `;
-                    if (totalCount) totalCount.textContent = "";
+                    document.getElementById("mktEmptyResetBtn")?.addEventListener("click", resetMarketplaceDiscovery);
+                    if (totalCount) totalCount.textContent = "0 layanan";
+                    renderDiscoveryContext();
                     renderLoadMore();
                     return;
                 }
@@ -1963,14 +2026,9 @@
                         if (id) openMarketplaceDetail(id);
                     };
                     card.addEventListener("click", buka);
-                    card.addEventListener("keydown", (e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            buka();
-                        }
-                    });
                 });
 
+                renderDiscoveryContext();
                 renderLoadMore();
             } catch (err) {
                 console.error("[MARKETPLACE RENDER ERROR]", err);
@@ -2021,9 +2079,12 @@
     `;
 
             const btn = document.getElementById("mktLoadMoreBtn");
-            if (btn) btn.addEventListener("click", () => loadCatalogPage(false));
+            if (btn) btn.addEventListener("click", () => loadCatalogPage(false, true));
 
-            pasangObserver();
+            // Pemuatan berikutnya disengaja lewat tombol. Ini menjaga footer
+            // tetap bisa dicapai dan mencegah jaringan terus menarik batch
+            // baru ketika pengguna hanya sedang menggulir halaman.
+            lepasObserver();
         }
 
         function setLoadMoreState(state) {
@@ -2052,28 +2113,47 @@
             }
         }
 
-        function pasangObserver() {
-            lepasObserver();
-            const sentinel = document.getElementById("mktLoadSentinel");
-            if (!sentinel || typeof IntersectionObserver === "undefined") return;
-
-            mktObserver = new IntersectionObserver((entries) => {
-                if (entries.some((e) => e.isIntersecting) && mktHasMore && !mktLoading) {
-                    loadCatalogPage(false);
-                }
-            }, {
-                // Mulai memuat sebelum sentinel benar-benar terlihat supaya
-                // kartu berikutnya sudah siap ketika user sampai di bawah.
-                rootMargin: "400px 0px"
-            });
-            mktObserver.observe(sentinel);
-        }
-
         // Dua kotak pencarian (hero + nav) nyetir SATU state yang sama, dan
         // yang satunya ikut diisi biar gak keliatan "kolom cari yang satu lagi
         // kosong padahal hasilnya kefilter".
         const mktSearchInput = document.getElementById("mktSearchInput");
         const mktNavSearchInput = document.getElementById("mktNavSearchInput");
+        const mktSearchClearBtn = document.getElementById("mktSearchClearBtn");
+        if (mktSearchInput) mktSearchInput.value = searchQuery;
+        if (mktNavSearchInput) mktNavSearchInput.value = searchQuery;
+
+        function renderDiscoveryContext() {
+            const context = document.getElementById("mktResultContext");
+            const active = document.getElementById("mktActiveFilter");
+            const parts = [];
+            if (activeCategory) parts.push(`Kategori: ${activeCategory}`);
+            if (searchQuery.trim()) parts.push(`Pencarian: “${searchQuery.trim()}”`);
+            if (context) {
+                context.textContent = parts.length
+                    ? `Menampilkan hasil ${parts.join(" · ")}`
+                    : "Pilih layanan untuk melihat produk dan harga.";
+            }
+            if (active) {
+                active.classList.toggle("hidden", !parts.length);
+                active.innerHTML = parts.length ? `
+                    <span><i class="fa-solid fa-filter" aria-hidden="true"></i>${escapeHtml(parts.join(" · "))}</span>
+                    <button type="button" id="mktClearDiscoveryBtn">Hapus filter</button>
+                ` : "";
+                document.getElementById("mktClearDiscoveryBtn")?.addEventListener("click", resetMarketplaceDiscovery);
+            }
+            mktSearchClearBtn?.classList.toggle("hidden", !searchQuery.trim());
+        }
+
+        function resetMarketplaceDiscovery() {
+            activeCategory = "";
+            searchQuery = "";
+            if (mktSearchInput) mktSearchInput.value = "";
+            if (mktNavSearchInput) mktNavSearchInput.value = "";
+            renderCategoryChips();
+            renderDiscoveryContext();
+            loadCatalogPage(true);
+            mktSearchInput?.focus();
+        }
 
         // Pencarian dikerjakan SERVER (lihat /topup/catalog/operators?q=).
         // Ini bukan sekadar pilihan gaya: kartu kini dimuat bertahap, jadi
@@ -2087,6 +2167,7 @@
             searchQuery = value;
             if (sumber !== mktSearchInput && mktSearchInput) mktSearchInput.value = value;
             if (sumber !== mktNavSearchInput && mktNavSearchInput) mktNavSearchInput.value = value;
+            renderDiscoveryContext();
 
             // Debounce: tanpa ini setiap ketukan huruf memicu satu request.
             clearTimeout(searchDebounce);
@@ -2104,6 +2185,7 @@
 
         mktSearchInput?.addEventListener("input", (e) => applySearch(e.target.value, mktSearchInput));
         mktNavSearchInput?.addEventListener("input", (e) => applySearch(e.target.value, mktNavSearchInput));
+        mktSearchClearBtn?.addEventListener("click", resetMarketplaceDiscovery);
 
         document.getElementById("mktSearchForm")?.addEventListener("submit", (e) => {
             e.preventDefault();
@@ -2115,9 +2197,14 @@
         });
 
         document.getElementById("mktRailResetBtn")?.addEventListener("click", () => {
-            activeCategory = "";
-            renderCategoryChips();
-            applySearchNow("", null);
+            resetMarketplaceDiscovery();
+        });
+
+        document.getElementById("mktCategoryPrev")?.addEventListener("click", () => {
+            document.getElementById("catFilterWrap")?.scrollBy({ left: -280, behavior: "smooth" });
+        });
+        document.getElementById("mktCategoryNext")?.addEventListener("click", () => {
+            document.getElementById("catFilterWrap")?.scrollBy({ left: 280, behavior: "smooth" });
         });
 
         // Kartu support cuma memicu tombol NexBot yang sudah ada, bukan bikin
@@ -3211,7 +3298,7 @@
     </div>
 
     <!-- Asisten NexBot, modul yang sama dengan halaman utama -->
-    <script src="/nexbot.js?v=20260823-nexbot"></script>
+    <script src="/nexbot.js?v=20260825-mascot"></script>
 </body>
 
 </html>
