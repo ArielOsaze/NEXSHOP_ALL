@@ -2262,7 +2262,8 @@ function switchTrackTab(tab) {
         p.classList.toggle("hidden", p.dataset.trackPanel !== tab);
     });
     document.getElementById("trackForm").classList.toggle("hidden", tab !== "byid");
-    document.getElementById("trackResult").classList.toggle("hidden", tab !== "byid");
+    const result = document.getElementById("trackResult");
+    result.classList.toggle("hidden", tab !== "byid" || !result.innerHTML.trim());
     if (tab === "mine") loadMyTransactions();
 }
 document.querySelectorAll("[data-track-tab]").forEach(btn => {

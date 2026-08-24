@@ -1190,8 +1190,8 @@ i[class*="fa-"] {
 }
 
 .mkt-rail-deco-item--wallet {
-    background: radial-gradient(circle at 30% 30%, rgba(167, 139, 250, 0.4), rgba(0, 194, 232, 0.1));
-    color: #C4B5FD;
+    background: radial-gradient(circle at 30% 30%, rgba(34, 211, 238, 0.34), rgba(0, 194, 232, 0.08));
+    color: #67e8f9;
     box-shadow: 0 0 16px rgba(0, 194, 232, 0.35);
     animation-delay: 0s;
 }
@@ -2893,6 +2893,68 @@ i[class*="fa-"] {
     }
 }
 
+/* Program Reseller hanya memiliki dua aksi di kanan. Beri ruang dan touch
+   target yang layak tanpa menyembunyikan wordmark pada ponsel kecil. */
+@media (max-width: 768px) {
+    .reseller-page {
+        --mkt-nav-h: 4rem;
+    }
+
+    .reseller-page .mkt-nav {
+        gap: 0.75rem;
+        padding-inline: 0.75rem;
+    }
+
+    .reseller-page .mkt-nav-brand {
+        min-width: 0;
+        gap: 0.45rem;
+        font-size: 0.9rem;
+    }
+
+    .reseller-page .mkt-brand-text {
+        display: inline;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .reseller-page .mkt-nav-actions {
+        margin-left: auto;
+        gap: 0.5rem;
+    }
+
+    .reseller-page .mkt-nav-toggle,
+    .reseller-page .mkt-nav-back {
+        width: 2.75rem;
+        height: 2.75rem;
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+        padding: 0;
+        flex: 0 0 2.75rem;
+        justify-content: center;
+        border-radius: 12px;
+    }
+
+    .reseller-page .mkt-nav-links {
+        top: calc(100% + 0.5rem);
+        left: 0.75rem;
+        right: 0.75rem;
+        border: 1px solid var(--mkt-line);
+        border-radius: var(--mkt-radius);
+    }
+
+    .reseller-page .mkt-nav.is-open .mkt-nav-links {
+        padding: 0.65rem;
+    }
+
+    .reseller-page .mkt-nav-links li {
+        width: 100%;
+    }
+
+    .reseller-page .mkt-nav-links a {
+        min-height: 2.75rem;
+    }
+}
+
 @media (max-width: 340px) {
     .marketplace-page .mkt-nav {
         gap: 0.5rem;
@@ -3279,10 +3341,10 @@ i[class*="fa-"] {
 .wallet-balance-card {
     padding: 1.25rem;
     border-radius: 16px;
-    background: linear-gradient(135deg, #1e1b4b, #312e81);
+    background: linear-gradient(135deg, #082f49, #0e7490);
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: #ffffff;
-    box-shadow: 0 8px 24px rgba(30, 27, 75, 0.4);
+    box-shadow: 0 8px 24px rgba(8, 145, 178, 0.28);
     position: relative;
     overflow: hidden;
     margin-bottom: 1rem;

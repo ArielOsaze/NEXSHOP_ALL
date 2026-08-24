@@ -5,7 +5,7 @@ const ADMIN_TOKEN_STORAGE_KEY = "nexshop-admin-token";
 
 // Already logged in? Skip straight to dashboard.
 if (localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)) {
-    window.location.href = "/admin/dashboard";
+    window.location.href = "/admin/dashboard.html";
 }
 
 // Pesan kenapa sesi sebelumnya berakhir — disimpen dashboard sebelum
@@ -78,7 +78,7 @@ form.addEventListener("submit", async (e) => {
         }
 
         localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, data.token);
-        window.location.href = "/admin/dashboard";
+        window.location.href = "/admin/dashboard.html";
 
     } catch (err) {
         console.error(err);

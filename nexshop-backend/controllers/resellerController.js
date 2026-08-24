@@ -997,7 +997,7 @@ exports.getPortalOverview = async (req, res) => {
     try {
         const { data: user, error: uErr } = await supabase
             .from("users")
-            .select("id, email, fullname, reseller_status, reseller_tier, reseller_since, balance")
+            .select("id, email, fullname, phone, reseller_status, reseller_tier, reseller_since, balance")
             .eq("id", req.user.id)
             .maybeSingle();
 
@@ -1007,15 +1007,40 @@ exports.getPortalOverview = async (req, res) => {
         }
 
         let status = user.reseller_status || "none";
-        if (status === "none") {
-            const { data: latestApp } = await supabase
-                .from("reseller_applications")
-                .select("status")
-                .eq("user_id", user.id)
-                .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
-            if (latestApp && latestApp.status) status = latestApp.status;
+        const { data: latestApp } = await supabase
+            .from("reseller_applications")
+            .select("status, tier_code, reviewed_at")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (status === "none" && latestApp && latestApp.status) status = latestApp.status;
+
+        // Rekonsiliasi data approval lama. Beberapa pengajuan sudah berstatus
+        // approved, tetapi users.reseller_status masih pending akibat deploy
+        // versi admin terdahulu. Jangan menimpa suspended/rejected secara diam-diam.
+        if (["none", "pending"].includes(status) && latestApp?.status === "approved") {
+            const repairedTier = latestApp.tier_code || user.reseller_tier || null;
+            const repairedSince = latestApp.reviewed_at || user.reseller_since || new Date().toISOString();
+            let repairQuery = supabase
+                .from("users")
+                .update({
+                    reseller_status: "approved",
+                    reseller_tier: repairedTier,
+                    reseller_since: repairedSince
+                })
+                .eq("id", user.id);
+            repairQuery = user.reseller_status == null
+                ? repairQuery.is("reseller_status", null)
+                : repairQuery.eq("reseller_status", user.reseller_status);
+            const { error: repairErr } = await repairQuery;
+            if (!repairErr) {
+                status = "approved";
+                user.reseller_status = "approved";
+                user.reseller_tier = repairedTier;
+                user.reseller_since = repairedSince;
+            }
         }
 
         // User ini belum pernah mendaftar jadi reseller sama sekali (gak ada
@@ -1042,6 +1067,7 @@ exports.getPortalOverview = async (req, res) => {
                     id: user.id,
                     email: user.email,
                     fullname: user.fullname,
+                    phone: user.phone || "",
                     member_code: memberCode,
                     balance: balance,
                     reseller_status: status,
@@ -1114,9 +1140,10 @@ exports.getPortalOverview = async (req, res) => {
                 id: user.id,
                 email: user.email,
                 fullname: user.fullname,
+                phone: user.phone || "",
                 member_code: memberCode,
                 balance: balance,
-                reseller_status: user.reseller_status,
+                reseller_status: status,
                 reseller_tier: tier ? { code: tier.code, name: tier.name, discount_percent: tier.discount_percent } : null,
                 reseller_since: user.reseller_since
             },
@@ -1368,14 +1395,28 @@ exports.getPortalOrders = async (req, res) => {
     try {
         const { data: orders, error } = await supabase
             .from("topup_orders")
-            .select("id, ref_id, produk, tujuan, server_id, total, status, sn, message, payment_method, created_at, updated_at")
+            .select("id, nama_produk, kode_produk, tujuan, server_id, harga, status, tv_sn, tv_message, payment_method, created_at, updated_at")
             .eq("user_id", req.user.id)
             .order("created_at", { ascending: false })
             .limit(100);
 
         if (error) throw error;
 
-        res.json(orders || []);
+        res.json((orders || []).map((order) => ({
+            id: order.id,
+            ref_id: order.id,
+            produk: order.nama_produk || order.kode_produk || "Produk NexShop",
+            kode_produk: order.kode_produk,
+            tujuan: order.tujuan,
+            server_id: order.server_id,
+            total: Number(order.harga) || 0,
+            status: order.status,
+            sn: order.tv_sn,
+            message: order.tv_message,
+            payment_method: order.payment_method,
+            created_at: order.created_at,
+            updated_at: order.updated_at
+        })));
     } catch (err) {
         console.error("getPortalOrders:", err.message);
         res.status(500).json({ message: "Gagal memuat riwayat transaksi" });

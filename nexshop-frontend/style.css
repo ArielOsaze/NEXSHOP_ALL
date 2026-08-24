@@ -7703,8 +7703,8 @@ html.dark .home-glass-badge {
     background: rgba(0, 194, 232, 0.12);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    color: rgba(216, 180, 254, 0.95);
-    border: 1px solid rgba(167, 139, 250, 0.22);
+    color: #67e8f9;
+    border: 1px solid rgba(34, 211, 238, 0.32);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
@@ -8068,11 +8068,11 @@ html:not(.dark) .home-glass-badge {
     flex-direction: column;
     padding: 1.15rem;
     border-radius: 18px;
-    background: linear-gradient(135deg, #1e1b4b, #312e81);
+    background: linear-gradient(135deg, #082f49, #0e7490);
     border: 1px solid rgba(255, 255, 255, 0.15);
     color: #ffffff;
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(30, 27, 75, 0.4);
+    box-shadow: 0 8px 24px rgba(8, 145, 178, 0.28);
     transition: all 0.2s ease;
     margin-bottom: 0.5rem;
     user-select: none;
@@ -8152,7 +8152,7 @@ html:not(.dark) .home-glass-badge {
     font-weight: 800;
     border: none;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.32);
 }
 
 .drawer-wallet-amount-row {

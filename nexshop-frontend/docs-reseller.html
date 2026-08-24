@@ -34,7 +34,8 @@
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <script src="/theme-init.js"></script>
-    <script defer src="/cookie-consent.js?v=20260824"></script>
+    <script defer src="/clean-url.js?v=20260825"></script>
+    <script defer src="/cookie-consent.js?v=20260825"></script>
     <link rel="stylesheet" href="/style.css?v=20260824-cyan-brand">
     <link rel="stylesheet" href="/marketplace-theme.css?v=20260824-cyan-brand">
 
@@ -346,29 +347,29 @@
         .docs-steps {
             display: flex;
             flex-direction: column;
-            gap: 0;
+            gap: 0.85rem;
+            margin: 1.25rem 0;
         }
 
         .docs-step {
             display: grid;
-            grid-template-columns: 44px 1fr;
-            gap: 0 1rem;
+            grid-template-columns: 2.5rem minmax(0, 1fr);
+            gap: 0.9rem;
             position: relative;
+            align-items: start;
+            padding: 1rem;
+            border: 1px solid var(--mkt-line);
+            border-radius: var(--mkt-radius);
+            background: var(--mkt-surface-2);
         }
 
         .docs-step:not(:last-child)::before {
-            content: '';
-            position: absolute;
-            left: 21px;
-            top: 44px;
-            bottom: 0;
-            width: 2px;
-            background: var(--mkt-line);
+            display: none;
         }
 
         .docs-step-num {
-            width: 44px;
-            height: 44px;
+            width: 2.5rem;
+            height: 2.5rem;
             border-radius: 50%;
             background: color-mix(in srgb, var(--mkt-accent) 15%, transparent);
             border: 2px solid color-mix(in srgb, var(--mkt-accent) 40%, transparent);
@@ -383,11 +384,12 @@
         }
 
         .docs-step-body {
-            padding: 0.55rem 0 2rem;
+            min-width: 0;
+            padding: 0;
         }
 
         .docs-step:last-child .docs-step-body {
-            padding-bottom: 0.5rem;
+            padding-bottom: 0;
         }
 
         .docs-step-body h3 {
@@ -402,7 +404,25 @@
             color: var(--mkt-text-dim);
             font-size: 0.855rem;
             line-height: 1.65;
-            margin: 0;
+            margin: 0 0 0.6rem;
+            overflow-wrap: anywhere;
+        }
+
+        .docs-step-body p:last-child {
+            margin-bottom: 0;
+        }
+
+        @media (max-width: 520px) {
+            .docs-step {
+                grid-template-columns: 2.25rem minmax(0, 1fr);
+                gap: 0.75rem;
+                padding: 0.9rem;
+            }
+
+            .docs-step-num {
+                width: 2.25rem;
+                height: 2.25rem;
+            }
         }
 
         /* ── Info / Warning / Tip boxes ──────────────────────────────── */
@@ -641,6 +661,7 @@
         }
 
         .docs-faq summary {
+            min-height: 44px;
             padding: 0.9rem 1rem;
             font-weight: 600;
             font-size: 0.9rem;
@@ -656,25 +677,33 @@
         .docs-faq summary::-webkit-details-marker { display: none; }
 
         .docs-faq summary::after {
-            content: 'expand_more';
-            font-family: 'Material Symbols Outlined';
-            font-size: 1.1rem;
+            content: '';
+            width: 0.55rem;
+            height: 0.55rem;
+            border-right: 2px solid currentColor;
+            border-bottom: 2px solid currentColor;
             color: var(--mkt-text-dim);
             flex-shrink: 0;
-            transition: transform 0.2s;
+            transform: rotate(45deg);
+            transition: transform 0.2s ease;
         }
 
         .docs-faq details[open] summary::after {
-            transform: rotate(180deg);
+            transform: rotate(225deg);
         }
 
         .docs-faq details p {
-            padding: 0 1rem 0.9rem;
+            padding: 0.9rem 1rem 1rem;
             margin: 0;
             font-size: 0.875rem;
             color: var(--mkt-text-dim);
             line-height: 1.7;
             border-top: 1px solid var(--mkt-line);
+        }
+
+        .docs-faq summary:focus-visible {
+            outline: 2px solid var(--mkt-accent);
+            outline-offset: -2px;
         }
 
         /* ── Mobile ToC ──────────────────────────────────────────────── */

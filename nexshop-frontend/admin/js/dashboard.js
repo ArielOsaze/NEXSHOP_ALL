@@ -10,7 +10,7 @@ const API_BASE = (window.location.hostname === "localhost" || window.location.ho
     : (window.location.protocol.startsWith("http") ? "/api" : "https://nexshop.cloud/api");
 
 if (!token) {
-    window.location.href = "/admin/login";
+    window.location.href = "/admin/login.html";
 }
 
 let products = [];
@@ -127,7 +127,7 @@ async function apiFetch(path, options = {}) {
         if (res.status === 401) {
             localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
             showToast("Sesi kamu berakhir, silakan login kembali.", true);
-            setTimeout(() => window.location.href = "/admin/login", 1200);
+            setTimeout(() => window.location.href = "/admin/login.html", 1200);
             throw new Error("unauthorized");
         }
     }
@@ -281,7 +281,7 @@ function forceAdminLogout(reason = "expired") {
     localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY);
     try { sessionStorage.removeItem(ADMIN_PIN_TRUST_KEY); } catch (e) { /* noop */ }
     if (reason !== "manual") localStorage.setItem("nexshop_admin_logout_reason", reason);
-    window.location.replace("/admin/login");
+    window.location.replace("/admin/login.html");
     // Dilempar biar pemanggilnya berhenti; semua caller udah nge-handle
     // pesan "unauthorized" sebagai kondisi diam (gak nampilin toast error).
     throw new Error("unauthorized");
@@ -2951,7 +2951,7 @@ function logout() {
     localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
     localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY);
     try { sessionStorage.removeItem(ADMIN_PIN_TRUST_KEY); } catch (e) { /* noop */ }
-    window.location.href = "/admin/login";
+    window.location.href = "/admin/login.html";
 }
 
 // Dipakai tombol "Keluar" di overlay gerbang — forceAdminLogout sengaja

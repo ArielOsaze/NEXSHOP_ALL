@@ -34,7 +34,8 @@
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <script src="/theme-init.js"></script>
-    <script defer src="/cookie-consent.js?v=20260824"></script>
+    <script defer src="/clean-url.js?v=20260825"></script>
+    <script defer src="/cookie-consent.js?v=20260825"></script>
     <link rel="stylesheet" href="/style.css?v=20260824-cyan-brand">
     <link rel="stylesheet" href="/marketplace-theme.css?v=20260824-cyan-brand">
 
@@ -199,6 +200,10 @@
             cursor: pointer;
             border: 1px solid transparent;
             position: relative;
+            width: 100%;
+            background: transparent;
+            font-family: inherit;
+            text-align: left;
         }
 
         .tv-nav-link > i[class*='fa-'] {
@@ -217,11 +222,11 @@
         }
 
         .tv-nav-link.active {
-            background: linear-gradient(90deg, rgba(37, 99, 235, 0.3) 0%, rgba(30, 64, 175, 0.4) 100%);
+            background: rgba(8, 145, 178, 0.18);
             color: #ffffff;
             font-weight: 700;
-            border-color: rgba(96, 165, 250, 0.3);
-            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.25);
+            border-color: rgba(34, 211, 238, 0.35);
+            box-shadow: none;
         }
 
         .tv-nav-link.active > i[class*='fa-'] {
@@ -836,7 +841,6 @@
         .tv-product-card-item:hover {
             background: rgba(255, 255, 255, 0.06);
             border-color: rgba(56, 189, 248, 0.4);
-            transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
         }
 
@@ -863,14 +867,14 @@
             position: fixed;
             bottom: 24px;
             right: 24px;
-            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            background: #0e7490;
             color: #ffffff;
             border: none;
             padding: 0.65rem 1.25rem;
             border-radius: 50px;
             font-size: 0.88rem;
             font-weight: 800;
-            box-shadow: 0 8px 25px rgba(234, 88, 12, 0.45);
+            box-shadow: 0 8px 25px rgba(8, 145, 178, 0.28);
             display: flex;
             align-items: center;
             gap: 7px;
@@ -881,8 +885,8 @@
         }
 
         .tv-fab-help:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 12px 30px rgba(234, 88, 12, 0.6);
+            background: #0891b2;
+            box-shadow: 0 10px 28px rgba(8, 145, 178, 0.36);
             color: #ffffff;
         }
 
@@ -1072,6 +1076,118 @@
             color: #ffffff;
         }
 
+        /* Polishing portal: satu aksen cyan, focus state terlihat, dan kontrol
+           kerja tetap tenang tanpa efek glow/gerak berlebihan. */
+        .tv-cat-tab-btn.active {
+            background: #0891b2;
+            border-color: #22d3ee;
+            box-shadow: none;
+        }
+
+        .tv-operator-pill.active {
+            background: rgba(8, 145, 178, 0.18);
+            border-color: #22d3ee;
+            box-shadow: none;
+        }
+
+        .tv-distributor-portal button:focus-visible,
+        .tv-distributor-portal a:focus-visible,
+        .tv-distributor-portal input:focus-visible,
+        .tv-distributor-portal select:focus-visible {
+            outline: 2px solid #22d3ee;
+            outline-offset: 2px;
+        }
+
+        .tv-product-actions {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 0.55rem;
+        }
+
+        .tv-btn-buy {
+            min-height: 42px;
+            justify-content: center;
+            border-color: #0891b2 !important;
+            background: #0891b2 !important;
+            color: #ffffff !important;
+        }
+
+        .tv-purchase-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            display: grid;
+            place-items: center;
+            padding: 1rem;
+            background: rgba(2, 6, 23, 0.78);
+        }
+
+        .tv-purchase-overlay[hidden] { display: none; }
+
+        .tv-purchase-dialog {
+            width: min(31rem, 100%);
+            max-height: calc(100vh - 2rem);
+            overflow-y: auto;
+            padding: 1.25rem;
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            border-radius: 16px;
+            background: #0b1220;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+        }
+
+        .tv-purchase-head,
+        .tv-purchase-summary,
+        .tv-purchase-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .tv-purchase-head { margin-bottom: 1rem; }
+        .tv-purchase-head h2 { margin: 0; font-size: 1.1rem; color: #fff; }
+        .tv-purchase-summary {
+            align-items: flex-start;
+            padding: 0.9rem;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255,255,255,.09);
+            border-radius: 12px;
+            background: rgba(255,255,255,.035);
+        }
+        .tv-purchase-summary strong { display: block; color: #fff; }
+        .tv-purchase-summary span { color: #67e8f9; font-weight: 800; white-space: nowrap; }
+        .tv-purchase-form-row { margin-bottom: 0.9rem; }
+        .tv-purchase-form-row input {
+            width: 100%;
+            min-height: 44px;
+            box-sizing: border-box;
+            padding: 0.7rem 0.85rem;
+            border: 1px solid rgba(255,255,255,.14);
+            border-radius: 10px;
+            background: #111827;
+            color: #fff;
+        }
+        .tv-purchase-help { margin: 0.35rem 0 0; color: #94a3b8; font-size: 0.76rem; line-height: 1.5; }
+        .tv-purchase-error { min-height: 1.25rem; margin: 0 0 0.7rem; color: #fca5a5; font-size: 0.8rem; }
+        .tv-purchase-close {
+            width: 44px;
+            height: 44px;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 10px;
+            background: transparent;
+            color: #cbd5e1;
+            cursor: pointer;
+        }
+        .tv-mobile-menu-button { display: none; }
+
+        @media (prefers-reduced-motion: reduce) {
+            .tv-distributor-portal *, .tv-distributor-portal *::before, .tv-distributor-portal *::after {
+                scroll-behavior: auto !important;
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+            }
+        }
+
         /* Responsive Mobile Styles */
         @media (max-width: 992px) {
             .tv-sidebar {
@@ -1086,7 +1202,25 @@
             }
 
             .tv-console-main {
-                padding: 1.25rem 1rem 5rem;
+                padding: 5rem 1rem 5rem;
+            }
+
+            .tv-mobile-menu-button {
+                position: fixed;
+                top: 1rem;
+                left: 1rem;
+                z-index: 45;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 44px;
+                height: 44px;
+                border: 1px solid rgba(34, 211, 238, 0.35);
+                border-radius: 12px;
+                background: #0b1220;
+                color: #67e8f9;
+                box-shadow: 0 10px 28px rgba(0,0,0,.35);
+                cursor: pointer;
             }
 
             .tv-top-widgets-grid {
@@ -1099,6 +1233,10 @@
 
             .tv-transaksi-stats-row {
                 grid-template-columns: repeat(2, 1fr);
+            }
+
+            .tv-product-cards-grid {
+                grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
             }
         }
     </style>
@@ -1252,6 +1390,10 @@
     <!-- =============================================================== -->
     <div id="sectionDashboard" class="tv-console-layout" style="display:none;">
 
+        <button type="button" class="tv-mobile-menu-button" onclick="toggleSidebar()" aria-label="Buka menu portal reseller">
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
+        </button>
+
         <!-- ── Left Sidebar ── -->
         <aside class="tv-sidebar" id="tvSidebar">
             <div class="tv-sidebar-brand">
@@ -1259,9 +1401,9 @@
                     <img src="/images/nexshop-logo.webp" alt="NexShop" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(59,130,246,0.5));">
                     <div class="tv-brand-text">
                         <div class="tv-brand-title">
-                            <span>NexShop</span> <span class="tv-brand-tag">GOLD</span>
+                            <span>NexShop</span> <span class="tv-brand-tag" id="portalBrandTier">MITRA</span>
                         </div>
-                        <div class="tv-brand-sub">Distributor Console</div>
+                        <div class="tv-brand-sub">Partner Portal</div>
                     </div>
                 </a>
                 <button type="button" class="tv-sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
@@ -1271,39 +1413,38 @@
 
             <!-- Sidebar Navigation Menu Items -->
             <nav class="tv-sidebar-menu">
-                <a class="tv-nav-link active" data-view="view-dashboard" onclick="switchConsoleView('view-dashboard')">
+                <button type="button" class="tv-nav-link active" data-view="view-dashboard" onclick="switchConsoleView('view-dashboard')">
                     <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
                     <span>Dashboard</span>
-                </a>
-                <a class="tv-nav-link" data-view="view-products" onclick="switchConsoleView('view-products')">
+                </button>
+                <button type="button" class="tv-nav-link" data-view="view-products" onclick="switchConsoleView('view-products')">
                     <i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i>
                     <span>Produk</span>
-                </a>
-                <a class="tv-nav-link" data-view="view-deposit" onclick="switchConsoleView('view-deposit')">
+                </button>
+                <button type="button" class="tv-nav-link" data-view="view-deposit" onclick="switchConsoleView('view-deposit')">
                     <i class="fa-solid fa-wallet" aria-hidden="true"></i>
                     <span>Deposit</span>
-                </a>
-                <a class="tv-nav-link" data-view="view-mutations" onclick="switchConsoleView('view-mutations')">
+                </button>
+                <button type="button" class="tv-nav-link" data-view="view-mutations" onclick="switchConsoleView('view-mutations')">
                     <i class="fa-solid fa-receipt" aria-hidden="true"></i>
                     <span>Mutasi Saldo</span>
-                </a>
-                <a class="tv-nav-link" data-view="view-transactions" onclick="switchConsoleView('view-transactions')">
+                </button>
+                <button type="button" class="tv-nav-link" data-view="view-transactions" onclick="switchConsoleView('view-transactions')">
                     <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
                     <span>Transaksi</span>
-                </a>
-                <a class="tv-nav-link" data-view="view-settings" onclick="switchConsoleView('view-settings')">
+                </button>
+                <button type="button" class="tv-nav-link" data-view="view-settings" onclick="switchConsoleView('view-settings')">
                     <i class="fa-solid fa-gear" aria-hidden="true"></i>
                     <span>Pengaturan</span>
-                </a>
-                <a class="tv-nav-link" data-view="view-api" onclick="switchConsoleView('view-api')">
+                </button>
+                <button type="button" class="tv-nav-link" data-view="view-api" onclick="switchConsoleView('view-api')">
                     <i class="fa-solid fa-code" aria-hidden="true"></i>
                     <span>Integrasi API</span>
-                </a>
-                <a class="tv-nav-link" data-view="view-tiers" onclick="switchConsoleView('view-tiers')">
+                </button>
+                <button type="button" class="tv-nav-link" data-view="view-tiers" onclick="switchConsoleView('view-tiers')">
                     <i class="fa-solid fa-award" aria-hidden="true"></i>
-                    <span>Upgrade Level !</span>
-                    <span class="tv-nav-pill-tag tv-nav-pill-gold">PRO</span>
-                </a>
+                    <span>Tingkatan Reseller</span>
+                </button>
             </nav>
 
             <!-- Bottom User Profile Area in Sidebar -->
@@ -1337,7 +1478,7 @@
                             <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
                                 <div class="tv-widget-user-name" id="topWidgetFullName">Memuat akun mitra...</div>
                                 <div id="topWidgetStatusChip">
-                                    <span class="tv-badge-status tv-badge-pending"><i class="fa-solid fa-hourglass-half" aria-hidden="true"></i> Menunggu Verifikasi</span>
+                                    <span class="tv-badge-status"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Memeriksa status</span>
                                 </div>
                             </div>
                             <div class="tv-widget-user-email" id="topWidgetEmail">...</div>
@@ -1390,7 +1531,7 @@
             </div>
 
             <!-- ── Alert Banner Saat Akun Belum Diverifikasi (Pending KYC) ── -->
-            <div id="tvPendingBanner" class="tv-pending-banner" style="display:flex;">
+            <div id="tvPendingBanner" class="tv-pending-banner" style="display:none;">
                 <div class="tv-pending-badge-icon">
                     <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
                 </div>
@@ -1479,7 +1620,7 @@
                     <!-- Right: News & Updates ! -->
                     <div class="tv-section-card">
                         <div class="tv-section-title">
-                            <span>News &amp; Updates !</span>
+                            <span>Berita &amp; Pembaruan</span>
                         </div>
 
                         <div class="tv-news-list" id="tvNewsFeedList">
@@ -1937,6 +2078,49 @@
         </main>
     </div>
 
+    <div id="portalPurchaseOverlay" class="tv-purchase-overlay" hidden>
+        <section class="tv-purchase-dialog" role="dialog" aria-modal="true" aria-labelledby="portalPurchaseTitle">
+            <div class="tv-purchase-head">
+                <div>
+                    <h2 id="portalPurchaseTitle">Beli dengan Saldo Reseller</h2>
+                    <p class="tv-purchase-help">Harga dihitung ulang oleh server sesuai tier akunmu.</p>
+                </div>
+                <button type="button" class="tv-purchase-close" onclick="closePortalPurchase()" aria-label="Tutup form pembelian">
+                    <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="tv-purchase-summary">
+                <div>
+                    <strong id="portalPurchaseProduct">Produk</strong>
+                    <p class="tv-purchase-help" id="portalPurchaseSku">SKU</p>
+                </div>
+                <span id="portalPurchasePrice">Rp 0</span>
+            </div>
+            <form id="portalPurchaseForm">
+                <div class="tv-purchase-form-row">
+                    <label class="form-label" for="portalPurchaseTarget">Nomor tujuan / User ID</label>
+                    <input id="portalPurchaseTarget" name="tujuan" required autocomplete="off" placeholder="Masukkan nomor atau ID pelanggan">
+                </div>
+                <div class="tv-purchase-form-row" id="portalPurchaseServerRow" hidden>
+                    <label class="form-label" for="portalPurchaseServer">Server ID / Zona</label>
+                    <input id="portalPurchaseServer" name="server_id" autocomplete="off" placeholder="Masukkan Server ID jika diperlukan">
+                </div>
+                <div class="tv-purchase-form-row">
+                    <label class="form-label" for="portalPurchasePhone">Nomor WhatsApp pembeli</label>
+                    <input id="portalPurchasePhone" name="recipient_phone" type="tel" required inputmode="tel" placeholder="08xxxxxxxxxx">
+                    <p class="tv-purchase-help">Dipakai untuk informasi status transaksi.</p>
+                </div>
+                <p class="tv-purchase-error" id="portalPurchaseError" role="alert"></p>
+                <div class="tv-purchase-footer">
+                    <span class="tv-purchase-help">Pembayaran langsung memotong saldo portal.</span>
+                    <button type="submit" class="tv-btn-deposit-action tv-btn-buy" id="portalPurchaseSubmit">
+                        <i class="fa-solid fa-lock" aria-hidden="true"></i> Bayar Sekarang
+                    </button>
+                </div>
+            </form>
+        </section>
+    </div>
+
     <!-- ── Floating Help Button ── -->
     <a data-wa-pesan="Halo Admin NexShop, saya butuh bantuan mengenai Partner Portal." target="_blank" rel="noopener noreferrer" class="tv-fab-help" style="display:none;">
         <span class="tv-fab-dot"></span>
@@ -1964,6 +2148,8 @@
         let activeOperator = "all";
         let activeSubvariant = "all";
         let productDisplayMode = "grid"; // "grid" or "table"
+        let currentResellerProfile = {};
+        let selectedPortalProduct = null;
 
         // Comprehensive Logo and Image Helpers
         const LOGO_PRESETS = {
@@ -2127,6 +2313,13 @@
             const activeLink = document.querySelector(`.tv-nav-link[data-view="${viewId}"]`);
             if (activeLink) activeLink.classList.add("active");
 
+            const widgets = document.querySelector(".tv-top-widgets-grid");
+            if (widgets) widgets.style.display = viewId === "view-dashboard" ? "grid" : "none";
+
+            if (window.innerWidth <= 992) {
+                document.getElementById("tvSidebar")?.classList.remove("open");
+            }
+
             if (viewId === "view-products" && !allProducts.length) {
                 loadPortalProducts();
             } else if (viewId === "view-transactions" && !allOrders.length) {
@@ -2160,13 +2353,45 @@
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || "Gagal memuat katalog produk");
                 allProducts = data.products || [];
 
+                buildCategoryTabs();
                 buildOperatorGrid();
                 filterAndRenderProducts();
             } catch (e) {
                 gridView.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#ef4444;padding:2rem;">Gagal memuat produk: ${e.message}</div>`;
             }
+        }
+
+        function portalCategoryKey(value) {
+            return String(value || "").trim().toLocaleLowerCase("id-ID");
+        }
+
+        function buildCategoryTabs() {
+            const tabs = document.getElementById("tvCategoryTabsScroll");
+            if (!tabs) return;
+            const byKey = new Map();
+            allProducts.forEach((product) => {
+                const label = String(product.kategori || "Lainnya").trim() || "Lainnya";
+                const key = portalCategoryKey(label);
+                if (!byKey.has(key)) byKey.set(key, label);
+            });
+            const categories = [
+                { value: "all", label: "Semua Kategori" },
+                ...Array.from(byKey.values())
+                    .sort((a, b) => a.localeCompare(b, "id-ID"))
+                    .map((label) => ({ value: label, label }))
+            ];
+            tabs.innerHTML = categories.map((category, index) => `
+                <button type="button" class="tv-cat-tab-btn ${portalCategoryKey(activeCategory) === portalCategoryKey(category.value) ? "active" : ""}" data-category-index="${index}">
+                    ${escapeHtml(category.label)}
+                </button>
+            `).join("");
+            tabs.querySelectorAll("[data-category-index]").forEach((button) => {
+                const category = categories[Number(button.dataset.categoryIndex)];
+                button.addEventListener("click", () => selectProductCategory(category.value, button));
+            });
         }
 
         function buildOperatorGrid() {
@@ -2176,7 +2401,7 @@
             // Extract unique operators based on active category
             const filteredByCat = activeCategory === "all" 
                 ? allProducts 
-                : allProducts.filter(p => (p.kategori || "").toLowerCase().includes(activeCategory.toLowerCase()));
+                : allProducts.filter(p => portalCategoryKey(p.kategori) === portalCategoryKey(activeCategory));
 
             const opMap = {};
             filteredByCat.forEach(p => {
@@ -2225,6 +2450,7 @@
             if (btnEl) btnEl.classList.add("active");
 
             buildOperatorGrid();
+            buildSubvariantsTabs();
             filterAndRenderProducts();
         }
 
@@ -2320,7 +2546,7 @@
             const q = (document.getElementById("inputSearchProduct")?.value || "").toLowerCase().trim();
 
             const filtered = allProducts.filter(p => {
-                const matchCat = activeCategory === "all" || (p.kategori || "").toLowerCase().includes(activeCategory.toLowerCase());
+                const matchCat = activeCategory === "all" || portalCategoryKey(p.kategori) === portalCategoryKey(activeCategory);
                 const matchOp = activeOperator === "all" || (p.operator || p.kategori) === activeOperator;
                 const matchVar = activeSubvariant === "all" || p.nama.toLowerCase().includes(activeSubvariant.toLowerCase()) || p.kode_produk.toLowerCase().includes(activeSubvariant.toLowerCase());
                 const matchQuery = !q || p.kode_produk.toLowerCase().includes(q) || p.nama.toLowerCase().includes(q) || (p.operator || "").toLowerCase().includes(q);
@@ -2352,7 +2578,9 @@
                             <div style="min-width:0;flex:1;">
                                 <div style="display:flex;align-items:center;justify-content:space-between;">
                                     <code style="font-weight:800;color:#60a5fa;font-size:0.8rem;">${p.kode_produk}</code>
-                                    <span class="tv-badge-status tv-badge-sukses">-${p.diskon_persen || 2}%</span>
+                                    ${Number(p.diskon_persen) > 0
+                                        ? `<span class="tv-badge-status tv-badge-sukses">-${Number(p.diskon_persen)}%</span>`
+                                        : '<span class="tv-badge-status">Harga umum</span>'}
                                 </div>
                                 <div style="font-size:0.75rem;color:#94a3b8;margin-top:2px;">${p.operator || p.kategori}</div>
                             </div>
@@ -2367,10 +2595,15 @@
                                 <span style="font-size:0.74rem;color:#94a3b8;text-decoration:line-through;">Rp ${(p.harga_normal || 0).toLocaleString("id-ID")}</span>
                                 <span style="font-size:1.15rem;font-weight:900;color:#38bdf8;">Rp ${(p.harga_modal_reseller || 0).toLocaleString("id-ID")}</span>
                             </div>
-                            <button type="button" class="tv-btn-deposit-action" style="width:100%;justify-content:center;padding:0.5rem;" onclick="navigator.clipboard.writeText('${p.kode_produk}');showToast('SKU ${p.kode_produk} disalin!');">
-                                <i class="fa-regular fa-copy" style="font-size:0.95rem;" aria-hidden="true"></i>
-                                <span>Salin SKU</span>
-                            </button>
+                            <div class="tv-product-actions">
+                                <button type="button" class="tv-btn-deposit-action tv-btn-buy" onclick="openPortalPurchase('${encodeURIComponent(p.kode_produk)}')">
+                                    <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
+                                    <span>Beli</span>
+                                </button>
+                                <button type="button" class="tv-btn-deposit-action" aria-label="Salin SKU ${escapeHtml(p.kode_produk)}" onclick="copyPortalSku('${encodeURIComponent(p.kode_produk)}')">
+                                    <i class="fa-regular fa-copy" aria-hidden="true"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -2396,11 +2629,13 @@
                         <td><span class="tv-stat-nominal-pill">${p.operator || p.kategori}</span></td>
                         <td style="color:#94a3b8;text-decoration:line-through;">Rp ${(p.harga_normal || 0).toLocaleString("id-ID")}</td>
                         <td style="font-weight:800;color:#38bdf8;">Rp ${(p.harga_modal_reseller || 0).toLocaleString("id-ID")}</td>
-                        <td><span class="tv-badge-status tv-badge-sukses">-${p.diskon_persen || 2}%</span></td>
+                        <td>${Number(p.diskon_persen) > 0
+                            ? `<span class="tv-badge-status tv-badge-sukses">-${Number(p.diskon_persen)}%</span>`
+                            : '<span class="tv-badge-status">Harga umum</span>'}</td>
                         <td><span class="tv-badge-status tv-badge-sukses">Tersedia</span></td>
                         <td>
-                            <button type="button" class="tv-btn-deposit-action" onclick="navigator.clipboard.writeText('${p.kode_produk}');showToast('SKU ${p.kode_produk} disalin!');">
-                                Salin
+                            <button type="button" class="tv-btn-deposit-action tv-btn-buy" onclick="openPortalPurchase('${encodeURIComponent(p.kode_produk)}')">
+                                Beli
                             </button>
                         </td>
                     </tr>
@@ -2544,6 +2779,97 @@
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
             });
         }
+
+        function copyPortalSku(encodedSku) {
+            const sku = decodeURIComponent(encodedSku || "");
+            navigator.clipboard.writeText(sku)
+                .then(() => showToast(`SKU ${sku} disalin!`))
+                .catch(() => showToast("Gagal menyalin SKU."));
+        }
+
+        function openPortalPurchase(encodedSku) {
+            if (currentResellerStatus !== "approved") {
+                showToast("Pembelian harga reseller aktif setelah akun disetujui admin.");
+                return;
+            }
+            const sku = decodeURIComponent(encodedSku || "");
+            selectedPortalProduct = allProducts.find((product) => product.kode_produk === sku) || null;
+            if (!selectedPortalProduct) {
+                showToast("Produk tidak ditemukan. Muat ulang katalog lalu coba lagi.");
+                return;
+            }
+
+            document.getElementById("portalPurchaseProduct").textContent = selectedPortalProduct.nama;
+            document.getElementById("portalPurchaseSku").textContent = selectedPortalProduct.kode_produk;
+            document.getElementById("portalPurchasePrice").textContent = `Rp ${Number(selectedPortalProduct.harga_modal_reseller || 0).toLocaleString("id-ID")}`;
+            document.getElementById("portalPurchaseTarget").value = "";
+            document.getElementById("portalPurchaseServer").value = "";
+            document.getElementById("portalPurchasePhone").value = currentResellerProfile.phone || "";
+            document.getElementById("portalPurchaseServerRow").hidden = !selectedPortalProduct.butuh_server_id;
+            document.getElementById("portalPurchaseServer").required = !!selectedPortalProduct.butuh_server_id;
+            document.getElementById("portalPurchaseError").textContent = "";
+            document.getElementById("portalPurchaseOverlay").hidden = false;
+            document.body.style.overflow = "hidden";
+            setTimeout(() => document.getElementById("portalPurchaseTarget").focus(), 0);
+        }
+
+        function closePortalPurchase() {
+            document.getElementById("portalPurchaseOverlay").hidden = true;
+            document.body.style.overflow = "";
+            selectedPortalProduct = null;
+        }
+
+        document.getElementById("portalPurchaseOverlay").addEventListener("click", (event) => {
+            if (event.target.id === "portalPurchaseOverlay") closePortalPurchase();
+        });
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && !document.getElementById("portalPurchaseOverlay").hidden) closePortalPurchase();
+        });
+        document.getElementById("portalPurchaseForm").addEventListener("submit", async (event) => {
+            event.preventDefault();
+            if (!selectedPortalProduct) return;
+
+            const submit = document.getElementById("portalPurchaseSubmit");
+            const error = document.getElementById("portalPurchaseError");
+            const tujuan = document.getElementById("portalPurchaseTarget").value.trim();
+            const serverId = document.getElementById("portalPurchaseServer").value.trim();
+            const phone = document.getElementById("portalPurchasePhone").value.trim();
+            error.textContent = "";
+            submit.disabled = true;
+            submit.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Memproses';
+
+            try {
+                const response = await fetch(`${API_BASE}/topup`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${getResellerToken()}`
+                    },
+                    body: JSON.stringify({
+                        kode_produk: selectedPortalProduct.kode_produk,
+                        tujuan,
+                        server_id: serverId || undefined,
+                        recipient_email: currentResellerProfile.email || undefined,
+                        recipient_phone: phone,
+                        payment_method: "wallet"
+                    })
+                });
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.message || "Pembelian gagal diproses");
+
+                const orderId = data.order_id || data.orderId || "";
+                closePortalPurchase();
+                showToast(orderId ? `Pesanan ${orderId} berhasil dibuat.` : "Pesanan berhasil dibuat.");
+                allOrders = [];
+                await loadPortalOverview();
+                loadPortalOrders();
+            } catch (purchaseError) {
+                error.textContent = purchaseError.message || "Pembelian gagal diproses.";
+            } finally {
+                submit.disabled = false;
+                submit.innerHTML = '<i class="fa-solid fa-lock" aria-hidden="true"></i> Bayar Sekarang';
+            }
+        });
 
         // ── Upload KTP ──
         const ktpDropzone = document.getElementById("ktpDropzone");
@@ -2770,8 +3096,12 @@
 
                 const data = await res.json().catch(() => ({}));
                 if (data.user) {
-                    currentResellerStatus = data.user.reseller_status || "none";
+                    currentResellerStatus = String(data.user.reseller_status || "none").toLowerCase();
                     const isApproved = (currentResellerStatus === "approved");
+                    currentResellerProfile = {
+                        email: data.user.email || "",
+                        phone: data.user.phone || ""
+                    };
                     const fullname = data.user.fullname || "Mitra Reseller";
                     const email = data.user.email || "";
                     // Jangan mengarang kode member. Kalau server belum
@@ -2823,6 +3153,8 @@
                             : null;
                         document.getElementById("sidebarTierBadge").textContent =
                             tierName ? `${tierName} · ${tierDiskon}%` : "Tier belum diatur";
+                        const brandTier = document.getElementById("portalBrandTier");
+                        if (brandTier) brandTier.textContent = tierName ? tierName.toUpperCase() : "MITRA";
 
                         if (data.api_credentials) {
                             document.getElementById("inputApiKey").value = data.api_credentials.api_key || "Belum ada key";
@@ -2833,6 +3165,8 @@
                     } else {
                         activeTierInfo = null;
                         document.getElementById("sidebarTierBadge").textContent = "Menunggu verifikasi";
+                        const brandTier = document.getElementById("portalBrandTier");
+                        if (brandTier) brandTier.textContent = "MITRA";
                         document.getElementById("inputApiKey").value = "Akun belum diverifikasi oleh admin (Maksimal 3x24 Jam kerja)";
                         document.getElementById("inputSecretKey").value = "••••••••••••••••";
                     }

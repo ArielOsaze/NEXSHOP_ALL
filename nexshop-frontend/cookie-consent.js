@@ -2,6 +2,7 @@
     "use strict";
 
     const CONSENT_COOKIE = "nexshop_cookie_consent";
+    const CONSENT_STORAGE = "nexshop_cookie_consent";
     const THEME_COOKIE = "nexshop_user_theme";
     const CONSENT_ALL = "v1.all";
     const CONSENT_ESSENTIAL = "v1.essential";
@@ -23,8 +24,31 @@
     }
 
     function getConsent() {
-        const value = readCookie(CONSENT_COOKIE);
-        return value === CONSENT_ALL || value === CONSENT_ESSENTIAL ? value : null;
+        const cookieValue = readCookie(CONSENT_COOKIE);
+        if (cookieValue === CONSENT_ALL || cookieValue === CONSENT_ESSENTIAL) return cookieValue;
+
+        // Beberapa browser/webview memblokir cookie persisten walau localStorage
+        // tetap tersedia. Simpan pilihan esensial ini di kedua tempat agar banner
+        // tidak muncul ulang di setiap halaman.
+        try {
+            const storedValue = localStorage.getItem(CONSENT_STORAGE);
+            if (storedValue === CONSENT_ALL || storedValue === CONSENT_ESSENTIAL) {
+                writeCookie(CONSENT_COOKIE, storedValue, ONE_YEAR_SECONDS);
+                return storedValue;
+            }
+        } catch {
+            // Tetap gunakan cookie jika storage browser diblokir.
+        }
+        return null;
+    }
+
+    function saveConsent(value) {
+        writeCookie(CONSENT_COOKIE, value, ONE_YEAR_SECONDS);
+        try {
+            localStorage.setItem(CONSENT_STORAGE, value);
+        } catch {
+            // Cookie sudah cukup pada browser yang memblokir storage.
+        }
     }
 
     function preferencesAllowed() {
@@ -94,7 +118,7 @@
         banner.addEventListener("click", (event) => {
             const choice = event.target.closest("[data-cookie-choice]")?.dataset.cookieChoice;
             if (!choice) return;
-            writeCookie(CONSENT_COOKIE, choice === "all" ? CONSENT_ALL : CONSENT_ESSENTIAL, ONE_YEAR_SECONDS);
+            saveConsent(choice === "all" ? CONSENT_ALL : CONSENT_ESSENTIAL);
             document.documentElement.dataset.cookieConsent = choice;
             syncThemePreference();
             hideBanner();
@@ -126,6 +150,11 @@
             reset: function () {
                 deleteCookie(CONSENT_COOKIE);
                 deleteCookie(THEME_COOKIE);
+                try {
+                    localStorage.removeItem(CONSENT_STORAGE);
+                } catch {
+                    // Tidak ada yang perlu dilakukan jika storage diblokir.
+                }
                 document.documentElement.dataset.cookieConsent = "unset";
                 ui.showBanner();
             }
