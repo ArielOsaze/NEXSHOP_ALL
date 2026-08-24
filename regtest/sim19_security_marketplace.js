@@ -32,6 +32,11 @@ const marketplace = read("nexshop-frontend/marketplace.html");
 const marketplaceTheme = read("nexshop-frontend/marketplace-theme.css");
 const portal = read("nexshop-frontend/portal-reseller.html");
 const nginx = read("nginx-nexshop.conf");
+const marketplaceNavbar = marketplace.match(/<nav class="mkt-nav"[\s\S]*?<\/nav>/)?.[0] || "";
+const categoryClickHandler = marketplace.slice(
+    marketplace.indexOf('wrap.querySelectorAll(".cat-btn")'),
+    marketplace.indexOf("function hargaCoretHtml")
+);
 
 check(
     "checkout web tidak menerima API Key reseller sebagai autentikasi opsional",
@@ -107,6 +112,26 @@ check(
         !marketplace.includes('class="mkt-rail-deco"') &&
         marketplaceTheme.includes("MARKETPLACE BANKING DASHBOARD") &&
         marketplaceTheme.includes("grid-template-columns: repeat(4, minmax(0, 1fr))")
+);
+check(
+    "navbar Marketplace tidak menduplikasi Wallet, transaksi, Top Up, atau Reseller dari dashboard",
+    !marketplaceNavbar.includes("data-wallet-trigger") &&
+        !marketplaceNavbar.includes("data-mkt-track-trigger") &&
+        !marketplaceNavbar.includes('href="/#topup"') &&
+        !marketplaceNavbar.includes('href="/reseller"')
+);
+check(
+    "shortcut Top Up Game tetap di Marketplace dan pilihan kategori tidak memaksa scroll",
+    marketplace.includes('href="/marketplace?q=game" class="mkt-banking-action"') &&
+        categoryClickHandler.includes("loadCatalogPage(true)") &&
+        !categoryClickHandler.includes("scrollIntoView")
+);
+check(
+    "kartu operator dan produk Marketplace memakai lapisan kaca transparan",
+    marketplaceTheme.includes("background: rgba(12, 18, 35, 0.45)") &&
+        marketplaceTheme.includes("backdrop-filter: blur(16px) saturate(120%)") &&
+        /\.mkt-product-tile\s*\{[\s\S]*?background:\s*rgba\(12, 18, 35, 0\.45\)/.test(marketplaceTheme) &&
+        marketplaceTheme.includes(':root[data-theme="light"] .mkt-product-tile')
 );
 
 const cspMatch = nginx.match(/add_header Content-Security-Policy "([^"]+)" always;/);

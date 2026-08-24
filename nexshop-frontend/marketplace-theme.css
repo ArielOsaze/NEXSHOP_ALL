@@ -1352,8 +1352,10 @@ i[class*="fa-"] {
 .market-card {
     position: relative;
     overflow: hidden;
-    background: var(--mkt-card);
-    border: 1px solid var(--mkt-stroke);
+    background: rgba(12, 18, 35, 0.45);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--mkt-radius);
     padding: 1rem;
     display: flex;
@@ -1363,6 +1365,7 @@ i[class*="fa-"] {
     text-align: left;
     cursor: pointer;
     animation: mkt-card-in 0.45s ease-out both;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
     transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s, background 0.2s;
 }
 
@@ -1380,8 +1383,8 @@ i[class*="fa-"] {
 
 .market-card:hover,
 .market-card:focus-visible {
-    border-color: rgba(0, 194, 232, 0.5);
-    background: var(--mkt-card-hover);
+    border-color: rgba(0, 194, 232, 0.42);
+    background: rgba(12, 18, 35, 0.58);
     transform: translateY(-4px);
     box-shadow: 0 0 0 1px var(--mkt-glow-soft), 0 18px 34px rgba(0, 0, 0, 0.32);
     outline: none;
@@ -2132,7 +2135,14 @@ i[class*="fa-"] {
     }
 
     .mkt-banking-action strong {
+        display: flex;
+        min-height: 1.75rem;
+        align-items: center;
+        justify-content: center;
         font-size: 0.66rem;
+        overflow: visible;
+        text-overflow: clip;
+        white-space: normal;
     }
 
     .mkt-banking-action > span:last-child {
@@ -2191,10 +2201,11 @@ i[class*="fa-"] {
     min-height: 5.4rem;
     padding: 0.9rem 1rem;
     border-radius: var(--mkt-radius-sm);
-    background: var(--mkt-glass);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--mkt-line);
+    background: rgba(12, 18, 35, 0.45);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.04);
     font-family: inherit;
     text-align: left;
     cursor: pointer;
@@ -2203,7 +2214,7 @@ i[class*="fa-"] {
 
 .mkt-product-tile:hover {
     border-color: rgba(0, 194, 232, 0.35);
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(12, 18, 35, 0.58);
 }
 
 .mkt-product-tile:active {
@@ -2846,13 +2857,22 @@ i[class*="fa-"] {
    sama saja dengan tidak ada. Di tema terang hover-nya dibalik jadi warna
    gelap tipis supaya tetap kelihatan. */
 :root[data-theme="light"] .cat-btn:hover,
-:root[data-theme="light"] .mkt-nav-links a:hover,
-:root[data-theme="light"] .market-card:hover {
+:root[data-theme="light"] .mkt-nav-links a:hover {
     background: rgba(15, 23, 42, 0.045);
 }
 
-:root[data-theme="light"] .market-card:hover {
-    background: var(--mkt-card-hover);
+:root[data-theme="light"] .market-card,
+:root[data-theme="light"] .mkt-product-tile {
+    background: rgba(255, 255, 255, 0.75);
+    border-color: rgba(15, 23, 42, 0.1);
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+:root[data-theme="light"] .market-card:hover,
+:root[data-theme="light"] .market-card:focus-visible,
+:root[data-theme="light"] .mkt-product-tile:hover {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(8, 145, 178, 0.3);
 }
 
 :root[data-theme="light"] .market-card-icon {

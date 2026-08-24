@@ -96,8 +96,11 @@ const server = http.createServer((req, res) => {
         await market.waitForFunction(() => {
             const bubble = document.getElementById("nexbotSpeechBubble");
             const widget = document.getElementById("nexbotWidget");
+            const floatBtn = document.getElementById("nexbotFloatBtn");
             return bubble && widget && Number.parseFloat(getComputedStyle(widget).opacity) > 0.9 &&
                 !bubble.classList.contains("is-hidden") &&
+                floatBtn?.classList.contains("is-bubble-greeting") &&
+                getComputedStyle(floatBtn.querySelector(".nexbot-mascot-image")).animationName === "nexbot-pet-bubble-greet" &&
                 document.getElementById("nexbotSpeechText")?.textContent.trim() === "Hii, NexBot di sini!";
         });
         if (process.env.QA_SCREENSHOT_PATH) {
@@ -114,7 +117,7 @@ const server = http.createServer((req, res) => {
             y: icon.style.getPropertyValue("--nexbot-look-y"),
             animation: getComputedStyle(icon.querySelector(".nexbot-mascot-image")).animationName
         }));
-        if (pointerReaction.x === "0px" || pointerReaction.y === "0px" || !["nexbot-mascot-wave", "nexbot-pet-curious"].includes(pointerReaction.animation)) {
+        if (pointerReaction.x === "0px" || pointerReaction.y === "0px" || !["nexbot-mascot-wave", "nexbot-pet-curious", "nexbot-pet-bubble-greet"].includes(pointerReaction.animation)) {
             throw new Error(`maskot tidak bereaksi terhadap pointer: ${JSON.stringify(pointerReaction)}`);
         }
 
@@ -143,7 +146,7 @@ const server = http.createServer((req, res) => {
         await market.waitForFunction(() => !document.getElementById("nexbotWindow")?.classList.contains("is-thinking"));
         await market.waitForSelector(".nexbot-msg--bot.nexbot-msg--arriving");
         await market.close();
-        console.log("PASS browser: legalitas lokal dan pet NexBot menyapa, mengikuti pointer, bereaksi saat dielus, berpikir, serta menjawab");
+        console.log("PASS browser: bubble bersih dan pet NexBot melambaikan sapaan, mengikuti pointer, bereaksi saat dielus, berpikir, serta menjawab");
 
         const guest = await browser.newPage();
         await guest.goto("http://127.0.0.1:3000/portal-reseller", { waitUntil: "domcontentloaded", timeout: 30000 });

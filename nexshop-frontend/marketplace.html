@@ -60,8 +60,8 @@
     <script defer src="/clean-url.js?v=20260825"></script>
     <script defer src="/legal-modal.js?v=20260825"></script>
     <script defer src="/cookie-consent.js?v=20260825"></script>
-    <link rel="stylesheet" href="/style.css?v=20260825-nexbot-pet">
-    <link rel="stylesheet" href="/marketplace-theme.css?v=20260825-banking-dashboard">
+    <link rel="stylesheet" href="/style.css?v=20260825-nexbot-wave">
+    <link rel="stylesheet" href="/marketplace-theme.css?v=20260825-banking-cleanup">
 </head>
 
 <body class="marketplace-page" data-nexbot="auto">
@@ -171,9 +171,7 @@
         <ul class="mkt-nav-links" id="catNavLinks">
             <li><a href="/">Beranda</a></li>
             <li><a href="/marketplace" class="active">Marketplace</a></li>
-            <li><a href="/#topup">Topup Diamond</a></li>
             <li><a href="/berita">Portal Berita</a></li>
-                            <li><a href="/reseller">Reseller</a></li>
         </ul>
 
         <div class="mkt-nav-actions">
@@ -199,23 +197,6 @@
                 <i class="fa-solid fa-award" aria-hidden="true"></i>
                 <span>Harga Reseller</span>
             </span>
-
-            <!-- Premium NexShop Wallet Header Button -->
-            <button type="button" class="nx-wallet-nav-btn" data-wallet-trigger aria-label="Buka NexShop Wallet" aria-haspopup="dialog" title="Buka NexShop Wallet">
-                <div class="nx-wallet-nav-icon-wrap" aria-hidden="true">
-                    <i class="fa-solid fa-wallet"></i>
-                </div>
-                <div class="nx-wallet-nav-info">
-                    <span class="nx-wallet-nav-label">NexShop Wallet</span>
-                    <span class="nx-wallet-nav-val headerWalletBalanceVal">Rp 0</span>
-                </div>
-                <i class="fa-solid fa-chevron-right nx-wallet-nav-chevron" aria-hidden="true"></i>
-            </button>
-
-            <button type="button" class="mkt-nav-track-btn" id="mktTrackNavBtn" data-mkt-track-trigger aria-label="Cek Transaksi">
-                <i class="fa-solid fa-receipt" aria-hidden="true"></i>
-                <span>Cek Transaksi</span>
-            </button>
 
             <a href="/" class="mkt-nav-back" aria-label="Kembali ke toko NexShop">
                 <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
@@ -270,7 +251,7 @@
                     <strong>Cek Transaksi</strong>
                     <span>Lacak pesanan</span>
                 </button>
-                <a href="/#topup" class="mkt-banking-action">
+                <a href="/marketplace?q=game" class="mkt-banking-action">
                     <span class="mkt-banking-action-icon"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></span>
                     <strong>Top Up Game</strong>
                     <span>Diamond &amp; pass</span>
@@ -1046,7 +1027,6 @@
                     // sudah dimuat -- kategori ini bisa punya operator yang
                     // belum pernah terkirim ke browser.
                     loadCatalogPage(true);
-                    document.getElementById("mktServicesSection")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 });
             });
         }
@@ -3281,7 +3261,7 @@
     </div>
 
     <!-- Asisten NexBot, modul yang sama dengan halaman utama -->
-    <script src="/nexbot.js?v=20260825-pet"></script>
+    <script src="/nexbot.js?v=20260825-wave"></script>
 </body>
 
 </html>

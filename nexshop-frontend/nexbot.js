@@ -52,6 +52,7 @@ const NEXBOT_PET_IDLE_LINES = [
 
 const nexbotPetState = {
     bubbleTimer: null,
+    greetingTimer: null,
     moodTimer: null,
     idleTimer: null,
     idleIndex: 0
@@ -515,9 +516,27 @@ function setNexBotPetMood(mood = "idle", duration = 0) {
 
 function hideNexBotPetBubble() {
     const bubble = document.getElementById("nexbotSpeechBubble");
+    const floatBtn = document.getElementById("nexbotFloatBtn");
     if (!bubble) return;
     bubble.classList.add("is-hidden");
     bubble.setAttribute("aria-hidden", "true");
+    clearTimeout(nexbotPetState.greetingTimer);
+    floatBtn?.classList.remove("is-bubble-greeting");
+}
+
+function triggerNexBotPetGreeting() {
+    const floatBtn = document.getElementById("nexbotFloatBtn");
+    if (!floatBtn || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+    clearTimeout(nexbotPetState.greetingTimer);
+    floatBtn.classList.remove("is-bubble-greeting");
+    // Memaksa restart keyframe agar setiap bubble baru selalu punya sapaan,
+    // termasuk ketika teks sebelumnya belum sempat selesai menghilang.
+    void floatBtn.offsetWidth;
+    floatBtn.classList.add("is-bubble-greeting");
+    nexbotPetState.greetingTimer = setTimeout(() => {
+        floatBtn.classList.remove("is-bubble-greeting");
+    }, 1450);
 }
 
 function showNexBotPetBubble(text, duration = 5200, mood = "curious") {
@@ -530,6 +549,7 @@ function showNexBotPetBubble(text, duration = 5200, mood = "curious") {
     bubble.classList.remove("is-hidden");
     bubble.setAttribute("aria-hidden", "false");
     setNexBotPetMood(mood, duration);
+    triggerNexBotPetGreeting();
     clearTimeout(nexbotPetState.bubbleTimer);
     if (duration > 0) {
         nexbotPetState.bubbleTimer = setTimeout(hideNexBotPetBubble, duration);
@@ -630,7 +650,7 @@ function initNexBotMascotInteractions(floatBtn, windowEl, input) {
     });
 
     bubble?.addEventListener("click", () => floatBtn.click());
-    setTimeout(() => showNexBotPetBubble("Hii, NexBot di sini!", 6800, "happy"), 700);
+    setTimeout(() => showNexBotPetBubble("Hii, NexBot di sini!", 6800, "happy"), 2100);
     scheduleNexBotPetIdle();
 
     document.addEventListener("visibilitychange", () => {

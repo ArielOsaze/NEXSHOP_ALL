@@ -83,13 +83,29 @@ const server = http.createServer((req, res) => {
                 categoryFirstRow: [...document.querySelectorAll(".cat-btn")].slice(0, 4)
                     .map((button) => Math.round(button.getBoundingClientRect().top)),
                 nexbotBackground: getComputedStyle(document.getElementById("nexbotFloatBtn")).backgroundImage,
-                nexbotBackgroundColor: getComputedStyle(document.getElementById("nexbotFloatBtn")).backgroundColor
+                nexbotBackgroundColor: getComputedStyle(document.getElementById("nexbotFloatBtn")).backgroundColor,
+                navbarDuplicateActions: document.querySelectorAll(".mkt-nav [data-wallet-trigger], .mkt-nav [data-mkt-track-trigger]").length,
+                topupGameHref: document.querySelector('.mkt-banking-action[href*="q=game"]')?.getAttribute("href"),
+                cardBackground: getComputedStyle(document.querySelector(".market-card")).backgroundColor,
+                cardBackdrop: getComputedStyle(document.querySelector(".market-card")).backdropFilter
             }));
             if (initial.cards !== 20 || initial.overflow || initial.cardTag !== "BUTTON") throw new Error(`${viewport.name}: render awal/overflow/kartu tidak valid ${JSON.stringify(initial)}`);
             if (initial.quickActions !== 4 || initial.categoryLayout !== "grid") throw new Error(`${viewport.name}: dashboard banking tidak valid ${JSON.stringify(initial)}`);
             if (initial.nexbotBackground !== "none" || initial.nexbotBackgroundColor !== "rgba(0, 0, 0, 0)") throw new Error(`${viewport.name}: tombol NexBot belum transparan ${JSON.stringify(initial)}`);
+            if (initial.navbarDuplicateActions !== 0 || initial.topupGameHref !== "/marketplace?q=game") throw new Error(`${viewport.name}: navbar/shortcut m-banking masih duplikat atau salah tujuan ${JSON.stringify(initial)}`);
+            if (!initial.cardBackground.includes("0.45") || !initial.cardBackdrop.includes("blur(16px)")) throw new Error(`${viewport.name}: kartu Marketplace belum transparan ${JSON.stringify(initial)}`);
             if (viewport.name === "mobile" && initial.categoryHeight < 44) throw new Error(`mobile: target kategori hanya ${initial.categoryHeight}px`);
             if (viewport.name === "mobile" && new Set(initial.categoryFirstRow).size !== 1) throw new Error(`mobile: empat shortcut kategori pertama tidak satu baris`);
+
+            await page.evaluate(() => {
+                window.scrollTo(0, 0);
+                document.querySelector('.cat-btn[data-cat="Tagihan"]')?.click();
+            });
+            await page.waitForFunction(() => document.querySelectorAll(".market-card").length === 10);
+            const categoryScrollY = await page.evaluate(() => window.scrollY);
+            if (categoryScrollY !== 0) throw new Error(`${viewport.name}: klik kategori memaksa scroll ke ${categoryScrollY}px`);
+            await page.evaluate(() => document.querySelector('.cat-btn[data-cat=""]')?.click());
+            await page.waitForFunction(() => document.querySelectorAll(".market-card").length === 20);
 
             await page.click("#mktLoadMoreBtn");
             await page.waitForFunction(() => document.querySelectorAll(".market-card").length === 35);
@@ -104,7 +120,7 @@ const server = http.createServer((req, res) => {
                 await page.screenshot({ path: path.join(process.env.QA_SCREENSHOT_DIR, `marketplace-${viewport.name}.png`), fullPage: true });
             }
             await page.close();
-            console.log(`PASS Marketplace ${viewport.name}: 20→35, search, focus, no-overflow`);
+            console.log(`PASS Marketplace ${viewport.name}: nav ringkas, kategori tanpa auto-scroll, kartu kaca, 20→35, search, no-overflow`);
         }
     } finally {
         await browser.close();

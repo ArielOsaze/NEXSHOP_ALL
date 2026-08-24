@@ -98,7 +98,21 @@ check(
         index.includes("Hii, NexBot di sini!") &&
         nexbot.includes('id="nexbotSpeechBubble"') &&
         nexbot.includes('showNexBotPetBubble("Hii, NexBot di sini!"') &&
-        style.includes(".nexbot-speech-bubble::after")
+        style.includes(".nexbot-speech-bubble::after") &&
+        !style.includes(".nexbot-speech-bubble::before")
+);
+check(
+    "setiap bubble memicu ulang animasi sapaan maskot",
+    nexbot.includes("function triggerNexBotPetGreeting()") &&
+        nexbot.includes('floatBtn.classList.add("is-bubble-greeting")') &&
+        nexbot.includes("triggerNexBotPetGreeting();") &&
+        style.includes(".nexbot-float-btn.is-bubble-greeting") &&
+        style.includes("@keyframes nexbot-pet-bubble-greet")
+);
+check(
+    "teks promosi memakai tanda baca natural tanpa strip pemisah",
+    index.includes("topup instan, aman, cepat, dan terpercaya") &&
+        !index.includes("topup instan — aman")
 );
 check(
     "pet NexBot bereaksi terhadap gestur elus, mood, partikel, dan waktu idle",

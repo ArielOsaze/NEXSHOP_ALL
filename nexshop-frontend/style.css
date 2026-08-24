@@ -6527,17 +6527,6 @@ input::placeholder {
     transition: opacity 180ms ease, transform 220ms cubic-bezier(.2, .9, .25, 1), border-color 180ms ease;
 }
 
-.nexbot-speech-bubble::before {
-    content: '';
-    position: absolute;
-    top: 7px;
-    left: 12px;
-    width: 28px;
-    height: 1px;
-    border-radius: 999px;
-    background: linear-gradient(90deg, rgba(103, 232, 249, 0.72), transparent);
-}
-
 .nexbot-speech-bubble::after {
     content: '';
     position: absolute;
@@ -6686,6 +6675,11 @@ input::placeholder {
     animation: nexbot-mascot-excited 520ms cubic-bezier(.2, .9, .25, 1) both;
 }
 
+.nexbot-float-btn.is-bubble-greeting .nexbot-mascot-image--float {
+    animation: nexbot-pet-bubble-greet 1.35s cubic-bezier(.2, .85, .25, 1) both;
+    transform-origin: 58% 82%;
+}
+
 @keyframes nexbot-pet-bubble-pop {
     0% { opacity: 0; transform: translateY(8px) scale(.86); }
     65% { opacity: 1; transform: translateY(-2px) scale(1.03); }
@@ -6717,6 +6711,16 @@ input::placeholder {
 @keyframes nexbot-pet-sleepy {
     0%, 100% { transform: translateY(1px) rotate(-2deg) scale(1, .97); }
     50% { transform: translateY(4px) rotate(2deg) scale(.98, .94); }
+}
+
+@keyframes nexbot-pet-bubble-greet {
+    0% { transform: translateY(0) rotate(0) scale(1); }
+    18% { transform: translateY(-8px) rotate(-8deg) scale(1.07, .97); }
+    36% { transform: translateY(-5px) rotate(9deg) scale(1.03); }
+    53% { transform: translateY(-7px) rotate(-7deg) scale(1.05); }
+    70% { transform: translateY(-3px) rotate(6deg) scale(1.02); }
+    86% { transform: translateY(-4px) rotate(-2deg) scale(1.03); }
+    100% { transform: translateY(0) rotate(0) scale(1); }
 }
 
 @keyframes nexbot-mascot-wave {
