@@ -43,6 +43,19 @@ const NEXBOT_QUICK_TOPICS = [
 ];
 
 const NEXBOT_MASCOT_SRC = "/images/nexbot-mascot.webp";
+const NEXBOT_PET_IDLE_LINES = [
+    "Butuh cek harga? Panggil aku ya!",
+    "Aku bisa bantu cek pesananmu.",
+    "Mau cari top up atau tagihan?",
+    "Aku masih di sini kalau kamu butuh bantuan."
+];
+
+const nexbotPetState = {
+    bubbleTimer: null,
+    moodTimer: null,
+    idleTimer: null,
+    idleIndex: 0
+};
 
 function nexbotMascotMarkup(extraClass = "") {
     const className = ["nexbot-mascot-image", extraClass].filter(Boolean).join(" ");
@@ -70,7 +83,11 @@ function ensureNexBotWidget() {
     wrap.style.pointerEvents = "none";
     wrap.style.transition = "opacity 0.5s ease-in-out";
     wrap.innerHTML = `
+        <button type="button" class="nexbot-speech-bubble is-hidden" id="nexbotSpeechBubble" aria-label="Buka percakapan dengan NexBot" aria-live="polite">
+            <span id="nexbotSpeechText">Hii, NexBot di sini!</span>
+        </button>
         <button type="button" class="nexbot-float-btn group" id="nexbotFloatBtn" aria-label="Buka NexBot">
+            <span class="nexbot-pet-sparks" aria-hidden="true"></span>
             <span class="nexbot-float-btn-icon">${nexbotMascotMarkup("nexbot-mascot-image--float")}</span>
         </button>
         <div class="nexbot-window hidden" id="nexbotWindow">
@@ -479,7 +496,74 @@ function closeNexBotWidget() {
         windowEl.classList.add("hidden");
         windowEl.classList.remove("closing");
         floatBtn.classList.remove("hidden");
+        showNexBotPetBubble("Aku tetap di sini ya!", 4200, "happy");
+        scheduleNexBotPetIdle();
     }, 200);
+}
+
+function setNexBotPetMood(mood = "idle", duration = 0) {
+    const widget = document.getElementById("nexbotWidget");
+    if (!widget) return;
+    widget.dataset.petMood = mood;
+    clearTimeout(nexbotPetState.moodTimer);
+    if (duration > 0) {
+        nexbotPetState.moodTimer = setTimeout(() => {
+            widget.dataset.petMood = "idle";
+        }, duration);
+    }
+}
+
+function hideNexBotPetBubble() {
+    const bubble = document.getElementById("nexbotSpeechBubble");
+    if (!bubble) return;
+    bubble.classList.add("is-hidden");
+    bubble.setAttribute("aria-hidden", "true");
+}
+
+function showNexBotPetBubble(text, duration = 5200, mood = "curious") {
+    const bubble = document.getElementById("nexbotSpeechBubble");
+    const textEl = document.getElementById("nexbotSpeechText");
+    const windowEl = document.getElementById("nexbotWindow");
+    if (!bubble || !textEl || !windowEl?.classList.contains("hidden")) return;
+
+    textEl.textContent = text;
+    bubble.classList.remove("is-hidden");
+    bubble.setAttribute("aria-hidden", "false");
+    setNexBotPetMood(mood, duration);
+    clearTimeout(nexbotPetState.bubbleTimer);
+    if (duration > 0) {
+        nexbotPetState.bubbleTimer = setTimeout(hideNexBotPetBubble, duration);
+    }
+}
+
+function emitNexBotPetSparks(floatBtn, count = 6) {
+    const layer = floatBtn?.querySelector(".nexbot-pet-sparks");
+    if (!layer || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return;
+
+    for (let index = 0; index < count; index += 1) {
+        const spark = document.createElement("span");
+        const angle = ((Math.PI * 2) / count) * index + (Math.random() * 0.35);
+        const distance = 28 + Math.random() * 18;
+        spark.style.setProperty("--pet-spark-x", `${Math.cos(angle) * distance}px`);
+        spark.style.setProperty("--pet-spark-y", `${Math.sin(angle) * distance}px`);
+        spark.style.setProperty("--pet-spark-delay", `${index * 35}ms`);
+        layer.appendChild(spark);
+        setTimeout(() => spark.remove(), 900);
+    }
+}
+
+function scheduleNexBotPetIdle() {
+    clearTimeout(nexbotPetState.idleTimer);
+    const delay = 18000 + Math.round(Math.random() * 12000);
+    nexbotPetState.idleTimer = setTimeout(() => {
+        const windowEl = document.getElementById("nexbotWindow");
+        if (document.visibilityState === "visible" && windowEl?.classList.contains("hidden")) {
+            const line = NEXBOT_PET_IDLE_LINES[nexbotPetState.idleIndex % NEXBOT_PET_IDLE_LINES.length];
+            nexbotPetState.idleIndex += 1;
+            showNexBotPetBubble(line, 5200, nexbotPetState.idleIndex % 3 === 0 ? "sleepy" : "curious");
+        }
+        scheduleNexBotPetIdle();
+    }, delay);
 }
 
 // Maskot bukan sekadar gambar dekoratif: ia mengikuti pointer pada tombol,
@@ -490,7 +574,11 @@ function initNexBotMascotInteractions(floatBtn, windowEl, input) {
     floatBtn.dataset.mascotReady = "true";
 
     const icon = floatBtn.querySelector(".nexbot-float-btn-icon");
+    const bubble = document.getElementById("nexbotSpeechBubble");
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    let lastPointer = null;
+    let petTravel = 0;
+    let lastPetReaction = 0;
 
     const resetPointerReaction = () => {
         if (!icon) return;
@@ -505,14 +593,49 @@ function initNexBotMascotInteractions(floatBtn, windowEl, input) {
             const y = Math.max(-1, Math.min(1, ((event.clientY - rect.top) / rect.height - 0.5) * 2));
             icon.style.setProperty("--nexbot-look-x", `${(x * 4).toFixed(2)}px`);
             icon.style.setProperty("--nexbot-look-y", `${(y * 3).toFixed(2)}px`);
+
+            if (lastPointer) {
+                petTravel += Math.hypot(event.clientX - lastPointer.x, event.clientY - lastPointer.y);
+            }
+            lastPointer = { x: event.clientX, y: event.clientY };
+            if (petTravel >= 85 && Date.now() - lastPetReaction > 1200) {
+                petTravel = 0;
+                lastPetReaction = Date.now();
+                floatBtn.classList.add("is-petted");
+                showNexBotPetBubble("Hehe, geli! Senang ketemu kamu ✨", 3600, "happy");
+                emitNexBotPetSparks(floatBtn, 7);
+                setTimeout(() => floatBtn.classList.remove("is-petted"), 760);
+            }
         });
-        floatBtn.addEventListener("pointerleave", resetPointerReaction);
+        floatBtn.addEventListener("pointerleave", () => {
+            lastPointer = null;
+            petTravel = 0;
+            resetPointerReaction();
+            scheduleNexBotPetIdle();
+        });
     }
 
-    floatBtn.addEventListener("focus", () => floatBtn.classList.add("is-greeting"));
+    floatBtn.addEventListener("pointerenter", () => {
+        clearTimeout(nexbotPetState.idleTimer);
+        showNexBotPetBubble("Hii! Mau aku bantu apa?", 3200, "curious");
+    });
+    floatBtn.addEventListener("focus", () => {
+        floatBtn.classList.add("is-greeting");
+        showNexBotPetBubble("Hii! Mau aku bantu apa?", 3200, "curious");
+    });
     floatBtn.addEventListener("blur", () => {
         floatBtn.classList.remove("is-greeting");
         resetPointerReaction();
+        scheduleNexBotPetIdle();
+    });
+
+    bubble?.addEventListener("click", () => floatBtn.click());
+    setTimeout(() => showNexBotPetBubble("Hii, NexBot di sini!", 6800, "happy"), 700);
+    scheduleNexBotPetIdle();
+
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") scheduleNexBotPetIdle();
+        else clearTimeout(nexbotPetState.idleTimer);
     });
 
     if (input) {
@@ -542,6 +665,10 @@ function initNexBotChat() {
     floatBtn.addEventListener("click", () => {
         if (windowEl.classList.contains("hidden")) {
             floatBtn.classList.add("expanding", "is-reacting");
+            setNexBotPetMood("excited", 700);
+            emitNexBotPetSparks(floatBtn, 8);
+            hideNexBotPetBubble();
+            clearTimeout(nexbotPetState.idleTimer);
             setTimeout(() => {
                 windowEl.classList.remove("hidden");
                 floatBtn.classList.add("hidden");

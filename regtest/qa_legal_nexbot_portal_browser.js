@@ -93,6 +93,16 @@ const server = http.createServer((req, res) => {
         await market.waitForSelector('.nexbot-mascot-image[src="/images/nexbot-mascot.webp"]');
         const mascotLoaded = await market.$eval(".nexbot-mascot-image", (img) => img.complete && img.naturalWidth === 640 && img.naturalHeight === 640);
         if (!mascotLoaded) throw new Error("aset maskot NexBot gagal dimuat");
+        await market.waitForFunction(() => {
+            const bubble = document.getElementById("nexbotSpeechBubble");
+            const widget = document.getElementById("nexbotWidget");
+            return bubble && widget && Number.parseFloat(getComputedStyle(widget).opacity) > 0.9 &&
+                !bubble.classList.contains("is-hidden") &&
+                document.getElementById("nexbotSpeechText")?.textContent.trim() === "Hii, NexBot di sini!";
+        });
+        if (process.env.QA_SCREENSHOT_PATH) {
+            await market.screenshot({ path: process.env.QA_SCREENSHOT_PATH });
+        }
 
         const floatBox = await market.$eval("#nexbotFloatBtn", (button) => {
             const rect = button.getBoundingClientRect();
@@ -104,8 +114,22 @@ const server = http.createServer((req, res) => {
             y: icon.style.getPropertyValue("--nexbot-look-y"),
             animation: getComputedStyle(icon.querySelector(".nexbot-mascot-image")).animationName
         }));
-        if (pointerReaction.x === "0px" || pointerReaction.y === "0px" || pointerReaction.animation !== "nexbot-mascot-wave") {
+        if (pointerReaction.x === "0px" || pointerReaction.y === "0px" || !["nexbot-mascot-wave", "nexbot-pet-curious"].includes(pointerReaction.animation)) {
             throw new Error(`maskot tidak bereaksi terhadap pointer: ${JSON.stringify(pointerReaction)}`);
+        }
+
+        for (let index = 0; index < 5; index += 1) {
+            const horizontal = index % 2 === 0 ? 0.18 : 0.82;
+            await market.mouse.move(floatBox.x + floatBox.width * horizontal, floatBox.y + floatBox.height * 0.52, { steps: 3 });
+        }
+        await market.waitForFunction(() => document.getElementById("nexbotSpeechText")?.textContent.includes("geli"));
+        const petReaction = await market.evaluate(() => ({
+            mood: document.getElementById("nexbotWidget")?.dataset.petMood,
+            sparkCount: document.querySelectorAll(".nexbot-pet-sparks span").length,
+            text: document.getElementById("nexbotSpeechText")?.textContent.trim()
+        }));
+        if (petReaction.mood !== "happy" || petReaction.sparkCount < 1 || !petReaction.text.includes("geli")) {
+            throw new Error(`gestur elus NexBot tidak bereaksi: ${JSON.stringify(petReaction)}`);
         }
 
         await market.click("#nexbotFloatBtn");
@@ -119,7 +143,7 @@ const server = http.createServer((req, res) => {
         await market.waitForFunction(() => !document.getElementById("nexbotWindow")?.classList.contains("is-thinking"));
         await market.waitForSelector(".nexbot-msg--bot.nexbot-msg--arriving");
         await market.close();
-        console.log("PASS browser: legalitas lokal dan maskot bereaksi pada pointer, input, berpikir, serta menjawab");
+        console.log("PASS browser: legalitas lokal dan pet NexBot menyapa, mengikuti pointer, bereaksi saat dielus, berpikir, serta menjawab");
 
         const guest = await browser.newPage();
         await guest.goto("http://127.0.0.1:3000/portal-reseller", { waitUntil: "domcontentloaded", timeout: 30000 });

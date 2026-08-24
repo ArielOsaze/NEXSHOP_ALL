@@ -60,7 +60,7 @@
 <script src="/theme-init.js?v=20260812-otp-security"></script>
 <script defer src="/clean-url.js?v=20260825"></script>
 <script defer src="/cookie-consent.js?v=20260825"></script>
-<link rel="stylesheet" href="/style.css?v=20260825-nexbot-transparent">
+<link rel="stylesheet" href="/style.css?v=20260825-nexbot-pet">
 <link rel="stylesheet" href="/tailwind.css?v=20260824-cyan-brand">
 
 <style>
@@ -1138,9 +1138,12 @@ Cek Transaksi
 
 <!-- NexBot Floating Chatbot Widget -->
 <div class="nexbot-widget" id="nexbotWidget" style="opacity: 0; pointer-events: none; transition: opacity 0.5s ease-in-out;">
+    <button type="button" class="nexbot-speech-bubble is-hidden" id="nexbotSpeechBubble" aria-label="Buka percakapan dengan NexBot" aria-live="polite">
+        <span id="nexbotSpeechText">Hii, NexBot di sini!</span>
+    </button>
     <button type="button" class="nexbot-float-btn group" id="nexbotFloatBtn" aria-label="Buka NexBot">
+        <span class="nexbot-pet-sparks" aria-hidden="true"></span>
         <span class="nexbot-float-btn-icon"><img src="/images/nexbot-mascot.webp" class="nexbot-mascot-image nexbot-mascot-image--float" alt="" aria-hidden="true" draggable="false"></span>
-        <span class="nexbot-float-btn-text max-w-0 overflow-hidden group-hover:max-w-[120px] transition-all duration-300 ease-in-out whitespace-nowrap ml-0 group-hover:ml-2 opacity-0 group-hover:opacity-100 font-bold text-sm hidden md:block">Tanya NexBot</span>
     </button>
 
     <div class="nexbot-window hidden" id="nexbotWindow">
@@ -1442,7 +1445,7 @@ Cek Transaksi
     </div>
 </div>
 
-<script src="/nexbot.js?v=20260825-interactive"></script>
+<script src="/nexbot.js?v=20260825-pet"></script>
 <script src="/script.js?v=20260824-search-relevance"></script>
 </body>
 </html>

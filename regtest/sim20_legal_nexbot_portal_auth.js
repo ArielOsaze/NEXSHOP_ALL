@@ -6,6 +6,7 @@ const path = require("path");
 const root = path.join(__dirname, "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const portal = read("nexshop-frontend/portal-reseller.html");
+const index = read("nexshop-frontend/index.html");
 const legalModal = read("nexshop-frontend/legal-modal.js");
 const nexbot = read("nexshop-frontend/nexbot.js");
 const style = read("nexshop-frontend/style.css");
@@ -90,6 +91,25 @@ check(
         nexbot.includes('windowEl.classList.toggle("is-listening"') &&
         style.includes("@keyframes nexbot-mascot-wave") &&
         style.includes("@keyframes nexbot-mascot-excited")
+);
+check(
+    "bubble sapaan NexBot tersedia pada markup statis dan widget lintas halaman",
+    index.includes('id="nexbotSpeechBubble"') &&
+        index.includes("Hii, NexBot di sini!") &&
+        nexbot.includes('id="nexbotSpeechBubble"') &&
+        nexbot.includes('showNexBotPetBubble("Hii, NexBot di sini!"') &&
+        style.includes(".nexbot-speech-bubble::after")
+);
+check(
+    "pet NexBot bereaksi terhadap gestur elus, mood, partikel, dan waktu idle",
+    nexbot.includes("petTravel += Math.hypot") &&
+        nexbot.includes('floatBtn.classList.add("is-petted")') &&
+        nexbot.includes("emitNexBotPetSparks(floatBtn") &&
+        nexbot.includes("scheduleNexBotPetIdle()") &&
+        nexbot.includes("NEXBOT_PET_IDLE_LINES") &&
+        style.includes('[data-pet-mood="curious"]') &&
+        style.includes("@keyframes nexbot-pet-happy") &&
+        style.includes("@keyframes nexbot-pet-spark")
 );
 check(
     "maskot memiliki status visual berpikir dan selesai menjawab",
