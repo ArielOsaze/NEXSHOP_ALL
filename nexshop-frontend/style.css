@@ -6539,11 +6539,15 @@ input::placeholder {
 }
 
 .nexbot-float-btn-icon {
+    --nexbot-look-x: 0px;
+    --nexbot-look-y: 0px;
     width: clamp(48px, 5.6vw, 60px);
     height: clamp(48px, 5.6vw, 60px);
     display: flex;
     align-items: center;
     justify-content: center;
+    transform: translate(var(--nexbot-look-x), var(--nexbot-look-y));
+    transition: transform 140ms ease-out;
 }
 
 .nexbot-mascot-image {
@@ -6558,11 +6562,34 @@ input::placeholder {
 
 .nexbot-mascot-image--float {
     animation: nexbot-mascot-idle 3.2s ease-in-out infinite;
+    transform-origin: 50% 78%;
 }
 
 @keyframes nexbot-mascot-idle {
     0%, 100% { transform: translateY(0) rotate(-1deg); }
     50% { transform: translateY(-3px) rotate(1deg); }
+}
+
+.nexbot-float-btn:hover .nexbot-mascot-image--float,
+.nexbot-float-btn.is-greeting .nexbot-mascot-image--float {
+    animation: nexbot-mascot-wave 720ms cubic-bezier(.2, .8, .2, 1) infinite alternate;
+}
+
+.nexbot-float-btn.is-reacting .nexbot-mascot-image--float {
+    animation: nexbot-mascot-excited 520ms cubic-bezier(.2, .9, .25, 1) both;
+}
+
+@keyframes nexbot-mascot-wave {
+    0% { transform: translateY(-1px) rotate(-4deg) scale(1); }
+    55% { transform: translateY(-5px) rotate(4deg) scale(1.04); }
+    100% { transform: translateY(-3px) rotate(7deg) scale(1.02); }
+}
+
+@keyframes nexbot-mascot-excited {
+    0% { transform: translateY(0) scale(1) rotate(0); }
+    38% { transform: translateY(-9px) scale(1.08) rotate(-5deg); }
+    68% { transform: translateY(-3px) scale(.98) rotate(4deg); }
+    100% { transform: translateY(0) scale(1) rotate(0); }
 }
 
 /* pointer-events:auto WAJIB di sini — .nexbot-widget (parent) sengaja
@@ -6649,6 +6676,50 @@ input::placeholder {
     color: #fff;
     padding: 2px;
     border: 1px solid rgba(34, 211, 238, 0.24);
+}
+
+.nexbot-avatar .nexbot-mascot-image {
+    transform-origin: 50% 78%;
+    animation: nexbot-mascot-breathe 3.4s ease-in-out infinite;
+}
+
+.nexbot-window.is-listening .nexbot-avatar .nexbot-mascot-image {
+    animation: nexbot-mascot-listen 760ms ease-in-out infinite alternate;
+}
+
+.nexbot-window.is-thinking .nexbot-avatar {
+    border-color: rgba(34, 211, 238, 0.65);
+    box-shadow: 0 0 0 4px rgba(8, 145, 178, 0.1), 0 0 18px rgba(34, 211, 238, 0.25);
+}
+
+.nexbot-window.is-thinking .nexbot-avatar .nexbot-mascot-image,
+.nexbot-msg--typing .nexbot-msg-avatar .nexbot-mascot-image {
+    animation: nexbot-mascot-think 900ms ease-in-out infinite;
+}
+
+.nexbot-msg--arriving .nexbot-msg-avatar .nexbot-mascot-image {
+    animation: nexbot-mascot-answer 680ms cubic-bezier(.2, .9, .2, 1) both;
+}
+
+@keyframes nexbot-mascot-breathe {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-1px) scale(1.035); }
+}
+
+@keyframes nexbot-mascot-listen {
+    from { transform: translateY(0) rotate(-3deg) scale(1.02); }
+    to { transform: translateY(-2px) rotate(3deg) scale(1.07); }
+}
+
+@keyframes nexbot-mascot-think {
+    0%, 100% { transform: translateY(0) rotate(-2deg) scale(1); }
+    50% { transform: translateY(-3px) rotate(3deg) scale(1.08); }
+}
+
+@keyframes nexbot-mascot-answer {
+    0% { transform: scale(.72) rotate(-8deg); opacity: .45; }
+    58% { transform: scale(1.16) rotate(4deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
 }
 
 .nexbot-badge {
@@ -7385,8 +7456,18 @@ input::placeholder {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .nexbot-mascot-image--float {
-        animation: none;
+    .nexbot-mascot-image--float,
+    .nexbot-avatar .nexbot-mascot-image,
+    .nexbot-window.is-listening .nexbot-avatar .nexbot-mascot-image,
+    .nexbot-window.is-thinking .nexbot-avatar .nexbot-mascot-image,
+    .nexbot-msg--typing .nexbot-msg-avatar .nexbot-mascot-image,
+    .nexbot-msg--arriving .nexbot-msg-avatar .nexbot-mascot-image {
+        animation: none !important;
+    }
+
+    .nexbot-float-btn-icon {
+        transform: none;
+        transition: none;
     }
 }
 

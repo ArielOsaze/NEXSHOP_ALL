@@ -473,12 +473,57 @@ function closeNexBotWidget() {
     const windowEl = document.getElementById("nexbotWindow");
     const floatBtn = document.getElementById("nexbotFloatBtn");
     if (!windowEl || !floatBtn || windowEl.classList.contains("hidden")) return;
+    windowEl.classList.remove("is-listening", "is-thinking");
     windowEl.classList.add("closing");
     setTimeout(() => {
         windowEl.classList.add("hidden");
         windowEl.classList.remove("closing");
         floatBtn.classList.remove("hidden");
     }, 200);
+}
+
+// Maskot bukan sekadar gambar dekoratif: ia mengikuti pointer pada tombol,
+// menyapa saat menerima fokus, dan bereaksi terhadap aktivitas input. Status
+// berpikir/menjawab diatur dari alur chat di bawah agar gerakannya bermakna.
+function initNexBotMascotInteractions(floatBtn, windowEl, input) {
+    if (!floatBtn || floatBtn.dataset.mascotReady === "true") return;
+    floatBtn.dataset.mascotReady = "true";
+
+    const icon = floatBtn.querySelector(".nexbot-float-btn-icon");
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+
+    const resetPointerReaction = () => {
+        if (!icon) return;
+        icon.style.setProperty("--nexbot-look-x", "0px");
+        icon.style.setProperty("--nexbot-look-y", "0px");
+    };
+
+    if (!reduceMotion && icon) {
+        floatBtn.addEventListener("pointermove", (event) => {
+            const rect = floatBtn.getBoundingClientRect();
+            const x = Math.max(-1, Math.min(1, ((event.clientX - rect.left) / rect.width - 0.5) * 2));
+            const y = Math.max(-1, Math.min(1, ((event.clientY - rect.top) / rect.height - 0.5) * 2));
+            icon.style.setProperty("--nexbot-look-x", `${(x * 4).toFixed(2)}px`);
+            icon.style.setProperty("--nexbot-look-y", `${(y * 3).toFixed(2)}px`);
+        });
+        floatBtn.addEventListener("pointerleave", resetPointerReaction);
+    }
+
+    floatBtn.addEventListener("focus", () => floatBtn.classList.add("is-greeting"));
+    floatBtn.addEventListener("blur", () => {
+        floatBtn.classList.remove("is-greeting");
+        resetPointerReaction();
+    });
+
+    if (input) {
+        const syncListeningState = () => {
+            const active = document.activeElement === input || Boolean(input.value.trim());
+            windowEl.classList.toggle("is-listening", active && !nexbotState.loading);
+        };
+        input.addEventListener("focus", syncListeningState);
+        input.addEventListener("input", syncListeningState);
+        input.addEventListener("blur", syncListeningState);
+    }
 }
 
 function initNexBotChat() {
@@ -492,13 +537,15 @@ function initNexBotChat() {
 
     if (!floatBtn || !windowEl || !form) return;
 
+    initNexBotMascotInteractions(floatBtn, windowEl, input);
+
     floatBtn.addEventListener("click", () => {
         if (windowEl.classList.contains("hidden")) {
-            floatBtn.classList.add("expanding");
+            floatBtn.classList.add("expanding", "is-reacting");
             setTimeout(() => {
                 windowEl.classList.remove("hidden");
                 floatBtn.classList.add("hidden");
-                floatBtn.classList.remove("expanding");
+                floatBtn.classList.remove("expanding", "is-reacting", "is-greeting");
                 updateNexBotGreeting();
                 input.focus();
             }, 250);
@@ -515,6 +562,8 @@ function initNexBotChat() {
         // Activate isolated chat loading state (DO NOT TRIGGER GLOBAL WEBSITE LOADING)
         nexbotState.loading = true;
         if (sendBtn) sendBtn.disabled = true;
+        windowEl.classList.remove("is-listening");
+        windowEl.classList.add("is-thinking");
 
         appendNexBotMessage(text, "user");
         input.value = "";
@@ -566,6 +615,8 @@ function initNexBotChat() {
         } finally {
             nexbotState.loading = false;
             if (sendBtn) sendBtn.disabled = false;
+            windowEl.classList.remove("is-thinking");
+            if (document.activeElement === input) windowEl.classList.add("is-listening");
         }
     });
 }
@@ -626,6 +677,7 @@ function appendNexBotMessage(text, sender, cards = [], handoff = false) {
     const isBot = sender !== "user";
     const msgDiv = document.createElement("div");
     msgDiv.className = `nexbot-msg nexbot-msg--${sender}`;
+    if (isBot) msgDiv.classList.add("nexbot-msg--arriving");
 
     const content = isBot
         ? parseMarkdownToHtml(text)
@@ -682,6 +734,7 @@ function appendNexBotMessage(text, sender, cards = [], handoff = false) {
     if (isBot) {
         attachNexBotCopy(msgDiv, text);
         attachNexBotInlineActions(msgDiv);
+        setTimeout(() => msgDiv.classList.remove("nexbot-msg--arriving"), 850);
     }
     nexbotScrollToBottom();
 }

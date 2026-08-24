@@ -53,6 +53,9 @@ const server = http.createServer((req, res) => {
     if (url.pathname === "/api/settings/store") {
         return json(res, 200, { store_name: "NexShop", contact_whatsapp: "628123456789" });
     }
+    if (url.pathname === "/api/ai/chat") {
+        return setTimeout(() => json(res, 200, { reply: "Halo! Maskot NexBot sedang aktif." }), 400);
+    }
     if (url.pathname.startsWith("/api/")) return json(res, 200, []);
 
     let relative = decodeURIComponent(url.pathname.replace(/^\//, ""));
@@ -90,8 +93,33 @@ const server = http.createServer((req, res) => {
         await market.waitForSelector('.nexbot-mascot-image[src="/images/nexbot-mascot.webp"]');
         const mascotLoaded = await market.$eval(".nexbot-mascot-image", (img) => img.complete && img.naturalWidth === 640 && img.naturalHeight === 640);
         if (!mascotLoaded) throw new Error("aset maskot NexBot gagal dimuat");
+
+        const floatBox = await market.$eval("#nexbotFloatBtn", (button) => {
+            const rect = button.getBoundingClientRect();
+            return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
+        });
+        await market.mouse.move(floatBox.x + floatBox.width * 0.82, floatBox.y + floatBox.height * 0.25);
+        const pointerReaction = await market.$eval(".nexbot-float-btn-icon", (icon) => ({
+            x: icon.style.getPropertyValue("--nexbot-look-x"),
+            y: icon.style.getPropertyValue("--nexbot-look-y"),
+            animation: getComputedStyle(icon.querySelector(".nexbot-mascot-image")).animationName
+        }));
+        if (pointerReaction.x === "0px" || pointerReaction.y === "0px" || pointerReaction.animation !== "nexbot-mascot-wave") {
+            throw new Error(`maskot tidak bereaksi terhadap pointer: ${JSON.stringify(pointerReaction)}`);
+        }
+
+        await market.click("#nexbotFloatBtn");
+        await market.waitForSelector("#nexbotWindow:not(.hidden)");
+        await market.focus("#nexbotInput");
+        await market.type("#nexbotInput", "Halo NexBot");
+        const listening = await market.$eval("#nexbotWindow", (windowEl) => windowEl.classList.contains("is-listening"));
+        if (!listening) throw new Error("maskot tidak bereaksi ketika input aktif");
+        await market.click("#nexbotSendBtn");
+        await market.waitForFunction(() => document.getElementById("nexbotWindow")?.classList.contains("is-thinking"));
+        await market.waitForFunction(() => !document.getElementById("nexbotWindow")?.classList.contains("is-thinking"));
+        await market.waitForSelector(".nexbot-msg--bot.nexbot-msg--arriving");
         await market.close();
-        console.log("PASS browser: legalitas tetap modal di Marketplace dan maskot NexBot termuat");
+        console.log("PASS browser: legalitas lokal dan maskot bereaksi pada pointer, input, berpikir, serta menjawab");
 
         const guest = await browser.newPage();
         await guest.goto("http://127.0.0.1:3000/portal-reseller", { waitUntil: "domcontentloaded", timeout: 30000 });

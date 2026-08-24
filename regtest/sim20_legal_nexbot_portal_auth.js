@@ -84,9 +84,25 @@ check(
         style.includes(".nexbot-mascot-image")
 );
 check(
-    "animasi idle maskot menghormati preferensi reduced motion",
+    "maskot merespons pointer, fokus input, dan klik pengguna",
+    nexbot.includes('floatBtn.addEventListener("pointermove"') &&
+        nexbot.includes('floatBtn.classList.add("expanding", "is-reacting")') &&
+        nexbot.includes('windowEl.classList.toggle("is-listening"') &&
+        style.includes("@keyframes nexbot-mascot-wave") &&
+        style.includes("@keyframes nexbot-mascot-excited")
+);
+check(
+    "maskot memiliki status visual berpikir dan selesai menjawab",
+    nexbot.includes('windowEl.classList.add("is-thinking")') &&
+        nexbot.includes('msgDiv.classList.add("nexbot-msg--arriving")') &&
+        style.includes("@keyframes nexbot-mascot-think") &&
+        style.includes("@keyframes nexbot-mascot-answer")
+);
+check(
+    "seluruh animasi maskot menghormati preferensi reduced motion",
     style.includes("@keyframes nexbot-mascot-idle") &&
-        style.includes("@media (prefers-reduced-motion: reduce)")
+        style.includes("@media (prefers-reduced-motion: reduce)") &&
+        style.includes("animation: none !important")
 );
 
 if (!process.exitCode) {
