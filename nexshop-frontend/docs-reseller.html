@@ -4,9 +4,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panduan &amp; Integrasi API Reseller NexShop — Bangun Website Toko &amp; Webhook Relay</title>
+    <title>Panduan &amp; Integrasi API Reseller NexShop — Bangun Website Toko &amp; Webhook</title>
     <meta name="description"
-        content="Dokumentasi resmi program reseller &amp; API NexShop: panduan membangun website reseller sendiri, sinkronisasi katalog, checkout API, serta integrasi Webhook Relay real-time.">
+        content="Dokumentasi resmi program reseller &amp; API NexShop: panduan membangun website reseller sendiri, sinkronisasi katalog, order API, serta integrasi webhook transaksi real-time.">
     <link rel="canonical" href="https://nexshop.cloud/docs-reseller">
 
     <meta property="og:type" content="website">
@@ -820,6 +820,12 @@
             Dokumentasi terpadu untuk reseller perorangan, pemilik konter, hingga developer yang ingin 
             <strong>membangun website / bot topup sendiri</strong> dengan mengambil produk &amp; harga modal dari NexShop via REST API dan Webhook Relay.
         </p>
+        <a href="/api/docs/reseller.pdf" download="NexShop-API-Reseller.pdf"
+           class="mkt-btn-secondary docs-pdf-download"
+           style="display:inline-flex;align-items:center;gap:0.5rem;text-decoration:none;margin-top:1.15rem;">
+            <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+            Download Dokumentasi PDF
+        </a>
     </header>
 
     <main class="docs-layout" id="main-content">
@@ -876,15 +882,15 @@
                 <li>
                     <a href="#api-order">
                         <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
-                        API Transaksi &amp; Inquiry
+                        API Transaksi &amp; Status
                     </a>
                 </li>
 
-                <li class="docs-nav-section">Webhook Relay</li>
+                <li class="docs-nav-section">Webhook Reseller</li>
                 <li>
                     <a href="#webhook-overview">
                         <i class="fa-solid fa-right-left" aria-hidden="true"></i>
-                        Konsep Webhook Relay
+                        Konsep Webhook Reseller
                     </a>
                 </li>
                 <li>
@@ -945,8 +951,8 @@
                     <li><a href="#arsitektur-toko">5. Alur Membangun Website Toko Sendiri</a></li>
                     <li><a href="#api-auth">6. Autentikasi API Reseller</a></li>
                     <li><a href="#api-katalog">7. API Get Produk &amp; Harga Modal Reseller</a></li>
-                    <li><a href="#api-order">8. API Transaksi, Validasi ID &amp; Inquiry</a></li>
-                    <li><a href="#webhook-overview">9. Konsep Webhook Relay</a></li>
+                    <li><a href="#api-order">8. API Transaksi, Validasi ID &amp; Status</a></li>
+                    <li><a href="#webhook-overview">9. Konsep Webhook Reseller</a></li>
                     <li><a href="#webhook-payload">10. Format Header &amp; Payload JSON</a></li>
                     <li><a href="#webhook-verify">11. Verifikasi Signature HMAC SHA-256</a></li>
                     <li><a href="#full-starter-code">12. Contoh Skrip Siap Pakai (Full Flow)</a></li>
@@ -974,7 +980,7 @@
                     <h3><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Konsep Kemitraan</h3>
                     <p>
                         Setelah akun Anda disetujui, harga di seluruh etalase (Marketplace &amp; Topup Diamond Game)
-                        <strong>otomatis dipotong sesuai tingkatan tier diskon</strong> saat Anda login di web maupun saat memanggil API dengan Bearer Token.
+                        <strong>otomatis dipotong sesuai tingkatan tier diskon</strong> saat Anda login di web maupun saat memanggil Open API dengan API Key dan Secret Key.
                         Anda bebas menentukan harga jual sendiri ke pelanggan untuk mendapatkan margin keuntungan maksimal.
                     </p>
                 </div>
@@ -1004,8 +1010,8 @@
                         <div class="docs-benefit-icon">
                             <i class="fa-solid fa-wallet" aria-hidden="true"></i>
                         </div>
-                        <h4>Tanpa Deposit Awal</h4>
-                        <p>Bebas dari kewajiban deposit saldo mengendap. Anda hanya membayar saat ada pesanan masuk dari pelanggan.</p>
+                        <h4>Pendaftaran Tanpa Biaya</h4>
+                        <p>Tidak ada biaya pendaftaran. Belanja langsung di web dapat dibayar per transaksi; penggunaan Open API memotong saldo reseller yang Anda isi melalui Partner Portal.</p>
                     </div>
 
                     <div class="docs-benefit-card">
@@ -1013,7 +1019,7 @@
                             <i class="fa-solid fa-plug" aria-hidden="true"></i>
                         </div>
                         <h4>API Lengkap &amp; Stabil</h4>
-                        <p>Endpoint Get Produk, Validasi Player ID Game, Cek Tagihan Pascabayar, Checkout, dan Webhook Relay.</p>
+                        <p>Endpoint katalog, validasi Player ID Game, pembuatan order idempoten, cek status, saldo, dan webhook transaksi.</p>
                     </div>
 
                     <div class="docs-benefit-card">
@@ -1060,7 +1066,7 @@
                     <div class="docs-step">
                         <div class="docs-step-num">3</div>
                         <div class="docs-step-body">
-                            <h3>Peninjauan oleh Admin (Maks. 1×24 Jam)</h3>
+                            <h3>Peninjauan oleh Admin (Maks. 3×24 Jam Kerja)</h3>
                             <p>
                                 Tim admin NexShop akan meninjau pengajuan dan menghubungi nomor WhatsApp yang Anda daftarkan
                                 untuk verifikasi data dan pengaktifan akses reseller.
@@ -1073,7 +1079,7 @@
                             <h3>Status Aktif &amp; Siap Digunakan</h3>
                             <p>
                                 Begitu disetujui, akun Anda langsung berstatus Reseller.
-                                Anda dapat langsung bertransaksi di web NexShop atau menggunakan API Token untuk website Anda sendiri.
+                                Anda dapat langsung bertransaksi di web NexShop atau membuat API Key dan Secret Key untuk server website Anda sendiri.
                             </p>
                         </div>
                     </div>
@@ -1139,28 +1145,28 @@
                             <div class="docs-step-num">1</div>
                             <div class="docs-step-body">
                                 <h3>Tarik Katalog Produk dari NexShop</h3>
-                                <p>Website Anda memanggil API <span class="docs-code">GET /api/topup/catalog</span> atau <span class="docs-code">GET /api/topup/products</span> menggunakan Token Reseller Anda untuk menyimpan &amp; menampilkan daftar produk dan harga modal di database website Anda.</p>
+                                <p>Backend toko Anda memanggil <span class="docs-code">GET /api/v1/reseller/products</span> memakai API Key dan Secret Key. Respons berisi seluruh produk aktif beserta <span class="docs-code">harga_reseller</span> sesuai tier akun. Simpan atau cache katalog di server Anda; jangan membuka kredensial ini di browser.</p>
                             </div>
                         </div>
                         <div class="docs-step">
                             <div class="docs-step-num">2</div>
                             <div class="docs-step-body">
                                 <h3>Pelanggan Memilih Produk &amp; Memasukkan Data</h3>
-                                <p>Pelanggan di website Anda memasukkan User ID Game / No HP / No Rekening. Website Anda dapat memanggil <span class="docs-code">POST /api/topup/check-nickname</span> untuk memverifikasi nama akun game pelanggan secara real-time.</p>
+                                <p>Pelanggan memasukkan User ID Game / No HP / nomor tujuan. Untuk game yang didukung, backend toko Anda dapat memanggil <span class="docs-code">POST /api/v1/reseller/check-nickname</span> sebelum membuat order.</p>
                             </div>
                         </div>
                         <div class="docs-step">
                             <div class="docs-step-num">3</div>
                             <div class="docs-step-body">
                                 <h3>Teruskan Pesanan ke API NexShop</h3>
-                                <p>Setelah pelanggan membayar ke toko Anda, server Anda memanggil <span class="docs-code">POST /api/topup</span> ke NexShop untuk mengeksekusi pengiriman produk.</p>
+                                <p>Setelah pelanggan membayar ke toko Anda, backend memanggil <span class="docs-code">POST /api/v1/reseller/orders</span>. Harga reseller dipotong otomatis dari saldo Partner Portal. Kirim <span class="docs-code">ref_id</span> unik dan gunakan nilai yang sama saat retry agar saldo tidak terpotong dua kali.</p>
                             </div>
                         </div>
                         <div class="docs-step">
                             <div class="docs-step-num">4</div>
                             <div class="docs-step-body">
                                 <h3>Terima Callback Webhook Real-time</h3>
-                                <p>Server NexShop mengirimkan webhook callback HTTP POST ke URL server Anda saat transaksi sukses/gagal beserta Serial Number (SN) atau Token PLN. Website Anda langsung mengupdate pesanan pelanggan secara instan.</p>
+                                <p>NexShop mengirim HTTP POST bertanda tangan HMAC ke Webhook URL milik akun Anda saat status berubah. Verifikasi signature, balas HTTP 200, lalu perbarui pesanan menggunakan <span class="docs-code">reference_id</span>, status, dan Serial Number. Jika callback terlambat, cek dengan <span class="docs-code">GET /api/v1/reseller/orders/:id</span>.</p>
                             </div>
                         </div>
                     </div>
@@ -1351,57 +1357,42 @@ Content-Type:      application/json</code></pre>
                 </div>
                 <h2>API Get Produk &amp; Harga Modal Reseller</h2>
                 <p>
-                    Tersedia dua endpoint katalog: satu untuk Marketplace (Pulsa/E-Wallet/PLN/Transfer Bank) dan satu untuk Topup Diamond Game.
+                    Open API menyediakan satu endpoint katalog resmi untuk seluruh produk aktif—Topup Game, Pulsa, Paket Data, E-Wallet, PLN, dan produk Marketplace lain. Harga pada respons dihitung dengan tier akun yang terautentikasi.
                 </p>
 
                 <!-- 1. Katalog Marketplace -->
                 <div class="docs-endpoint-card">
                     <div class="docs-endpoint-header">
                         <span class="docs-http-method docs-http-method--get">GET</span>
-                        <span class="docs-endpoint-url">/api/topup/public-catalog</span>
+                        <span class="docs-endpoint-url">/api/v1/reseller/products</span>
                     </div>
                     <p class="docs-endpoint-desc">
-                        Mengambil seluruh produk Marketplace (E-Wallet DANA/OVO/GoPay/ShopeePay, Pulsa &amp; Data seluruh operator, Token PLN, Transfer Antar Bank, Tagihan Pascabayar).
-                        Jika request menyertakan header <span class="docs-code">Authorization: Bearer &lt;token&gt;</span>, harga <span class="docs-code">harga_jual</span> otomatis menghasilkan harga modal reseller Anda.
+                        Wajib mengirim <span class="docs-code">X-NexShop-Api-Key</span> dan <span class="docs-code">X-NexShop-Secret</span>. Gunakan <span class="docs-code">harga_reseller</span> sebagai modal saat menghitung harga jual toko Anda.
                     </p>
                     <div class="docs-code-block">
                         <div class="docs-code-header">
-                            <span>Contoh Response Item (JSON)</span>
+                            <span>Contoh Response Open API (JSON)</span>
                             <span>200 OK</span>
                         </div>
                         <pre class="docs-code-content"><code>{
-  <span class="property">"E-Wallet"</span>: {
-    <span class="property">"DANA"</span>: {
-      <span class="property">"operator_id"</span>: <span class="string">"DANA"</span>,
-      <span class="property">"operator_name"</span>: <span class="string">"DANA"</span>,
-      <span class="property">"products"</span>: [
-        {
-          <span class="property">"id"</span>: <span class="string">"prod_101"</span>,
-          <span class="property">"kode_produk"</span>: <span class="string">"DANA50"</span>,
-          <span class="property">"nama"</span>: <span class="string">"DANA Rp 50.000"</span>,
-          <span class="property">"harga_jual"</span>: <span class="number">49800</span>,
-          <span class="property">"harga_normal"</span>: <span class="number">51500</span>,
-          <span class="property">"harga_reseller"</span>: <span class="keyword">true</span>,
-          <span class="property">"butuh_server_id"</span>: <span class="keyword">false</span>,
-          <span class="property">"cek_tagihan"</span>: <span class="keyword">false</span>
-        }
-      ]
-    }
-  }
+  <span class="property">"success"</span>: <span class="keyword">true</span>,
+  <span class="property">"total"</span>: <span class="number">245</span>,
+  <span class="property">"data"</span>: [{
+    <span class="property">"kode_produk"</span>: <span class="string">"ML86"</span>,
+    <span class="property">"nama"</span>: <span class="string">"Mobile Legends 86 Diamond"</span>,
+    <span class="property">"kategori"</span>: <span class="string">"Topup Game"</span>,
+    <span class="property">"operator"</span>: <span class="string">"Mobile Legends"</span>,
+    <span class="property">"harga_normal"</span>: <span class="number">22000</span>,
+    <span class="property">"harga_reseller"</span>: <span class="number">21340</span>,
+    <span class="property">"diskon_persen"</span>: <span class="number">3</span>,
+    <span class="property">"hemat"</span>: <span class="number">660</span>,
+    <span class="property">"butuh_server_id"</span>: <span class="keyword">true</span>,
+    <span class="property">"status"</span>: <span class="string">"ACTIVE"</span>
+  }]
 }</code></pre>
                     </div>
                 </div>
 
-                <!-- 2. Katalog Game -->
-                <div class="docs-endpoint-card">
-                    <div class="docs-endpoint-header">
-                        <span class="docs-http-method docs-http-method--get">GET</span>
-                        <span class="docs-endpoint-url">/api/topup/products?kategori=all</span>
-                    </div>
-                    <p class="docs-endpoint-desc">
-                        Mengambil daftar produk Topup Game (Mobile Legends, Free Fire, PUBG Mobile, Genshin Impact, Valorant, dll).
-                    </p>
-                </div>
             </section>
 
             <!-- ── Bab 8: API Order, Nickname & Inquiry ── -->
@@ -1410,16 +1401,16 @@ Content-Type:      application/json</code></pre>
                     <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
                     Bab 8 (Developer)
                 </div>
-                <h2>API Transaksi, Validasi ID &amp; Inquiry</h2>
+                <h2>API Transaksi, Validasi ID &amp; Status</h2>
                 <p>
-                    Endpoint operasional transaksi untuk website Anda:
+                    Seluruh endpoint berikut memakai pasangan API Key + Secret Key dan dijalankan dari backend toko Anda:
                 </p>
 
                 <!-- Check Nickname -->
                 <div class="docs-endpoint-card">
                     <div class="docs-endpoint-header">
                         <span class="docs-http-method docs-http-method--post">POST</span>
-                        <span class="docs-endpoint-url">/api/topup/check-nickname</span>
+                        <span class="docs-endpoint-url">/api/v1/reseller/check-nickname</span>
                     </div>
                     <p class="docs-endpoint-desc">
                         Mengecek username / nickname akun game pemain sebelum transaksi dibuat.
@@ -1430,9 +1421,9 @@ Content-Type:      application/json</code></pre>
                             <span>application/json</span>
                         </div>
                         <pre class="docs-code-content"><code>{
-  <span class="property">"kode_produk"</span>: <span class="string">"ML86"</span>,
+  <span class="property">"kode_game"</span>: <span class="string">"mobile-legends"</span>,
   <span class="property">"user_id"</span>: <span class="string">"12345678"</span>,
-  <span class="property">"server_id"</span>: <span class="string">"2123"</span>
+  <span class="property">"zone_id"</span>: <span class="string">"2123"</span>
 }</code></pre>
                     </div>
                     <div class="docs-code-block">
@@ -1442,7 +1433,11 @@ Content-Type:      application/json</code></pre>
                         </div>
                         <pre class="docs-code-content"><code>{
   <span class="property">"success"</span>: <span class="keyword">true</span>,
-  <span class="property">"nickname"</span>: <span class="string">"SkyWalker_99"</span>
+  <span class="property">"data"</span>: {
+    <span class="property">"username"</span>: <span class="string">"SkyWalker_99"</span>,
+    <span class="property">"user_id"</span>: <span class="string">"12345678"</span>,
+    <span class="property">"zone_id"</span>: <span class="string">"2123"</span>
+  }
 }</code></pre>
                     </div>
                 </div>
@@ -1451,10 +1446,10 @@ Content-Type:      application/json</code></pre>
                 <div class="docs-endpoint-card">
                     <div class="docs-endpoint-header">
                         <span class="docs-http-method docs-http-method--post">POST</span>
-                        <span class="docs-endpoint-url">/api/topup</span>
+                        <span class="docs-endpoint-url">/api/v1/reseller/orders</span>
                     </div>
                     <p class="docs-endpoint-desc">
-                        Membuat pesanan produk digital. Kirim header <span class="docs-code">Authorization: Bearer &lt;token&gt;</span> agar transaksi ditagih sesuai harga reseller.
+                        Membuat pesanan produk digital dan memotong saldo reseller secara atomik. <span class="docs-code">ref_id</span> wajib unik untuk satu pesanan dan harus digunakan kembali ketika retry karena timeout.
                     </p>
                     <div class="docs-code-block">
                         <div class="docs-code-header">
@@ -1462,54 +1457,66 @@ Content-Type:      application/json</code></pre>
                             <span>Kamus Data</span>
                         </div>
                         <pre class="docs-code-content"><code>// 1. Topup Game (Misal: Mobile Legends)
-{ "kode_produk": "ML86", "tujuan": "12345678", "server_id": "2123", "payment_method": "qris" }
+{ "kode_produk": "ML86", "tujuan": "12345678", "server_id": "2123", "ref_id": "TOKO-10001" }
 
 // 2. E-Wallet / Pulsa / Paket Data (Misal: DANA)
-{ "kode_produk": "DANA50", "tujuan": "08123456789", "payment_method": "qris" }
+{ "kode_produk": "DANA50", "tujuan": "08123456789", "ref_id": "TOKO-10002" }
 
 // 3. Token PLN Prabayar
-{ "kode_produk": "PLN50", "tujuan": "51234567890", "payment_method": "qris" }
+{ "kode_produk": "PLN50", "tujuan": "51234567890", "ref_id": "TOKO-10003" }
 
 // 4. Transfer Antar Bank (tujuan = No Rekening, server_id = Kode Bank 3 digit misal 014 BCA)
-{ "kode_produk": "TFBANK", "tujuan": "1234567890", "server_id": "014", "payment_method": "qris" }</code></pre>
+{ "kode_produk": "TFBANK", "tujuan": "1234567890", "server_id": "014", "ref_id": "TOKO-10004" }</code></pre>
                     </div>
 
                     <div class="docs-code-block">
                         <div class="docs-code-header">
                             <span>Response Pembuatan Order (JSON)</span>
-                            <span>200 OK</span>
+                            <span>201 Created</span>
                         </div>
                         <pre class="docs-code-content"><code>{
   <span class="property">"success"</span>: <span class="keyword">true</span>,
   <span class="property">"data"</span>: {
-    <span class="property">"id"</span>: <span class="string">"ORD_260823_981273"</span>,
-    <span class="property">"ref_id"</span>: <span class="string">"NX260823981273"</span>,
-    <span class="property">"total"</span>: <span class="number">49800</span>,
-    <span class="property">"status"</span>: <span class="string">"pending"</span>,
-    <span class="property">"qr_string"</span>: <span class="string">"00020101021226590014ID.LINKAJA.WWW0118936009110019283..."</span>,
-    <span class="property">"expired_at"</span>: <span class="string">"2026-08-23T21:00:00.000Z"</span>
+    <span class="property">"order_id"</span>: <span class="string">"NXA1B2C3D4E5F6"</span>,
+    <span class="property">"ref_id"</span>: <span class="string">"TOKO-10001"</span>,
+    <span class="property">"status"</span>: <span class="string">"PROCESSING"</span>,
+    <span class="property">"kode_produk"</span>: <span class="string">"ML86"</span>,
+    <span class="property">"nama_produk"</span>: <span class="string">"Mobile Legends 86 Diamond"</span>,
+    <span class="property">"target"</span>: <span class="string">"12345678"</span>,
+    <span class="property">"price"</span>: <span class="number">21340</span>,
+    <span class="property">"serial_number"</span>: <span class="keyword">null</span>,
+    <span class="property">"balance_remaining"</span>: <span class="number">478660</span>
   }
 }</code></pre>
                     </div>
                 </div>
+
+                <div class="docs-endpoint-card">
+                    <div class="docs-endpoint-header">
+                        <span class="docs-http-method docs-http-method--get">GET</span>
+                        <span class="docs-endpoint-url">/api/v1/reseller/orders/:id</span>
+                    </div>
+                    <p class="docs-endpoint-desc">
+                        Mengecek status memakai <span class="docs-code">order_id</span> NexShop atau <span class="docs-code">ref_id</span> milik toko Anda. Nilai status adalah <span class="docs-code">PROCESSING</span>, <span class="docs-code">SUCCESS</span>, atau <span class="docs-code">FAILED</span>. Gunakan endpoint ini setelah timeout dan sebagai fallback jika webhook terlambat.
+                    </p>
+                </div>
             </section>
 
-            <!-- ── Bab 9: Webhook Relay Overview ── -->
+        <!-- ── Bab 9: Webhook Reseller Overview ── -->
             <section class="docs-section" id="webhook-overview">
                 <div class="docs-section-badge">
                     <i class="fa-solid fa-right-left" aria-hidden="true"></i>
                     Bab 9 (Webhook)
                 </div>
-                <h2>Konsep &amp; Alur Webhook Relay</h2>
+                <h2>Konsep &amp; Alur Webhook Reseller</h2>
                 <p>
-                    Layanan Webhook Relay NexShop memungkinkan website atau bot toko Anda menerima notifikasi status transaksi (sukses, gagal, SN resmi) secara instan (real-time push) langsung dari server NexShop ke URL callback endpoint yang Anda daftarkan.
+                    Webhook Reseller NexShop mengirim perubahan status order Open API (PROCESSING, SUCCESS, FAILED, dan SN resmi) ke URL HTTPS yang Anda simpan sendiri di Partner Portal &rsaquo; API &amp; Integrasi.
                 </p>
 
                 <div class="docs-card">
-                    <h3><i class="fa-solid fa-route" aria-hidden="true"></i> Routing Berdasarkan Prefix ref_id</h3>
+                    <h3><i class="fa-solid fa-route" aria-hidden="true"></i> Hubungkan Callback dengan ref_id</h3>
                     <p>
-                        Setiap kali membuat order, Anda dapat menyertakan prefix unik pada <span class="docs-code">ref_id</span> (misalnya: <span class="docs-code">MYSTORE-10293</span>).
-                        Relay NexShop akan mencocokkan prefix tersebut dan secara otomatis mem-forward callback hanya ke endpoint URL toko Anda.
+                        Setiap order harus memakai <span class="docs-code">ref_id</span> unik dari sistem toko Anda (misalnya <span class="docs-code">MYSTORE-10293</span>). Nilai yang sama dikembalikan sebagai <span class="docs-code">reference_id</span> pada webhook, sehingga callback dapat dipasangkan ke pesanan lokal dan diproses secara idempoten.
                     </p>
                 </div>
             </section>
@@ -1530,11 +1537,8 @@ Content-Type:      application/json</code></pre>
                     <div class="docs-code-block">
                         <pre class="docs-code-content"><code>Content-Type: application/json
 User-Agent: NexShop-Webhook-Relay/1.0
-X-NexShop-Event: order.transaction
-X-NexShop-Delivery: 8f3c7e42-1b20-4e58-9419-38b812a14e9f
-X-NexShop-Timestamp: 1724421600
-X-NexShop-Attempt: 1
-X-NexShop-Signature: sha256=a1b2c3d4e5f6... (HMAC SHA-256)</code></pre>
+X-NexShop-Event: transaction.updated
+X-NexShop-Signature: a1b2c3d4e5f6... (hex HMAC SHA-256)</code></pre>
                     </div>
                 </div>
 
@@ -1542,22 +1546,18 @@ X-NexShop-Signature: sha256=a1b2c3d4e5f6... (HMAC SHA-256)</code></pre>
                     <h3><i class="fa-solid fa-code" aria-hidden="true"></i> Payload JSON Body</h3>
                     <div class="docs-code-block">
                         <pre class="docs-code-content"><code>{
-  <span class="property">"source"</span>: <span class="string">"nexshop_gateway"</span>,
-  <span class="property">"relayed_by"</span>: <span class="string">"nexshop"</span>,
-  <span class="property">"received_at"</span>: <span class="string">"2026-08-23T20:30:00.000Z"</span>,
-  <span class="property">"data"</span>: {
-    <span class="property">"ref_id"</span>: <span class="string">"MYSTORE-984210"</span>,
-    <span class="property">"trx_id"</span>: <span class="string">"NX260823102938"</span>,
-    <span class="property">"produk"</span>: <span class="string">"ML86"</span>,
-    <span class="property">"tujuan"</span>: <span class="string">"12345678"</span>,
-    <span class="property">"server_id"</span>: <span class="string">"2123"</span>,
-    <span class="property">"status"</span>: <span class="number">1</span>,
-    <span class="property">"status_message"</span>: <span class="string">"sukses"</span>,
-    <span class="property">"sn"</span>: <span class="string">"MP26082300019283"</span>,
-    <span class="property">"message"</span>: <span class="string">"Topup 86 Diamonds Mobile Legends Berhasil"</span>,
-    <span class="property">"saldo_terpotong"</span>: <span class="number">18500</span>,
-    <span class="property">"sisa_saldo"</span>: <span class="number">1250000</span>
-  }
+  <span class="property">"event"</span>: <span class="string">"transaction.updated"</span>,
+  <span class="property">"reference_id"</span>: <span class="string">"MYSTORE-984210"</span>,
+  <span class="property">"order_id"</span>: <span class="string">"NX260823102938"</span>,
+  <span class="property">"status"</span>: <span class="string">"SUCCESS"</span>,
+  <span class="property">"product_code"</span>: <span class="string">"ML86"</span>,
+  <span class="property">"product_name"</span>: <span class="string">"Mobile Legends 86 Diamond"</span>,
+  <span class="property">"target"</span>: <span class="string">"12345678"</span>,
+  <span class="property">"server_id"</span>: <span class="string">"2123"</span>,
+  <span class="property">"amount"</span>: <span class="number">21340</span>,
+  <span class="property">"serial_number"</span>: <span class="string">"MP26082300019283"</span>,
+  <span class="property">"message"</span>: <span class="string">"Transaksi Berhasil"</span>,
+  <span class="property">"timestamp"</span>: <span class="string">"2026-08-23T20:30:00.000Z"</span>
 }</code></pre>
                     </div>
                 </div>
@@ -1571,7 +1571,7 @@ X-NexShop-Signature: sha256=a1b2c3d4e5f6... (HMAC SHA-256)</code></pre>
                 </div>
                 <h2>Verifikasi Signature Kriptografis (HMAC SHA-256)</h2>
                 <p>
-                    Rumus tanda tangan: <span class="docs-code">signature = "sha256=" + HMAC_SHA256(secret_anda, timestamp + "." + raw_body)</span>
+                    Rumus yang dipakai Partner Portal: <span class="docs-code">signature = HEX(HMAC_SHA256(webhook_secret, raw_body))</span>. Hitung dari byte body mentah sebelum JSON di-parse.
                 </p>
 
                 <!-- Tabs Contoh Kode -->
@@ -1597,25 +1597,25 @@ X-NexShop-Signature: sha256=a1b2c3d4e5f6... (HMAC SHA-256)</code></pre>
 
 app.<span class="function">post</span>(<span class="string">"/api/webhook/nexshop"</span>, express.<span class="function">raw</span>({ type: <span class="string">"application/json"</span> }), (req, res) => {
     <span class="keyword">const</span> signatureHeader = req.headers[<span class="string">"x-nexshop-signature"</span>];
-    <span class="keyword">const</span> timestamp = req.headers[<span class="string">"x-nexshop-timestamp"</span>];
     <span class="keyword">const</span> rawBody = req.body.<span class="function">toString</span>(<span class="string">"utf8"</span>);
 
-    <span class="keyword">if</span> (!signatureHeader || !timestamp) {
+    <span class="keyword">if</span> (!signatureHeader) {
         <span class="keyword">return</span> res.<span class="function">status</span>(<span class="number">400</span>).<span class="function">send</span>(<span class="string">"Missing signature"</span>);
     }
 
-    <span class="keyword">const</span> expectedSignature = <span class="string">"sha256="</span> + crypto
+    <span class="keyword">const</span> expectedSignature = crypto
         .<span class="function">createHmac</span>(<span class="string">"sha256"</span>, WEBHOOK_SECRET)
-        .<span class="function">update</span>(timestamp + <span class="string">"."</span> + rawBody)
+        .<span class="function">update</span>(rawBody)
         .<span class="function">digest</span>(<span class="string">"hex"</span>);
 
-    <span class="keyword">if</span> (!crypto.<span class="function">timingSafeEqual</span>(Buffer.<span class="function">from</span>(signatureHeader), Buffer.<span class="function">from</span>(expectedSignature))) {
+    <span class="keyword">const</span> actual = Buffer.<span class="function">from</span>(signatureHeader);
+    <span class="keyword">const</span> expected = Buffer.<span class="function">from</span>(expectedSignature);
+    <span class="keyword">if</span> (actual.length !== expected.length || !crypto.<span class="function">timingSafeEqual</span>(actual, expected)) {
         <span class="keyword">return</span> res.<span class="function">status</span>(<span class="number">401</span>).<span class="function">send</span>(<span class="string">"Invalid signature"</span>);
     }
 
     <span class="keyword">const</span> payload = JSON.<span class="function">parse</span>(rawBody);
-    <span class="keyword">const</span> trx = payload.data;
-    console.<span class="function">log</span>(<span class="string">"Status Transaksi:"</span>, trx.ref_id, trx.status_message, <span class="string">"SN:"</span>, trx.sn);
+    console.<span class="function">log</span>(<span class="string">"Status Transaksi:"</span>, payload.reference_id, payload.status, <span class="string">"SN:"</span>, payload.serial_number);
 
     <span class="comment">// Update status pesanan di database toko Anda & kirim SN ke pembeli</span>
     <span class="comment">// ...</span>
@@ -1637,15 +1637,14 @@ app.<span class="function">listen</span>(<span class="number">8000</span>, () =>
                             <pre class="docs-code-content"><code><span class="keyword">&lt;?php</span>
 <span class="keyword">$secret</span> = <span class="string">"whsec_secret_toko_anda"</span>;
 <span class="keyword">$rawBody</span> = <span class="function">file_get_contents</span>(<span class="string">"php://input"</span>);
-<span class="keyword">$timestamp</span> = <span class="keyword">$_SERVER</span>[<span class="string">'HTTP_X_NEXSHOP_TIMESTAMP'</span>] ?? <span class="string">''</span>;
 <span class="keyword">$signature</span> = <span class="keyword">$_SERVER</span>[<span class="string">'HTTP_X_NEXSHOP_SIGNATURE'</span>] ?? <span class="string">''</span>;
 
-<span class="keyword">if</span> (<span class="function">empty</span>(<span class="keyword">$signature</span>) || <span class="function">empty</span>(<span class="keyword">$timestamp</span>)) {
+<span class="keyword">if</span> (<span class="function">empty</span>(<span class="keyword">$signature</span>)) {
     <span class="function">http_response_code</span>(<span class="number">400</span>);
     <span class="keyword">exit</span>(<span class="string">"Missing signature"</span>);
 }
 
-<span class="keyword">$expected</span> = <span class="string">"sha256="</span> . <span class="function">hash_hmac</span>(<span class="string">"sha256"</span>, <span class="keyword">$timestamp</span> . <span class="string">"."</span> . <span class="keyword">$rawBody</span>, <span class="keyword">$secret</span>);
+<span class="keyword">$expected</span> = <span class="function">hash_hmac</span>(<span class="string">"sha256"</span>, <span class="keyword">$rawBody</span>, <span class="keyword">$secret</span>);
 
 <span class="keyword">if</span> (!<span class="function">hash_equals</span>(<span class="keyword">$expected</span>, <span class="keyword">$signature</span>)) {
     <span class="function">http_response_code</span>(<span class="number">401</span>);
@@ -1653,8 +1652,6 @@ app.<span class="function">listen</span>(<span class="number">8000</span>, () =>
 }
 
 <span class="keyword">$payload</span> = <span class="function">json_decode</span>(<span class="keyword">$rawBody</span>, <span class="keyword">true</span>);
-<span class="keyword">$trx</span> = <span class="keyword">$payload</span>[<span class="string">'data'</span>];
-
 <span class="comment">// Update pesanan di database toko Anda</span>
 <span class="function">http_response_code</span>(<span class="number">200</span>);
 <span class="function">echo</span> <span class="function">json_encode</span>([<span class="string">"received"</span> =&gt; <span class="keyword">true</span>]);
@@ -1678,17 +1675,15 @@ WEBHOOK_SECRET = <span class="string">"whsec_secret_toko_anda"</span>
 @app.<span class="function">post</span>(<span class="string">"/api/webhook/nexshop"</span>)
 <span class="keyword">async def</span> <span class="function">receive_webhook</span>(
     request: Request,
-    x_nexshop_signature: str = Header(<span class="keyword">None</span>),
-    x_nexshop_timestamp: str = Header(<span class="keyword">None</span>)
+    x_nexshop_signature: str = Header(<span class="keyword">None</span>)
 ):
-    <span class="keyword">if not</span> x_nexshop_signature <span class="keyword">or not</span> x_nexshop_timestamp:
+    <span class="keyword">if not</span> x_nexshop_signature:
         <span class="keyword">raise</span> HTTPException(status_code=<span class="number">400</span>, detail=<span class="string">"Missing signature"</span>)
     
     raw_body = (<span class="keyword">await</span> request.body()).decode(<span class="string">"utf-8"</span>)
-    signed_payload = f<span class="string">"{x_nexshop_timestamp}.{raw_body}"</span>
-    expected_sig = <span class="string">"sha256="</span> + hmac.new(
+    expected_sig = hmac.new(
         WEBHOOK_SECRET.encode(<span class="string">"utf-8"</span>),
-        signed_payload.encode(<span class="string">"utf-8"</span>),
+        raw_body.encode(<span class="string">"utf-8"</span>),
         hashlib.sha256
     ).hexdigest()
     
@@ -1696,7 +1691,7 @@ WEBHOOK_SECRET = <span class="string">"whsec_secret_toko_anda"</span>
         <span class="keyword">raise</span> HTTPException(status_code=<span class="number">401</span>, detail=<span class="string">"Invalid signature"</span>)
     
     payload = <span class="keyword">await</span> request.json()
-    <span class="function">print</span>(<span class="string">"Trx update:"</span>, payload[<span class="string">"data"</span>][<span class="string">"ref_id"</span>], payload[<span class="string">"data"</span>][<span class="string">"status_message"</span>])
+    <span class="function">print</span>(<span class="string">"Trx update:"</span>, payload[<span class="string">"reference_id"</span>], payload[<span class="string">"status"</span>])
     <span class="keyword">return</span> {<span class="string">"received"</span>: <span class="keyword">True</span>}
 </code></pre>
                         </div>
@@ -1825,7 +1820,7 @@ app.<span class="function">post</span>(<span class="string">"/webhook/nexshop"</
     express.<span class="function">raw</span>({ type: <span class="string">"application/json"</span> }),
     (req, res) =&gt; {
         <span class="keyword">const</span> signature = req.headers[<span class="string">"x-nexshop-signature"</span>] || <span class="string">""</span>;
-        <span class="keyword">const</span> harusnya = <span class="string">"sha256="</span> + crypto
+        <span class="keyword">const</span> harusnya = crypto
             .<span class="function">createHmac</span>(<span class="string">"sha256"</span>, process.env.NEXSHOP_WEBHOOK_SECRET)
             .<span class="function">update</span>(req.body)
             .<span class="function">digest</span>(<span class="string">"hex"</span>);
@@ -1913,7 +1908,7 @@ app.<span class="function">post</span>(<span class="string">"/webhook/nexshop"</
                             <p>
                                 Menu <strong>Deposit</strong> &rarr; pilih nominal &rarr; bayar via QRIS
                                 atau Virtual Account. Saldo masuk otomatis setelah pembayaran terverifikasi
-                                ke gateway &mdash; tidak perlu konfirmasi manual.
+                                ke gateway &mdash; tidak perlu konfirmasi manual. Nominal deposit minimal Rp 10.000.
                             </p>
                             <p class="docs-step-note">
                                 Setiap transaksi API memotong saldo ini. Pesanan yang ditolak provider
@@ -2053,8 +2048,8 @@ app.<span class="function">post</span>(<span class="string">"/webhook/nexshop"</
                     </details>
                     <details>
                         <summary>Bagaimana cara mendaftarkan URL Webhook Callback toko saya?</summary>
-                        <p>
-                            Hubungi Admin NexShop via WhatsApp dengan menyertakan URL endpoint HTTPS toko Anda (misal: <span class="docs-code">https://tokosaya.com/api/webhook</span>) dan prefix ref_id toko Anda (misal: <span class="docs-code">MYSTORE-</span>). Admin akan mendaftarkan endpoint dan memberikan Webhook Secret key (<span class="docs-code">whsec_...</span>).
+                            <p>
+                            Buka <strong>Partner Portal &rsaquo; API &amp; Integrasi</strong>, isi Webhook URL HTTPS toko Anda, simpan, lalu tekan <strong>Tes Webhook</strong>. Webhook Secret tersedia pada akun yang sudah disetujui dan dipakai untuk memverifikasi header <span class="docs-code">X-NexShop-Signature</span>.
                         </p>
                     </details>
                     <details>
@@ -2066,7 +2061,7 @@ app.<span class="function">post</span>(<span class="string">"/webhook/nexshop"</
                     <details>
                         <summary>Apakah ada kewajiban deposit saldo minimum?</summary>
                         <p>
-                            Tidak ada. Anda bebas melakukan pembayaran per transaksi menggunakan QRIS atau Virtual Account secara real-time.
+                            Tidak ada biaya pendaftaran atau saldo mengendap wajib untuk berbelanja langsung di web. Namun, transaksi melalui Open API dipotong dari saldo reseller; isi saldo minimal Rp 10.000 melalui Partner Portal sebelum membuat order API.
                         </p>
                     </details>
                 </div>

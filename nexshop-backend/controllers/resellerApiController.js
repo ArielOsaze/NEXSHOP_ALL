@@ -10,6 +10,7 @@ const { getResellerContext } = require("../services/resellerService");
 const { hitungHargaReseller } = require("../utils/resellerPricing");
 const { hitungMarkupWajar } = require("../utils/topupHelpers");
 const { sendTelegramNotification } = require("../config/notify");
+const { dispatchResellerWebhook } = require("../services/resellerWebhookService");
 
 function rupiahLog(n) {
     return "Rp " + Number(n || 0).toLocaleString("id-ID");
@@ -289,6 +290,26 @@ exports.createOrder = async (req, res) => {
                 updated_at: new Date().toISOString()
             }).eq("id", orderId);
         }
+
+        // Kirim status awal (SUCCESS/FAILED/PROCESSING) ke Webhook URL yang
+        // diatur reseller di Partner Portal. Jika masih PROCESSING, perubahan
+        // final berikutnya dikirim oleh rekonsiliasi webhook TokoVoucher.
+        dispatchResellerWebhook({
+            id: orderId,
+            user_id: userId,
+            reseller_user_id: userId,
+            reseller_ref_id: resellerRefId,
+            kode_produk: product.kode_produk,
+            nama_produk: product.nama,
+            tujuan: tujuanBersih,
+            server_id: serverIdBersih,
+            harga: finalResellerPrice,
+            status: finalStatus,
+            tv_sn: tvResult?.sn || null,
+            tv_message: tvResult?.message || tvResult?.error_msg || "Pesanan sedang diproses"
+        }).catch((webhookErr) => {
+            console.log("Gagal mengirim webhook awal reseller:", webhookErr.message);
+        });
 
         sendTelegramNotification(
             `🚀 <b>Order Reseller API Baru</b>\nReseller: ${req.user.fullname || req.user.email}\nRef ID: ${resellerRefId}\nProduk: ${product.nama}\nTujuan: ${tujuanBersih}\nHarga: ${rupiahLog(finalResellerPrice)}`

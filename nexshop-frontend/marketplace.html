@@ -1729,9 +1729,13 @@
                     payment_channel: paymentMethod === "va" ? document.getElementById("mktCheckoutVaBank").value : undefined
                 };
 
+                const token = localStorage.getItem("nexshop-public-token") || localStorage.getItem("token");
+                const checkoutHeaders = { "Content-Type": "application/json" };
+                if (token) checkoutHeaders.Authorization = `Bearer ${token}`;
+
                 const res = await fetch(`${API_BASE}/topup`, {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: checkoutHeaders,
                     body: JSON.stringify(payload)
                 });
 

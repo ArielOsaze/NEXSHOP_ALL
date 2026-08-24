@@ -301,6 +301,33 @@ function urutkanPopuler(daftar, urutanPopuler) {
     });
 }
 
+// Saat mencari, ranking populer sengaja tidak dipakai. Hasil yang nama
+// grupnya paling dekat dengan query harus tampil lebih dulu; kecocokan yang
+// hanya berasal dari nama/kode produk tetap ditemukan, tetapi diletakkan
+// setelah kecocokan nama game.
+function urutkanPencarian(daftar, query) {
+    const q = String(query || "").toLowerCase().trim();
+    const tokens = q.split(/\s+/).filter(Boolean);
+    if (!tokens.length) return daftar;
+
+    const skor = (grup) => {
+        const nama = String(grup.name || "").toLowerCase().trim();
+        const teks = String(grup.search_text || "").toLowerCase();
+
+        if (nama === q) return 0;
+        if (nama.startsWith(q)) return 1;
+        if (nama.includes(q)) return 2;
+        if (cocokSemuaToken(nama, tokens)) return 3;
+        if (teks.includes(q)) return 4;
+        return 5;
+    };
+
+    return daftar.sort((a, b) => {
+        const selisih = skor(a) - skor(b);
+        return selisih || a.name.localeCompare(b.name, "id");
+    });
+}
+
 /**
  * Satu halaman kartu, plus total hasil supaya frontend tahu kapan
  * tombol "muat lebih banyak" harus berhenti.
@@ -343,5 +370,6 @@ module.exports = {
     invalidateCatalogIndex,
     halamanGrup,
     urutkanPopuler,
+    urutkanPencarian,
     TTL_MS
 };

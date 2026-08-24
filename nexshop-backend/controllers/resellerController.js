@@ -10,6 +10,7 @@ const { hitungHargaReseller } = require("../utils/resellerPricing");
 const { hitungMarkupWajar, cleanProductName } = require("../utils/topupHelpers");
 const { validateWebhookUrlShape, assertSafeOutboundUrl } = require("../utils/safeOutboundUrl");
 const { decryptDocument, parseDocumentRef, isDocumentRef } = require("../utils/secureDocument");
+const { generateWebhookSignature } = require("../services/resellerWebhookService");
 
 // ===========================================================
 // PROGRAM RESELLER & PARTNER PORTAL NEXSHOP
@@ -534,7 +535,7 @@ exports.applyReseller = async (req, res) => {
         notify("reseller", `🤝 Pengajuan reseller baru (+KYC KTP) dari ${fullname} (${req.user.email}) — WhatsApp ${whatsapp}`);
 
         res.status(201).json({
-            message: "Pengajuan & berkas KYC KTP berhasil terkirim! Admin akan meninjau maksimal 1x24 jam.",
+            message: "Pengajuan & berkas KYC KTP berhasil terkirim! Admin akan meninjau maksimal 3x24 jam kerja.",
             pengajuan: (inserted && inserted[0]) || null
         });
     } catch (err) {
@@ -1410,30 +1411,28 @@ exports.testPortalWebhook = async (req, res) => {
         }
 
         const targetUrl = cek.url;
-        const secret = keyRecord.webhook_secret || "whsec_test";
-        const timestamp = Math.floor(Date.now() / 1000).toString();
+        const secret = keyRecord.webhook_secret;
+        if (!secret) {
+            return res.status(503).json({ message: "Webhook Secret belum tersedia. Buat ulang kredensial API lalu coba lagi." });
+        }
 
         const testPayload = {
-            source: "nexshop_gateway",
-            relayed_by: "nexshop",
             event: "nexshop.test",
-            received_at: new Date().toISOString(),
-            data: {
-                ref_id: "TEST-TRX-" + Date.now(),
-                trx_id: "NX-TEST-998811",
-                produk: "ML86",
-                tujuan: "12345678",
-                server_id: "2123",
-                status: 1,
-                status_message: "sukses",
-                sn: "TEST_SN_NEXSHOP_2026",
-                message: "Tes Callback Webhook Reseller Berhasil",
-                saldo_terpotong: 18500
-            }
+            reference_id: "TEST-TRX-" + Date.now(),
+            order_id: "NX-TEST-998811",
+            status: "SUCCESS",
+            product_code: "ML86",
+            product_name: "Mobile Legends 86 Diamond",
+            target: "12345678",
+            server_id: "2123",
+            amount: 18500,
+            serial_number: "TEST_SN_NEXSHOP_2026",
+            message: "Tes Callback Webhook Reseller Berhasil",
+            timestamp: new Date().toISOString()
         };
 
         const rawBody = JSON.stringify(testPayload);
-        const signature = "sha256=" + crypto.createHmac("sha256", secret).update(timestamp + "." + rawBody).digest("hex");
+        const signature = generateWebhookSignature(rawBody, secret);
 
         const startTime = Date.now();
         let responseStatus = 0;
@@ -1445,9 +1444,6 @@ exports.testPortalWebhook = async (req, res) => {
                     "Content-Type": "application/json",
                     "User-Agent": "NexShop-Webhook-Relay/1.0",
                     "X-NexShop-Event": "nexshop.test",
-                    "X-NexShop-Delivery": "test-delivery-" + Date.now(),
-                    "X-NexShop-Timestamp": timestamp,
-                    "X-NexShop-Attempt": "1",
                     "X-NexShop-Signature": signature
                 },
                 timeout: 8000,

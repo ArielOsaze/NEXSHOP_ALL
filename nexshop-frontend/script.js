@@ -3003,6 +3003,7 @@ function getTopupGameName(p) {
 
 function renderTopupGameSkeleton() {
     const grid = document.getElementById("topupGameGrid");
+    if (!grid) return;
     grid.innerHTML = Array.from({ length: 6 }).map(() => `
         <div class="rounded-2xl p-4 border border-gray-200 dark:border-white/5 bg-white dark:bg-[#0a0a0c] flex flex-col justify-between" aria-hidden="true">
             <div>
@@ -3018,11 +3019,53 @@ function renderTopupGameSkeleton() {
     `).join("");
 }
 
+function updateTopupCatalogHeading(query = "") {
+    const title = document.getElementById("topupCatalogTitle");
+    const description = document.getElementById("topupCatalogDescription");
+    const sedangMencari = !!String(query).trim();
+
+    if (title) {
+        title.innerHTML = sedangMencari
+            ? 'Hasil <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">Pencarian</span>'
+            : 'Top-Up <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan">Terpopuler</span>';
+    }
+    if (description) {
+        description.textContent = sedangMencari
+            ? `Hasil untuk “${String(query).trim()}” diurutkan berdasarkan kecocokan.`
+            : "Menampilkan game yang paling banyak dicari lebih dulu";
+    }
+}
+
+// Begitu pengguna mengetik, singkirkan kartu populer lama sebelum debounce
+// selesai. Selain memberi umpan balik yang benar, ini mencegah kartu lama
+// masih bisa diklik dan membuka detail yang tidak sesuai dengan query baru.
+function renderTopupSearchPending() {
+    const query = topupSearchQuery.trim();
+    topupRequestToken++;
+    TOPUP_GAMES = [];
+    topupTotal = 0;
+    updateTopupCatalogHeading(query);
+    renderTopupGameSkeleton();
+
+    const zona = document.getElementById("topupLoadMoreZone");
+    if (zona) zona.innerHTML = "";
+
+    const clearBtn = document.getElementById("topupSearchClearBtn");
+    if (clearBtn) clearBtn.classList.toggle("hidden", !query);
+
+    const searchMeta = document.getElementById("topupSearchMeta");
+    if (searchMeta) searchMeta.classList.toggle("hidden", !query);
+
+    const countBadge = document.getElementById("topupSearchCountBadge");
+    if (countBadge && query) countBadge.textContent = "Mencari…";
+}
+
 function renderTopupGameGrid() {
     const grid = document.getElementById("topupGameGrid");
     if (!grid) return;
 
     const query = topupSearchQuery.trim().toLowerCase();
+    updateTopupCatalogHeading(topupSearchQuery);
     // TIDAK ADA penyaringan di sisi klien lagi: TOPUP_GAMES hanya berisi
     // kartu yang sudah dimuat, jadi menyaringnya di sini akan melewatkan
     // game yang cocok tapi belum terkirim. Penyaringan dikerjakan server
@@ -3719,6 +3762,9 @@ async function submitTopupOrder() {
 
         if (!res.ok) {
             errorEl.textContent = data.message || "Gagal membuat pesanan topup";
+            if (data.code === "DUPLICATE_PENDING_CHECKOUT") {
+                toast(data.message, "error");
+            }
             btn.disabled = false;
             btn.textContent = "Bayar Sekarang";
             return;
@@ -4152,6 +4198,7 @@ function initSearchListeners() {
     if (topupSearchInput) {
         topupSearchInput.addEventListener("input", (e) => {
             topupSearchQuery = e.target.value;
+            renderTopupSearchPending();
             // Debounce: tanpa ini tiap ketukan huruf memicu satu request.
             clearTimeout(topupSearchDebounce);
             topupSearchDebounce = setTimeout(() => loadTopupProducts(true), 280);
@@ -4163,6 +4210,7 @@ function initSearchListeners() {
             e.preventDefault();
             clearTimeout(topupSearchDebounce);
             topupSearchQuery = topupSearchInput.value;
+            renderTopupSearchPending();
             loadTopupProducts(true);
         });
     }
@@ -4172,6 +4220,7 @@ function initSearchListeners() {
             clearTimeout(topupSearchDebounce);
             topupSearchQuery = "";
             if (topupSearchInput) topupSearchInput.value = "";
+            renderTopupSearchPending();
             loadTopupProducts(true);
         });
     }

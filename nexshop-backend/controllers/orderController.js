@@ -9,6 +9,7 @@ const { sendTelegramNotification } = require("../config/telegram");
 const { sendWhatsAppNotification } = require("../config/whatsapp");
 const { sendUserWhatsApp } = require("../services/userWhatsAppService");
 const { processNotificationEvent } = require("../services/notificationDeliveryService");
+const { cariCheckoutProdukPending, responsCheckoutPending } = require("../services/pendingCheckoutService");
 
 const IPAYMU_PAYMENT_METHODS = Object.freeze({
     qris: "qris",
@@ -87,6 +88,20 @@ exports.create = async (req, res) => {
             });
         } catch (e) {
             return res.status(400).json({ message: e.message });
+        }
+
+        // Akun login tidak boleh membuat invoice baru untuk produk yang sama
+        // selama invoice sebelumnya masih berstatus pending. Validasi ada di
+        // server supaya tetap berlaku dari tab/perangkat lain.
+        if (userId) {
+            const pendingOrder = await cariCheckoutProdukPending(supabase, userId, ids);
+            if (pendingOrder) {
+                const namaProduk = item_details
+                    .filter((item) => pendingOrder.product_ids.includes(String(item.id)))
+                    .map((item) => item.name)
+                    .join(", ");
+                return res.status(409).json(responsCheckoutPending(pendingOrder, namaProduk));
+            }
         }
 
         const subtotal = item_details.reduce((sum, i) => sum + i.price * i.quantity, 0);

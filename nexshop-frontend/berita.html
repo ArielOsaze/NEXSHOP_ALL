@@ -716,13 +716,6 @@
         <ul class="news-nav-links" id="catNavLinks">
             <li><a href="/">Beranda</a></li>
             <li><a href="/berita" class="active">Berita</a></li>
-            <li style="color:var(--line);margin:0 0.25rem;">|</li>
-            <li><a href="#" data-cat="">Semua</a></li>
-            <li><a href="#" data-cat="Esports">Esports</a></li>
-            <li><a href="#" data-cat="Gaming">Gaming</a></li>
-            <li><a href="#" data-cat="Teknologi">Teknologi</a></li>
-            <li><a href="#" data-cat="Xbox">Xbox</a></li>
-            <li><a href="#" data-cat="PlayStation">PlayStation</a></li>
         </ul>
 
         <a href="/" class="news-nav-back" aria-label="Kembali ke toko NexShop">
@@ -1082,20 +1075,7 @@
                         b.classList.toggle("active", b.dataset.cat === cat);
                         b.setAttribute("aria-pressed", b.dataset.cat === cat ? "true" : "false");
                     });
-                    document.querySelectorAll("#catNavLinks a[data-cat]").forEach(a => {
-                        a.classList.toggle("active", (a.dataset.cat || "") === cat);
-                    });
-
                     loadArticles(1);
-                });
-            });
-
-            // Nav links
-            document.querySelectorAll("#catNavLinks a[data-cat]").forEach(a => {
-                a.addEventListener("click", e => {
-                    e.preventDefault();
-                    const cat = a.dataset.cat || "";
-                    document.querySelector(`.cat-btn[data-cat="${cat}"]`)?.click();
                 });
             });
         }
@@ -1112,9 +1092,6 @@
             document.querySelectorAll(".cat-btn").forEach(b => {
                 b.classList.toggle("active", b.dataset.cat === currentCat);
                 b.setAttribute("aria-pressed", b.dataset.cat === currentCat ? "true" : "false");
-            });
-            document.querySelectorAll("#catNavLinks a[data-cat]").forEach(a => {
-                a.classList.toggle("active", (a.dataset.cat || "") === currentCat);
             });
         }
 

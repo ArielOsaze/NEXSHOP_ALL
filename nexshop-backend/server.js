@@ -36,6 +36,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
 const newsRoutes = require("./routes/newsRoutes");
 const seoRoutes = require("./routes/seoRoutes");
+const docsRoutes = require("./routes/docsRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const ratingRoutes = require("./routes/ratingRoutes");
 const musicRoutes = require("./routes/musicRoutes");
@@ -191,6 +192,7 @@ app.use(express.static(path.join(__dirname, "public")));
 // =========================
 app.get("/api/sitemap", sitemapController.generateSitemap);
 app.use("/api/seo", seoRoutes);
+app.use("/api/docs", docsRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/products", productRoutes);

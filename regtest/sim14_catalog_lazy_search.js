@@ -18,7 +18,7 @@
 const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
-const { halamanGrup, urutkanPopuler } = require("../nexshop-backend/services/catalogIndexService");
+const { halamanGrup, urutkanPopuler, urutkanPencarian } = require("../nexshop-backend/services/catalogIndexService");
 
 console.log("===============================================================================");
 console.log("  NEXSHOP REGTEST 14: KATALOG BERTAHAP & PENCARIAN SISI SERVER");
@@ -261,6 +261,25 @@ test("pengurutan populer dilakukan SEBELUM paginasi", () => {
     assert.deepStrictEqual(h.items.map((i) => i.name), ["Mobile Legends", "PUBG Mobile"]);
 });
 
+test("pencarian mengabaikan ranking populer dan mendahulukan nama game yang cocok", () => {
+    const gamePopuler = buatGrup("mobile-legends", "Mobile Legends", "Topup Game", [
+        { nama: "Voucher Minecraft Bonus", kode: "ML-MINECRAFT", harga: 15000 }
+    ]);
+    const minecraft = buatGrup("minecraft", "Minecraft", "Topup Game", [
+        { nama: "Minecoins 1720", kode: "MC1720", harga: 100000 }
+    ]);
+
+    // Dalam mode beranda Mobile Legends memang menang ranking populer.
+    const populer = urutkanPopuler([minecraft, gamePopuler], ["mobile legends"]);
+    assert.strictEqual(populer[0].name, "Mobile Legends");
+
+    // Dalam mode pencarian, kecocokan nama Minecraft harus menang meskipun
+    // Mobile Legends juga cocok lewat salah satu nama produknya.
+    const dicari = urutkanPencarian([gamePopuler, minecraft], "minecraft");
+    const h = halamanGrup(dicari, { page: 1, limit: 20, q: "minecraft" });
+    assert.deepStrictEqual(h.items.map((i) => i.name), ["Minecraft", "Mobile Legends"]);
+});
+
 // -------------------------------------------------------------
 // E. RINGKASAN KARTU
 // -------------------------------------------------------------
@@ -309,6 +328,15 @@ test("Tampilkan Semua mengambil batch server lalu merender sekali setelah lengka
     assert.ok(storefrontSource.includes('limit: "60"'));
     assert.ok(storefrontSource.includes("TOPUP_GAMES = mapTopupSummaryItems(semuaItem)"));
     assert.ok(storefrontSource.includes("querySnapshot !== topupSearchQuery.trim()"), "hasil query lama harus dibuang");
+});
+
+test("kartu populer langsung disingkirkan saat pengguna mulai mencari", () => {
+    assert.ok(storefrontSource.includes("function renderTopupSearchPending()"));
+    assert.ok(
+        storefrontSource.includes('topupSearchQuery = e.target.value;\n            renderTopupSearchPending();'),
+        "input pencarian harus menonaktifkan kartu lama sebelum menunggu debounce"
+    );
+    assert.ok(storefrontSource.includes('countBadge.textContent = "Mencari…"'));
 });
 
 test("Marketplace menyediakan pencarian produk di dalam operator", () => {

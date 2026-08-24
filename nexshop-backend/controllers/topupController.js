@@ -2,7 +2,7 @@ const supabase = require("../config/db");
 const crypto = require("crypto");
 const tokovoucher = require("../config/tokovoucher");
 const catalogService = require("../services/catalogService");
-const { getCatalogIndex, halamanGrup, urutkanPopuler, invalidateCatalogIndex } = require("../services/catalogIndexService");
+const { getCatalogIndex, halamanGrup, urutkanPopuler, urutkanPencarian, invalidateCatalogIndex } = require("../services/catalogIndexService");
 const webhookRelay = require("../services/webhookRelayService");
 const { createRedirectPayment, checkTransactionStatus, createDirectPayment, isDirectPaymentMethod } = require("../config/ipaymu");
 
@@ -40,6 +40,7 @@ const { getResellerContext } = require("../services/resellerService");
 const { hitungHargaReseller } = require("../utils/resellerPricing");
 const walletService = require("../services/walletService");
 const { dispatchResellerWebhook } = require("../services/resellerWebhookService");
+const { cariCheckoutTopupPending, responsCheckoutPending } = require("../services/pendingCheckoutService");
 
 const IPAYMU_PAYMENT_METHODS = Object.freeze({
     qris: "qris",
@@ -1689,6 +1690,16 @@ exports.create = async (req, res) => {
         if (prodErr || !product) {
             return res.status(404).json({ message: "Produk topup tidak ditemukan atau tidak aktif" });
         }
+
+        // Berlaku untuk Topup Game dan seluruh produk Marketplace karena
+        // keduanya checkout lewat endpoint ini. Wallet juga tidak boleh
+        // membuat order pengganti selama invoice produk yang sama masih pending.
+        if (userId) {
+            const pendingOrder = await cariCheckoutTopupPending(supabase, userId, product.kode_produk);
+            if (pendingOrder) {
+                return res.status(409).json(responsCheckoutPending(pendingOrder, product.nama));
+            }
+        }
         
         // DYNAMIC PRICING: if harga_jual is 0, calculate dynamically using backend markup rules.
         if (!product.harga_jual || product.harga_jual === 0) {
@@ -2517,7 +2528,7 @@ exports.handleTokoVoucherWebhook = async (req, res) => {
 
         const { data: existingOrder } = await supabase
             .from("topup_orders")
-            .select("id, status, recipient_email, nama_produk, tujuan, server_id, harga, tv_trx_id, tv_sn, tv_message")
+            .select("id, status, user_id, reseller_user_id, reseller_ref_id, recipient_email, nama_produk, kode_produk, tujuan, server_id, harga, payment_method, refunded_at, tv_trx_id, tv_sn, tv_message")
             .eq("id", refId)
             .maybeSingle();
 
@@ -3122,11 +3133,16 @@ exports.getCatalogGames = async (req, res) => {
         const konteksReseller = await getResellerContext(req.user && req.user.id);
         const indeks = await getCatalogIndex();
 
-        const daftar = urutkanPopuler([...indeks.games], URUTAN_GAME_POPULER);
+        const query = String(req.query.q || "").trim();
+        // Beranda katalog memakai ranking populer. Begitu ada pencarian,
+        // ranking tersebut diabaikan dan hasil diurutkan menurut kecocokan.
+        const daftar = query
+            ? urutkanPencarian([...indeks.games], query)
+            : urutkanPopuler([...indeks.games], URUTAN_GAME_POPULER);
         const hasil = halamanGrup(daftar, {
             page: req.query.page,
             limit: req.query.limit,
-            q: req.query.q,
+            q: query,
             kategori: req.query.kategori
         });
 
