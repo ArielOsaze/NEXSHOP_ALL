@@ -10,6 +10,7 @@ const index = read("nexshop-frontend/index.html");
 const legalModal = read("nexshop-frontend/legal-modal.js");
 const nexbot = read("nexshop-frontend/nexbot.js");
 const style = read("nexshop-frontend/style.css");
+const cookieConsent = read("nexshop-frontend/cookie-consent.js");
 const publicLegalPages = [
     "berita-artikel.html",
     "berita.html",
@@ -71,26 +72,40 @@ check(
 );
 
 const mascotPath = path.join(root, "nexshop-frontend/images/nexbot-mascot.webp");
+const mascotWavePath = path.join(root, "nexshop-frontend/images/nexbot-mascot-wave.webp");
 const mascotHeader = fs.existsSync(mascotPath)
     ? fs.readFileSync(mascotPath).subarray(0, 12).toString("ascii")
     : "";
+const mascotWaveHeader = fs.existsSync(mascotWavePath)
+    ? fs.readFileSync(mascotWavePath).subarray(0, 12).toString("ascii")
+    : "";
 check(
-    "maskot NexBot tersimpan sebagai aset WebP lokal",
-    mascotHeader.startsWith("RIFF") && mascotHeader.endsWith("WEBP")
+    "pose diam dan lambaian NexBot tersimpan sebagai aset WebP lokal",
+    mascotHeader.startsWith("RIFF") && mascotHeader.endsWith("WEBP") &&
+        mascotWaveHeader.startsWith("RIFF") && mascotWaveHeader.endsWith("WEBP")
 );
 check(
-    "semua avatar NexBot memakai satu aset maskot terpusat",
+    "avatar dan pose lambaian NexBot memakai aset terpusat",
     nexbot.includes('const NEXBOT_MASCOT_SRC = "/images/nexbot-mascot.webp"') &&
+        nexbot.includes('const NEXBOT_MASCOT_WAVE_SRC = "/images/nexbot-mascot-wave.webp"') &&
+        index.includes('class="nexbot-mascot-frame-stack"') &&
         !nexbot.includes("fa-robot") &&
         style.includes(".nexbot-mascot-image")
 );
 check(
-    "maskot merespons pointer, fokus input, dan klik pengguna",
+    "shortcut NexBot memakai ikon bantuan tanpa ornamen petir generik",
+    nexbot.includes('{ icon: "fa-circle-question", topic: "Cara top up?" }') &&
+        !nexbot.includes('{ icon: "fa-bolt", topic: "Cara top up?" }')
+);
+check(
+    "interaksi pointer tetap aktif tanpa menggeser seluruh badan maskot",
     nexbot.includes('floatBtn.addEventListener("pointermove"') &&
         nexbot.includes('floatBtn.classList.add("expanding", "is-reacting")') &&
         nexbot.includes('windowEl.classList.toggle("is-listening"') &&
-        style.includes("@keyframes nexbot-mascot-wave") &&
-        style.includes("@keyframes nexbot-mascot-excited")
+        !nexbot.includes("--nexbot-look-x") &&
+        style.includes(".nexbot-float-btn-icon") &&
+        style.includes("transform: none") &&
+        !style.includes("@keyframes nexbot-mascot-idle")
 );
 check(
     "bubble sapaan NexBot tersedia pada markup statis dan widget lintas halaman",
@@ -102,12 +117,14 @@ check(
         !style.includes(".nexbot-speech-bubble::before")
 );
 check(
-    "setiap bubble memicu ulang animasi sapaan maskot",
+    "setiap bubble memicu pergantian frame lengan tanpa menggoyang badan",
     nexbot.includes("function triggerNexBotPetGreeting()") &&
         nexbot.includes('floatBtn.classList.add("is-bubble-greeting")') &&
         nexbot.includes("triggerNexBotPetGreeting();") &&
-        style.includes(".nexbot-float-btn.is-bubble-greeting") &&
-        style.includes("@keyframes nexbot-pet-bubble-greet")
+        style.includes(".nexbot-float-btn.is-bubble-greeting .nexbot-mascot-frame--wave") &&
+        style.includes("@keyframes nexbot-arm-wave-rest-frame") &&
+        style.includes("@keyframes nexbot-arm-wave-raised-frame") &&
+        !style.includes("@keyframes nexbot-pet-bubble-greet")
 );
 check(
     "teks promosi memakai tanda baca natural tanpa strip pemisah",
@@ -115,15 +132,15 @@ check(
         !index.includes("topup instan — aman")
 );
 check(
-    "pet NexBot bereaksi terhadap gestur elus, mood, partikel, dan waktu idle",
+    "pet NexBot bereaksi terhadap gestur elus, bubble, partikel, dan waktu idle tanpa animasi badan",
     nexbot.includes("petTravel += Math.hypot") &&
         nexbot.includes('floatBtn.classList.add("is-petted")') &&
         nexbot.includes("emitNexBotPetSparks(floatBtn") &&
         nexbot.includes("scheduleNexBotPetIdle()") &&
         nexbot.includes("NEXBOT_PET_IDLE_LINES") &&
-        style.includes('[data-pet-mood="curious"]') &&
-        style.includes("@keyframes nexbot-pet-happy") &&
-        style.includes("@keyframes nexbot-pet-spark")
+        style.includes("@keyframes nexbot-pet-spark") &&
+        !style.includes("@keyframes nexbot-pet-happy") &&
+        !style.includes("@keyframes nexbot-pet-curious")
 );
 check(
     "maskot memiliki status visual berpikir dan selesai menjawab",
@@ -133,15 +150,22 @@ check(
         style.includes("@keyframes nexbot-mascot-answer")
 );
 check(
-    "seluruh animasi maskot menghormati preferensi reduced motion",
-    style.includes("@keyframes nexbot-mascot-idle") &&
+    "animasi pergantian frame menghormati preferensi reduced motion",
+    style.includes("@keyframes nexbot-arm-wave-raised-frame") &&
         style.includes("@media (prefers-reduced-motion: reduce)") &&
         style.includes("animation: none !important")
 );
 check(
     "tombol maskot transparan tanpa lingkaran warna bawaan",
     /\.nexbot-float-btn\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?border:\s*0;[\s\S]*?box-shadow:\s*none;/.test(style) &&
-        style.includes("overflow: visible")
+    style.includes("overflow: visible")
+);
+check(
+    "pilihan cookie tidak meninggalkan tombol mengambang di kiri bawah",
+    !cookieConsent.includes("nexshop-cookie-manage") &&
+        !cookieConsent.includes("manage.hidden = false") &&
+        cookieConsent.includes("document.body.append(banner)") &&
+        cookieConsent.includes("window.NexShopCookies")
 );
 
 if (!process.exitCode) {

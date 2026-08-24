@@ -59,9 +59,9 @@
     <script src="/theme-init.js"></script>
     <script defer src="/clean-url.js?v=20260825"></script>
     <script defer src="/legal-modal.js?v=20260825"></script>
-    <script defer src="/cookie-consent.js?v=20260825"></script>
-    <link rel="stylesheet" href="/style.css?v=20260825-nexbot-wave">
-    <link rel="stylesheet" href="/marketplace-theme.css?v=20260825-banking-cleanup">
+    <script defer src="/cookie-consent.js?v=20260825-no-float"></script>
+    <link rel="stylesheet" href="/style.css?v=20260825-nexbot-rigged">
+    <link rel="stylesheet" href="/marketplace-theme.css?v=20260825-search-focus">
 </head>
 
 <body class="marketplace-page" data-nexbot="auto">
@@ -115,10 +115,6 @@
         <span class="ambient-asset ambient-asset--bank"
             style="left:58%;top:0;--rain-duration:70s;--rain-delay:-18s;--rain-drift:-32px;">
             <span class="ambient-asset-glyph"><i class="fa-solid fa-building-columns"></i></span>
-        </span>
-        <span class="ambient-asset ambient-asset--bolt"
-            style="left:70%;top:0;--rain-duration:64s;--rain-delay:-48s;--rain-drift:22px;">
-            <span class="ambient-asset-glyph"><i class="fa-solid fa-bolt"></i></span>
         </span>
         <span class="ambient-asset ambient-asset--simcard"
             style="left:82%;top:0;--rain-duration:80s;--rain-delay:-30s;--rain-drift:-24px;">
@@ -219,9 +215,6 @@
         </div>
 
         <section class="mkt-hero">
-            <div class="mkt-hero-tag">
-                <i class="fa-solid fa-bolt" aria-hidden="true"></i> One Stop Solution
-            </div>
             <h1>Satu Platform, <span class="mkt-hero-accent">Ribuan Solusi Digital</span></h1>
             <p>Isi ulang E-Wallet, beli pulsa &amp; paket data, bayar PLN &amp; tagihan lainnya &mdash; diproses instan,
                 aman, dan terpercaya lewat NexShop.</p>
@@ -264,7 +257,7 @@
             </div>
 
             <ul class="mkt-trust-strip">
-                <li><i class="fa-solid fa-bolt" aria-hidden="true"></i> Proses otomatis 24 jam</li>
+                <li><i class="fa-solid fa-clock" aria-hidden="true"></i> Proses otomatis 24 jam</li>
                 <li><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Legal &amp; berbadan
                     usaha</li>
                 <li><i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i> QRIS, VA &amp; E-Wallet
@@ -977,7 +970,7 @@
             { test: /e-?toll|etoll/i, icon: "fa-solid fa-road", tone: "etoll" },
             { test: /pulsa|telpon|sms|perdana|kartu\s*sim/i, icon: "fa-solid fa-mobile-screen-button", tone: "pulsa" },
             { test: /paket\s*data|internet/i, icon: "fa-solid fa-wifi", tone: "data" },
-            { test: /pln|listrik|token/i, icon: "fa-solid fa-bolt", tone: "pln" },
+            { test: /pln|listrik|token/i, icon: "fa-solid fa-lightbulb", tone: "pln" },
             { test: /tagihan|pascabayar|pdam|bpjs/i, icon: "fa-solid fa-file-invoice-dollar", tone: "tagihan" },
             { test: /voucher/i, icon: "fa-solid fa-ticket", tone: "voucher" },
             { test: /game/i, icon: "fa-solid fa-gamepad", tone: "game" },
@@ -3261,7 +3254,7 @@
     </div>
 
     <!-- Asisten NexBot, modul yang sama dengan halaman utama -->
-    <script src="/nexbot.js?v=20260825-wave"></script>
+    <script src="/nexbot.js?v=20260825-production"></script>
 </body>
 
 </html>

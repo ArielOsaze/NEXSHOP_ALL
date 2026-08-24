@@ -90,9 +90,18 @@ const server = http.createServer((req, res) => {
         }
         await market.keyboard.press("Escape");
         await market.waitForFunction(() => !document.getElementById("sharedLegalOverlay")?.classList.contains("active"));
-        await market.waitForSelector('.nexbot-mascot-image[src="/images/nexbot-mascot.webp"]');
-        const mascotLoaded = await market.$eval(".nexbot-mascot-image", (img) => img.complete && img.naturalWidth === 640 && img.naturalHeight === 640);
-        if (!mascotLoaded) throw new Error("aset maskot NexBot gagal dimuat");
+        await market.waitForSelector('.nexbot-mascot-frame--wave[src="/images/nexbot-mascot-wave.webp"]');
+        const mascotLoaded = await market.$$eval("#nexbotFloatBtn .nexbot-mascot-image", (images) =>
+            images.length === 2 && images.every((img) => img.complete && img.naturalWidth === 640 && img.naturalHeight === 640));
+        if (!mascotLoaded) throw new Error("aset pose diam/lambaian NexBot gagal dimuat");
+        const cookieState = await market.evaluate(() => ({
+            manageButton: Boolean(document.querySelector(".nexshop-cookie-manage")),
+            bannerHidden: document.querySelector(".nexshop-cookie-banner")?.hidden
+        }));
+        if (cookieState.manageButton || cookieState.bannerHidden !== true) {
+            throw new Error(`cookie masih mengambang atau banner muncul ulang: ${JSON.stringify(cookieState)}`);
+        }
+        await market.evaluate(() => showNexBotPetBubble("Hii, NexBot di sini!", 3000, "curious"));
         await market.waitForFunction(() => {
             const bubble = document.getElementById("nexbotSpeechBubble");
             const widget = document.getElementById("nexbotWidget");
@@ -100,7 +109,8 @@ const server = http.createServer((req, res) => {
             return bubble && widget && Number.parseFloat(getComputedStyle(widget).opacity) > 0.9 &&
                 !bubble.classList.contains("is-hidden") &&
                 floatBtn?.classList.contains("is-bubble-greeting") &&
-                getComputedStyle(floatBtn.querySelector(".nexbot-mascot-image")).animationName === "nexbot-pet-bubble-greet" &&
+                Number.parseFloat(getComputedStyle(floatBtn.querySelector(".nexbot-mascot-frame--wave")).opacity) > 0.9 &&
+                getComputedStyle(floatBtn.querySelector(".nexbot-mascot-frame--wave")).animationName === "nexbot-arm-wave-raised-frame" &&
                 document.getElementById("nexbotSpeechText")?.textContent.trim() === "Hii, NexBot di sini!";
         });
         if (process.env.QA_SCREENSHOT_PATH) {
@@ -111,14 +121,14 @@ const server = http.createServer((req, res) => {
             const rect = button.getBoundingClientRect();
             return { x: rect.left, y: rect.top, width: rect.width, height: rect.height };
         });
-        await market.mouse.move(floatBox.x + floatBox.width * 0.82, floatBox.y + floatBox.height * 0.25);
-        const pointerReaction = await market.$eval(".nexbot-float-btn-icon", (icon) => ({
-            x: icon.style.getPropertyValue("--nexbot-look-x"),
-            y: icon.style.getPropertyValue("--nexbot-look-y"),
-            animation: getComputedStyle(icon.querySelector(".nexbot-mascot-image")).animationName
+        const rigState = await market.$eval(".nexbot-float-btn-icon", (icon) => ({
+            iconTransform: getComputedStyle(icon).transform,
+            restTransform: getComputedStyle(icon.querySelector(".nexbot-mascot-frame--rest")).transform,
+            waveTransform: getComputedStyle(icon.querySelector(".nexbot-mascot-frame--wave")).transform,
+            frameCount: icon.querySelectorAll(".nexbot-mascot-image").length
         }));
-        if (pointerReaction.x === "0px" || pointerReaction.y === "0px" || !["nexbot-mascot-wave", "nexbot-pet-curious", "nexbot-pet-bubble-greet"].includes(pointerReaction.animation)) {
-            throw new Error(`maskot tidak bereaksi terhadap pointer: ${JSON.stringify(pointerReaction)}`);
+        if (rigState.iconTransform !== "none" || rigState.restTransform !== "none" || rigState.waveTransform !== "none" || rigState.frameCount !== 2) {
+            throw new Error(`badan maskot masih digoyang atau frame lengan tidak lengkap: ${JSON.stringify(rigState)}`);
         }
 
         for (let index = 0; index < 5; index += 1) {
@@ -146,7 +156,7 @@ const server = http.createServer((req, res) => {
         await market.waitForFunction(() => !document.getElementById("nexbotWindow")?.classList.contains("is-thinking"));
         await market.waitForSelector(".nexbot-msg--bot.nexbot-msg--arriving");
         await market.close();
-        console.log("PASS browser: bubble bersih dan pet NexBot melambaikan sapaan, mengikuti pointer, bereaksi saat dielus, berpikir, serta menjawab");
+        console.log("PASS browser: bubble bersih, lengan NexBot berganti pose tanpa badan bergoyang, pet bereaksi, cookie menetap, lalu NexBot berpikir dan menjawab");
 
         const guest = await browser.newPage();
         await guest.goto("http://127.0.0.1:3000/portal-reseller", { waitUntil: "domcontentloaded", timeout: 30000 });

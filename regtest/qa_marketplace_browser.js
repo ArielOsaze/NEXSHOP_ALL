@@ -87,15 +87,30 @@ const server = http.createServer((req, res) => {
                 navbarDuplicateActions: document.querySelectorAll(".mkt-nav [data-wallet-trigger], .mkt-nav [data-mkt-track-trigger]").length,
                 topupGameHref: document.querySelector('.mkt-banking-action[href*="q=game"]')?.getAttribute("href"),
                 cardBackground: getComputedStyle(document.querySelector(".market-card")).backgroundColor,
-                cardBackdrop: getComputedStyle(document.querySelector(".market-card")).backdropFilter
+                cardBackdrop: getComputedStyle(document.querySelector(".market-card")).backdropFilter,
+                cookieManageButton: Boolean(document.querySelector(".nexshop-cookie-manage")),
+                cookieBannerHidden: document.querySelector(".nexshop-cookie-banner")?.hidden,
+                aiSlopDecorations: document.querySelectorAll(".ambient-asset--bolt, .mkt-hero-tag, .fa-bolt").length
             }));
             if (initial.cards !== 20 || initial.overflow || initial.cardTag !== "BUTTON") throw new Error(`${viewport.name}: render awal/overflow/kartu tidak valid ${JSON.stringify(initial)}`);
             if (initial.quickActions !== 4 || initial.categoryLayout !== "grid") throw new Error(`${viewport.name}: dashboard banking tidak valid ${JSON.stringify(initial)}`);
             if (initial.nexbotBackground !== "none" || initial.nexbotBackgroundColor !== "rgba(0, 0, 0, 0)") throw new Error(`${viewport.name}: tombol NexBot belum transparan ${JSON.stringify(initial)}`);
             if (initial.navbarDuplicateActions !== 0 || initial.topupGameHref !== "/marketplace?q=game") throw new Error(`${viewport.name}: navbar/shortcut m-banking masih duplikat atau salah tujuan ${JSON.stringify(initial)}`);
-            if (!initial.cardBackground.includes("0.45") || !initial.cardBackdrop.includes("blur(16px)")) throw new Error(`${viewport.name}: kartu Marketplace belum transparan ${JSON.stringify(initial)}`);
+            if (!initial.cardBackground.includes("0.28") || initial.cardBackdrop !== "none") throw new Error(`${viewport.name}: kartu Marketplace belum tembus pandang tanpa blur ${JSON.stringify(initial)}`);
+            if (initial.cookieManageButton || initial.cookieBannerHidden !== true) throw new Error(`${viewport.name}: cookie masih muncul/mengambang setelah disimpan ${JSON.stringify(initial)}`);
+            if (initial.aiSlopDecorations !== 0) throw new Error(`${viewport.name}: ornamen petir/label template masih tampil ${JSON.stringify(initial)}`);
             if (viewport.name === "mobile" && initial.categoryHeight < 44) throw new Error(`mobile: target kategori hanya ${initial.categoryHeight}px`);
             if (viewport.name === "mobile" && new Set(initial.categoryFirstRow).size !== 1) throw new Error(`mobile: empat shortcut kategori pertama tidak satu baris`);
+
+            await page.focus("#mktSearchInput");
+            const searchFocus = await page.evaluate(() => ({
+                inputShadow: getComputedStyle(document.getElementById("mktSearchInput")).boxShadow,
+                inputOutline: getComputedStyle(document.getElementById("mktSearchInput")).outlineStyle,
+                wrapperShadow: getComputedStyle(document.getElementById("mktSearchForm")).boxShadow
+            }));
+            if (searchFocus.inputShadow !== "none" || searchFocus.inputOutline !== "none" || /0px 0px 0px 4px/.test(searchFocus.wrapperShadow)) {
+                throw new Error(`${viewport.name}: fokus search bar masih bertumpuk ${JSON.stringify(searchFocus)}`);
+            }
 
             await page.evaluate(() => {
                 window.scrollTo(0, 0);
@@ -120,7 +135,7 @@ const server = http.createServer((req, res) => {
                 await page.screenshot({ path: path.join(process.env.QA_SCREENSHOT_DIR, `marketplace-${viewport.name}.png`), fullPage: true });
             }
             await page.close();
-            console.log(`PASS Marketplace ${viewport.name}: nav ringkas, kategori tanpa auto-scroll, kartu kaca, 20→35, search, no-overflow`);
+            console.log(`PASS Marketplace ${viewport.name}: nav ringkas, tanpa petir, kategori tanpa auto-scroll, kartu tembus pandang, cookie menetap, 20→35, search, no-overflow`);
         }
     } finally {
         await browser.close();

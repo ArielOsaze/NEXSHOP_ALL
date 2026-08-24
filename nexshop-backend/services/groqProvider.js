@@ -41,7 +41,7 @@ async function listAvailableModels(apiKey) {
     try {
         const res = await axios.get("https://api.groq.com/openai/v1/models", {
             headers: { Authorization: `Bearer ${apiKey}` },
-            timeout: 8000
+            timeout: 2500
         });
 
         const models = (res.data?.data || [])

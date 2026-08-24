@@ -114,6 +114,12 @@ check(
         marketplaceTheme.includes("grid-template-columns: repeat(4, minmax(0, 1fr))")
 );
 check(
+    "Marketplace tidak memakai ornamen petir dekoratif ala template AI",
+    !marketplace.includes('ambient-asset--bolt') &&
+        !marketplace.includes('class="mkt-hero-tag"') &&
+        !marketplace.includes("fa-solid fa-bolt")
+);
+check(
     "navbar Marketplace tidak menduplikasi Wallet, transaksi, Top Up, atau Reseller dari dashboard",
     !marketplaceNavbar.includes("data-wallet-trigger") &&
         !marketplaceNavbar.includes("data-mkt-track-trigger") &&
@@ -127,11 +133,19 @@ check(
         !categoryClickHandler.includes("scrollIntoView")
 );
 check(
-    "kartu operator dan produk Marketplace memakai lapisan kaca transparan",
-    marketplaceTheme.includes("background: rgba(12, 18, 35, 0.45)") &&
-        marketplaceTheme.includes("backdrop-filter: blur(16px) saturate(120%)") &&
-        /\.mkt-product-tile\s*\{[\s\S]*?background:\s*rgba\(12, 18, 35, 0\.45\)/.test(marketplaceTheme) &&
+    "kartu operator dan produk Marketplace tembus pandang tanpa blur latar",
+    /\.market-card\s*\{[^}]*background:\s*rgba\(12, 18, 35, 0\.28\)/.test(marketplaceTheme) &&
+        /\.mkt-product-tile\s*\{[^}]*background:\s*rgba\(12, 18, 35, 0\.28\)/.test(marketplaceTheme) &&
+        !/\.(?:market-card|mkt-product-tile)\s*\{[^}]*backdrop-filter:\s*blur\(16px\)/.test(marketplaceTheme) &&
         marketplaceTheme.includes(':root[data-theme="light"] .mkt-product-tile')
+);
+check(
+    "search bar Marketplace memakai satu fokus visual tanpa outline bertumpuk",
+    marketplaceTheme.includes(".mkt-search-wrap input:focus-visible") &&
+        /\.mkt-search-wrap input:focus,[\s\S]*?box-shadow:\s*none;/.test(marketplaceTheme) &&
+        !/\.mkt-search-wrap:focus-within\s*\{[^}]*0 0 0 4px/.test(marketplaceTheme) &&
+        !/\.mkt-detail-search-box input:focus\s*\{[^}]*0 0 0 3px/.test(marketplaceTheme) &&
+        !/\.mkt-bank-search-wrap input\[type="text"\]:focus\s*\{[^}]*0 0 0 3px/.test(marketplaceTheme)
 );
 
 const cspMatch = nginx.match(/add_header Content-Security-Policy "([^"]+)" always;/);

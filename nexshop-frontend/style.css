@@ -6608,7 +6608,7 @@ input::placeholder {
 }
 
 .nexbot-float-btn:hover:not(.expanding) {
-    transform: scale(1.05);
+    transform: none;
     box-shadow: none;
 }
 
@@ -6618,15 +6618,12 @@ input::placeholder {
 }
 
 .nexbot-float-btn-icon {
-    --nexbot-look-x: 0px;
-    --nexbot-look-y: 0px;
     width: clamp(48px, 5.6vw, 60px);
     height: clamp(48px, 5.6vw, 60px);
     display: flex;
     align-items: center;
     justify-content: center;
-    transform: translate(var(--nexbot-look-x), var(--nexbot-look-y));
-    transition: transform 140ms ease-out;
+    transform: none;
 }
 
 .nexbot-mascot-image {
@@ -6639,45 +6636,44 @@ input::placeholder {
     filter: drop-shadow(0 5px 10px rgba(0, 194, 232, 0.24));
 }
 
-.nexbot-mascot-image--float {
-    animation: nexbot-mascot-idle 3.2s ease-in-out infinite;
-    transform-origin: 50% 78%;
+.nexbot-mascot-frame-stack {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
-@keyframes nexbot-mascot-idle {
-    0%, 100% { transform: translateY(0) rotate(-1deg); }
-    50% { transform: translateY(-3px) rotate(1deg); }
+.nexbot-mascot-frame-stack .nexbot-mascot-image--float {
+    position: absolute;
+    inset: 0;
+    transform: none;
+    animation: none;
 }
 
-.nexbot-float-btn:hover .nexbot-mascot-image--float,
-.nexbot-float-btn.is-greeting .nexbot-mascot-image--float {
-    animation: nexbot-mascot-wave 720ms cubic-bezier(.2, .8, .2, 1) infinite alternate;
+.nexbot-mascot-frame--rest {
+    opacity: 1;
 }
 
-.nexbot-float-btn.is-reacting .nexbot-mascot-image--float {
-    animation: nexbot-mascot-excited 520ms cubic-bezier(.2, .9, .25, 1) both;
+.nexbot-mascot-frame--wave {
+    opacity: 0;
 }
 
-.nexbot-float-btn.is-petted .nexbot-mascot-image--float,
-.nexbot-widget[data-pet-mood="happy"] .nexbot-mascot-image--float {
-    animation: nexbot-pet-happy 680ms cubic-bezier(.2, .9, .25, 1) both;
+.nexbot-float-btn.is-bubble-greeting .nexbot-mascot-frame--rest {
+    animation: nexbot-arm-wave-rest-frame 1.35s steps(1, end) both;
 }
 
-.nexbot-widget[data-pet-mood="curious"] .nexbot-mascot-image--float {
-    animation: nexbot-pet-curious 850ms ease-in-out infinite alternate;
+.nexbot-float-btn.is-bubble-greeting .nexbot-mascot-frame--wave {
+    animation: nexbot-arm-wave-raised-frame 1.35s steps(1, end) both;
 }
 
-.nexbot-widget[data-pet-mood="sleepy"] .nexbot-mascot-image--float {
-    animation: nexbot-pet-sleepy 1.6s ease-in-out infinite;
+@keyframes nexbot-arm-wave-rest-frame {
+    0%, 18%, 37%, 55%, 74%, 100% { opacity: 1; }
+    19%, 36%, 56%, 73% { opacity: 0; }
 }
 
-.nexbot-widget[data-pet-mood="excited"] .nexbot-mascot-image--float {
-    animation: nexbot-mascot-excited 520ms cubic-bezier(.2, .9, .25, 1) both;
-}
-
-.nexbot-float-btn.is-bubble-greeting .nexbot-mascot-image--float {
-    animation: nexbot-pet-bubble-greet 1.35s cubic-bezier(.2, .85, .25, 1) both;
-    transform-origin: 58% 82%;
+@keyframes nexbot-arm-wave-raised-frame {
+    0%, 18%, 37%, 55%, 74%, 100% { opacity: 0; }
+    19%, 36%, 56%, 73% { opacity: 1; }
 }
 
 @keyframes nexbot-pet-bubble-pop {
@@ -6693,47 +6689,6 @@ input::placeholder {
         opacity: 0;
         transform: translate(calc(-50% + var(--pet-spark-x)), calc(-50% + var(--pet-spark-y))) rotate(135deg) scale(.05);
     }
-}
-
-@keyframes nexbot-pet-happy {
-    0% { transform: translateY(0) rotate(0) scale(1); }
-    28% { transform: translateY(-8px) rotate(-7deg) scale(1.08, .96); }
-    52% { transform: translateY(-3px) rotate(7deg) scale(.98, 1.06); }
-    76% { transform: translateY(-6px) rotate(-3deg) scale(1.04); }
-    100% { transform: translateY(0) rotate(0) scale(1); }
-}
-
-@keyframes nexbot-pet-curious {
-    from { transform: translateY(-1px) rotate(-4deg) scale(1.01); }
-    to { transform: translateY(-4px) rotate(5deg) scale(1.045); }
-}
-
-@keyframes nexbot-pet-sleepy {
-    0%, 100% { transform: translateY(1px) rotate(-2deg) scale(1, .97); }
-    50% { transform: translateY(4px) rotate(2deg) scale(.98, .94); }
-}
-
-@keyframes nexbot-pet-bubble-greet {
-    0% { transform: translateY(0) rotate(0) scale(1); }
-    18% { transform: translateY(-8px) rotate(-8deg) scale(1.07, .97); }
-    36% { transform: translateY(-5px) rotate(9deg) scale(1.03); }
-    53% { transform: translateY(-7px) rotate(-7deg) scale(1.05); }
-    70% { transform: translateY(-3px) rotate(6deg) scale(1.02); }
-    86% { transform: translateY(-4px) rotate(-2deg) scale(1.03); }
-    100% { transform: translateY(0) rotate(0) scale(1); }
-}
-
-@keyframes nexbot-mascot-wave {
-    0% { transform: translateY(-1px) rotate(-4deg) scale(1); }
-    55% { transform: translateY(-5px) rotate(4deg) scale(1.04); }
-    100% { transform: translateY(-3px) rotate(7deg) scale(1.02); }
-}
-
-@keyframes nexbot-mascot-excited {
-    0% { transform: translateY(0) scale(1) rotate(0); }
-    38% { transform: translateY(-9px) scale(1.08) rotate(-5deg); }
-    68% { transform: translateY(-3px) scale(.98) rotate(4deg); }
-    100% { transform: translateY(0) scale(1) rotate(0); }
 }
 
 /* pointer-events:auto WAJIB di sini — .nexbot-widget (parent) sengaja

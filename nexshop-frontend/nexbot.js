@@ -30,12 +30,15 @@ function nexbotFetch(url, options) {
     return f(url, options);
 }
 
+const NEXBOT_REQUEST_TIMEOUT_MS = 16000;
+
 const NEXBOT_QUICK_TOPICS = [
     { icon: "fa-shield-halved", topic: "Apakah NexShop aman?" },
     { icon: "fa-scale-balanced", topic: "Apakah NexShop legal?" },
     { icon: "fa-wallet", topic: "Pembayaran pakai apa?" },
+    { icon: "fa-handshake-angle", topic: "Ada escrow?" },
     { icon: "fa-cart-shopping", topic: "Cara membeli produk?" },
-    { icon: "fa-bolt", topic: "Cara top up?" },
+    { icon: "fa-circle-question", topic: "Cara top up?" },
     { icon: "fa-shop", topic: "Apa itu Marketplace NexShop?" },
     { icon: "fa-handshake", topic: "Cara daftar reseller?" },
     { icon: "fa-rotate-left", topic: "Kebijakan refund?" },
@@ -43,6 +46,7 @@ const NEXBOT_QUICK_TOPICS = [
 ];
 
 const NEXBOT_MASCOT_SRC = "/images/nexbot-mascot.webp";
+const NEXBOT_MASCOT_WAVE_SRC = "/images/nexbot-mascot-wave.webp";
 const NEXBOT_PET_IDLE_LINES = [
     "Butuh cek harga? Panggil aku ya!",
     "Aku bisa bantu cek pesananmu.",
@@ -60,6 +64,12 @@ const nexbotPetState = {
 
 function nexbotMascotMarkup(extraClass = "") {
     const className = ["nexbot-mascot-image", extraClass].filter(Boolean).join(" ");
+    if (extraClass.includes("nexbot-mascot-image--float")) {
+        return `<span class="nexbot-mascot-frame-stack" aria-hidden="true">
+            <img src="${NEXBOT_MASCOT_SRC}" class="${className} nexbot-mascot-frame--rest" alt="" aria-hidden="true" draggable="false">
+            <img src="${NEXBOT_MASCOT_WAVE_SRC}" class="${className} nexbot-mascot-frame--wave" alt="" aria-hidden="true" draggable="false">
+        </span>`;
+    }
     return `<img src="${NEXBOT_MASCOT_SRC}" class="${className}" alt="" aria-hidden="true" draggable="false">`;
 }
 
@@ -586,34 +596,21 @@ function scheduleNexBotPetIdle() {
     }, delay);
 }
 
-// Maskot bukan sekadar gambar dekoratif: ia mengikuti pointer pada tombol,
-// menyapa saat menerima fokus, dan bereaksi terhadap aktivitas input. Status
-// berpikir/menjawab diatur dari alur chat di bawah agar gerakannya bermakna.
+// Maskot float memakai dua frame pose tangan. Tubuh tidak ditransform atau
+// mengikuti pointer; gerak sapaan datang dari pergantian frame lengan asli.
+// Gestur pointer tetap dihitung untuk interaksi "elus" tanpa menggeser badan.
 function initNexBotMascotInteractions(floatBtn, windowEl, input) {
     if (!floatBtn || floatBtn.dataset.mascotReady === "true") return;
     floatBtn.dataset.mascotReady = "true";
 
-    const icon = floatBtn.querySelector(".nexbot-float-btn-icon");
     const bubble = document.getElementById("nexbotSpeechBubble");
     const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     let lastPointer = null;
     let petTravel = 0;
     let lastPetReaction = 0;
 
-    const resetPointerReaction = () => {
-        if (!icon) return;
-        icon.style.setProperty("--nexbot-look-x", "0px");
-        icon.style.setProperty("--nexbot-look-y", "0px");
-    };
-
-    if (!reduceMotion && icon) {
+    if (!reduceMotion) {
         floatBtn.addEventListener("pointermove", (event) => {
-            const rect = floatBtn.getBoundingClientRect();
-            const x = Math.max(-1, Math.min(1, ((event.clientX - rect.left) / rect.width - 0.5) * 2));
-            const y = Math.max(-1, Math.min(1, ((event.clientY - rect.top) / rect.height - 0.5) * 2));
-            icon.style.setProperty("--nexbot-look-x", `${(x * 4).toFixed(2)}px`);
-            icon.style.setProperty("--nexbot-look-y", `${(y * 3).toFixed(2)}px`);
-
             if (lastPointer) {
                 petTravel += Math.hypot(event.clientX - lastPointer.x, event.clientY - lastPointer.y);
             }
@@ -630,7 +627,6 @@ function initNexBotMascotInteractions(floatBtn, windowEl, input) {
         floatBtn.addEventListener("pointerleave", () => {
             lastPointer = null;
             petTravel = 0;
-            resetPointerReaction();
             scheduleNexBotPetIdle();
         });
     }
@@ -645,7 +641,6 @@ function initNexBotMascotInteractions(floatBtn, windowEl, input) {
     });
     floatBtn.addEventListener("blur", () => {
         floatBtn.classList.remove("is-greeting");
-        resetPointerReaction();
         scheduleNexBotPetIdle();
     });
 
@@ -720,6 +715,8 @@ function initNexBotChat() {
 
         const typingEl = appendNexBotTyping();
         body.scrollTop = body.scrollHeight;
+        const requestController = new AbortController();
+        const requestTimer = setTimeout(() => requestController.abort(), NEXBOT_REQUEST_TIMEOUT_MS);
 
         try {
             const token = localStorage.getItem("nexshop-public-token") || localStorage.getItem("token");
@@ -735,6 +732,7 @@ function initNexBotChat() {
             const res = await nexbotFetch(`${nexbotApiBase()}/ai/chat`, {
                 method: "POST",
                 headers,
+                signal: requestController.signal,
                 body: JSON.stringify({
                     message: text,
                     session_id: sessionId,
@@ -758,8 +756,12 @@ function initNexBotChat() {
 
         } catch (err) {
             typingEl.remove();
-            appendNexBotMessage("Maaf, terjadi masalah pada jaringan.", "bot");
+            const timeoutMessage = err?.name === "AbortError"
+                ? "Respons NexBot terlalu lama. Coba kirim ulang pertanyaanmu; koneksi kamu tidak akan dibiarkan loading terus."
+                : "Koneksi ke NexBot terputus. Periksa jaringan lalu tekan kirim lagi.";
+            appendNexBotMessage(timeoutMessage, "bot");
         } finally {
+            clearTimeout(requestTimer);
             nexbotState.loading = false;
             if (sendBtn) sendBtn.disabled = false;
             windowEl.classList.remove("is-thinking");

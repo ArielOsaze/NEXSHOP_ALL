@@ -59,8 +59,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <script src="/theme-init.js?v=20260812-otp-security"></script>
 <script defer src="/clean-url.js?v=20260825"></script>
-<script defer src="/cookie-consent.js?v=20260825"></script>
-<link rel="stylesheet" href="/style.css?v=20260825-nexbot-wave">
+    <script defer src="/cookie-consent.js?v=20260825-no-float"></script>
+    <link rel="stylesheet" href="/style.css?v=20260825-nexbot-rigged">
 <link rel="stylesheet" href="/tailwind.css?v=20260824-cyan-brand">
 
 <style>
@@ -1143,7 +1143,12 @@ Cek Transaksi
     </button>
     <button type="button" class="nexbot-float-btn group" id="nexbotFloatBtn" aria-label="Buka NexBot">
         <span class="nexbot-pet-sparks" aria-hidden="true"></span>
-        <span class="nexbot-float-btn-icon"><img src="/images/nexbot-mascot.webp" class="nexbot-mascot-image nexbot-mascot-image--float" alt="" aria-hidden="true" draggable="false"></span>
+        <span class="nexbot-float-btn-icon">
+            <span class="nexbot-mascot-frame-stack" aria-hidden="true">
+                <img src="/images/nexbot-mascot.webp" class="nexbot-mascot-image nexbot-mascot-image--float nexbot-mascot-frame--rest" alt="" aria-hidden="true" draggable="false">
+                <img src="/images/nexbot-mascot-wave.webp" class="nexbot-mascot-image nexbot-mascot-image--float nexbot-mascot-frame--wave" alt="" aria-hidden="true" draggable="false">
+            </span>
+        </span>
     </button>
 
     <div class="nexbot-window hidden" id="nexbotWindow">
@@ -1185,8 +1190,10 @@ Cek Transaksi
                 <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Pembayaran pakai apa?"><i class="fa-solid fa-wallet"></i> Pembayaran pakai apa?</button>
                 <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Ada escrow?"><i class="fa-solid fa-handshake-angle"></i> Ada escrow?</button>
                 <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Cara membeli produk?"><i class="fa-solid fa-cart-shopping"></i> Cara membeli produk?</button>
-                <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Cara top up?"><i class="fa-solid fa-bolt"></i> Cara top up?</button>
-                <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Kebijakan refund?"><i class="fa-solid fa-rotate-left"></i> Kebijakan refund?</button>
+                        <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Cara top up?"><i class="fa-solid fa-circle-question"></i> Cara top up?</button>
+                        <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Apa itu Marketplace NexShop?"><i class="fa-solid fa-shop"></i> Apa itu Marketplace NexShop?</button>
+                        <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Cara daftar reseller?"><i class="fa-solid fa-handshake"></i> Cara daftar reseller?</button>
+                        <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Kebijakan refund?"><i class="fa-solid fa-rotate-left"></i> Kebijakan refund?</button>
                 <button type="button" class="nexbot-pill nexbot-quick-btn" data-topic="Hubungi Customer Service"><i class="fa-brands fa-whatsapp"></i> Hubungi Customer Service</button>
             </div>
         </div>
@@ -1445,7 +1452,7 @@ Cek Transaksi
     </div>
 </div>
 
-<script src="/nexbot.js?v=20260825-wave"></script>
+    <script src="/nexbot.js?v=20260825-production"></script>
 <script src="/script.js?v=20260824-search-relevance"></script>
 </body>
 </html>

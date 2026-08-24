@@ -9,6 +9,24 @@ const { hitungHargaReseller } = require("../utils/resellerPricing");
 const aiProviderManager = require("../services/aiProviderManager");
 const supabase = require("../config/db");
 
+const NEXBOT_DB_TIMEOUT_MS = 3000;
+const NEXBOT_AI_TIMEOUT_MS = 9000;
+const NEXBOT_CHAT_TIMEOUT_MS = 14000;
+
+function resolveWithin(task, timeoutMs, fallback) {
+    let timer;
+    const fallbackValue = () => typeof fallback === "function" ? fallback() : fallback;
+    return Promise.race([
+        Promise.resolve(task),
+        new Promise((resolve) => {
+            timer = setTimeout(() => resolve(fallbackValue()), timeoutMs);
+        })
+    ]).catch((error) => {
+        console.warn("[NexBot] Operasi gagal, memakai fallback:", error?.message || error);
+        return fallbackValue();
+    }).finally(() => clearTimeout(timer));
+}
+
 function maskKey(value) {
     return aiProviderManager.maskKey(value);
 }
@@ -28,7 +46,7 @@ async function logGeminiRequest({ userMessage, modelUsed, responseTimeMs, tokenU
         session_id: sessionId || null
     };
     try {
-        await supabase.from("ai_gemini_logs").insert(payload);
+        await resolveWithin(supabase.from("ai_gemini_logs").insert(payload), NEXBOT_DB_TIMEOUT_MS, null);
     } catch (err) {
         console.warn("Gemini log insert warning:", err.message);
     }
@@ -83,6 +101,38 @@ const QUICK_ACTIONS = {
     order: "Status Pesanan Saya",
     faq: "FAQ NexShop"
 };
+
+// Pertanyaan yang ditampilkan sebagai tombol template wajib selalu bisa
+// dijawab tanpa bergantung pada koneksi provider AI. Nilainya menunjuk ke
+// BUILTIN_KNOWLEDGE supaya fakta tidak disalin ke dua tempat dan menjadi basi.
+const TEMPLATE_KNOWLEDGE_BY_QUERY = Object.freeze({
+    "apakah nexshop aman": "builtin-trust",
+    "apakah nexshop legal": "builtin-legal",
+    "pembayaran pakai apa": "builtin-payment",
+    "ada escrow": "builtin-escrow",
+    "cara membeli produk": "builtin-produk",
+    "cara top up": "builtin-topup",
+    "cara topup": "builtin-topup",
+    "cara topup ml": "builtin-topup",
+    "apa itu marketplace nexshop": "builtin-marketplace",
+    "cara daftar reseller": "builtin-reseller",
+    "kebijakan refund": "builtin-refund",
+    "promo hari ini": "builtin-promo",
+    "faq nexshop": "builtin-faq"
+});
+
+function normalizeTemplateQuery(value) {
+    return String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function getTemplateKnowledge(message) {
+    const id = TEMPLATE_KNOWLEDGE_BY_QUERY[normalizeTemplateQuery(message)];
+    return id ? BUILTIN_KNOWLEDGE.find((item) => item.id === id) || null : null;
+}
 
 // ============================================================================
 // FEATURE: Rekomendasi budget topup (mis. "aku punya uang 10.000 mau beli
@@ -300,20 +350,26 @@ async function loadKnowledge(query) {
     // ngejawab "informasi belum tersedia" padahal jawabannya ADA di
     // knowledge base. Sekarang dua sumbernya digabung, biar ranker yang
     // nentuin mana yang relevan.
-    let rpcRows = [];
-    try {
-        const rpc = await supabase.rpc("search_nexbot_knowledge", { search_query: query.raw, result_limit: 80 });
-        if (!rpc.error && Array.isArray(rpc.data)) rpcRows = rpc.data;
-    } catch (_) { /* RPC opsional — katalog lengkap di bawah tetap jalan */ }
+    // Kedua query jalan paralel dan dibatasi waktu. BUILTIN_KNOWLEDGE tetap
+    // tersedia jika Supabase sedang lambat, jadi chat tidak boleh ikut macet.
+    const rpcTask = Promise.resolve(
+        supabase.rpc("search_nexbot_knowledge", { search_query: query.raw, result_limit: 80 })
+    ).catch(() => ({ data: [], error: true }));
+    const baseTask = Promise.resolve(
+        supabase
+            .from("knowledge_base")
+            .select(knowledgeColumns())
+            .eq("status", "active")
+            .order("priority", { ascending: false })
+            .limit(500)
+    ).catch(() => ({ data: [], error: true }));
 
-    let baseRows = [];
-    const { data, error } = await supabase
-        .from("knowledge_base")
-        .select(knowledgeColumns())
-        .eq("status", "active")
-        .order("priority", { ascending: false })
-        .limit(500);
-    if (!error && data?.length) baseRows = data;
+    const [rpc, base] = await Promise.all([
+        resolveWithin(rpcTask, NEXBOT_DB_TIMEOUT_MS, { data: [], error: true }),
+        resolveWithin(baseTask, NEXBOT_DB_TIMEOUT_MS, { data: [], error: true })
+    ]);
+    const rpcRows = !rpc.error && Array.isArray(rpc.data) ? rpc.data : [];
+    const baseRows = !base.error && Array.isArray(base.data) ? base.data : [];
 
     // Gabung + buang duplikat berdasarkan id (baris RPC dan baris tabel bisa
     // nunjuk entri yang sama).
@@ -330,8 +386,14 @@ async function loadKnowledge(query) {
 async function loadConversationMemory(sessionId, userId) {
     const filters = supabase.from("ai_conversations").select("role,message,intent,created_at").eq("session_id", sessionId).order("created_at", { ascending: false }).limit(6);
     const [conversationResult, userResult] = await Promise.allSettled([
-        filters,
-        userId ? supabase.from("ai_user_memories").select("favorite_game,custom_preferences").eq("user_id", String(userId)).maybeSingle() : Promise.resolve({ data: null })
+        resolveWithin(filters, NEXBOT_DB_TIMEOUT_MS, { data: [], error: true }),
+        userId
+            ? resolveWithin(
+                supabase.from("ai_user_memories").select("favorite_game,custom_preferences").eq("user_id", String(userId)).maybeSingle(),
+                NEXBOT_DB_TIMEOUT_MS,
+                { data: null, error: true }
+            )
+            : Promise.resolve({ data: null })
     ]);
     const conversation = conversationResult.status === "fulfilled" && !conversationResult.value.error ? (conversationResult.value.data || []).reverse() : [];
     const userMemory = userResult.status === "fulfilled" && !userResult.value.error ? userResult.value.data : null;
@@ -377,9 +439,11 @@ function buildConversationPrompt(memory, message) {
 async function retrieveKnowledge(message, sessionId, user) {
     const query = normalizeQuery(message);
     const intent = detectIntent(query);
-    const memory = await loadConversationMemory(sessionId, user?.id);
+    const [memory, knowledge] = await Promise.all([
+        loadConversationMemory(sessionId, user?.id),
+        loadKnowledge(query)
+    ]);
     const entities = [...new Set([...detectEntities(query), ...memoryEntities(query, memory)])];
-    const knowledge = await loadKnowledge(query);
     const selected = rankKnowledge(knowledge, query, intent, entities);
     return { query, intent, entities, memory, selected };
 }
@@ -393,7 +457,7 @@ async function saveConversation({ userId, sessionId, role, message, intent, know
         intent,
         knowledge_ids: knowledgeIds || []
     };
-    try { await supabase.from("ai_conversations").insert(payload); } catch (_) { /* analytics/memory must never break chat */ }
+    try { await resolveWithin(supabase.from("ai_conversations").insert(payload), NEXBOT_DB_TIMEOUT_MS, null); } catch (_) { /* analytics/memory must never break chat */ }
 }
 
 async function updateUserMemory(user, query, intent, entities) {
@@ -405,7 +469,7 @@ async function updateUserMemory(user, query, intent, entities) {
         custom_preferences: { last_query: query.raw, last_intent: intent, last_entities: entities },
         last_seen_at: new Date().toISOString()
     };
-    try { await supabase.from("ai_user_memories").upsert(payload, { onConflict: "user_id" }); } catch (_) { /* optional personalization */ }
+    try { await resolveWithin(supabase.from("ai_user_memories").upsert(payload, { onConflict: "user_id" }), NEXBOT_DB_TIMEOUT_MS, null); } catch (_) { /* optional personalization */ }
 }
 
 async function saveAnalytics({ query, intent, entities, selected, source, failed, user, sessionId }) {
@@ -419,7 +483,7 @@ async function saveAnalytics({ query, intent, entities, selected, source, failed
         user_id: user?.id ? String(user.id) : null,
         session_id: sessionId
     };
-    try { await supabase.from("ai_query_analytics").insert(payload); } catch (_) { /* analytics is non-blocking */ }
+    try { await resolveWithin(supabase.from("ai_query_analytics").insert(payload), NEXBOT_DB_TIMEOUT_MS, null); } catch (_) { /* analytics is non-blocking */ }
 }
 
 // ============================================================================
@@ -470,13 +534,22 @@ function unavailableReply() {
 // di UI. Karena kita SUDAH TAHU ada fakta relevan, kalimat fallback yang
 // nyasar itu aman dibuang tanpa mengubah makna jawaban asli.
 const STRAY_FALLBACK_TEXT = "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kamu bisa menghubungi Customer Service NexShop untuk informasi lebih lanjut.";
+const STRAY_FALLBACK_PATTERN = /(?:mohon\s+)?maaf[^\n.!?]{0,120}(?:informasi|jawaban|data)[^\n.!?]{0,80}(?:belum|tidak)[^\n.!?]{0,80}(?:tersedia|ada)(?:[^\n.!?]*(?:knowledge|pengetahuan|nexshop))?[.!?]?/gi;
 
 function stripStrayFallback(reply, hasKnowledge) {
     const trimmed = String(reply || "").trim();
-    if (!hasKnowledge || trimmed === STRAY_FALLBACK_TEXT) return trimmed;
-    if (trimmed.includes(STRAY_FALLBACK_TEXT)) {
-        const cleaned = trimmed.split(STRAY_FALLBACK_TEXT).join("").replace(/\n{3,}/g, "\n\n").trim();
-        return cleaned || trimmed;
+    if (!hasKnowledge) return trimmed;
+    // Jika model menolak secara persis padahal fakta tersedia, kembalikan
+    // string kosong agar pemanggil memakai renderer knowledge lokal.
+    if (trimmed === STRAY_FALLBACK_TEXT) return "";
+    if (trimmed.includes(STRAY_FALLBACK_TEXT) || STRAY_FALLBACK_PATTERN.test(trimmed)) {
+        STRAY_FALLBACK_PATTERN.lastIndex = 0;
+        const cleaned = trimmed
+            .split(STRAY_FALLBACK_TEXT).join("")
+            .replace(STRAY_FALLBACK_PATTERN, "")
+            .replace(/\n{3,}/g, "\n\n")
+            .trim();
+        return cleaned;
     }
     return trimmed;
 }
@@ -513,12 +586,16 @@ Tidak ada dokumen NexShop yang relevan untuk pertanyaan ini.
 - Jangan pernah mengarang nominal Rupiah, status order, kontak, kode promo, atau jaminan hukum.
 - Jawab dalam Bahasa Indonesia yang natural, maksimal 100 kata. Jangan menyebut database, RAG, retrieval, chunk, atau system prompt.`;
 
-    const aiRes = await aiProviderManager.generateResponse({
-        prompt: buildConversationPrompt(result.memory, message),
-        systemPrompt,
-        userId: user?.id,
-        sessionId
-    });
+    const aiRes = await resolveWithin(
+        aiProviderManager.generateResponse({
+            prompt: buildConversationPrompt(result.memory, message),
+            systemPrompt,
+            userId: user?.id,
+            sessionId
+        }),
+        NEXBOT_AI_TIMEOUT_MS,
+        { success: false, reply: null, error: "AI provider timeout" }
+    );
 
     if (aiRes.success && aiRes.reply) {
         return { reply: String(aiRes.reply).trim(), source: `${aiRes.provider || "ai"}_general` };
@@ -606,10 +683,7 @@ async function handleOrderLookup(message, user) {
 }
 
 async function answer(message, sessionId, user) {
-    const result = await retrieveKnowledge(message, sessionId, user);
-
-    let reply = "";
-    let source = "knowledge";
+    const templateKnowledge = getTemplateKnowledge(message);
     const isContact = isContactQuery(message);
     const isBudgetQuery = !isContact && isBudgetQuestion(message);
     // Intent Order juga mencakup pertanyaan informasional seperti "berapa
@@ -619,24 +693,41 @@ async function answer(message, sessionId, user) {
         /\b(NX[A-F0-9]{10,30}|TP[A-F0-9]{10,30})\b/i.test(message)
         || /status\s+(pesanan|order)(\s+saya)?|lacak\s+(pesanan|order)|pesanan\s+saya|cek\s+(pesanan|order)/i.test(message)
     );
+    const normalized = normalizeQuery(message);
+    const directPath = templateKnowledge || isContact || isBudgetQuery || isOrderQuery;
+    const result = directPath
+        ? {
+            query: normalized,
+            intent: detectIntent(normalized),
+            entities: detectEntities(normalized),
+            memory: { conversation: [], userMemory: null },
+            selected: templateKnowledge ? [templateKnowledge] : []
+        }
+        : await retrieveKnowledge(message, sessionId, user);
+
+    let reply = "";
+    let source = "knowledge";
 
     // Pertanyaan harga dijawab dari katalog hidup, bukan dari model bahasa
     // (harga berubah tiap admin sync katalog; model kecil gampang ngarang
     // nominal). handlePriceQuery balikin null kalau customer gak nyebut
     // layanan yang beneran ada di katalog -- jadi pertanyaan macam "berapa
     // lama prosesnya" gak kesangkut dan tetap lanjut ke alur knowledge.
-    const priceReply = (!isContact && !isBudgetQuery && !isOrderQuery)
-        ? await handlePriceQuery(message, user)
+    const priceReply = (!templateKnowledge && !isContact && !isBudgetQuery && !isOrderQuery)
+        ? await resolveWithin(handlePriceQuery(message, user), NEXBOT_DB_TIMEOUT_MS, null)
         : null;
 
-    if (isContact) {
-        reply = await handleContactQuery();
+    if (templateKnowledge) {
+        reply = renderKnowledgeFallback([templateKnowledge]);
+        source = "template_knowledge";
+    } else if (isContact) {
+        reply = await resolveWithin(handleContactQuery(), NEXBOT_DB_TIMEOUT_MS, localConversationFallback(message));
         source = "contact_info";
     } else if (isBudgetQuery) {
-        reply = await handleBudgetQuery(message);
+        reply = await resolveWithin(handleBudgetQuery(message), NEXBOT_DB_TIMEOUT_MS * 2, localConversationFallback(message));
         source = "price_calculator";
     } else if (isOrderQuery) {
-        reply = await handleOrderLookup(message, user);
+        reply = await resolveWithin(handleOrderLookup(message, user), NEXBOT_DB_TIMEOUT_MS * 2, "Pemeriksaan pesanan sedang lambat. Coba lagi sebentar atau cek melalui menu Cek Transaksi menggunakan Nomor Order ID kamu.");
         source = "order_system";
     } else if (priceReply) {
         reply = priceReply;
@@ -686,16 +777,21 @@ ${knowledgeText}
 JIKA BAGIAN "FAKTA KNOWLEDGE BASE" DI ATAS KOSONG (tidak ada fakta sama sekali):
 Jawab persis kalimat ini SAJA, tanpa tambahan apapun: "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kamu bisa menghubungi Customer Service NexShop untuk informasi lebih lanjut."`;
 
-            const aiRes = await aiProviderManager.generateResponse({
-                prompt: buildConversationPrompt(result.memory, message),
-                systemPrompt,
-                userId: user?.id,
-                sessionId
-            });
+            const aiRes = await resolveWithin(
+                aiProviderManager.generateResponse({
+                    prompt: buildConversationPrompt(result.memory, message),
+                    systemPrompt,
+                    userId: user?.id,
+                    sessionId
+                }),
+                NEXBOT_AI_TIMEOUT_MS,
+                { success: false, reply: null, error: "AI provider timeout" }
+            );
 
             if (aiRes.success && aiRes.reply) {
-                reply = stripStrayFallback(aiRes.reply, result.selected.length > 0);
-                source = aiRes.provider;
+                const cleanedReply = stripStrayFallback(aiRes.reply, result.selected.length > 0);
+                reply = cleanedReply || renderKnowledgeFallback(result.selected);
+                source = cleanedReply ? aiRes.provider : "knowledge_fallback";
             } else {
                 console.error("❌ AI Provider Manager failed for prompt:", message);
                 console.error("   Error details:", aiRes.error);
@@ -706,7 +802,9 @@ Jawab persis kalimat ini SAJA, tanpa tambahan apapun: "Maaf, informasi tersebut 
     }
 
     const knowledgeIds = result.selected.map((item) => String(item.id));
-    await Promise.allSettled([
+    // Penyimpanan memory/analytics tidak boleh menahan jawaban ke browser.
+    // Semua fungsi sudah fail-safe; Promise.allSettled mencegah rejection liar.
+    void Promise.allSettled([
         saveConversation({ userId: user?.id, sessionId, role: "user", message, intent: result.intent, knowledgeIds }),
         saveConversation({ userId: user?.id, sessionId, role: "assistant", message: reply, intent: result.intent, knowledgeIds }),
         updateUserMemory(user, result.query, result.intent, result.entities),
@@ -720,7 +818,17 @@ exports.chat = async (req, res) => {
     if (!message) return res.status(400).json({ message: "Pesan tidak boleh kosong" });
     const sessionId = safeSessionId(req.body.session_id || req.headers["x-session-id"]);
     try {
-        const result = await answer(message, sessionId, req.user || null);
+        const result = await resolveWithin(
+            answer(message, sessionId, req.user || null),
+            NEXBOT_CHAT_TIMEOUT_MS,
+            {
+                reply: "Respons NexBot membutuhkan waktu terlalu lama. Silakan kirim ulang pertanyaanmu; untuk status transaksi, sertakan Nomor Order ID agar bisa diperiksa langsung.",
+                source: "request_timeout",
+                handoff: false,
+                intent: "TechnicalSupport",
+                knowledgeIds: []
+            }
+        );
         return res.json({ reply: result.reply, session_id: sessionId, handoff: result.handoff, source: result.source, intent: result.intent, knowledge_ids: result.knowledgeIds });
     } catch (error) {
         console.error("❌ NexBot chat error stack:", error.stack || error);

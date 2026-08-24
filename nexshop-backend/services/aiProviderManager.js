@@ -34,6 +34,19 @@ const DEFAULT_SETTINGS = [
 
 let settingsCache = { data: null, ts: 0 };
 const CACHE_TTL_MS = 15 * 1000;
+const SETTINGS_TIMEOUT_MS = 2500;
+const PROVIDER_TIMEOUT_MS = 4500;
+
+function resolveWithin(task, timeoutMs, fallback) {
+    let timer;
+    return Promise.race([
+        Promise.resolve(task),
+        new Promise((resolve) => { timer = setTimeout(() => resolve(fallback), timeoutMs); })
+    ]).catch((error) => {
+        console.warn("[AI Provider Manager] Operasi gagal, memakai fallback:", error?.message || error);
+        return fallback;
+    }).finally(() => clearTimeout(timer));
+}
 
 function maskKey(value) {
     if (!value) return "Belum diisi";
@@ -50,8 +63,12 @@ async function loadProviderSettings({ fresh = false } = {}) {
     }
 
     const [dbRes, appApiKeys] = await Promise.all([
-        supabase.from("ai_provider_settings").select("*").order("priority", { ascending: true }),
-        getApiKeys({ fresh }).catch(() => ({}))
+        resolveWithin(
+            supabase.from("ai_provider_settings").select("*").order("priority", { ascending: true }),
+            SETTINGS_TIMEOUT_MS,
+            { data: null, error: true }
+        ),
+        resolveWithin(getApiKeys({ fresh }), SETTINGS_TIMEOUT_MS, {})
     ]);
 
     const data = dbRes.data;
@@ -163,7 +180,7 @@ async function logProviderRequest({ provider, model, userPrompt, responseText, l
     };
 
     try {
-        await supabase.from("ai_provider_logs").insert(payload);
+        await resolveWithin(supabase.from("ai_provider_logs").insert(payload), SETTINGS_TIMEOUT_MS, null);
     } catch (err) {
         console.warn("⚠️ Error saving ai_provider_log:", err.message);
     }
@@ -194,15 +211,28 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
 
         console.log(`👉 Selected Provider: ${pConfig.provider} (${pConfig.id}) | Configured Model: ${pConfig.model}`);
 
-        const res = await driver.generateContent({
-            apiKey: pConfig.api_key,
-            preferredModel: pConfig.model,
-            prompt,
-            systemPrompt,
-            httpReferer: pConfig.http_referer,
-            appName: pConfig.app_name,
-            timeoutMs: 10000
-        });
+        const res = await resolveWithin(
+            driver.generateContent({
+                apiKey: pConfig.api_key,
+                preferredModel: pConfig.model,
+                prompt,
+                systemPrompt,
+                httpReferer: pConfig.http_referer,
+                appName: pConfig.app_name,
+                timeoutMs: PROVIDER_TIMEOUT_MS
+            }),
+            PROVIDER_TIMEOUT_MS + 750,
+            {
+                provider: pConfig.id,
+                providerName: pConfig.provider,
+                success: false,
+                reply: null,
+                model: pConfig.model,
+                latencyMs: PROVIDER_TIMEOUT_MS + 750,
+                httpStatus: 504,
+                error: "Provider melewati batas waktu"
+            }
+        );
 
         console.log(`📊 Provider Result Details:`);
         console.log(`   - Current Provider: ${res.providerName || pConfig.provider}`);
@@ -214,7 +244,8 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
             console.log(`   - Error Message: ${res.error}`);
         }
 
-        await logProviderRequest({
+        // Logging observability tidak boleh menahan jawaban customer.
+        void logProviderRequest({
             provider: res.provider || pConfig.id,
             model: res.model,
             userPrompt: prompt,
@@ -257,8 +288,9 @@ async function generateResponse({ prompt, systemPrompt = "", userId = null, sess
         lastError = res.error;
         console.warn(`❌ Provider ${res.providerName || pConfig.provider} failed: ${res.error}`);
         
-        // NexBot strictly requires no silent fallback (Force Groq)
-        break;
+        // Coba provider aktif berikutnya. Dulu loop berhenti di provider
+        // pertama, sehingga konfigurasi fallback tidak pernah berfungsi.
+        continue;
     }
 
     return {

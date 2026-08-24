@@ -719,7 +719,7 @@ i[class*="fa-"] {
 
 .mkt-search-wrap:focus-within {
     border-color: rgba(0, 194, 232, 0.55);
-    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.32), 0 0 0 4px var(--mkt-glow-soft);
+    box-shadow: 0 14px 32px rgba(0, 0, 0, 0.26), 0 0 18px rgba(0, 194, 232, 0.12);
 }
 
 .mkt-search-wrap>i[class*='fa-'] {
@@ -769,6 +769,13 @@ i[class*="fa-"] {
     background: var(--mkt-surface-3);
     color: var(--mkt-text);
     outline: none;
+}
+
+.mkt-search-wrap input:focus,
+.mkt-search-wrap input:focus-visible {
+    border: 0;
+    outline: 0;
+    box-shadow: none;
 }
 
 .mkt-search-btn {
@@ -1352,10 +1359,8 @@ i[class*="fa-"] {
 .market-card {
     position: relative;
     overflow: hidden;
-    background: rgba(12, 18, 35, 0.45);
-    backdrop-filter: blur(16px) saturate(120%);
-    -webkit-backdrop-filter: blur(16px) saturate(120%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(12, 18, 35, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: var(--mkt-radius);
     padding: 1rem;
     display: flex;
@@ -1384,7 +1389,7 @@ i[class*="fa-"] {
 .market-card:hover,
 .market-card:focus-visible {
     border-color: rgba(0, 194, 232, 0.42);
-    background: rgba(12, 18, 35, 0.58);
+    background: rgba(12, 18, 35, 0.38);
     transform: translateY(-4px);
     box-shadow: 0 0 0 1px var(--mkt-glow-soft), 0 18px 34px rgba(0, 0, 0, 0.32);
     outline: none;
@@ -1823,7 +1828,7 @@ i[class*="fa-"] {
 .mkt-detail-search-box input:focus {
     border-color: var(--mkt-primary);
     background: var(--mkt-surface-3);
-    box-shadow: 0 0 0 3px var(--mkt-primary-tint);
+    box-shadow: 0 0 16px var(--mkt-primary-tint);
 }
 
 .mkt-detail-search-box:focus-within>i[class*='fa-'] {
@@ -2201,10 +2206,8 @@ i[class*="fa-"] {
     min-height: 5.4rem;
     padding: 0.9rem 1rem;
     border-radius: var(--mkt-radius-sm);
-    background: rgba(12, 18, 35, 0.45);
-    backdrop-filter: blur(16px) saturate(120%);
-    -webkit-backdrop-filter: blur(16px) saturate(120%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(12, 18, 35, 0.28);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.04);
     font-family: inherit;
     text-align: left;
@@ -2214,7 +2217,7 @@ i[class*="fa-"] {
 
 .mkt-product-tile:hover {
     border-color: rgba(0, 194, 232, 0.35);
-    background: rgba(12, 18, 35, 0.58);
+    background: rgba(12, 18, 35, 0.38);
 }
 
 .mkt-product-tile:active {
@@ -2863,7 +2866,7 @@ i[class*="fa-"] {
 
 :root[data-theme="light"] .market-card,
 :root[data-theme="light"] .mkt-product-tile {
-    background: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.68);
     border-color: rgba(15, 23, 42, 0.1);
     box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
@@ -2871,7 +2874,7 @@ i[class*="fa-"] {
 :root[data-theme="light"] .market-card:hover,
 :root[data-theme="light"] .market-card:focus-visible,
 :root[data-theme="light"] .mkt-product-tile:hover {
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.84);
     border-color: rgba(8, 145, 178, 0.3);
 }
 
@@ -2884,7 +2887,7 @@ i[class*="fa-"] {
 }
 
 :root[data-theme="light"] .mkt-search-wrap:focus-within {
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.1), 0 0 0 4px var(--mkt-glow-soft);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.1), 0 0 16px var(--mkt-glow-soft);
 }
 
 :root[data-theme="light"] .cat-btn-count {
@@ -3494,7 +3497,7 @@ i[class*="fa-"] {
 
 .mkt-bank-search-wrap input[type="text"]:focus {
     border-color: var(--mkt-primary) !important;
-    box-shadow: 0 0 0 3px rgba(0, 194, 232, 0.25) !important;
+    box-shadow: 0 0 14px rgba(0, 194, 232, 0.2) !important;
     background: var(--mkt-surface-3) !important;
 }
 

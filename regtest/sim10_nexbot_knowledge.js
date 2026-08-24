@@ -29,6 +29,9 @@ const nexbotCatalog = require(path.join(BE, "utils", "nexbotCatalog"));
 // bukan salinan yang gampang basi.
 const fs = require("fs");
 const src = fs.readFileSync(path.join(BE, "controllers", "aiController.js"), "utf8");
+const providerManagerSrc = fs.readFileSync(path.join(BE, "services", "aiProviderManager.js"), "utf8");
+const frontendSrc = fs.readFileSync(path.join(__dirname, "..", "nexshop-frontend", "nexbot.js"), "utf8");
+const indexSrc = fs.readFileSync(path.join(__dirname, "..", "nexshop-frontend", "index.html"), "utf8");
 const blokAwal = src.indexOf("const BUILTIN_KNOWLEDGE = [");
 const blokAkhir = src.indexOf("\n];", blokAwal);
 const blok = src.slice(blokAwal + "const BUILTIN_KNOWLEDGE = ".length, blokAkhir + 2);
@@ -158,9 +161,45 @@ cekRetrieval("FAQ NexShop", "builtin-faq");
 cekRetrieval("berapa lama pesanan diproses?", "builtin-process");
 cekRetrieval("kenapa saya tidak bisa login?", "builtin-account");
 
+const templateMappings = {
+    "apakah nexshop aman": "builtin-trust",
+    "apakah nexshop legal": "builtin-legal",
+    "pembayaran pakai apa": "builtin-payment",
+    "ada escrow": "builtin-escrow",
+    "cara membeli produk": "builtin-produk",
+    "cara top up": "builtin-topup",
+    "apa itu marketplace nexshop": "builtin-marketplace",
+    "cara daftar reseller": "builtin-reseller",
+    "kebijakan refund": "builtin-refund",
+    "promo hari ini": "builtin-promo",
+    "faq nexshop": "builtin-faq"
+};
+for (const [query, id] of Object.entries(templateMappings)) {
+    cek(`template "${query}" dipetakan langsung ke ${id}`, src.includes(`"${query}": "${id}"`), true);
+}
+cek("template dijawab tanpa menunggu provider AI", src.includes('source = "template_knowledge"'), true);
+for (const topic of [
+    "Apakah NexShop aman?", "Apakah NexShop legal?", "Pembayaran pakai apa?",
+    "Ada escrow?", "Cara membeli produk?", "Cara top up?",
+    "Apa itu Marketplace NexShop?", "Cara daftar reseller?",
+    "Kebijakan refund?", "Hubungi Customer Service"
+]) {
+    cek(`template "${topic}" konsisten di widget pusat dan halaman utama`,
+        frontendSrc.includes(`topic: "${topic}"`) && indexSrc.includes(`data-topic="${topic}"`), true);
+}
+
 console.log("\n=== 9. Fakta RAG tidak dibuang saat provider AI gagal ===");
 cek("controller memiliki fallback renderer knowledge", src.includes("renderKnowledgeFallback(result.selected)"), true);
 cek("query tanpa knowledge diteruskan ke fallback percakapan", src.includes("answerWithoutKnowledge(message, result, user, sessionId)"), true);
+cek("penolakan persis dari model dibuang saat knowledge tersedia", src.includes('if (trimmed === STRAY_FALLBACK_TEXT) return ""'), true);
+cek("variasi kalimat mohon maaf/knowledge dari model ikut disaring", src.includes("STRAY_FALLBACK_PATTERN") && src.includes(".replace(STRAY_FALLBACK_PATTERN, \"\")"), true);
+
+console.log("\n=== 10. Jalur produksi selalu memiliki batas waktu dan fallback ===");
+cek("frontend membatalkan request chat yang terlalu lama", frontendSrc.includes("NEXBOT_REQUEST_TIMEOUT_MS") && frontendSrc.includes("requestController.abort()"), true);
+cek("backend membatasi keseluruhan request chat", src.includes("NEXBOT_CHAT_TIMEOUT_MS") && src.includes('source: "request_timeout"'), true);
+cek("telemetry tidak menahan jawaban browser", src.includes("void Promise.allSettled(["), true);
+cek("provider berikutnya dicoba setelah provider pertama gagal", providerManagerSrc.includes("Coba provider aktif berikutnya") && !providerManagerSrc.includes("Force Groq"), true);
+cek("logging provider tidak menahan respons", providerManagerSrc.includes("void logProviderRequest({"), true);
 
 console.log("\n==========================================");
 if (gagal === 0) {
