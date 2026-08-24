@@ -2,6 +2,9 @@
 // (audit Agustus 2026). Logic-only, tidak butuh koneksi database -- beda
 // dari test_ssr.js yang integration test terhadap Supabase asli.
 
+const fs = require("fs");
+const path = require("path");
+
 let allPass = true;
 function check(name, cond) {
     console.log(`${cond ? "PASS" : "FAIL"} — ${name}`);
@@ -93,6 +96,37 @@ check(
 check(
     "baseUrl: trailing slash di env value dibuang (konsisten dgn ssrController)",
     resolveBaseUrl("https://nexshop.cloud/") === "https://nexshop.cloud"
+);
+
+// ---- 4. Fallback sitemap statis — Nginx lama/yang belum di-reload dapat
+//         menyajikan file ini langsung, jadi tidak boleh kembali cuma satu URL.
+const frontendDir = path.join(__dirname, "..", "nexshop-frontend");
+const staticSitemap = fs.readFileSync(path.join(frontendDir, "sitemap.xml"), "utf8");
+const staticLocs = [...staticSitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map(match => match[1]);
+const expectedStaticPaths = ["/", "/marketplace", "/berita", "/reseller", "/docs-reseller"];
+
+check(
+    "sitemap statis: memuat lima canonical public pages",
+    expectedStaticPaths.every(pagePath => staticLocs.includes(`https://nexshop.cloud${pagePath}`))
+        && staticLocs.length === expectedStaticPaths.length
+);
+check(
+    "sitemap statis: portal/login privat tidak ikut diindeks",
+    !staticSitemap.includes("portal-reseller") && !staticSitemap.includes("/login") && !staticSitemap.includes("/admin")
+);
+
+// ---- 5. Form pelanggan — selector harus lebih spesifik dari reset input
+//         Tailwind agar field WA/Order ID/checkout tidak menjadi putih lagi.
+const storefrontCss = fs.readFileSync(path.join(frontendDir, "style.css"), "utf8");
+check(
+    "form pelanggan: auth modal memiliki background, border, dan autofill bertema",
+    storefrontCss.includes('.auth-modal input:not([type="hidden"])')
+        && storefrontCss.includes("border: 1px solid rgba(0, 194, 232, .32)")
+        && storefrontCss.includes(".auth-modal input:-webkit-autofill")
+);
+check(
+    "form pelanggan: checkout modal memakai aturan field bertema yang sama",
+    storefrontCss.includes('.checkout-modal input:not([type="hidden"])')
 );
 
 process.exit(allPass ? 0 : 1);

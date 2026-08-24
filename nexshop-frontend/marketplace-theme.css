@@ -1945,7 +1945,7 @@ i[class*="fa-"] {
     width: 100%;
     padding: 0.8rem 0.95rem;
     border-radius: var(--mkt-radius-sm);
-    border: 1px solid var(--mkt-line);
+    border: 1px solid var(--mkt-line-strong);
     background: var(--mkt-surface-2);
     color: var(--mkt-text);
     font-family: inherit;

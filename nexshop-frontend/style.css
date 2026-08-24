@@ -4659,6 +4659,62 @@ select:focus {
     box-shadow: 0 0 0 3px rgba(0, 194, 232, .18);
 }
 
+/* Field yang benar-benar diisi pelanggan perlu selector lebih spesifik dari
+   Tailwind Forms preflight. tailwind.css dimuat setelah file ini di homepage;
+   tanpa scope ini reset Tailwind mengembalikan field WA, Order ID, login, dan
+   checkout ke kotak putih bawaan browser. Scope modal menjaga search/quantity
+   dan komponen khusus lain tetap memakai styling masing-masing. */
+.auth-modal input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.auth-modal select,
+.auth-modal textarea,
+.checkout-modal input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.checkout-modal select,
+.checkout-modal textarea {
+    width: 100%;
+    box-sizing: border-box;
+    appearance: none;
+    background-color: var(--bg-panel-2);
+    border: 1px solid rgba(0, 194, 232, .32);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    color: var(--text);
+    caret-color: var(--cyan);
+    font: inherit;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .025);
+    transition: border-color .2s, box-shadow .2s, background-color .2s;
+}
+
+.auth-modal input::placeholder,
+.auth-modal textarea::placeholder,
+.checkout-modal input::placeholder,
+.checkout-modal textarea::placeholder {
+    color: var(--text-dim);
+    opacity: 1;
+}
+
+.auth-modal input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+.auth-modal select:focus,
+.auth-modal textarea:focus,
+.checkout-modal input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus,
+.checkout-modal select:focus,
+.checkout-modal textarea:focus {
+    outline: none;
+    background-color: var(--bg-panel-3);
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, .16), 0 0 18px rgba(34, 211, 238, .08);
+}
+
+.auth-modal input:-webkit-autofill,
+.auth-modal input:-webkit-autofill:hover,
+.auth-modal input:-webkit-autofill:focus,
+.checkout-modal input:-webkit-autofill,
+.checkout-modal input:-webkit-autofill:hover,
+.checkout-modal input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--text);
+    caret-color: var(--text);
+    box-shadow: 0 0 0 1000px var(--bg-panel-2) inset;
+}
+
 input::placeholder {
     color: var(--text-dim);
 }

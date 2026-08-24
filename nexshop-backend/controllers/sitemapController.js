@@ -28,8 +28,10 @@ exports.generateSitemap = async (req, res) => {
             .order("published_at", { ascending: false });
 
         if (error) {
-            console.error("Sitemap generation error:", error);
-            return res.status(500).send("Error generating sitemap");
+            // Halaman statis tetap harus bisa ditemukan crawler walaupun
+            // Supabase/news sedang bermasalah. Artikel dinamis cukup dilewati
+            // untuk request ini, lalu akan ikut lagi setelah DB pulih.
+            console.error("Sitemap article query error; serving static URLs:", error);
         }
 
         // BUG FIX: sebelumnya baseUrl di-hardcode "https://nexshop.cloud",
@@ -43,18 +45,28 @@ exports.generateSitemap = async (req, res) => {
         let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
         xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
 
-        // Homepage
-        xml += `  <url>\n    <loc>${escapeXml(baseUrl)}/</loc>\n    <lastmod>${today}</lastmod>\n  </url>\n`;
+        // Seluruh halaman publik dengan canonical URL bersih. Login, admin,
+        // dan Partner Portal sengaja tidak masuk karena bukan landing page
+        // publik yang perlu ditemukan lewat mesin pencari.
+        const staticPages = [
+            { path: "/", changefreq: "daily", priority: "1.0" },
+            { path: "/marketplace", changefreq: "daily", priority: "0.9" },
+            { path: "/berita", changefreq: "daily", priority: "0.9" },
+            { path: "/reseller", changefreq: "weekly", priority: "0.8" },
+            { path: "/docs-reseller", changefreq: "weekly", priority: "0.7" }
+        ];
 
-        // News Index
-        xml += `  <url>\n    <loc>${escapeXml(baseUrl)}/berita</loc>\n    <lastmod>${today}</lastmod>\n  </url>\n`;
-
-        // Marketplace & program reseller — halaman statis yang layak diindeks
-        xml += `  <url>\n    <loc>${escapeXml(baseUrl)}/marketplace</loc>\n    <lastmod>${today}</lastmod>\n  </url>\n`;
-        xml += `  <url>\n    <loc>${escapeXml(baseUrl)}/reseller</loc>\n    <lastmod>${today}</lastmod>\n  </url>\n`;
+        for (const page of staticPages) {
+            xml += `  <url>\n`;
+            xml += `    <loc>${escapeXml(baseUrl)}${page.path}</loc>\n`;
+            xml += `    <lastmod>${today}</lastmod>\n`;
+            xml += `    <changefreq>${page.changefreq}</changefreq>\n`;
+            xml += `    <priority>${page.priority}</priority>\n`;
+            xml += `  </url>\n`;
+        }
 
         // Articles
-        if (articles && articles.length > 0) {
+        if (!error && articles && articles.length > 0) {
             const seenSlugs = new Set();
             for (const article of articles) {
                 if (seenSlugs.has(article.slug)) continue;
@@ -71,6 +83,7 @@ exports.generateSitemap = async (req, res) => {
         xml += `</urlset>`;
 
         res.header("Content-Type", "application/xml; charset=utf-8");
+        res.header("Cache-Control", "public, max-age=900, stale-while-revalidate=86400");
         res.send(xml);
 
     } catch (err) {
