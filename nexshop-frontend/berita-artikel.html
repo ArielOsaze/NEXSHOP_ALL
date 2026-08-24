@@ -108,7 +108,7 @@
     background: rgba(0, 194, 232, 0.12);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    color: rgba(216, 180, 254, 0.95);
+    color: var(--cyan);
     border: 1px solid rgba(0, 194, 232, 0.22);
     margin-bottom: 1rem;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -231,7 +231,7 @@
     font-size: 0.75rem; font-weight: 500; text-decoration: none;
     transition: all 0.18s;
 }
-.tag-chip:hover { border-color: var(--violet); color: var(--violet); }
+.tag-chip:hover { border-color: var(--cyan); color: var(--cyan); }
 
 /* Share buttons */
 .share-section { margin-bottom: 2rem; }
@@ -303,7 +303,7 @@
     background: linear-gradient(135deg, var(--bg-panel-2), var(--bg-panel-3));
 }
 .related-body { padding: 0.85rem; display: flex; flex-direction: column; gap: 0.35rem; }
-.related-cat { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--violet); }
+.related-cat { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cyan); }
 .related-title {
     font-family: 'Sora', sans-serif; font-size: 0.82rem; font-weight: 700;
     color: var(--text); line-height: 1.35;
@@ -422,7 +422,7 @@
                     <span>Terdaftar melalui OSS</span>
                 </div>
 
-                <a href="/legalitas.html" class="nx-footer__legal-link">
+            <a href="/legalitas" class="nx-footer__legal-link">
                     Informasi legalitas <i class="fa-solid fa-arrow-right"></i>
                 </a>
             </div>
@@ -494,7 +494,7 @@ function readingTime(content) {
 }
 
 function articlePath(slug) {
-    return `/berita-artikel.html?slug=${encodeURIComponent(slug)}`;
+    return `/berita/${encodeURIComponent(slug)}`;
 }
 
 function categoryIcon(cat) {

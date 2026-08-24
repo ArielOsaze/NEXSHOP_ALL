@@ -28,7 +28,7 @@ form.addEventListener("submit", async (event) => {
 
         localStorage.setItem(PUBLIC_TOKEN_STORAGE_KEY, data.token);
         localStorage.setItem("nexshop_user", JSON.stringify(data.user));
-        window.location.assign("index.html");
+        window.location.assign("/");
     } catch (error) {
         status.textContent = error.message || "Gagal terhubung ke server.";
         status.classList.add("is-error");

@@ -203,7 +203,7 @@
         .cat-btn.active {
             background: rgba(0, 194, 232, 0.15);
             border-color: rgba(0, 194, 232, 0.4);
-            color: var(--violet);
+            color: var(--cyan);
             box-shadow: 0 0 15px rgba(0, 194, 232, 0.1);
         }
 
@@ -291,7 +291,7 @@
             background: rgba(0, 194, 232, 0.12);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            color: rgba(216, 180, 254, 0.95);
+            color: var(--cyan);
             border: 1px solid rgba(0, 194, 232, 0.22);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
@@ -796,7 +796,7 @@
                         <span>Terdaftar melalui OSS</span>
                     </div>
 
-                    <a href="/legalitas.html" class="nx-footer__legal-link">
+                    <a href="/legalitas" class="nx-footer__legal-link">
                         Informasi legalitas <i class="fa-solid fa-arrow-right"></i>
                     </a>
                 </div>
@@ -870,7 +870,7 @@
         }
 
         function articlePath(slug) {
-            return `/berita-artikel.html?slug=${encodeURIComponent(slug)}`;
+            return `/berita/${encodeURIComponent(slug)}`;
         }
 
         function imgOrPlaceholder(imageUrl, alt, icon = "fa-gamepad") {

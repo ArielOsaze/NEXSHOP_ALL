@@ -8,25 +8,6 @@
 <link rel="canonical" href="https://nexshop.cloud/">
 <meta name="author" content="Ariel">
 
-<script>
-    // Fallback Router: Jika Nginx belum di-reload dan mengembalikan index.html untuk URL News/Marketplace
-    const path = window.location.pathname;
-    if (path === "/berita" || path === "/berita/") {
-        window.location.replace("/berita.html");
-    } else if (path.startsWith("/berita/") && path.length > 8) {
-        const slug = path.substring(8).replace(/\/$/, "");
-        window.location.replace("/berita-artikel.html?slug=" + encodeURIComponent(slug));
-    } else if (path === "/marketplace" || path === "/marketplace/" || path === "/one-stop" || path === "/one-stop/") {
-        window.location.replace("/marketplace.html" + window.location.search);
-    } else if (path === "/reseller" || path === "/reseller/") {
-        window.location.replace("/reseller.html" + window.location.search);
-    } else if (path === "/portal-reseller" || path === "/portal-reseller/") {
-        window.location.replace("/portal-reseller.html" + window.location.search);
-    } else if (path === "/docs-reseller" || path === "/docs-reseller/") {
-        window.location.replace("/docs-reseller.html" + window.location.search);
-    }
-</script>
-
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://nexshop.cloud/">

@@ -240,7 +240,7 @@
                             ? `<button class="btn btn-xs btn-outline-success" onclick="editorialPublishOne(${art.id})" title="Publish"><i class="bi bi-send-check"></i></button>`
                             : `<button class="btn btn-xs btn-outline-secondary" onclick="editorialUnpublishOne(${art.id})" title="Draft"><i class="bi bi-file-earmark"></i></button>`
                         }
-                        <a class="btn btn-xs btn-outline-light" href="/berita-artikel.html?slug=${encodeURIComponent(art.slug)}" target="_blank" title="Lihat publik"><i class="bi bi-box-arrow-up-right"></i></a>
+        <a class="btn btn-xs btn-outline-light" href="/berita/${encodeURIComponent(art.slug)}" target="_blank" title="Lihat publik"><i class="bi bi-box-arrow-up-right"></i></a>
                         <button class="btn btn-xs btn-outline-danger" onclick="editorialDeleteOne(${art.id},'${editSafe(art.title,60)}')" title="Hapus"><i class="bi bi-trash"></i></button>
                     </div>
                 </td>

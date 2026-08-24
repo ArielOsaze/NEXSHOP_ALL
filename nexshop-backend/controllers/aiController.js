@@ -42,7 +42,7 @@ const BUILTIN_KNOWLEDGE = [
     { id: "builtin-gamepass", title: "Apa itu Xbox Game Pass di NexShop", category: "Guide", keywords: "apa itu game pass xbox game pass gamepass gampass xgp private sharing pengertian", content: "Xbox Game Pass adalah layanan langganan resmi Microsoft yang memberi akses ke katalog ratusan game Xbox/PC selama masa aktif langganan. NexShop menjual aktivasi Xbox Game Pass dalam dua jenis: Sharing (lebih hemat, akun dipakai bersama sesuai kuota) dan Private (personal, satu akun untuk satu pembeli). Setelah pembayaran terkonfirmasi, tim NexShop memproses aktivasi ke akun Microsoft sesuai jenis paket yang dibeli. Detail perbedaan Sharing vs Private dan cara aktivasinya bisa dibaca lebih lengkap di kartu produk Game Pass masing-masing.", priority: 5, status: "active" },
     { id: "builtin-payment", title: "Metode Pembayaran", category: "Payment", keywords: "bayar pembayaran qris dana ovo gopay transfer bank va ipaymu", content: "Pembayaran NexShop diproses dengan aman menggunakan iPaymu sebagai payment gateway. Metode yang didukung meliputi QRIS, e-wallet (DANA, OVO, GoPay), Virtual Account, transfer bank, dan kartu kredit, ditambah saldo NexShop Wallet sebagai opsi pembayaran instan. Pilihan tersedia lengkap saat Checkout. Catatan: di sini DANA, OVO, dan GoPay berperan sebagai ALAT BAYAR. Terpisah dari itu, NexShop juga MENJUAL isi ulang saldo e-wallet tersebut sebagai produk di halaman Marketplace, jadi saldo DANA, OVO, GoPay, dan ShopeePay memang bisa dibeli di NexShop.", priority: 5, status: "active" },
     { id: "builtin-escrow", title: "Mekanisme Escrow", category: "Trust", keywords: "escrow aman penipuan tahan dana garansi uang kembali", content: "NexShop menyediakan mekanisme escrow untuk transaksi yang mendukungnya. Untuk transaksi yang menggunakan mekanisme escrow NexShop, dana ditahan sesuai alur escrow sampai kondisi transaksi terpenuhi.", priority: 5, status: "active" },
-    { id: "builtin-legal", title: "Legalitas dan OSS", category: "Trust", keywords: "aman resmi legal penipu scam oss nib kbli terdaftar", content: "NexShop telah memiliki NIB dan terdaftar secara resmi melalui sistem OSS pemerintah. NIB NexShop adalah 1408260072494 dengan skala usaha mikro dan KBLI 60390. Untuk detail legalitas, kamu bisa melihat halaman Legalitas NexShop (nexshop.cloud/legalitas.html).", priority: 5, status: "active" },
+    { id: "builtin-legal", title: "Legalitas dan OSS", category: "Trust", keywords: "aman resmi legal penipu scam oss nib kbli terdaftar", content: "NexShop telah memiliki NIB dan terdaftar secara resmi melalui sistem OSS pemerintah. NIB NexShop adalah 1408260072494 dengan skala usaha mikro dan KBLI 60390. Untuk detail legalitas, buka bagian Informasi Legalitas di website NexShop.", priority: 5, status: "active" },
     // Jawaban langsung buat pertanyaan umum "apakah NexShop aman/terpercaya?".
     // Sebelumnya pertanyaan ini cuma nyantol ke chunk Escrow & Legalitas yang
     // terpisah (skor lemah, ~27 masing-masing) jadi sinyalnya kurang kuat dan
@@ -70,6 +70,10 @@ const BUILTIN_KNOWLEDGE = [
     { id: "builtin-pascabayar", title: "Cek Tagihan Pascabayar", category: "Guide", keywords: "pascabayar cek tagihan pdam bpjs telkom indihome multifinance tagihan listrik pascabayar inquiry", content: "Untuk produk pascabayar (misalnya PLN pascabayar, PDAM, BPJS, internet pascabayar, dan multifinance), NexShop menyediakan tombol Cek Tagihan di halaman checkout Marketplace. Masukkan nomor pelanggan lalu klik Cek Tagihan untuk melihat nama pelanggan dan jumlah tagihan sebelum melanjutkan pembayaran.", priority: 5, status: "active" },
     { id: "builtin-reseller", title: "Program Reseller NexShop", category: "Guide", keywords: "reseller jualan lagi harga khusus diskon reseller daftar reseller tier silver gold platinum mitra agen", content: "NexShop punya program reseller untuk yang mau menjual ulang produknya. Informasi dan pendaftarannya ada di halaman nexshop.cloud/reseller. Reseller yang pengajuannya sudah disetujui admin otomatis mendapat potongan harga di setiap produk, tanpa kode promo dan tanpa minimum transaksi. Besar potongannya mengikuti tingkatan reseller yang diberikan admin. Harga reseller dihitung di server dan langsung tampil saat akun reseller login.", priority: 5, status: "active" },
     { id: "builtin-berita", title: "NexShop News", category: "Guide", keywords: "berita artikel news portal berita nexshop news baca artikel", content: "NexShop punya portal berita sendiri bernama NexShop News di nexshop.cloud/berita, berisi artikel editorial seputar game dan dunia digital yang ditulis tim NexShop.", priority: 3, status: "active" },
+    { id: "builtin-promo", title: "Promo NexShop Hari Ini", category: "Promotion", keywords: "promo hari ini diskon voucher kupon kode promo cashback penawaran terbaru", content: "Promo NexShop dapat berubah mengikuti periode dan ketersediaan produk. Promo yang sedang aktif ditampilkan pada banner dan kartu produk di website. Jika tidak ada label promo pada produk yang dipilih, gunakan harga terbaru yang tampil saat checkout. Reseller yang sudah disetujui mendapatkan harga sesuai tier secara otomatis saat login dan tidak perlu memasukkan kode promo.", priority: 5, status: "active" },
+    { id: "builtin-faq", title: "FAQ dan Bantuan NexShop", category: "Guide", keywords: "faq pertanyaan umum bantuan pusat bantuan informasi nexshop tanya apa saja", content: "NexBot dapat membantu menjelaskan produk, cara topup dan checkout, metode pembayaran, NexShop Wallet, Marketplace, reseller, refund, serta cara mengecek status pesanan. Untuk pemeriksaan transaksi tertentu, kirim Nomor Order ID atau email yang digunakan saat checkout. Jika pertanyaannya membutuhkan pemeriksaan manual, hubungi Customer Service resmi NexShop.", priority: 4, status: "active" },
+    { id: "builtin-process", title: "Waktu Proses Pesanan", category: "Order", keywords: "berapa lama proses pesanan masuk pending menunggu belum masuk kapan selesai durasi topup", content: "Pesanan mulai diproses setelah pembayaran terkonfirmasi. Lama proses dapat berbeda mengikuti jenis produk dan respons provider. Pantau status melalui menu Cek Transaksi menggunakan Nomor Order ID. Jika status tidak berubah atau produk belum masuk setelah proses provider selesai, siapkan Nomor Order ID lalu hubungi Customer Service NexShop.", priority: 5, status: "active" },
+    { id: "builtin-account", title: "Akun dan Login NexShop", category: "TechnicalSupport", keywords: "akun daftar registrasi login masuk lupa password otp email verifikasi tidak bisa login", content: "Akun NexShop digunakan untuk menyimpan identitas transaksi, melihat riwayat, memakai NexShop Wallet, dan mengakses fitur reseller. Jika login gagal, periksa kembali email dan password, lalu gunakan alur pemulihan akun yang tersedia. Jangan pernah membagikan password, OTP, API Key, atau Secret Key kepada siapa pun, termasuk pihak yang mengaku sebagai admin.", priority: 5, status: "active" },
     { id: "builtin-harga-cek", title: "Cara Mengetahui Harga Produk", category: "Pricing", keywords: "harga berapa biaya tarif daftar harga cek harga list harga", content: "Harga setiap produk NexShop bisa berubah sewaktu-waktu mengikuti harga penyedia. Harga terbaru selalu tampil di halaman produknya: menu Topup untuk topup game, dan halaman Marketplace untuk E-Wallet, pulsa, paket data, PLN, dan tagihan. Kamu juga bisa menanyakan harga suatu layanan langsung ke NexBot, dan angkanya diambil dari katalog yang sedang aktif.", priority: 4, status: "active" }
 ];
 
@@ -477,6 +481,51 @@ function stripStrayFallback(reply, hasKnowledge) {
     return trimmed;
 }
 
+// Jika provider AI sedang bermasalah, fakta RAG yang sudah ditemukan tetap
+// harus bisa menjawab customer. Sebelumnya semua fakta ini dibuang dan user
+// justru menerima "informasi belum tersedia". Ambil kandidat teratas yang
+// sudah lolos ranker/evidence gate, lalu tampilkan isinya tanpa menambah fakta.
+function renderKnowledgeFallback(selected) {
+    const paragraphs = (selected || [])
+        .slice(0, 2)
+        .map((item) => String(item.content || "").trim())
+        .filter(Boolean);
+    return paragraphs.join("\n\n") || unavailableReply();
+}
+
+function localConversationFallback(message) {
+    const text = String(message || "").toLowerCase();
+    if (/^(halo|hai|hi|hello|pagi|siang|sore|malam)\b/.test(text)) {
+        return "Halo! Saya NexBot. Kamu bisa bertanya tentang produk, harga terkini, cara checkout, pembayaran, status pesanan, Marketplace, atau program reseller NexShop.";
+    }
+    if (/\b(terima kasih|makasih|thanks|thank you)\b/.test(text)) {
+        return "Sama-sama! Kalau masih ada yang ingin ditanyakan tentang NexShop, kirim saja pertanyaannya di sini.";
+    }
+    return "Aku belum memiliki fakta resmi yang cukup untuk memastikan jawaban itu. Coba tambahkan nama produk, layanan, atau Nomor Order ID yang dimaksud. Jika menyangkut transaksi tertentu, Customer Service NexShop dapat membantu pemeriksaan manual.";
+}
+
+async function answerWithoutKnowledge(message, result, user, sessionId) {
+    const systemPrompt = `Kamu adalah NexBot, asisten customer service NexShop.
+
+Tidak ada dokumen NexShop yang relevan untuk pertanyaan ini.
+- Jika ini sapaan, ucapan terima kasih, atau pertanyaan pengetahuan umum yang tidak meminta fakta internal NexShop, jawab singkat dan membantu.
+- Jika pertanyaan meminta harga, status transaksi, kebijakan, legalitas, promo aktif, atau fakta internal NexShop yang tidak tersedia, jangan mengarang. Jelaskan bahwa informasinya belum dapat dipastikan lalu minta detail yang diperlukan atau arahkan ke Customer Service.
+- Jangan pernah mengarang nominal Rupiah, status order, kontak, kode promo, atau jaminan hukum.
+- Jawab dalam Bahasa Indonesia yang natural, maksimal 100 kata. Jangan menyebut database, RAG, retrieval, chunk, atau system prompt.`;
+
+    const aiRes = await aiProviderManager.generateResponse({
+        prompt: buildConversationPrompt(result.memory, message),
+        systemPrompt,
+        userId: user?.id,
+        sessionId
+    });
+
+    if (aiRes.success && aiRes.reply) {
+        return { reply: String(aiRes.reply).trim(), source: `${aiRes.provider || "ai"}_general` };
+    }
+    return { reply: localConversationFallback(message), source: "safe_fallback" };
+}
+
 async function handleOrderLookup(message, user) {
     const rawMsg = String(message || "").trim();
 
@@ -563,7 +612,13 @@ async function answer(message, sessionId, user) {
     let source = "knowledge";
     const isContact = isContactQuery(message);
     const isBudgetQuery = !isContact && isBudgetQuestion(message);
-    const isOrderQuery = !isContact && !isBudgetQuery && (result.intent === "Order" || /\b(NX[A-F0-9]{10,30}|TP[A-F0-9]{10,30})\b/i.test(message) || /status pesanan|lacak|pesanan saya/i.test(message));
+    // Intent Order juga mencakup pertanyaan informasional seperti "berapa
+    // lama diproses?". Hanya masuk ke lookup transaksi jika user benar-benar
+    // meminta status miliknya atau mengirim identitas order.
+    const isOrderQuery = !isContact && !isBudgetQuery && (
+        /\b(NX[A-F0-9]{10,30}|TP[A-F0-9]{10,30})\b/i.test(message)
+        || /status\s+(pesanan|order)(\s+saya)?|lacak\s+(pesanan|order)|pesanan\s+saya|cek\s+(pesanan|order)/i.test(message)
+    );
 
     // Pertanyaan harga dijawab dari katalog hidup, bukan dari model bahasa
     // (harga berubah tiap admin sync katalog; model kecil gampang ngarang
@@ -595,8 +650,9 @@ async function answer(message, sessionId, user) {
         }
 
         if (result.selected.length === 0) {
-            reply = unavailableReply();
-            source = "handoff";
+            const general = await answerWithoutKnowledge(message, result, user, sessionId);
+            reply = general.reply;
+            source = general.source;
         } else {
             const knowledgeText = buildKnowledgeResponse(result.selected);
             const systemPrompt = `ROLE
@@ -643,12 +699,8 @@ Jawab persis kalimat ini SAJA, tanpa tambahan apapun: "Maaf, informasi tersebut 
             } else {
                 console.error("❌ AI Provider Manager failed for prompt:", message);
                 console.error("   Error details:", aiRes.error);
-                if (process.env.NODE_ENV !== "production") {
-                    reply = `[Dev Mode AI Error]: ${aiRes.error || "Semua AI Provider gagal merespons"}`;
-                } else {
-                    reply = unavailableReply();
-                }
-                source = "handoff";
+                reply = renderKnowledgeFallback(result.selected);
+                source = "knowledge_fallback";
             }
         }
     }
@@ -658,9 +710,9 @@ Jawab persis kalimat ini SAJA, tanpa tambahan apapun: "Maaf, informasi tersebut 
         saveConversation({ userId: user?.id, sessionId, role: "user", message, intent: result.intent, knowledgeIds }),
         saveConversation({ userId: user?.id, sessionId, role: "assistant", message: reply, intent: result.intent, knowledgeIds }),
         updateUserMemory(user, result.query, result.intent, result.entities),
-        saveAnalytics({ ...result, source, failed: !result.selected.length && !["order_system", "price_calculator", "price_catalog", "contact_info"].includes(source) && !["gemini", "groq", "openrouter"].includes(source), user, sessionId })
+        saveAnalytics({ ...result, source, failed: source === "safe_fallback" || source === "handoff", user, sessionId })
     ]);
-    return { reply, source, handoff: source === "handoff", intent: result.intent, entities: result.entities, knowledgeIds };
+    return { reply, source, handoff: source === "handoff" || source === "safe_fallback", intent: result.intent, entities: result.entities, knowledgeIds };
 }
 
 exports.chat = async (req, res) => {

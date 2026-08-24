@@ -187,8 +187,8 @@ exports.createTopup = async (req, res) => {
                     buyerName,
                     buyerEmail,
                     buyerPhone,
-                    returnUrl: `${FRONTEND_URL}/marketplace.html?topup=${topupId}&status=success`,
-                    cancelUrl: `${FRONTEND_URL}/marketplace.html?topup=${topupId}&status=cancel`,
+                    returnUrl: `${FRONTEND_URL}/marketplace?topup=${topupId}&status=success`,
+                    cancelUrl: `${FRONTEND_URL}/marketplace?topup=${topupId}&status=cancel`,
                     notifyUrl,
                     paymentMethod: ipaymuMethod
                 });
@@ -211,8 +211,8 @@ exports.createTopup = async (req, res) => {
                 buyerName,
                 buyerEmail,
                 buyerPhone,
-                returnUrl: `${FRONTEND_URL}/marketplace.html?topup=${topupId}&status=success`,
-                cancelUrl: `${FRONTEND_URL}/marketplace.html?topup=${topupId}&status=cancel`,
+                returnUrl: `${FRONTEND_URL}/marketplace?topup=${topupId}&status=success`,
+                cancelUrl: `${FRONTEND_URL}/marketplace?topup=${topupId}&status=cancel`,
                 notifyUrl,
                 paymentMethod: ipaymuMethod
             });

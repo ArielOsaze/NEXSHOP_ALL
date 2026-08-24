@@ -1801,6 +1801,12 @@ document.querySelectorAll("[data-policy-tab]").forEach(btn => {
     });
 });
 
+// URL publik /legalitas tetap memakai modal legalitas homepage, tetapi URL
+// kanoniknya bersih dan bisa dibagikan langsung tanpa ekstensi .html.
+if (["/legalitas", "/legalitas/"].includes(window.location.pathname)) {
+    openPolicy("legal");
+}
+
 /* ---------- NexShop News (artikel editorial) ---------- */
 function formatNewsDate(value) {
     const date = new Date(value);

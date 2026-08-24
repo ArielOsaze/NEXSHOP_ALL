@@ -60,6 +60,12 @@ function cekRetrieval(pertanyaan, idHarusAda) {
     );
 }
 
+function cekRetrievalTeratas(pertanyaan, idHarusTeratas) {
+    const { intent, selected } = pilih(pertanyaan);
+    const aktual = selected[0] || "KOSONG";
+    cek(`"${pertanyaan}" memilih fakta teratas yang tepat (intent=${intent})`, aktual, idHarusTeratas);
+}
+
 console.log("=== 1. Chunk knowledge tersedia ===");
 const ids = BUILTIN_KNOWLEDGE.map((k) => k.id);
 console.log("   total chunk builtin:", BUILTIN_KNOWLEDGE.length);
@@ -69,6 +75,10 @@ for (const wajib of [
     "builtin-pascabayar",
     "builtin-reseller",
     "builtin-berita",
+    "builtin-promo",
+    "builtin-faq",
+    "builtin-process",
+    "builtin-account",
     "builtin-harga-cek"
 ]) {
     cek(`chunk ${wajib} ada`, ids.includes(wajib), true);
@@ -93,6 +103,7 @@ cekRetrieval("cara cek tagihan pascabayar PDAM", "builtin-pascabayar");
 cekRetrieval("apa itu program reseller nexshop?", "builtin-reseller");
 cekRetrieval("saya mau jadi reseller caranya gimana", "builtin-reseller");
 cekRetrieval("nexshop punya portal berita?", "builtin-berita");
+cekRetrievalTeratas("bisa isi saldo DANA gak di sini?", "builtin-marketplace");
 
 console.log("\n=== 4. Pertanyaan lama tidak boleh rusak ===");
 cekRetrieval("apakah nexshop aman?", "builtin-trust");
@@ -133,6 +144,23 @@ cekRetrieval("apa itu nexshop wallet?", "builtin-wallet");
 cekRetrieval("cara isi saldo nexshop wallet gimana?", "builtin-wallet");
 cekRetrieval("gimana cara top up saldo wallet nexshop", "builtin-wallet");
 cekRetrieval("apa itu game pass?", "builtin-gamepass");
+
+console.log("\n=== 8. Seluruh pertanyaan template punya knowledge ===");
+cekRetrieval("Apakah NexShop aman?", "builtin-trust");
+cekRetrieval("Apakah NexShop legal?", "builtin-legal");
+cekRetrieval("Pembayaran pakai apa?", "builtin-payment");
+cekRetrieval("Ada escrow?", "builtin-escrow");
+cekRetrieval("Cara membeli produk?", "builtin-produk");
+cekRetrieval("Cara top up?", "builtin-topup");
+cekRetrieval("Kebijakan refund?", "builtin-refund");
+cekRetrieval("Promo Hari Ini", "builtin-promo");
+cekRetrieval("FAQ NexShop", "builtin-faq");
+cekRetrieval("berapa lama pesanan diproses?", "builtin-process");
+cekRetrieval("kenapa saya tidak bisa login?", "builtin-account");
+
+console.log("\n=== 9. Fakta RAG tidak dibuang saat provider AI gagal ===");
+cek("controller memiliki fallback renderer knowledge", src.includes("renderKnowledgeFallback(result.selected)"), true);
+cek("query tanpa knowledge diteruskan ke fallback percakapan", src.includes("answerWithoutKnowledge(message, result, user, sessionId)"), true);
 
 console.log("\n==========================================");
 if (gagal === 0) {

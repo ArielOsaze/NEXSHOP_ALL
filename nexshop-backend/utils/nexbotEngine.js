@@ -76,7 +76,7 @@ const INTENTS = {
     Recommendation: ["rekomendasi", "saran", "cocok", "bagus mana"],
     Payment: ["bayar", "pembayaran", "payment", "qris", "dana", "ovo", "gopay", "transfer", "bank", "va", "ipaymu"],
     Refund: ["refund", "batal", "uang kembali", "garansi", "komplain"],
-    Order: ["status pesanan", "status order", "pesanan", "lacak", "tracking", "belum masuk"],
+    Order: ["status pesanan", "status order", "pesanan", "lacak", "tracking", "belum masuk", "berapa lama", "lama proses", "kapan selesai", "diproses"],
     TechnicalSupport: ["error", "gagal", "tidak bisa", "masalah", "kendala", "login", "otp"],
     Promotion: ["promo", "diskon", "voucher", "kupon", "kode promo"],
     // Intent khusus layanan Marketplace/PPOB, biar pertanyaan "bisa isi
@@ -203,6 +203,13 @@ const PRODUCT_SCOPED_PATTERN = /game ?pass|gamepass|xbox|steam|mobile legends|fr
 function inferKnowledgeIntent(item) {
     const text = `${item.title || ""} ${item.category || ""} ${item.keywords || ""}`.toLowerCase();
     const cat = String(item.category || "").toLowerCase();
+
+    // Marketplace adalah layanan yang dijual, bukan sekadar metode bayar.
+    // Deteksi sebelum safeguard kategori Guide agar chunk isi DANA/pulsa/PLN
+    // tidak kalah dari artikel payment yang kebetulan menyebut DANA/OVO.
+    if (/marketplace|ppob|isi ulang e-?wallet|pulsa|paket data|token listrik|pascabayar/.test(text)) {
+        return "Marketplace";
+    }
     
     // Explicit category safeguard so product/game guides aren't confused as generic Trust/Escrow
     if (cat === "guide" || cat === "product" || cat === "news") {
@@ -288,12 +295,13 @@ function scoreKnowledge(item, query, intent, entities) {
         Definition: ["Definition", "Comparison", "Guide"],
         Comparison: ["Comparison", "Definition"],
         Recommendation: ["Recommendation", "Pricing", "Purchase", "Comparison"],
+        Marketplace: ["Marketplace", "Guide", "Purchase", "Pricing"],
         Order: ["Order", "TechnicalSupport", "Refund"],
         Refund: ["Refund", "Order", "TechnicalSupport"],
         TechnicalSupport: ["TechnicalSupport", "Guide", "Order"]
     };
 
-    const isStrictIntent = ["Trust", "Legality", "Payment", "Refund", "Escrow"].includes(intent);
+    const isStrictIntent = ["Trust", "Legality", "Payment", "Refund", "Escrow", "Marketplace"].includes(intent);
     let intentScore = -25;
 
     if (intent === knowledgeIntent) {

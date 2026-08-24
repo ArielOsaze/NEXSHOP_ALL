@@ -11,7 +11,7 @@ const BASE_URL = 'https://nexshop.cloud';
 
 const PUBLIC_ROUTES = [
     { url: `${BASE_URL}/`, title: 'NexShop Beranda' },
-    { url: `${BASE_URL}/legalitas.html`, title: 'Legalitas NexShop' },
+    { url: `${BASE_URL}/legalitas`, title: 'Legalitas NexShop' },
     { url: `${BASE_URL}/berita`, title: 'Portal Berita NexShop' },
     // Tambahkan halaman public lainnya sesuai kebutuhan
 ];
