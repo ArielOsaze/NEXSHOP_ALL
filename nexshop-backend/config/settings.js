@@ -186,7 +186,9 @@ async function getStoreSettings({ fresh = false } = {}) {
         wa_notify_otp_enabled: true,
         wa_template_pending: "Halo {name}, pesanan kamu #{order_id} berhasil dibuat!\n\nSilakan lakukan pembayaran sebesar {total} sebelum waktu habis.\n\nTerima kasih, NexShop.",
         wa_template_success: "Halo {name}, pembayaran untuk pesanan #{order_id} sebesar {total} telah kami terima.\n\nPesanan sedang diproses, terima kasih sudah berbelanja di NexShop!",
-        wa_template_otp: "Halo!\n\nKode OTP NexShop kamu adalah: *{otp}*\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun."
+        wa_template_otp: "Halo!\n\nKode OTP NexShop kamu adalah: *{otp}*\n\nKode ini berlaku selama 10 menit. Jangan berikan kode ini kepada siapapun.",
+        seo_screenshot_base_url: process.env.SEO_SCREENSHOT_BASE_URL || process.env.FRONTEND_URL || "https://nexshop.cloud",
+        chrome_executable_path: process.env.CHROME_EXECUTABLE_PATH || ""
     };
 
     storeSettingsCache = { data: merged, ts: now };
@@ -199,6 +201,7 @@ async function updateStoreSettings(payload) {
         "address", "logo_url", "faq", "terms_content", "refund_content", "trust_bar_enabled",
         "trust_bar_orders_offset", "trust_bar_games_offset", "event_mascot",
         "ticker_text", "ticker_speed_seconds",
+        "seo_screenshot_base_url", "chrome_executable_path",
         "fonnte_user_enabled", "wa_notify_pending_enabled", "wa_notify_success_enabled",
         "wa_notify_otp_enabled", "wa_template_pending", "wa_template_success", "wa_template_otp"
     ];

@@ -11,13 +11,15 @@
 <meta id="ogUrl"         property="og:url"         content="">
 <meta id="ogTitle"       property="og:title"       content="">
 <meta id="ogDesc"        property="og:description" content="">
-<meta id="ogImage"       property="og:image"       content="">
+<meta id="ogImage"       property="og:image"       content="https://nexshop.cloud/api/seo/thumbnail?page=berita">
+<meta                    property="og:image:width"  content="1200">
+<meta                    property="og:image:height" content="630">
 <meta                    property="og:type"         content="article">
 <meta                    property="og:site_name"    content="NexShop">
 <meta id="twCard"        name="twitter:card"       content="summary_large_image">
 <meta id="twTitle"       name="twitter:title"      content="">
 <meta id="twDesc"        name="twitter:description" content="">
-<meta id="twImage"       name="twitter:image"      content="">
+<meta id="twImage"       name="twitter:image"      content="https://nexshop.cloud/api/seo/thumbnail?page=berita">
 <meta id="artPublished"  property="article:published_time" content="">
 <meta id="artModified"   property="article:modified_time"  content="">
 <meta id="artAuthor"     property="article:author"         content="">
@@ -30,6 +32,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <script src="/theme-init.js"></script>
+<script defer src="/cookie-consent.js?v=20260824"></script>
 <link rel="stylesheet" href="/style.css?v=20260824-cyan-brand">
 <style>
 /* =============================
@@ -505,7 +508,7 @@ function updateSeo(article) {
     const canon    = `${base}/berita/${encodeURIComponent(article.slug)}`;
     const seoTitle = article.seo_title || article.title;
     const seoDesc  = article.seo_description || article.excerpt || "Baca artikel gaming terbaru dari NexShop News.";
-    const img      = article.image_url || `${base}/images/nexshop-og-v2.jpg`;
+    const img      = article.image_url || `${base}/api/seo/thumbnail?page=berita`;
 
     document.getElementById("docTitle").textContent        = `${seoTitle} — NexShop News`;
     document.getElementById("metaDesc").content           = seoDesc;

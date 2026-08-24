@@ -104,7 +104,7 @@ exports.renderArticle = async (req, res) => {
     // Siapkan metadata
     const baseUrl = (process.env.FRONTEND_URL || "https://nexshop.cloud").replace(/\/$/, "");
     const canonicalUrl = `${baseUrl}/berita/${encodeURIComponent(article.slug)}`;
-    const defaultImage = `${baseUrl}/images/hero-bg.jpg`; // Fallback image jika tidak ada
+    const defaultImage = `${baseUrl}/api/seo/thumbnail?page=berita`; // Fallback live untuk kartu tautan berita
 
     let imageUrl = article.image_url;
     if (!imageUrl) {

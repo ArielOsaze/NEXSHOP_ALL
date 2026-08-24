@@ -5,9 +5,59 @@ const { notify } = require("../config/notify");
 const { isValidSecurityPin, verifyAdminPin, logSensitiveAction } = require("../middleware/adminPinMiddleware");
 const { sendAdminPinChangeOtpEmail } = require("../config/mailer");
 const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
 
 const PIN_CHANGE_OTP_TTL_MS = 5 * 60 * 1000;
 const PIN_CHANGE_OTP_MAX_ATTEMPTS = 5;
+
+function normalizeSeoSettings(payload) {
+    const normalized = { ...payload };
+
+    if (normalized.seo_screenshot_base_url !== undefined) {
+        const rawUrl = String(normalized.seo_screenshot_base_url || "").trim();
+        if (!rawUrl) {
+            normalized.seo_screenshot_base_url = "";
+        } else {
+            let parsed;
+            try {
+                parsed = new URL(rawUrl);
+            } catch {
+                throw new Error("SEO Screenshot Base URL tidak valid.");
+            }
+            const isLocalDevelopment = ["localhost", "127.0.0.1", "::1"].includes(parsed.hostname);
+            if (!["http:", "https:"].includes(parsed.protocol) || parsed.username || parsed.password) {
+                throw new Error("SEO Screenshot Base URL harus berupa origin HTTP(S) tanpa kredensial.");
+            }
+            if (process.env.NODE_ENV === "production" && parsed.protocol !== "https:" && !isLocalDevelopment) {
+                throw new Error("SEO Screenshot Base URL wajib HTTPS di production.");
+            }
+            if (parsed.pathname !== "/" || parsed.search || parsed.hash) {
+                throw new Error("SEO Screenshot Base URL hanya boleh berisi origin, tanpa path, query, atau hash.");
+            }
+            normalized.seo_screenshot_base_url = parsed.origin;
+        }
+    }
+
+    if (normalized.chrome_executable_path !== undefined) {
+        const executablePath = String(normalized.chrome_executable_path || "").trim();
+        if (!executablePath) {
+            normalized.chrome_executable_path = "";
+        } else {
+            const executableName = path.basename(executablePath).toLowerCase();
+            const allowedBrowserName = /^(?:google-chrome(?:-stable)?|chromium(?:-browser)?|chrome|msedge)(?:\.exe)?$/;
+            if (!path.isAbsolute(executablePath) || !allowedBrowserName.test(executableName)) {
+                throw new Error("Chrome Executable Path harus path absolut menuju Chrome, Chromium, atau Edge.");
+            }
+            if (!fs.existsSync(executablePath)) {
+                throw new Error("Chrome Executable Path tidak ditemukan pada server backend.");
+            }
+            normalized.chrome_executable_path = path.normalize(executablePath);
+        }
+    }
+
+    return normalized;
+}
 
 function hashPinChangeOtp(otp) {
     return crypto.createHash("sha256").update(otp).digest("hex");
@@ -256,7 +306,14 @@ exports.getApiKeysAdmin = async (req, res) => {
             fonnte_user_enabled: !!storeSettings.fonnte_user_enabled,
             wa_template_otp: storeSettings.wa_template_otp,
             wa_template_pending: storeSettings.wa_template_pending,
-            wa_template_success: storeSettings.wa_template_success
+            wa_template_success: storeSettings.wa_template_success,
+            seo_screenshot_base_url: storeSettings.seo_screenshot_base_url
+                || process.env.SEO_SCREENSHOT_BASE_URL
+                || process.env.FRONTEND_URL
+                || "https://nexshop.cloud",
+            chrome_executable_path: storeSettings.chrome_executable_path
+                || process.env.CHROME_EXECUTABLE_PATH
+                || ""
         });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
@@ -287,7 +344,7 @@ exports.updateApiKeysAdmin = async (req, res) => {
     try {
         // kalau field dikirim kosong/masih berupa mask (mengandung "••••"),
         // jangan ditimpa — anggap admin gak berniat mengganti value itu
-        const payload = { ...req.body };
+        let payload = { ...req.body };
         delete payload.security_pin;
         for (const key of Object.keys(payload)) {
             if (typeof payload[key] === "string" && payload[key].includes("••")) {
@@ -300,8 +357,14 @@ exports.updateApiKeysAdmin = async (req, res) => {
         // di sini supaya masing-masing ditulis ke tabel yang benar, tetap dalam
         // 1 request/1 verifikasi PIN yang sama.
         const storeSettingsFields = [
-            "fonnte_user_enabled", "wa_template_otp", "wa_template_pending", "wa_template_success"
+            "fonnte_user_enabled", "wa_template_otp", "wa_template_pending", "wa_template_success",
+            "seo_screenshot_base_url", "chrome_executable_path"
         ];
+        try {
+            payload = normalizeSeoSettings(payload);
+        } catch (validationError) {
+            return res.status(400).json({ message: validationError.message });
+        }
         const storePayload = {};
         for (const key of storeSettingsFields) {
             if (payload[key] !== undefined) {
@@ -320,13 +383,24 @@ exports.updateApiKeysAdmin = async (req, res) => {
             const { error: storeError } = await updateStoreSettings(storePayload);
             if (storeError) {
                 console.log(storeError);
+                if (/seo_screenshot_base_url|chrome_executable_path|schema cache/i.test(storeError.message || "")) {
+                    return res.status(503).json({
+                        code: "SEO_SETTINGS_NOT_SETUP",
+                        message: "Kolom SEO Thumbnail belum tersedia. Jalankan migration 012_add_seo_thumbnail_settings.sql di Supabase SQL Editor."
+                    });
+                }
                 return res.status(500).json({ message: "API keys tersimpan, tapi gagal update template/toggle notifikasi Fonnte" });
+            }
+
+            if (storePayload.seo_screenshot_base_url !== undefined || storePayload.chrome_executable_path !== undefined) {
+                const { resetSeoThumbnailRuntime } = require("../services/seoThumbnailService");
+                await resetSeoThumbnailRuntime();
             }
         }
 
-        notify("settings", `🔑 ${req.user.email} mengubah API Keys`);
+        notify("settings", `🔑 ${req.user.email} mengubah konfigurasi API/SEO`);
         await logSensitiveAction(req, "UPDATE_SECRET", { fields: [...Object.keys(payload), ...Object.keys(storePayload)] });
-        res.json({ message: "API keys berhasil disimpan" });
+        res.json({ message: "Konfigurasi berhasil disimpan" });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }

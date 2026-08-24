@@ -15,11 +15,19 @@
         if (isAdmin) document.documentElement.setAttribute("data-bs-theme", theme);
     }
 
+    function readCookie(name) {
+        const prefix = `${encodeURIComponent(name)}=`;
+        const match = document.cookie.split("; ").find((item) => item.startsWith(prefix));
+        return match ? decodeURIComponent(match.slice(prefix.length)) : null;
+    }
+
     try {
         const path = (location && location.pathname) ? location.pathname : "";
         const isAdmin = path.includes("/admin/") || path.startsWith("/admin");
         const key = isAdmin ? "nexshop-admin-theme" : "nexshop-public-theme";
-        const theme = localStorage.getItem(key) === "light" ? "light" : "dark";
+        const storedTheme = localStorage.getItem(key);
+        const cookieTheme = !isAdmin ? readCookie("nexshop_user_theme") : null;
+        const theme = (storedTheme || cookieTheme) === "light" ? "light" : "dark";
         apply(theme, isAdmin);
     } catch {
         apply("dark", true);

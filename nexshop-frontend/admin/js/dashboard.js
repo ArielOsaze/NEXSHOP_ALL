@@ -2070,6 +2070,8 @@ async function saveApiKeys() {
         waapi_url: document.getElementById("waapiUrl").value.trim(),
         waapi_key: document.getElementById("waapiKey").value.trim(),
         waapi_target_number: document.getElementById("waapiTargetNumber").value.trim(),
+        seo_screenshot_base_url: document.getElementById("seoScreenshotBaseUrl").value.trim(),
+        chrome_executable_path: document.getElementById("chromeExecutablePath").value.trim(),
         fonnte_token: document.getElementById("fonnteApiKey").value.trim(),
         fonnte_user_enabled: document.getElementById("fonnteUserEnabled").checked,
         wa_template_otp: document.getElementById("fonnteTemplateOtp").value.trim(),
@@ -2093,7 +2095,7 @@ async function saveApiKeys() {
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.message || "Gagal menyimpan API keys");
 
-            showToast("API keys berhasil disimpan");
+            showToast("Konfigurasi berhasil disimpan");
             // Reuse PIN yang sudah diverifikasi di request Save ini — jangan minta
             // PIN lagi cuma buat reload form (dulu ini penyebab PIN muncul 2x).
             loadApiKeys(security_pin).catch(() => { });
@@ -3381,6 +3383,8 @@ async function loadApiKeys(security_pin) {
         document.getElementById("waapiUrl").value = keys.waapi_url || "";
         document.getElementById("waapiKey").value = keys.waapi_key || "";
         document.getElementById("waapiTargetNumber").value = keys.waapi_target_number || "";
+        document.getElementById("seoScreenshotBaseUrl").value = keys.seo_screenshot_base_url || "";
+        document.getElementById("chromeExecutablePath").value = keys.chrome_executable_path || "";
         document.getElementById("fonnteApiKey").value = keys.fonnte_token || "";
         document.getElementById("fonnteUserEnabled").checked = !!keys.fonnte_user_enabled;
         document.getElementById("fonnteTemplateOtp").value = keys.wa_template_otp || "";

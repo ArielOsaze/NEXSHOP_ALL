@@ -992,6 +992,14 @@ nav#mainNav.nav-scrolled {
     position: relative;
 }
 
+/* Samakan bingkai logo navbar Topup dengan identitas cyan di halaman lain.
+   Dimensi tetap berasal dari utility HTML; aturan ini hanya menambah glow. */
+.nx-topup-brand-mark {
+    box-shadow:
+        0 0 0 1px rgba(34, 211, 238, .22),
+        0 0 18px rgba(0, 194, 232, .38);
+}
+
 .logo-wrapper {
     --mascot-web-length: 42px;
     position: relative;
