@@ -1715,6 +1715,113 @@ i[class*="fa-"] {
     color: var(--mkt-text);
 }
 
+.mkt-detail-search {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.mkt-detail-search-box {
+    position: relative;
+    flex: 1 1 26rem;
+    max-width: 42rem;
+}
+
+.mkt-detail-search-box>i[class*='fa-'] {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    z-index: 1;
+    transform: translateY(-50%);
+    color: var(--mkt-text-muted);
+    pointer-events: none;
+}
+
+.mkt-detail-search-box input {
+    width: 100%;
+    box-sizing: border-box;
+    appearance: none;
+    padding: 0.82rem 2.8rem 0.82rem 2.75rem;
+    border: 1px solid var(--mkt-line-strong);
+    border-radius: var(--mkt-radius-sm);
+    background: var(--mkt-surface-2);
+    color: var(--mkt-text);
+    font: 500 0.86rem/1.4 'Inter', 'Plus Jakarta Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+}
+
+.mkt-detail-search-box input::-webkit-search-cancel-button {
+    display: none;
+}
+
+.mkt-detail-search-box input::placeholder {
+    color: var(--mkt-text-muted);
+}
+
+.mkt-detail-search-box input:focus {
+    border-color: var(--mkt-primary);
+    background: var(--mkt-surface-3);
+    box-shadow: 0 0 0 3px var(--mkt-primary-tint);
+}
+
+.mkt-detail-search-box:focus-within>i[class*='fa-'] {
+    color: var(--mkt-primary);
+}
+
+.mkt-detail-search-clear {
+    position: absolute;
+    right: 0.55rem;
+    top: 50%;
+    display: inline-flex;
+    width: 2rem;
+    height: 2rem;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-50%);
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--mkt-text-muted);
+    cursor: pointer;
+}
+
+.mkt-detail-search-clear:hover,
+.mkt-detail-search-clear:focus-visible {
+    background: var(--mkt-primary-tint);
+    color: var(--mkt-primary);
+    outline: none;
+}
+
+.mkt-detail-search-meta {
+    flex: 0 0 auto;
+    color: var(--mkt-text-muted);
+    font-size: 0.76rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.mkt-detail-empty-search .mkt-btn-secondary {
+    margin-top: 1rem;
+}
+
+@media (max-width: 640px) {
+    .mkt-detail-search {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+
+    .mkt-detail-search-box {
+        flex-basis: auto;
+        max-width: none;
+    }
+
+    .mkt-detail-search-meta {
+        padding-left: 0.15rem;
+    }
+}
+
 .mkt-detail-products {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));

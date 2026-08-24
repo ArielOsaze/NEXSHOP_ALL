@@ -409,7 +409,7 @@ Cek Transaksi
         <div class="flex gap-4 catalog-controls">
             <div class="relative catalog-search-wrap">
                 <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true"></i>
-                <input type="text" id="topupSearchInput" placeholder="Cari game topup..." class="w-full md:w-64 pl-12 pr-4 py-3 bg-white dark:bg-[#0a0a0c] border border-gray-200 dark:border-white/10 rounded-xl focus:border-brand-indigo dark:focus:border-brand-cyan outline-none transition-colors text-gray-900 dark:text-white font-medium" />
+                <input type="text" id="topupSearchInput" placeholder="Cari game atau produk topup..." class="w-full md:w-64 pl-12 pr-4 py-3 bg-white dark:bg-[#0a0a0c] border border-gray-200 dark:border-white/10 rounded-xl focus:border-brand-indigo dark:focus:border-brand-cyan outline-none transition-colors text-gray-900 dark:text-white font-medium" />
                 <button type="button" id="topupSearchClearBtn" class="search-clear-btn hidden absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-900 dark:hover:text-white"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="search-meta hidden" id="topupSearchMeta">
@@ -419,9 +419,8 @@ Cek Transaksi
     </div>
     <div class="topup-game-grid grid grid-cols-3 min-[480px]:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-[clamp(6px,1.5vw,16px)]" id="topupGameGrid">
     </div>
-    <!-- Zona kontrol pemuatan bertahap. Diisi renderTopupLoadMore():
-         tombol "Muat lebih banyak" + sentinel IntersectionObserver, atau
-         keterangan bahwa semua game sudah tampil. -->
+    <!-- Hanya 20 kartu awal yang dirender. Seluruh sisanya baru dimuat dan
+         dirender setelah pengguna menekan tombol eksplisit di zona ini. -->
     <div class="topup-loadmore-zone" id="topupLoadMoreZone"></div>
 </section>
 
@@ -1462,6 +1461,6 @@ Cek Transaksi
 </div>
 
 <script src="/nexbot.js?v=20260823-nexbot"></script>
-<script src="/script.js?v=20260823-wallet-redesign"></script>
+<script src="/script.js?v=20260824-topup-limit"></script>
 </body>
 </html>

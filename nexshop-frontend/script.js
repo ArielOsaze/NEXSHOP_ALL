@@ -2800,8 +2800,22 @@ let topupRequestToken = 0;
 // Nominal per game, diisi saat kartunya dibuka.
 const TOPUP_PRODUK_CACHE = new Map();
 
+function mapTopupSummaryItems(items) {
+    return (items || []).map((g) => ({
+        id: g.id,
+        kategori: g.name,
+        logo: g.logo,
+        product_count: g.product_count,
+        min_price: g.min_price,
+        products: []
+    }));
+}
+
 async function loadTopupProducts(reset = true) {
-    if (topupLoading) return;
+    // Query pencarian baru boleh menggantikan request lama yang masih jalan.
+    // Ini penting saat tombol "Tampilkan Semua" sedang mengambil banyak
+    // halaman: hasil lama tidak boleh menimpa hasil kata kunci terbaru.
+    if (topupLoading && !reset) return;
 
     if (reset) {
         topupPage = 0;
@@ -2839,14 +2853,7 @@ async function loadTopupProducts(reset = true) {
         // products}) supaya seluruh kode di bawah -- termasuk openGameDetail
         // -- tidak perlu ikut diubah. Bedanya `products` sekarang mulai
         // kosong dan diisi saat game dibuka.
-        const kartuBaru = (data.items || []).map((g) => ({
-            id: g.id,
-            kategori: g.name,
-            logo: g.logo,
-            product_count: g.product_count,
-            min_price: g.min_price,
-            products: []
-        }));
+        const kartuBaru = mapTopupSummaryItems(data.items);
 
         TOPUP_GAMES = reset ? kartuBaru : TOPUP_GAMES.concat(kartuBaru);
         renderTopupGameGrid();
@@ -2863,6 +2870,65 @@ async function loadTopupProducts(reset = true) {
         if (tokenPermintaan === topupRequestToken) {
             topupLoading = false;
             setTopupLoadMoreState(topupHasMore ? "idle" : "done");
+        }
+    }
+}
+
+// Tombol eksplisit mengambil SEMUA halaman ringkasan yang cocok, lalu baru
+// merender sekali. Batch tetap maksimal 60 (batas aman endpoint) dan daftar
+// nominal per game tetap lazy: yang diunduh di sini hanya kartu ringkas.
+async function loadAllTopupProducts() {
+    if (topupLoading || !topupHasMore) return;
+
+    topupLoading = true;
+    const tokenPermintaan = ++topupRequestToken;
+    const querySnapshot = topupSearchQuery.trim();
+    let gagal = false;
+    setTopupLoadMoreState("loading");
+
+    try {
+        let halaman = 1;
+        let masihAda = true;
+        let total = 0;
+        const semuaItem = [];
+
+        while (masihAda) {
+            if (halaman > 100) throw new Error("Paginasi katalog topup melewati batas aman");
+
+            const params = new URLSearchParams({
+                page: String(halaman),
+                limit: "60"
+            });
+            if (querySnapshot) params.set("q", querySnapshot);
+
+            const res = await fetch(`${API_BASE}/topup/catalog/games?${params}`, {
+                headers: publicAuthHeaders()
+            });
+            if (!res.ok) throw new Error("Gagal memuat seluruh katalog game");
+            const data = await res.json();
+
+            if (tokenPermintaan !== topupRequestToken || querySnapshot !== topupSearchQuery.trim()) return;
+
+            semuaItem.push(...(data.items || []));
+            total = Number(data.total) || semuaItem.length;
+            masihAda = !!data.has_more;
+            halaman = (Number(data.page) || halaman) + 1;
+        }
+
+        TOPUP_GAMES = mapTopupSummaryItems(semuaItem);
+        topupPage = Math.max(1, halaman - 1);
+        topupHasMore = false;
+        topupTotal = total;
+        renderTopupGameGrid();
+    } catch (err) {
+        if (tokenPermintaan !== topupRequestToken) return;
+        gagal = true;
+        console.error("loadAllTopupProducts:", err);
+        setTopupLoadMoreState("error");
+    } finally {
+        if (tokenPermintaan === topupRequestToken) {
+            topupLoading = false;
+            if (!gagal) setTopupLoadMoreState(topupHasMore ? "idle" : "done");
         }
     }
 }
@@ -3043,66 +3109,36 @@ function renderTopupGameGrid() {
 }
 
 // ==============================================================
-// KONTROL "MUAT LEBIH BANYAK" — KATALOG GAME
+// KONTROL "TAMPILKAN SEMUA" — KATALOG GAME
 //
-// Dua jalur disediakan bersamaan dan itu disengaja:
-//   * IntersectionObserver -> memuat otomatis saat sentinel mendekati layar,
-//   * tombol eksplisit    -> tetap ada, bisa difokus keyboard, dan berfungsi
-//     di browser tanpa IntersectionObserver. Infinite scroll saja akan
-//     memutus navigasi keyboard.
+// Tidak ada infinite scroll di sini: hanya 20 kartu awal yang dirender sampai
+// pengguna memang menekan tombol. Dengan begitu pengguna yang cuma mencari
+// satu game tidak membayar biaya render seluruh katalog.
 // ==============================================================
-let topupObserver = null;
-
-function lepasTopupObserver() {
-    if (topupObserver) {
-        topupObserver.disconnect();
-        topupObserver = null;
-    }
-}
-
 function renderTopupLoadMore() {
     const zona = document.getElementById("topupLoadMoreZone");
     if (!zona) return;
 
     if (!TOPUP_GAMES.length) {
         zona.innerHTML = "";
-        lepasTopupObserver();
         return;
     }
     if (!topupHasMore) {
-        zona.innerHTML = `<p class="topup-loadmore-done">Semua ${topupTotal} game sudah ditampilkan.</p>`;
-        lepasTopupObserver();
+        zona.innerHTML = `<p class="topup-loadmore-done">Semua ${topupTotal} kategori topup sudah ditampilkan.</p>`;
         return;
     }
 
     const sisa = Math.max(topupTotal - TOPUP_GAMES.length, 0);
-    // Tombol pertama (baru 20 game populer yang tampil) pakai label
-    // "Lihat Semua Produk" sesuai permintaan brief -- klik berikutnya
-    // (kalau user masih mau muat lebih jauh lagi) balik ke label netral
-    // "Muat lebih banyak" karena itu bukan lagi transisi populer -> semua.
-    const labelTombol = topupPage <= 1 ? "Lihat Semua Produk" : "Muat lebih banyak";
     zona.innerHTML = `
         <button type="button" class="topup-loadmore-btn" id="topupLoadMoreBtn">
             <i class="fa-solid fa-arrow-down" aria-hidden="true"></i>
-            <span class="topup-loadmore-label">${labelTombol}</span>
-            <span class="topup-loadmore-sisa">${sisa} lagi</span>
+            <span class="topup-loadmore-label">Tampilkan Semua Produk</span>
+            <span class="topup-loadmore-sisa">${sisa} lainnya</span>
         </button>
-        <div id="topupLoadSentinel" aria-hidden="true"></div>
     `;
 
     const btn = document.getElementById("topupLoadMoreBtn");
-    if (btn) btn.addEventListener("click", () => loadTopupProducts(false));
-
-    lepasTopupObserver();
-    const sentinel = document.getElementById("topupLoadSentinel");
-    if (sentinel && typeof IntersectionObserver !== "undefined") {
-        topupObserver = new IntersectionObserver((entries) => {
-            if (entries.some((e) => e.isIntersecting) && topupHasMore && !topupLoading) {
-                loadTopupProducts(false);
-            }
-        }, { rootMargin: "400px 0px" });
-        topupObserver.observe(sentinel);
-    }
+    if (btn) btn.addEventListener("click", loadAllTopupProducts);
 }
 
 function setTopupLoadMoreState(state) {
@@ -3120,7 +3156,7 @@ function setTopupLoadMoreState(state) {
     } else {
         btn.disabled = false;
         btn.classList.remove("is-loading");
-        if (label) label.textContent = topupPage <= 1 ? "Lihat Semua Produk" : "Muat lebih banyak";
+        if (label) label.textContent = "Tampilkan Semua Produk";
     }
 }
 

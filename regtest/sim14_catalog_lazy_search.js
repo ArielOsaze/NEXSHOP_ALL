@@ -16,6 +16,8 @@
  */
 
 const assert = require("assert");
+const fs = require("fs");
+const path = require("path");
 const { halamanGrup, urutkanPopuler } = require("../nexshop-backend/services/catalogIndexService");
 
 console.log("===============================================================================");
@@ -279,6 +281,54 @@ test("ringkasan tidak pernah membocorkan harga modal", () => {
     for (const kartu of h.items) {
         assert.strictEqual(kartu.harga_beli, undefined, "harga_beli bocor ke ringkasan kartu");
     }
+});
+
+// -------------------------------------------------------------
+// F. KONTRAK UI: 20 KARTU + TOMBOL EKSPLISIT
+// -------------------------------------------------------------
+console.log("\nF. Kontrak render ringan di frontend\n");
+
+const frontendDir = path.join(__dirname, "..", "nexshop-frontend");
+const storefrontSource = fs.readFileSync(path.join(frontendDir, "script.js"), "utf8");
+const marketplaceSource = fs.readFileSync(path.join(frontendDir, "marketplace.html"), "utf8");
+const topupControlStart = storefrontSource.indexOf('KONTROL "TAMPILKAN SEMUA"');
+const topupControlEnd = storefrontSource.indexOf("function setTopupLoadMoreState", topupControlStart);
+const topupControlSource = storefrontSource.slice(topupControlStart, topupControlEnd);
+
+test("Topup merender batch awal tepat 20 kartu", () => {
+    assert.ok(storefrontSource.includes("const TOPUP_PAGE_SIZE = 20;"));
+});
+
+test("Topup tidak auto-render sisanya lewat IntersectionObserver", () => {
+    assert.ok(topupControlStart >= 0 && topupControlEnd > topupControlStart, "blok kontrol Topup tidak ditemukan");
+    assert.ok(!topupControlSource.includes("IntersectionObserver"), "Topup tidak boleh auto-load saat discroll");
+    assert.ok(topupControlSource.includes('btn.addEventListener("click", loadAllTopupProducts)'));
+});
+
+test("Tampilkan Semua mengambil batch server lalu merender sekali setelah lengkap", () => {
+    assert.ok(storefrontSource.includes('limit: "60"'));
+    assert.ok(storefrontSource.includes("TOPUP_GAMES = mapTopupSummaryItems(semuaItem)"));
+    assert.ok(storefrontSource.includes("querySnapshot !== topupSearchQuery.trim()"), "hasil query lama harus dibuang");
+});
+
+test("Marketplace menyediakan pencarian produk di dalam operator", () => {
+    assert.ok(marketplaceSource.includes('id="mktDetailSearchInput"'));
+    assert.ok(marketplaceSource.includes("function filterMarketplaceDetailProducts"));
+    assert.ok(marketplaceSource.includes("[p.nama, p.kode_produk, p.harga_jual]"));
+});
+
+test("filter detail menemukan produk yang berada jauh setelah 20 item pertama", () => {
+    const produk = Array.from({ length: 45 }, (_, i) => ({
+        nama: i === 37 ? "PDAM Kota Bandung" : `PDAM Wilayah ${i + 1}`,
+        kode_produk: i === 37 ? "PDAMBANDUNG" : `PDAM${i + 1}`
+    }));
+    const tokens = "bandung".split(/\s+/);
+    const hasil = produk.filter((p) => {
+        const text = `${p.nama} ${p.kode_produk}`.toLowerCase();
+        return tokens.every((token) => text.includes(token));
+    });
+    assert.strictEqual(hasil.length, 1);
+    assert.strictEqual(hasil[0].kode_produk, "PDAMBANDUNG");
 });
 
 console.log("");
