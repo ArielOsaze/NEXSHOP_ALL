@@ -60,8 +60,8 @@
     <script defer src="/clean-url.js?v=20260825"></script>
     <script defer src="/legal-modal.js?v=20260825"></script>
     <script defer src="/cookie-consent.js?v=20260825"></script>
-    <link rel="stylesheet" href="/style.css?v=20260825-nexbot-interactive">
-    <link rel="stylesheet" href="/marketplace-theme.css?v=20260824-product-search">
+    <link rel="stylesheet" href="/style.css?v=20260825-nexbot-transparent">
+    <link rel="stylesheet" href="/marketplace-theme.css?v=20260825-banking-dashboard">
 </head>
 
 <body class="marketplace-page" data-nexbot="auto">
@@ -212,7 +212,7 @@
                 <i class="fa-solid fa-chevron-right nx-wallet-nav-chevron" aria-hidden="true"></i>
             </button>
 
-            <button type="button" class="mkt-nav-track-btn" id="mktTrackNavBtn" aria-label="Cek Transaksi">
+            <button type="button" class="mkt-nav-track-btn" id="mktTrackNavBtn" data-mkt-track-trigger aria-label="Cek Transaksi">
                 <i class="fa-solid fa-receipt" aria-hidden="true"></i>
                 <span>Cek Transaksi</span>
             </button>
@@ -259,27 +259,26 @@
                 <button type="submit" class="mkt-search-btn">Cari</button>
             </form>
 
-            <div class="mkt-hero-ctas">
-                <div class="mkt-hero-cta">
-                    <span class="mkt-hero-cta-icon mkt-hero-cta-icon--cyan">
-                        <i class="fa-solid fa-store" aria-hidden="true"></i>
-                    </span>
-                    <div class="mkt-hero-cta-text">
-                        <strong>Ingin jualan?</strong>
-                        <span>Gabung program reseller NexShop</span>
-                    </div>
-                        <a href="/reseller" class="mkt-hero-cta-link">Daftar</a>
-                </div>
-
-                <a href="/#topup" class="mkt-hero-cta mkt-hero-cta--link">
-                    <span class="mkt-hero-cta-icon">
-                        <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
-                    </span>
-                    <div class="mkt-hero-cta-text">
-                        <strong>Top Up Game?</strong>
-                        <span>Buka etalase Topup Diamond</span>
-                    </div>
-                    <i class="fa-solid fa-arrow-right mkt-hero-cta-arrow" aria-hidden="true"></i>
+            <div class="mkt-banking-actions" aria-label="Akses cepat NexShop">
+                <button type="button" class="mkt-banking-action" data-wallet-trigger aria-haspopup="dialog">
+                    <span class="mkt-banking-action-icon"><i class="fa-solid fa-wallet" aria-hidden="true"></i></span>
+                    <strong>Wallet</strong>
+                    <span class="headerWalletBalanceVal">Rp 0</span>
+                </button>
+                <button type="button" class="mkt-banking-action" data-mkt-track-trigger>
+                    <span class="mkt-banking-action-icon"><i class="fa-solid fa-receipt" aria-hidden="true"></i></span>
+                    <strong>Cek Transaksi</strong>
+                    <span>Lacak pesanan</span>
+                </button>
+                <a href="/#topup" class="mkt-banking-action">
+                    <span class="mkt-banking-action-icon"><i class="fa-solid fa-gamepad" aria-hidden="true"></i></span>
+                    <strong>Top Up Game</strong>
+                    <span>Diamond &amp; pass</span>
+                </a>
+                <a href="/reseller" class="mkt-banking-action">
+                    <span class="mkt-banking-action-icon"><i class="fa-solid fa-store" aria-hidden="true"></i></span>
+                    <strong>Reseller</strong>
+                    <span>Harga khusus</span>
                 </a>
             </div>
 
@@ -298,8 +297,8 @@
                 <div class="mkt-rail-panel">
                     <div class="mkt-rail-head">
                         <div>
-                            <h2 class="mkt-section-title">Kategori</h2>
-                            <p>Geser atau pilih kategori layanan</p>
+                            <h2 class="mkt-section-title">Layanan</h2>
+                            <p>Pilih kebutuhan transaksi kamu</p>
                         </div>
                         <div class="mkt-category-scroll-actions" aria-label="Navigasi kategori">
                             <button type="button" id="mktCategoryPrev" aria-label="Kategori sebelumnya">
@@ -308,23 +307,6 @@
                             <button type="button" id="mktCategoryNext" aria-label="Kategori berikutnya">
                                 <i class="fa-solid fa-chevron-right" aria-hidden="true"></i>
                             </button>
-                        </div>
-                        <!-- Dekorasi doang (aria-hidden): padanan asset "diamond" yang
-                             ada di alur Topup Game, versi Marketplace -- dompet, kartu,
-                             e-toll, voucher, melayang pelan + glow. -->
-                        <div class="mkt-rail-deco" aria-hidden="true">
-                            <span class="mkt-rail-deco-item mkt-rail-deco-item--wallet" title="E-Wallet">
-                                <i class="fa-solid fa-wallet" aria-hidden="true"></i>
-                            </span>
-                            <span class="mkt-rail-deco-item mkt-rail-deco-item--card" title="Kartu">
-                                <i class="fa-solid fa-credit-card" aria-hidden="true"></i>
-                            </span>
-                            <span class="mkt-rail-deco-item mkt-rail-deco-item--etoll" title="E-Toll">
-                                <i class="fa-solid fa-road" aria-hidden="true"></i>
-                            </span>
-                            <span class="mkt-rail-deco-item mkt-rail-deco-item--voucher" title="Voucher">
-                                <i class="fa-solid fa-ticket" aria-hidden="true"></i>
-                            </span>
                         </div>
                     </div>
                     <div class="cat-filter-wrap" id="catFilterWrap"></div>
@@ -340,7 +322,7 @@
                 <section id="mktServicesSection" aria-labelledby="mktServicesTitle">
                     <div class="mkt-grid-header">
                         <div>
-                            <h3 id="mktServicesTitle">Pilih Penyedia Layanan</h3>
+                            <h3 id="mktServicesTitle">Penyedia &amp; Produk</h3>
                             <p id="mktResultContext">Pilih layanan untuk melihat produk dan harga.</p>
                         </div>
                         <span id="totalCount" aria-live="polite"></span>
@@ -434,7 +416,7 @@
                         <li><a href="/marketplace" class="nx-footer__link">Marketplace</a></li>
                         <li><a href="/#topup" class="nx-footer__link">Topup Diamond</a></li>
                         <li><a href="/berita" class="nx-footer__link">Portal Berita</a></li>
-                        <li><button type="button" id="mktTrackFooterBtn" class="nx-footer__link">Cek Transaksi</button>
+                        <li><button type="button" id="mktTrackFooterBtn" data-mkt-track-trigger class="nx-footer__link">Cek Transaksi</button>
                         </li>
                     </ul>
                 </div>
@@ -2457,8 +2439,9 @@
             document.getElementById("mktTrackOverlay").classList.remove("is-visible");
             if (window.mktTrackPollingTimer) { clearTimeout(window.mktTrackPollingTimer); window.mktTrackPollingTimer = null; }
         }
-        document.getElementById("mktTrackNavBtn").addEventListener("click", () => openMktTrackModal("byid"));
-        document.getElementById("mktTrackFooterBtn").addEventListener("click", () => openMktTrackModal("byid"));
+        document.querySelectorAll("[data-mkt-track-trigger]").forEach((button) => {
+            button.addEventListener("click", () => openMktTrackModal("byid"));
+        });
         document.getElementById("mktTrackCloseBtn").addEventListener("click", closeMktTrackModal);
         document.getElementById("mktTrackOverlay").addEventListener("click", (e) => {
             if (e.target.id === "mktTrackOverlay") closeMktTrackModal();

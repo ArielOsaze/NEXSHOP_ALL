@@ -6514,28 +6514,33 @@ input::placeholder {
     height: clamp(52px, 6vw, 64px);
     padding: 0;
     border-radius: 32px;
-    background: linear-gradient(135deg, var(--violet-2), var(--magenta));
+    background: transparent;
     color: #fff;
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    border: 0;
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(0, 194, 232, 0.3);
+    box-shadow: none;
     transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: auto;
-    overflow: hidden;
+    overflow: visible;
     white-space: nowrap;
 }
 
 .nexbot-float-btn:hover {
-    padding: 0 20px;
+    padding: 0;
 }
 
 .nexbot-float-btn.expanding {
-    width: 140px;
+    width: clamp(52px, 6vw, 64px);
 }
 
 .nexbot-float-btn:hover:not(.expanding) {
     transform: scale(1.05);
-    box-shadow: 0 12px 30px rgba(8, 145, 178, 0.55);
+    box-shadow: none;
+}
+
+.nexbot-float-btn:focus-visible {
+    outline: 2px solid var(--cyan);
+    outline-offset: 4px;
 }
 
 .nexbot-float-btn-icon {

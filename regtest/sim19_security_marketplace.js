@@ -29,6 +29,7 @@ const settings = read("nexshop-backend/controllers/settingsController.js");
 const news = read("nexshop-backend/controllers/newsArticleController.js");
 const seoThumbnail = read("nexshop-backend/services/seoThumbnailService.js");
 const marketplace = read("nexshop-frontend/marketplace.html");
+const marketplaceTheme = read("nexshop-frontend/marketplace-theme.css");
 const portal = read("nexshop-frontend/portal-reseller.html");
 const nginx = read("nginx-nexshop.conf");
 
@@ -98,6 +99,14 @@ check(
     marketplace.includes("function syncMarketplaceUrl()") &&
         marketplace.includes("mktEmptyResetBtn") &&
         marketplace.includes("mktSearchClearBtn")
+);
+check(
+    "Marketplace memakai dashboard layanan ala mobile banking tanpa dekorasi tumpang tindih",
+    marketplace.includes('class="mkt-banking-actions"') &&
+        marketplace.includes("data-mkt-track-trigger") &&
+        !marketplace.includes('class="mkt-rail-deco"') &&
+        marketplaceTheme.includes("MARKETPLACE BANKING DASHBOARD") &&
+        marketplaceTheme.includes("grid-template-columns: repeat(4, minmax(0, 1fr))")
 );
 
 const cspMatch = nginx.match(/add_header Content-Security-Policy "([^"]+)" always;/);

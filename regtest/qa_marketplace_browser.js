@@ -77,10 +77,19 @@ const server = http.createServer((req, res) => {
                 cards: document.querySelectorAll(".market-card").length,
                 overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
                 cardTag: document.querySelector(".market-card")?.tagName,
-                categoryHeight: Math.round(document.querySelector(".cat-btn")?.getBoundingClientRect().height || 0)
+                categoryHeight: Math.round(document.querySelector(".cat-btn")?.getBoundingClientRect().height || 0),
+                quickActions: document.querySelectorAll(".mkt-banking-action").length,
+                categoryLayout: getComputedStyle(document.getElementById("catFilterWrap")).display,
+                categoryFirstRow: [...document.querySelectorAll(".cat-btn")].slice(0, 4)
+                    .map((button) => Math.round(button.getBoundingClientRect().top)),
+                nexbotBackground: getComputedStyle(document.getElementById("nexbotFloatBtn")).backgroundImage,
+                nexbotBackgroundColor: getComputedStyle(document.getElementById("nexbotFloatBtn")).backgroundColor
             }));
             if (initial.cards !== 20 || initial.overflow || initial.cardTag !== "BUTTON") throw new Error(`${viewport.name}: render awal/overflow/kartu tidak valid ${JSON.stringify(initial)}`);
+            if (initial.quickActions !== 4 || initial.categoryLayout !== "grid") throw new Error(`${viewport.name}: dashboard banking tidak valid ${JSON.stringify(initial)}`);
+            if (initial.nexbotBackground !== "none" || initial.nexbotBackgroundColor !== "rgba(0, 0, 0, 0)") throw new Error(`${viewport.name}: tombol NexBot belum transparan ${JSON.stringify(initial)}`);
             if (viewport.name === "mobile" && initial.categoryHeight < 44) throw new Error(`mobile: target kategori hanya ${initial.categoryHeight}px`);
+            if (viewport.name === "mobile" && new Set(initial.categoryFirstRow).size !== 1) throw new Error(`mobile: empat shortcut kategori pertama tidak satu baris`);
 
             await page.click("#mktLoadMoreBtn");
             await page.waitForFunction(() => document.querySelectorAll(".market-card").length === 35);

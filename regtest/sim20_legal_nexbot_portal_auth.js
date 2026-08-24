@@ -104,6 +104,11 @@ check(
         style.includes("@media (prefers-reduced-motion: reduce)") &&
         style.includes("animation: none !important")
 );
+check(
+    "tombol maskot transparan tanpa lingkaran warna bawaan",
+    /\.nexbot-float-btn\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?border:\s*0;[\s\S]*?box-shadow:\s*none;/.test(style) &&
+        style.includes("overflow: visible")
+);
 
 if (!process.exitCode) {
     console.log(`\nRINGKASAN: ${passed} pengujian lolos.`);

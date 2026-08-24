@@ -1880,6 +1880,298 @@ i[class*="fa-"] {
     }
 }
 
+/* ==========================================================================
+   MARKETPLACE BANKING DASHBOARD
+   Pola navigasi dibuat seperti aplikasi mobile banking: ringkasan utama,
+   akses cepat, lalu grid layanan fungsional. Tidak ada dekorasi yang bisa
+   menabrak kolom produk; seluruh ikon pada panel layanan adalah tombol asli.
+   ========================================================================== */
+.mkt-main {
+    gap: 1.5rem;
+}
+
+.mkt-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    align-items: stretch;
+    text-align: left;
+    gap: 0.85rem;
+    padding: clamp(1.25rem, 3vw, 2.25rem);
+    border: 1px solid var(--mkt-stroke);
+    border-radius: calc(var(--mkt-radius-lg) + 4px);
+    background:
+        radial-gradient(circle at 88% 10%, rgba(34, 211, 238, 0.18), transparent 34%),
+        linear-gradient(135deg, rgba(8, 145, 178, 0.13), var(--mkt-glass-solid) 58%);
+    box-shadow: var(--mkt-shadow);
+}
+
+.mkt-hero::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    width: 15rem;
+    height: 15rem;
+    right: -6rem;
+    bottom: -9rem;
+    border: 1px solid rgba(34, 211, 238, 0.16);
+    border-radius: 50%;
+    box-shadow: 0 0 0 2.5rem rgba(8, 145, 178, 0.04), 0 0 0 5rem rgba(8, 145, 178, 0.025);
+}
+
+.mkt-hero h1 {
+    max-width: 42rem;
+    font-size: clamp(1.8rem, 4.2vw, 2.7rem);
+}
+
+.mkt-hero p {
+    max-width: 44rem;
+    font-size: clamp(0.86rem, 1.4vw, 1rem);
+}
+
+.mkt-search-wrap {
+    max-width: none;
+    margin-top: 0.25rem;
+    background: var(--mkt-surface-2);
+    box-shadow: none;
+}
+
+.mkt-banking-actions {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.65rem;
+    margin-top: 0.25rem;
+}
+
+.mkt-banking-action {
+    min-width: 0;
+    min-height: 5.8rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0.2rem;
+    padding: 0.8rem;
+    border: 1px solid var(--mkt-stroke);
+    border-radius: 15px;
+    background: rgba(9, 19, 31, 0.64);
+    color: var(--mkt-text);
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.mkt-banking-action:hover,
+.mkt-banking-action:focus-visible {
+    border-color: rgba(34, 211, 238, 0.48);
+    background: rgba(8, 145, 178, 0.14);
+    transform: translateY(-2px);
+    outline: none;
+}
+
+.mkt-banking-action-icon {
+    width: 2.3rem;
+    height: 2.3rem;
+    display: grid;
+    place-items: center;
+    margin-bottom: 0.25rem;
+    border-radius: 12px;
+    background: var(--mkt-primary-tint);
+    color: var(--mkt-primary);
+}
+
+.mkt-banking-action strong {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--mkt-text);
+    font-size: 0.78rem;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mkt-banking-action > span:last-child {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--mkt-text-muted);
+    font-size: 0.67rem;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mkt-trust-strip {
+    justify-content: flex-start;
+    margin-top: 0.25rem;
+}
+
+.mkt-columns,
+.mkt-columns.is-detail {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+}
+
+.mkt-col-rail {
+    position: static;
+}
+
+.mkt-rail-panel {
+    gap: 1rem;
+    padding: 1rem;
+    background: var(--mkt-glass-solid);
+}
+
+.mkt-rail-head {
+    align-items: center;
+}
+
+.mkt-category-scroll-actions,
+.mkt-rail-foot,
+.mkt-rail-deco {
+    display: none !important;
+}
+
+.cat-filter-wrap {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+    gap: 0.55rem;
+    overflow: visible;
+    padding: 0;
+}
+
+.cat-btn {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+    min-height: 6rem;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.7rem 0.4rem;
+    border-color: var(--mkt-stroke);
+    border-radius: 14px;
+    background: var(--mkt-surface-2);
+    text-align: center;
+}
+
+.cat-btn:hover,
+.cat-btn:focus-visible {
+    border-color: var(--mkt-line-strong);
+    transform: translateY(-2px);
+    outline: none;
+}
+
+.cat-btn-icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 14px;
+}
+
+.cat-btn-icon i[class*='fa-'] {
+    font-size: 1.2rem;
+}
+
+.cat-btn-label {
+    flex: 0 1 auto;
+    width: 100%;
+    overflow: visible;
+    font-size: 0.72rem;
+    line-height: 1.25;
+    text-overflow: clip;
+    white-space: normal;
+}
+
+.cat-btn-count {
+    display: none;
+}
+
+.cat-btn.active {
+    box-shadow: inset 0 0 0 1px rgba(34, 211, 238, 0.14);
+}
+
+@media (max-width: 640px) {
+    .mkt-main {
+        padding-inline: 0.75rem;
+        gap: 1rem;
+    }
+
+    .mkt-hero {
+        padding: 1rem;
+        border-radius: 18px;
+    }
+
+    .mkt-hero h1 {
+        font-size: 1.55rem;
+        line-height: 1.18;
+    }
+
+    .mkt-hero-tag {
+        align-self: flex-start;
+    }
+
+    .mkt-banking-actions {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.4rem;
+    }
+
+    .mkt-banking-action {
+        min-height: 5.4rem;
+        align-items: center;
+        padding: 0.55rem 0.2rem;
+        text-align: center;
+    }
+
+    .mkt-banking-action-icon {
+        width: 2.15rem;
+        height: 2.15rem;
+        border-radius: 11px;
+    }
+
+    .mkt-banking-action strong {
+        font-size: 0.66rem;
+    }
+
+    .mkt-banking-action > span:last-child {
+        font-size: 0.58rem;
+    }
+
+    .mkt-trust-strip {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 0.35rem;
+    }
+
+    .mkt-rail-panel {
+        padding: 0.85rem 0.7rem;
+        border-radius: 18px;
+    }
+
+    .cat-filter-wrap {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.4rem;
+    }
+
+    .cat-btn {
+        min-height: 5.25rem;
+        padding: 0.55rem 0.2rem;
+        border-radius: 13px;
+    }
+
+    .cat-btn-icon {
+        width: 2.45rem;
+        height: 2.45rem;
+        border-radius: 12px;
+    }
+
+    .cat-btn-label {
+        font-size: 0.63rem;
+    }
+}
+
 .mkt-detail-products {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -4745,5 +5037,80 @@ i[class*="fa-"] {
 
     .mkt-grid-header {
         align-items: flex-start;
+    }
+}
+
+/* Final responsive layer for the banking shortcut grid. Diletakkan paling
+   akhir agar aturan kompatibilitas kategori lama tidak mengembalikannya
+   menjadi pill horizontal yang saling berhimpitan. */
+@media (max-width: 1024px) {
+    .cat-filter-wrap {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+        gap: 0.5rem;
+        overflow: visible;
+        padding: 0;
+        scroll-snap-type: none;
+    }
+
+    .cat-btn {
+        width: 100%;
+        min-width: 0;
+        min-height: 5.6rem;
+        flex: initial;
+        flex-direction: column;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.65rem 0.35rem;
+        border-radius: 14px;
+        scroll-snap-align: none;
+    }
+
+    .cat-btn-icon {
+        width: 2.65rem;
+        height: 2.65rem;
+        border-radius: 13px;
+    }
+
+    .cat-btn-icon i[class*='fa-'] {
+        font-size: 1.15rem;
+    }
+
+    .cat-btn-label {
+        width: 100%;
+        flex: initial;
+        overflow: visible;
+        font-size: 0.68rem;
+        line-height: 1.25;
+        text-align: center;
+        text-overflow: clip;
+        white-space: normal;
+    }
+
+    .mkt-category-scroll-actions {
+        display: none !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .cat-filter-wrap {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 0.4rem;
+    }
+
+    .cat-btn {
+        min-height: 5.25rem;
+        padding: 0.55rem 0.2rem;
+        border-radius: 13px;
+    }
+
+    .cat-btn-icon {
+        width: 2.45rem;
+        height: 2.45rem;
+        border-radius: 12px;
+    }
+
+    .cat-btn-label {
+        font-size: 0.63rem;
     }
 }
