@@ -1872,31 +1872,31 @@
                 <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">WA Gateway (Notifikasi WhatsApp)</h6></div>
                 <div class="col-12">
                     <label class="form-label">URL Gateway</label>
-                    <input id="waapiUrl" class="form-control" placeholder="https://waapi.fyas.my.id">
+                    <input id="waapiUrl" class="form-control placeholder-glow" placeholder="http://127.0.0.1:8080 (WA API server)" disabled>
                 </div>
                 <div class="col-12">
                     <label class="form-label">API Key</label>
-                    <input id="waapiKey" class="form-control" placeholder="API Key dari waapi.fyas.my.id">
+                    <input id="waapiKey" class="form-control placeholder-glow" placeholder="URL WA API: http://127.0.0.1:8080" disabled>
                 </div>
                 <div class="col-12">
                     <label class="form-label">Nomor Tujuan Notifikasi</label>
                     <input id="waapiTargetNumber" class="form-control" placeholder="62812xxxxxxxx">
                 </div>
                 <div class="col-12">
-                    <div class="form-text">Dipakai buat kirim notifikasi WhatsApp tiap ada pembelian sukses. Buka <a href="https://waapi.fyas.my.id/dashboard" target="_blank" rel="noopener">waapi.fyas.my.id/dashboard</a> buat generate API Key, lalu isi Nomor Tujuan dengan nomor WA yang mau menerima notifikasi (pakai kode negara, tanpa tanda + atau spasi, mis. 62812xxxxxxxx).</div>
+                    <div class="form-text">WA API sudah running di <code>http://127.0.0.1:8080</code>. API key & konfigurasi WA API ada di file <code>.env</code> (WA_API_KEY). Nomor tujuan di bawah dipakai notifikasi ke **admin**.</div>
                 </div>
 
-                <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">WhatsApp API (Fonnte) - Notifikasi Pelanggan</h6></div>
+                <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">WhatsApp API (WA API) - Notifikasi Pelanggan</h6></div>
                 <div class="col-12">
                     <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="fonnteUserEnabled">
-                        <label class="form-check-label" for="fonnteUserEnabled">Aktifkan notifikasi WhatsApp Fonnte ke pelanggan</label>
+                        <label class="form-check-label" for="fonnteUserEnabled">Aktifkan notifikasi WhatsApp WA API ke pelanggan</label>
                     </div>
                     <div class="form-text">Jika nonaktif, OTP/notifikasi pending/sukses tidak akan dikirim meskipun token & template sudah diisi.</div>
                 </div>
                 <div class="col-12">
-                    <label class="form-label">API Key (Fonnte)</label>
-                    <input id="fonnteApiKey" type="password" class="form-control" placeholder="API Key dari md.fonnte.com">
+                    <label class="form-label">API Key (WA API — biarkan kosong, pakai .env)</label>
+                    <input id="fonnteApiKey" type="password" class="form-control" placeholder="WA_API_KEY di .env">
                 </div>
                 <div class="col-12">
                     <label class="form-label">Template Pesan OTP</label>
@@ -1911,7 +1911,7 @@
                     <textarea id="fonnteTemplateSuccess" class="form-control" rows="3" placeholder="Halo {name}, pesanan {order_id} berhasil diproses!"></textarea>
                 </div>
                 <div class="col-12">
-                    <div class="form-text">Fonnte API digunakan khusus untuk mengirim notifikasi ke PELANGGAN (contoh: OTP registrasi, status pembayaran). Gunakan variabel <code>{name}</code>, <code>{order_id}</code>, <code>{total}</code>, dan <code>{otp}</code> sesuai kebutuhan.</div>
+                    <div class="form-text">WA API dikirim via server Baileys (port 8080). Gunakan variabel <code>{name}</code>, <code>{order_id}</code>, <code>{total}</code>, dan <code>{otp}</code> sesuai kebutuhan.</div>
                 </div>
 
                 <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">SEO Thumbnail Live</h6></div>
@@ -1928,7 +1928,7 @@
 
                 <div class="col-12 mt-2">
                     <div class="border rounded p-3 bg-light">
-                        <h6 class="mb-2"><i class="bi bi-send-check me-1"></i>Test Kirim WhatsApp Pelanggan (Fonnte)</h6>
+                        <h6 class="mb-2"><i class="bi bi-send-check me-1"></i>Test Kirim WhatsApp Pelanggan (WA API)</h6>
                         <div class="row g-2">
                             <div class="col-12 col-md-5">
                                 <label class="form-label small">Nomor Tujuan Test</label>
@@ -1936,7 +1936,7 @@
                             </div>
                             <div class="col-12 col-md-7">
                                 <label class="form-label small">Pesan Test</label>
-                                <input id="fonnteTestMessage" class="form-control form-control-sm" placeholder="Test dari Fonnte">
+                                <input id="fonnteTestMessage" class="form-control form-control-sm" placeholder="Test dari WA API NexShop">
                             </div>
                         </div>
                         <button type="button" class="btn btn-outline-primary btn-sm mt-3" id="fonnteTestBtn" onclick="testFonnteWhatsApp()">

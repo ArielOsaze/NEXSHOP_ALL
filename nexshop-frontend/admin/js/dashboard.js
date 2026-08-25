@@ -2083,7 +2083,8 @@ async function saveApiKeys() {
         wa_template_pending: document.getElementById("fonnteTemplatePending").value.trim(),
         wa_template_success: document.getElementById("fonnteTemplateSuccess").value.trim()
     };
-    // Field kosong berarti "tidak diubah" untuk secret fonnte_token — jangan
+// Field kosong berarti "tidak diubah" untuk secret WA_API_KEY — jangan overwrite ke database
+// (WA_API_KEY dikelola via file .env, bukan dashboard admin)
     // kirim string kosong ke backend supaya token lama tidak ketimpa/hilang
     // (lihat updateApiKeys: field yang dikirim "" akan diabaikan, tapi kita
     // tetap eksplisit di sini biar niatnya jelas dibaca ulang nanti).
@@ -2233,7 +2234,7 @@ async function testFonnteWhatsApp() {
                 rawEl.classList.add("d-none");
                 rawEl.textContent = "";
             }
-        }, "mengirim test Fonnte WhatsApp");
+        }, "mengirim test WhatsApp API");
     } catch (err) {
         if (err.message === "unauthorized") return;
         resultWrap.classList.remove("d-none");
@@ -3329,7 +3330,7 @@ const SECRET_API_FIELDS = {
     geminiApiKey: "gemini_api_key",
     smtpPassword: "smtp_password",
     waapiKey: "waapi_key",
-    fonnteApiKey: "fonnte_token"
+    fonnteApiKey: "fonnte_token" // field lama, sekarang pakai WA_API_KEY via .env
 };
 let maskedApiKeys = {};
 let revealedSecretField = null;
