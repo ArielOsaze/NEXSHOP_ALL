@@ -4627,7 +4627,6 @@ async function bootstrapApp() {
     loadPromo();
 
     const initialRequests = Promise.allSettled([
-        fetchUserProfile(),
         loadStoreSettings(),
         loadProducts(),
         loadTopupProducts(),
