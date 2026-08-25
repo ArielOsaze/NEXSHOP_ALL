@@ -39,14 +39,14 @@
         statusEl.classList.toggle("hidden", !message);
     }
 
-    async function mountCaptcha(name, containerId, statusId) {
+    async function mountCaptcha(name, containerId, statusId, { allowUnconfigured = false } = {}) {
         const container = document.getElementById(containerId);
         const status = document.getElementById(statusId);
         if (!container) return;
         const config = await getConfig();
         if (!config.turnstile_site_key) {
             container.hidden = true;
-            if (config.turnstile_required) setStatus(status, "Verifikasi keamanan belum tersedia. Coba lagi nanti.");
+            if (config.turnstile_required && !allowUnconfigured) setStatus(status, "Verifikasi keamanan belum tersedia. Coba lagi nanti.");
             return;
         }
         container.hidden = false;
@@ -75,10 +75,10 @@
         }
     }
 
-    async function captchaToken(name) {
+    async function captchaToken(name, { allowUnconfigured = false } = {}) {
         const config = await getConfig();
         if (!config.turnstile_site_key) {
-            if (config.turnstile_required) throw new Error("Verifikasi keamanan belum tersedia. Coba lagi nanti.");
+            if (config.turnstile_required && !allowUnconfigured) throw new Error("Verifikasi keamanan belum tersedia. Coba lagi nanti.");
             return "";
         }
         const state = widgets.get(name);

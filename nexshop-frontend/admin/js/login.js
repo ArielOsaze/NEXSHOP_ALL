@@ -30,6 +30,14 @@ const loginBtn = document.getElementById("loginBtn");
 const passwordInput = document.getElementById("password");
 const toggleBtn = document.getElementById("togglePassword");
 
+async function initAdminLoginSecurity() {
+    const security = window.NexShopAuthSecurity;
+    if (!security) return;
+    await security.mountCaptcha("admin-login", "adminLoginTurnstile", "adminLoginTurnstileStatus", { allowUnconfigured: true });
+}
+
+const adminCaptchaReady = initAdminLoginSecurity();
+
 toggleBtn.addEventListener("click", () => {
     const isHidden = passwordInput.type === "password";
     passwordInput.type = isHidden ? "text" : "password";
@@ -52,12 +60,16 @@ form.addEventListener("submit", async (e) => {
     setLoading(true);
 
     try {
+        await adminCaptchaReady;
+        const captcha_token = window.NexShopAuthSecurity
+            ? await window.NexShopAuthSecurity.captchaToken("admin-login", { allowUnconfigured: true })
+            : "";
         let res;
         try {
             res = await fetch(`${API_BASE}/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password, captcha_token })
             });
         } catch {
             throw new Error("Tidak dapat terhubung ke server NexShop. Periksa status backend lalu coba lagi.");

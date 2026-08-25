@@ -62,8 +62,13 @@ function isProviderSchemaError(error) {
     return code === "42703" || message.includes("schema cache") || message.includes("google_subject") || message.includes("auth_provider");
 }
 
-async function requireHumanVerification(req, res) {
-    const { secretKey } = await getTurnstileConfig();
+async function requireHumanVerification(req, res, { allowAdminBootstrap = false } = {}) {
+    const { siteKey, secretKey } = await getTurnstileConfig();
+    // Admin/staff yang kredensialnya sudah benar tetap perlu jalan masuk untuk
+    // memasang Turnstile pertama kali. Bypass ini hanya aktif selama salah satu
+    // key belum ada; setelah keduanya tersimpan, admin juga wajib menyelesaikan
+    // challenge seperti login lainnya.
+    if (allowAdminBootstrap && (!siteKey || !secretKey)) return true;
     if (!secretKey && !(await isTurnstileRequired())) return true;
     if (!secretKey) {
         res.status(503).json({ message: "Verifikasi keamanan sedang belum dikonfigurasi. Coba lagi nanti.", code: "TURNSTILE_NOT_CONFIGURED" });
@@ -456,8 +461,6 @@ exports.login = async (req, res) => {
     const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
     const password = typeof req.body.password === "string" ? req.body.password : "";
 
-    if (!await requireHumanVerification(req, res)) return;
-
     if (!isValidEmail(email) || !password || password.length > 128) {
         return res.status(401).json({ message: "Email atau password salah" });
     }
@@ -485,6 +488,12 @@ exports.login = async (req, res) => {
             recordFailedLogin(email);
             return res.status(401).json({ message: "Email atau password salah" });
         }
+
+        // Turnstile diperiksa setelah password valid agar super admin bisa
+        // bootstrap konfigurasi pertama dari dashboard. Endpoint tetap dibatasi
+        // loginLimiter, dan customer tidak mendapat bypass ini.
+        const isSuperAdminUser = user.role === "admin";
+        if (!await requireHumanVerification(req, res, { allowAdminBootstrap: isSuperAdminUser })) return;
 
         if (!user.email_verified && user.role !== "admin") {
             return res.status(403).json({

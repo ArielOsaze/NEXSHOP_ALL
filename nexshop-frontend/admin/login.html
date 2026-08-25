@@ -38,6 +38,9 @@
             </div>
         </div>
 
+        <div class="admin-turnstile" id="adminLoginTurnstile" hidden></div>
+        <p class="text-danger small mb-3 hidden" id="adminLoginTurnstileStatus" role="alert" aria-live="polite"></p>
+
         <p class="text-danger small mb-3" id="loginError"></p>
 
         <button type="submit" class="btn btn-primary w-100" id="loginBtn">
@@ -46,6 +49,7 @@
     </form>
 </div>
 
-<script src="js/login.js?v=20260824-server-errors"></script>
+<script src="/auth-security.js?v=20260825-admin-bootstrap"></script>
+<script src="js/login.js?v=20260825-turnstile"></script>
 </body>
 </html>

@@ -27,6 +27,8 @@ function check(label, condition) {
     const routes = read("nexshop-backend/routes/authRoutes.js");
     const index = read("nexshop-frontend/index.html");
     const authUi = read("nexshop-frontend/auth-security.js");
+    const adminLogin = read("nexshop-frontend/admin/login.html");
+    const adminLoginUi = read("nexshop-frontend/admin/js/login.js");
     const nginx = read("nginx-nexshop.conf");
 
     check(
@@ -59,6 +61,13 @@ function check(label, condition) {
         !authUi.includes("TURNSTILE_SECRET_KEY") &&
         index.includes('id="googleLoginBtn"') &&
         index.includes('id="googleRegisterBtn"')
+    );
+    check(
+        "admin bisa bootstrap konfigurasi captcha, lalu tetap memakai challenge setelah aktif",
+        authController.includes("allowAdminBootstrap") &&
+        authController.includes("const isSuperAdminUser") &&
+        adminLogin.includes('id="adminLoginTurnstile"') &&
+        adminLoginUi.includes('captchaToken("admin-login", { allowUnconfigured: true })')
     );
     check(
         "CSP mengizinkan iframe dan script Turnstile secara terbatas",

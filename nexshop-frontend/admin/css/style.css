@@ -451,6 +451,18 @@ main{
     text-align:left;
 }
 
+.admin-turnstile{
+    display:flex;
+    justify-content:center;
+    min-height:65px;
+    margin-bottom:12px;
+    overflow:hidden;
+}
+
+.login-card .hidden{
+    display:none;
+}
+
 .login-card .btn{
     padding:11px;
 }
