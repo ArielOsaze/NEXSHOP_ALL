@@ -1,6 +1,28 @@
+/**
+ * userWhatsAppService.js — REPLACED from Fonnte to NexShop WA API (local server)
+ *
+ * Original: kirim ke https://api.fonnte.com/send
+ * Sekarang : kirim ke WA API server yang running di http://127.0.0.1:8080 (Baileys)
+ *
+ * Interface tetap sama (sendUserWhatsApp, testFonnteConnection, parseTemplate)
+ * supaya semua controller (auth, order, topup, notificationDelivery) nggak perlu diubah.
+ *
+ * WA API endpoints:
+ *   POST /send-otp         — template: login_otp, login_warning
+ *   POST /send-transaction — status: pending, success, failed
+ *
+ * Semua template (otp/pending/success) tetap dikelola via Settings > API Keys di NexShop admin
+ * (fields: wa_template_otp, wa_template_pending, wa_template_success, fonnte_user_enabled, dll).
+ * Template ini akan diparse lalu dikirim sebagai custom `message` ke WA API.
+ */
+
 const axios = require("axios");
 const { getApiKeys, getStoreSettings } = require("../config/settings");
-const { toFonntePhone } = require("../utils/phoneNumber");
+const { normalizePhoneNumber, toFonntePhone } = require("../utils/phoneNumber");
+
+// WA API server konfigurasi — ambil dari apiKeys (wa_api_url) supaya fleksibel
+const WA_API_BASE = process.env.WA_API_URL || "http://127.0.0.1:8080";
+const WA_API_KEY = process.env.WA_API_KEY || "nexshop-wa-2024-secure-key";
 
 /**
  * Mengganti template variables (misal: {name}, {order_id}) dengan data asli
@@ -8,140 +30,156 @@ const { toFonntePhone } = require("../utils/phoneNumber");
 function parseTemplate(template, data) {
     let result = template;
     for (const key in data) {
-        // Replace semua occurrence dari {key}
         result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), data[key] || '');
     }
     return result;
 }
 
 /**
- * Fungsi utama untuk kirim WA ke user via Fonnte
- * tipe: 'pending' | 'success' | 'otp'
- *
- * extraMessage (opsional): blok teks tambahan yang DITEMPEL setelah hasil
- * template admin, dipakai buat detail transaksi yang otomatis (nama produk,
- * ID Pelanggan/Nomor Tujuan, No. Token/SN + instruksi cara pakai). Ini
- * SENGAJA ditempel di KODE, bukan lewat placeholder {xxx} di template admin
- * -- supaya tetap terkirim walau admin belum pernah edit template WA-nya
- * dari default.
+ * Helper: kirim ke WA API server (Baileys)
+ * - POST /send-otp untuk type "otp"
+ * - POST /send-transaction untuk type "pending"/"success"
+ */
+async function sendToWaApi(phone, type, variables, extraMessage, customMessage) {
+    const payload = {
+        phone: phone,
+        message: customMessage || undefined
+    };
+
+    if (type === "otp") {
+        payload.otp = variables.otp || '';
+        payload.template = "login_otp";
+    } else if (type === "pending") {
+        payload.orderId = variables.order_id || variables.orderId || '';
+        payload.status = "pending";
+        payload.amount = variables.total || variables.amount || '';
+    } else if (type === "success") {
+        payload.orderId = variables.order_id || variables.orderId || '';
+        payload.status = "success";
+        payload.amount = variables.total || variables.amount || '';
+    } else if (type === "failed") {
+        payload.orderId = variables.order_id || variables.orderId || '';
+        payload.status = "failed";
+        payload.amount = variables.total || variables.amount || '';
+    }
+
+    // Jika custom message diberikan, kirim sebagai message (WA API akan pakai ini)
+    const url = (type === "otp")
+        ? `${WA_API_BASE}/send-otp`
+        : `${WA_API_BASE}/send-transaction`;
+
+    const resp = await axios.post(url, payload, {
+        headers: {
+            "Content-Type": "application/json",
+            "X-API-Key": WA_API_KEY
+        },
+        timeout: 15000
+    });
+
+    return resp.data;
+}
+
+/**
+ * Fungsi utama untuk kirim WA ke user
+ * type: 'otp' | 'pending' | 'success' | 'failed'
  */
 async function sendUserWhatsApp(targetNumber, type, variables = {}, extraMessage = "") {
     try {
         const canonicalTarget = toFonntePhone(String(targetNumber || ""));
         if (!canonicalTarget) return { success: false, reason: "invalid_phone" };
+
         const apiKeys = await getApiKeys();
         const settings = await getStoreSettings();
 
-        // Cek apakah fitur Fonnte diaktifkan secara global
+        // Cek apakah fitur WA diaktifkan secara global
         if (!settings.fonnte_user_enabled) return { success: false, reason: "disabled_globally" };
 
-        const token = apiKeys.fonnte_token;
-        if (!token) {
-            console.log("⚠️ Fonnte Token belum dikonfigurasi.");
-            return { success: false, reason: "missing_token" };
-        }
-
-        // Cek apakah tipe notifikasi ini diaktifkan
+        // Map template dari settings (biarkan admin edit template via dashboard)
         let template = "";
+        let enabledFlag = true;
         if (type === "pending") {
-            if (!settings.wa_notify_pending_enabled) return { success: false, reason: "disabled_type" };
-            template = settings.wa_template_pending;
+            enabledFlag = settings.wa_notify_pending_enabled;
+            template = settings.wa_template_pending || "";
         } else if (type === "success") {
-            if (!settings.wa_notify_success_enabled) return { success: false, reason: "disabled_type" };
-            template = settings.wa_template_success;
+            enabledFlag = settings.wa_notify_success_enabled;
+            template = settings.wa_template_success || "";
         } else if (type === "otp") {
-            if (!settings.wa_notify_otp_enabled) return { success: false, reason: "disabled_type" };
-            template = settings.wa_template_otp;
+            enabledFlag = settings.wa_notify_otp_enabled;
+            template = settings.wa_template_otp || "";
         } else {
             return { success: false, reason: "invalid_type" };
         }
 
-        if (!template) {
-            console.log(`⚠️ Template WhatsApp untuk ${type} kosong.`);
-            return { success: false, reason: "missing_template" };
+        if (!enabledFlag) return { success: false, reason: "disabled_type" };
+
+        // Parse template jika ada (dari settings admin)
+        let message = "";
+        if (template) {
+            message = parseTemplate(template, variables);
+            if (extraMessage) message += `\n\n${extraMessage}`;
         }
 
-        let message = parseTemplate(template, variables);
-        if (extraMessage) message += `\n\n${extraMessage}`;
+        console.log(`[WA API] Kirim ke ${canonicalTarget}, type: ${type}, orderId: ${variables.order_id || variables.orderId || 'N/A'}`);
 
-        const response = await axios.post(
-            "https://api.fonnte.com/send",
-            {
-                target: canonicalTarget,
-                message: message
-            },
-            {
-                headers: {
-                    Authorization: token
-                },
-                timeout: 10000 // 10 detik agar tidak hang
-            }
-        );
+        const result = await sendToWaApi(canonicalTarget, type, variables, extraMessage, message);
 
-        if (response.data && response.data.status) {
-            return { success: true, response: response.data, status: response.status };
+        if (result && result.success) {
+            return { success: true, response: result, status: "sent" };
         } else {
-            console.log("⚠️ Fonnte API gagal:", response.data);
-            return { success: false, reason: "api_error", error: response.data, status: response.status };
+            return { success: false, reason: "api_error", error: result?.message || "unknown error", status: "failed" };
         }
 
     } catch (err) {
-        console.error("Kesalahan saat mengirim Fonnte WA:", err.message);
-        
-        let errorCategory = "unknown"; // default to timeout/disconnect
-        let status = null;
+        console.error("Kesalahan saat mengirim WA via WA API:", err.message);
+
+        let errorCategory = "transient"; // default
+        let status = err.response?.status || null;
         if (err.response) {
-            status = err.response.status;
             if ([400, 401, 403, 404, 405, 422].includes(status)) {
                 errorCategory = "permanent";
-            } else if ([408, 429].includes(status) || (status >= 500 && status <= 599)) {
-                errorCategory = "transient";
             }
         }
-        
-        return { 
-            success: false, 
-            reason: errorCategory, 
-            error: err.response?.data || err.message, 
-            status: status 
+
+        return {
+            success: false,
+            reason: errorCategory,
+            error: err.response?.data || err.message,
+            status: status
         };
     }
 }
 
 /**
- * Khusus untuk testing dari Admin Dashboard
+ * Test koneksi WA API (ganti dari Fonnte test connection)
+ * Dipanggil dari Settings > API Keys dashboard "Test" button
  */
 async function testFonnteConnection(targetNumber, messageText) {
     try {
-        // fresh:true — test dari dashboard harus selalu baca token TERBARU dari
-        // DB, gak boleh kena cache 30 detik (bisa bikin "belum dikonfigurasi"
-        // padahal admin baru saja save).
-        const apiKeys = await getApiKeys({ fresh: true });
-        const token = apiKeys.fonnte_token;
-        if (!token) throw new Error("Fonnte Token belum dikonfigurasi");
+        // Gunakan endpoint /send-otp sebagai test, kirim OTP dummy
+        const canonicalTarget = toFonntePhone(String(targetNumber || ""));
+        if (!canonicalTarget) throw new Error("Nomor WhatsApp tidak valid");
 
-        const response = await axios.post(
-            "https://api.fonnte.com/send",
-            {
-                target: targetNumber,
-                message: messageText
+        const resp = await axios.post(`${WA_API_BASE}/send-otp`, {
+            phone: canonicalTarget,
+            otp: "000000",
+            message: messageText || `🧪 Test koneksi NexShop WA API — berhasil! ✅`
+        }, {
+            headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": WA_API_KEY
             },
-            {
-                headers: {
-                    Authorization: token
-                },
-                timeout: 10000
-            }
-        );
+            timeout: 15000
+        });
 
-        return response.data;
+        return resp.data;
     } catch (err) {
-        throw err;
+        throw new Error(`Gagal kirim WA: ${err.response?.data?.message || err.message}`);
     }
 }
 
 module.exports = {
     sendUserWhatsApp,
     testFonnteConnection,
-    parseTemplate
+    parseTemplate,
+    sendToWaApi  // export juga untuk pemakaian langsung/testing
 };

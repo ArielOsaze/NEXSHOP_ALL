@@ -1,54 +1,56 @@
+/**
+ * config/whatsapp.js — REPLACED from WAAPI to NexShop WA API (local Baileys server)
+ *
+ * Original: kirim notifikasi admin ke https://waapi.fyas.my.id/api/whatsapp/send-message
+ * Sekarang : kirim ke WA API server (Baileys) di http://127.0.0.1:8080
+ *
+ * Notifikasi ini kirim ke ADMIN, pakai nomor yang dikonfig di Settings > API Keys
+ * (waapi_target_number / NEXSHOP_ADMIN_WA_NUMBER).
+ */
+
 const axios = require("axios");
-require("dotenv").config();
 const { getApiKeys } = require("./settings");
-const { assertSafeOutboundUrl } = require("../utils/safeOutboundUrl");
 
-// Kirim notifikasi ke WhatsApp lewat WA Gateway (waapi.fyas.my.id), dipanggil
-// dari controller lain (order/topup) tiap ada event penting (pembelian sukses,
-// dst) — pola & alasan silent-fail-nya sama persis kayak sendTelegramNotification:
-// kalau gagal kirim WA, itu JANGAN sampai bikin proses utama (update status
-// order/topup) ikut gagal.
-//
-// Config (URL/Key/nomor tujuan) diambil dari tabel api_keys (bisa diedit
-// lewat Settings > API Keys di admin dashboard), dengan fallback ke .env
-// kalau admin belum pernah isi dari dashboard sama sekali.
+const WA_API_BASE = process.env.WA_API_URL || "http://127.0.0.1:8080";
+const WA_API_KEY = process.env.WA_API_KEY || "nexshop-wa-2024-secure-key";
+
+/**
+ * Kirim notifikasi ke WhatsApp admin lewat WA API server.
+ * Pesan dikirim sebagai custom message via /send-otp endpoint.
+ *
+ * Pola & alasan silent-fail-nya sama persis kayak sebelumnya
+ * (WAAPI/Fonnte): kalau gagal kirim WA, proses utama (order/topup)
+ * JANGAN ikut gagal.
+ */
 async function sendWhatsAppNotification(message) {
-    let waapi_url, waapi_key, waapi_target_number;
+    let waapi_target_number;
     try {
-        ({ waapi_url, waapi_key, waapi_target_number } = await getApiKeys());
+        ({ waapi_target_number } = await getApiKeys());
     } catch (err) {
-        console.log("Gagal ambil config WAAPI:", err.message);
+        console.log("Gagal ambil config WA target number:", err.message);
         return;
     }
 
-    if (!waapi_url || !waapi_key || !waapi_target_number) {
-        console.log("⚠️ WAAPI_URL / WAAPI_KEY / WAAPI_TARGET_NUMBER belum diisi — notifikasi WhatsApp nonaktif");
+    if (!waapi_target_number) {
+        console.log("⚠️ Nomor WA admin (waapi_target_number) belum diisi — notifikasi WhatsApp nonaktif");
         return;
     }
 
     try {
-        const target = `${waapi_url.replace(/\/$/, "")}/api/whatsapp/send-message`;
-        const safeTarget = await assertSafeOutboundUrl(target);
-        if (!safeTarget.ok) {
-            console.log("URL WAAPI ditolak:", safeTarget.reason);
-            return;
-        }
-        await axios.post(
-            safeTarget.url,
-            {
-                number: waapi_target_number,
-                message
+        // Kirim via /send-otp endpoint (pakai custom message)
+        await axios.post(`${WA_API_BASE}/send-otp`, {
+            phone: waapi_target_number,
+            otp: "notify",  // dummy, karena message custom akan dipakai
+            message: message
+        }, {
+            headers: {
+                "Content-Type": "application/json",
+                "X-API-Key": WA_API_KEY
             },
-            {
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-API-Key": waapi_key
-                },
-                timeout: 10000
-            }
-        );
+            timeout: 10000
+        });
     } catch (err) {
-        console.log("Gagal kirim notifikasi WhatsApp:", err.response?.data || err.message);
+        console.log("Gagal kirim notifikasi WhatsApp (WA API):", err.response?.data || err.message);
     }
 }
 

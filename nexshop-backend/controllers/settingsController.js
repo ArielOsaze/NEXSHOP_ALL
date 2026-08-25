@@ -584,7 +584,7 @@ exports.testUserWhatsApp = async (req, res) => {
     try {
         const { testFonnteConnection } = require("../services/userWhatsAppService");
         const number = (req.body.number || "").trim();
-        const message = (req.body.message || "").trim() || "Test notifikasi WhatsApp dari Fonnte NexShop ✅";
+        const message = (req.body.message || "").trim() || "🧪 *Test koneksi NexShop WA API*\nBerhasil! ✅ Pesan ini dikirim via WhatsApp API (Baileys).";
 
         if (!number) return res.status(400).json({ message: "Nomor tujuan belum diisi." });
 
@@ -593,13 +593,13 @@ exports.testUserWhatsApp = async (req, res) => {
             const waRes = await testFonnteConnection(number, message);
             return res.json({
                 success: true,
-                message: `Pesan test berhasil dikirim via Fonnte (${Date.now() - started}ms)`,
+                message: `Pesan test berhasil dikirim via WA API (${Date.now() - started}ms)`,
                 gateway_response: waRes
             });
         } catch (waErr) {
             return res.status(200).json({
                 success: false,
-                message: "Gagal memanggil Fonnte API: " + (waErr.response?.data?.reason || waErr.message),
+                message: "Gagal memanggil WA API: " + (waErr.response?.data?.message || waErr.message),
                 gateway_response: waErr.response?.data || null
             });
         }
