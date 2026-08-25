@@ -2,7 +2,8 @@ const supabase = require("../config/db");
 const { sendOtpEmail } = require("../config/mailer");
 const { notify } = require("../config/notify");
 const { generateOtp, OTP_EXPIRY_MINUTES } = require("./authController");
-const { normalizePhoneNumber } = require("../utils/phoneNumber");
+const { startPhoneOtp, verifyPhoneOtp } = require("../services/phoneOtpService");
+const { getUserProfile, toPublicProfile } = require("../services/userProfileService");
 
 // ===========================
 // GET SEMUA USER (untuk admin dashboard)
@@ -379,6 +380,8 @@ exports.updateOwnAvatar = async (req, res) => {
         if (typeof avatar_url !== "string" || avatar_url.length > 2048 || /[\u0000-\u001f\u007f]/.test(avatar_url)) throw new Error();
         const parsed = new URL(avatar_url.trim());
         if (parsed.protocol !== "https:" || parsed.username || parsed.password) throw new Error();
+        const storageOrigin = String(process.env.SUPABASE_URL || "").replace(/\/$/, "");
+        if (!storageOrigin || !parsed.href.startsWith(`${storageOrigin}/storage/v1/object/public/avatars/`)) throw new Error();
         cleanAvatarUrl = parsed.toString();
     } catch (_) {
         return res.status(400).json({ message: "avatar_url tidak valid" });
@@ -386,15 +389,15 @@ exports.updateOwnAvatar = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from("users")
-            .update({ avatar_url: cleanAvatarUrl })
+            .update({ avatar_url: cleanAvatarUrl, avatar_updated_at: new Date().toISOString() })
             .eq("id", req.user.id)
-            .select("id, avatar_url");
+            .select("id, avatar_url, avatar_updated_at");
             
         if (error) {
             console.error(error);
             return res.status(500).json({ message: "Gagal update foto profil" });
         }
-        res.json({ message: "Foto profil diperbarui", avatar_url: data[0].avatar_url });
+        res.json({ message: "Foto profil diperbarui", avatar_url: data[0].avatar_url, avatar_updated_at: data[0].avatar_updated_at });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Server Error" });
@@ -402,49 +405,55 @@ exports.updateOwnAvatar = async (req, res) => {
 };
 
 exports.updateOwnPhone = async (req, res) => {
-    let { phone } = req.body;
-    if (!phone || typeof phone !== "string") {
-        return res.status(400).json({ message: "Nomor WhatsApp tidak valid" });
-    }
-    
-    phone = normalizePhoneNumber(phone);
-    if (!phone || phone.length < 9) {
-        return res.status(400).json({ message: "Nomor WhatsApp tidak valid" });
-    }
-
     try {
-        const { data: existing, error: findErr } = await supabase
-            .from("users")
-            .select("id")
-            .eq("phone", phone)
-            .neq("id", req.user.id)
-            .maybeSingle();
+        const result = await startPhoneOtp(supabase, {
+            userId: req.user.id,
+            phone: req.body?.phone,
+            purpose: "phone_change"
+        });
+        if (result.alreadyVerified) return res.json({ message: "Nomor WhatsApp ini sudah terverifikasi.", ...result });
+        res.json({ message: "Kode OTP telah dikirim ke WhatsApp. Nomor lama tetap aktif sampai verifikasi selesai.", ...result, needs_verification: true });
+    } catch (err) {
+        const status = ["PHONE_INVALID", "PHONE_ALREADY_IN_USE"].includes(err.code) ? 400 : (err.code === "OTP_COOLDOWN" ? 429 : 503);
+        res.status(status).json({ message: err.message || "Gagal memulai verifikasi nomor telepon." });
+    }
+};
 
-        if (findErr) {
-            console.error(findErr);
-            return res.status(500).json({ message: "Database Error" });
-        }
+exports.verifyOwnPhone = async (req, res) => {
+    try {
+        const user = await verifyPhoneOtp(supabase, { userId: req.user.id, otp: req.body?.otp });
+        res.json({ message: "Nomor WhatsApp berhasil diverifikasi.", user: toPublicProfile(user) });
+    } catch (err) {
+        const status = ["OTP_INVALID", "OTP_NOT_ACTIVE", "OTP_EXPIRED", "OTP_ATTEMPTS_EXCEEDED", "OTP_MISMATCH", "PHONE_ALREADY_IN_USE"].includes(err.code) || err.code === "23505" ? 400 : 500;
+        res.status(status).json({ message: err.code === "23505" ? "Nomor WhatsApp tersebut sudah terverifikasi pada akun lain." : (err.message || "Verifikasi nomor gagal.") });
+    }
+};
 
-        if (existing) {
-            return res.status(400).json({ message: "Nomor WhatsApp tersebut sudah terdaftar pada akun lain." });
-        }
+exports.getOwnProfile = async (req, res) => {
+    try {
+        const user = await getUserProfile(req.user.id);
+        if (!user) return res.status(404).json({ message: "User tidak ditemukan" });
+        return res.json({ user: toPublicProfile(user) });
+    } catch (err) {
+        return res.status(500).json({ message: "Gagal memuat profil" });
+    }
+};
 
+exports.updateOwnProfile = async (req, res) => {
+    const fullname = typeof req.body?.fullname === "string" ? req.body.fullname.trim() : "";
+    if (fullname.length < 2 || fullname.length > 100) {
+        return res.status(400).json({ message: "Nama harus terdiri dari 2–100 karakter." });
+    }
+    try {
         const { data, error } = await supabase
             .from("users")
-            .update({ phone })
+            .update({ fullname })
             .eq("id", req.user.id)
-            .select("id, phone");
-            
-        if (error) {
-            console.error(error);
-            if (error.code === '23505' && error.message && error.message.includes('users_phone_key')) {
-                return res.status(400).json({ message: "Nomor WhatsApp tersebut sudah terdaftar pada akun lain." });
-            }
-            return res.status(500).json({ message: "Gagal update nomor telepon" });
-        }
-        res.json({ message: "Nomor telepon diperbarui", phone: data[0].phone });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server Error" });
+            .select("*")
+            .maybeSingle();
+        if (error || !data) return res.status(500).json({ message: "Gagal memperbarui nama profil." });
+        return res.json({ message: "Nama profil diperbarui.", user: toPublicProfile(data) });
+    } catch (_) {
+        return res.status(500).json({ message: "Gagal memperbarui nama profil." });
     }
 };

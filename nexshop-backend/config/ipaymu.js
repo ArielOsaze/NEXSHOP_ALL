@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const axios = require("axios");
 const https = require("https");
 const { getApiKeys } = require("./settings");
+const { toIpaymuPhone } = require("../utils/phoneNumber");
 
 // ===========================================================
 // iPaymu API v2 (Redirect Payment).
@@ -143,6 +144,8 @@ async function requestOnce(path, body, timeoutMs) {
 // Bikin transaksi Redirect Payment. `itemDetails` = [{ name, price, quantity }]
 // Return { sessionId, paymentUrl } atau throw error kalau gagal.
 async function createRedirectPayment({ referenceId, itemDetails, buyerName, buyerEmail, buyerPhone, returnUrl, notifyUrl, cancelUrl, paymentMethod, paymentChannel }) {
+    const formattedBuyerPhone = toIpaymuPhone(buyerPhone);
+    if (!formattedBuyerPhone) throw new Error("Nomor pembeli iPaymu tidak valid.");
     const body = {
         product: itemDetails.map((i) => i.name),
         qty: itemDetails.map((i) => i.quantity),
@@ -154,7 +157,7 @@ async function createRedirectPayment({ referenceId, itemDetails, buyerName, buye
         referenceId,
         buyerName: buyerName || "Guest",
         buyerEmail: buyerEmail || undefined,
-        buyerPhone: buyerPhone || undefined,
+        buyerPhone: formattedBuyerPhone,
         ...(paymentMethod ? { paymentMethod } : {}),
         ...(paymentChannel ? { paymentChannel } : {})
     };
@@ -191,6 +194,9 @@ async function checkTransactionStatus(transactionId) {
 // Bikin transaksi Direct Payment (VA & QRIS)
 // Return { transactionId, paymentNo, qrContent, expired, amount, fee, status, url } atau throw error.
 async function createDirectPayment({ referenceId, amount, buyerName, buyerEmail, buyerPhone, paymentMethod, paymentChannel, notifyUrl }) {
+    const formattedBuyerPhone = toIpaymuPhone(buyerPhone);
+    if (!formattedBuyerPhone) throw new Error("Nomor pembeli iPaymu tidak valid.");
+    if (!buyerEmail) throw new Error("Email pembeli iPaymu wajib diisi.");
     let finalChannel = paymentChannel;
     if (!finalChannel) {
         if (paymentMethod === "qris") finalChannel = "qris";
@@ -199,8 +205,8 @@ async function createDirectPayment({ referenceId, amount, buyerName, buyerEmail,
 
     const body = {
         name: buyerName || "Guest",
-        phone: buyerPhone || "08123456789",
-        email: buyerEmail || "guest@example.com",
+        phone: formattedBuyerPhone,
+        email: buyerEmail,
         amount,
         notifyUrl,
         referenceId,

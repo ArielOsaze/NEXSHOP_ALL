@@ -774,32 +774,68 @@ document.getElementById("cartBtn").addEventListener("click", () => {
 const accountBtn = document.getElementById("accountBtn");
 const accountDropdown = document.getElementById("accountDropdown");
 
+function hasVerifiedPhone(user = currentUser) {
+    return Boolean(user?.phone_normalized && user?.phone_verified_at && user?.onboarding_completed);
+}
+
+function avatarUrlFor(user) {
+    if (!user?.avatar_url) return "";
+    const url = safeUrl(user.avatar_url);
+    if (!url) return "";
+    if (!user.avatar_updated_at) return url;
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}v=${encodeURIComponent(user.avatar_updated_at)}`;
+}
+
+function avatarFallback(target, user) {
+    target.innerHTML = user
+        ? escapeHtml((user.fullname || "P").charAt(0).toUpperCase())
+        : '<i class="fa-solid fa-circle-user text-sm sm:text-base opacity-70" aria-hidden="true"></i>';
+}
+
+function renderAvatar(target, user, { header = false } = {}) {
+    const url = avatarUrlFor(user);
+    if (!url) return avatarFallback(target, user);
+    target.innerHTML = `<img src="${escapeHtml(url)}" alt="Foto profil ${escapeHtml(user.fullname || "pengguna")}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">`;
+    const image = target.querySelector("img");
+    image.addEventListener("error", () => avatarFallback(target, user), { once: true });
+    if (header) target.setAttribute("aria-label", `Akun ${user.fullname || "saya"}`);
+}
+
+async function refreshCurrentUserProfile() {
+    const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+    if (!token || !currentUser) return null;
+    try {
+        const res = await fetch(`${API_BASE}/users/me`, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (!res.ok || !data.user) return null;
+        currentUser = { ...currentUser, ...data.user };
+        saveUser();
+        refreshAccountUI();
+        return currentUser;
+    } catch (_) {
+        return null;
+    }
+}
+
 function refreshAccountUI() {
     if (currentUser) {
         accountBtn.querySelector("#accountBtnLabel").textContent = currentUser.fullname.split(" ")[0];
+        accountBtn.setAttribute("aria-label", `Akun ${currentUser.fullname}`);
         accountBtn.classList.add("logged-in");
         const accountAvatar = document.getElementById("accountAvatar");
-        if (currentUser.avatar_url) {
-            accountAvatar.innerHTML = `
-                <img src="${escapeHtml(safeUrl(currentUser.avatar_url))}" alt="" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
-                <button type="button" class="account-avatar-edit" id="accountAvatarEditBtn" aria-label="Ganti foto profil">
-                    <i class="fa-solid fa-camera"></i>
-                </button>
-            `;
-        } else {
-            accountAvatar.innerHTML = `
-                ${escapeHtml(currentUser.fullname.charAt(0).toUpperCase())}
-                <button type="button" class="account-avatar-edit" id="accountAvatarEditBtn" aria-label="Ganti foto profil">
-                    <i class="fa-solid fa-camera"></i>
-                </button>
-            `;
-        }
+        const headerAvatar = document.getElementById("accountBtnAvatar");
+        renderAvatar(headerAvatar, currentUser, { header: true });
+        renderAvatar(accountAvatar, currentUser);
+        accountAvatar.insertAdjacentHTML("beforeend", '<button type="button" class="account-avatar-edit" id="accountAvatarEditBtn" aria-label="Ganti foto profil"><i class="fa-solid fa-camera"></i></button>');
         document.getElementById("accountName").textContent = currentUser.fullname;
         document.getElementById("accountEmail").textContent = currentUser.email;
         attachAvatarUploadListeners();
     } else {
         accountBtn.querySelector("#accountBtnLabel").textContent = "Login";
+        accountBtn.setAttribute("aria-label", "Login atau daftar akun");
         accountBtn.classList.remove("logged-in");
+        avatarFallback(document.getElementById("accountBtnAvatar"), null);
     }
 }
 
@@ -841,6 +877,7 @@ function attachAvatarUploadListeners() {
             if (!updateRes.ok) throw new Error(updateData.message || "Gagal update foto profil");
             
             currentUser.avatar_url = updateData.avatar_url;
+            currentUser.avatar_updated_at = updateData.avatar_updated_at || new Date().toISOString();
             localStorage.setItem("nexshop_user", JSON.stringify(currentUser));
             refreshAccountUI();
             
@@ -961,8 +998,8 @@ async function initAuthSecurity() {
             toast("Akun Google berhasil dihubungkan.", "success");
             return;
         }
-        if (!currentUser.phone) {
-            openOverlay("phoneOverlay");
+        if (!hasVerifiedPhone(currentUser)) {
+            openPhoneOnboarding();
         } else {
             toast(`Berhasil masuk. Selamat datang, ${currentUser.fullname}!`, "success");
         }
@@ -1110,16 +1147,11 @@ document.getElementById("resetPasswordForm").addEventListener("submit", async (e
     }
 });
 
-document.getElementById("regOtpMethod")?.addEventListener("change", (e) => {
-    document.getElementById("regWhatsappContainer").style.display = e.target.value === "whatsapp" ? "block" : "none";
-});
-
 document.getElementById("registerForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const fullname = document.getElementById("regName").value.trim();
     const email = document.getElementById("regEmail").value.trim().toLowerCase();
     const password = document.getElementById("regPassword").value;
-    const otp_method = document.getElementById("regOtpMethod").value;
     const whatsapp = document.getElementById("regWhatsapp").value.trim();
     const errorEl = document.getElementById("regError");
 
@@ -1130,7 +1162,7 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
         const res = await fetch(`${API_BASE}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ fullname, email, password, otp_method, whatsapp, captcha_token })
+            body: JSON.stringify({ fullname, email, password, phone: whatsapp, captcha_token })
         });
         const data = await res.json();
 
@@ -1142,8 +1174,8 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
         errorEl.textContent = "";
         window.NexShopAuthSecurity?.resetCaptcha("register");
         e.target.reset();
-        showOtpForm(email, data.otp_method || otp_method);
-        toast(`Cek ${data.otp_method === "whatsapp" ? "WhatsApp" : "email"} kamu untuk kode verifikasi.`, "success");
+        showOtpForm(email, "whatsapp");
+        toast("Cek WhatsApp kamu untuk kode verifikasi.", "success");
     } catch (err) {
         errorEl.textContent = "Gagal terhubung ke server.";
     }
@@ -1263,9 +1295,9 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         switchCartContext();
         refreshAccountUI();
         
-        if (!currentUser.phone) {
+        if (!hasVerifiedPhone(currentUser)) {
             closeOverlay("authOverlay");
-            openOverlay("phoneOverlay");
+            openPhoneOnboarding();
         } else {
             closeOverlay("authOverlay");
             toast(`Berhasil masuk. Selamat datang kembali, ${data.user.fullname}!`, "success");
@@ -1276,18 +1308,42 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     }
 });
 
+function openPhoneOnboarding() {
+    if (!currentUser) return;
+    document.getElementById("phoneOnboardingName").value = currentUser.fullname || "";
+    document.getElementById("userPhoneInput").value = currentUser.phone_normalized || currentUser.phone || "";
+    document.getElementById("phoneError").textContent = "";
+    document.getElementById("phoneVerifyError").textContent = "";
+    document.getElementById("phoneOtpCode").value = "";
+    document.getElementById("phoneForm").classList.remove("hidden");
+    document.getElementById("phoneVerifyForm").classList.add("hidden");
+    openOverlay("phoneOverlay");
+}
+
 document.getElementById("phoneForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const phone = document.getElementById("userPhoneInput").value.trim();
+    const fullname = document.getElementById("phoneOnboardingName").value.trim();
     const errorEl = document.getElementById("phoneError");
     const btn = document.getElementById("phoneSubmitBtn");
     
     errorEl.textContent = "";
     btn.disabled = true;
-    btn.textContent = "Menyimpan...";
+    btn.textContent = "Mengirim...";
     
     try {
         const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+        // Nama akun adalah sumber kebenaran berikutnya; nomor baru tidak
+        // menggantikan nomor lama sebelum OTP berhasil diverifikasi.
+        const nameRes = await fetch(`${API_BASE}/users/me`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ fullname })
+        });
+        const nameData = await nameRes.json();
+        if (!nameRes.ok) throw new Error(nameData.message || "Gagal menyimpan nama profil.");
+        currentUser = { ...currentUser, ...nameData.user };
+
         const res = await fetch(`${API_BASE}/users/me/phone`, {
             method: "PUT",
             headers: { 
@@ -1303,33 +1359,47 @@ document.getElementById("phoneForm").addEventListener("submit", async (e) => {
             return;
         }
         
-        if (currentUser) {
-            currentUser.phone = data.phone;
-            saveUser();
-        }
-        
-        closeOverlay("phoneOverlay");
-        toast("Nomor WhatsApp berhasil disimpan!", "success");
-        e.target.reset();
-        
-        // Also pre-fill & hide the field if checkout is open (nomor sudah tersimpan, ga perlu ditampilin lagi)
-        const checkoutPhone = document.getElementById("checkoutPhone");
-        if (checkoutPhone) {
-            checkoutPhone.value = data.phone;
-            checkoutPhone.parentElement.classList.add("hidden");
-        }
-        const twPhone = document.getElementById("twPhone");
-        if (twPhone) {
-            twPhone.value = data.phone;
-            twPhone.closest(".tw-field-group").classList.add("hidden");
-        }
+        document.getElementById("phoneForm").classList.add("hidden");
+        document.getElementById("phoneVerifyForm").classList.remove("hidden");
+        toast(data.message || "Kode OTP dikirim ke WhatsApp.", "success");
         
     } catch (err) {
         errorEl.textContent = "Gagal terhubung ke server.";
     } finally {
         btn.disabled = false;
-        btn.textContent = "Simpan Nomor WA";
+        btn.textContent = "Kirim Kode OTP";
     }
+});
+
+document.getElementById("phoneVerifyForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const errorEl = document.getElementById("phoneVerifyError");
+    const btn = document.getElementById("phoneVerifySubmitBtn");
+    errorEl.textContent = "";
+    btn.disabled = true;
+    try {
+        const res = await fetch(`${API_BASE}/users/me/phone/verify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY)}` },
+            body: JSON.stringify({ otp: document.getElementById("phoneOtpCode").value.trim() })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || "Kode OTP tidak valid.");
+        currentUser = { ...currentUser, ...data.user };
+        saveUser();
+        refreshAccountUI();
+        closeOverlay("phoneOverlay");
+        toast("Nomor WhatsApp berhasil diverifikasi.", "success");
+    } catch (err) {
+        errorEl.textContent = err.message || "Gagal memverifikasi nomor.";
+    } finally {
+        btn.disabled = false;
+    }
+});
+
+document.getElementById("phoneOtpResendBtn").addEventListener("click", () => {
+    document.getElementById("phoneVerifyForm").classList.add("hidden");
+    document.getElementById("phoneForm").classList.remove("hidden");
 });
 
 document.getElementById("logoutBtn").addEventListener("click", () => {
@@ -1430,6 +1500,10 @@ function openCheckout(items, source = "cart") {
         toast("Keranjang masih kosong.", "error");
         return;
     }
+    if (currentUser && !hasVerifiedPhone(currentUser)) {
+        openPhoneOnboarding();
+        return;
+    }
 
     checkoutItems = validItems.map(item => ({ id: item.id, qty: item.qty }));
     checkoutSource = source;
@@ -1466,6 +1540,15 @@ function openCheckout(items, source = "cart") {
         document.getElementById("checkoutEmail").value = "";
         document.getElementById("checkoutPhone").value = "";
         document.getElementById("checkoutPhone").parentElement.classList.remove("hidden");
+    }
+
+    if (currentUser) {
+        // Backend memakai profil terverifikasi; field ini hanya prefill untuk
+        // kompatibilitas payload lama dan tidak perlu diminta ulang.
+        document.getElementById("checkoutName").value = currentUser.fullname;
+        document.getElementById("checkoutEmail").value = currentUser.email;
+        document.getElementById("checkoutPhone").value = currentUser.phone_normalized || currentUser.phone || "";
+        ["checkoutName", "checkoutEmail", "checkoutPhone"].forEach((id) => document.getElementById(id).parentElement.classList.add("hidden"));
     }
 
     renderCheckoutSummary();
@@ -3458,6 +3541,10 @@ document.getElementById("twPrevBtn").addEventListener("click", () => {
 
 document.getElementById("twNextBtn").addEventListener("click", async () => {
     if (twState.step === 1) {
+        if (currentUser && !hasVerifiedPhone(currentUser)) {
+            openPhoneOnboarding();
+            return;
+        }
         const userId = document.getElementById("twUserId").value.trim();
         const serverId = document.getElementById("twServerId").value.trim();
         const email = document.getElementById("twEmail").value.trim();
@@ -4535,6 +4622,7 @@ async function bootstrapApp() {
     updateCartCount();
     checkResetPasswordLink();
     refreshAccountUI();
+    await refreshCurrentUserProfile();
     initNexBotChat();
     loadPromo();
 
@@ -4557,8 +4645,8 @@ async function bootstrapApp() {
     ]);
     finishInitialLoading(!completed);
     
-    if (currentUser && (!currentUser.phone || !/^(0|62)[0-9]{8,14}$/.test(currentUser.phone))) {
-        openOverlay("phoneOverlay");
+    if (currentUser && !hasVerifiedPhone(currentUser)) {
+        openPhoneOnboarding();
     }
 }
 

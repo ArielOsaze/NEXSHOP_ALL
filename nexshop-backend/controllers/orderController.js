@@ -10,6 +10,8 @@ const { sendWhatsAppNotification } = require("../config/whatsapp");
 const { sendUserWhatsApp } = require("../services/userWhatsAppService");
 const { processNotificationEvent } = require("../services/notificationDeliveryService");
 const { cariCheckoutProdukPending, responsCheckoutPending } = require("../services/pendingCheckoutService");
+const { normalizePhoneNumber } = require("../utils/phoneNumber");
+const { getCheckoutIdentity } = require("../services/userProfileService");
 
 const IPAYMU_PAYMENT_METHODS = Object.freeze({
     qris: "qris",
@@ -28,20 +30,23 @@ function rupiahLog(n) {
 }
 
 exports.create = async (req, res) => {
-    const { recipient_name, recipient_email, recipient_phone, items, payment_method, payment_channel } = req.body;
+    let { recipient_name, recipient_email, recipient_phone, items, payment_method, payment_channel } = req.body;
     // req.user bisa null (guest checkout) berkat optionalAuthMiddleware
     const userId = req.user ? req.user.id : null;
 
-    if (!recipient_name || !recipient_email || !recipient_phone || !Array.isArray(items) || items.length === 0) {
+    if ((!userId && (!recipient_name || !recipient_email || !recipient_phone)) || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ message: "Data pesanan tidak lengkap" });
+    }
+    if (!userId && (typeof recipient_email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient_email.trim()))) {
+        return res.status(400).json({ message: "Email pembeli tidak valid" });
     }
 
     // Nomor HP WAJIB nyata & unik per pembeli -- kalau kosong/default sebelumnya
     // (fallback "08123456789" di ipaymu.js) iPaymu Direct Payment (QRIS/VA)
     // nolak transaksi dengan "Suspicious buyer" karena nomor yang sama
     // dipakai berulang di banyak transaksi berbeda.
-    const normalizedPhone = String(recipient_phone).trim();
-    if (!/^(0|62)[0-9]{8,14}$/.test(normalizedPhone)) {
+    let normalizedPhone = userId ? "" : normalizePhoneNumber(String(recipient_phone || ""));
+    if (!userId && !normalizedPhone) {
         return res.status(400).json({ message: "Nomor HP tidak valid (contoh: 08... atau 628...)" });
     }
 
@@ -52,6 +57,18 @@ exports.create = async (req, res) => {
     }
 
     try {
+        if (userId) {
+            const checkoutProfile = await getCheckoutIdentity(userId);
+            if (checkoutProfile.error === "PHONE_ONBOARDING_REQUIRED") {
+                return res.status(403).json({ code: "PHONE_ONBOARDING_REQUIRED", message: "Verifikasi nomor WhatsApp di profil terlebih dahulu sebelum checkout." });
+            }
+            if (checkoutProfile.error) return res.status(401).json({ message: "Sesi akun tidak valid." });
+            // Identitas akun login selalu dari profil database, bukan body browser.
+            recipient_name = checkoutProfile.identity.name;
+            recipient_email = checkoutProfile.identity.email;
+            recipient_phone = checkoutProfile.identity.phone;
+            normalizedPhone = checkoutProfile.identity.phone;
+        }
         // Ambil harga produk langsung dari database kita sendiri — JANGAN percaya
         // `total`/harga yang dikirim dari frontend, karena itu bisa dimanipulasi
         // di browser.

@@ -6,13 +6,14 @@ const { OAuth2Client } = require("google-auth-library");
 const { sendOtpEmail, sendPasswordResetEmail } = require("../config/mailer");
 const { sendUserWhatsApp } = require("../services/userWhatsAppService");
 const { normalizePhoneNumber } = require("../utils/phoneNumber");
+const { startPhoneOtp, verifyPhoneOtp, generateOtp, OTP_EXPIRY_MINUTES, assertPhoneAvailable } = require("../services/phoneOtpService");
+const { toPublicProfile } = require("../services/userProfileService");
 const { notify } = require("../config/notify");
 const { resetLoginLimiter, getBlockedLoginIps } = require("../middleware/rateLimiter");
 const { resetAdminSession } = require("../middleware/adminSession");
 const { getTurnstileConfig, isTurnstileRequired, verifyTurnstile } = require("../services/turnstileService");
 const { getRuntimeConfig } = require("../services/runtimeConfigService");
 
-const OTP_EXPIRY_MINUTES = 10;
 const RESET_TOKEN_EXPIRY_MINUTES = 30;
 // dipakai buat bikin link reset password (lihat .env.example) -- sama kayak
 // FRONTEND_URL di orderController.js/topupController.js
@@ -31,14 +32,7 @@ function hashResetToken(token) {
 }
 
 function authUserPayload(user) {
-    return {
-        id: user.id,
-        fullname: user.fullname,
-        email: user.email,
-        role: user.role,
-        avatar_url: user.avatar_url,
-        phone: user.phone
-    };
+    return toPublicProfile(user);
 }
 
 function issueUserSession(user) {
@@ -149,9 +143,29 @@ function clearFailedLogin(email) {
     failedLoginMap.delete(email);
 }
 
-function generateOtp() {
-    // kode 6 digit cryptographically secure, contoh "042817"
-    return String(crypto.randomInt(100000, 1000000));
+const ACCOUNT_LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const ACCOUNT_LOGIN_MAX_FAILURES = 5;
+
+async function recordPersistentFailedLogin(user) {
+    const now = Date.now();
+    const windowStarted = user.failed_login_window_started_at ? new Date(user.failed_login_window_started_at).getTime() : 0;
+    const inWindow = windowStarted && now - windowStarted < ACCOUNT_LOGIN_WINDOW_MS;
+    const failures = (inWindow ? Number(user.failed_login_count || 0) : 0) + 1;
+    const locked = failures >= ACCOUNT_LOGIN_MAX_FAILURES;
+    await supabase.from("users").update({
+        failed_login_count: failures,
+        failed_login_window_started_at: inWindow ? user.failed_login_window_started_at : new Date(now).toISOString(),
+        login_locked_until: locked ? new Date(now + ACCOUNT_LOGIN_WINDOW_MS).toISOString() : null
+    }).eq("id", user.id);
+    if (locked) notify("security", `🔒 Akun ${user.email} dikunci sementara setelah ${failures} percobaan login gagal.`);
+}
+
+async function clearPersistentFailedLogin(userId) {
+    await supabase.from("users").update({
+        failed_login_count: 0,
+        failed_login_window_started_at: null,
+        login_locked_until: null
+    }).eq("id", userId);
 }
 
 // di-export biar bisa dipakai userController buat fitur admin "Kirim Ulang OTP"
@@ -165,26 +179,17 @@ exports.register = async (req, res) => {
     const fullname = typeof req.body.fullname === "string" ? req.body.fullname.trim() : "";
     const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
     const password = typeof req.body.password === "string" ? req.body.password : "";
-    const otpMethod = typeof req.body.otp_method === "string" ? req.body.otp_method : "email";
-    let whatsapp = typeof req.body.whatsapp === "string" ? req.body.whatsapp.trim() : "";
+    // `whatsapp` diterima sementara demi kompatibilitas frontend lama, tetapi
+    // semua registrasi baru wajib diverifikasi melalui nomor WhatsApp.
+    const phone = normalizePhoneNumber(typeof req.body.phone === "string" ? req.body.phone : req.body.whatsapp);
 
     if (!await requireHumanVerification(req, res)) return;
 
-    if (!fullname || !email || !password) {
+    if (!fullname || !email || !password || !phone) {
         return res.status(400).json({ message: "Semua field wajib diisi" });
-    }
-    if (otpMethod === "whatsapp" && !whatsapp) {
-        return res.status(400).json({ message: "Nomor WhatsApp wajib diisi jika memilih verifikasi via WhatsApp" });
     }
     if (fullname.length > 100 || !isValidEmail(email) || password.length < 8 || password.length > 128) {
         return res.status(400).json({ message: "Data registrasi tidak valid. Password minimal 8 karakter." });
-    }
-
-    if (otpMethod === "whatsapp") {
-        whatsapp = normalizePhoneNumber(whatsapp);
-        if (!whatsapp || whatsapp.length < 9) {
-            return res.status(400).json({ message: "Nomor WhatsApp tidak valid" });
-        }
     }
 
     try {
@@ -203,48 +208,53 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: "Email sudah terdaftar" });
         }
 
-        if (otpMethod === "whatsapp") {
-            const { data: existingPhone, error: findPhoneErr } = await supabase
-                .from("users")
-                .select("id")
-                .eq("phone", whatsapp)
-                .maybeSingle();
-
-            if (findPhoneErr) {
-                console.log(findPhoneErr);
-                return res.status(500).json({ message: "Database Error" });
-            }
-
-            if (existingPhone) {
-                return res.status(400).json({ message: "Nomor WhatsApp tersebut sudah terdaftar pada akun lain." });
-            }
+        try {
+            await assertPhoneAvailable(supabase, phone);
+        } catch (phoneErr) {
+            if (phoneErr.code === "PHONE_ALREADY_IN_USE") return res.status(400).json({ message: "Nomor WhatsApp tersebut sudah digunakan pada akun lain." });
+            return res.status(500).json({ message: "Database Error" });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const otp = generateOtp();
-        const hashedOtp = crypto.createHash("sha256").update(otp).digest("hex");
-        const otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000).toISOString();
-
-        const { error: insertErr } = await supabase
+        const { data: createdUser, error: insertErr } = await supabase
             .from("users")
             .insert([{
                 fullname,
                 email,
                 password: hashedPassword,
                 email_verified: false,
-                otp_code: hashedOtp,
-                otp_expires_at: otpExpiresAt,
-                phone: otpMethod === "whatsapp" ? whatsapp : null
-            }]);
+                onboarding_completed: false
+            }])
+            .select("id")
+            .maybeSingle();
 
         if (insertErr) {
             console.log(insertErr);
-            if (insertErr.code === '23505' && insertErr.message && insertErr.message.includes('users_phone_key')) {
-                return res.status(400).json({ message: "Nomor WhatsApp tersebut sudah terdaftar pada akun lain." });
-            }
             return res.status(500).json({ message: "Gagal register" });
         }
 
+        try {
+            await startPhoneOtp(supabase, { userId: createdUser.id, phone, purpose: "phone_onboarding" });
+        } catch (otpErr) {
+            console.log("Gagal kirim OTP WhatsApp saat register:", otpErr.message);
+            return res.status(201).json({
+                message: "Register berhasil, tapi kode OTP WhatsApp belum dapat dikirim. Silakan minta kirim ulang.",
+                email,
+                otp_method: "whatsapp",
+                deliverySent: false
+            });
+        }
+        return res.status(201).json({
+            message: "Register berhasil. Cek WhatsApp kamu untuk kode verifikasi.",
+            email,
+            otp_method: "whatsapp",
+            deliverySent: true
+        });
+
+        /*
+         * Jalur email/WA campuran lama sengaja dinonaktifkan. OTP nomor baru
+         * dibuat oleh phoneOtpService di atas agar tidak ada implementasi OTP
+         * kedua yang dapat mengaktifkan akun tanpa verifikasi nomor.
         let deliverySent = false;
         let deliveryChannel = otpMethod === "whatsapp" ? "whatsapp" : "email";
 
@@ -291,6 +301,7 @@ exports.register = async (req, res) => {
             deliverySent: true,
             deliveryChannel
         });
+        */
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server Error" });
@@ -314,7 +325,7 @@ exports.verifyOtp = async (req, res) => {
     try {
         const { data: user, error } = await supabase
             .from("users")
-            .select("id, otp_code, otp_expires_at, email_verified")
+            .select("id, otp_code, otp_expires_at, email_verified, otp_purpose")
             .eq("email", email)
             .maybeSingle();
 
@@ -325,6 +336,19 @@ exports.verifyOtp = async (req, res) => {
 
         if (!user) {
             return res.status(404).json({ message: "Akun tidak ditemukan" });
+        }
+
+        if (user.otp_purpose === "phone_onboarding") {
+            try {
+                await verifyPhoneOtp(supabase, { userId: user.id, otp });
+                // `email_verified` adalah flag aktivasi historis yang dipakai
+                // guard login. Untuk registrasi password, aktivasi sekarang
+                // terjadi setelah pemilik membuktikan nomor WhatsApp-nya.
+                await supabase.from("users").update({ email_verified: true }).eq("id", user.id);
+                return res.json({ message: "Nomor WhatsApp berhasil diverifikasi. Kamu sekarang bisa login." });
+            } catch (otpErr) {
+                return res.status(400).json({ message: otpErr.message || "Verifikasi nomor gagal." });
+            }
         }
 
         if (user.email_verified) {
@@ -377,7 +401,7 @@ exports.resendOtp = async (req, res) => {
     try {
         const { data: user, error } = await supabase
             .from("users")
-            .select("id, email_verified, phone")
+            .select("id, email_verified, phone, pending_phone_normalized, otp_purpose")
             .eq("email", email)
             .maybeSingle();
 
@@ -388,6 +412,20 @@ exports.resendOtp = async (req, res) => {
 
         if (!user) {
             return res.status(404).json({ message: "Akun tidak ditemukan" });
+        }
+
+        if (user.otp_purpose === "phone_onboarding" && user.pending_phone_normalized) {
+            try {
+                await startPhoneOtp(supabase, {
+                    userId: user.id,
+                    phone: user.pending_phone_normalized,
+                    purpose: "phone_onboarding"
+                });
+                return res.json({ message: "Kode OTP baru sudah dikirim ke WhatsApp kamu.", deliverySent: true, deliveryChannel: "whatsapp" });
+            } catch (otpErr) {
+                const status = otpErr.code === "OTP_COOLDOWN" ? 429 : 503;
+                return res.status(status).json({ message: otpErr.message || "Gagal mengirim ulang kode OTP." });
+            }
         }
 
         if (user.email_verified) {
@@ -482,10 +520,15 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Email atau password salah" });
         }
 
+        if (user.login_locked_until && new Date(user.login_locked_until) > new Date()) {
+            return res.status(429).json({ message: "Terlalu banyak percobaan login. Coba lagi beberapa menit lagi atau gunakan lupa password." });
+        }
+
         const validPassword = await bcrypt.compare(password, user.password);
 
         if (!validPassword) {
             recordFailedLogin(email);
+            await recordPersistentFailedLogin(user);
             return res.status(401).json({ message: "Email atau password salah" });
         }
 
@@ -509,32 +552,8 @@ exports.login = async (req, res) => {
             });
         }
 
-        const token = jwt.sign(
-            { id: user.id, email: user.email, fullname: user.fullname, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: "7d" }
-        );
-
-        clearFailedLogin(email);
-
-        // Sesi admin yang lama (termasuk catatan idle-nya) dibuang begitu
-        // login baru sukses -- kalau nggak, admin yang barusan ke-logout
-        // otomatis karena idle bisa langsung ketolak lagi sama guard-nya.
-        resetAdminSession(user.id);
-
-        res.json({
-            message: "Login berhasil",
-            token,
-            ...(["admin", "staff"].includes(user.role) ? { securityPinSetupRequired: !user.security_pin_hash } : {}),
-            user: {
-                id: user.id,
-                fullname: user.fullname,
-                email: user.email,
-                role: user.role,
-                avatar_url: user.avatar_url,
-                phone: user.phone
-            }
-        });
+        await clearPersistentFailedLogin(user.id);
+        res.json({ message: "Login berhasil", ...issueUserSession(user) });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server Error" });
@@ -586,14 +605,14 @@ function redirectGoogleFailure(res, returnPath, error) {
 }
 
 async function findOrCreateGoogleUser(googleProfile) {
-    const { sub, email, email_verified: emailVerified, name } = googleProfile;
+    const { sub, email, email_verified: emailVerified, name, picture } = googleProfile;
     if (!sub || !email || !emailVerified) {
         return { error: "google_email_unverified" };
     }
     const normalizedEmail = String(email).trim().toLowerCase();
     const { data: linkedUser, error: linkedErr } = await supabase
         .from("users")
-        .select("id, fullname, email, role, avatar_url, phone, is_blacklisted, security_pin_hash, google_subject, auth_provider")
+        .select("*")
         .eq("google_subject", sub)
         .maybeSingle();
     if (linkedErr) {
@@ -622,9 +641,13 @@ async function findOrCreateGoogleUser(googleProfile) {
             password: generatedPassword,
             email_verified: true,
             google_subject: sub,
-            auth_provider: "google"
+            auth_provider: "google",
+            onboarding_completed: false,
+            // Hanya nilai awal saat akun dibuat. Login berikutnya tidak pernah
+            // menimpa avatar NexShop yang dipilih pengguna.
+            avatar_url: typeof picture === "string" && /^https:\/\//i.test(picture) ? picture.slice(0, 2048) : null
         }])
-        .select("id, fullname, email, role, avatar_url, phone, is_blacklisted, security_pin_hash, google_subject, auth_provider")
+        .select("*")
         .maybeSingle();
     if (createErr) {
         if (isProviderSchemaError(createErr)) return { error: "provider_schema_missing" };
@@ -664,7 +687,7 @@ async function linkGoogleUser(userId, googleProfile) {
     }
     const { data: user, error: userErr } = await supabase
         .from("users")
-        .select("id, fullname, email, role, avatar_url, phone, is_blacklisted, security_pin_hash")
+        .select("*")
         .eq("id", userId)
         .maybeSingle();
     if (userErr || !user) throw userErr || new Error("User link tidak ditemukan");

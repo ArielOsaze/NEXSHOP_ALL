@@ -9,6 +9,8 @@ const { createRedirectPayment, checkTransactionStatus, createDirectPayment, isDi
 const { checkNickname } = require("../config/apigames");
 const { notify } = require("../config/notify");
 const { sendUserWhatsApp } = require("../services/userWhatsAppService");
+const { normalizePhoneNumber } = require("../utils/phoneNumber");
+const { getCheckoutIdentity } = require("../services/userProfileService");
 const { sendTopupInvoiceEmail } = require("../config/mailer");
 const { sendTelegramNotification } = require("../config/telegram");
 const { sendWhatsAppNotification } = require("../config/whatsapp");
@@ -1650,7 +1652,7 @@ exports.deleteAllProducts = async (req, res) => {
 // sama seperti checkout produk biasa)
 // ===========================================================
 exports.create = async (req, res) => {
-    const { kode_produk, tujuan, server_id, recipient_email, recipient_phone, promo_code, payment_method, payment_channel } = req.body;
+    let { kode_produk, tujuan, server_id, recipient_email, recipient_phone, promo_code, payment_method, payment_channel } = req.body;
     const userId = req.user ? req.user.id : null;
 
     if (!kode_produk || !tujuan) {
@@ -1660,9 +1662,12 @@ exports.create = async (req, res) => {
     // Wajib diisi & harus nomor asli -- fallback default sebelumnya
     // ("08123456789" di ipaymu.js) dipakai berulang di semua transaksi dan
     // diduga jadi penyebab iPaymu Direct Payment nolak dengan "Suspicious buyer".
-    const normalizedPhone = String(recipient_phone || "").trim();
-    if (!/^(0|62)[0-9]{8,14}$/.test(normalizedPhone)) {
+    let normalizedPhone = userId ? "" : normalizePhoneNumber(String(recipient_phone || ""));
+    if (!userId && !normalizedPhone) {
         return res.status(400).json({ message: "Nomor HP tidak valid (contoh: 08... atau 628...)" });
+    }
+    if (!userId && (typeof recipient_email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient_email.trim()))) {
+        return res.status(400).json({ message: "Email pembeli tidak valid" });
     }
 
     const normalizedPaymentMethod = String(payment_method || "").trim().toLowerCase();
@@ -1680,6 +1685,18 @@ exports.create = async (req, res) => {
     }
 
     try {
+        let buyerName = `Player ${tujuan}`;
+        if (userId) {
+            const checkoutProfile = await getCheckoutIdentity(userId);
+            if (checkoutProfile.error === "PHONE_ONBOARDING_REQUIRED") {
+                return res.status(403).json({ code: "PHONE_ONBOARDING_REQUIRED", message: "Verifikasi nomor WhatsApp di profil terlebih dahulu sebelum checkout." });
+            }
+            if (checkoutProfile.error) return res.status(401).json({ message: "Sesi akun tidak valid." });
+            recipient_email = checkoutProfile.identity.email;
+            recipient_phone = checkoutProfile.identity.phone;
+            normalizedPhone = checkoutProfile.identity.phone;
+            buyerName = checkoutProfile.identity.name;
+        }
         const { data: product, error: prodErr } = await supabase
             .from("topup_products")
             .select("nama, kode_produk, harga_beli, harga_jual, butuh_server_id, kategori, source_operator_name")
@@ -1878,18 +1895,12 @@ exports.create = async (req, res) => {
         try {
             if (isDirect) {
                 try {
-                    // Ensure phone starts with 0 for iPaymu to avoid format rejection
-                    let ipaymuPhone = normalizedPhone;
-                    if (ipaymuPhone.startsWith("62")) {
-                        ipaymuPhone = "0" + ipaymuPhone.substring(2);
-                    }
-
                     payment = await createDirectPayment({
                         referenceId: orderId,
                         amount: total,
-                        buyerName: req.user ? req.user.fullname : "Player " + tujuan,
+                        buyerName,
                         buyerEmail: recipient_email,
-                        buyerPhone: ipaymuPhone,
+                        buyerPhone: normalizedPhone,
                         paymentMethod: ipaymuPaymentMethod,
                         paymentChannel: payment_channel,
                         notifyUrl: `${BACKEND_URL}/api/topup/notification`
@@ -1915,18 +1926,12 @@ exports.create = async (req, res) => {
             }
 
             if (!isDirect) {
-                // Same logic for redirect fallback
-                let ipaymuPhone = normalizedPhone;
-                if (ipaymuPhone.startsWith("62")) {
-                    ipaymuPhone = "0" + ipaymuPhone.substring(2);
-                }
-
                 payment = await createRedirectPayment({
                     referenceId: orderId,
                     itemDetails: ipaymuItems,
-                    buyerName: req.user ? req.user.fullname : "Player " + tujuan,
+                    buyerName,
                     buyerEmail: recipient_email || undefined,
-                    buyerPhone: ipaymuPhone,
+                    buyerPhone: normalizedPhone,
                     returnUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=success`,
                     cancelUrl: `${FRONTEND_URL}/#/payment-status?order=${orderId}&status=cancel`,
                     notifyUrl: `${BACKEND_URL}/api/topup/notification`,
@@ -1963,7 +1968,7 @@ exports.create = async (req, res) => {
             // dibebankan ke pembeli), bukan total polos.
             const displayAmount = payment.amount || (total + (payment.fee || 0));
             
-            sendUserWhatsApp(normalizedPhone, "pending", { name: "Pelanggan", order_id: orderId, total: rupiahLog(displayAmount) });
+            sendUserWhatsApp(normalizedPhone, "pending", { name: buyerName, order_id: orderId, total: rupiahLog(displayAmount) });
 
             res.status(201).json({
                 message: "Pesanan topup berhasil dibuat",
@@ -1981,7 +1986,7 @@ exports.create = async (req, res) => {
                 }
             });
         } else {
-            sendUserWhatsApp(normalizedPhone, "pending", { name: "Pelanggan", order_id: orderId, total: rupiahLog(total) });
+            sendUserWhatsApp(normalizedPhone, "pending", { name: buyerName, order_id: orderId, total: rupiahLog(total) });
 
             res.status(201).json({
                 message: "Pesanan topup berhasil dibuat",

@@ -1,5 +1,6 @@
 const axios = require("axios");
 const { getApiKeys, getStoreSettings } = require("../config/settings");
+const { toFonntePhone } = require("../utils/phoneNumber");
 
 /**
  * Mengganti template variables (misal: {name}, {order_id}) dengan data asli
@@ -26,6 +27,8 @@ function parseTemplate(template, data) {
  */
 async function sendUserWhatsApp(targetNumber, type, variables = {}, extraMessage = "") {
     try {
+        const canonicalTarget = toFonntePhone(String(targetNumber || ""));
+        if (!canonicalTarget) return { success: false, reason: "invalid_phone" };
         const apiKeys = await getApiKeys();
         const settings = await getStoreSettings();
 
@@ -64,7 +67,7 @@ async function sendUserWhatsApp(targetNumber, type, variables = {}, extraMessage
         const response = await axios.post(
             "https://api.fonnte.com/send",
             {
-                target: targetNumber,
+                target: canonicalTarget,
                 message: message
             },
             {

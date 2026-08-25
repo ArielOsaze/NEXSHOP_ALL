@@ -237,7 +237,7 @@
 </button>
 
 <div class="h-8 w-8 sm:h-10 sm:w-auto px-0 sm:pl-2.5 sm:pr-5 rounded-full border border-gray-200 dark:border-white/10 cursor-pointer hover:border-brand-indigo transition-colors ml-0.5 sm:ml-1 shrink-0 flex items-center justify-center gap-1.5 text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-200 whitespace-nowrap overflow-hidden sm:max-w-[130px]" id="accountBtn" role="button" tabindex="0" aria-haspopup="menu" aria-expanded="false" aria-label="Akun saya">
-    <i class="fa-solid fa-circle-user text-sm sm:text-base opacity-70 shrink-0" aria-hidden="true"></i>
+    <span id="accountBtnAvatar" class="relative h-8 w-8 sm:h-8 sm:w-8 rounded-full overflow-hidden shrink-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 text-gray-500" aria-hidden="true"><i class="fa-solid fa-circle-user text-sm sm:text-base opacity-70"></i></span>
     <span id="accountBtnLabel" class="hidden sm:inline truncate">Login</span>
 </div>
 </div>
@@ -912,14 +912,8 @@ Cek Transaksi
             <label>Email
                 <input type="email" id="regEmail" required placeholder="kamu@email.com">
             </label>
-            <label>Pilih Pengiriman Kode OTP
-                <select id="regOtpMethod" class="input-select" required>
-                    <option value="email">Kirim ke Email</option>
-                    <option value="whatsapp">Kirim ke WhatsApp</option>
-                </select>
-            </label>
-            <label id="regWhatsappContainer" style="display: none;">Nomor WhatsApp
-                <input type="tel" id="regWhatsapp" placeholder="081234567890" minlength="9" maxlength="15">
+            <label>Nomor WhatsApp
+                <input type="tel" id="regWhatsapp" required placeholder="081234567890" inputmode="tel" autocomplete="tel">
             </label>
             <label>Kata Sandi
                 <div class="password-field">
@@ -939,7 +933,7 @@ Cek Transaksi
 
         <form id="otpForm" class="auth-form hidden">
             <h3>Verifikasi Kode OTP</h3>
-            <p class="otp-info">Kode 6 digit sudah dikirim ke <strong id="otpEmailLabel"></strong>. <span id="otpSpamNotice">Cek juga folder Spam kalau belum masuk.</span></p>
+            <p class="otp-info">Kode 6 digit sudah dikirim ke <strong id="otpEmailLabel"></strong>.</p>
             <input type="hidden" id="otpEmail">
             <label>Kode OTP
                 <input type="text" id="otpCode" required maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="6 digit kode">
@@ -989,13 +983,26 @@ Cek Transaksi
         <!-- User cannot close this modal, they MUST enter the phone number to proceed or we can let them close it? "dimintain an di save langsung... jdi pas payment gaperliu minta no wa lagi". We will let them close but if they close, they won't have it saved. Better to show close button for UX, but prompt pops up on checkout if missing. -->
         <button class="modal-close" data-close="phoneOverlay" aria-label="Tutup"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
         <form id="phoneForm" class="auth-form">
-            <h3 id="phoneTitle">Satu Langkah Lagi!</h3>
-            <p class="otp-info">Masukkan nomor WhatsApp kamu buat mempermudah integrasi pembayaran (biar nggak usah masukin manual lagi pas checkout).</p>
+            <h3 id="phoneTitle">Lengkapi Akun</h3>
+            <p class="otp-info">Konfirmasi nama dan verifikasi nomor WhatsApp satu kali untuk notifikasi transaksi dan pembayaran.</p>
+            <label>Nama lengkap
+                <input type="text" id="phoneOnboardingName" required maxlength="100" autocomplete="name">
+            </label>
             <label>Nomor WhatsApp
-                <input type="tel" id="userPhoneInput" required placeholder="08xxxxxxxxxx" pattern="[0-9]+" minlength="9" maxlength="15">
+                <input type="tel" id="userPhoneInput" required placeholder="08xxxxxxxxxx" inputmode="tel" autocomplete="tel">
             </label>
             <p class="auth-error" id="phoneError"></p>
-            <button type="submit" class="btn-primary" id="phoneSubmitBtn">Simpan Nomor WA</button>
+            <button type="submit" class="btn-primary" id="phoneSubmitBtn">Kirim Kode OTP</button>
+        </form>
+        <form id="phoneVerifyForm" class="auth-form hidden">
+            <h3>Verifikasi WhatsApp</h3>
+            <p class="otp-info">Masukkan kode 6 digit yang dikirim ke nomor WhatsApp kamu.</p>
+            <label>Kode OTP
+                <input type="text" id="phoneOtpCode" required maxlength="6" inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code">
+            </label>
+            <p class="auth-error" id="phoneVerifyError"></p>
+            <button type="submit" class="btn-primary" id="phoneVerifySubmitBtn">Verifikasi Nomor</button>
+            <button type="button" class="otp-resend" id="phoneOtpResendBtn">Kirim ulang kode</button>
         </form>
     </div>
 </div>
