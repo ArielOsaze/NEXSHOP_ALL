@@ -628,7 +628,9 @@ function openProductModal(id) {
     document.getElementById("pmCategory").textContent = p.category || "Produk digital";
     document.getElementById("pmStars").innerHTML = `<span class="stars">${stars(p.rating || 5)}</span> ${p.rating || 5}`;
     document.getElementById("pmSold").textContent = `· ${p.sold || 0} sold`;
-    document.getElementById("pmDesc").textContent = p.description || "";
+    const descContainer = document.getElementById("pmDesc");
+    descContainer.innerHTML = "";
+    descContainer.appendChild(window.renderProductDescription(p.description, p.name, p.category));
     document.getElementById("pmPrice").innerHTML = priceBlockHtml(p, "lg");
     document.getElementById("pmQtyValue").value = pendingQty;
 
