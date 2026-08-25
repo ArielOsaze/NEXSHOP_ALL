@@ -102,6 +102,14 @@ const server = http.createServer((req, res) => {
             if (viewport.name === "mobile" && initial.categoryHeight < 44) throw new Error(`mobile: target kategori hanya ${initial.categoryHeight}px`);
             if (viewport.name === "mobile" && new Set(initial.categoryFirstRow).size !== 1) throw new Error(`mobile: empat shortcut kategori pertama tidak satu baris`);
 
+            // Panel akses cepat hanya relevan di halaman etalase. Saat satu
+            // layanan dibuka, panel harus ikut hilang agar detail produk
+            // tetap fokus dan tidak terasa seperti halaman berbeda.
+            await page.click("button.market-card");
+            await page.waitForFunction(() => document.querySelector(".mkt-quick-panel")?.classList.contains("hidden"));
+            await page.click("#mktDetailBackBtn");
+            await page.waitForFunction(() => !document.querySelector(".mkt-quick-panel")?.classList.contains("hidden"));
+
             await page.focus("#mktSearchInput");
             const searchFocus = await page.evaluate(() => ({
                 inputShadow: getComputedStyle(document.getElementById("mktSearchInput")).boxShadow,

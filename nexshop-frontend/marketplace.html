@@ -61,7 +61,7 @@
     <script defer src="/legal-modal.js?v=20260825"></script>
     <script defer src="/cookie-consent.js?v=20260825-no-float"></script>
     <link rel="stylesheet" href="/style.css?v=20260825-nexbot-rigged">
-    <link rel="stylesheet" href="/marketplace-theme.css?v=20260825-search-focus">
+    <link rel="stylesheet" href="/marketplace-theme.css?v=20260825-marketplace-hub">
 </head>
 
 <body class="marketplace-page" data-nexbot="auto">
@@ -233,6 +233,19 @@
                 <button type="submit" class="mkt-search-btn">Cari</button>
             </form>
 
+        </section>
+
+        <!-- Akses cepat hanya memuat tindakan yang benar-benar tersedia di
+             NexShop. Kategori layanan tetap dirender dari faset API katalog
+             di bawah, sehingga tidak ada layanan atau riwayat buatan. -->
+        <section class="mkt-quick-panel" aria-labelledby="mktQuickTitle">
+            <div class="mkt-quick-panel-head">
+                <div>
+                    <p class="mkt-panel-kicker">Marketplace NexShop</p>
+                    <h2 id="mktQuickTitle">Akses cepat</h2>
+                </div>
+                <p>Pilih transaksi yang ingin kamu lakukan.</p>
+            </div>
             <div class="mkt-banking-actions" aria-label="Akses cepat NexShop">
                 <button type="button" class="mkt-banking-action" data-wallet-trigger aria-haspopup="dialog">
                     <span class="mkt-banking-action-icon"><i class="fa-solid fa-wallet" aria-hidden="true"></i></span>
@@ -255,7 +268,9 @@
                     <span>Harga khusus</span>
                 </a>
             </div>
+        </section>
 
+        <section class="mkt-trust-panel" aria-label="Keunggulan layanan NexShop">
             <ul class="mkt-trust-strip">
                 <li><i class="fa-solid fa-clock" aria-hidden="true"></i> Proses otomatis 24 jam</li>
                 <li><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Legal &amp; berbadan
@@ -1177,6 +1192,8 @@
             document.getElementById("mktRail").classList.add("hidden");
             document.querySelector(".mkt-columns").classList.add("is-detail");
             document.querySelector(".mkt-hero").classList.add("hidden");
+            document.querySelector(".mkt-quick-panel")?.classList.add("hidden");
+            document.querySelector(".mkt-trust-panel")?.classList.add("hidden");
 
             const detailContainer = document.getElementById("marketplaceDetail");
             detailContainer.classList.remove("hidden");
@@ -1252,6 +1269,8 @@
             document.getElementById("mktRail").classList.remove("hidden");
             document.querySelector(".mkt-columns").classList.remove("is-detail");
             document.querySelector(".mkt-hero").classList.remove("hidden");
+            document.querySelector(".mkt-quick-panel")?.classList.remove("hidden");
+            document.querySelector(".mkt-trust-panel")?.classList.remove("hidden");
         }
 
         document.getElementById("mktDetailBackBtn").addEventListener("click", closeMarketplaceDetail);
