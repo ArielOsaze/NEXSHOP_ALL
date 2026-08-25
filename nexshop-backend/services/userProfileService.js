@@ -2,8 +2,11 @@ const supabase = require("../config/db");
 
 const PROFILE_COLUMNS = "id, fullname, email, role, avatar_url, phone, phone_normalized, phone_verified_at, onboarding_completed, google_subject, auth_provider, is_blacklisted, security_pin_hash, avatar_updated_at";
 
+const { normalizePhoneNumber } = require("../utils/phoneNumber");
+
 function toPublicProfile(user) {
-    const isPhoneVerified = Boolean(user.phone_normalized && user.phone_verified_at);
+    const canonicalPhone = user.phone_normalized || normalizePhoneNumber(user.phone || "");
+    const isPhoneVerified = Boolean(canonicalPhone && user.phone_verified_at);
     return {
         id: user.id,
         fullname: user.fullname,
@@ -11,18 +14,39 @@ function toPublicProfile(user) {
         role: user.role,
         avatar_url: user.avatar_url,
         avatar_updated_at: user.avatar_updated_at || null,
-        phone: user.phone_normalized || user.phone || null,
-        phone_normalized: user.phone_normalized || null,
+        phone: canonicalPhone || null,
+        phone_normalized: canonicalPhone || null,
         phone_verified_at: user.phone_verified_at || null,
-        has_verified_phone: Boolean(user.phone_verified_at),
+        has_verified_phone: isPhoneVerified,
         onboarding_completed: Boolean(user.onboarding_completed)
     };
+}
+
+async function backfillLegacyPhone(user) {
+    if (!user || user.phone_normalized || !user.phone || !user.phone_verified_at) return user;
+    
+    const canonical = normalizePhoneNumber(user.phone);
+    if (!canonical) return user;
+
+    // Pastikan tidak ada akun lain yang sudah menggunakan nomor ini
+    const { data: conflict } = await supabase
+        .from("users")
+        .select("id")
+        .eq("phone_normalized", canonical)
+        .neq("id", user.id)
+        .maybeSingle();
+
+    if (!conflict) {
+        await supabase.from("users").update({ phone_normalized: canonical }).eq("id", user.id);
+        user.phone_normalized = canonical;
+    }
+    return user;
 }
 
 async function getUserProfile(userId) {
     const { data, error } = await supabase.from("users").select(PROFILE_COLUMNS).eq("id", userId).maybeSingle();
     if (error) throw error;
-    return data;
+    return await backfillLegacyPhone(data);
 }
 
 async function getCheckoutIdentity(userId) {
@@ -42,4 +66,4 @@ async function getCheckoutIdentity(userId) {
     };
 }
 
-module.exports = { PROFILE_COLUMNS, toPublicProfile, getUserProfile, getCheckoutIdentity };
+module.exports = { PROFILE_COLUMNS, toPublicProfile, getUserProfile, getCheckoutIdentity, backfillLegacyPhone };

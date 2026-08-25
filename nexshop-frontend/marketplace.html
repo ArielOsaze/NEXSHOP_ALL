@@ -238,15 +238,14 @@
         <!-- Akses cepat hanya memuat tindakan yang benar-benar tersedia di
              NexShop. Kategori layanan tetap dirender dari faset API katalog
              di bawah, sehingga tidak ada layanan atau riwayat buatan. -->
-        <section class="mkt-quick-panel" aria-labelledby="mktQuickTitle">
+        <section class="mkt-quick-panel" aria-label="Akses cepat NexShop">
             <div class="mkt-quick-panel-head">
                 <div>
                     <p class="mkt-panel-kicker">Marketplace NexShop</p>
-                    <h2 id="mktQuickTitle">Akses cepat</h2>
                 </div>
                 <p>Pilih transaksi yang ingin kamu lakukan.</p>
             </div>
-            <div class="mkt-banking-actions" aria-label="Akses cepat NexShop">
+            <div class="mkt-banking-actions">
                 <button type="button" class="mkt-banking-action" data-wallet-trigger aria-haspopup="dialog">
                     <span class="mkt-banking-action-icon"><i class="fa-solid fa-wallet" aria-hidden="true"></i></span>
                     <strong>Wallet</strong>
@@ -2055,10 +2054,16 @@
             const btn = document.getElementById("mktLoadMoreBtn");
             if (btn) btn.addEventListener("click", () => loadCatalogPage(false, true));
 
-            // Pemuatan berikutnya disengaja lewat tombol. Ini menjaga footer
-            // tetap bisa dicapai dan mencegah jaringan terus menarik batch
-            // baru ketika pengguna hanya sedang menggulir halaman.
             lepasObserver();
+            const sentinel = document.getElementById("mktLoadSentinel");
+            if (sentinel && 'IntersectionObserver' in window) {
+                mktObserver = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting && !mktLoading) {
+                        loadCatalogPage(false, false);
+                    }
+                }, { rootMargin: "300px" });
+                mktObserver.observe(sentinel);
+            }
         }
 
         function setLoadMoreState(state) {

@@ -7,7 +7,7 @@ const { sendOtpEmail, sendPasswordResetEmail } = require("../config/mailer");
 const { sendUserWhatsApp } = require("../services/userWhatsAppService");
 const { normalizePhoneNumber } = require("../utils/phoneNumber");
 const { startPhoneOtp, verifyPhoneOtp, generateOtp, OTP_EXPIRY_MINUTES, assertPhoneAvailable } = require("../services/phoneOtpService");
-const { toPublicProfile } = require("../services/userProfileService");
+const { toPublicProfile, backfillLegacyPhone } = require("../services/userProfileService");
 const { notify } = require("../config/notify");
 const { resetLoginLimiter, getBlockedLoginIps } = require("../middleware/rateLimiter");
 const { resetAdminSession } = require("../middleware/adminSession");
@@ -552,6 +552,7 @@ exports.login = async (req, res) => {
             });
         }
 
+        await backfillLegacyPhone(user);
         await clearPersistentFailedLogin(user.id);
         res.json({ message: "Login berhasil", ...issueUserSession(user) });
     } catch (error) {
@@ -721,6 +722,7 @@ exports.googleCallback = async (req, res) => {
         if (outcome.error) return redirectGoogleFailure(res, returnPath, outcome.error);
         if (!outcome.user || outcome.user.is_blacklisted) return redirectGoogleFailure(res, returnPath, "access_denied");
 
+        await backfillLegacyPhone(outcome.user);
         const session = issueUserSession(outcome.user);
         const exchangeCode = createGoogleExchangeCode(session);
         return res.redirect(302, frontendRedirect(returnPath, { oauth: state.action, code: exchangeCode }));
