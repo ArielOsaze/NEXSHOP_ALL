@@ -5221,3 +5221,86 @@ async function toggleMasterMusicPlayer(enabled) {
         showToast(e.message, true);
     }
 }
+
+// ===========================================================
+// WhatsApp API — QR status & rescan (admin dashboard)
+// ===========================================================
+var waQrRefreshTimer = null;
+
+/** fetch WA connection status + QR code */
+async function refreshWaQr() {
+    const badge = document.getElementById("waQrBadge");
+    const container = document.getElementById("waQrContainer");
+    const qrImg = document.getElementById("waQrImage");
+    const errEl = document.getElementById("waQrError");
+    errEl.classList.add("d-none");
+
+    try {
+        await withAdminPin(async (security_pin) => {
+            const res = await apiFetch("/settings/wa-api/status", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ security_pin })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal ambil status WA");
+
+            if (data.waConnected) {
+                badge.textContent = "✅ Terhubung";
+                badge.className = "badge bg-success";
+                container.classList.add("d-none");
+            } else if (data.qr) {
+                badge.textContent = "⚠️ Belum terhubung — scan QR";
+                badge.className = "badge bg-warning text-dark";
+                qrImg.src = data.qrImage || "";
+                container.classList.remove("d-none");
+            } else {
+                badge.textContent = "⏳ Menunggu QR...";
+                badge.className = "badge bg-secondary";
+                container.classList.add("d-none");
+            }
+        }, "mengecek status WhatsApp API");
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        badge.textContent = "❌ Offline";
+        badge.className = "badge bg-danger";
+        errEl.textContent = err.message;
+        errEl.classList.remove("d-none");
+    }
+}
+
+/** hapus session & trigger QR baru */
+async function forceWaRescan() {
+    if (!confirm("Reset session WhatsApp & generate QR baru? WhatsApp akan terputus & perlu scan ulang.")) return;
+
+    const btn = document.getElementById("waRescanBtn");
+    btn.disabled = true;
+    btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Reset...`;
+
+    try {
+        await withAdminPin(async (security_pin) => {
+            const res = await apiFetch("/settings/wa-api/rescan", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ security_pin })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal reset WA");
+
+            showToast(data.message || "QR baru digenerate. Scan di WhatsApp ponsel.");
+            setTimeout(refreshWaQr, 1000);
+        }, "mereset sesi WhatsApp (scan ulang)");
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        showToast("Gagal reset WA: " + err.message, true);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="bi bi-trash"></i> Reset & Scan Ulang`;
+    }
+}
+
+// Auto-refresh QR status setiap 15 detik
+document.addEventListener("DOMContentLoaded", () => {
+    refreshWaQr();
+    waQrRefreshTimer = setInterval(refreshWaQr, 15000);
+});

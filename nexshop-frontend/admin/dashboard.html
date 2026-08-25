@@ -1973,6 +1973,29 @@
                     </div>
                 </div>
 
+                <!-- QR Code WA API Scanner -->
+                <div class="card shadow-sm mt-3" id="waQrCard">
+                    <div class="card-body text-center">
+                        <h6 class="text-uppercase text-muted small mb-2">📱 WhatsApp API — QR Scanner</h6>
+                        <p class="text-muted small mb-2">Scan QR ini pakai WhatsApp ponsel Anda.</p>
+                        <div id="waQrStatus" class="mb-2">
+                            <span class="badge bg-secondary" id="waQrBadge">Memuat status...</span>
+                        </div>
+                        <div id="waQrContainer" class="d-none mb-2">
+                            <img id="waQrImage" src="" alt="QR Code WA" style="width:180px;height:180px;border:2px solid #ccc;border-radius:8px;">
+                        </div>
+                        <div class="d-flex gap-2 justify-content-center mt-2">
+                            <button type="button" class="btn btn-outline-success btn-sm" onclick="refreshWaQr()">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh QR
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm" id="waRescanBtn" onclick="forceWaRescan()">
+                                <i class="bi bi-trash"></i> Reset & Scan Ulang
+                            </button>
+                        </div>
+                        <div id="waQrError" class="text-danger small mt-2 d-none"></div>
+                    </div>
+                </div>
+
                 <div class="d-flex align-items-center gap-2 flex-wrap"><p class="text-muted small mb-0">Pilih field secret, lalu tampilkan atau salin. Nilai selalu tersamar secara default.</p><button type="button" class="btn btn-outline-warning btn-sm" onclick="revealApiKeys()"><i class="bi bi-eye"></i> Tampilkan 15 detik</button><button type="button" class="btn btn-outline-secondary btn-sm" onclick="copySelectedSecret()"><i class="bi bi-clipboard"></i> Salin secret</button></div>
                 <p class="text-danger small mb-0" id="apiKeysError"></p>
                 <div class="col-12">

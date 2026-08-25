@@ -36,6 +36,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
 const newsRoutes = require("./routes/newsRoutes");
 const seoRoutes = require("./routes/seoRoutes");
+const waApiRoutes = require("./routes/waApiRoutes");
 const docsRoutes = require("./routes/docsRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const ratingRoutes = require("./routes/ratingRoutes");
@@ -201,6 +202,7 @@ app.use("/api/wallet", walletRoutes);
 app.use("/api/v1/reseller", resellerApiRoutes);
 app.use("/api/reseller", resellerRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/settings/wa-api", waApiRoutes); // proxy route WA API (status + rescan QR)
 app.use("/api/webhooks", webhookRelayRoutes);
 app.use("/api/promo-codes", promoCodeRoutes);
 app.use("/api/notifications", notificationRoutes);

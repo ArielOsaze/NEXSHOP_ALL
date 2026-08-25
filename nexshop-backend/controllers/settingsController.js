@@ -634,6 +634,99 @@ exports.testApiGamesAdmin = async (req, res) => {
 };
 
 // ===========================================================
+// WhatsApp API — proxy status & QR code langsung dari WA API server
+// (endpoint: POST /api/settings/wa-api/status & /wa-api/rescan)
+// ===========================================================
+const WA_API_URL = process.env.WA_API_URL || "http://127.0.0.1:8080";
+const WA_API_KEY = process.env.WA_API_KEY || "nexshop-wa-2024-secure-key";
+
+exports.getWaApiStatus = async (req, res) => {
+    try {
+        const response = await axios.get(`${WA_API_URL}/health`, {
+            headers: { "X-API-Key": WA_API_KEY },
+            timeout: 8000
+        });
+        // Ambil QR code juga (untuk display di dashboard)
+        let qrData = null;
+        try {
+            const qrResp = await axios.get(`${WA_API_URL}/qr`, {
+                headers: { "X-API-Key": WA_API_KEY },
+                timeout: 8000
+            });
+            qrData = qrResp.data;
+        } catch (qrErr) { /* QR fetch gagal, tak apa — tetap kirim status */ }
+
+        res.json({
+            success: true,
+            waConnected: response.data.waConnected,
+            qrAvailable: qrData?.qr ? true : false,
+            qr: qrData?.qr || null,
+            qrImage: qrData?.qrImage || null,
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        console.error("WA API status proxy error:", err.message);
+        res.status(200).json({
+            success: false,
+            message: "WA API server tidak dapat dihubungi. Pastikan proses 'nexshop-wa-api' berjalan (pm2 list).",
+            waConnected: false
+        });
+    }
+};
+
+exports.forceWaRescan = async (req, res) => {
+    try {
+        // Hapus session persisten supaya WA API generate QR code baru
+        const sessionDir = process.env.WA_SESSION_DIR || "C:/Users/ariel/nexshop/whatsapp-session";
+        const fs = require("fs");
+        let deleted = false;
+        try {
+            const entries = fs.readdirSync(sessionDir);
+            for (const entry of entries) {
+                if (entry.endsWith(".json")) { // hapus pre-key/signed-key/session file
+                    fs.unlinkSync(require("path").join(sessionDir, entry));
+                    deleted = true;
+                }
+            }
+        } catch (dirErr) { /* session dir mungkin kosong/belum ada */ }
+
+        // Restart WA socket lewat PM2
+        const { execSync } = require("child_process");
+        try {
+            execSync("pm2 restart nexshop-wa-api", { timeout: 15000, stdio: "pipe" });
+        } catch (pm2Err) {
+            console.error("PM2 restart gagal:", pm2Err.message);
+        }
+
+        // Tunggu sebentar, ambil QR baru
+        setTimeout(async () => {
+            try {
+                const qrResp = await axios.get(`${WA_API_URL}/qr`, {
+                    headers: { "X-API-Key": WA_API_KEY },
+                    timeout: 8000
+                });
+                res.json({
+                    success: true,
+                    message: "QR code WA baru telah digenerate. Silakan scan ulang.",
+                    qr: qrResp.data.qr || null,
+                    qrImage: qrResp.data.qrImage || null,
+                    sessionCleared: deleted
+                });
+            } catch (e) {
+                res.json({
+                    success: true,
+                    message: "Session dihapus & service di-restart. Refresh halaman / buka /qr untuk dapat QR baru.",
+                    sessionCleared: deleted
+                });
+            }
+        }, 5000);
+    } catch (err) {
+        console.error("Force resc an error:", err.message);
+        res.status(500).json({ success: false, message: "Gagal mereset sesi WA: " + err.message });
+    }
+};
+
+// ===========================================================
 // PROFIL ADMIN — lihat & ubah nama/email/password akun sendiri
 // ===========================================================
 exports.getMe = async (req, res) => {
