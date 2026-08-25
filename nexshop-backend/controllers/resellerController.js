@@ -943,7 +943,7 @@ async function getResellerDashboardMetrics(userId) {
         const sejak = new Date(lastMonthStart).toISOString();
         const { data: orders } = await supabase
             .from("topup_orders")
-            .select("id, total, harga, created_at, status")
+            .select("id, harga, created_at, status")
             .eq("user_id", userId)
             .gte("created_at", sejak)
             .order("created_at", { ascending: false })
@@ -957,7 +957,7 @@ async function getResellerDashboardMetrics(userId) {
                 // reseller tahu volume percobaannya, tapi nominalnya nol supaya
                 // angka rupiah di dashboard = uang yang benar-benar berputar.
                 const sukses = STATUS_SUKSES.has(String(o.status || "").toLowerCase());
-                const nominal = Number(o.total != null ? o.total : o.harga) || 0;
+                const nominal = Number(o.harga) || 0;
                 const total = sukses ? nominal : 0;
                 const ot = new Date(o.created_at).getTime();
 
@@ -1050,7 +1050,7 @@ exports.getPortalOverview = async (req, res) => {
     try {
         const { data: user, error: uErr } = await supabase
             .from("users")
-            .select("id, email, fullname, phone, reseller_status, reseller_tier, reseller_since, balance")
+            .select("id, email, fullname, phone, reseller_status, reseller_tier, reseller_since")
             .eq("id", req.user.id)
             .maybeSingle();
 

@@ -23,8 +23,9 @@ let tierCacheAt = 0;
 function isMissingTableError(error) {
     if (!error) return false;
     const kode = String(error.code || "");
-    // 42P01: undefined_table, 42703: undefined_column
-    return kode === "42P01" || kode === "42703";
+    // 42P01: undefined_table
+    // 42703: undefined_column (bukan bukti tabel belum di-setup)
+    return kode === "42P01";
 }
 
 function invalidateTierCache() {
