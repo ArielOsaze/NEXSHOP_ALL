@@ -5228,7 +5228,7 @@ async function toggleMasterMusicPlayer(enabled) {
 // ===========================================================
 var waQrRefreshTimer = null;
 
-/** fetch WA connection status + QR code */
+/** fetch WA connection status + QR code — GET (NO security PIN needed, read-only) */
 async function refreshWaQr() {
     const badge = document.getElementById("waQrBadge");
     const container = document.getElementById("waQrContainer");
@@ -5237,32 +5237,25 @@ async function refreshWaQr() {
     errEl.classList.add("d-none");
 
     try {
-        await withAdminPin(async (security_pin) => {
-            const res = await apiFetch("/settings/wa-api/status", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ security_pin })
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.message || "Gagal ambil status WA");
+        const res = await apiFetch("/settings/wa-api/status");
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal ambil status WA");
 
-            if (data.waConnected) {
-                badge.textContent = "✅ Terhubung";
-                badge.className = "badge bg-success";
-                container.classList.add("d-none");
-            } else if (data.qr) {
-                badge.textContent = "⚠️ Belum terhubung — scan QR";
-                badge.className = "badge bg-warning text-dark";
-                qrImg.src = data.qrImage || "";
-                container.classList.remove("d-none");
-            } else {
-                badge.textContent = "⏳ Menunggu QR...";
-                badge.className = "badge bg-secondary";
-                container.classList.add("d-none");
-            }
-        }, "mengecek status WhatsApp API");
+        if (data.waConnected) {
+            badge.textContent = "✅ Terhubung";
+            badge.className = "badge bg-success";
+            container.classList.add("d-none");
+        } else if (data.qr) {
+            badge.textContent = "⚠️ Belum terhubung — scan QR";
+            badge.className = "badge bg-warning text-dark";
+            qrImg.src = data.qrImage || "";
+            container.classList.remove("d-none");
+        } else {
+            badge.textContent = "⏳ Menunggu QR...";
+            badge.className = "badge bg-secondary";
+            container.classList.add("d-none");
+        }
     } catch (err) {
-        if (err.message === "unauthorized") return;
         badge.textContent = "❌ Offline";
         badge.className = "badge bg-danger";
         errEl.textContent = err.message;

@@ -11,8 +11,8 @@ const axios = require("axios");
 const WA_API_URL = process.env.WA_API_URL || "http://127.0.0.1:8080";
 const WA_API_KEY = process.env.WA_API_KEY || "nexshop-wa-2024-secure-key";
 
-/** GET /api/settings/wa-api/status  — cek koneksi WA + dapat QR */
-router.post("/status", requireAdminPin, async (req, res) => {
+/** GET /api/settings/wa-api/status  — cek koneksi WA + dapat QR (NO auth — read-only seperti /health) */
+router.get("/status", async (req, res) => {
     try {
         const health = await axios.get(`${WA_API_URL}/health`, {
             headers: { "X-API-Key": WA_API_KEY },
