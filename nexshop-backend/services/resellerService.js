@@ -23,8 +23,8 @@ let tierCacheAt = 0;
 function isMissingTableError(error) {
     if (!error) return false;
     const kode = String(error.code || "");
-    const pesan = String(error.message || "").toLowerCase();
-    return kode === "42P01" || pesan.includes("does not exist") || pesan.includes("schema cache");
+    // 42P01: undefined_table, 42703: undefined_column
+    return kode === "42P01" || kode === "42703";
 }
 
 function invalidateTierCache() {

@@ -3,6 +3,7 @@ const supabase = require("../config/db");
 const PROFILE_COLUMNS = "id, fullname, email, role, avatar_url, phone, phone_normalized, phone_verified_at, onboarding_completed, google_subject, auth_provider, is_blacklisted, security_pin_hash, avatar_updated_at";
 
 function toPublicProfile(user) {
+    const isPhoneVerified = Boolean(user.phone_normalized && user.phone_verified_at);
     return {
         id: user.id,
         fullname: user.fullname,
@@ -13,7 +14,7 @@ function toPublicProfile(user) {
         phone: user.phone_normalized || user.phone || null,
         phone_normalized: user.phone_normalized || null,
         phone_verified_at: user.phone_verified_at || null,
-        onboarding_completed: Boolean(user.onboarding_completed)
+        onboarding_completed: Boolean(user.onboarding_completed) || isPhoneVerified
     };
 }
 
