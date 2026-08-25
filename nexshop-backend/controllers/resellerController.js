@@ -25,7 +25,7 @@ const { getTurnstileConfig, isTurnstileRequired, verifyTurnstile } = require("..
 //      Secret Key, IP Whitelist, Webhook Endpoint, dan daftar harga modal.
 // ===========================================================
 
-const BELUM_SETUP = "Fitur reseller belum di-setup. Jalankan migrations/008_create_reseller.sql dan 010_create_reseller_api_and_kyc.sql di Supabase dulu ya.";
+const BELUM_SETUP = "Fitur kemitraan NexShop saat ini sedang tidak tersedia. Silakan coba lagi nanti.";
 
 async function requireResellerHumanVerification(req, res) {
     const { secretKey } = await getTurnstileConfig();
@@ -404,17 +404,19 @@ exports.resellerLogin = async (req, res) => {
             .select("reseller_status")
             .eq("id", user.id)
             .maybeSingle();
+        let status = "none";
         if (resellerUserErr) {
-            if (isMissingTableError(resellerUserErr)) {
-                return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
+            if (!isMissingTableError(resellerUserErr)) {
+                console.error("resellerLogin reseller status error:", resellerUserErr);
+                return res.status(500).json({ message: "Database Error" });
             }
-            console.error("resellerLogin reseller status error:", resellerUserErr);
-            return res.status(500).json({ message: "Database Error" });
+            // Jika tabel missing, status tetap "none"
+        } else if (resellerUser) {
+            status = resellerUser.reseller_status || "none";
         }
 
         // Jika status pada users belum terisi (data lama), cek riwayat
         // pengajuan terakhir yang menjadi sumber status cadangan.
-        let status = resellerUser?.reseller_status || "none";
         if (status === "none") {
             const { data: latestApp, error: latestAppErr } = await supabase
                 .from("reseller_applications")
@@ -423,14 +425,13 @@ exports.resellerLogin = async (req, res) => {
                 .order("created_at", { ascending: false })
                 .limit(1)
                 .maybeSingle();
+            
             if (latestAppErr) {
-                if (isMissingTableError(latestAppErr)) {
-                    return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
+                if (!isMissingTableError(latestAppErr)) {
+                    console.error("resellerLogin application status error:", latestAppErr);
+                    return res.status(500).json({ message: "Database Error" });
                 }
-                console.error("resellerLogin application status error:", latestAppErr);
-                return res.status(500).json({ message: "Database Error" });
-            }
-            if (latestApp && latestApp.status) {
+            } else if (latestApp && latestApp.status) {
                 status = latestApp.status;
             }
         }

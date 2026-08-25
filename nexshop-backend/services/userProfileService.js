@@ -14,7 +14,7 @@ function toPublicProfile(user) {
         phone: user.phone_normalized || user.phone || null,
         phone_normalized: user.phone_normalized || null,
         phone_verified_at: user.phone_verified_at || null,
-        onboarding_completed: Boolean(user.onboarding_completed) || isPhoneVerified
+        onboarding_completed: Boolean(user.onboarding_completed)
     };
 }
 

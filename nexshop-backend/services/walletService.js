@@ -2,8 +2,7 @@ const supabase = require("../config/db");
 const { isMissingTableError } = require("./resellerService");
 
 const WALLET_NOT_SETUP_CODE = "WALLET_NOT_SETUP";
-const WALLET_NOT_SETUP_MESSAGE =
-    "Fitur NexShop Wallet belum di-setup di database. Jalankan migrations/011_create_nexshop_wallets.sql di Supabase SQL Editor.";
+const WALLET_NOT_SETUP_MESSAGE = "Fitur Dompet (Wallet) saat ini sedang tidak tersedia.";
 
 class WalletNotSetupError extends Error {
     constructor() {

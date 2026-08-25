@@ -27,8 +27,7 @@ const axios = require("axios");
 const supabase = require("../config/db");
 
 const RELAY_NOT_SETUP_CODE = "WEBHOOK_RELAY_NOT_SETUP";
-const RELAY_NOT_SETUP_MESSAGE =
-    "Fitur Webhook Relay belum di-setup. Jalankan migrations/009_create_webhook_relay.sql di Supabase SQL Editor dulu.";
+const RELAY_NOT_SETUP_MESSAGE = "Fitur Webhook Relay saat ini sedang tidak tersedia.";
 
 // Jadwal retry (menit) per percobaan yang sudah gagal. Panjangnya sekaligus
 // nentuin jatah percobaan: habis ini statusnya jadi "dead".

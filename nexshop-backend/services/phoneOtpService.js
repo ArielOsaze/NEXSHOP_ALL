@@ -15,11 +15,11 @@ function hashOtp(otp) {
 }
 
 async function assertPhoneAvailable(supabase, phoneNormalized, userId) {
-    const query = supabase
+    let query = supabase
         .from("users")
         .select("id")
         .or(`phone_normalized.eq.${phoneNormalized},pending_phone_normalized.eq.${phoneNormalized}`);
-    if (userId) query.neq("id", userId);
+    if (userId) query = query.neq("id", userId);
     const { data, error } = await query.maybeSingle();
     if (error) throw error;
     if (data) {

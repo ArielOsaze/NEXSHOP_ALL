@@ -153,8 +153,9 @@ async function saveProviderSetting({ id, api_key, model, enabled, priority, http
         .single();
 
     if (error) {
-        if (error.code === "PGRST204" || /schema cache|relation.*does not exist/i.test(error.message)) {
-            throw new Error("Tabel 'ai_provider_settings' belum tersedia di Supabase. Silakan jalankan file migrations-23-multi-ai-provider.sql di Supabase SQL Editor.");
+        if (String(error.code) === "42P01") {
+            console.warn("[WARN] Tabel 'ai_provider_settings' tidak ditemukan. Kembali ke LLM default.");
+            throw new Error("Konfigurasi AI Provider sedang tidak tersedia.");
         }
         throw new Error(`Gagal menyimpan provider setting ${pId}: ${error.message}`);
     }
