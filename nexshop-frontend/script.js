@@ -62,7 +62,7 @@ function hideAppLoader() {
     if (!appLoader) return;
     appLoader.classList.remove("is-visible");
     appLoader.setAttribute("aria-busy", "false");
-    
+
     // Delayed NexBot appearance
     setTimeout(() => {
         const nexbot = document.getElementById("nexbotWidget");
@@ -125,7 +125,7 @@ function applyTheme(theme, persist = false) {
     });
 
     if (persist) {
-        try { localStorage.setItem(THEME_STORAGE_KEY, isLight ? "light" : "dark"); } catch (e) {}
+        try { localStorage.setItem(THEME_STORAGE_KEY, isLight ? "light" : "dark"); } catch (e) { }
     }
 }
 
@@ -272,7 +272,7 @@ function closeOverlay(id) {
     if (!el) return;
     el.classList.remove("active");
     el.setAttribute("aria-hidden", "true");
-    
+
     if (id === "trackOverlay" && window.trackPollingTimer) {
         clearTimeout(window.trackPollingTimer);
         window.trackPollingTimer = null;
@@ -340,13 +340,13 @@ async function loadPromo() {
         const res = await fetch(`${API_BASE}/promo`);
         if (!res.ok) return;
         promoSlides = await res.json();
-        
+
         const section = document.getElementById("promoCarouselSection");
         if (!promoSlides || promoSlides.length === 0) {
             if (section) section.classList.add("hidden");
             return;
         }
-        
+
         if (section) section.classList.remove("hidden");
         renderPromoCarousel();
     } catch (err) {
@@ -357,9 +357,9 @@ async function loadPromo() {
 function renderPromoCarousel() {
     const inner = document.getElementById("promoCarouselInner");
     const indicators = document.getElementById("promoIndicators");
-    
+
     if (!inner || !indicators) return;
-    
+
     inner.innerHTML = promoSlides.map((slide, i) => {
         if (slide.full_image) {
             return `
@@ -371,7 +371,7 @@ function renderPromoCarousel() {
                 </a>
             `;
         }
-        
+
         return `
             <div class="min-w-full h-full shrink-0 relative flex items-center p-6 sm:p-12">
                 <picture>
@@ -388,11 +388,11 @@ function renderPromoCarousel() {
             </div>
         `;
     }).join("");
-    
+
     indicators.innerHTML = promoSlides.map((_, i) => `
         <button class="transition-all duration-300 ${i === 0 ? 'w-6 h-2 rounded-full bg-brand-cyan' : 'w-2 h-2 rounded-full bg-black/20 dark:bg-white/50'}" onclick="goToPromoSlide(${i})"></button>
     `).join("");
-    
+
     promoIndex = 0;
     startPromoAutoplay();
 }
@@ -400,12 +400,12 @@ function renderPromoCarousel() {
 function goToPromoSlide(index) {
     if (promoSlides.length === 0) return;
     promoIndex = (index + promoSlides.length) % promoSlides.length;
-    
+
     const inner = document.getElementById("promoCarouselInner");
     if (inner) {
         inner.style.transform = `translateX(-${promoIndex * 100}%)`;
     }
-    
+
     const dots = document.getElementById("promoIndicators").children;
     Array.from(dots).forEach((dot, i) => {
         if (i === promoIndex) {
@@ -615,7 +615,7 @@ function openProductModal(id) {
     image.classList.add("is-loading");
     image.src = safeUrl(p.image);
     image.alt = p.name;
-    
+
     const pmFlash = document.getElementById("pmFlashFlag");
     if (pmFlash) pmFlash.classList.toggle("hidden", !isFlashSaleActive(p));
     const pmBadge = document.getElementById("pmBadge");
@@ -780,6 +780,19 @@ function hasVerifiedPhone(user = currentUser) {
     return Boolean(user?.has_verified_phone);
 }
 
+// Backend menyimpan nomor HP sebagai E.164 ("+628..."), tapi seluruh input &
+// placeholder di frontend pakai format lokal ("08..."). Dipakai di mana pun
+// nomor dari currentUser ditampilkan/prefill supaya formatnya konsisten.
+function toLocalPhoneDisplay(rawPhone) {
+    let clean = (rawPhone || "").replace(/[^0-9]/g, "");
+    if (clean.startsWith("62")) {
+        clean = "0" + clean.slice(2);
+    } else if (!clean.startsWith("0") && clean.length > 5) {
+        clean = "0" + clean;
+    }
+    return clean;
+}
+
 function avatarUrlFor(user) {
     if (!user?.avatar_url) return "";
     const url = safeUrl(user.avatar_url);
@@ -845,20 +858,20 @@ function attachAvatarUploadListeners() {
     const editBtn = document.getElementById("accountAvatarEditBtn");
     const fileInput = document.getElementById("accountAvatarInput");
     if (!editBtn || !fileInput) return;
-    
+
     editBtn.onclick = () => fileInput.click();
     fileInput.onchange = async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
+
         try {
             const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
             if (!token) throw new Error("Silakan login terlebih dahulu");
-            
+
             editBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
             const formData = new FormData();
             formData.append("image", file);
-            
+
             const uploadRes = await fetch(`${API_BASE}/upload?type=avatar`, {
                 method: "POST",
                 headers: { "Authorization": `Bearer ${token}` },
@@ -866,23 +879,23 @@ function attachAvatarUploadListeners() {
             });
             const uploadData = await uploadRes.json();
             if (!uploadRes.ok) throw new Error(uploadData.message || "Gagal upload gambar");
-            
+
             const updateRes = await fetch(`${API_BASE}/users/me/avatar`, {
                 method: "PUT",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}` 
+                    "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({ avatar_url: uploadData.url })
             });
             const updateData = await updateRes.json();
             if (!updateRes.ok) throw new Error(updateData.message || "Gagal update foto profil");
-            
+
             currentUser.avatar_url = updateData.avatar_url;
             currentUser.avatar_updated_at = updateData.avatar_updated_at || new Date().toISOString();
             localStorage.setItem("nexshop_user", JSON.stringify(currentUser));
             refreshAccountUI();
-            
+
             if (typeof showToast === 'function') {
                 showToast("Sukses", "Foto profil berhasil diperbarui");
             } else {
@@ -1193,7 +1206,7 @@ function showOtpForm(email, method = "email") {
     document.getElementById("otpForm").classList.remove("hidden");
     document.getElementById("otpEmail").value = email;
     document.getElementById("otpEmailLabel").textContent = method === "whatsapp" ? "WhatsApp" : email;
-    
+
     const spamNotice = document.getElementById("otpSpamNotice");
     if (spamNotice) spamNotice.style.display = method === "whatsapp" ? "none" : "inline";
 
@@ -1296,7 +1309,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         saveUser();
         switchCartContext();
         refreshAccountUI();
-        
+
         if (!hasVerifiedPhone(currentUser)) {
             closeOverlay("authOverlay");
             openPhoneOnboarding();
@@ -1313,7 +1326,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
 function openPhoneOnboarding() {
     if (!currentUser) return;
     document.getElementById("phoneOnboardingName").value = currentUser.fullname || "";
-    document.getElementById("userPhoneInput").value = currentUser.phone_normalized || currentUser.phone || "";
+    document.getElementById("userPhoneInput").value = toLocalPhoneDisplay(currentUser.phone_normalized || currentUser.phone || "");
     document.getElementById("phoneError").textContent = "";
     document.getElementById("phoneVerifyError").textContent = "";
     document.getElementById("phoneOtpCode").value = "";
@@ -1328,11 +1341,11 @@ document.getElementById("phoneForm").addEventListener("submit", async (e) => {
     const fullname = document.getElementById("phoneOnboardingName").value.trim();
     const errorEl = document.getElementById("phoneError");
     const btn = document.getElementById("phoneSubmitBtn");
-    
+
     errorEl.textContent = "";
     btn.disabled = true;
     btn.textContent = "Mengirim...";
-    
+
     try {
         const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
         // Nama akun adalah sumber kebenaran berikutnya; nomor baru tidak
@@ -1348,23 +1361,23 @@ document.getElementById("phoneForm").addEventListener("submit", async (e) => {
 
         const res = await fetch(`${API_BASE}/users/me/phone`, {
             method: "PUT",
-            headers: { 
+            headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}` 
+                "Authorization": `Bearer ${token}`
             },
             body: JSON.stringify({ phone })
         });
         const data = await res.json();
-        
+
         if (!res.ok) {
             errorEl.textContent = data.message || "Gagal menyimpan nomor WA.";
             return;
         }
-        
+
         document.getElementById("phoneForm").classList.add("hidden");
         document.getElementById("phoneVerifyForm").classList.remove("hidden");
         toast(data.message || "Kode OTP dikirim ke WhatsApp.", "success");
-        
+
     } catch (err) {
         errorEl.textContent = "Gagal terhubung ke server.";
     } finally {
@@ -1520,37 +1533,22 @@ function openCheckout(items, source = "cart") {
     document.getElementById("checkoutGuestNote").classList.toggle("hidden", !!currentUser);
 
     if (currentUser) {
+        // currentUser yang sampai sini sudah pasti hasVerifiedPhone (dicek di
+        // awal openCheckout), jadi field ini hanya prefill untuk kompatibilitas
+        // payload lama dan TIDAK boleh diminta ulang ke user (satu blok saja,
+        // sebelumnya ada blok kedua yang duplikat dan menimpa nilai di atas
+        // dengan phone_normalized mentah berformat "+62..." -- itu yang bikin
+        // validasi nomor HP di submit gagal / kelihatan minta nomor WA lagi).
         document.getElementById("checkoutName").value = currentUser.fullname;
         document.getElementById("checkoutEmail").value = currentUser.email;
-        let cleanPhone = currentUser.phone || "";
-        cleanPhone = cleanPhone.replace(/[^0-9]/g, "");
-        if (cleanPhone.startsWith("62")) {
-            // Keep 62
-        } else if (!cleanPhone.startsWith("0") && cleanPhone.length > 5) {
-            cleanPhone = "0" + cleanPhone; // Fallback to 0 if they entered like 8222...
-        }
-        
-        if (cleanPhone && /^(0|62)[0-9]{8,14}$/.test(cleanPhone)) {
-            document.getElementById("checkoutPhone").value = cleanPhone;
-            document.getElementById("checkoutPhone").parentElement.classList.add("hidden");
-        } else {
-            document.getElementById("checkoutPhone").value = currentUser.phone || "";
-            document.getElementById("checkoutPhone").parentElement.classList.remove("hidden");
-        }
+        document.getElementById("checkoutPhone").value = toLocalPhoneDisplay(currentUser.phone_normalized || currentUser.phone || "");
+
+        ["checkoutName", "checkoutEmail", "checkoutPhone"].forEach((id) => document.getElementById(id).parentElement.classList.add("hidden"));
     } else {
         document.getElementById("checkoutName").value = "";
         document.getElementById("checkoutEmail").value = "";
         document.getElementById("checkoutPhone").value = "";
         document.getElementById("checkoutPhone").parentElement.classList.remove("hidden");
-    }
-
-    if (currentUser) {
-        // Backend memakai profil terverifikasi; field ini hanya prefill untuk
-        // kompatibilitas payload lama dan tidak perlu diminta ulang.
-        document.getElementById("checkoutName").value = currentUser.fullname;
-        document.getElementById("checkoutEmail").value = currentUser.email;
-        document.getElementById("checkoutPhone").value = currentUser.phone_normalized || currentUser.phone || "";
-        ["checkoutName", "checkoutEmail", "checkoutPhone"].forEach((id) => document.getElementById(id).parentElement.classList.add("hidden"));
     }
 
     renderCheckoutSummary();
@@ -1807,7 +1805,7 @@ async function renderRatingPrompt(orderData, container) {
         <h4 style="margin-bottom:0.5rem;font-size:1.05rem;color:var(--text);"><i class="fa-solid fa-star" aria-hidden="true"></i> Bagaimana pengalamanmu berbelanja di NexShop?</h4>
         <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">Masukan kamu membantu kami meningkatkan layanan.</p>
         <div id="rp_stars_${uid}" style="display:flex;justify-content:center;gap:0.5rem;margin-bottom:1rem;">
-            ${[1,2,3,4,5].map(n => `
+            ${[1, 2, 3, 4, 5].map(n => `
                 <button type="button" class="rp-star" data-score="${n}" aria-label="Bintang ${n}"
                     style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;padding:0.15rem;">
                     <i class="fa-regular fa-star"></i>
@@ -1861,9 +1859,9 @@ async function renderRatingPrompt(orderData, container) {
     // container.querySelector(...) supaya lookup selalu scoped ke
     // container ini saja, terlepas dari duplikasi id di tempat lain.
     let selectedScore = 0;
-    const stars   = container.querySelectorAll(".rp-star");
-    const form    = container.querySelector(`#rp_form_${uid}`);
-    const errDiv  = container.querySelector(`#rp_err_${uid}`);
+    const stars = container.querySelectorAll(".rp-star");
+    const form = container.querySelector(`#rp_form_${uid}`);
+    const errDiv = container.querySelector(`#rp_err_${uid}`);
     const txtArea = container.querySelector(`#rp_txt_${uid}`);
     const charCnt = container.querySelector(`#rp_cnt_${uid}`);
     const doneDiv = container.querySelector(`#rp_done_${uid}`);
@@ -2004,17 +2002,17 @@ function renderNexshopNews(items) {
     const section = document.getElementById("news");
     const grid = document.getElementById("newsGrid");
     if (!section || !grid) return;
-    
+
     if (!Array.isArray(items) || !items.length) {
         section.classList.remove("hidden");
         grid.innerHTML = `<div class="col-span-full text-center text-gray-500 py-10 text-sm font-medium">Belum ada berita terbaru.</div>`;
         return;
     }
-    
+
     grid.innerHTML = items.map((item) => {
         const imageUrl = safeUrl(item.image_url) || "/images/placeholder-news.jpg";
         const category = String(item.category || "Berita");
-        
+
         return `
             <a href="/berita/${encodeURIComponent(item.slug)}" class="group relative home-glass-card rounded-2xl overflow-hidden flex flex-col no-underline text-left transition-all duration-300">
                 <div class="relative w-full aspect-video overflow-hidden bg-transparent">
@@ -2369,7 +2367,7 @@ function renderTrackResult(data, options = {}) {
                         // closeOverlay dan showPaidOrderSuccess dari sini.
                         renderTrackResult(newData, options);
                     }
-                } catch(e) {}
+                } catch (e) { }
             }
         }, 5000);
     }
@@ -2592,40 +2590,40 @@ function updateContactEmailLinks(value) {
 
 function applyTickerSettings(s) {
     const track = document.getElementById("tickerTrack");
-    
+
     if (!s || !s.ticker_text) {
         if (track) track.style.display = 'none';
         return;
     }
-    
+
     const items = String(s.ticker_text).split("|").map(t => t.trim()).filter(Boolean);
     if (!items.length) {
         if (track) track.style.display = 'none';
         return;
     }
-    
+
     // Repeat items if too few to ensure it fills the screen seamlessly
     let displayItems = [...items];
     while (displayItems.length < 8) {
         displayItems = displayItems.concat(items);
     }
-    
+
     const buildHTML = (groupItems) => groupItems.map(item => `<span class="ticker-msg">${item}</span> <span class="text-brand-indigo">•</span>`).join("");
-    
+
     const g1 = document.getElementById("tickerGroup1");
     const g2 = document.getElementById("tickerGroup2");
     if (g1) g1.innerHTML = buildHTML(displayItems);
     if (g2) g2.innerHTML = buildHTML(displayItems);
-    
+
     if (track) {
         track.style.display = 'flex';
         const seconds = Number(s.ticker_speed_seconds) || 30;
-        
+
         // Calculate constant speed: "seconds" is treated as the duration for 100 characters.
         // This ensures the visual scrolling speed remains exactly the same whether there is 1 short message or 10 long ones.
         const totalChars = displayItems.join("").length;
         const calculatedDuration = Math.max((totalChars / 100) * seconds, 5);
-        
+
         track.style.animationDuration = `${calculatedDuration}s`;
     }
 }
@@ -2757,7 +2755,7 @@ function initEventMascot(config) {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const playKey = `eventMascotPlayed:${config.mascot_url}`;
     let alreadyPlayed = false;
-    try { alreadyPlayed = sessionStorage.getItem(playKey) === "true"; } catch (err) {}
+    try { alreadyPlayed = sessionStorage.getItem(playKey) === "true"; } catch (err) { }
     const enterDuration = 2000 / (Number(config.speed) || 1);
     let started = false;
     const startMascot = () => {
@@ -2771,7 +2769,7 @@ function initEventMascot(config) {
                 const confirmEntrance = () => {
                     if (entranceConfirmed) return;
                     entranceConfirmed = true;
-                    try { sessionStorage.setItem(playKey, "true"); } catch (err) {}
+                    try { sessionStorage.setItem(playKey, "true"); } catch (err) { }
                 };
                 image.addEventListener("animationstart", confirmEntrance, { once: true });
                 mascot.classList.add("is-entering");
@@ -3601,12 +3599,12 @@ document.getElementById("twCheckBtn").addEventListener("click", async () => {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ kategori: twState.kategori, tujuan: userId, serverId: serverId || undefined })
         });
-        
+
         let data = { available: false, reason: "provider_unavailable" };
         if (res.status === 429) {
             data.message = "Terlalu banyak percobaan cek akun. Silakan tunggu sebentar.";
         } else {
-            try { data = await res.json(); } catch(e){}
+            try { data = await res.json(); } catch (e) { }
         }
 
         resultEl.classList.remove("hidden");
@@ -3725,7 +3723,7 @@ function renderTopupPaymentGrid() {
                     <span class="text-brand-indigo dark:text-brand-cyan text-sm font-black">${window.currentUserWallet ? rupiah(window.currentUserWallet.balance) : (localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) ? "Memuat..." : "Login untuk cek saldo")}</span>
                 </div>
                 ${window.currentUserWallet && twState.product ? (
-                    window.currentUserWallet.balance >= twState.product.harga_jual ? `
+                window.currentUserWallet.balance >= twState.product.harga_jual ? `
                         <div class="text-emerald-500 font-semibold mt-1 flex items-center gap-1">
                             <i class="fa-solid fa-circle-check text-xs" aria-hidden="true"></i>
                             <span>Saldo mencukupi. Sisa setelah transaksi: <strong>${rupiah(window.currentUserWallet.balance - twState.product.harga_jual)}</strong></span>
@@ -3736,7 +3734,7 @@ function renderTopupPaymentGrid() {
                             <button type="button" class="py-1 px-3 bg-brand-indigo hover:bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-sm transition-all" onclick="openWalletModal(event)">+ Top Up</button>
                         </div>
                     `
-                ) : ''}
+            ) : ''}
             </div>
         ` : ''}
         ${method.id === "va" && twState.payment === "va" ? `
@@ -3997,12 +3995,12 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
     const vaContainer = document.getElementById("dpVaContainer");
     const qrCodeDiv = document.getElementById("dpQrCode");
     const vaNumberDiv = document.getElementById("dpVaNumber");
-    
+
     // Set UI elements based on payment channel
     if (paymentData.qrContent) {
         qrisContainer.classList.remove("hidden");
         vaContainer.classList.add("hidden");
-        
+
         qrCodeDiv.innerHTML = "";
         if (typeof QRCode !== "undefined") {
             new QRCode(qrCodeDiv, {
@@ -4067,7 +4065,7 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
 
     // Polling logic
     const closeBtn = document.getElementById("dpCloseBtn");
-    
+
     const handleClose = () => {
         closeOverlay("directPaymentOverlay");
 
@@ -4083,7 +4081,7 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
         // backdrop-click/Escape) menutup celah itu di semua jalur penutupan.
         stopIpaymuPolling();
     };
-    
+
     const newCloseBtn = closeBtn.cloneNode(true);
     closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
     newCloseBtn.addEventListener("click", handleClose);
@@ -4135,7 +4133,7 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
                     return;
                 }
             }
-        } catch(e) {
+        } catch (e) {
             if (e.name === 'AbortError') return;
             // Ignore polling errors
         }
@@ -4151,14 +4149,14 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
     const left = (window.screen.width / 2) - (w / 2);
     const top = (window.screen.height / 2) - (h / 2);
     const popup = window.open(paymentUrl, "iPaymuCheckout", `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
-    
+
     // Simpan referensi popup window secara global supaya stopIpaymuPolling()
     // (dipanggil dari closeOverlay() saat user menutup lewat backdrop/Escape)
     // juga bisa menutup jendela iPaymu ini, bukan cuma lewat tombol X.
     ipaymuActivePopupWindow = popup;
 
     document.getElementById("paymentWaitingOverlay").style.display = "flex";
-    
+
     // FIX (Bug 4): clone closeBtn dulu sebelum tambah listener baru, sama
     // seperti showDirectPaymentModal -- tanpa ini, tiap kali popup iPaymu
     // dibuka lagi, listener numpuk di tombol yang sama (elemen DOM-nya gak
@@ -4208,7 +4206,7 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
                     // jadi muncul berkali-kali walau sudah ditutup. Transaksi sudah
                     // selesai, jadi stop di sini.
                     handleClose();
-                    
+
                     if (isTopup) {
                         document.getElementById("twStep3Error").textContent = "";
                         closeGameDetail();
@@ -4220,7 +4218,7 @@ function openIpaymuPopup(paymentUrl, orderId, isTopup) {
                     return;
                 }
             }
-        } catch(e) {
+        } catch (e) {
             if (e.name === 'AbortError') return;
             // Ignore polling errors
         }
@@ -4252,7 +4250,7 @@ async function checkPaymentReturn() {
 
         const controller = new AbortController();
         const signal = controller.signal;
-        
+
         // Setup listener to abort if user navigates away from the page
         const abortHandler = () => controller.abort();
         window.addEventListener("hashchange", abortHandler, { once: true });
@@ -4482,15 +4480,15 @@ function renderLeaderboard(data) {
     // Podium: Top 3
     const top3 = data.slice(0, 3);
     const rest = data.slice(3, 10);
-    
+
     let podiumHtml = `<div class="flex flex-row items-end justify-center gap-2 md:gap-6 lg:gap-10 mb-12 min-h-[300px]"> `;
-    
+
     // Helper untuk avatar
     const getAvatar = (user) => {
         if (user.avatar_url) return `<img src="${user.avatar_url}" class="w-full h-full object-cover" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: cover; display: block; flex-shrink: 0;">`;
         return `<div class="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-2xl font-bold text-gray-400 dark:text-gray-500" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; flex-shrink: 0;"><i class="fa-solid fa-user"></i></div>`;
     };
-    
+
     // Helper untuk rank badge
     const getRankBadge = (rank) => {
         if (rank === 1) return '<div class="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 border-2 border-white dark:border-gray-900 flex items-center justify-center text-gray-900 font-bold text-sm shadow-[0_0_15px_rgba(251,191,36,0.5)] z-20">1</div>';
@@ -4597,9 +4595,9 @@ function renderLeaderboard(data) {
 function initNavScroll() {
     const nav = document.getElementById('mainNav');
     if (!nav) return;
-    
+
     let ticking = false;
-    
+
     window.addEventListener('scroll', () => {
         if (!ticking) {
             window.requestAnimationFrame(() => {
@@ -4647,7 +4645,7 @@ async function bootstrapApp() {
         new Promise((resolve) => setTimeout(() => resolve(false), 12000))
     ]);
     finishInitialLoading(!completed);
-    
+
     if (currentUser && !hasVerifiedPhone(currentUser)) {
         openPhoneOnboarding();
     }
@@ -4711,7 +4709,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     document.querySelectorAll('.nexbot-quick-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             if (typeof window.sendNexBotQuick === 'function') {
                 window.sendNexBotQuick(this.dataset.topic);
             }
@@ -4727,7 +4725,7 @@ async function initMusicPlayer() {
 
         const defaultMascot = document.getElementById("defaultMascot");
         const musicPlayerUI = document.getElementById("musicPlayerUI");
-        
+
         if (data.enabled && data.music) {
             // Setup player UI
             const musicCoverImg = document.getElementById("musicCoverImg");
@@ -4735,7 +4733,7 @@ async function initMusicPlayer() {
             const musicPlayBtn = document.getElementById("musicPlayBtn");
             const musicPlayIcon = document.getElementById("musicPlayIcon");
             const musicDisc = document.getElementById("musicDisc");
-            
+
             if (musicCoverImg) musicCoverImg.src = data.music.cover_url || "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=500&auto=format&fit=crop";
             if (heroAudioPlayer) heroAudioPlayer.src = data.music.audio_url;
 
@@ -4746,7 +4744,7 @@ async function initMusicPlayer() {
             }
 
             let isPlaying = false;
-            
+
             if (heroAudioPlayer) {
                 heroAudioPlayer.addEventListener("ended", () => {
                     isPlaying = false;
@@ -4799,7 +4797,7 @@ let oneStopSearchQuery = "";
 async function loadOneStopCatalog() {
     const grid = document.getElementById("oneStopOperatorGrid");
     if (!grid) return;
-    
+
     grid.innerHTML = Array(12).fill(`
         <div class="glass-panel p-4 rounded-2xl flex flex-col items-center justify-center animate-pulse gap-3 border border-white/5">
             <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gray-200 dark:bg-white/10 rounded-full"></div>
@@ -4812,7 +4810,7 @@ async function loadOneStopCatalog() {
         const response = await fetch(`${API_BASE}/topup/public-catalog`, { headers: publicAuthHeaders() });
         if (!response.ok) throw new Error("Gagal mengambil katalog.");
         const data = await response.json();
-        
+
         if (Array.isArray(data)) {
             oneStopCatalog = data;
         } else {
@@ -4848,7 +4846,7 @@ function renderOneStopCategories() {
         const baseClass = "px-5 py-2.5 rounded-full font-bold text-sm transition-all whitespace-nowrap cursor-pointer";
         const activeClass = "bg-brand-indigo text-white shadow-lg shadow-brand-indigo/30";
         const inactiveClass = "bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10";
-        
+
         return `<div class="${baseClass} ${isActive ? activeClass : inactiveClass}" data-category="${cat}">${cat}</div>`;
     }).join("");
 
@@ -4884,9 +4882,9 @@ function renderOneStopOperators() {
         categoryObj.operators.forEach(op => {
             const matchCategory = matchesQuery(categoryObj.category);
             const matchOperator = matchesQuery(op.operator);
-            
+
             const fallbackIcon = `<i class="fa-solid fa-gamepad text-4xl text-gray-400" aria-hidden="true"></i>`;
-            const imgHtml = op.operator_logo 
+            const imgHtml = op.operator_logo
                 ? `<img src="${safeUrl(op.operator_logo)}" alt="${op.operator}" onerror="this.outerHTML='${fallbackIcon}'" class="w-full h-full object-contain drop-shadow-lg" loading="lazy">`
                 : fallbackIcon;
 
@@ -4904,7 +4902,7 @@ function renderOneStopOperators() {
                         if (minPrice === null || p.harga_jual < minPrice) minPrice = p.harga_jual;
                     }
                 });
-                const priceHtml = minPrice !== null 
+                const priceHtml = minPrice !== null
                     ? `<div class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand-indigo to-brand-cyan text-[clamp(0.65rem,2vw,0.85rem)]">Mulai ${rupiah(minPrice)}</div>`
                     : `<div></div>`;
 
@@ -4984,7 +4982,7 @@ function renderOneStopOperators() {
             try {
                 const operatorData = JSON.parse(card.dataset.operator);
                 const productId = card.dataset.product || null;
-                
+
                 const fakeGame = {
                     kategori: operatorData.operator,
                     logo: operatorData.operator_logo,
@@ -5087,13 +5085,13 @@ document.addEventListener("DOMContentLoaded", openMarketplaceCheckoutFromQuery);
 
 function openOneStopView(e) {
     if (e) e.preventDefault();
-    
+
     // Hide other views
     document.getElementById("topupGameGrid").classList.add("hidden");
     document.getElementById("topupSearchFilter").classList.add("hidden");
     document.getElementById("topupDetail").classList.add("hidden");
     document.getElementById("topup").classList.remove("hidden");
-    
+
     // Show One Stop
     const oneStopView = document.getElementById("view-onestop");
     if (oneStopView) {
@@ -5101,14 +5099,14 @@ function openOneStopView(e) {
         // Trigger reveal animation
         setTimeout(() => oneStopView.classList.add("revealed"), 50);
     }
-    
+
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function closeOneStopView() {
     const oneStopView = document.getElementById("view-onestop");
     if (oneStopView) oneStopView.classList.add("hidden");
-    
+
     document.getElementById("topup").classList.remove("hidden");
     document.getElementById("topupGameGrid").classList.remove("hidden");
     document.getElementById("topupSearchFilter").classList.remove("hidden");
@@ -5367,7 +5365,7 @@ function initWalletUI() {
             document.getElementById("walletViewSuccess").style.display = "none";
             const expView = document.getElementById("walletViewExpired");
             if (expView) expView.style.display = "none";
-            
+
             // Default select Rp 100.000 on open
             selectPresetAmount(100000);
         });
@@ -5615,7 +5613,7 @@ function initWalletUI() {
                                 document.getElementById("walletViewQris").style.display = "none";
                                 if (expView) expView.style.display = "block";
                             }
-                        } catch (_) {}
+                        } catch (_) { }
                     }, 3500);
                 } else if (data.payment_url) {
                     window.location.href = data.payment_url;
@@ -5670,5 +5668,3 @@ function initWalletUI() {
 }
 
 document.addEventListener("DOMContentLoaded", initWalletUI);
-
-
