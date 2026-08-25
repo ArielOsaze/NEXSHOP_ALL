@@ -1270,17 +1270,20 @@
             <!-- TAB 1: FORM LOGIN MITRA -->
             <div id="authPaneLogin">
                 <form id="formResellerLogin">
-                    <div id="loginErrorMsg" style="display:none;background:rgba(239,68,68,0.15);color:#fca5a5;padding:0.75rem 1rem;border-radius:8px;font-size:0.84rem;font-weight:600;margin-bottom:1rem;border:1px solid rgba(239,68,68,0.3);"></div>
+                    <div id="loginErrorMsg" role="alert" aria-live="polite" style="display:none;background:rgba(239,68,68,0.15);color:#fca5a5;padding:0.75rem 1rem;border-radius:8px;font-size:0.84rem;font-weight:600;margin-bottom:1rem;border:1px solid rgba(239,68,68,0.3);"></div>
 
                     <div style="margin-bottom:1.15rem;">
                         <label class="form-label" for="loginEmail">Email Akun Mitra <span style="color:#ef4444;">*</span></label>
-                        <input type="email" id="loginEmail" required class="form-control" placeholder="nama@domain.com" style="width:100%;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;font-size:0.9rem;box-sizing:border-box;">
+                        <input type="email" id="loginEmail" required autocomplete="email" inputmode="email" class="form-control" placeholder="nama@domain.com" aria-describedby="loginErrorMsg" style="width:100%;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;font-size:0.9rem;box-sizing:border-box;">
                     </div>
 
                     <div style="margin-bottom:1.5rem;">
                         <label class="form-label" for="loginPassword">Password <span style="color:#ef4444;">*</span></label>
-                        <input type="password" id="loginPassword" required class="form-control" placeholder="••••••••" style="width:100%;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;font-size:0.9rem;box-sizing:border-box;">
+                        <input type="password" id="loginPassword" required autocomplete="current-password" class="form-control" placeholder="••••••••" aria-describedby="loginErrorMsg" style="width:100%;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;font-size:0.9rem;box-sizing:border-box;">
                     </div>
+
+                    <div id="resellerLoginTurnstile" class="auth-turnstile" hidden></div>
+                    <p id="resellerLoginTurnstileStatus" class="auth-error hidden" role="alert" aria-live="polite"></p>
 
                     <button type="submit" id="btnLoginSubmit" style="width:100%;padding:0.8rem;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-weight:800;font-size:0.94rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 16px rgba(37,99,235,0.4);">
                         <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
@@ -1375,6 +1378,9 @@
                         <label class="form-label" for="regNote">Catatan Tambahan (Opsional)</label>
                         <textarea id="regNote" rows="2" placeholder="Catatan untuk verifikator..." style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;"></textarea>
                     </div>
+
+                    <div id="resellerRegisterTurnstile" class="auth-turnstile" hidden></div>
+                    <p id="resellerRegisterTurnstileStatus" class="auth-error hidden" role="alert" aria-live="polite"></p>
 
                     <button type="submit" id="btnRegisterSubmit" style="width:100%;padding:0.8rem;border:none;border-radius:12px;background:linear-gradient(135deg,#00c2e8,#0891b2);color:#fff;font-weight:800;font-size:0.94rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 16px rgba(0,194,232,0.4);">
                         <i class="fa-solid fa-user-check" aria-hidden="true"></i>
@@ -2134,6 +2140,7 @@
     <!-- =============================================================== -->
     <!-- JAVASCRIPT LOGIC & INTERACTIONS                                -->
     <!-- =============================================================== -->
+    <script src="/auth-security.js?v=20260825"></script>
     <script>
         const API_BASE = window.location.origin + "/api";
         let uploadedKtpUrl = "";
@@ -2958,6 +2965,9 @@
             btn.innerHTML = `<i class="fa-solid fa-spinner mkt-spin" style="font-size:1.1rem;" aria-hidden="true"></i> Memproses...`;
 
             try {
+                const captcha_token = window.NexShopAuthSecurity
+                    ? await window.NexShopAuthSecurity.captchaToken("reseller-register")
+                    : "";
                 if (file && !uploadedKtpUrl) {
                     uploadedKtpUrl = await uploadKtpFile(file);
                 }
@@ -2972,7 +2982,8 @@
                     channel: document.getElementById("regChannel").value,
                     monthly_estimate: document.getElementById("regMonthly").value,
                     note: document.getElementById("regNote").value.trim(),
-                    ktp_url: uploadedKtpUrl
+                    ktp_url: uploadedKtpUrl,
+                    captcha_token
                 };
 
                 const res = await fetch(`${API_BASE}/reseller/auth/register`, {
@@ -2998,13 +3009,21 @@
                     return;
                 }
 
-                if (!res.ok) throw new Error(data.message || "Gagal mendaftar reseller");
+                if (!res.ok) {
+                    window.NexShopAuthSecurity?.resetCaptcha("reseller-register");
+                    throw new Error(data.message || "Gagal mendaftar reseller");
+                }
 
+                window.NexShopAuthSecurity?.resetCaptcha("reseller-register");
                 setResellerSession(data.token, data.user);
                 showToast("Pendaftaran berhasil! Selamat datang di Partner Portal.");
                 loadPortalOverview();
             } catch (err) {
-                errEl.textContent = err.message;
+                // Kesalahan jaringan tidak selalu punya body JSON. Tampilkan
+                // arahan yang bisa ditindak, tanpa membocorkan detail server.
+                errEl.textContent = err instanceof TypeError
+                    ? "Tidak dapat menghubungi server NexShop. Periksa koneksi lalu coba lagi."
+                    : (err.message || "Pendaftaran belum dapat diproses. Coba lagi sebentar.");
                 errEl.style.display = "block";
             } finally {
                 btn.disabled = false;
@@ -3025,7 +3044,10 @@
             try {
                 const payload = {
                     email: document.getElementById("loginEmail").value.trim(),
-                    password: document.getElementById("loginPassword").value
+                    password: document.getElementById("loginPassword").value,
+                    captcha_token: window.NexShopAuthSecurity
+                        ? await window.NexShopAuthSecurity.captchaToken("reseller-login")
+                        : ""
                 };
 
                 const res = await fetch(`${API_BASE}/reseller/auth/login`, {
@@ -3034,13 +3056,19 @@
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.message || "Email atau password salah");
+                if (!res.ok) {
+                    window.NexShopAuthSecurity?.resetCaptcha("reseller-login");
+                    throw new Error(data.message || "Email atau password salah");
+                }
 
+                window.NexShopAuthSecurity?.resetCaptcha("reseller-login");
                 setResellerSession(data.token, data.user);
                 showToast("Login berhasil!");
                 loadPortalOverview();
             } catch (err) {
-                errEl.textContent = err.message;
+                errEl.textContent = err instanceof TypeError
+                    ? "Tidak dapat menghubungi server NexShop. Periksa koneksi lalu coba lagi."
+                    : (err.message || "Login belum dapat diproses. Coba lagi sebentar.");
                 errEl.style.display = "block";
             } finally {
                 btn.disabled = false;
@@ -3843,6 +3871,8 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
+            window.NexShopAuthSecurity?.mountCaptcha("reseller-login", "resellerLoginTurnstile", "resellerLoginTurnstileStatus");
+            window.NexShopAuthSecurity?.mountCaptcha("reseller-register", "resellerRegisterTurnstile", "resellerRegisterTurnstileStatus");
             loadKontakAdmin();
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get("mode") === "register") {

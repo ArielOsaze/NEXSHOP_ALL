@@ -35,6 +35,9 @@ router.post("/security-pin/change", authMiddleware, adminMiddleware, pinChangeOt
 router.post("/api-keys", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.getApiKeysAdmin);
 router.post("/api-keys/reveal", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.revealApiKeysAdmin);
 router.put("/api-keys", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.updateApiKeysAdmin);
+router.post("/runtime-config", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.getRuntimeConfigAdmin);
+router.post("/runtime-config/reveal", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.revealRuntimeConfigSecretAdmin);
+router.put("/runtime-config", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.updateRuntimeConfigAdmin);
 router.post("/test-whatsapp", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.testWhatsAppAdmin);
 router.post("/test-user-whatsapp", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.testUserWhatsApp);
 router.post("/apigames/test", authMiddleware, superAdminMiddleware, requireAdminPin, testApiGamesLimiter, settingsController.testApiGamesAdmin);

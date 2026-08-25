@@ -11,6 +11,7 @@ const { hitungMarkupWajar, cleanProductName } = require("../utils/topupHelpers")
 const { validateWebhookUrlShape, assertSafeOutboundUrl } = require("../utils/safeOutboundUrl");
 const { decryptDocument, parseDocumentRef, isDocumentRef } = require("../utils/secureDocument");
 const { generateWebhookSignature } = require("../services/resellerWebhookService");
+const { getTurnstileConfig, isTurnstileRequired, verifyTurnstile } = require("../services/turnstileService");
 
 // ===========================================================
 // PROGRAM RESELLER & PARTNER PORTAL NEXSHOP
@@ -25,6 +26,25 @@ const { generateWebhookSignature } = require("../services/resellerWebhookService
 // ===========================================================
 
 const BELUM_SETUP = "Fitur reseller belum di-setup. Jalankan migrations/008_create_reseller.sql dan 010_create_reseller_api_and_kyc.sql di Supabase dulu ya.";
+
+async function requireResellerHumanVerification(req, res) {
+    const { secretKey } = await getTurnstileConfig();
+    if (!secretKey && !(await isTurnstileRequired())) return true;
+    if (!secretKey) {
+        res.status(503).json({ message: "Verifikasi keamanan sedang belum dikonfigurasi. Coba lagi nanti.", code: "TURNSTILE_NOT_CONFIGURED" });
+        return false;
+    }
+    const verification = await verifyTurnstile(req.body?.captcha_token, req.ip);
+    if (verification.ok) return true;
+    const unavailable = verification.reason === "verification_unavailable";
+    res.status(unavailable ? 503 : 400).json({
+        message: unavailable
+            ? "Verifikasi keamanan sedang tidak tersedia. Coba lagi sebentar."
+            : "Verifikasi keamanan tidak berhasil. Silakan ulangi tantangannya.",
+        code: unavailable ? "TURNSTILE_UNAVAILABLE" : "TURNSTILE_FAILED"
+    });
+    return false;
+}
 
 function bersihkan(nilai, maksimal) {
     return String(nilai ?? "").trim().slice(0, maksimal);
@@ -109,6 +129,8 @@ exports.resellerRegister = async (req, res) => {
     const monthlyEstimate = bersihkan(req.body.monthly_estimate, 60);
     const note = bersihkan(req.body.note, 500);
     const ktpUrl = bersihkan(req.body.ktp_url, 500);
+
+    if (!await requireResellerHumanVerification(req, res)) return;
 
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         return res.status(400).json({ message: "Format email tidak valid" });
@@ -333,6 +355,8 @@ exports.resellerLogin = async (req, res) => {
     const email = String(req.body.email || "").trim().toLowerCase();
     const password = String(req.body.password || "").trim();
 
+    if (!await requireResellerHumanVerification(req, res)) return;
+
     if (!email || !password) {
         return res.status(400).json({ message: "Email dan password wajib diisi" });
     }
@@ -346,7 +370,10 @@ exports.resellerLogin = async (req, res) => {
             // ikut error kalau kecocokannya lebih dari satu. Email sudah
             // dinormalisasi ke huruf kecil di atas, jadi pencocokan persis
             // (.eq) sudah cukup dan tidak punya wildcard sama sekali.
-            .select("id, fullname, email, password, role, reseller_status, phone, is_blacklisted")
+            // Kolom inti akun dipisah dari kolom program reseller. Ini
+            // memastikan migrasi reseller yang belum diterapkan tidak
+            // menyamar sebagai kredensial salah pada layar login.
+            .select("id, fullname, email, password, role, phone, is_blacklisted")
             .eq("email", email)
             .maybeSingle();
 
@@ -368,16 +395,41 @@ exports.resellerLogin = async (req, res) => {
             return res.status(403).json({ message: "Akun Anda telah diblokir. Hubungi admin NexShop." });
         }
 
-        // Tentukan status reseller: jika di users bernilai none, cek riwayat pengajuan di reseller_applications
-        let status = user.reseller_status || "none";
+        // Status program reseller memang ada di migrasi 008. Jangan
+        // menganggap akun biasa sebagai reseller bila skema ini belum ada;
+        // beri petunjuk setup yang eksplisit agar user tidak melihat pesan
+        // "email/password salah" untuk masalah server.
+        const { data: resellerUser, error: resellerUserErr } = await supabase
+            .from("users")
+            .select("reseller_status")
+            .eq("id", user.id)
+            .maybeSingle();
+        if (resellerUserErr) {
+            if (isMissingTableError(resellerUserErr)) {
+                return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
+            }
+            console.error("resellerLogin reseller status error:", resellerUserErr);
+            return res.status(500).json({ message: "Database Error" });
+        }
+
+        // Jika status pada users belum terisi (data lama), cek riwayat
+        // pengajuan terakhir yang menjadi sumber status cadangan.
+        let status = resellerUser?.reseller_status || "none";
         if (status === "none") {
-            const { data: latestApp } = await supabase
+            const { data: latestApp, error: latestAppErr } = await supabase
                 .from("reseller_applications")
                 .select("status")
                 .eq("user_id", user.id)
                 .order("created_at", { ascending: false })
                 .limit(1)
                 .maybeSingle();
+            if (latestAppErr) {
+                if (isMissingTableError(latestAppErr)) {
+                    return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
+                }
+                console.error("resellerLogin application status error:", latestAppErr);
+                return res.status(500).json({ message: "Database Error" });
+            }
             if (latestApp && latestApp.status) {
                 status = latestApp.status;
             }
@@ -1001,19 +1053,30 @@ exports.getPortalOverview = async (req, res) => {
             .eq("id", req.user.id)
             .maybeSingle();
 
-        if (uErr) throw uErr;
+        if (uErr) {
+            if (isMissingTableError(uErr)) {
+                return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
+            }
+            throw uErr;
+        }
         if (!user) {
             return res.status(404).json({ message: "User tidak ditemukan" });
         }
 
         let status = user.reseller_status || "none";
-        const { data: latestApp } = await supabase
+        const { data: latestApp, error: latestAppErr } = await supabase
             .from("reseller_applications")
             .select("status, tier_code, reviewed_at")
             .eq("user_id", user.id)
             .order("created_at", { ascending: false })
             .limit(1)
             .maybeSingle();
+        if (latestAppErr) {
+            if (isMissingTableError(latestAppErr)) {
+                return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
+            }
+            throw latestAppErr;
+        }
 
         if (status === "none" && latestApp && latestApp.status) status = latestApp.status;
 

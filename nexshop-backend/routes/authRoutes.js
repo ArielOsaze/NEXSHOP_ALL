@@ -10,6 +10,11 @@ const { loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgo
 
 router.post("/register", registerLimiter, authController.register);
 router.post("/login", loginLimiter, authController.login);
+router.get("/public-config", authController.publicAuthConfig);
+router.get("/google/start", authController.googleStart);
+router.get("/google/callback", authController.googleCallback);
+router.post("/google/exchange", authController.googleExchange);
+router.get("/google/link/start", authMiddleware, authController.googleLinkStart);
 router.post("/verify-otp", otpVerifyLimiter, authController.verifyOtp);
 router.post("/resend-otp", otpResendLimiter, authController.resendOtp);
 router.post("/forgot-password", forgotPasswordLimiter, authController.forgotPassword);

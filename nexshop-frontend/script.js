@@ -907,6 +907,74 @@ document.querySelectorAll(".auth-tab").forEach(tab => {
     });
 });
 
+const GOOGLE_OAUTH_MESSAGES = {
+    cancelled: "Login Google dibatalkan.",
+    invalid_state: "Sesi login Google tidak valid. Silakan coba lagi.",
+    verification_failed: "Identitas Google tidak dapat diverifikasi. Silakan coba lagi.",
+    google_email_unverified: "Email Google harus sudah terverifikasi untuk digunakan di NexShop.",
+    account_link_required: "Email ini sudah memiliki akun NexShop. Masuk dengan password terlebih dahulu, lalu hubungkan Google dari menu akun.",
+    google_already_linked: "Akun Google tersebut sudah terhubung ke akun NexShop lain.",
+    link_email_mismatch: "Email Google harus sama dengan email akun NexShop yang sedang masuk.",
+    provider_schema_missing: "Login Google belum siap di server. Hubungi admin NexShop.",
+    not_configured: "Login Google belum dikonfigurasi. Silakan gunakan email dan password.",
+    access_denied: "Akun ini tidak dapat menggunakan login Google."
+};
+
+async function initAuthSecurity() {
+    const security = window.NexShopAuthSecurity;
+    if (!security) return;
+
+    await Promise.all([
+        security.mountCaptcha("login", "loginTurnstile", "loginTurnstileStatus"),
+        security.mountCaptcha("register", "registerTurnstile", "registerTurnstileStatus")
+    ]);
+
+    const beginGoogle = async () => {
+        const errorEl = document.getElementById("loginError");
+        errorEl.textContent = "";
+        try {
+            await security.beginGoogle("login");
+        } catch (error) {
+            errorEl.textContent = error.message || "Login Google belum dapat dimulai.";
+        }
+    };
+    document.getElementById("googleLoginBtn")?.addEventListener("click", beginGoogle);
+    document.getElementById("googleRegisterBtn")?.addEventListener("click", beginGoogle);
+
+    document.getElementById("linkGoogleBtn")?.addEventListener("click", async () => {
+        const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+        if (!token) return;
+        try {
+            await security.beginGoogle("link", token);
+        } catch (error) {
+            toast(error.message || "Google belum dapat dihubungkan.", "error");
+        }
+    });
+
+    await security.consumeGoogleCallback((data, mode) => {
+        localStorage.setItem(PUBLIC_TOKEN_STORAGE_KEY, data.token);
+        currentUser = data.user;
+        saveUser();
+        switchCartContext();
+        refreshAccountUI();
+        if (mode === "link") {
+            toast("Akun Google berhasil dihubungkan.", "success");
+            return;
+        }
+        if (!currentUser.phone) {
+            openOverlay("phoneOverlay");
+        } else {
+            toast(`Berhasil masuk. Selamat datang, ${currentUser.fullname}!`, "success");
+        }
+    }, (error) => {
+        const errorEl = document.getElementById("loginError");
+        errorEl.textContent = GOOGLE_OAUTH_MESSAGES[error] || error || "Login Google tidak dapat diselesaikan.";
+        openOverlay("authOverlay");
+    });
+}
+
+initAuthSecurity();
+
 /* ---------- Lupa Password ---------- */
 function showForgotPasswordForm() {
     document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
@@ -1056,18 +1124,23 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
     const errorEl = document.getElementById("regError");
 
     try {
+        const captcha_token = window.NexShopAuthSecurity
+            ? await window.NexShopAuthSecurity.captchaToken("register")
+            : "";
         const res = await fetch(`${API_BASE}/auth/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ fullname, email, password, otp_method, whatsapp })
+            body: JSON.stringify({ fullname, email, password, otp_method, whatsapp, captcha_token })
         });
         const data = await res.json();
 
         if (!res.ok) {
             errorEl.textContent = data.message;
+            window.NexShopAuthSecurity?.resetCaptcha("register");
             return;
         }
         errorEl.textContent = "";
+        window.NexShopAuthSecurity?.resetCaptcha("register");
         e.target.reset();
         showOtpForm(email, data.otp_method || otp_method);
         toast(`Cek ${data.otp_method === "whatsapp" ? "WhatsApp" : "email"} kamu untuk kode verifikasi.`, "success");
@@ -1162,14 +1235,18 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     const errorEl = document.getElementById("loginError");
 
     try {
+        const captcha_token = window.NexShopAuthSecurity
+            ? await window.NexShopAuthSecurity.captchaToken("login")
+            : "";
         const res = await fetch(`${API_BASE}/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
+            body: JSON.stringify({ email, password, captcha_token })
         });
         const data = await res.json();
 
         if (!res.ok) {
+            window.NexShopAuthSecurity?.resetCaptcha("login");
             if (data.needsVerification) {
                 errorEl.textContent = "";
                 showOtpForm(data.email || email);
@@ -1179,6 +1256,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             errorEl.textContent = data.message;
             return;
         }
+        window.NexShopAuthSecurity?.resetCaptcha("login");
         localStorage.setItem(PUBLIC_TOKEN_STORAGE_KEY, data.token);
         currentUser = data.user;
         saveUser();

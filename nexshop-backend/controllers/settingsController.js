@@ -77,6 +77,12 @@ const {
     getApiKeys,
     updateApiKeys
 } = require("../config/settings");
+const {
+    RUNTIME_CONFIG_FIELDS,
+    getRuntimeConfig,
+    updateRuntimeConfig,
+    getAdminRuntimeConfig
+} = require("../services/runtimeConfigService");
 
 // ===========================================================
 // STORE SETTINGS — nama toko, tagline, kontak, logo
@@ -428,6 +434,72 @@ exports.updateApiKeysAdmin = async (req, res) => {
         res.json({ message: "Konfigurasi berhasil disimpan" });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
+    }
+};
+
+// ===========================================================
+// RUNTIME AUTH CONFIG â€” Turnstile + Google OAuth (super admin)
+// ===========================================================
+function runtimeConfigSchemaMessage(error) {
+    const code = String(error?.code || "");
+    const message = String(error?.message || "");
+    if (["42P01", "PGRST205"].includes(code) || /runtime_config|schema cache/i.test(message)) {
+        return "Konfigurasi autentikasi belum tersedia. Jalankan migrations/014_create_runtime_auth_config.sql di Supabase SQL Editor.";
+    }
+    return "Gagal memproses konfigurasi autentikasi.";
+}
+
+exports.getRuntimeConfigAdmin = async (req, res) => {
+    try {
+        const config = await getRuntimeConfig({ fresh: true, strict: true });
+        return res.json({ fields: getAdminRuntimeConfig(config) });
+    } catch (err) {
+        return res.status(500).json({ message: runtimeConfigSchemaMessage(err) });
+    }
+};
+
+exports.revealRuntimeConfigSecretAdmin = async (req, res) => {
+    const key = typeof req.body?.key === "string" ? req.body.key : "";
+    if (!RUNTIME_CONFIG_FIELDS[key]?.secret) {
+        return res.status(400).json({ message: "Secret konfigurasi yang diminta tidak valid." });
+    }
+    try {
+        const config = await getRuntimeConfig({ fresh: true, strict: true });
+        await logSensitiveAction(req, req.body?.purpose === "copy" ? "COPY_RUNTIME_SECRET" : "REVEAL_RUNTIME_SECRET", { key });
+        return res.json({ key, value: config[key] || "" });
+    } catch (err) {
+        return res.status(500).json({ message: runtimeConfigSchemaMessage(err) });
+    }
+};
+
+exports.updateRuntimeConfigAdmin = async (req, res) => {
+    const values = req.body?.values;
+    const clearKeys = req.body?.clear_keys;
+    if (!values || typeof values !== "object" || Array.isArray(values)) {
+        return res.status(400).json({ message: "Nilai konfigurasi autentikasi tidak valid." });
+    }
+    if (clearKeys !== undefined && (!Array.isArray(clearKeys) || clearKeys.some(key => typeof key !== "string"))) {
+        return res.status(400).json({ message: "Daftar konfigurasi yang akan dihapus tidak valid." });
+    }
+
+    try {
+        const sanitizedValues = {};
+        for (const [key, value] of Object.entries(values)) {
+            if (!RUNTIME_CONFIG_FIELDS[key]) continue;
+            // Nilai masked dari halaman admin bukan secret asli dan tidak boleh
+            // pernah ditulis kembali ke database.
+            if (typeof value === "string" && value.includes("••")) continue;
+            sanitizedValues[key] = value;
+        }
+        const result = await updateRuntimeConfig(sanitizedValues, clearKeys || []);
+        if (result.error) {
+            return res.status(503).json({ code: "RUNTIME_CONFIG_NOT_SETUP", message: runtimeConfigSchemaMessage(result.error) });
+        }
+        notify("settings", `🔐 ${req.user.email} mengubah konfigurasi autentikasi: ${result.changedKeys.join(", ") || "tanpa perubahan"}`);
+        await logSensitiveAction(req, "UPDATE_RUNTIME_CONFIG", { fields: result.changedKeys });
+        return res.json({ message: "Konfigurasi autentikasi berhasil disimpan.", fields: result.changedKeys });
+    } catch (err) {
+        return res.status(400).json({ message: err.message || "Konfigurasi autentikasi tidak valid." });
     }
 };
 

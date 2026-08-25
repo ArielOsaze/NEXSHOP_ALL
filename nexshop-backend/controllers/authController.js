@@ -2,18 +2,25 @@ const supabase = require("../config/db");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const { OAuth2Client } = require("google-auth-library");
 const { sendOtpEmail, sendPasswordResetEmail } = require("../config/mailer");
 const { sendUserWhatsApp } = require("../services/userWhatsAppService");
 const { normalizePhoneNumber } = require("../utils/phoneNumber");
 const { notify } = require("../config/notify");
 const { resetLoginLimiter, getBlockedLoginIps } = require("../middleware/rateLimiter");
 const { resetAdminSession } = require("../middleware/adminSession");
+const { getTurnstileConfig, isTurnstileRequired, verifyTurnstile } = require("../services/turnstileService");
+const { getRuntimeConfig } = require("../services/runtimeConfigService");
 
 const OTP_EXPIRY_MINUTES = 10;
 const RESET_TOKEN_EXPIRY_MINUTES = 30;
 // dipakai buat bikin link reset password (lihat .env.example) -- sama kayak
 // FRONTEND_URL di orderController.js/topupController.js
 const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
+const BACKEND_URL = (process.env.BACKEND_URL || "").replace(/\/$/, "");
+const GOOGLE_STATE_TTL = "10m";
+const GOOGLE_EXCHANGE_TTL_MS = 2 * 60 * 1000;
+const googleExchangeCodes = new Map();
 
 function isValidEmail(value) {
     return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()) && value.length <= 254;
@@ -21,6 +28,98 @@ function isValidEmail(value) {
 
 function hashResetToken(token) {
     return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function authUserPayload(user) {
+    return {
+        id: user.id,
+        fullname: user.fullname,
+        email: user.email,
+        role: user.role,
+        avatar_url: user.avatar_url,
+        phone: user.phone
+    };
+}
+
+function issueUserSession(user) {
+    const token = jwt.sign(
+        { id: user.id, email: user.email, fullname: user.fullname, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
+    );
+    clearFailedLogin(user.email);
+    resetAdminSession(user.id);
+    return {
+        token,
+        user: authUserPayload(user),
+        ...(["admin", "staff"].includes(user.role) ? { securityPinSetupRequired: !user.security_pin_hash } : {})
+    };
+}
+
+function isProviderSchemaError(error) {
+    const code = String(error?.code || "");
+    const message = String(error?.message || "").toLowerCase();
+    return code === "42703" || message.includes("schema cache") || message.includes("google_subject") || message.includes("auth_provider");
+}
+
+async function requireHumanVerification(req, res) {
+    const { secretKey } = await getTurnstileConfig();
+    if (!secretKey && !(await isTurnstileRequired())) return true;
+    if (!secretKey) {
+        res.status(503).json({ message: "Verifikasi keamanan sedang belum dikonfigurasi. Coba lagi nanti.", code: "TURNSTILE_NOT_CONFIGURED" });
+        return false;
+    }
+
+    const verification = await verifyTurnstile(req.body?.captcha_token, req.ip);
+    if (verification.ok) return true;
+    const unavailable = verification.reason === "verification_unavailable";
+    res.status(unavailable ? 503 : 400).json({
+        message: unavailable
+            ? "Verifikasi keamanan sedang tidak tersedia. Coba lagi sebentar."
+            : "Verifikasi keamanan tidak berhasil. Silakan ulangi tantangannya.",
+        code: unavailable ? "TURNSTILE_UNAVAILABLE" : "TURNSTILE_FAILED"
+    });
+    return false;
+}
+
+async function googleConfig() {
+    const config = await getRuntimeConfig();
+    const clientId = String(config.GOOGLE_OAUTH_CLIENT_ID || "").trim();
+    const clientSecret = String(config.GOOGLE_OAUTH_CLIENT_SECRET || "").trim();
+    const redirectUri = String(config.GOOGLE_OAUTH_REDIRECT_URI || `${BACKEND_URL}/api/auth/google/callback`).trim();
+    return { clientId, clientSecret, redirectUri };
+}
+
+async function getGoogleClient() {
+    const { clientId, clientSecret, redirectUri } = await googleConfig();
+    if (!clientId || !clientSecret || !redirectUri) return null;
+    return new OAuth2Client(clientId, clientSecret, redirectUri);
+}
+
+function safeReturnPath(value) {
+    const path = typeof value === "string" ? value : "/";
+    return /^\/(?!\/)[^\s]*$/.test(path) ? path : "/";
+}
+
+function frontendRedirect(returnPath, params) {
+    const base = FRONTEND_URL || "http://localhost:5500";
+    const target = new URL(base + safeReturnPath(returnPath));
+    Object.entries(params).forEach(([key, value]) => target.searchParams.set(key, value));
+    return target.toString();
+}
+
+function purgeGoogleExchangeCodes() {
+    const now = Date.now();
+    for (const [code, record] of googleExchangeCodes) {
+        if (record.expiresAt <= now) googleExchangeCodes.delete(code);
+    }
+}
+
+function createGoogleExchangeCode(session) {
+    purgeGoogleExchangeCodes();
+    const code = crypto.randomBytes(32).toString("base64url");
+    googleExchangeCodes.set(code, { ...session, expiresAt: Date.now() + GOOGLE_EXCHANGE_TTL_MS });
+    return code;
 }
 
 // Deteksi spam login sederhana (in-memory, per instance server) — bukan
@@ -63,6 +162,8 @@ exports.register = async (req, res) => {
     const password = typeof req.body.password === "string" ? req.body.password : "";
     const otpMethod = typeof req.body.otp_method === "string" ? req.body.otp_method : "email";
     let whatsapp = typeof req.body.whatsapp === "string" ? req.body.whatsapp.trim() : "";
+
+    if (!await requireHumanVerification(req, res)) return;
 
     if (!fullname || !email || !password) {
         return res.status(400).json({ message: "Semua field wajib diisi" });
@@ -355,6 +456,8 @@ exports.login = async (req, res) => {
     const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
     const password = typeof req.body.password === "string" ? req.body.password : "";
 
+    if (!await requireHumanVerification(req, res)) return;
+
     if (!isValidEmail(email) || !password || password.length > 128) {
         return res.status(401).json({ message: "Email atau password salah" });
     }
@@ -427,6 +530,182 @@ exports.login = async (req, res) => {
         console.log(error);
         res.status(500).json({ message: "Server Error" });
     }
+};
+
+// Konfigurasi publik sengaja hanya mengirim site key Turnstile dan status
+// provider. Secret Turnstile/Google tidak pernah melewati endpoint ini.
+exports.publicAuthConfig = async (req, res) => {
+    const { siteKey, secretKey } = await getTurnstileConfig();
+    const { clientId, clientSecret, redirectUri } = await googleConfig();
+    res.json({
+        turnstile_site_key: siteKey && secretKey ? siteKey : "",
+        turnstile_required: await isTurnstileRequired(),
+        google_enabled: Boolean(clientId && clientSecret && redirectUri)
+    });
+};
+
+async function sendGoogleStart(req, res, action) {
+    const client = await getGoogleClient();
+    if (!client) {
+        return res.status(503).json({ message: "Login Google belum dikonfigurasi. Coba metode login lain.", code: "GOOGLE_NOT_CONFIGURED" });
+    }
+
+    const returnPath = safeReturnPath(req.query.return_to);
+    const payload = {
+        type: "google-oauth-state",
+        action,
+        returnPath,
+        nonce: crypto.randomBytes(18).toString("base64url")
+    };
+    if (action === "link") payload.userId = req.user.id;
+
+    const state = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: GOOGLE_STATE_TTL, audience: "nexshop-google-oauth" });
+    const url = client.generateAuthUrl({
+        access_type: "offline",
+        prompt: "select_account",
+        scope: ["openid", "email", "profile"],
+        state
+    });
+    return res.json({ url });
+}
+
+exports.googleStart = (req, res) => sendGoogleStart(req, res, "login");
+exports.googleLinkStart = (req, res) => sendGoogleStart(req, res, "link");
+
+function redirectGoogleFailure(res, returnPath, error) {
+    return res.redirect(302, frontendRedirect(returnPath, { oauth_error: error }));
+}
+
+async function findOrCreateGoogleUser(googleProfile) {
+    const { sub, email, email_verified: emailVerified, name } = googleProfile;
+    if (!sub || !email || !emailVerified) {
+        return { error: "google_email_unverified" };
+    }
+    const normalizedEmail = String(email).trim().toLowerCase();
+    const { data: linkedUser, error: linkedErr } = await supabase
+        .from("users")
+        .select("id, fullname, email, role, avatar_url, phone, is_blacklisted, security_pin_hash, google_subject, auth_provider")
+        .eq("google_subject", sub)
+        .maybeSingle();
+    if (linkedErr) {
+        if (isProviderSchemaError(linkedErr)) return { error: "provider_schema_missing" };
+        throw linkedErr;
+    }
+    if (linkedUser) return { user: linkedUser };
+
+    const { data: sameEmailUser, error: emailErr } = await supabase
+        .from("users")
+        .select("id")
+        .eq("email", normalizedEmail)
+        .maybeSingle();
+    if (emailErr) throw emailErr;
+    // Tidak boleh mengaitkan akun lama hanya karena alamat email sama. Pemilik
+    // harus masuk dengan passwordnya sendiri lalu menjalankan Link Google.
+    if (sameEmailUser) return { error: "account_link_required" };
+
+    const generatedPassword = await bcrypt.hash(crypto.randomBytes(32).toString("base64url"), 10);
+    const fullname = String(name || normalizedEmail.split("@")[0]).trim().slice(0, 100) || "Pengguna NexShop";
+    const { data: createdUser, error: createErr } = await supabase
+        .from("users")
+        .insert([{
+            fullname,
+            email: normalizedEmail,
+            password: generatedPassword,
+            email_verified: true,
+            google_subject: sub,
+            auth_provider: "google"
+        }])
+        .select("id, fullname, email, role, avatar_url, phone, is_blacklisted, security_pin_hash, google_subject, auth_provider")
+        .maybeSingle();
+    if (createErr) {
+        if (isProviderSchemaError(createErr)) return { error: "provider_schema_missing" };
+        if (createErr.code === "23505") return { error: "account_link_required" };
+        throw createErr;
+    }
+    return { user: createdUser };
+}
+
+async function linkGoogleUser(userId, googleProfile) {
+    const { sub, email, email_verified: emailVerified } = googleProfile;
+    if (!sub || !email || !emailVerified) return { error: "google_email_unverified" };
+
+    const [{ data: localUser, error: localErr }, { data: linkedUser, error: linkedErr }] = await Promise.all([
+        supabase.from("users").select("id, email, auth_provider").eq("id", userId).maybeSingle(),
+        supabase.from("users").select("id").eq("google_subject", sub).maybeSingle()
+    ]);
+    if (localErr || linkedErr) {
+        const error = localErr || linkedErr;
+        if (isProviderSchemaError(error)) return { error: "provider_schema_missing" };
+        throw error;
+    }
+    if (!localUser) return { error: "link_account_missing" };
+    if (linkedUser && String(linkedUser.id) !== String(userId)) return { error: "google_already_linked" };
+    if (String(localUser.email || "").toLowerCase() !== String(email).trim().toLowerCase()) {
+        return { error: "link_email_mismatch" };
+    }
+
+    const provider = localUser.auth_provider === "google" ? "google" : "password_google";
+    const { error: updateErr } = await supabase
+        .from("users")
+        .update({ google_subject: sub, auth_provider: provider })
+        .eq("id", userId);
+    if (updateErr) {
+        if (isProviderSchemaError(updateErr)) return { error: "provider_schema_missing" };
+        throw updateErr;
+    }
+    const { data: user, error: userErr } = await supabase
+        .from("users")
+        .select("id, fullname, email, role, avatar_url, phone, is_blacklisted, security_pin_hash")
+        .eq("id", userId)
+        .maybeSingle();
+    if (userErr || !user) throw userErr || new Error("User link tidak ditemukan");
+    return { user };
+}
+
+exports.googleCallback = async (req, res) => {
+    let state;
+    try {
+        state = jwt.verify(String(req.query.state || ""), process.env.JWT_SECRET, { audience: "nexshop-google-oauth" });
+    } catch (_) {
+        return redirectGoogleFailure(res, "/", "invalid_state");
+    }
+    const returnPath = safeReturnPath(state.returnPath);
+    if (req.query.error || !req.query.code || state.type !== "google-oauth-state") {
+        return redirectGoogleFailure(res, returnPath, "cancelled");
+    }
+
+    const client = await getGoogleClient();
+    if (!client) return redirectGoogleFailure(res, returnPath, "not_configured");
+
+    try {
+        const tokenResponse = await client.getToken(String(req.query.code));
+        const idToken = tokenResponse.tokens?.id_token;
+        if (!idToken) return redirectGoogleFailure(res, returnPath, "verification_failed");
+        const ticket = await client.verifyIdToken({ idToken, audience: (await googleConfig()).clientId });
+        const profile = ticket.getPayload() || {};
+        const outcome = state.action === "link"
+            ? await linkGoogleUser(state.userId, profile)
+            : await findOrCreateGoogleUser(profile);
+        if (outcome.error) return redirectGoogleFailure(res, returnPath, outcome.error);
+        if (!outcome.user || outcome.user.is_blacklisted) return redirectGoogleFailure(res, returnPath, "access_denied");
+
+        const session = issueUserSession(outcome.user);
+        const exchangeCode = createGoogleExchangeCode(session);
+        return res.redirect(302, frontendRedirect(returnPath, { oauth: state.action, code: exchangeCode }));
+    } catch (error) {
+        console.error("Google OAuth callback failed:", error.message);
+        return redirectGoogleFailure(res, returnPath, "verification_failed");
+    }
+};
+
+exports.googleExchange = (req, res) => {
+    const code = typeof req.body?.code === "string" ? req.body.code : "";
+    const record = googleExchangeCodes.get(code);
+    googleExchangeCodes.delete(code);
+    if (!record || record.expiresAt <= Date.now()) {
+        return res.status(400).json({ message: "Sesi login Google sudah kedaluwarsa. Silakan coba lagi.", code: "GOOGLE_EXCHANGE_EXPIRED" });
+    }
+    return res.json({ message: "Login Google berhasil", token: record.token, user: record.user, securityPinSetupRequired: record.securityPinSetupRequired });
 };
 
 // ADMIN — daftar IP yang lagi diblokir loginLimiter sekarang, biar admin

@@ -1690,11 +1690,14 @@ async function deletePromoSlide(id) {
 // Settings — Profil Admin / Toko / API Keys
 // ================================
 
-const SENSITIVE_SETTINGS_TABS = new Set(["apikeys", "security", "store", "mascot"]);
+const SENSITIVE_SETTINGS_TABS = new Set(["apikeys", "authconfig", "security", "store", "mascot"]);
 
 function scrubSensitiveSettings() {
     hideRevealedSecrets();
     document.getElementById("apiKeysForm")?.reset();
+    hideRevealedRuntimeSecrets();
+    const runtimeFields = document.getElementById("runtimeConfigFields");
+    if (runtimeFields) runtimeFields.replaceChildren();
     const blockedIps = document.getElementById("blockedIpsList");
     if (blockedIps) blockedIps.innerHTML = `<div class="text-muted text-center py-3 small">Security PIN diperlukan untuk memuat data.</div>`;
     const unlockInput = document.getElementById("unlockLoginIp");
@@ -1712,6 +1715,7 @@ const SETTINGS_TAB_PANES = {
     store: "settingsTabStore",
     content: "settingsTabContent",
     apikeys: "settingsTabApiKeys",
+    authconfig: "settingsTabAuthconfig",
     security: "settingsTabSecurity",
     mascot: "settingsTabMascot",
     webhooks: "settingsTabWebhooks"
@@ -1743,12 +1747,13 @@ document.querySelectorAll("#settingsTabs [data-settings-tab]").forEach(btn => {
             activateSettingsTab(tab, btn);
             return;
         }
-        const purpose = tab === "apikeys" ? "membuka API Keys" : tab === "security" ? "membuka Keamanan" : "membuka pengaturan sensitif";
+        const purpose = tab === "apikeys" ? "membuka API Keys" : tab === "authconfig" ? "membuka Login & Captcha" : tab === "security" ? "membuka Keamanan" : "membuka pengaturan sensitif";
         try {
             await withAdminPin(async (security_pin) => {
                 if (SENSITIVE_SETTINGS_TABS.has(previousTab) && previousTab !== tab) scrubSensitiveSettings();
                 activateSettingsTab(tab, btn);
                 if (tab === "apikeys") await loadApiKeys(security_pin);
+                if (tab === "authconfig") await loadRuntimeConfig(security_pin);
                 if (tab === "security") await loadBlockedIps(security_pin);
             }, purpose);
         } catch (err) {
@@ -3394,6 +3399,179 @@ async function loadApiKeys(security_pin) {
         Object.keys(SECRET_API_FIELDS).forEach(id => { document.getElementById(id).type = "password"; });
     } catch (err) {
         if (err.message !== "unauthorized") errorEl.textContent = err.message;
+    }
+}
+
+// =========================================
+// Runtime auth config — Turnstile / Google
+// =========================================
+let runtimeConfigDefinitions = [];
+const runtimeMaskedValues = new Map();
+const runtimeRevealTimers = new Map();
+
+function runtimeInputId(key) {
+    return `runtimeConfig_${key}`;
+}
+
+function hideRevealedRuntimeSecrets() {
+    for (const timer of runtimeRevealTimers.values()) clearTimeout(timer);
+    runtimeRevealTimers.clear();
+    runtimeMaskedValues.forEach((maskedValue, key) => {
+        const input = document.getElementById(runtimeInputId(key));
+        if (!input) return;
+        input.value = maskedValue || "";
+        input.type = "password";
+    });
+}
+
+function renderRuntimeConfigFields(fields) {
+    const container = document.getElementById("runtimeConfigFields");
+    if (!container) return;
+    runtimeConfigDefinitions = Array.isArray(fields) ? fields : [];
+    runtimeMaskedValues.clear();
+    hideRevealedRuntimeSecrets();
+    container.replaceChildren();
+
+    runtimeConfigDefinitions.forEach((field) => {
+        const inputId = runtimeInputId(field.key);
+        const col = document.createElement("div");
+        col.className = "col-12";
+
+        if (field.type === "boolean") {
+            const check = document.createElement("div");
+            check.className = "form-check form-switch";
+            const input = document.createElement("input");
+            input.className = "form-check-input";
+            input.type = "checkbox";
+            input.role = "switch";
+            input.id = inputId;
+            input.checked = field.value === true;
+            const label = document.createElement("label");
+            label.className = "form-check-label";
+            label.htmlFor = inputId;
+            label.textContent = field.label;
+            check.append(input, label);
+            col.append(check);
+        } else {
+            const label = document.createElement("label");
+            label.className = "form-label";
+            label.htmlFor = inputId;
+            label.textContent = field.label;
+            const input = document.createElement("input");
+            input.className = "form-control";
+            input.id = inputId;
+            input.type = field.secret ? "password" : (field.type === "url" ? "url" : "text");
+            input.autocomplete = "off";
+            input.spellcheck = false;
+            input.value = field.value || "";
+            if (field.type === "url") input.placeholder = "https://nexshop.cloud/api/auth/google/callback";
+            col.append(label, input);
+
+            if (field.secret) {
+                runtimeMaskedValues.set(field.key, field.value || "");
+                const actions = document.createElement("div");
+                actions.className = "d-flex align-items-center gap-3 flex-wrap mt-2";
+                const reveal = document.createElement("button");
+                reveal.type = "button";
+                reveal.className = "btn btn-outline-warning btn-sm";
+                reveal.innerHTML = '<i class="bi bi-eye"></i> Tampilkan 15 detik';
+                reveal.addEventListener("click", () => revealRuntimeConfigSecret(field.key));
+                const clearWrap = document.createElement("div");
+                clearWrap.className = "form-check mb-0";
+                const clear = document.createElement("input");
+                clear.className = "form-check-input";
+                clear.type = "checkbox";
+                clear.id = `${inputId}_clear`;
+                const clearLabel = document.createElement("label");
+                clearLabel.className = "form-check-label small";
+                clearLabel.htmlFor = clear.id;
+                clearLabel.textContent = "Hapus override dashboard (pakai fallback .env)";
+                clearWrap.append(clear, clearLabel);
+                actions.append(reveal, clearWrap);
+                col.append(actions);
+            }
+        }
+
+        if (field.description) {
+            const help = document.createElement("div");
+            help.className = "form-text";
+            help.textContent = field.description;
+            col.append(help);
+        }
+        container.append(col);
+    });
+}
+
+async function loadRuntimeConfig(security_pin) {
+    const errorEl = document.getElementById("runtimeConfigError");
+    if (errorEl) errorEl.textContent = "";
+    try {
+        const res = await apiFetch("/settings/runtime-config", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ security_pin })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal memuat konfigurasi Login & Captcha");
+        renderRuntimeConfigFields(data.fields);
+    } catch (err) {
+        if (err.message !== "unauthorized" && errorEl) errorEl.textContent = err.message;
+    }
+}
+
+async function revealRuntimeConfigSecret(key) {
+    const input = document.getElementById(runtimeInputId(key));
+    if (!input) return;
+    try {
+        await withAdminPin(async (security_pin) => {
+            const res = await apiFetch("/settings/runtime-config/reveal", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ security_pin, key, purpose: "reveal" })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal menampilkan secret");
+            hideRevealedRuntimeSecrets();
+            input.type = "text";
+            input.value = data.value || "";
+            runtimeRevealTimers.set(key, setTimeout(() => {
+                input.value = runtimeMaskedValues.get(key) || "";
+                input.type = "password";
+                runtimeRevealTimers.delete(key);
+            }, 15000));
+        }, "menampilkan secret Login & Captcha");
+    } catch (err) {
+        if (err.message !== "unauthorized") showToast(err.message || "Gagal menampilkan secret", true);
+    }
+}
+
+async function saveRuntimeConfig() {
+    const errorEl = document.getElementById("runtimeConfigError");
+    if (errorEl) errorEl.textContent = "";
+    const values = {};
+    const clear_keys = [];
+    runtimeConfigDefinitions.forEach((field) => {
+        const input = document.getElementById(runtimeInputId(field.key));
+        if (!input) return;
+        if (field.type === "boolean") values[field.key] = input.checked;
+        else if (!field.secret || input.value !== (runtimeMaskedValues.get(field.key) || "")) values[field.key] = input.value.trim();
+        if (field.secret && document.getElementById(`${runtimeInputId(field.key)}_clear`)?.checked) clear_keys.push(field.key);
+    });
+
+    try {
+        await withAdminPin(async (security_pin) => {
+            const res = await apiFetch("/settings/runtime-config", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ security_pin, values, clear_keys })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal menyimpan Login & Captcha");
+            showToast(data.message || "Konfigurasi Login & Captcha berhasil disimpan");
+            await loadRuntimeConfig(security_pin);
+        }, "menyimpan Login & Captcha");
+    } catch (err) {
+        if (err.message !== "unauthorized" && errorEl) errorEl.textContent = err.message;
     }
 }
 

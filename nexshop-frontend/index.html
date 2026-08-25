@@ -895,7 +895,13 @@ Cek Transaksi
             </label>
             <button type="button" class="otp-resend forgot-password-link" id="forgotPasswordLink">Lupa password?</button>
             <p class="auth-error" id="loginError"></p>
+            <div class="auth-turnstile" id="loginTurnstile" hidden></div>
+            <p class="auth-error hidden" id="loginTurnstileStatus" role="alert" aria-live="polite"></p>
             <button type="submit" class="btn-primary">Masuk</button>
+            <div class="auth-provider-divider" aria-hidden="true"><span>atau</span></div>
+            <button type="button" class="auth-google-button" id="googleLoginBtn">
+                <i class="fa-brands fa-google" aria-hidden="true"></i> Lanjutkan dengan Google
+            </button>
         </form>
 
         <form id="registerForm" class="auth-form hidden">
@@ -922,7 +928,13 @@ Cek Transaksi
                 </div>
             </label>
             <p class="auth-error" id="regError"></p>
+            <div class="auth-turnstile" id="registerTurnstile" hidden></div>
+            <p class="auth-error hidden" id="registerTurnstileStatus" role="alert" aria-live="polite"></p>
             <button type="submit" class="btn-primary">Daftar</button>
+            <div class="auth-provider-divider" aria-hidden="true"><span>atau</span></div>
+            <button type="button" class="auth-google-button" id="googleRegisterBtn">
+                <i class="fa-brands fa-google" aria-hidden="true"></i> Daftar dengan Google
+            </button>
         </form>
 
         <form id="otpForm" class="auth-form hidden">
@@ -1030,6 +1042,7 @@ Cek Transaksi
         </div>
     </div>
     <button class="dropdown-item" id="myOrdersBtn">Pesanan Saya</button>
+    <button class="dropdown-item" id="linkGoogleBtn"><i class="fa-brands fa-google" aria-hidden="true"></i> Hubungkan Google</button>
     <button class="dropdown-item logout" id="logoutBtn">Keluar</button>
 </div>
 
@@ -1453,6 +1466,7 @@ Cek Transaksi
 </div>
 
     <script src="/nexbot.js?v=20260825-production"></script>
+<script src="/auth-security.js?v=20260825"></script>
 <script src="/script.js?v=20260824-search-relevance"></script>
 </body>
 </html>

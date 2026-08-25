@@ -1642,6 +1642,7 @@
         <li class="nav-item"><button class="nav-link" data-settings-tab="store">Pengaturan Toko</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="content">FAQ / Syarat / Refund</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="apikeys">API Keys</button></li>
+        <li class="nav-item"><button class="nav-link" data-settings-tab="authconfig">Login &amp; Captcha</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="security">Keamanan</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="mascot">Event Mascot</button></li>
         <li class="nav-item"><button class="nav-link" data-settings-tab="webhooks">Webhook Relay</button></li>
@@ -1978,6 +1979,23 @@
                     <button type="button" class="btn btn-success" onclick="saveApiKeys()">
                         <i class="bi bi-floppy"></i> Simpan Konfigurasi
                     </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Login & Captcha: field dibentuk dari registry backend supaya penambahan
+         konfigurasi runtime tidak perlu perubahan HTML atau migration baru. -->
+    <div id="settingsTabAuthconfig" class="card shadow-sm d-none">
+        <div class="card-body" style="max-width:680px;">
+            <h6 class="text-uppercase text-muted small">Turnstile &amp; Google OAuth</h6>
+            <p class="text-muted small">Nilai yang disimpan di sini langsung dipakai backend dan menjadi prioritas di atas <code>.env</code>. Secret tetap tersembunyi; untuk mengosongkan override dashboard, centang opsi hapus pada field secret.</p>
+            <div class="alert alert-warning small py-2" role="note"><i class="bi bi-shield-lock me-1"></i>Perubahan dilindungi Security PIN dan dicatat di audit log. Pastikan Redirect URI Google juga didaftarkan di Google Cloud Console.</div>
+            <form id="runtimeConfigForm" class="row g-3" onsubmit="return false;">
+                <div id="runtimeConfigFields" class="col-12 row g-3"></div>
+                <p class="text-danger small mb-0" id="runtimeConfigError"></p>
+                <div class="col-12">
+                    <button type="button" class="btn btn-success" onclick="saveRuntimeConfig()"><i class="bi bi-floppy"></i> Simpan Login &amp; Captcha</button>
                 </div>
             </form>
         </div>

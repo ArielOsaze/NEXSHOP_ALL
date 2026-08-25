@@ -29,6 +29,13 @@ function json(res, status, body) {
 
 const server = http.createServer((req, res) => {
     const url = new URL(req.url, "http://127.0.0.1:3000");
+    if (url.pathname === "/api/reseller/auth/login") {
+        return json(res, 200, {
+            message: "Login Partner Portal berhasil",
+            token: "good-token",
+            user: { email: "mitra@nexshop.test", fullname: "Mitra QA", reseller_status: "approved" }
+        });
+    }
     if (url.pathname === "/api/reseller/portal/overview") {
         const auth = req.headers.authorization || "";
         if (auth !== "Bearer good-token") {
@@ -166,6 +173,18 @@ const server = http.createServer((req, res) => {
             dashboard: getComputedStyle(document.getElementById("sectionDashboard")).display
         }));
         if (guestState.auth === "none" || guestState.dashboard !== "none") throw new Error(`guest portal bocor: ${JSON.stringify(guestState)}`);
+        await guest.type("#loginEmail", "mitra@nexshop.test");
+        await guest.type("#loginPassword", "password-qa");
+        await guest.click("#btnLoginSubmit");
+        await guest.waitForFunction(() => getComputedStyle(document.getElementById("sectionDashboard")).display === "flex");
+        const loginState = await guest.evaluate(() => ({
+            token: localStorage.getItem("nexshop-reseller-token"),
+            auth: getComputedStyle(document.getElementById("sectionAuth")).display,
+            dashboard: getComputedStyle(document.getElementById("sectionDashboard")).display
+        }));
+        if (loginState.token !== "good-token" || loginState.auth !== "none" || loginState.dashboard !== "flex") {
+            throw new Error(`login portal tidak menyimpan/validasi sesi: ${JSON.stringify(loginState)}`);
+        }
         await guest.close();
 
         const stale = await browser.newPage();
@@ -186,7 +205,7 @@ const server = http.createServer((req, res) => {
         if (beforeValidation !== "none") throw new Error("dashboard tampil sebelum overview tervalidasi");
         await valid.waitForFunction(() => getComputedStyle(document.getElementById("sectionDashboard")).display === "flex");
         await valid.close();
-        console.log("PASS browser: portal guest/stale tertutup dan dashboard valid tidak berkedip sebelum verifikasi");
+        console.log("PASS browser: login portal menyimpan sesi, guest/stale tertutup, dan dashboard valid tidak berkedip sebelum verifikasi");
     } finally {
         await browser.close();
         server.close();

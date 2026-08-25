@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
     <script src="theme-init.js?v=20260803-ui"></script>
     <script defer src="/clean-url.js?v=20260825"></script>
     <script defer src="/cookie-consent.js?v=20260825-no-float"></script>
@@ -35,13 +36,20 @@
         </label>
 
         <p id="loginStatus" class="public-login-status" role="status" aria-live="polite"></p>
+        <div class="auth-turnstile" id="publicLoginTurnstile" hidden></div>
+        <p id="publicLoginTurnstileStatus" class="public-login-status is-error hidden" role="alert" aria-live="polite"></p>
         <button type="submit" id="loginButton" class="btn-primary">Login</button>
+        <div class="auth-provider-divider" aria-hidden="true"><span>atau</span></div>
+        <button type="button" id="googleLoginButton" class="auth-google-button">
+            <i class="fa-brands fa-google" aria-hidden="true"></i> Lanjutkan dengan Google
+        </button>
     </form>
 
         <p class="public-login-help">Belum punya akun? <a href="/#top">Daftar dari menu akun di beranda</a>.</p>
 </main>
 
-<script src="public-login.js"></script>
+<script src="/auth-security.js?v=20260825"></script>
+<script src="public-login.js?v=20260825-auth-security"></script>
 
 </body>
 </html>
