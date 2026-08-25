@@ -777,7 +777,7 @@ const accountBtn = document.getElementById("accountBtn");
 const accountDropdown = document.getElementById("accountDropdown");
 
 function hasVerifiedPhone(user = currentUser) {
-    return Boolean(user?.phone_normalized && user?.phone_verified_at);
+    return Boolean(user?.has_verified_phone);
 }
 
 function avatarUrlFor(user) {

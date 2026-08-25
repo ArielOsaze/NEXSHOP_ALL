@@ -3139,6 +3139,17 @@
                         return;
                     }
                 }
+                
+                if (res.status === 503 && data.code === "RESELLER_NOT_SETUP") {
+                    clearResellerSession();
+                    showPortalAuth();
+                    const errEl = document.getElementById("loginErrorMsg");
+                    if (errEl) {
+                        errEl.innerHTML = `Fitur Reseller belum di-setup di database. Silakan jalankan migration <code>008_create_reseller.sql</code> terlebih dahulu.`;
+                        errEl.style.display = "block";
+                    }
+                    return;
+                }
 
                 if (!res.ok) {
                     throw new Error(data.message || "Sesi reseller tidak dapat diverifikasi.");

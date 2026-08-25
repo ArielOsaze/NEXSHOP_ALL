@@ -96,6 +96,9 @@ form.addEventListener("submit", async (e) => {
         console.error(err);
         errorEl.textContent = err.message || "Terjadi kesalahan. Coba lagi.";
         setLoading(false);
+        if (window.NexShopAuthSecurity && typeof window.NexShopAuthSecurity.resetCaptcha === "function") {
+            window.NexShopAuthSecurity.resetCaptcha("admin-login");
+        }
     }
 });
 

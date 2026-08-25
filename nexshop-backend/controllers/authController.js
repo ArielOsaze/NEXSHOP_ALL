@@ -535,7 +535,7 @@ exports.login = async (req, res) => {
         // Turnstile diperiksa setelah password valid agar super admin bisa
         // bootstrap konfigurasi pertama dari dashboard. Endpoint tetap dibatasi
         // loginLimiter, dan customer tidak mendapat bypass ini.
-        const isSuperAdminUser = user.role === "admin";
+        const isSuperAdminUser = ["admin", "staff"].includes(user.role);
         if (!await requireHumanVerification(req, res, { allowAdminBootstrap: isSuperAdminUser })) return;
 
         if (!user.email_verified && user.role !== "admin") {
