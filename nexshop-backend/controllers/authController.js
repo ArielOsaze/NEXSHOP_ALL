@@ -729,9 +729,11 @@ exports.googleCallback = async (req, res) => {
 
         await backfillLegacyPhone(outcome.user);
         const session = issueUserSession(outcome.user);
-        sendLoginSecurityNotification(outcome.user, req).catch((notificationError) => {
-            console.log("Login security notification Google gagal:", notificationError.message);
-        });
+        if (state.action === "login") {
+            sendLoginSecurityNotification(outcome.user, req).catch((notificationError) => {
+                console.log("Login security notification Google gagal:", notificationError.message);
+            });
+        }
         const exchangeCode = createGoogleExchangeCode(session);
         return res.redirect(302, frontendRedirect(returnPath, { oauth: state.action, code: exchangeCode }));
     } catch (error) {
