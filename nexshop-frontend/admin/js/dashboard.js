@@ -2077,18 +2077,17 @@ async function saveApiKeys() {
         waapi_target_number: document.getElementById("waapiTargetNumber").value.trim(),
         seo_screenshot_base_url: document.getElementById("seoScreenshotBaseUrl").value.trim(),
         chrome_executable_path: document.getElementById("chromeExecutablePath").value.trim(),
-        fonnte_token: document.getElementById("fonnteApiKey").value.trim(),
         fonnte_user_enabled: document.getElementById("fonnteUserEnabled").checked,
         wa_template_otp: document.getElementById("fonnteTemplateOtp").value.trim(),
         wa_template_pending: document.getElementById("fonnteTemplatePending").value.trim(),
         wa_template_success: document.getElementById("fonnteTemplateSuccess").value.trim()
     };
-// Field kosong berarti "tidak diubah" untuk secret WA_API_KEY — jangan overwrite ke database
-// (WA_API_KEY dikelola via file .env, bukan dashboard admin)
+// Field kosong berarti "tidak diubah" untuk secret waapi_key/waapi_url —
+// jangan overwrite ke database (biar admin bisa save form tanpa harus
+// isi ulang field yang emang gak mau diubah)
     // kirim string kosong ke backend supaya token lama tidak ketimpa/hilang
     // (lihat updateApiKeys: field yang dikirim "" akan diabaikan, tapi kita
     // tetap eksplisit di sini biar niatnya jelas dibaca ulang nanti).
-    if (!payload.fonnte_token) delete payload.fonnte_token;
     if (!payload.apigames_secret_key) delete payload.apigames_secret_key;
 
     try {
@@ -3329,8 +3328,7 @@ const SECRET_API_FIELDS = {
     brevoApiKey: "brevo_api_key",
     geminiApiKey: "gemini_api_key",
     smtpPassword: "smtp_password",
-    waapiKey: "waapi_key",
-    fonnteApiKey: "fonnte_token" // field lama, sekarang pakai WA_API_KEY via .env
+    waapiKey: "waapi_key"
 };
 let maskedApiKeys = {};
 let revealedSecretField = null;
@@ -3391,7 +3389,6 @@ async function loadApiKeys(security_pin) {
         document.getElementById("waapiTargetNumber").value = keys.waapi_target_number || "";
         document.getElementById("seoScreenshotBaseUrl").value = keys.seo_screenshot_base_url || "";
         document.getElementById("chromeExecutablePath").value = keys.chrome_executable_path || "";
-        document.getElementById("fonnteApiKey").value = keys.fonnte_token || "";
         document.getElementById("fonnteUserEnabled").checked = !!keys.fonnte_user_enabled;
         document.getElementById("fonnteTemplateOtp").value = keys.wa_template_otp || "";
         document.getElementById("fonnteTemplatePending").value = keys.wa_template_pending || "";

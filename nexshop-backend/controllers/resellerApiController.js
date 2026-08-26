@@ -9,7 +9,7 @@ const { getResellerContext } = require("../services/resellerService");
 // "hitungMarkupWajar is not a function" dan endpoint balas 500.
 const { hitungHargaReseller } = require("../utils/resellerPricing");
 const { hitungMarkupWajar } = require("../utils/topupHelpers");
-const { sendTelegramNotification } = require("../config/notify");
+const { sendTelegramNotification } = require("../config/telegram");
 const { dispatchResellerWebhook } = require("../services/resellerWebhookService");
 
 function rupiahLog(n) {

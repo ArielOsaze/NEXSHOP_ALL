@@ -226,11 +226,29 @@ async function updateStoreSettings(payload) {
     return { data, error };
 }
 
+// ===========================
+// NEXSHOP WA API — resolusi config koneksi ke server WA API (Baileys)
+// ===========================
+// Prioritas: nilai tersimpan di dashboard (tabel api_keys) > .env di VPS >
+// default darurat. Ini SENGAJA disamakan pola-nya dengan getApiKeys() di
+// atas (iPaymu/TokoVoucher/dll) supaya admin bisa ganti URL/Key WA API
+// langsung dari Settings > API Keys tanpa perlu masuk VPS/edit .env —
+// penting kalau .env di lokal & di VPS beda dan gak bisa disamakan manual.
+async function getWaApiConfig({ fresh = false } = {}) {
+    const keys = await getApiKeys({ fresh });
+    return {
+        url: (keys.waapi_url || process.env.WA_API_URL || "http://127.0.0.1:8080").trim().replace(/\/$/, ""),
+        key: (keys.waapi_key || process.env.WA_API_KEY || "nexshop-wa-2024-secure-key").trim(),
+        targetNumber: (keys.waapi_target_number || "").trim()
+    };
+}
+
 module.exports = {
     getApiKeys,
     updateApiKeys,
     getStoreSettings,
     updateStoreSettings,
+    getWaApiConfig,
     DEFAULT_GEMINI_MODEL,
     GEMINI_FALLBACK_MODELS,
     normalizeGeminiModel,

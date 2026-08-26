@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const supabase = require("../config/db");
 const walletService = require("../services/walletService");
 const { createRedirectPayment, checkTransactionStatus, createDirectPayment, isDirectPaymentMethod } = require("../config/ipaymu");
-const { sendTelegramNotification, sendWhatsAppNotification } = require("../config/notify");
+const { sendTelegramNotification } = require("../config/telegram");
 
 function rupiahLog(n) {
     return "Rp " + Number(n || 0).toLocaleString("id-ID");

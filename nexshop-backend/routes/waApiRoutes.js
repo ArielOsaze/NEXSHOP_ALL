@@ -2,28 +2,37 @@
 // Auth: Bearer JWT (admin login) + security_pin (6 digit) via withAdminPin pattern
 // Akses via frontend:
 //   withAdminPin(async (pin) => apiFetch("/settings/wa-api/status", { method: "POST", body: JSON.stringify({ security_pin: pin }) }));
+//
+// CATATAN: URL/Key WA API diambil dari getWaApiConfig() — utamakan yang
+// tersimpan di dashboard (Settings > API Keys), .env cuma fallback darurat.
+// Jangan hardcode WA_API_URL/WA_API_KEY module-level lagi di sini, supaya
+// admin bisa ganti dari dashboard tanpa perlu edit .env di VPS.
+//
+// CATATAN ROUTING: POST /rescan di file ini SENGAJA TIDAK didaftarkan lagi
+// (dulu ada, tapi jadi dead code / gak pernah kepanggil karena
+// routes/settingsRoutes.js sudah lebih dulu mendaftarkan
+// POST /api/settings/wa-api/rescan dengan requireAdminPin, jadi request-nya
+// selalu ditangkap di sana lebih dulu — lihat settingsController.forceWaRescan).
 
 const express = require("express");
 const router = express.Router({ mergeParams: true });
-const { requireAdminPin } = require("../middleware/adminPinMiddleware");
 const axios = require("axios");
-
-const WA_API_URL = process.env.WA_API_URL || "http://127.0.0.1:8080";
-const WA_API_KEY = process.env.WA_API_KEY || "nexshop-wa-2024-secure-key";
+const { getWaApiConfig } = require("../config/settings");
 
 /** GET /api/settings/wa-api/status  — cek koneksi WA + dapat QR (NO auth — read-only seperti /health) */
 router.get("/status", async (req, res) => {
     try {
-        const health = await axios.get(`${WA_API_URL}/health`, {
-            headers: { "X-API-Key": WA_API_KEY },
+        const { url, key } = await getWaApiConfig();
+        const health = await axios.get(`${url}/health`, {
+            headers: { "X-API-Key": key },
             timeout: 8000
         });
         // Ambil QR juga kalau belum connected
         let qrData = null;
         if (!health.data.waConnected && !health.data.qrAvailable) {
             try {
-                const qrResp = await axios.get(`${WA_API_URL}/qr`, {
-                    headers: { "X-API-Key": WA_API_KEY },
+                const qrResp = await axios.get(`${url}/qr`, {
+                    headers: { "X-API-Key": key },
                     timeout: 8000
                 });
                 qrData = qrResp.data;
@@ -42,58 +51,11 @@ router.get("/status", async (req, res) => {
     } catch (err) {
         res.status(200).json({
             success: false,
-            message: "WA API server (port 8080) tidak dapat dihubungi.",
+            message: "WA API server tidak dapat dihubungi. Pastikan proses 'nexshop-wa-api' berjalan dan URL/Key di Settings > API Keys sudah benar.",
             waConnected: false,
             error: err.message
         });
     }
-});
-
-/** POST /api/settings/wa-api/rescan — hapus session & restart WA socket */
-router.post("/rescan", requireAdminPin, async (req, res) => {
-    const fs = require("fs");
-    const { execSync } = require("child_process");
-    const path = require("path");
-    const sessionDir = process.env.WA_SESSION_DIR || "C:/Users/ariel/nexshop/whatsapp-session";
-
-    // hapus session lama
-    let cleared = false;
-    try {
-        if (fs.existsSync(sessionDir)) {
-            for (const f of fs.readdirSync(sessionDir)) {
-                fs.unlinkSync(path.join(sessionDir, f));
-                cleared = true;
-            }
-        }
-    } catch (e) { /* */ }
-
-    // restart WA API di PM2
-    try {
-        execSync("pm2 restart nexshop-wa-api", { timeout: 15000, stdio: "pipe" });
-    } catch (e) { console.error("PM2 restart error:", e.message); }
-
-    // Tunggu & kirim QR baru
-    setTimeout(async () => {
-        try {
-            const qrResp = await axios.get(`${WA_API_URL}/qr`, {
-                headers: { "X-API-Key": WA_API_KEY },
-                timeout: 8000
-            });
-            res.json({
-                success: true,
-                message: "QR code WA baru digenerate. Scan di WhatsApp ponsel.",
-                qr: qrResp.data.qr || null,
-                qrImage: qrResp.data.qrImage || null,
-                sessionCleared: cleared
-            });
-        } catch (e) {
-            res.json({
-                success: true,
-                message: "Session dihapus & service restart. Refresh dashboard untuk QR baru.",
-                sessionCleared: cleared
-            });
-        }
-    }, 5000);
 });
 
 /** GET /api/settings/wa-api/dashboard
@@ -102,16 +64,17 @@ router.post("/rescan", requireAdminPin, async (req, res) => {
  */
 router.get("/dashboard", async (req, res) => {
     try {
-        const health = await axios.get(`${WA_API_URL}/health`, {
-            headers: { "X-API-Key": WA_API_KEY },
+        const { url, key } = await getWaApiConfig();
+        const health = await axios.get(`${url}/health`, {
+            headers: { "X-API-Key": key },
             timeout: 8000
         });
 
         let qrImg = '';
         if (!health.data.waConnected) {
             try {
-                const qrResp = await axios.get(`${WA_API_URL}/qr`, {
-                    headers: { "X-API-Key": WA_API_KEY },
+                const qrResp = await axios.get(`${url}/qr`, {
+                    headers: { "X-API-Key": key },
                     timeout: 8000
                 });
                 if (qrResp.data.qrImage) {
@@ -144,7 +107,7 @@ router.get("/dashboard", async (req, res) => {
     </span></p>
     ${qrImg || '<p>Tunggu sebentar, QR sedang digenerate...</p>'}
     <p style="font-size:13px; margin-top:15px;">Buka WhatsApp di ponsel → Settings → Linked Devices → Scan QR</p>
-    <p><a href="/api/settings/wa-api/rescan" onclick="return confirm('Reset session WA & generate QR baru?')">🔄 Generate QR Baru</a></p>
+    <p style="font-size:12px; opacity:0.7;">Reset session &amp; QR baru: tombol "Reset QR WhatsApp" di Admin Dashboard &gt; Settings &gt; API Keys.</p>
   </div>
 </body>
 </html>`;

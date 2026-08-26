@@ -75,7 +75,8 @@ const {
     getStoreSettings,
     updateStoreSettings,
     getApiKeys,
-    updateApiKeys
+    updateApiKeys,
+    getWaApiConfig
 } = require("../config/settings");
 const {
     RUNTIME_CONFIG_FIELDS,
@@ -503,69 +504,73 @@ exports.updateRuntimeConfigAdmin = async (req, res) => {
     }
 };
 
-// Admin only — kirim pesan test ke WA Gateway (waapi.fyas.my.id) langsung dari
-// dashboard, buat mastiin URL/Key/Nomor tujuan bener sebelum dipakai beneran
-// buat notifikasi order/topup. Beda sama sendWhatsAppNotification() di
-// config/whatsapp.js: yang itu sengaja silent-fail (gak boleh ganggu proses
-// order), yang ini justru harus melaporkan hasil sukses/gagal apa adanya
-// biar gampang di-debug dari admin dashboard.
+// Admin only — kirim pesan test ke NexShop WA API (server Baileys lokal,
+// process.env.WA_API_URL/WA_API_KEY) langsung dari dashboard, buat mastiin
+// nomor admin bener sebelum dipakai beneran buat notifikasi order/topup.
+// Beda sama sendWhatsAppNotification() di config/whatsapp.js: yang itu
+// sengaja silent-fail (gak boleh ganggu proses order), yang ini justru harus
+// melaporkan hasil sukses/gagal apa adanya biar gampang di-debug dari admin
+// dashboard.
+//
+// CATATAN MIGRASI: dulu fungsi ini manggil gateway WAAPI eksternal
+// (waapi_url/waapi_key dari Settings > API Keys, endpoint
+// /api/whatsapp/send-message). Field waapi_url/waapi_key itu peninggalan
+// gateway lama dan TIDAK dipakai lagi buat kirim pesan asli — semua
+// pengiriman WA (OTP, notifikasi pending/success/failed, notifikasi admin)
+// sekarang lewat NexShop WA API (lihat config/whatsapp.js &
+// services/userWhatsAppService.js), jadi test button ini disamakan supaya
+// benar-benar menguji jalur yang sama yang dipakai production.
 exports.testWhatsAppAdmin = async (req, res) => {
     if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
     try {
-        // pakai config tersimpan sbg default, tapi admin boleh override nomor
-        // & pesan dari form test — gak perlu save dulu buat coba-coba
-        const keys = await getApiKeys({ fresh: true });
-        const waapi_url = (req.body.waapi_url || keys.waapi_url || "").trim();
-        const waapi_key = (req.body.waapi_key || keys.waapi_key || "").trim();
-        const number = (req.body.number || keys.waapi_target_number || "").trim();
+        // URL/Key WA API & nomor tujuan diambil dari dashboard (Settings >
+        // API Keys), .env cuma fallback. Nomor tujuan tetap boleh
+        // di-override dari form test.
+        const { url, key, targetNumber } = await getWaApiConfig({ fresh: true });
+        const number = (req.body.number || targetNumber || "").trim();
         const message = (req.body.message || "").trim() || "Test notifikasi WhatsApp dari NexShop Admin Dashboard ✅";
 
-        if (!waapi_url || !waapi_key) {
-            return res.status(400).json({ message: "URL Gateway & API Key WA belum diisi. Isi dulu di form API Keys (atau simpan dulu) sebelum test." });
-        }
         if (!number) {
-            return res.status(400).json({ message: "Nomor tujuan belum diisi." });
-        }
-
-        const outboundTarget = `${waapi_url.replace(/\/$/, "")}/api/whatsapp/send-message`;
-        const safeTarget = await assertSafeOutboundUrl(outboundTarget);
-        if (!safeTarget.ok) {
-            return res.status(400).json({ success: false, message: `URL Gateway WA ditolak: ${safeTarget.reason}` });
+            return res.status(400).json({ message: "Nomor tujuan admin belum diisi. Isi dulu 'Nomor Tujuan Notifikasi Admin' di form API Keys (atau isi nomor test manual)." });
         }
 
         const started = Date.now();
         try {
             const waRes = await axios.post(
-                safeTarget.url,
-                { number, message },
+                `${url}/send-otp`,
+                { phone: number, otp: "notify", message },
                 {
                     headers: {
                         "Content-Type": "application/json",
-                        "X-API-Key": waapi_key
+                        "X-API-Key": key
                     },
                     timeout: 15000
                 }
             );
 
-            return res.json({
-                success: true,
-                message: `Pesan test berhasil dikirim ke ${number} (${Date.now() - started}ms)`,
+            const ok = waRes.data?.success !== false;
+            return res.status(200).json({
+                success: ok,
+                message: ok
+                    ? `Pesan test berhasil dikirim ke ${number} via NexShop WA API (${Date.now() - started}ms)`
+                    : `NexShop WA API menolak permintaan: ${waRes.data?.message || "unknown error"}`,
                 gateway_status: waRes.status,
                 gateway_response: waRes.data
             });
         } catch (waErr) {
-            // gagal panggil gateway-nya (bukan gagal server kita) — tetap 200
-            // biar frontend bisa nampilin detail errornya, bukan cuma "Server Error"
+            // gagal panggil WA API server-nya (bukan gagal server kita) —
+            // tetap 200 biar frontend bisa nampilin detail errornya, bukan
+            // cuma "Server Error"
             return res.status(200).json({
                 success: false,
                 message: waErr.response
-                    ? `Gateway WA menolak request (HTTP ${waErr.response.status})`
+                    ? `NexShop WA API menolak request (HTTP ${waErr.response.status})`
                     : (waErr.code === "ECONNABORTED"
-                        ? "Timeout — gateway WA gak merespon dalam 15 detik."
-                        : `Gagal menghubungi gateway WA: ${waErr.message}`),
+                        ? "Timeout — NexShop WA API tidak merespon dalam 15 detik."
+                        : `Gagal menghubungi NexShop WA API (${url}): ${waErr.message}. Pastikan proses 'nexshop-wa-api' berjalan (pm2 list) dan sudah scan QR.`),
                 gateway_status: waErr.response?.status || null,
                 gateway_response: waErr.response?.data || null
             });
@@ -637,20 +642,18 @@ exports.testApiGamesAdmin = async (req, res) => {
 // WhatsApp API — proxy status & QR code langsung dari WA API server
 // (endpoint: POST /api/settings/wa-api/status & /wa-api/rescan)
 // ===========================================================
-const WA_API_URL = process.env.WA_API_URL || "http://127.0.0.1:8080";
-const WA_API_KEY = process.env.WA_API_KEY || "nexshop-wa-2024-secure-key";
-
 exports.getWaApiStatus = async (req, res) => {
     try {
-        const response = await axios.get(`${WA_API_URL}/health`, {
-            headers: { "X-API-Key": WA_API_KEY },
+        const { url, key } = await getWaApiConfig();
+        const response = await axios.get(`${url}/health`, {
+            headers: { "X-API-Key": key },
             timeout: 8000
         });
         // Ambil QR code juga (untuk display di dashboard)
         let qrData = null;
         try {
-            const qrResp = await axios.get(`${WA_API_URL}/qr`, {
-                headers: { "X-API-Key": WA_API_KEY },
+            const qrResp = await axios.get(`${url}/qr`, {
+                headers: { "X-API-Key": key },
                 timeout: 8000
             });
             qrData = qrResp.data;
@@ -668,7 +671,7 @@ exports.getWaApiStatus = async (req, res) => {
         console.error("WA API status proxy error:", err.message);
         res.status(200).json({
             success: false,
-            message: "WA API server tidak dapat dihubungi. Pastikan proses 'nexshop-wa-api' berjalan (pm2 list).",
+            message: "WA API server tidak dapat dihubungi. Pastikan proses 'nexshop-wa-api' berjalan (pm2 list) dan URL/Key di Settings > API Keys sudah benar.",
             waConnected: false
         });
     }
@@ -676,6 +679,8 @@ exports.getWaApiStatus = async (req, res) => {
 
 exports.forceWaRescan = async (req, res) => {
     try {
+        const { url, key } = await getWaApiConfig();
+
         // Hapus session persisten supaya WA API generate QR code baru
         const sessionDir = process.env.WA_SESSION_DIR || "C:/Users/ariel/nexshop/whatsapp-session";
         const fs = require("fs");
@@ -701,8 +706,8 @@ exports.forceWaRescan = async (req, res) => {
         // Tunggu sebentar, ambil QR baru
         setTimeout(async () => {
             try {
-                const qrResp = await axios.get(`${WA_API_URL}/qr`, {
-                    headers: { "X-API-Key": WA_API_KEY },
+                const qrResp = await axios.get(`${url}/qr`, {
+                    headers: { "X-API-Key": key },
                     timeout: 8000
                 });
                 res.json({

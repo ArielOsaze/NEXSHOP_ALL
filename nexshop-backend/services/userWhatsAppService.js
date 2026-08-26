@@ -17,12 +17,8 @@
  */
 
 const axios = require("axios");
-const { getApiKeys, getStoreSettings } = require("../config/settings");
+const { getApiKeys, getStoreSettings, getWaApiConfig } = require("../config/settings");
 const { normalizePhoneNumber, toFonntePhone } = require("../utils/phoneNumber");
-
-// WA API server konfigurasi — ambil dari apiKeys (wa_api_url) supaya fleksibel
-const WA_API_BASE = process.env.WA_API_URL || "http://127.0.0.1:8080";
-const WA_API_KEY = process.env.WA_API_KEY || "nexshop-wa-2024-secure-key";
 
 /**
  * Mengganti template variables (misal: {name}, {order_id}) dengan data asli
@@ -39,8 +35,15 @@ function parseTemplate(template, data) {
  * Helper: kirim ke WA API server (Baileys)
  * - POST /send-otp untuk type "otp"
  * - POST /send-transaction untuk type "pending"/"success"
+ *
+ * URL & Key WA API diambil dari getWaApiConfig() — utamakan yang tersimpan
+ * di dashboard (Settings > API Keys), .env cuma fallback darurat. Ini
+ * supaya admin bisa ganti WA API server dari dashboard tanpa perlu edit
+ * .env di VPS (env lokal & VPS bisa beda).
  */
 async function sendToWaApi(phone, type, variables, extraMessage, customMessage) {
+    const { url, key } = await getWaApiConfig();
+
     const payload = {
         phone: phone,
         message: customMessage || undefined
@@ -64,14 +67,14 @@ async function sendToWaApi(phone, type, variables, extraMessage, customMessage) 
     }
 
     // Jika custom message diberikan, kirim sebagai message (WA API akan pakai ini)
-    const url = (type === "otp")
-        ? `${WA_API_BASE}/send-otp`
-        : `${WA_API_BASE}/send-transaction`;
+    const targetUrl = (type === "otp")
+        ? `${url}/send-otp`
+        : `${url}/send-transaction`;
 
-    const resp = await axios.post(url, payload, {
+    const resp = await axios.post(targetUrl, payload, {
         headers: {
             "Content-Type": "application/json",
-            "X-API-Key": WA_API_KEY
+            "X-API-Key": key
         },
         timeout: 15000
     });
@@ -159,14 +162,15 @@ async function testFonnteConnection(targetNumber, messageText) {
         const canonicalTarget = toFonntePhone(String(targetNumber || ""));
         if (!canonicalTarget) throw new Error("Nomor WhatsApp tidak valid");
 
-        const resp = await axios.post(`${WA_API_BASE}/send-otp`, {
+        const { url, key } = await getWaApiConfig();
+        const resp = await axios.post(`${url}/send-otp`, {
             phone: canonicalTarget,
             otp: "000000",
             message: messageText || `🧪 Test koneksi NexShop WA API — berhasil! ✅`
         }, {
             headers: {
                 "Content-Type": "application/json",
-                "X-API-Key": WA_API_KEY
+                "X-API-Key": key
             },
             timeout: 15000
         });

@@ -1871,19 +1871,19 @@
 
                 <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">WA Gateway (Notifikasi WhatsApp)</h6></div>
                 <div class="col-12">
-                    <label class="form-label">URL Gateway</label>
-                    <input id="waapiUrl" class="form-control placeholder-glow" placeholder="http://127.0.0.1:8080 (WA API server)" disabled>
+                    <label class="form-label">URL WA API Server</label>
+                    <input id="waapiUrl" class="form-control" placeholder="http://127.0.0.1:8080 (WA API server)">
                 </div>
                 <div class="col-12">
-                    <label class="form-label">API Key</label>
-                    <input id="waapiKey" class="form-control placeholder-glow" placeholder="URL WA API: http://127.0.0.1:8080" disabled>
+                    <label class="form-label">API Key WA API Server</label>
+                    <input id="waapiKey" type="password" class="form-control" placeholder="Samakan dengan API key di server WA API (Baileys)">
                 </div>
                 <div class="col-12">
                     <label class="form-label">Nomor Tujuan Notifikasi</label>
                     <input id="waapiTargetNumber" class="form-control" placeholder="62812xxxxxxxx">
                 </div>
                 <div class="col-12">
-                    <div class="form-text">WA API sudah running di <code>http://127.0.0.1:8080</code>. API key & konfigurasi WA API ada di file <code>.env</code> (WA_API_KEY). Nomor tujuan di bawah dipakai notifikasi ke **admin**.</div>
+                    <div class="form-text">Diisi &amp; disimpan di sini (database), <strong>tidak perlu edit file <code>.env</code> di VPS</strong>. Kalau dikosongkan, sistem jatuh ke <code>WA_API_URL</code>/<code>WA_API_KEY</code> di <code>.env</code> sebagai fallback. Key di sini <strong>harus sama persis</strong> dengan API key yang dikonfig di server WA API (Baileys)-nya sendiri, kalau tidak semua kirim WA akan gagal. Nomor tujuan di bawah dipakai notifikasi ke <strong>admin</strong>.</div>
                 </div>
 
                 <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">WhatsApp API (WA API) - Notifikasi Pelanggan</h6></div>
@@ -1892,11 +1892,7 @@
                         <input class="form-check-input" type="checkbox" id="fonnteUserEnabled">
                         <label class="form-check-label" for="fonnteUserEnabled">Aktifkan notifikasi WhatsApp WA API ke pelanggan</label>
                     </div>
-                    <div class="form-text">Jika nonaktif, OTP/notifikasi pending/sukses tidak akan dikirim meskipun token & template sudah diisi.</div>
-                </div>
-                <div class="col-12">
-                    <label class="form-label">API Key (WA API — biarkan kosong, pakai .env)</label>
-                    <input id="fonnteApiKey" type="password" class="form-control" placeholder="WA_API_KEY di .env">
+                    <div class="form-text">Jika nonaktif, OTP/notifikasi pending/sukses tidak akan dikirim meskipun URL/Key WA API di atas & template sudah diisi.</div>
                 </div>
                 <div class="col-12">
                     <label class="form-label">Template Pesan OTP</label>
