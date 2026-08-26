@@ -2,7 +2,7 @@ const supabase = require("../config/db");
 const crypto = require("crypto");
 const tokovoucher = require("../config/tokovoucher");
 const catalogService = require("../services/catalogService");
-const { getCatalogIndex, halamanGrup, urutkanPopuler, urutkanPencarian, invalidateCatalogIndex } = require("../services/catalogIndexService");
+const { getCatalogIndex, halamanGrup, urutkanMarketplaceOperators, urutkanPopuler, urutkanPencarian, invalidateCatalogIndex } = require("../services/catalogIndexService");
 const webhookRelay = require("../services/webhookRelayService");
 const { createRedirectPayment, checkTransactionStatus, createDirectPayment, isDirectPaymentMethod } = require("../config/ipaymu");
 
@@ -3171,7 +3171,7 @@ exports.getCatalogOperators = async (req, res) => {
         const konteksReseller = await getResellerContext(req.user && req.user.id);
         const indeks = await getCatalogIndex();
 
-        const daftar = [...indeks.operators].sort((a, b) => a.name.localeCompare(b.name, "id"));
+        const daftar = urutkanMarketplaceOperators(indeks.operators);
         const hasil = halamanGrup(daftar, {
             page: req.query.page,
             limit: req.query.limit,

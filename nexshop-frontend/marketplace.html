@@ -843,7 +843,7 @@
         // browser atas data yang kebetulan sudah terunduh akan membuat
         // produk yang belum termuat mustahil ditemukan.
         // ==============================================================
-        const MKT_PAGE_SIZE = 20;
+        const MKT_PAGE_SIZE = 24;
         let mktPage = 0;
         let mktHasMore = true;
         let mktLoading = false;
@@ -1986,7 +1986,7 @@
                     // Angka ini dari server = TOTAL hasil, bukan cuma yang
                     // sudah termuat. Menampilkan jumlah kartu yang terlihat
                     // akan menyesatkan ("12 layanan" padahal ada 240).
-                    totalCount.textContent = mktTotal ? `${mktTotal} layanan` : "";
+                    totalCount.textContent = mktTotal ? `Menampilkan ${operators.length} dari ${mktTotal} layanan` : "";
                 }
 
                 grid.querySelectorAll(".market-card").forEach((card, index) => {
@@ -2061,7 +2061,7 @@
                     if (entries[0].isIntersecting && !mktLoading) {
                         loadCatalogPage(false, false);
                     }
-                }, { rootMargin: "300px" });
+                }, { rootMargin: "700px" });
                 mktObserver.observe(sentinel);
             }
         }

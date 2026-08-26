@@ -336,6 +336,14 @@ function urutkanPencarian(daftar, query) {
  * halaman yang sudah terkirim. Inilah yang membuat pencarian tetap benar
  * walau browser baru memuat sebagian kartu.
  */
+function urutkanMarketplaceOperators(daftar) {
+    return [...(daftar || [])].sort((a, b) => {
+        const categoryCompare = String(a?.category || "Lainnya").localeCompare(String(b?.category || "Lainnya"), "id");
+        if (categoryCompare !== 0) return categoryCompare;
+        return String(a?.name || "").localeCompare(String(b?.name || ""), "id");
+    });
+}
+
 function halamanGrup(daftar, { page = 1, limit = 24, q = "", kategori = "" } = {}) {
     const tokens = String(q || "").toLowerCase().trim().split(/\s+/).filter(Boolean);
     const kat = String(kategori || "").trim();
@@ -369,6 +377,7 @@ module.exports = {
     getCatalogIndex,
     invalidateCatalogIndex,
     halamanGrup,
+    urutkanMarketplaceOperators,
     urutkanPopuler,
     urutkanPencarian,
     TTL_MS

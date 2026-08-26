@@ -93,11 +93,12 @@ check(
         portal.includes("Gagal memuat transaksi: ${escapeHtml(e.message)}")
 );
 check(
-    "Marketplace memuat 20 item, membatalkan request lama, dan memakai tombol kartu native",
-    marketplace.includes("const MKT_PAGE_SIZE = 20") &&
+    "Marketplace memuat batch 24 item, membatalkan request lama, dan menyediakan auto-load saat scroll",
+    marketplace.includes("const MKT_PAGE_SIZE = 24") &&
         marketplace.includes("mktAbortController?.abort()") &&
         marketplace.includes('<button type="button" class="market-card"') &&
-        !marketplace.includes("new IntersectionObserver")
+        marketplace.includes("new IntersectionObserver") &&
+        marketplace.includes('rootMargin: "700px"')
 );
 check(
     "Marketplace menyimpan search/filter ke URL dan menyediakan reset hasil kosong",

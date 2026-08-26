@@ -1360,6 +1360,38 @@ nav#mainNav.nav-scrolled {
     border-color: var(--violet);
 }
 
+/* Navbar desktop hanya menampilkan teks saat ruang benar-benar cukup (2xl).
+   Di bawah breakpoint itu mobile drawer dipakai supaya label tidak pernah
+   dipotong menjadi "Katal..." atau "Cek Transa...". */
+.nx-main-nav-desktop {
+    display: none;
+}
+
+.nx-main-nav-mobile {
+    display: flex;
+}
+
+@media (min-width: 1536px) {
+    #mainNav .nx-main-nav-desktop {
+        display: flex;
+        flex: 1 1 auto;
+        min-width: 0;
+        justify-content: center;
+    }
+
+    #mainNav .nx-main-nav-mobile {
+        display: none;
+    }
+
+    #mainNav .nx-main-nav-desktop > a,
+    #mainNav .nx-main-nav-desktop > button {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+    }
+}
+
 .cart-count {
     position: absolute;
     top: -6px;
