@@ -44,15 +44,57 @@ function describeUserAgent(userAgent = "") {
     return `${browser} (${os})`;
 }
 
+function safeNotificationField(value, fallback = "tidak tersedia", maxLength = 140) {
+    const text = String(value ?? "").replace(/[\r\n]+/g, " ").trim();
+    return text ? text.slice(0, maxLength) : fallback;
+}
+
+function validCoordinate(value) {
+    const number = Number(value);
+    return Number.isFinite(number) && Math.abs(number) <= 180 ? number : null;
+}
+
+function formatLocationDetails(location) {
+    if (typeof location === "string") {
+        return [`Lokasi IP (perkiraan): ${safeNotificationField(location)}`];
+    }
+    if (!location || location.available === false) {
+        return ["Lokasi IP: Tidak berhasil dipetakan dari IP ini."];
+    }
+
+    const city = safeNotificationField(location.city);
+    const region = safeNotificationField(location.region);
+    const country = safeNotificationField(location.country);
+    const countryCode = location.countryCode ? ` (${safeNotificationField(location.countryCode, "", 8)})` : "";
+    const coordinates = [location.latitude, location.longitude].every((value) => Number.isFinite(Number(value)))
+        ? `${Number(location.latitude)}, ${Number(location.longitude)}`
+        : "tidak tersedia";
+    const lines = [
+        "Lokasi IP (perkiraan):",
+        `Kota: ${city}`,
+        `Wilayah: ${region}`,
+        `Negara: ${country}${countryCode}`,
+        `Kode pos: ${safeNotificationField(location.postal)}`,
+        `Koordinat perkiraan: ${coordinates}`
+    ];
+    if (location.mapUrl) lines.push(`Peta: ${safeNotificationField(location.mapUrl, "", 240)}`);
+    lines.push(`ISP: ${safeNotificationField(location.isp)}`);
+    lines.push(`Organisasi: ${safeNotificationField(location.organization)}`);
+    lines.push(`ASN: ${safeNotificationField(location.asn)}`);
+    lines.push(`Domain jaringan: ${safeNotificationField(location.domain)}`);
+    lines.push(`Zona waktu: ${safeNotificationField(location.timezone)}${location.timezoneUtc ? ` (${safeNotificationField(location.timezoneUtc, "", 12)})` : ""}`);
+    lines.push("Catatan: lokasi berbasis geolokasi IP, bukan GPS presisi; VPN, proxy, dan jaringan seluler dapat membuatnya meleset.");
+    return lines;
+}
+
 function buildLoginSecurityMessage({ user, timestamp, ip, location, userAgent, resetUrl }) {
     const name = resolveUserDisplayName(user);
-    const safeLocation = String(location || "Lokasi tidak terdeteksi").slice(0, 160);
-    const safeIp = String(ip || "tidak tersedia").slice(0, 80);
+    const safeIp = safeNotificationField(ip, "tidak tersedia", 80);
     const device = describeUserAgent(userAgent);
     const role = String(user?.role || "").trim().toLowerCase();
     const isAdminLogin = role === "admin" || role === "staff";
     const roleLabel = role === "staff" ? "Staff" : "Admin";
-    const safeEmail = String(user?.email || "tidak tersedia").trim().slice(0, 160);
+    const safeEmail = safeNotificationField(user?.email, "tidak tersedia", 160);
     const adminTitle = role === "staff" ? "🔐 *Peringatan Login Staff NexShop*" : "🔐 *Peringatan Login Admin NexShop*";
     const intro = isAdminLogin
         ? `Halo ${name}, akses dashboard ${role === "staff" ? "staff" : "admin"} NexShop baru saja berhasil digunakan.`
@@ -64,7 +106,7 @@ function buildLoginSecurityMessage({ user, timestamp, ip, location, userAgent, r
         intro,
         ...(isAdminLogin ? [`Nama: ${name}`, `Email: ${safeEmail}`, `Peran: ${roleLabel}`, "Dashboard: https://nexshop.cloud/admin/dashboard"] : []),
         `Waktu: ${formatWibTimestamp(timestamp)}`,
-        `Lokasi perkiraan: ${safeLocation}`,
+        ...formatLocationDetails(location),
         `IP: ${safeIp}`,
         `Perangkat: ${device}`,
         "",
@@ -76,9 +118,14 @@ function buildLoginSecurityMessage({ user, timestamp, ip, location, userAgent, r
     ].join("\n");
 }
 
+function cleanClientIp(value) {
+    return String(value || "").trim().replace(/^::ffff:/, "");
+}
+
 function getClientIp(req = {}) {
-    const forwarded = String(req.headers?.["x-forwarded-for"] || "").split(",")[0].trim();
-    return forwarded || String(req.ip || req.socket?.remoteAddress || "").replace(/^::ffff:/, "") || "tidak tersedia";
+    // Express sudah memvalidasi satu lapis Nginx melalui trust proxy di server.js.
+    // Jangan memakai X-Forwarded-For mentah karena header itu dapat dipalsukan client.
+    return cleanClientIp(req.ip || req.socket?.remoteAddress || req.connection?.remoteAddress) || "tidak tersedia";
 }
 
 function isPublicIp(ip) {
@@ -89,21 +136,62 @@ function isPublicIp(ip) {
     return true;
 }
 
+function normalizeIpLocation(data, source) {
+    if (!data || data.success === false || data.status === "fail") return null;
+    const connection = data.connection || {};
+    const latitude = validCoordinate(data.latitude);
+    const longitude = validCoordinate(data.longitude);
+    const country = data.country || data.country_name;
+    const countryCode = data.country_code || data.countryCode;
+    const timezone = typeof data.timezone === "string" ? data.timezone : data.timezone?.id;
+    const timezoneUtc = typeof data.timezone === "object" ? data.timezone.utc : data.utc_offset;
+    const asnRaw = connection.asn || data.asn;
+    const asn = asnRaw ? (String(asnRaw).toUpperCase().startsWith("AS") ? String(asnRaw).toUpperCase() : `AS${asnRaw}`) : "";
+    if (!data.city && !data.region && !country && latitude === null && longitude === null) return null;
+    return {
+        available: true,
+        source,
+        city: data.city,
+        region: data.region,
+        country,
+        countryCode,
+        postal: data.postal,
+        latitude,
+        longitude,
+        mapUrl: latitude !== null && longitude !== null ? `https://www.google.com/maps?q=${latitude},${longitude}` : "",
+        isp: connection.isp || data.org,
+        organization: connection.org || data.org,
+        asn,
+        domain: connection.domain,
+        timezone,
+        timezoneUtc
+    };
+}
+
 async function lookupIpLocation(ip, fetchImpl = global.fetch) {
     if (!isPublicIp(ip) || typeof fetchImpl !== "function") return "Lokasi jaringan lokal/tidak tersedia";
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1500);
-    try {
-        const response = await fetchImpl(`https://ipapi.co/${encodeURIComponent(ip)}/json/`, { signal: controller.signal });
-        if (!response.ok) return "Lokasi tidak terdeteksi";
-        const data = await response.json();
-        const parts = [data.city, data.region, data.country_name].filter((value) => typeof value === "string" && value.trim());
-        return parts.length ? parts.join(", ").slice(0, 160) : "Lokasi tidak terdeteksi";
-    } catch (_) {
-        return "Lokasi tidak terdeteksi";
-    } finally {
-        clearTimeout(timer);
+    const providers = [
+        [`https://ipwho.is/${encodeURIComponent(ip)}`, "ipwho.is"],
+        [`https://ipapi.co/${encodeURIComponent(ip)}/json/`, "ipapi.co"]
+    ];
+    for (const [url, source] of providers) {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 1500);
+        try {
+            const response = await fetchImpl(url, {
+                signal: controller.signal,
+                headers: { "User-Agent": "NexShop-Security-Alert/1.0" }
+            });
+            if (!response.ok) continue;
+            const location = normalizeIpLocation(await response.json(), source);
+            if (location) return location;
+        } catch (_) {
+            // Provider geolocation tidak boleh menggagalkan login/notifikasi.
+        } finally {
+            clearTimeout(timer);
+        }
     }
+    return { available: false };
 }
 
 module.exports = {
