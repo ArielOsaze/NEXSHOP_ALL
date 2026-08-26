@@ -65,34 +65,53 @@
     </div>
 
     <ul class="nav flex-column" id="sidebarNav">
-        <li class="sidebar-section-label">Overview</li>
-        <li class="nav-item"><a class="nav-link active" href="#" data-view="dashboard"><i class="bi bi-grid me-2"></i>Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="stats"><i class="bi bi-graph-up me-2"></i>Statistik Penjualan</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="topSpenders"><i class="bi bi-trophy me-2"></i>Top Spenders (HoF)</a></li>
-
-        <li class="sidebar-section-label">Orders</li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="orders"><i class="bi bi-cart me-2"></i>Semua Orders</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Topup &amp; Pesanan Game</a></li>
-
-        <li class="sidebar-section-label">Catalog &amp; Sales</li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="products"><i class="bi bi-box-seam me-2"></i>Produk Game / Gamepass</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="promo"><i class="bi bi-megaphone me-2"></i>Promo &amp; Banner</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="promocodes"><i class="bi bi-ticket-perforated me-2"></i>Kode Promo</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="ratings"><i class="bi bi-star me-2"></i>Rating &amp; Testimoni</a></li>
-
-        <li class="sidebar-section-label">Customers &amp; Partners</li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="users"><i class="bi bi-people me-2"></i>Users</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="reseller"><i class="bi bi-people-fill me-2"></i>Reseller</a></li>
-
-        <li class="sidebar-section-label">Content &amp; Automation</li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="editorial"><i class="bi bi-pen-fill me-2"></i>NexShop News</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="aimgmt"><i class="bi bi-robot me-2"></i>AI Management</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="musicplayer"><i class="bi bi-music-note-beamed me-2"></i>Music Player</a></li>
-
-        <li class="sidebar-section-label">Settings &amp; Approval</li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="settings"><i class="bi bi-gear me-2"></i>Settings Toko</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="waApi"><i class="bi bi-whatsapp me-2"></i>WhatsApp API</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="approvals"><i class="bi bi-shield-check me-2"></i>Approval Staff <span class="badge rounded-pill text-bg-danger ms-auto d-none" id="approvalNavCount">0</span></a></li>
+        <li class="sidebar-nav-group" data-nav-group-wrap="overview">
+            <button type="button" class="sidebar-section-toggle" data-nav-group="overview" aria-expanded="false"><span>Overview</span><i class="bi bi-chevron-down"></i></button>
+            <div class="sidebar-section-items" data-nav-items="overview">
+                <div class="nav-item"><a class="nav-link active" href="#" data-view="dashboard"><i class="bi bi-grid me-2"></i>Dashboard</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="stats"><i class="bi bi-graph-up me-2"></i>Statistik Penjualan</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="topSpenders"><i class="bi bi-trophy me-2"></i>Top Spenders (HoF)</a></div>
+            </div>
+        </li>
+        <li class="sidebar-nav-group" data-nav-group-wrap="orders">
+            <button type="button" class="sidebar-section-toggle" data-nav-group="orders" aria-expanded="false"><span>Orders</span><i class="bi bi-chevron-down"></i></button>
+            <div class="sidebar-section-items" data-nav-items="orders">
+                <div class="nav-item"><a class="nav-link" href="#" data-view="orders"><i class="bi bi-cart me-2"></i>Semua Orders</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Topup &amp; Pesanan Game</a></div>
+            </div>
+        </li>
+        <li class="sidebar-nav-group" data-nav-group-wrap="catalog-sales">
+            <button type="button" class="sidebar-section-toggle" data-nav-group="catalog-sales" aria-expanded="false"><span>Catalog &amp; Sales</span><i class="bi bi-chevron-down"></i></button>
+            <div class="sidebar-section-items" data-nav-items="catalog-sales">
+                <div class="nav-item"><a class="nav-link" href="#" data-view="products"><i class="bi bi-box-seam me-2"></i>Produk Game / Gamepass</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="promo"><i class="bi bi-megaphone me-2"></i>Promo &amp; Banner</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="promocodes"><i class="bi bi-ticket-perforated me-2"></i>Kode Promo</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="ratings"><i class="bi bi-star me-2"></i>Rating &amp; Testimoni</a></div>
+            </div>
+        </li>
+        <li class="sidebar-nav-group" data-nav-group-wrap="customers-partners">
+            <button type="button" class="sidebar-section-toggle" data-nav-group="customers-partners" aria-expanded="false"><span>Customers &amp; Partners</span><i class="bi bi-chevron-down"></i></button>
+            <div class="sidebar-section-items" data-nav-items="customers-partners">
+                <div class="nav-item"><a class="nav-link" href="#" data-view="users"><i class="bi bi-people me-2"></i>Users</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="reseller"><i class="bi bi-people-fill me-2"></i>Reseller</a></div>
+            </div>
+        </li>
+        <li class="sidebar-nav-group" data-nav-group-wrap="content-automation">
+            <button type="button" class="sidebar-section-toggle" data-nav-group="content-automation" aria-expanded="false"><span>Content &amp; Automation</span><i class="bi bi-chevron-down"></i></button>
+            <div class="sidebar-section-items" data-nav-items="content-automation">
+                <div class="nav-item"><a class="nav-link" href="#" data-view="editorial"><i class="bi bi-pen-fill me-2"></i>NexShop News</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="aimgmt"><i class="bi bi-robot me-2"></i>AI Management</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="musicplayer"><i class="bi bi-music-note-beamed me-2"></i>Music Player</a></div>
+            </div>
+        </li>
+        <li class="sidebar-nav-group" data-nav-group-wrap="settings-approval">
+            <button type="button" class="sidebar-section-toggle" data-nav-group="settings-approval" aria-expanded="false"><span>Settings &amp; Approval</span><i class="bi bi-chevron-down"></i></button>
+            <div class="sidebar-section-items" data-nav-items="settings-approval">
+                <div class="nav-item"><a class="nav-link" href="#" data-view="settings"><i class="bi bi-gear me-2"></i>Settings Toko</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="waApi"><i class="bi bi-whatsapp me-2"></i>WhatsApp API</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="approvals"><i class="bi bi-shield-check me-2"></i>Approval Staff <span class="badge rounded-pill text-bg-danger ms-auto d-none" id="approvalNavCount">0</span></a></div>
+            </div>
+        </li>
     </ul>
 
     <button onclick="logout()" class="btn btn-danger w-100 mt-5">

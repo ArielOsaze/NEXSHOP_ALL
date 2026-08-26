@@ -610,8 +610,35 @@ document.getElementById("sidebarCloseBtn").addEventListener("click", closeMobile
 mobileBackdrop.addEventListener("click", closeMobileSidebar);
 
 // ================================
-// View switching (sidebar)
+// Collapsible sidebar categories
 // ================================
+function setNavGroupState(group, open) {
+    if (!group) return;
+    group.classList.toggle("is-open", open);
+    const toggle = group.querySelector(".sidebar-section-toggle");
+    if (toggle) toggle.setAttribute("aria-expanded", String(open));
+}
+
+function setupSidebarGroups() {
+    document.querySelectorAll("#sidebarNav .sidebar-section-toggle").forEach((toggle) => {
+        toggle.addEventListener("click", () => {
+            const group = toggle.closest(".sidebar-nav-group");
+            const shouldOpen = !group.classList.contains("is-open");
+            document.querySelectorAll("#sidebarNav .sidebar-nav-group.is-open").forEach((other) => {
+                if (other !== group) setNavGroupState(other, false);
+            });
+            setNavGroupState(group, shouldOpen);
+        });
+    });
+}
+
+function openNavGroupForView(view) {
+    const link = [...document.querySelectorAll("#sidebarNav .nav-link")].find((item) => item.dataset.view === view);
+    const group = link?.closest(".sidebar-nav-group");
+    if (group) setNavGroupState(group, true);
+}
+
+setupSidebarGroups();
 
 document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
     link.addEventListener("click", (e) => {
@@ -621,6 +648,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         closeMobileSidebar();
 
         const view = link.dataset.view;
+        openNavGroupForView(view);
         document.querySelectorAll(".view-section").forEach(sec => sec.classList.add("d-none"));
         document.getElementById(`view-${view}`).classList.remove("d-none");
 
@@ -649,6 +677,7 @@ function switchView(view) {
     document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         link.classList.toggle("active", link.dataset.view === view);
     });
+    openNavGroupForView(view);
     document.querySelectorAll(".view-section").forEach(sec => sec.classList.add("d-none"));
     const target = document.getElementById(`view-${view}`);
     if (target) target.classList.remove("d-none");
