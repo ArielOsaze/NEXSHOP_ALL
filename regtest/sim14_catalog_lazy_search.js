@@ -308,8 +308,8 @@ test("ringkasan tidak pernah membocorkan harga modal", () => {
 console.log("\nF. Kontrak render ringan di frontend\n");
 
 const frontendDir = path.join(__dirname, "..", "nexshop-frontend");
-const storefrontSource = fs.readFileSync(path.join(frontendDir, "script.js"), "utf8");
-const marketplaceSource = fs.readFileSync(path.join(frontendDir, "marketplace.html"), "utf8");
+const storefrontSource = fs.readFileSync(path.join(frontendDir, "script.js"), "utf8").replace(/\r\n/g, "\n");
+const marketplaceSource = fs.readFileSync(path.join(frontendDir, "marketplace.html"), "utf8").replace(/\r\n/g, "\n");
 const topupControlStart = storefrontSource.indexOf('KONTROL "TAMPILKAN SEMUA"');
 const topupControlEnd = storefrontSource.indexOf("function setTopupLoadMoreState", topupControlStart);
 const topupControlSource = storefrontSource.slice(topupControlStart, topupControlEnd);

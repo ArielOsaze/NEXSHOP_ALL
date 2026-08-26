@@ -19,6 +19,7 @@
 const axios = require("axios");
 const { getApiKeys, getStoreSettings, getWaApiConfig } = require("../config/settings");
 const { normalizePhoneNumber, toFonntePhone } = require("../utils/phoneNumber");
+const { resolveUserDisplayName } = require("./userNotificationHelpers");
 
 /**
  * Mengganti template variables (misal: {name}, {order_id}) dengan data asli
@@ -90,6 +91,10 @@ async function sendUserWhatsApp(targetNumber, type, variables = {}, extraMessage
     try {
         const canonicalTarget = toFonntePhone(String(targetNumber || ""));
         if (!canonicalTarget) return { success: false, reason: "invalid_phone" };
+        const notificationVariables = {
+            ...variables,
+            name: resolveUserDisplayName({ fullname: variables.name, email: variables.email })
+        };
 
         const apiKeys = await getApiKeys();
         const settings = await getStoreSettings();
@@ -123,13 +128,13 @@ async function sendUserWhatsApp(targetNumber, type, variables = {}, extraMessage
         // Parse template jika ada (dari settings admin)
         let message = "";
         if (template) {
-            message = parseTemplate(template, variables);
+            message = parseTemplate(template, notificationVariables);
             if (extraMessage) message += `\n\n${extraMessage}`;
         }
 
         console.log(`[WA API] Kirim ke ${canonicalTarget}, type: ${type}, orderId: ${variables.order_id || variables.orderId || 'N/A'}`);
 
-        const result = await sendToWaApi(canonicalTarget, type, variables, extraMessage, message);
+        const result = await sendToWaApi(canonicalTarget, type, notificationVariables, extraMessage, message);
 
         if (result && result.success) {
             return { success: true, response: result, status: "sent" };
@@ -153,6 +158,36 @@ async function sendUserWhatsApp(targetNumber, type, variables = {}, extraMessage
             reason: errorCategory,
             error: err.response?.data || err.message,
             status: status
+        };
+    }
+}
+
+/**
+ * Kirim pesan keamanan/non-transaksional langsung ke user.
+ * Jalur ini tidak tunduk pada toggle notifikasi transaksi karena login alert
+ * adalah kontrol keamanan yang wajib dicoba setiap kali user login.
+ */
+async function sendUserSecurityWhatsApp(targetNumber, message) {
+    try {
+        const canonicalTarget = toFonntePhone(String(targetNumber || ""));
+        if (!canonicalTarget) return { success: false, reason: "invalid_phone" };
+        const { url, key } = await getWaApiConfig({ fresh: true });
+        if (!key) return { success: false, reason: "missing_gateway_key" };
+        const response = await axios.post(`${url}/send-message`, {
+            phone: canonicalTarget,
+            message: String(message || "").trim()
+        }, {
+            headers: { "Content-Type": "application/json", "X-API-Key": key },
+            timeout: 15000
+        });
+        return response.data?.success === false
+            ? { success: false, reason: "api_error", error: response.data.message || "gateway_rejected" }
+            : { success: true, status: "sent", response: response.data };
+    } catch (error) {
+        return {
+            success: false,
+            reason: [400, 401, 403, 404, 422].includes(error.response?.status) ? "permanent" : "transient",
+            error: error.response?.data?.message || error.message
         };
     }
 }
@@ -219,6 +254,7 @@ async function sendMarketingWhatsApp(targetNumber, message) {
 
 module.exports = {
     sendUserWhatsApp,
+    sendUserSecurityWhatsApp,
     testFonnteConnection,
     parseTemplate,
     sendToWaApi,  // export juga untuk pemakaian langsung/testing

@@ -1,0 +1,44 @@
+const assert = require("assert");
+const {
+    resolveUserDisplayName,
+    formatWibTimestamp,
+    describeUserAgent,
+    buildLoginSecurityMessage
+} = require("../nexshop-backend/services/userNotificationHelpers");
+
+assert.equal(resolveUserDisplayName({ fullname: "  Ariel Osaze  ", email: "ariel@example.com" }), "Ariel Osaze");
+assert.equal(resolveUserDisplayName({ fullname: "", email: "ariel.osaze@gmail.com" }), "ariel.osaze");
+assert.equal(resolveUserDisplayName({ fullname: "Player 123456", email: "ariel.osaze@gmail.com" }), "ariel.osaze");
+assert.equal(resolveUserDisplayName({ fullname: null, email: "" }), "Pengguna NexShop");
+
+const timestamp = formatWibTimestamp(new Date("2026-08-26T06:07:08.000Z"));
+assert.match(timestamp, /13:07:08 WIB/);
+assert.match(timestamp, /26 Agustus 2026/);
+
+const browser = describeUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/139.0.0.0 Safari/537.36");
+assert.match(browser, /Chrome/);
+assert.match(browser, /Windows/);
+
+const message = buildLoginSecurityMessage({
+    user: { fullname: "", email: "ariel.osaze@gmail.com" },
+    timestamp: new Date("2026-08-26T06:07:08.000Z"),
+    ip: "203.0.113.10",
+    location: "Jakarta, Indonesia",
+    userAgent: "Mozilla/5.0 Chrome/139 Windows",
+    resetUrl: "https://nexshop.cloud/#/forgot-password"
+});
+assert.match(message, /ariel\.osaze/);
+assert.match(message, /26 Agustus 2026 13:07:08 WIB/);
+assert.match(message, /Jakarta, Indonesia/);
+assert.match(message, /Chrome/);
+assert.match(message, /203\.0\.113\.10/);
+assert.match(message, /https:\/\/nexshop\.cloud\/#\/forgot-password/);
+assert.match(message, /Jika ini bukan Anda/i);
+
+const fs = require("fs");
+const walletControllerSource = fs.readFileSync(require.resolve("../nexshop-backend/controllers/walletController"), "utf8");
+assert.match(walletControllerSource, /notify\("wallet"/);
+assert.match(walletControllerSource, /sendUserWhatsApp\(/);
+assert.match(walletControllerSource, /email: buyerEmail/);
+
+console.log("sim23_user_notifications_security: passed");

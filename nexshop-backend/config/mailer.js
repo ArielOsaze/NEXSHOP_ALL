@@ -3,6 +3,7 @@ const nodemailer = require("nodemailer");
 require("dotenv").config();
 const { getApiKeys, getStoreSettings } = require("./settings");
 const { notify } = require("./notify");
+const { resolveUserDisplayName } = require("../services/userNotificationHelpers");
 
 // Kenapa pakai Brevo HTTP API, bukan nodemailer/SMTP langsung ke Gmail:
 // Awalnya karena Railway (plan Hobby) memblokir koneksi SMTP keluar (port
@@ -244,8 +245,9 @@ async function sendTopupInvoiceEmail(to, { orderId, namaProduk, tujuan, serverId
 // OTP 6 digit), berlaku singkat, dan cuma bisa dipakai SEKALI (token
 // dihapus dari DB begitu password berhasil diganti -- lihat resetPassword
 // di authController.js).
-async function sendPasswordResetEmail(to, resetLink) {
+async function sendPasswordResetEmail(to, resetLink, fullname) {
     const config = await getBrevoConfig();
+    const recipientName = resolveUserDisplayName({ fullname, email: to });
     try {
         await sendConfiguredEmail(config, {
                 to,
@@ -253,7 +255,8 @@ async function sendPasswordResetEmail(to, resetLink) {
                 htmlContent: `
                     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto;">
         <h2 style="color:#00C2E8;">NexShop</h2>
-                        <p>Ada permintaan buat reset password akun kamu. Klik tombol di bawah buat bikin password baru:</p>
+        <p>Halo ${recipientName},</p>
+        <p>Ada permintaan buat reset password akun kamu. Klik tombol di bawah buat bikin password baru:</p>
         <a href="${resetLink}" style="display:inline-block; margin:16px 0; padding:13px 28px; background:linear-gradient(135deg,#00C2E8,#0891B2); color:#fff; text-decoration:none; border-radius:100px; font-weight:bold; font-size:14px;">
                             Reset Password
                         </a>

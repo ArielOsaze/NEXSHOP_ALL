@@ -121,7 +121,7 @@ exports.updateStoreSettingsAdmin = async (req, res) => {
             console.log(error);
             return res.status(500).json({ message: "Gagal update pengaturan toko" });
         }
-        notify("settings", `⚙️ ${req.user.email} mengubah pengaturan toko`);
+        notify("settings", `⚙️ ${req.user.email} mengubah pengaturan toko. Field: ${Object.keys(req.body || {}).join(", ") || "tanpa perubahan"}`);
         res.json({ message: "Pengaturan toko berhasil disimpan", data });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
@@ -430,7 +430,8 @@ exports.updateApiKeysAdmin = async (req, res) => {
             }
         }
 
-        notify("settings", `🔑 ${req.user.email} mengubah konfigurasi API/SEO`);
+        const changedFields = [...Object.keys(payload), ...Object.keys(storePayload)];
+        notify("settings", `🔑 ${req.user.email} mengubah konfigurasi API/SEO. Field: ${changedFields.join(", ") || "tanpa perubahan"}`);
         await logSensitiveAction(req, "UPDATE_SECRET", { fields: [...Object.keys(payload), ...Object.keys(storePayload)] });
         res.json({ message: "Konfigurasi berhasil disimpan" });
     } catch (err) {
@@ -849,6 +850,7 @@ exports.updateMe = async (req, res) => {
             });
         }
 
+        notify("settings", `👤 ${user.email} memperbarui profil admin. Field: ${Object.keys(payload).map((key) => key === "password" ? "password" : key).join(", ")}`);
         res.json({ message: "Profil berhasil diperbarui", data });
     } catch (err) {
         console.log(err);

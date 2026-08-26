@@ -1,5 +1,6 @@
 const supabase = require('../config/db');
 const { sendUserWhatsApp } = require('./userWhatsAppService');
+const { resolveUserDisplayName } = require('./userNotificationHelpers');
 const crypto = require('crypto');
 const {
     resolveNexshopCategory,
@@ -72,7 +73,12 @@ async function fetchNotificationPayload(orderId, notificationType) {
         const extraMessage = notificationType === "success" ? await buildTopupDetailBlock(topup) : "";
         return {
             targetNumber: topup.recipient_phone,
-            variables: { name: "Pelanggan", order_id: orderId, total: rupiahLog(topup.harga) },
+            variables: {
+                name: resolveUserDisplayName({ fullname: topup.recipient_name, email: topup.recipient_email }),
+                email: topup.recipient_email,
+                order_id: orderId,
+                total: rupiahLog(topup.harga)
+            },
             extraMessage
         };
     } else {
@@ -80,7 +86,12 @@ async function fetchNotificationPayload(orderId, notificationType) {
         if (!order) return null;
         return {
             targetNumber: order.recipient_phone,
-            variables: { name: order.recipient_name, order_id: orderId, total: rupiahLog(order.total) },
+            variables: {
+                name: resolveUserDisplayName({ fullname: order.recipient_name, email: order.recipient_email }),
+                email: order.recipient_email,
+                order_id: orderId,
+                total: rupiahLog(order.total)
+            },
             extraMessage: ""
         };
     }

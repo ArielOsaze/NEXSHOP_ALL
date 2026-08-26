@@ -43,7 +43,7 @@ async function startPhoneOtp(supabase, { userId, phone, purpose }) {
     await assertPhoneAvailable(supabase, normalized, userId);
     const { data: user, error: userErr } = await supabase
         .from("users")
-        .select("id, phone_normalized, phone_verified_at, otp_sent_at")
+        .select("id, email, fullname, phone_normalized, phone_verified_at, otp_sent_at")
         .eq("id", userId)
         .maybeSingle();
     if (userErr) throw userErr;
@@ -73,7 +73,11 @@ async function startPhoneOtp(supabase, { userId, phone, purpose }) {
         .eq("id", userId);
     if (updateErr) throw updateErr;
 
-    const delivery = await sendUserWhatsApp(toFonntePhone(normalized), "otp", { otp });
+    const delivery = await sendUserWhatsApp(toFonntePhone(normalized), "otp", {
+        otp,
+        name: user.fullname,
+        email: user.email
+    });
     if (!delivery.success) {
         const err = new Error("Kode OTP belum dapat dikirim ke WhatsApp. Periksa konfigurasi notifikasi lalu coba lagi.");
         err.code = "OTP_DELIVERY_FAILED";

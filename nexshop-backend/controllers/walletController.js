@@ -3,6 +3,9 @@ const supabase = require("../config/db");
 const walletService = require("../services/walletService");
 const { createRedirectPayment, checkTransactionStatus, createDirectPayment, isDirectPaymentMethod } = require("../config/ipaymu");
 const { sendTelegramNotification } = require("../config/telegram");
+const { notify } = require("../config/notify");
+const { sendUserWhatsApp } = require("../services/userWhatsAppService");
+const { resolveUserDisplayName } = require("../services/userNotificationHelpers");
 
 function rupiahLog(n) {
     return "Rp " + Number(n || 0).toLocaleString("id-ID");
@@ -116,13 +119,13 @@ exports.createTopup = async (req, res) => {
         // Ambil info user
         const { data: user } = await supabase
             .from("users")
-            .select("id, email, fullname, whatsapp")
+            .select("id, email, fullname, whatsapp, phone")
             .eq("id", req.user.id)
             .maybeSingle();
 
-        const buyerName = user?.fullname || req.user.fullname || "User NexShop";
+        const buyerName = resolveUserDisplayName({ fullname: user?.fullname || req.user.fullname, email: user?.email || req.user.email });
         const buyerEmail = user?.email || req.user.email || "user@nexshop.id";
-        let buyerPhone = user?.whatsapp || "08123456789";
+        let buyerPhone = user?.whatsapp || user?.phone || "08123456789";
         if (buyerPhone.startsWith("62")) buyerPhone = "0" + buyerPhone.substring(2);
 
         // Simpan baris wallet_topups status PENDING
@@ -143,6 +146,16 @@ exports.createTopup = async (req, res) => {
                 throw new walletService.WalletNotSetupError();
             }
             throw insertErr;
+        }
+
+        notify("wallet", `💳 Invoice topup saldo baru ${topupId} dari ${buyerName} (${buyerEmail}) senilai ${rupiahLog(amount)} via ${paymentMethod}`);
+        if (user?.whatsapp || user?.phone) {
+            sendUserWhatsApp(user.whatsapp || user.phone, "pending", {
+                name: buyerName,
+                email: buyerEmail,
+                order_id: topupId,
+                total: rupiahLog(amount)
+            }).catch((notificationError) => console.log("Wallet pending notification gagal:", notificationError.message));
         }
 
         let paymentData;
@@ -352,7 +365,22 @@ exports.handleIpaymuWalletNotification = async (req, res) => {
                 })
                 .eq("id", topup.id);
 
-            // 3. Kirim notifikasi Telegram & WA
+            // 3. Kirim notifikasi Telegram, admin WA & user WA
+            const { data: paidUser } = await supabase
+                .from("users")
+                .select("email, fullname, whatsapp, phone")
+                .eq("id", topup.user_id)
+                .maybeSingle();
+            const paidName = resolveUserDisplayName({ fullname: paidUser?.fullname, email: paidUser?.email });
+            notify("wallet", `✅ Topup saldo ${topup.id} berhasil. User: ${paidName} (${paidUser?.email || "-"}), nominal: ${rupiahLog(topup.amount)}, saldo baru: ${rupiahLog(creditResult.balance_after)}`);
+            if (paidUser?.whatsapp || paidUser?.phone) {
+                sendUserWhatsApp(paidUser.whatsapp || paidUser.phone, "success", {
+                    name: paidName,
+                    email: paidUser.email,
+                    order_id: topup.id,
+                    total: rupiahLog(topup.amount)
+                }).catch((notificationError) => console.log("Wallet success notification gagal:", notificationError.message));
+            }
             sendTelegramNotification(
                 `💰 <b>Top Up Saldo Berhasil</b>\nInvoice: ${topup.id}\nUser ID: ${topup.user_id}\nNominal: ${rupiahLog(topup.amount)}\nSaldo Baru: ${rupiahLog(creditResult.balance_after)}`
             );
@@ -363,6 +391,21 @@ exports.handleIpaymuWalletNotification = async (req, res) => {
                 .from("wallet_topups")
                 .update({ status: "FAILED", updated_at: new Date().toISOString() })
                 .eq("id", topup.id);
+            const { data: failedUser } = await supabase
+                .from("users")
+                .select("email, fullname, whatsapp, phone")
+                .eq("id", topup.user_id)
+                .maybeSingle();
+            const failedName = resolveUserDisplayName({ fullname: failedUser?.fullname, email: failedUser?.email });
+            notify("wallet", `❌ Topup saldo ${topup.id} gagal/expired. User: ${failedName} (${failedUser?.email || "-"}), nominal: ${rupiahLog(topup.amount)}`);
+            if (failedUser?.whatsapp || failedUser?.phone) {
+                sendUserWhatsApp(failedUser.whatsapp || failedUser.phone, "failed", {
+                    name: failedName,
+                    email: failedUser.email,
+                    order_id: topup.id,
+                    total: rupiahLog(topup.amount)
+                }).catch((notificationError) => console.log("Wallet failed notification gagal:", notificationError.message));
+            }
             return res.status(200).json({ message: "Status topup diperbarui (gagal/expired)" });
         }
 
@@ -533,6 +576,23 @@ exports.adminAdjustBalance = async (req, res) => {
             });
         }
 
+        const { data: adjustedUser } = await supabase
+            .from("users")
+            .select("email, fullname, whatsapp, phone")
+            .eq("id", parsedUserId)
+            .maybeSingle();
+        const adjustedName = resolveUserDisplayName({ fullname: adjustedUser?.fullname, email: adjustedUser?.email });
+        const adjustmentDirection = normalizedDirection === "IN" ? "bertambah" : "berkurang";
+        notify("wallet", `🛠️ Admin ${req.user.email} mengubah saldo user ${adjustedName} (${adjustedUser?.email || "-"}): ${adjustmentDirection} ${rupiahLog(parsedAmount)}. Alasan: ${String(reason).trim()}`);
+        if (adjustedUser?.whatsapp || adjustedUser?.phone) {
+            sendUserWhatsApp(adjustedUser.whatsapp || adjustedUser.phone, "success", {
+                name: adjustedName,
+                email: adjustedUser.email,
+                order_id: adjustRef,
+                total: rupiahLog(parsedAmount)
+            }, `Saldo kamu ${adjustmentDirection} ${rupiahLog(parsedAmount)} oleh admin. Saldo baru: ${rupiahLog(result.balance_after)}.`).catch((notificationError) => console.log("Wallet adjustment notification gagal:", notificationError.message));
+        }
+
         sendTelegramNotification(
             `🛠 <b>Admin Wallet Adjustment</b>\nTarget User ID: ${parsedUserId}\nArah: ${normalizedDirection === "IN" ? "Penambahan Saldo (+)" : "Pengurangan Saldo (-)"}\nNominal: ${rupiahLog(parsedAmount)}\nAlasan: ${reason}\nSaldo Baru: ${rupiahLog(result.balance_after)}\nAdmin: ${req.user.email}`
         );
@@ -594,6 +654,17 @@ exports.adminRefundOrder = async (req, res) => {
             refunded_at: new Date().toISOString(),
             tv_message: `Refund oleh admin: ${reason || "Pesanan dibatalkan"}`
         }).eq("id", order.id);
+
+        const refundName = resolveUserDisplayName({ fullname: order.recipient_name, email: order.recipient_email });
+        notify("wallet", `↩️ Refund order ${order.id} berhasil ke user ${refundName} (${order.recipient_email || "-"}), nominal ${rupiahLog(order.harga)}. Admin: ${req.user.email}`);
+        if (order.recipient_phone) {
+            sendUserWhatsApp(order.recipient_phone, "success", {
+                name: refundName,
+                email: order.recipient_email,
+                order_id: refundRef,
+                total: rupiahLog(order.harga)
+            }, `Refund ${rupiahLog(order.harga)} untuk pesanan ${order.id} sudah masuk ke saldo NexShop. Saldo baru: ${rupiahLog(refundResult.balance_after)}.`).catch((notificationError) => console.log("Wallet refund notification gagal:", notificationError.message));
+        }
 
         sendTelegramNotification(
             `↩️ <b>Admin Manual Order Refund</b>\nOrder ID: ${order.id}\nUser ID: ${order.user_id}\nNominal: ${rupiahLog(order.harga)}\nAlasan: ${reason || "Dibatalkan Admin"}\nAdmin: ${req.user.email}`

@@ -1968,7 +1968,7 @@ exports.create = async (req, res) => {
             // dibebankan ke pembeli), bukan total polos.
             const displayAmount = payment.amount || (total + (payment.fee || 0));
             
-            sendUserWhatsApp(normalizedPhone, "pending", { name: buyerName, order_id: orderId, total: rupiahLog(displayAmount) });
+            sendUserWhatsApp(normalizedPhone, "pending", { name: buyerName, email: recipient_email, order_id: orderId, total: rupiahLog(displayAmount) });
 
             res.status(201).json({
                 message: "Pesanan topup berhasil dibuat",
@@ -1986,7 +1986,7 @@ exports.create = async (req, res) => {
                 }
             });
         } else {
-            sendUserWhatsApp(normalizedPhone, "pending", { name: buyerName, order_id: orderId, total: rupiahLog(total) });
+            sendUserWhatsApp(normalizedPhone, "pending", { name: buyerName, email: recipient_email, order_id: orderId, total: rupiahLog(total) });
 
             res.status(201).json({
                 message: "Pesanan topup berhasil dibuat",

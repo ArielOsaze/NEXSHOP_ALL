@@ -13,6 +13,7 @@ const { resetLoginLimiter, getBlockedLoginIps } = require("../middleware/rateLim
 const { resetAdminSession } = require("../middleware/adminSession");
 const { getTurnstileConfig, isTurnstileRequired, verifyTurnstile } = require("../services/turnstileService");
 const { getRuntimeConfig } = require("../services/runtimeConfigService");
+const { sendLoginSecurityNotification } = require("../services/loginSecurityNotificationService");
 
 const RESET_TOKEN_EXPIRY_MINUTES = 30;
 // dipakai buat bikin link reset password (lihat .env.example) -- sama kayak
@@ -401,7 +402,7 @@ exports.resendOtp = async (req, res) => {
     try {
         const { data: user, error } = await supabase
             .from("users")
-            .select("id, email_verified, phone, pending_phone_normalized, otp_purpose")
+            .select("id, email, fullname, email_verified, phone, pending_phone_normalized, otp_purpose")
             .eq("email", email)
             .maybeSingle();
 
@@ -451,7 +452,7 @@ exports.resendOtp = async (req, res) => {
 
         try {
             if (req.body.otp_method === "whatsapp" && user.phone) {
-                const resWA = await sendUserWhatsApp(user.phone, "otp", { otp });
+                const resWA = await sendUserWhatsApp(user.phone, "otp", { otp, name: user.fullname, email: user.email });
                 if (resWA.success) {
                     deliverySent = true;
                 } else if (resWA.reason === "disabled_type" || resWA.reason === "disabled_globally") {
@@ -554,7 +555,11 @@ exports.login = async (req, res) => {
 
         await backfillLegacyPhone(user);
         await clearPersistentFailedLogin(user.id);
-        res.json({ message: "Login berhasil", ...issueUserSession(user) });
+        const session = issueUserSession(user);
+        res.json({ message: "Login berhasil", ...session });
+        sendLoginSecurityNotification(user, req).catch((notificationError) => {
+            console.log("Login security notification gagal:", notificationError.message);
+        });
     } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Server Error" });
@@ -724,6 +729,9 @@ exports.googleCallback = async (req, res) => {
 
         await backfillLegacyPhone(outcome.user);
         const session = issueUserSession(outcome.user);
+        sendLoginSecurityNotification(outcome.user, req).catch((notificationError) => {
+            console.log("Login security notification Google gagal:", notificationError.message);
+        });
         const exchangeCode = createGoogleExchangeCode(session);
         return res.redirect(302, frontendRedirect(returnPath, { oauth: state.action, code: exchangeCode }));
     } catch (error) {
@@ -793,7 +801,7 @@ exports.forgotPassword = async (req, res) => {
     try {
         const { data: user, error } = await supabase
             .from("users")
-            .select("id, email")
+            .select("id, email, fullname")
             .eq("email", email)
             .maybeSingle();
 
@@ -829,7 +837,7 @@ exports.forgotPassword = async (req, res) => {
         const resetLink = `${frontendUrl}/#/reset-password?token=${token}`;
 
         try {
-            await sendPasswordResetEmail(user.email, resetLink);
+            await sendPasswordResetEmail(user.email, resetLink, user.fullname);
         } catch (mailErr) {
             // gagal kirim tetap dicatat ke admin_notifications (dari dalam
             // mailer.js) -- tapi ke USER tetap kasih respons generic yang

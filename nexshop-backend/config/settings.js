@@ -1,7 +1,9 @@
 const axios = require("axios");
 const supabase = require("./db");
 
+const DEFAULT_ADMIN_WA_NUMBER = "087792634063";
 const DEFAULT_GEMINI_MODEL = "gemini-flash-latest";
+
 const GEMINI_FALLBACK_MODELS = [
     "gemini-flash-latest",
     "gemini-2.5-flash",
@@ -81,7 +83,7 @@ async function getApiKeys({ fresh = false } = {}) {
         brevo_sender_name: (data && data.brevo_sender_name) || process.env.BREVO_SENDER_NAME || "NexShop",
         waapi_url: (data && data.waapi_url) || process.env.WA_API_URL || process.env.WAAPI_URL || "",
         waapi_key: (data && data.waapi_key) || process.env.WA_API_KEY || process.env.WAAPI_KEY || "",
-        waapi_target_number: (data && data.waapi_target_number) || process.env.WAAPI_TARGET_NUMBER || "",
+        waapi_target_number: (data && data.waapi_target_number) || process.env.WAAPI_TARGET_NUMBER || process.env.NEXSHOP_ADMIN_WA_NUMBER || DEFAULT_ADMIN_WA_NUMBER,
         gemini_api_key: (data && data.gemini_api_key) || process.env.GEMINI_API_KEY || "",
         gemini_news_model: normalizeGeminiModel((data && data.gemini_news_model) || process.env.GEMINI_NEWS_MODEL),
         smtp_host: (data && data.smtp_host) || process.env.SMTP_HOST || "",

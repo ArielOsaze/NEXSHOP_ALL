@@ -237,7 +237,7 @@ exports.adminResendOtp = async (req, res) => {
     try {
         const { data: user, error } = await supabase
             .from("users")
-            .select("id, email, email_verified, phone")
+            .select("id, email, fullname, email_verified, phone")
             .eq("id", id)
             .maybeSingle();
 
@@ -273,7 +273,7 @@ exports.adminResendOtp = async (req, res) => {
             // Coba kirim via WA jika user punya nomor, kalau gagal fallback email
             if (user.phone) {
                 const { sendUserWhatsApp } = require("../services/userWhatsAppService");
-                const resWA = await sendUserWhatsApp(user.phone, "otp", { otp });
+                const resWA = await sendUserWhatsApp(user.phone, "otp", { otp, name: user.fullname, email: user.email });
                 if (resWA.success) {
                     deliverySent = true;
                     deliveryChannel = "whatsapp";

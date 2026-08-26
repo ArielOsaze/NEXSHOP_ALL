@@ -1110,6 +1110,14 @@ function checkResetPasswordLink() {
     history.replaceState(null, "", window.location.pathname + window.location.search);
 }
 
+function checkForgotPasswordLink() {
+    const hash = window.location.hash || "";
+    if (!hash.startsWith("#/forgot-password")) return;
+    showForgotPasswordForm();
+    openOverlay("authOverlay");
+    history.replaceState(null, "", window.location.pathname + window.location.search);
+}
+
 document.getElementById("resetPasswordForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const token = document.getElementById("resetPasswordToken").value;
@@ -4621,6 +4629,7 @@ async function bootstrapApp() {
     initSearchListeners();
     updateCartCount();
     checkResetPasswordLink();
+    checkForgotPasswordLink();
     refreshAccountUI();
     await refreshCurrentUserProfile();
     initNexBotChat();
