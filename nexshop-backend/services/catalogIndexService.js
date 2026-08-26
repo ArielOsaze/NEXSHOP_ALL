@@ -246,9 +246,9 @@ async function bangunIndeks() {
                 if (!o.category) return;
                 hitung.set(o.category, (hitung.get(o.category) || 0) + 1);
             });
-            return [...hitung.entries()]
-                .map(([name, count]) => ({ name, count }))
-                .sort((a, b) => a.name.localeCompare(b.name, "id"));
+            const kategori = [...hitung.entries()]
+                .map(([name, count]) => ({ name, count }));
+            return urutkanKategoriMarketplace(kategori);
         })(),
         total_operators: operators.length,
         total_games: games.length,
@@ -336,9 +336,22 @@ function urutkanPencarian(daftar, query) {
  * halaman yang sudah terkirim. Inilah yang membuat pencarian tetap benar
  * walau browser baru memuat sebagian kartu.
  */
+function compareMarketplaceCategory(a, b) {
+    const aName = typeof a === "string" ? a : a?.category || a?.name;
+    const bName = typeof b === "string" ? b : b?.category || b?.name;
+    const aLainnya = String(aName || "").trim().toLowerCase() === "lainnya";
+    const bLainnya = String(bName || "").trim().toLowerCase() === "lainnya";
+    if (aLainnya !== bLainnya) return aLainnya ? 1 : -1;
+    return String(aName || "Lainnya").localeCompare(String(bName || "Lainnya"), "id");
+}
+
+function urutkanKategoriMarketplace(daftar) {
+    return [...(daftar || [])].sort(compareMarketplaceCategory);
+}
+
 function urutkanMarketplaceOperators(daftar) {
     return [...(daftar || [])].sort((a, b) => {
-        const categoryCompare = String(a?.category || "Lainnya").localeCompare(String(b?.category || "Lainnya"), "id");
+        const categoryCompare = compareMarketplaceCategory(a, b);
         if (categoryCompare !== 0) return categoryCompare;
         return String(a?.name || "").localeCompare(String(b?.name || ""), "id");
     });
@@ -377,6 +390,7 @@ module.exports = {
     getCatalogIndex,
     invalidateCatalogIndex,
     halamanGrup,
+    urutkanKategoriMarketplace,
     urutkanMarketplaceOperators,
     urutkanPopuler,
     urutkanPencarian,
