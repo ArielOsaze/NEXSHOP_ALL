@@ -35,6 +35,30 @@ assert.match(message, /203\.0\.113\.10/);
 assert.match(message, /https:\/\/nexshop\.cloud\/#\/forgot-password/);
 assert.match(message, /Jika ini bukan Anda/i);
 
+const adminMessage = buildLoginSecurityMessage({
+    user: { fullname: "Ariel Admin", email: "admin@nexshop.com", role: "admin" },
+    timestamp: new Date("2026-08-26T06:07:08.000Z"),
+    ip: "203.0.113.10",
+    location: "Jakarta, Indonesia",
+    userAgent: "Mozilla/5.0 Chrome/139 Windows",
+    resetUrl: "https://nexshop.cloud/#/forgot-password"
+});
+assert.match(adminMessage, /Peringatan Login Admin NexShop/);
+assert.match(adminMessage, /akses dashboard admin/i);
+assert.match(adminMessage, /Peran: Admin/);
+assert.doesNotMatch(adminMessage, /akun NexShop kamu baru saja login/i);
+
+const staffMessage = buildLoginSecurityMessage({
+    user: { fullname: "Staff NexShop", email: "staff@nexshop.com", role: "staff" },
+    timestamp: new Date("2026-08-26T06:07:08.000Z"),
+    ip: "203.0.113.11",
+    location: "Bandung, Indonesia",
+    userAgent: "Mozilla/5.0 Firefox/140 Windows",
+    resetUrl: "https://nexshop.cloud/#/forgot-password"
+});
+assert.match(staffMessage, /Peringatan Login Admin NexShop/);
+assert.match(staffMessage, /Peran: Staff/);
+
 const fs = require("fs");
 const walletControllerSource = fs.readFileSync(require.resolve("../nexshop-backend/controllers/walletController"), "utf8");
 assert.match(walletControllerSource, /notify\("wallet"/);

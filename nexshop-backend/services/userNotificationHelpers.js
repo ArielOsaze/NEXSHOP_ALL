@@ -49,10 +49,18 @@ function buildLoginSecurityMessage({ user, timestamp, ip, location, userAgent, r
     const safeLocation = String(location || "Lokasi tidak terdeteksi").slice(0, 160);
     const safeIp = String(ip || "tidak tersedia").slice(0, 80);
     const device = describeUserAgent(userAgent);
+    const role = String(user?.role || "").trim().toLowerCase();
+    const isAdminLogin = role === "admin" || role === "staff";
+    const roleLabel = role === "staff" ? "Staff" : "Admin";
+    const intro = isAdminLogin
+        ? `Halo ${name}, akses dashboard admin NexShop baru saja berhasil digunakan.`
+        : `Halo ${name}, akun NexShop kamu baru saja login.`;
+
     return [
-        "🔐 *Peringatan Login NexShop*",
+        isAdminLogin ? "🔐 *Peringatan Login Admin NexShop*" : "🔐 *Peringatan Login NexShop*",
         "",
-        `Halo ${name}, akun NexShop kamu baru saja login.`,
+        intro,
+        ...(isAdminLogin ? [`Peran: ${roleLabel}`, "Dashboard: https://nexshop.cloud/admin/dashboard"] : []),
         `Waktu: ${formatWibTimestamp(timestamp)}`,
         `Lokasi perkiraan: ${safeLocation}`,
         `IP: ${safeIp}`,
