@@ -545,9 +545,9 @@ exports.login = async (req, res) => {
         if (loginContext === "admin" && !["admin", "staff"].includes(user.role)) {
             return res.status(403).json({ message: "Akun ini tidak memiliki akses administrator atau staff." });
         }
-        if (loginContext === "user" && ["admin", "staff"].includes(user.role)) {
-            return res.status(403).json({ message: "Gunakan halaman login admin untuk akun administrator atau staff." });
-        }
+        // Admin/staff tetap boleh masuk ke web utama sebagai sesi storefront.
+        // Perlindungan dashboard dan endpoint sensitif tetap ditegakkan oleh
+        // middleware role di server, bukan oleh login context ini.
 
         // Turnstile diperiksa setelah password valid agar super admin bisa
         // bootstrap konfigurasi pertama dari dashboard. Endpoint tetap dibatasi

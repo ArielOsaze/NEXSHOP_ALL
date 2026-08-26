@@ -211,8 +211,20 @@ function switchCartContext() {
 }
 
 /* ---------- Toast ---------- */
+function getToastContainer() {
+    let container = document.getElementById("toastContainer");
+    if (container) return container;
+    container = document.createElement("div");
+    container.id = "toastContainer";
+    container.className = "toast-container";
+    container.setAttribute("aria-live", "polite");
+    container.setAttribute("aria-atomic", "true");
+    document.body.appendChild(container);
+    return container;
+}
+
 function toast(message, type = "default") {
-    const container = document.getElementById("toastContainer");
+    const container = getToastContainer();
     const el = document.createElement("div");
     el.className = "toast" + (type !== "default" ? " " + type : "");
     const icon = type === "success" ? "fa-circle-check" : type === "error" ? "fa-circle-exclamation" : "fa-circle-info";
@@ -1298,7 +1310,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         loginResponse = await fetch(`${API_BASE}/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password, captcha_token })
+            body: JSON.stringify({ email, password, captcha_token, login_context: "user" })
         });
         data = await loginResponse.json();
     } catch (networkError) {

@@ -23,7 +23,7 @@ assert.match(auth, /requestedLoginContext/);
 assert.match(auth, /referer/);
 assert.match(auth, /request dari halaman \/admin\/login/);
 assert.match(auth, /loginContext === "admin"[\s\S]{0,180}includes\(user\.role\)/);
-assert.match(auth, /loginContext === "user"[\s\S]{0,180}includes\(user\.role\)/);
+assert.doesNotMatch(auth, /loginContext === "user"[\s\S]{0,180}includes\(user\.role\)/, "admin/staff tetap boleh login web utama");
 
 assert.ok(fs.existsSync(path.join(root, "nexshop-backend/migrations/019_create_admin_approval_requests.sql")), "migration approval harus tersedia");
 assert.ok(fs.existsSync(path.join(root, "nexshop-backend/routes/adminApprovalRoutes.js")), "route approval harus tersedia");
@@ -38,7 +38,7 @@ assert.match(musicRoutes, /router\.post\("\/", authMiddleware, superAdminMiddlew
 assert.match(server, /app\.use\("\/api\/admin\/approvals", adminApprovalRoutes\)/);
 assert.match(dashboard, /data-view="approvals"/);
 assert.match(dashboard, /view-approvals/);
-assert.match(dashboard, /sidebar-section-label/);
+assert.match(dashboard, /sidebar-dashboard-link/);
 assert.match(dashboardJs, /\/admin\/approvals/);
 assert.match(dashboardJs, /submitStoreSettingsApproval|requestStoreSettingsApproval/);
 
