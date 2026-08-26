@@ -7,7 +7,8 @@ const { sendAdminPinChangeOtpEmail } = require("../config/mailer");
 const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
-const { assertSafeOutboundUrl, validateWebhookUrlShape } = require("../utils/safeOutboundUrl");
+const { assertSafeOutboundUrl } = require("../utils/safeOutboundUrl");
+const { validateWaGatewayUrlShape } = require("../utils/waGatewayUrl");
 const { isAllowedChromeExecutable } = require("../utils/chromeExecutable");
 
 const PIN_CHANGE_OTP_TTL_MS = 5 * 60 * 1000;
@@ -365,12 +366,11 @@ exports.updateApiKeysAdmin = async (req, res) => {
         }
 
         if (payload.waapi_url !== undefined && String(payload.waapi_url).trim()) {
-            const target = `${String(payload.waapi_url).trim().replace(/\/$/, "")}/api/whatsapp/send-message`;
-            const validation = validateWebhookUrlShape(target);
+            const validation = validateWaGatewayUrlShape(payload.waapi_url);
             if (!validation.ok) {
                 return res.status(400).json({ message: `URL Gateway WA ditolak: ${validation.reason}` });
             }
-            payload.waapi_url = String(payload.waapi_url).trim().replace(/\/$/, "");
+            payload.waapi_url = validation.url;
         }
 
         // Template pesan & toggle notifikasi Fonnte disimpan di store_settings,
@@ -512,14 +512,9 @@ exports.updateRuntimeConfigAdmin = async (req, res) => {
 // melaporkan hasil sukses/gagal apa adanya biar gampang di-debug dari admin
 // dashboard.
 //
-// CATATAN MIGRASI: dulu fungsi ini manggil gateway WAAPI eksternal
-// (waapi_url/waapi_key dari Settings > API Keys, endpoint
-// /api/whatsapp/send-message). Field waapi_url/waapi_key itu peninggalan
-// gateway lama dan TIDAK dipakai lagi buat kirim pesan asli — semua
-// pengiriman WA (OTP, notifikasi pending/success/failed, notifikasi admin)
-// sekarang lewat NexShop WA API (lihat config/whatsapp.js &
-// services/userWhatsAppService.js), jadi test button ini disamakan supaya
-// benar-benar menguji jalur yang sama yang dipakai production.
+// URL/key di Settings > API Keys dipakai sebagai konfigurasi NexShop WA API
+// (gateway Baileys privat), jadi test button ini menguji jalur produksi yang
+// sama dengan OTP, notifikasi transaksi, dan notifikasi admin.
 exports.testWhatsAppAdmin = async (req, res) => {
     if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
@@ -540,8 +535,8 @@ exports.testWhatsAppAdmin = async (req, res) => {
         const started = Date.now();
         try {
             const waRes = await axios.post(
-                `${url}/send-otp`,
-                { phone: number, otp: "notify", message },
+                `${url}/send-message`,
+                { phone: number, message },
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -645,6 +640,7 @@ exports.testApiGamesAdmin = async (req, res) => {
 exports.getWaApiStatus = async (req, res) => {
     try {
         const { url, key } = await getWaApiConfig();
+        if (!key) return res.status(400).json({ success: false, message: "API Key WA Gateway belum dikonfigurasi." });
         const response = await axios.get(`${url}/health`, {
             headers: { "X-API-Key": key },
             timeout: 8000
@@ -680,54 +676,20 @@ exports.getWaApiStatus = async (req, res) => {
 exports.forceWaRescan = async (req, res) => {
     try {
         const { url, key } = await getWaApiConfig();
-
-        // Hapus session persisten supaya WA API generate QR code baru
-        const sessionDir = process.env.WA_SESSION_DIR || "C:/Users/ariel/nexshop/whatsapp-session";
-        const fs = require("fs");
-        let deleted = false;
-        try {
-            const entries = fs.readdirSync(sessionDir);
-            for (const entry of entries) {
-                if (entry.endsWith(".json")) { // hapus pre-key/signed-key/session file
-                    fs.unlinkSync(require("path").join(sessionDir, entry));
-                    deleted = true;
-                }
-            }
-        } catch (dirErr) { /* session dir mungkin kosong/belum ada */ }
-
-        // Restart WA socket lewat PM2
-        const { execSync } = require("child_process");
-        try {
-            execSync("pm2 restart nexshop-wa-api", { timeout: 15000, stdio: "pipe" });
-        } catch (pm2Err) {
-            console.error("PM2 restart gagal:", pm2Err.message);
-        }
-
-        // Tunggu sebentar, ambil QR baru
-        setTimeout(async () => {
-            try {
-                const qrResp = await axios.get(`${url}/qr`, {
-                    headers: { "X-API-Key": key },
-                    timeout: 8000
-                });
-                res.json({
-                    success: true,
-                    message: "QR code WA baru telah digenerate. Silakan scan ulang.",
-                    qr: qrResp.data.qr || null,
-                    qrImage: qrResp.data.qrImage || null,
-                    sessionCleared: deleted
-                });
-            } catch (e) {
-                res.json({
-                    success: true,
-                    message: "Session dihapus & service di-restart. Refresh halaman / buka /qr untuk dapat QR baru.",
-                    sessionCleared: deleted
-                });
-            }
-        }, 5000);
+        if (!key) return res.status(400).json({ success: false, message: "API Key WA Gateway belum dikonfigurasi." });
+        // Hanya gateway yang boleh menghapus kredensialnya sendiri. Backend
+        // utama tidak tahu lokasi sesi gateway dan tidak perlu akses PM2.
+        await axios.post(`${url}/reset`, {}, {
+            headers: { "X-API-Key": key },
+            timeout: 15000
+        });
+        return res.status(202).json({
+            success: true,
+            message: "Sesi WhatsApp direset oleh gateway. Tunggu beberapa detik lalu klik Refresh QR."
+        });
     } catch (err) {
-        console.error("Force resc an error:", err.message);
-        res.status(500).json({ success: false, message: "Gagal mereset sesi WA: " + err.message });
+        console.error("Force WA rescan error:", err.response?.data || err.message);
+        res.status(502).json({ success: false, message: err.response?.data?.message || "Gateway WhatsApp tidak dapat dihubungi untuk reset sesi." });
     }
 };
 

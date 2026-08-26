@@ -109,6 +109,11 @@ async function sendUserWhatsApp(targetNumber, type, variables = {}, extraMessage
         } else if (type === "otp") {
             enabledFlag = settings.wa_notify_otp_enabled;
             template = settings.wa_template_otp || "";
+        } else if (type === "failed") {
+            // Tidak ada template khusus gagal pada UI lama. Gateway akan
+            // membentuk pesan status gagal yang aman bila message kosong.
+            enabledFlag = settings.wa_notify_success_enabled;
+            template = "";
         } else {
             return { success: false, reason: "invalid_type" };
         }
@@ -181,9 +186,41 @@ async function testFonnteConnection(targetNumber, messageText) {
     }
 }
 
+/**
+ * Jalur pesan kampanye sengaja terpisah dari sendUserWhatsApp(): ia tidak
+ * tunduk pada toggle notifikasi transaksional dan dipanggil oleh worker yang
+ * membatasi satu penerima per interval. Gateway tetap menerima satu nomor per
+ * request; tidak ada endpoint bulk di service ini.
+ */
+async function sendMarketingWhatsApp(targetNumber, message) {
+    try {
+        const canonicalTarget = toFonntePhone(String(targetNumber || ""));
+        if (!canonicalTarget) return { success: false, reason: "permanent", error: "Nomor WhatsApp tidak valid." };
+        const text = String(message || "").trim();
+        if (!text || text.length > 4096) return { success: false, reason: "permanent", error: "Pesan kampanye tidak valid." };
+
+        const { url, key } = await getWaApiConfig();
+        if (!key) return { success: false, reason: "permanent", error: "API Key WA Gateway belum dikonfigurasi." };
+        const response = await axios.post(`${url}/send-message`, { phone: canonicalTarget, message: text }, {
+            headers: { "Content-Type": "application/json", "X-API-Key": key },
+            timeout: 15000
+        });
+        return response.data?.success === false
+            ? { success: false, reason: "permanent", error: response.data.message || "Gateway menolak pesan." }
+            : { success: true, response: response.data };
+    } catch (err) {
+        return {
+            success: false,
+            reason: [400, 401, 403, 404, 422].includes(err.response?.status) ? "permanent" : "transient",
+            error: err.response?.data?.message || err.message
+        };
+    }
+}
+
 module.exports = {
     sendUserWhatsApp,
     testFonnteConnection,
     parseTemplate,
-    sendToWaApi  // export juga untuk pemakaian langsung/testing
+    sendToWaApi,  // export juga untuk pemakaian langsung/testing
+    sendMarketingWhatsApp
 };

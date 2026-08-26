@@ -1,0 +1,22 @@
+{
+  "name": "nexshop-wa-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Private Baileys gateway used by NexShop for WhatsApp delivery.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "7.0.0-rc14",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "pino": "^9.9.4",
+    "qrcode": "^1.5.4"
+  }
+}

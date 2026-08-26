@@ -17,7 +17,7 @@ const { getWaApiConfig } = require("./settings");
 
 /**
  * Kirim notifikasi ke WhatsApp admin lewat WA API server.
- * Pesan dikirim sebagai custom message via /send-otp endpoint.
+ * Pesan dikirim sebagai custom message via /send-message endpoint.
  *
  * Pola & alasan silent-fail-nya sama persis kayak sebelumnya
  * (WAAPI/Fonnte): kalau gagal kirim WA, proses utama (order/topup)
@@ -38,10 +38,8 @@ async function sendWhatsAppNotification(message) {
     }
 
     try {
-        // Kirim via /send-otp endpoint (pakai custom message)
-        await axios.post(`${url}/send-otp`, {
+        await axios.post(`${url}/send-message`, {
             phone: targetNumber,
-            otp: "notify",  // dummy, karena message custom akan dipakai
             message: message
         }, {
             headers: {

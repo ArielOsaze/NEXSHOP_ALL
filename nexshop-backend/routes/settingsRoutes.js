@@ -41,12 +41,10 @@ router.put("/runtime-config", authMiddleware, superAdminMiddleware, requireAdmin
 router.post("/test-whatsapp", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.testWhatsAppAdmin);
 router.post("/test-user-whatsapp", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.testUserWhatsApp);
 
-// WhatsApp API — proxy status & QR code langsung dari WA API server
-// (endpoint: POST /api/settings/wa-api/status & /wa-api/rescan)
-// Catatan: pakai requireAdminPin saja (tanpa JWT authMiddleware) — agar admin
-// bisa cek scan QR dari dashboard login PIN, tanpa perlu dapat session JWT dulu.
-router.post("/wa-api/status", requireAdminPin, settingsController.getWaApiStatus);
-router.post("/wa-api/rescan", requireAdminPin, settingsController.forceWaRescan);
+// QR adalah kredensial login WhatsApp. Status boleh dibaca oleh admin yang
+// sudah login, sedangkan reset sesi tetap membutuhkan Security PIN.
+router.get("/wa-api/status", authMiddleware, superAdminMiddleware, settingsController.getWaApiStatus);
+router.post("/wa-api/rescan", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.forceWaRescan);
 router.post("/apigames/test", authMiddleware, superAdminMiddleware, requireAdminPin, testApiGamesLimiter, settingsController.testApiGamesAdmin);
 
 // Profil admin yang sedang login

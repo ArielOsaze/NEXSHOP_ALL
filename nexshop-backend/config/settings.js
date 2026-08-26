@@ -79,8 +79,8 @@ async function getApiKeys({ fresh = false } = {}) {
         brevo_api_key: (data && data.brevo_api_key) || process.env.BREVO_API_KEY || "",
         brevo_sender_email: (data && data.brevo_sender_email) || process.env.EMAIL_USER || "",
         brevo_sender_name: (data && data.brevo_sender_name) || process.env.BREVO_SENDER_NAME || "NexShop",
-        waapi_url: (data && data.waapi_url) || process.env.WAAPI_URL || "",
-        waapi_key: (data && data.waapi_key) || process.env.WAAPI_KEY || "",
+        waapi_url: (data && data.waapi_url) || process.env.WA_API_URL || process.env.WAAPI_URL || "",
+        waapi_key: (data && data.waapi_key) || process.env.WA_API_KEY || process.env.WAAPI_KEY || "",
         waapi_target_number: (data && data.waapi_target_number) || process.env.WAAPI_TARGET_NUMBER || "",
         gemini_api_key: (data && data.gemini_api_key) || process.env.GEMINI_API_KEY || "",
         gemini_news_model: normalizeGeminiModel((data && data.gemini_news_model) || process.env.GEMINI_NEWS_MODEL),
@@ -237,8 +237,10 @@ async function updateStoreSettings(payload) {
 async function getWaApiConfig({ fresh = false } = {}) {
     const keys = await getApiKeys({ fresh });
     return {
-        url: (keys.waapi_url || process.env.WA_API_URL || "http://127.0.0.1:8080").trim().replace(/\/$/, ""),
-        key: (keys.waapi_key || process.env.WA_API_KEY || "nexshop-wa-2024-secure-key").trim(),
+        url: (keys.waapi_url || process.env.WA_API_URL || process.env.WAAPI_URL || "http://127.0.0.1:8080").trim().replace(/\/$/, ""),
+        // Tidak ada default key: key bawaan membuat semua deploy memiliki
+        // kredensial gateway yang sama dan mudah ditebak.
+        key: (keys.waapi_key || process.env.WA_API_KEY || process.env.WAAPI_KEY || "").trim(),
         targetNumber: (keys.waapi_target_number || "").trim()
     };
 }
