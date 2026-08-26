@@ -3,7 +3,7 @@
 
 CREATE TABLE IF NOT EXISTS wa_marketing_contacts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
     phone_normalized TEXT NOT NULL UNIQUE,
     display_name TEXT NOT NULL DEFAULT 'Kontak WhatsApp',
     email TEXT,
@@ -39,7 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_wa_marketing_messages_contact_time
 
 CREATE TABLE IF NOT EXISTS wa_marketing_followups (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
     source_type TEXT NOT NULL CHECK (source_type IN ('order', 'topup_order')),
     source_id TEXT NOT NULL,
     phone_normalized TEXT NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS wa_marketing_campaigns (
     audience_mode TEXT NOT NULL DEFAULT 'opted_in' CHECK (audience_mode IN ('opted_in', 'all_registered')),
     scheduled_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN ('queued', 'sending', 'sent', 'failed', 'cancelled')),
-    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
     sent_count INTEGER NOT NULL DEFAULT 0,
     failed_count INTEGER NOT NULL DEFAULT 0,
     last_error TEXT,
