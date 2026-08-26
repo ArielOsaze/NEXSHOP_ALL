@@ -2,7 +2,7 @@ const crypto = require("crypto");
 const { sendUserWhatsApp } = require("./userWhatsAppService");
 const { normalizePhoneNumber, toFonntePhone } = require("../utils/phoneNumber");
 
-const OTP_EXPIRY_MINUTES = 10;
+const OTP_EXPIRY_MINUTES = 5;
 const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
 
@@ -142,9 +142,16 @@ async function verifyPhoneOtp(supabase, { userId, otp }) {
             otp_sent_at: null
         })
         .eq("id", userId)
+        .eq("otp_code", user.otp_code)
+        .eq("otp_expires_at", user.otp_expires_at)
         .select("id, fullname, email, role, avatar_url, phone, phone_normalized, phone_verified_at, onboarding_completed")
         .maybeSingle();
     if (updateErr) throw updateErr;
+    if (!updated) {
+        const err = new Error("Kode OTP sudah dipakai atau tidak lagi aktif. Minta kode baru.");
+        err.code = "OTP_ALREADY_USED";
+        throw err;
+    }
     return updated;
 }
 

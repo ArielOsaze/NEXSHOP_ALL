@@ -1096,7 +1096,7 @@ document.getElementById("forgotPasswordForm").addEventListener("submit", async (
     }
 });
 
-/* ---------- Reset Password (dibuka via link di email, #/reset-password?token=...) ---------- */
+/* ---------- Reset Password (dibuka via link unik 5 menit dari email/WhatsApp, #/reset-password?token=...) ---------- */
 function showResetPasswordForm(token) {
     document.querySelectorAll(".auth-tab").forEach(t => t.classList.remove("active"));
     document.getElementById("loginForm").classList.add("hidden");

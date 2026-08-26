@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const { OAuth2Client } = require("google-auth-library");
 const { sendOtpEmail, sendPasswordResetEmail } = require("../config/mailer");
-const { sendUserWhatsApp } = require("../services/userWhatsAppService");
+const { sendUserWhatsApp, sendUserSecurityWhatsApp } = require("../services/userWhatsAppService");
 const { normalizePhoneNumber } = require("../utils/phoneNumber");
 const { startPhoneOtp, verifyPhoneOtp, generateOtp, OTP_EXPIRY_MINUTES, assertPhoneAvailable } = require("../services/phoneOtpService");
 const { toPublicProfile, backfillLegacyPhone } = require("../services/userProfileService");
@@ -14,8 +14,13 @@ const { resetAdminSession } = require("../middleware/adminSession");
 const { getTurnstileConfig, isTurnstileRequired, verifyTurnstile } = require("../services/turnstileService");
 const { getRuntimeConfig } = require("../services/runtimeConfigService");
 const { sendLoginSecurityNotification } = require("../services/loginSecurityNotificationService");
+const {
+    hashResetToken,
+    createPasswordResetToken,
+    buildPasswordResetLink,
+    buildPasswordResetWhatsAppMessage
+} = require("../services/passwordResetService");
 
-const RESET_TOKEN_EXPIRY_MINUTES = 30;
 // dipakai buat bikin link reset password (lihat .env.example) -- sama kayak
 // FRONTEND_URL di orderController.js/topupController.js
 const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
@@ -26,10 +31,6 @@ const googleExchangeCodes = new Map();
 
 function isValidEmail(value) {
     return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()) && value.length <= 254;
-}
-
-function hashResetToken(token) {
-    return crypto.createHash("sha256").update(token).digest("hex");
 }
 
 function authUserPayload(user) {
@@ -360,7 +361,7 @@ exports.verifyOtp = async (req, res) => {
             return res.status(400).json({ message: "Tidak ada kode OTP aktif. Silakan minta kirim ulang." });
         }
 
-        if (!user.otp_expires_at || new Date(user.otp_expires_at) < new Date()) {
+        if (!user.otp_expires_at || new Date(user.otp_expires_at) <= new Date()) {
             return res.status(400).json({ message: "Kode OTP sudah kedaluwarsa. Silakan minta kirim ulang." });
         }
 
@@ -374,14 +375,21 @@ exports.verifyOtp = async (req, res) => {
             return res.status(400).json({ message: "Kode OTP salah. Periksa kembali atau minta kirim ulang." });
         }
 
-        const { error: updateErr } = await supabase
+        const { data: consumed, error: updateErr } = await supabase
             .from("users")
             .update({ email_verified: true, otp_code: null, otp_expires_at: null })
-            .eq("id", user.id);
+            .eq("id", user.id)
+            .eq("otp_code", user.otp_code)
+            .eq("otp_expires_at", user.otp_expires_at)
+            .select("id")
+            .maybeSingle();
 
         if (updateErr) {
             console.log(updateErr);
             return res.status(500).json({ message: "Gagal verifikasi akun" });
+        }
+        if (!consumed) {
+            return res.status(400).json({ message: "Kode OTP sudah dipakai atau tidak lagi aktif. Silakan minta kode baru." });
         }
 
         res.json({ message: "Verifikasi berhasil. Kamu sekarang bisa login." });
@@ -820,7 +828,7 @@ exports.forgotPassword = async (req, res) => {
     try {
         const { data: user, error } = await supabase
             .from("users")
-            .select("id, email, fullname")
+            .select("id, email, fullname, phone, phone_normalized")
             .eq("email", email)
             .maybeSingle();
 
@@ -833,15 +841,23 @@ exports.forgotPassword = async (req, res) => {
             return res.json(genericResponse);
         }
 
-        // token acak PANJANG (bukan 6 digit kayak OTP) -- reset password itu
-        // sensitif, jadi HARUS gak bisa ditebak/di-brute-force dalam waktu wajar
-        const token = crypto.randomBytes(32).toString("hex");
-        const tokenHash = hashResetToken(token);
-        const expiresAt = new Date(Date.now() + RESET_TOKEN_EXPIRY_MINUTES * 60 * 1000).toISOString();
+        // Satu token acak dipakai bersama oleh email dan WhatsApp. Database
+        // hanya menyimpan hash; token mentah tidak pernah ditulis ke log.
+        const resetToken = createPasswordResetToken();
+        const frontendUrl = FRONTEND_URL || "http://localhost:5500";
+        const resetLink = buildPasswordResetLink(frontendUrl, resetToken.token);
+        const resetWhatsAppMessage = buildPasswordResetWhatsAppMessage({
+            fullname: user.fullname,
+            email: user.email,
+            resetLink
+        });
 
         const { error: updateErr } = await supabase
             .from("users")
-            .update({ reset_password_token: tokenHash, reset_password_expires_at: expiresAt })
+            .update({
+                reset_password_token: resetToken.tokenHash,
+                reset_password_expires_at: resetToken.expiresAt
+            })
             .eq("id", user.id);
 
         if (updateErr) {
@@ -849,19 +865,16 @@ exports.forgotPassword = async (req, res) => {
             return res.status(500).json({ message: "Gagal membuat token reset" });
         }
 
-        // FRONTEND_URL diwajibkan ketika production (divalidasi saat startup).
-        // Fallback development memudahkan menjalankan store lokal tanpa
-        // membentuk URL dari Host header yang bisa dimanipulasi client.
-        const frontendUrl = FRONTEND_URL || "http://localhost:5500";
-        const resetLink = `${frontendUrl}/#/reset-password?token=${token}`;
-
-        try {
-            await sendPasswordResetEmail(user.email, resetLink, user.fullname);
-        } catch (mailErr) {
-            // gagal kirim tetap dicatat ke admin_notifications (dari dalam
-            // mailer.js) -- tapi ke USER tetap kasih respons generic yang
-            // sama, jangan bocorin detail error internal
-            console.log("Gagal kirim email reset password:", mailErr.message);
+        // Kedua delivery dicoba tanpa membocorkan apakah salah satunya gagal.
+        // Token tetap single-use dan akan hangus otomatis setelah 5 menit.
+        const deliveries = await Promise.allSettled([
+            sendPasswordResetEmail(user.email, resetLink, user.fullname),
+            user.phone || user.phone_normalized
+                ? sendUserSecurityWhatsApp(user.phone || user.phone_normalized, resetWhatsAppMessage)
+                : Promise.resolve({ success: false, reason: "missing_user_phone" })
+        ]);
+        if (deliveries.some((result) => result.status === "rejected")) {
+            console.log("Gagal mengirim salah satu channel reset password.");
         }
 
         res.json(genericResponse);
@@ -896,7 +909,7 @@ exports.resetPassword = async (req, res) => {
             return res.status(500).json({ message: "Database Error" });
         }
 
-        if (!user || !user.reset_password_expires_at || new Date(user.reset_password_expires_at) < new Date()) {
+        if (!user || !user.reset_password_expires_at || new Date(user.reset_password_expires_at) <= new Date()) {
             return res.status(400).json({
                 message: "Link reset password tidak valid atau sudah kedaluwarsa. Silakan minta link baru."
             });
@@ -904,21 +917,30 @@ exports.resetPassword = async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        const { error: updateErr } = await supabase
+        const { data: consumed, error: updateErr } = await supabase
             .from("users")
             .update({
                 password: hashedPassword,
                 reset_password_token: null,
                 reset_password_expires_at: null
             })
-            .eq("id", user.id);
+            .eq("id", user.id)
+            .eq("reset_password_token", tokenHash)
+            .eq("reset_password_expires_at", user.reset_password_expires_at)
+            .select("id")
+            .maybeSingle();
 
         if (updateErr) {
             console.log(updateErr);
             return res.status(500).json({ message: "Gagal update password" });
         }
+        if (!consumed) {
+            return res.status(400).json({
+                message: "Link reset password tidak valid atau sudah dipakai. Silakan minta link baru."
+            });
+        }
 
-        notify("users", `🔑 Password akun (id ${user.id}) berhasil direset lewat email`);
+        notify("users", `🔑 Password akun (id ${user.id}) berhasil direset lewat link aman`);
         res.json({ message: "Password berhasil diganti. Silakan login dengan password baru kamu." });
     } catch (err) {
         console.log(err);

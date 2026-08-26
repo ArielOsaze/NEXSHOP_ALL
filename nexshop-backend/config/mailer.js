@@ -86,7 +86,7 @@ async function sendOtpEmail(to, otp) {
                             ${otp}
                         </div>
                         <p style="color:#666; font-size: 13px; margin-top: 16px;">
-                            Kode ini berlaku selama 10 menit. Jangan bagikan kode ini ke siapa pun,
+                            Kode ini berlaku selama 5 menit. Jangan bagikan kode ini kepada siapa pun,
                             termasuk pihak yang mengaku dari NexShop.
                         </p>
                     </div>
@@ -261,7 +261,7 @@ async function sendPasswordResetEmail(to, resetLink, fullname) {
                             Reset Password
                         </a>
                         <p style="color:#666; font-size:13px;">
-                            Link ini cuma berlaku 30 menit dan cuma bisa dipakai sekali. Kalau kamu
+                            Link ini cuma berlaku 5 menit dan cuma bisa dipakai sekali. Kalau kamu
                             gak merasa minta reset password, abaikan aja email ini — password kamu
                             tetap aman dan gak berubah.
                         </p>

@@ -116,7 +116,7 @@ function buildLoginSecurityMessage({ user, loginContext = "user", timestamp, ip,
         "",
         "Jika ini Anda, abaikan pesan ini.",
         "Jika ini bukan Anda, segera reset password melalui link berikut:",
-        String(resetUrl || "https://nexshop.cloud/#/forgot-password"),
+        String(resetUrl || "Link reset aman tidak tersedia."),
         "",
         "Jangan berikan password atau OTP kepada siapa pun."
     ].join("\n");

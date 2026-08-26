@@ -25,14 +25,14 @@ const message = buildLoginSecurityMessage({
     ip: "203.0.113.10",
     location: "Jakarta, Indonesia",
     userAgent: "Mozilla/5.0 Chrome/139 Windows",
-    resetUrl: "https://nexshop.cloud/#/forgot-password"
+    resetUrl: "https://nexshop.cloud/#/reset-password?token=" + "a".repeat(64)
 });
 assert.match(message, /ariel\.osaze/);
 assert.match(message, /26 Agustus 2026 13:07:08 WIB/);
 assert.match(message, /Jakarta, Indonesia/);
 assert.match(message, /Chrome/);
 assert.match(message, /203\.0\.113\.10/);
-assert.match(message, /https:\/\/nexshop\.cloud\/#\/forgot-password/);
+assert.match(message, /https:\/\/nexshop\.cloud\/#\/reset-password\?token=[a-f0-9]{64}/);
 assert.match(message, /Jika ini bukan Anda/i);
 
 const adminMessage = buildLoginSecurityMessage({
@@ -42,7 +42,7 @@ const adminMessage = buildLoginSecurityMessage({
     ip: "203.0.113.10",
     location: "Jakarta, Indonesia",
     userAgent: "Mozilla/5.0 Chrome/139 Windows",
-    resetUrl: "https://nexshop.cloud/#/forgot-password"
+    resetUrl: "https://nexshop.cloud/#/reset-password?token=" + "a".repeat(64)
 });
 assert.match(adminMessage, /Peringatan Login Dashboard Admin NexShop/);
 assert.match(adminMessage, /dashboard admin NexShop/i);
@@ -58,7 +58,7 @@ const staffMessage = buildLoginSecurityMessage({
     ip: "203.0.113.11",
     location: "Bandung, Indonesia",
     userAgent: "Mozilla/5.0 Firefox/140 Windows",
-    resetUrl: "https://nexshop.cloud/#/forgot-password"
+    resetUrl: "https://nexshop.cloud/#/reset-password?token=" + "a".repeat(64)
 });
 assert.match(staffMessage, /Peringatan Login Dashboard Staff NexShop/);
 assert.match(staffMessage, /dashboard staff NexShop/i);

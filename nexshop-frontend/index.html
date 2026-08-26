@@ -934,7 +934,7 @@ Cek Transaksi
 
         <form id="otpForm" class="auth-form hidden">
             <h3>Verifikasi Kode OTP</h3>
-            <p class="otp-info">Kode 6 digit sudah dikirim ke <strong id="otpEmailLabel"></strong>.</p>
+            <p class="otp-info">Kode 6 digit sudah dikirim ke <strong id="otpEmailLabel"></strong>. Kode berlaku 5 menit dan hanya dapat dipakai sekali.</p>
             <input type="hidden" id="otpEmail">
             <label>Kode OTP
                 <input type="text" id="otpCode" required maxlength="6" inputmode="numeric" pattern="[0-9]{6}" placeholder="6 digit kode">
@@ -946,7 +946,7 @@ Cek Transaksi
 
         <form id="forgotPasswordForm" class="auth-form hidden">
             <h3>Lupa Password</h3>
-            <p class="otp-info">Masukkan email akun kamu. Kalau terdaftar, link reset password akan dikirim ke email itu.</p>
+            <p class="otp-info">Masukkan email akun kamu. Kalau terdaftar, link reset unik akan dikirim ke email dan WhatsApp yang tersimpan. Link berlaku 5 menit dan hanya bisa dipakai sekali.</p>
             <label>Email
                 <input type="email" id="forgotPasswordEmail" required placeholder="kamu@email.com">
             </label>
@@ -958,6 +958,7 @@ Cek Transaksi
 
         <form id="resetPasswordForm" class="auth-form hidden">
             <h3>Buat Password Baru</h3>
+            <p class="otp-info">Link reset unik ini berlaku 5 menit dan hanya bisa dipakai sekali.</p>
             <input type="hidden" id="resetPasswordToken">
             <label>Password Baru
                 <div class="password-field">

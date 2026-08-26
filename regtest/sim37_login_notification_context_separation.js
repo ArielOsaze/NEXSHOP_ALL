@@ -16,7 +16,7 @@ const common = {
     ip: "203.0.113.10",
     location: "Jakarta, Indonesia",
     userAgent: "Mozilla/5.0 Chrome/139 Windows",
-    resetUrl: "https://nexshop.cloud/#/forgot-password"
+    resetUrl: "https://nexshop.cloud/#/reset-password?token=" + "b".repeat(64)
 };
 const webMessage = helper.buildLoginSecurityMessage({ ...common, loginContext: "user" });
 const dashboardMessage = helper.buildLoginSecurityMessage({ ...common, loginContext: "admin" });
