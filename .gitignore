@@ -3,3 +3,18 @@ node_modules/
 codex-plugin-antigravity/
 .DS_Store
 Thumbs.db
+
+# Generated/local artifacts
+__pycache__/
+*.py[cod]
+*.log
+coverage/
+.nyc_output/
+
+# Runtime and audit output
+nexshop-backend/audit-report.txt
+nexshop-backend/counts.json
+nexshop-backend/public_catalog_audit*.json
+wa-gateway-server/data/
+wa-gateway-server/auth_info/
+wa-gateway-server/runtime-config.json

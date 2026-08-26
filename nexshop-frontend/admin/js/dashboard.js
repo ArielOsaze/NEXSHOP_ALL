@@ -40,7 +40,7 @@ async function loadCurrentUser() {
                 roleBadge.classList.replace("bg-primary", "bg-secondary");
 
                 // Hide restricted menus
-                document.querySelectorAll('.nav-link[data-view="settings"], .nav-link[data-view="aimgmt"], .nav-link[data-view="waMarketing"]').forEach(el => {
+                document.querySelectorAll('.nav-link[data-view="settings"], .nav-link[data-view="aimgmt"]').forEach(el => {
                     el.closest('.nav-item').style.display = 'none';
                 });
             } else {
@@ -620,7 +620,6 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         if (view === "topup") { window.initTopupCatalog?.(); loadTvBalance(); }
         if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); loadCustomTestimonials(); ratingsLoaded = true; }
         if (view === "settings" && !settingsLoaded) loadSettings();
-        if (view === "waMarketing") loadWaMarketingCampaigns();
         if (view === "stats" && !statsLoaded) loadStats();
         if (view === "musicplayer" && !musicPlayerLoaded) { loadMusicList(); musicPlayerLoaded = true; }
         if (view === "topSpenders") loadAdminTopSpenders();
@@ -629,7 +628,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
 });
 
 function switchView(view) {
-    if (currentUser && currentUser.role === "staff" && (view === "settings" || view === "aimgmt" || view === "waMarketing")) {
+    if (currentUser && currentUser.role === "staff" && (view === "settings" || view === "aimgmt")) {
         showToast("Akses ditolak. Fitur ini hanya untuk Super Admin.", true);
         return;
     }
@@ -651,7 +650,6 @@ function switchView(view) {
     if (view === "topup") { window.initTopupCatalog?.(); loadTvBalance(); }
     if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); loadCustomTestimonials(); ratingsLoaded = true; }
     if (view === "settings" && !settingsLoaded) loadSettings();
-    if (view === "waMarketing") loadWaMarketingCampaigns();
     if (view === "stats" && !statsLoaded) loadStats();
     if (view === "musicplayer" && !musicPlayerLoaded) { loadMusicList(); musicPlayerLoaded = true; }
     if (view === "aimgmt") { loadKnowledgeBase(); loadMultiAiStatus(); loadMultiAiLogs(); startAiHealthCheckTimer(); }
@@ -2280,113 +2278,6 @@ async function testFonnteWhatsApp() {
     } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="bi bi-whatsapp"></i> Kirim Test`;
-    }
-}
-
-// ===========================================================
-// WhatsApp Marketing — setiap campaign diproses worker backend satu nomor
-// per jeda. Tidak memakai antrean OTP/transaksi.
-// ===========================================================
-function toggleWaMarketingManualNumbers() {
-    const isManual = document.getElementById("waMarketingAudience")?.value === "manual";
-    document.getElementById("waMarketingManualWrap")?.classList.toggle("d-none", !isManual);
-}
-
-function waMarketingStatusBadge(status) {
-    const colors = { queued: "secondary", running: "primary", completed: "success", cancelled: "dark", failed: "danger" };
-    const labels = { queued: "Menunggu", running: "Berjalan", completed: "Selesai", cancelled: "Dibatalkan", failed: "Gagal" };
-    return `<span class="badge bg-${colors[status] || "secondary"}">${escapeHtml(labels[status] || status || "-")}</span>`;
-}
-
-async function loadWaMarketingCampaigns() {
-    const tbody = document.getElementById("waMarketingCampaigns");
-    if (!tbody) return;
-    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat campaign...</td></tr>`;
-    try {
-        const res = await apiFetch("/admin/wa-marketing");
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal memuat campaign WhatsApp.");
-        const campaigns = data.campaigns || [];
-        if (!campaigns.length) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Belum ada campaign.</td></tr>`;
-            return;
-        }
-        tbody.innerHTML = campaigns.map((campaign) => {
-            const created = campaign.created_at ? new Date(campaign.created_at).toLocaleString("id-ID") : "-";
-            const audience = campaign.audience_type === "manual" ? "Manual" : "Pengguna terverifikasi";
-            const total = Number(campaign.total_recipients || 0);
-            const sent = Number(campaign.sent_count || 0);
-            const failed = Number(campaign.failed_count || 0);
-            const action = ["queued", "running"].includes(campaign.status)
-                ? `<button class="btn btn-outline-danger btn-sm" onclick="cancelWaMarketingCampaign('${encodeURIComponent(campaign.id)}')">Batalkan</button>`
-                : "-";
-            return `<tr>
-                <td class="small">${escapeHtml(created)}</td>
-                <td><div>${escapeHtml(audience)}</div><small class="text-muted">Jeda ${escapeHtml(String(campaign.delay_seconds))} dtk</small></td>
-                <td style="max-width:320px"><div class="small text-truncate" title="${escapeHtml(campaign.message || "")}">${escapeHtml(campaign.message || "")}</div></td>
-                <td class="small"><strong>${sent}/${total}</strong> terkirim${failed ? ` <span class="text-danger">(${failed} gagal)</span>` : ""}</td>
-                <td>${waMarketingStatusBadge(campaign.status)}</td>
-                <td>${action}</td>
-            </tr>`;
-        }).join("");
-    } catch (error) {
-        if (error.message === "unauthorized") return;
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${escapeHtml(error.message)}</td></tr>`;
-    }
-}
-
-async function createWaMarketingCampaign(event) {
-    event.preventDefault();
-    const errorEl = document.getElementById("waMarketingError");
-    const button = document.getElementById("waMarketingSendBtn");
-    errorEl.textContent = "";
-    const payload = {
-        audience_type: document.getElementById("waMarketingAudience").value,
-        delay_seconds: Number(document.getElementById("waMarketingDelay").value),
-        manual_numbers: document.getElementById("waMarketingNumbers").value,
-        message: document.getElementById("waMarketingMessage").value.trim(),
-        confirmed_compliance: document.getElementById("waMarketingConfirm").checked
-    };
-    if (!confirm("Jadwalkan campaign WhatsApp ini? Pesan yang sudah diterima gateway tidak dapat ditarik kembali.")) return;
-    button.disabled = true;
-    try {
-        await withAdminPin(async (security_pin) => {
-            const res = await apiFetch("/admin/wa-marketing", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ ...payload, security_pin })
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.message || "Gagal membuat campaign WhatsApp.");
-            document.getElementById("waMarketingForm").reset();
-            document.getElementById("waMarketingDelay").value = "15";
-            toggleWaMarketingManualNumbers();
-            showToast(data.message || "Campaign dijadwalkan.");
-            await loadWaMarketingCampaigns();
-        }, "menjadwalkan campaign WhatsApp");
-    } catch (error) {
-        if (error.message !== "unauthorized") errorEl.textContent = error.message;
-    } finally {
-        button.disabled = false;
-    }
-}
-
-async function cancelWaMarketingCampaign(encodedId) {
-    if (!confirm("Batalkan campaign ini? Pesan yang sudah diterima gateway tetap tidak bisa ditarik kembali.")) return;
-    try {
-        await withAdminPin(async (security_pin) => {
-            const res = await apiFetch(`/admin/wa-marketing/${encodedId}/cancel`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ security_pin })
-            });
-            const data = await res.json().catch(() => ({}));
-            if (!res.ok) throw new Error(data.message || "Gagal membatalkan campaign.");
-            showToast(data.message || "Campaign dibatalkan.");
-            await loadWaMarketingCampaigns();
-        }, "membatalkan campaign WhatsApp");
-    } catch (error) {
-        if (error.message !== "unauthorized") showToast(error.message, true);
     }
 }
 

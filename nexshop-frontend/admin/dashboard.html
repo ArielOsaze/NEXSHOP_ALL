@@ -77,7 +77,6 @@
         <li class="nav-item"><a class="nav-link" href="#" data-view="editorial"><i class="bi bi-pen-fill me-2"></i>NexShop News</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="promocodes"><i class="bi bi-ticket-perforated me-2"></i>Kode Promo</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="ratings"><i class="bi bi-star me-2"></i>Rating</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="waMarketing"><i class="bi bi-whatsapp me-2"></i>WA Marketing</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="aimgmt"><i class="bi bi-robot me-2"></i>AI Management</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="musicplayer"><i class="bi bi-music-note-beamed me-2"></i>Music Player</a></li>
@@ -1630,69 +1629,6 @@
         </div>
     </div>
 </div>
-
-<!-- ===== Settings view ===== -->
-<section id="view-waMarketing" class="view-section d-none">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <div>
-            <h2>WhatsApp Marketing</h2>
-            <p class="text-muted mb-0">Campaign diproses satu per satu agar tidak menghambat OTP dan notifikasi transaksi.</p>
-        </div>
-        <button type="button" class="btn btn-outline-primary btn-sm" onclick="loadWaMarketingCampaigns()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
-    </div>
-
-    <div class="alert alert-warning small" role="alert">
-        <i class="bi bi-shield-exclamation me-1"></i> Kirim hanya kepada pelanggan yang telah memberi izin menerima pesan marketing. Jangan gunakan untuk spam. Target pengguna hanya mengambil nomor WhatsApp yang sudah diverifikasi.
-    </div>
-
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h5 class="card-title">Buat Campaign</h5>
-            <form id="waMarketingForm" class="row g-3" onsubmit="createWaMarketingCampaign(event)">
-                <div class="col-md-5">
-                    <label class="form-label" for="waMarketingAudience">Penerima</label>
-                    <select id="waMarketingAudience" class="form-select" onchange="toggleWaMarketingManualNumbers()">
-                        <option value="verified_users">Semua pengguna terverifikasi</option>
-                        <option value="manual">Daftar nomor manual (maks. 250)</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label" for="waMarketingDelay">Jeda antar pesan (detik)</label>
-                    <input id="waMarketingDelay" type="number" class="form-control" min="10" max="3600" value="15" required>
-                </div>
-                <div class="col-md-4 d-flex align-items-end">
-                    <div class="form-check mb-2">
-                        <input id="waMarketingConfirm" class="form-check-input" type="checkbox" required>
-                        <label class="form-check-label small" for="waMarketingConfirm">Saya mengonfirmasi penerima telah memberi izin.</label>
-                    </div>
-                </div>
-                <div id="waMarketingManualWrap" class="col-12 d-none">
-                    <label class="form-label" for="waMarketingNumbers">Nomor WhatsApp</label>
-                    <textarea id="waMarketingNumbers" class="form-control" rows="3" placeholder="0812xxxxxxx&#10;62813xxxxxxx&#10;(pisahkan dengan baris baru atau koma)"></textarea>
-                </div>
-                <div class="col-12">
-                    <label class="form-label" for="waMarketingMessage">Pesan</label>
-                    <textarea id="waMarketingMessage" class="form-control" rows="6" maxlength="4096" required placeholder="Tulis pesan campaign di sini..."></textarea>
-                    <div class="form-text">Maksimal 4.096 karakter. Tidak ada attachment atau bulk-send langsung.</div>
-                </div>
-                <div class="col-12 d-flex align-items-center gap-2">
-                    <button id="waMarketingSendBtn" type="submit" class="btn btn-success"><i class="bi bi-send me-1"></i>Jadwalkan Campaign</button>
-                    <span id="waMarketingError" class="text-danger small"></span>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div class="card shadow-sm">
-        <div class="card-header"><h5 class="mb-0">Riwayat Campaign</h5></div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead><tr><th>Dibuat</th><th>Target</th><th>Pesan</th><th>Progres</th><th>Status</th><th>Aksi</th></tr></thead>
-                <tbody id="waMarketingCampaigns"><tr><td colspan="6" class="text-center text-muted py-4">Belum dimuat.</td></tr></tbody>
-            </table>
-        </div>
-    </div>
-</section>
 
 <section id="view-settings" class="view-section d-none">
     <div class="mb-4">
