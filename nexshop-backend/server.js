@@ -32,6 +32,7 @@ const resellerRoutes = require("./routes/resellerRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
 const webhookRelayRoutes = require("./routes/webhookRelayRoutes");
 const promoCodeRoutes = require("./routes/promoCodeRoutes");
+const waCampaignRoutes = require("./routes/waCampaignRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const statsRoutes = require("./routes/statsRoutes");
 const newsRoutes = require("./routes/newsRoutes");
@@ -49,6 +50,7 @@ const { startRetryPoller } = require("./jobs/notificationRetryPoller");
 const { startScheduledPublishPoller } = require("./jobs/scheduledPublishPoller");
 const { startCatalogSyncPoller } = require("./jobs/catalogSyncPoller");
 const { startWebhookRelayPoller } = require("./jobs/webhookRelayPoller");
+const { startWaCampaignPoller } = require("./jobs/waCampaignPoller");
 const { getWaApiConfig } = require("./config/settings");
 const { syncWaGatewayRuntimeKey } = require("./utils/waGatewayRuntimeSync");
 
@@ -205,6 +207,7 @@ app.use("/api/reseller", resellerRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/webhooks", webhookRelayRoutes);
 app.use("/api/promo-codes", promoCodeRoutes);
+app.use("/api/wa-marketing", waCampaignRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin/stats", statsRoutes);
 app.use("/api/news", newsRoutes);
@@ -302,6 +305,7 @@ app.listen(PORT, () => {
         startScheduledPublishPoller();
         startCatalogSyncPoller();
         startWebhookRelayPoller();
+        startWaCampaignPoller();
     } else {
         console.log("⏸️  Background pollers dimatikan (set ENABLE_POLLERS=1 untuk mengaktifkan)");
     }

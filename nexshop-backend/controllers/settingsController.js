@@ -581,6 +581,7 @@ exports.testWhatsAppAdmin = async (req, res) => {
         const { url, key, targetNumber } = await getWaApiConfig({ fresh: true });
         const number = (req.body.number || targetNumber || "").trim();
         const message = (req.body.message || "").trim() || "Test notifikasi WhatsApp dari NexShop Admin Dashboard ✅";
+        const mediaUrl = (req.body.mediaUrl || "").trim();
 
         if (!number) {
             return res.status(400).json({ message: "Nomor tujuan admin belum diisi. Isi dulu 'Nomor Tujuan Notifikasi Admin' di form API Keys (atau isi nomor test manual)." });
@@ -589,8 +590,8 @@ exports.testWhatsAppAdmin = async (req, res) => {
         const started = Date.now();
         try {
             const waRes = await axios.post(
-                `${url}/send-message`,
-                { phone: number, message },
+                `${url}${mediaUrl ? "/send-media" : "/send-message"}`,
+                mediaUrl ? { phone: number, mediaUrl, caption: message } : { phone: number, message },
                 {
                     headers: {
                         "Content-Type": "application/json",
@@ -693,7 +694,7 @@ exports.testApiGamesAdmin = async (req, res) => {
 // ===========================================================
 exports.getWaApiStatus = async (req, res) => {
     try {
-        const { url, key } = await getWaApiConfig();
+        const { url, key, targetNumber } = await getWaApiConfig();
         if (!key) return res.status(400).json({ success: false, message: "API Key WA Gateway belum dikonfigurasi." });
         const response = await axios.get(`${url}/health`, {
             headers: { "X-API-Key": key },
@@ -711,6 +712,8 @@ exports.getWaApiStatus = async (req, res) => {
 
         res.json({
             success: true,
+            gateway_url: url,
+            target_number: targetNumber || "",
             waConnected: response.data.waConnected,
             qrAvailable: qrData?.qr ? true : false,
             qr: qrData?.qr || null,

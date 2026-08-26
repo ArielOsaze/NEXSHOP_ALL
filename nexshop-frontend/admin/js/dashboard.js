@@ -23,6 +23,7 @@ let orderStatusFilterValue = "";
 let usersLoaded = false;
 let promoLoaded = false;
 let settingsLoaded = false;
+let waApiManagerLoaded = false;
 let ratingsLoaded = false;
 let musicPlayerLoaded = false;
 let currentUser = null;
@@ -40,7 +41,7 @@ async function loadCurrentUser() {
                 roleBadge.classList.replace("bg-primary", "bg-secondary");
 
                 // Hide restricted menus
-                document.querySelectorAll('.nav-link[data-view="settings"], .nav-link[data-view="aimgmt"]').forEach(el => {
+                document.querySelectorAll('.nav-link[data-view="settings"], .nav-link[data-view="waApi"], .nav-link[data-view="aimgmt"]').forEach(el => {
                     el.closest('.nav-item').style.display = 'none';
                 });
             } else {
@@ -620,6 +621,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         if (view === "topup") { window.initTopupCatalog?.(); loadTvBalance(); }
         if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); loadCustomTestimonials(); ratingsLoaded = true; }
         if (view === "settings" && !settingsLoaded) loadSettings();
+        if (view === "waApi" && !waApiManagerLoaded) loadWaApiManager();
         if (view === "stats" && !statsLoaded) loadStats();
         if (view === "musicplayer" && !musicPlayerLoaded) { loadMusicList(); musicPlayerLoaded = true; }
         if (view === "topSpenders") loadAdminTopSpenders();
@@ -628,7 +630,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
 });
 
 function switchView(view) {
-    if (currentUser && currentUser.role === "staff" && (view === "settings" || view === "aimgmt")) {
+    if (currentUser && currentUser.role === "staff" && (view === "settings" || view === "waApi" || view === "aimgmt")) {
         showToast("Akses ditolak. Fitur ini hanya untuk Super Admin.", true);
         return;
     }
@@ -650,6 +652,7 @@ function switchView(view) {
     if (view === "topup") { window.initTopupCatalog?.(); loadTvBalance(); }
     if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); loadCustomTestimonials(); ratingsLoaded = true; }
     if (view === "settings" && !settingsLoaded) loadSettings();
+    if (view === "waApi" && !waApiManagerLoaded) loadWaApiManager();
     if (view === "stats" && !statsLoaded) loadStats();
     if (view === "musicplayer" && !musicPlayerLoaded) { loadMusicList(); musicPlayerLoaded = true; }
     if (view === "aimgmt") { loadKnowledgeBase(); loadMultiAiStatus(); loadMultiAiLogs(); startAiHealthCheckTimer(); }
@@ -5322,6 +5325,92 @@ async function forceWaRescan() {
         btn.disabled = false;
         btn.innerHTML = `<i class="bi bi-trash"></i> Reset & Scan Ulang`;
     }
+}
+
+// WhatsApp API manager terpisah dari Settings > API Keys.
+async function loadWaApiManager(force = false) {
+    if (waApiManagerLoaded && !force) return;
+    const statusError = document.getElementById("waManagerStatusError");
+    try {
+        const [statusRes, campaignsRes, contactsRes] = await Promise.all([apiFetch("/settings/wa-api/status"), apiFetch("/wa-marketing/campaigns"), apiFetch("/wa-marketing/contacts")]);
+        const status = await statusRes.json().catch(() => ({}));
+        if (status.gateway_url) document.getElementById("waManagerUrl").value = status.gateway_url;
+        if (status.target_number) document.getElementById("waManagerTarget").value = status.target_number;
+        renderWaApiManagerStatus(status);
+        const campaigns = await campaignsRes.json().catch(() => ({}));
+        const contacts = await contactsRes.json().catch(() => ({}));
+        if (!campaignsRes.ok && campaignsRes.status !== 503) throw new Error(campaigns.message || "Gagal memuat campaign");
+        if (!contactsRes.ok && contactsRes.status !== 503) throw new Error(contacts.message || "Gagal memuat kontak");
+        renderWaCampaigns(campaigns.campaigns || []); renderWaContacts(contacts.contacts || []); waApiManagerLoaded = true;
+    } catch (error) { statusError.textContent = error.message || "Gagal memuat WhatsApp API."; }
+}
+
+function renderWaApiManagerStatus(data) {
+    const badge = document.getElementById("waManagerBadge"); const state = document.getElementById("waManagerState"); const qrWrap = document.getElementById("waManagerQrWrap"); const qrImage = document.getElementById("waManagerQrImage"); const error = document.getElementById("waManagerStatusError");
+    error.textContent = data.success === false ? (data.message || "Gateway tidak dapat dihubungi.") : "";
+    if (data.waConnected) { badge.textContent = "Connected"; badge.className = "badge bg-success"; state.textContent = "WhatsApp terhubung dan siap mengirim pesan."; }
+    else if (data.qrAvailable && data.qrImage) { badge.textContent = "Scan QR"; badge.className = "badge bg-warning text-dark"; state.textContent = "QR tersedia. Scan dari WhatsApp ponsel admin."; }
+    else { badge.textContent = data.success === false ? "Offline" : "Belum terhubung"; badge.className = `badge ${data.success === false ? "bg-danger" : "bg-secondary"}`; state.textContent = "Gateway belum terhubung atau sedang menunggu QR."; }
+    qrWrap.classList.toggle("d-none", !data.qrAvailable || !data.qrImage); if (data.qrImage) qrImage.src = data.qrImage;
+}
+
+async function refreshWaApiManagerStatus() {
+    try { const res = await apiFetch("/settings/wa-api/status"); renderWaApiManagerStatus(await res.json().catch(() => ({}))); }
+    catch (error) { document.getElementById("waManagerStatusError").textContent = error.message; }
+}
+
+async function provisionWaApiManager() {
+    const result = document.getElementById("waManagerProvisionResult");
+    try { await withAdminPin(async (security_pin) => {
+        const res = await apiFetch("/settings/wa-api/provision", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin, waapi_url: document.getElementById("waManagerUrl").value.trim(), waapi_target_number: document.getElementById("waManagerTarget").value.trim() }) });
+        const data = await res.json().catch(() => ({})); if (!res.ok) throw new Error(data.message || "Provisioning WA gagal");
+        result.className = "small mt-3 text-success"; result.textContent = data.message || "Gateway berhasil diprovision."; await refreshWaApiManagerStatus();
+    }, "membuat atau merotasi key WhatsApp API"); }
+    catch (error) { if (error.message !== "unauthorized") { result.className = "small mt-3 text-danger"; result.textContent = error.message; } }
+}
+
+async function resetWaApiManagerSession() {
+    if (!confirm("Reset sesi WhatsApp? Ponsel admin harus scan QR ulang.")) return;
+    try { await withAdminPin(async (security_pin) => {
+        const res = await apiFetch("/settings/wa-api/rescan", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin }) }); const data = await res.json().catch(() => ({})); if (!res.ok) throw new Error(data.message || "Reset WhatsApp gagal");
+        showToast(data.message || "Sesi direset. QR baru sedang dibuat."); setTimeout(refreshWaApiManagerStatus, 1500);
+    }, "mereset sesi WhatsApp API"); } catch (error) { if (error.message !== "unauthorized") showToast(error.message, true); }
+}
+
+async function sendWaApiManagerTest() {
+    const result = document.getElementById("waManagerTestResult");
+    try { await withAdminPin(async (security_pin) => {
+        const res = await apiFetch("/settings/test-whatsapp", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ security_pin, number: document.getElementById("waManagerTestNumber").value.trim(), message: document.getElementById("waManagerTestMessage").value.trim(), mediaUrl: document.getElementById("waManagerTestMedia").value.trim() }) }); const data = await res.json().catch(() => ({})); if (!res.ok || data.success === false) throw new Error(data.message || "Test chat gagal");
+        result.className = "small mt-3 text-success"; result.textContent = data.message || "Test chat berhasil dikirim.";
+    }, "mengirim test chat WhatsApp"); } catch (error) { if (error.message !== "unauthorized") { result.className = "small mt-3 text-danger"; result.textContent = error.message; } }
+}
+
+function renderWaCampaigns(campaigns) {
+    const tbody = document.getElementById("waCampaignTbody"); tbody.innerHTML = campaigns.length ? campaigns.map((campaign) => `<tr><td>${escapeHtml(campaign.title)}</td><td>${escapeHtml(campaign.kind)}</td><td>${escapeHtml(campaign.status)}</td><td>${new Date(campaign.scheduled_at).toLocaleString("id-ID")}</td><td>${campaign.sent_count || 0}/${(campaign.sent_count || 0) + (campaign.failed_count || 0)}</td></tr>`).join("") : '<tr><td colspan="5" class="text-muted">Belum ada campaign.</td></tr>';
+}
+
+function renderWaContacts(contacts) {
+    const tbody = document.getElementById("waContactsTbody"); tbody.innerHTML = contacts.length ? contacts.map((contact) => `<tr><td>${escapeHtml(contact.display_name)}</td><td>${escapeHtml(contact.phone_normalized)}</td><td><button class="btn btn-sm ${contact.marketing_opt_in ? "btn-success" : "btn-outline-secondary"}" onclick="toggleWaContactOptIn('${contact.id}', ${!contact.marketing_opt_in})">${contact.marketing_opt_in ? "Opt-in" : "Opt-in?"}</button></td><td>${contact.user_id ? "Terdaftar" : "Tamu"}</td></tr>`).join("") : '<tr><td colspan="4" class="text-muted">Belum ada chat inbound.</td></tr>';
+}
+
+async function toggleWaContactOptIn(id, value) {
+    const res = await apiFetch(`/wa-marketing/contacts/${encodeURIComponent(id)}/opt-in`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ marketing_opt_in: value }) }); const data = await res.json().catch(() => ({})); if (!res.ok) return showToast(data.message || "Gagal mengubah opt-in", true); await loadWaCampaignData();
+}
+
+async function loadWaCampaignData() {
+    const [campaignsRes, contactsRes] = await Promise.all([apiFetch("/wa-marketing/campaigns"), apiFetch("/wa-marketing/contacts")]); const campaigns = await campaignsRes.json().catch(() => ({})); const contacts = await contactsRes.json().catch(() => ({})); renderWaCampaigns(campaigns.campaigns || []); renderWaContacts(contacts.contacts || []);
+}
+
+async function createWaCampaign() {
+    const result = document.getElementById("waCampaignResult"); const scheduleRaw = document.getElementById("waCampaignSchedule").value;
+    try { const res = await apiFetch("/wa-marketing/campaigns", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: document.getElementById("waCampaignKind").value, title: document.getElementById("waCampaignTitle").value.trim(), message: document.getElementById("waCampaignMessage").value.trim(), media_url: document.getElementById("waCampaignMedia").value.trim(), promo_code: document.getElementById("waCampaignCode").value.trim(), scheduled_at: scheduleRaw ? new Date(scheduleRaw).toISOString() : new Date().toISOString() }) }); const data = await res.json().catch(() => ({})); if (!res.ok) throw new Error(data.message || "Campaign gagal dibuat"); result.className = "small mt-3 text-success"; result.textContent = "Campaign masuk queue. Hanya kontak terdaftar opt-in yang akan menerima."; await loadWaCampaignData(); }
+    catch (error) { result.className = "small mt-3 text-danger"; result.textContent = error.message; }
+}
+
+async function runWaMarketingNow() {
+    const result = document.getElementById("waCampaignResult");
+    try { const res = await apiFetch("/wa-marketing/run-now", { method: "POST" }); const data = await res.json().catch(() => ({})); if (!res.ok) throw new Error(data.message || "Queue gagal dijalankan"); result.className = "small mt-3 text-success"; result.textContent = `Queue selesai: ${data.campaigns?.sent || 0} pesan campaign terkirim, ${data.followups?.processed || 0} follow-up diproses.`; await loadWaCampaignData(); }
+    catch (error) { result.className = "small mt-3 text-danger"; result.textContent = error.message; }
 }
 
 // Auto-refresh QR status setiap 15 detik

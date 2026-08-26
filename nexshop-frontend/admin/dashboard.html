@@ -78,6 +78,7 @@
         <li class="nav-item"><a class="nav-link" href="#" data-view="promocodes"><i class="bi bi-ticket-perforated me-2"></i>Kode Promo</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="ratings"><i class="bi bi-star me-2"></i>Rating</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="waApi"><i class="bi bi-whatsapp me-2"></i>WhatsApp API</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="aimgmt"><i class="bi bi-robot me-2"></i>AI Management</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="musicplayer"><i class="bi bi-music-note-beamed me-2"></i>Music Player</a></li>
     </ul>
@@ -1868,6 +1869,7 @@
                 <div class="col-md-6"><label class="form-label">From Email</label><input id="smtpFromEmail" type="email" class="form-control"></div>
                 <div class="col-md-6"><label class="form-label">From Name</label><input id="smtpFromName" class="form-control" placeholder="NexShop"></div>
 
+                <div id="legacyWaApiSettings" class="d-none">
                 <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">WA Gateway (Notifikasi WhatsApp)</h6></div>
                 <div class="col-12">
                     <label class="form-label">URL WA API Server</label>
@@ -1995,6 +1997,7 @@
                         </div>
                         <div id="waQrError" class="text-danger small mt-2 d-none"></div>
                     </div>
+                </div>
                 </div>
 
                 <div class="d-flex align-items-center gap-2 flex-wrap"><p class="text-muted small mb-0">Pilih field secret, lalu tampilkan atau salin. Nilai selalu tersamar secara default.</p><button type="button" class="btn btn-outline-warning btn-sm" onclick="revealApiKeys()"><i class="bi bi-eye"></i> Tampilkan 15 detik</button><button type="button" class="btn btn-outline-secondary btn-sm" onclick="copySelectedSecret()"><i class="bi bi-clipboard"></i> Salin secret</button></div>
@@ -2281,6 +2284,95 @@ app.post("/api/callback/tokovoucher", express.raw({ type: "*/*" }), (req, res) =
         </div>
     </div>
 </section>
+<section id="view-waApi" class="view-section d-none">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+        <div>
+            <h2><i class="bi bi-whatsapp text-success me-2"></i>WhatsApp API</h2>
+            <p class="text-muted mb-0">Kelola gateway Baileys, QR login, test chat, follow-up checkout, campaign promo, voucher, dan kontak masuk.</p>
+        </div>
+        <button type="button" class="btn btn-outline-primary" onclick="loadWaApiManager(true)"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-5">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Koneksi Gateway</h5>
+                        <span id="waManagerBadge" class="badge bg-secondary">Memuat...</span>
+                    </div>
+                    <div class="small text-muted mb-3" id="waManagerState">-</div>
+                    <div id="waManagerQrWrap" class="text-center d-none mb-3">
+                        <p class="small text-muted mb-2">Scan QR ini dari WhatsApp ponsel admin.</p>
+                        <img id="waManagerQrImage" alt="QR WhatsApp Gateway" style="width:240px;height:240px;border:2px solid #198754;border-radius:12px;">
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="refreshWaApiManagerStatus()"><i class="bi bi-qr-code me-1"></i>Refresh QR/Status</button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="resetWaApiManagerSession()"><i class="bi bi-arrow-repeat me-1"></i>Reset &amp; Scan Ulang</button>
+                    </div>
+                    <div id="waManagerStatusError" class="text-danger small mt-3"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-7">
+            <div class="card shadow-sm h-100">
+                <div class="card-body">
+                    <h5>Konfigurasi WA API</h5>
+                    <p class="text-muted small">API key tidak ditampilkan di halaman ini. Generate/rotasi dilakukan lewat Security PIN dan otomatis disinkronkan ke runtime gateway.</p>
+                    <div class="mb-3"><label class="form-label">URL Gateway</label><input id="waManagerUrl" class="form-control font-monospace" placeholder="http://127.0.0.1:8080"></div>
+                    <div class="mb-3"><label class="form-label">Nomor Notifikasi Admin</label><input id="waManagerTarget" class="form-control" placeholder="087792634063"></div>
+                    <button type="button" class="btn btn-primary" onclick="provisionWaApiManager()"><i class="bi bi-shield-lock me-1"></i>Generate / Rotasi Key</button>
+                    <div id="waManagerProvisionResult" class="small mt-3"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Testing Chat</h5>
+                    <div class="row g-2">
+                        <div class="col-md-4"><label class="form-label small">Nomor Tujuan</label><input id="waManagerTestNumber" class="form-control" placeholder="087..." /></div>
+                        <div class="col-md-8"><label class="form-label small">Pesan</label><input id="waManagerTestMessage" class="form-control" placeholder="Test chat dari Admin NexShop" /></div>
+                        <div class="col-12"><label class="form-label small">URL Foto (opsional, harus HTTPS/public)</label><input id="waManagerTestMedia" class="form-control" placeholder="https://.../promo.jpg" /></div>
+                    </div>
+                    <button type="button" class="btn btn-outline-success mt-3" onclick="sendWaApiManagerTest()"><i class="bi bi-send me-1"></i>Kirim Test Chat</button>
+                    <div id="waManagerTestResult" class="small mt-3"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-7">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2"><h5 class="mb-0">Campaign Promo / Voucher</h5><button class="btn btn-sm btn-outline-secondary" onclick="loadWaCampaignData()">Refresh</button></div>
+                    <p class="text-muted small">Campaign hanya dikirim ke kontak terdaftar yang sudah opt-in promo. Pengiriman di-throttle agar tidak spam.</p>
+                    <div class="row g-2">
+                        <div class="col-md-4"><label class="form-label small">Jenis</label><select id="waCampaignKind" class="form-select"><option value="promo">Promo</option><option value="voucher">Voucher</option><option value="manual">Manual</option></select></div>
+                        <div class="col-md-8"><label class="form-label small">Judul</label><input id="waCampaignTitle" class="form-control" placeholder="Promo akhir pekan"></div>
+                        <div class="col-12"><label class="form-label small">Pesan</label><textarea id="waCampaignMessage" class="form-control" rows="4" placeholder="Halo {name}, ada promo baru di NexShop..."></textarea></div>
+                        <div class="col-md-8"><label class="form-label small">URL Foto (opsional)</label><input id="waCampaignMedia" class="form-control" placeholder="https://.../promo.jpg"></div>
+                        <div class="col-md-4"><label class="form-label small">Kode Voucher (opsional)</label><input id="waCampaignCode" class="form-control" placeholder="HEMAT10"></div>
+                        <div class="col-md-7"><label class="form-label small">Kirim pada</label><input id="waCampaignSchedule" type="datetime-local" class="form-control"></div>
+                    </div>
+                    <button class="btn btn-success mt-3" onclick="createWaCampaign()"><i class="bi bi-megaphone me-1"></i>Queue Campaign</button>
+                    <button class="btn btn-outline-warning mt-3 ms-2" onclick="runWaMarketingNow()"><i class="bi bi-play me-1"></i>Jalankan Queue Sekarang</button>
+                    <div id="waCampaignResult" class="small mt-3"></div>
+                    <div class="table-responsive mt-3"><table class="table table-sm"><thead><tr><th>Judul</th><th>Jenis</th><th>Status</th><th>Jadwal</th><th>Terkirim</th></tr></thead><tbody id="waCampaignTbody"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-5">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5>Kontak WhatsApp Terdaftar</h5>
+                    <p class="text-muted small">Chat inbound tersimpan berdasarkan nomor. Nama akun terdaftar menjadi nama utama; kontak baru memakai push name sampai terhubung.</p>
+                    <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Nama</th><th>Nomor</th><th>Promo</th><th></th></tr></thead><tbody id="waContactsTbody"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12"><div id="waFollowupInfo" class="alert alert-info small">Reminder checkout otomatis: satu kali per order pending yang sudah berumur 7 hari. Poller aktif di production saat ENABLE_POLLERS=1.</div></div>
+    </div>
+</section>
+
 <section id="view-aimgmt" class="view-section d-none">
     <div class="mb-4">
         <h2>AI Management & Knowledge Base</h2>

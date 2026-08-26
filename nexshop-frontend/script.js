@@ -777,7 +777,7 @@ const accountBtn = document.getElementById("accountBtn");
 const accountDropdown = document.getElementById("accountDropdown");
 
 function hasVerifiedPhone(user = currentUser) {
-    return Boolean(user?.has_verified_phone);
+    return Boolean(user?.has_verified_phone || (user?.phone_verified_at && (user?.phone_normalized || user?.phone)));
 }
 
 // Backend menyimpan nomor HP sebagai E.164 ("+628..."), tapi seluruh input &
@@ -1288,32 +1288,47 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     const email = document.getElementById("loginEmail").value.trim().toLowerCase();
     const password = document.getElementById("loginPassword").value;
     const errorEl = document.getElementById("loginError");
+    let loginResponse;
+    let data;
 
     try {
         const captcha_token = window.NexShopAuthSecurity
             ? await window.NexShopAuthSecurity.captchaToken("login")
             : "";
-        const res = await fetch(`${API_BASE}/auth/login`, {
+        loginResponse = await fetch(`${API_BASE}/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ email, password, captcha_token })
         });
-        const data = await res.json();
+        data = await loginResponse.json();
+    } catch (networkError) {
+        console.error("Login network/response error:", networkError);
+        errorEl.textContent = "Gagal terhubung ke server. Coba lagi sebentar.";
+        return;
+    }
 
-        if (!res.ok) {
-            window.NexShopAuthSecurity?.resetCaptcha("login");
-            if (data.needsVerification) {
-                errorEl.textContent = "";
-                showOtpForm(data.email || email);
-                toast("Email belum diverifikasi. Cek kode OTP kamu.");
-                return;
-            }
-            errorEl.textContent = data.message;
+    if (!loginResponse.ok) {
+        window.NexShopAuthSecurity?.resetCaptcha("login");
+        if (data.needsVerification) {
+            errorEl.textContent = "";
+            showOtpForm(data.email || email);
+            toast("Email belum diverifikasi. Cek kode OTP kamu.");
             return;
         }
-        window.NexShopAuthSecurity?.resetCaptcha("login");
+        errorEl.textContent = data.message || "Login tidak berhasil.";
+        return;
+    }
+
+    window.NexShopAuthSecurity?.resetCaptcha("login");
+    try {
+        if (!data?.token) throw new Error("Response login tidak berisi token sesi.");
+        const safeUser = data.user || {
+            email,
+            fullname: data.fullname || email.split("@")[0] || "Pengguna NexShop",
+            role: data.role || "user"
+        };
         localStorage.setItem(PUBLIC_TOKEN_STORAGE_KEY, data.token);
-        currentUser = data.user;
+        currentUser = safeUser;
         saveUser();
         switchCartContext();
         refreshAccountUI();
@@ -1323,11 +1338,14 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
             openPhoneOnboarding();
         } else {
             closeOverlay("authOverlay");
-            toast(`Berhasil masuk. Selamat datang kembali, ${data.user.fullname}!`, "success");
+            toast(`Berhasil masuk. Selamat datang kembali, ${currentUser.fullname}!`, "success");
         }
         e.target.reset();
-    } catch (err) {
-        errorEl.textContent = "Gagal terhubung ke server.";
+    } catch (uiError) {
+        console.error("Login UI error setelah server berhasil:", uiError);
+        // Token sudah disimpan sebelum render UI. Jangan tampilkan pesan
+        // jaringan gagal karena itu menyesatkan user yang sebenarnya sudah login.
+        toast("Login berhasil. Halaman sedang menyegarkan sesi kamu.", "success");
     }
 });
 
@@ -4631,7 +4649,7 @@ async function bootstrapApp() {
     checkResetPasswordLink();
     checkForgotPasswordLink();
     refreshAccountUI();
-    await refreshCurrentUserProfile();
+    const refreshedUser = await refreshCurrentUserProfile();
     initNexBotChat();
     loadPromo();
 
@@ -4654,7 +4672,7 @@ async function bootstrapApp() {
     ]);
     finishInitialLoading(!completed);
 
-    if (currentUser && !hasVerifiedPhone(currentUser)) {
+    if (refreshedUser && currentUser && !hasVerifiedPhone(currentUser)) {
         openPhoneOnboarding();
     }
 }

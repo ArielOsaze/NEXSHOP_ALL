@@ -30,6 +30,9 @@ const gateway = fs.readFileSync(path.join(__dirname, "../wa-gateway-server/serve
 assert.ok(gateway.includes('process.env.HOST || "127.0.0.1"'), "gateway harus private-by-default");
 assert.ok(gateway.includes("timingSafeEqual"), "API key gateway harus timing-safe");
 assert.ok(gateway.includes('app.post("/send-message"'), "campaign harus memakai endpoint pesan satuan");
+assert.ok(gateway.includes('app.post("/send-media"'), "campaign foto harus memakai endpoint media");
+assert.ok(gateway.includes('messages.upsert'), "gateway harus meneruskan chat inbound");
+assert.ok(gateway.includes("INBOUND_WEBHOOK_URL"), "inbound webhook harus dikonfigurasi secara eksplisit");
 
 const { createRuntimeConfigStore } = require("../wa-gateway-server/runtimeConfig");
 

@@ -1,5 +1,6 @@
 const supabase = require("../config/db");
 const { notify } = require("../config/notify");
+const { createCampaign } = require("../services/waMarketingService");
 
 function computeDiscount(promo, subtotal) {
     let discount = 0;
@@ -220,6 +221,9 @@ exports.create = async (req, res) => {
         }
 
         notify("promo_code", `🎟️ ${req.user.email} membuat kode promo "${data[0].code}"`);
+        if (data[0].is_active) {
+            createCampaign({ kind: "voucher", title: `Voucher baru: ${data[0].code}`, message: `Halo {name} 👋\n\nAda voucher baru untuk kamu di NexShop. Gunakan kode *{promo_code}*${data[0].description ? `\n${data[0].description}` : ""}${data[0].expires_at ? `\nBerlaku sampai: ${data[0].expires_at}` : ""}`, promo_code: data[0].code }).catch((error) => console.warn("Voucher campaign queue dilewati:", error.message));
+        }
         res.status(201).json({ message: "Kode promo berhasil dibuat", data: data[0] });
     } catch (err) {
         console.log(err);
@@ -262,6 +266,9 @@ exports.update = async (req, res) => {
         if (!data.length) return res.status(404).json({ message: "Kode promo tidak ditemukan" });
 
         notify("promo_code", `🎟️ ${req.user.email} mengubah kode promo "${data[0].code}"`);
+        if (data[0].is_active) {
+            createCampaign({ kind: "voucher", title: `Voucher diperbarui: ${data[0].code}`, message: `Halo {name} 👋\n\nVoucher NexShop *{promo_code}* telah diperbarui.${data[0].description ? `\n${data[0].description}` : ""}${data[0].expires_at ? `\nBerlaku sampai: ${data[0].expires_at}` : ""}`, promo_code: data[0].code }).catch((error) => console.warn("Voucher update campaign queue dilewati:", error.message));
+        }
         res.json({ message: "Kode promo berhasil diperbarui", data: data[0] });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });

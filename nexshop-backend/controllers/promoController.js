@@ -1,5 +1,6 @@
 const supabase = require("../config/db");
 const { notify } = require("../config/notify");
+const { createCampaign } = require("../services/waMarketingService");
 const { createWebpFileName, optimizeImageToWebp } = require("../utils/imageOptimizer");
 
 const PROMO_BUCKET = "promo";
@@ -111,6 +112,9 @@ exports.createSlide = async (req, res) => {
         }
 
         notify("promo", `🖼️ ${req.user.email} membuat slide promo baru "${title}"`);
+        if (is_active !== false && is_active !== "false") {
+            createCampaign({ kind: "promo", title: `Promo baru: ${title}`, message: `Halo {name} 👋\n\nAda promo baru di NexShop: *${title}*${description ? `\n${description}` : ""}${cta_link ? `\n\nLihat promo: ${cta_link}` : ""}`, media_url: image_url || null }).catch((error) => console.warn("Promo campaign queue dilewati:", error.message));
+        }
         res.status(201).json({ message: "Slide berhasil dibuat", data: data[0] });
     } catch (err) {
         console.log(err);
@@ -159,6 +163,9 @@ exports.updateSlide = async (req, res) => {
         }
 
         notify("promo", `🖼️ ${req.user.email} mengubah slide promo "${data[0].title}"`);
+        if (data[0].is_active) {
+            createCampaign({ kind: "promo", title: `Promo diperbarui: ${data[0].title}`, message: `Halo {name} 👋\n\nPromo NexShop diperbarui: *${data[0].title}*${data[0].description ? `\n${data[0].description}` : ""}${data[0].cta_link ? `\n\nLihat promo: ${data[0].cta_link}` : ""}`, media_url: data[0].image_url || null }).catch((error) => console.warn("Promo update campaign queue dilewati:", error.message));
+        }
         res.json({ message: "Slide berhasil diperbarui", data: data[0] });
     } catch (err) {
         console.log(err);

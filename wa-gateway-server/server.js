@@ -12,6 +12,8 @@ const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "127.0.0.1";
 const ENV_API_KEY = String(process.env.WA_API_KEY || "").trim(); // kompatibilitas migrasi lama saja
 const MAX_MESSAGE_LENGTH = Number(process.env.MAX_MESSAGE_LENGTH || 4096);
+const INBOUND_WEBHOOK_URL = String(process.env.INBOUND_WEBHOOK_URL || "http://127.0.0.1:3000/api/wa-marketing/inbound").trim();
+const MAX_MEDIA_BYTES = 8 * 1024 * 1024;
 const AUTH_DIR = path.resolve(process.env.WA_AUTH_DIR || path.join(__dirname, "data", "auth_info"));
 const RUNTIME_CONFIG_PATH = path.resolve(process.env.WA_RUNTIME_CONFIG || path.join(path.dirname(AUTH_DIR), "gateway-config.json"));
 const configStore = createRuntimeConfigStore({ configPath: RUNTIME_CONFIG_PATH });
@@ -88,6 +90,19 @@ function messageFromTransaction({ orderId, status, amount, message }) {
     return `Pesanan NexShop #${orderId} ${label}.${amount ? `\nTotal: ${amount}` : ""}`;
 }
 
+function isAllowedMediaUrl(rawUrl) {
+    try {
+        const parsed = new URL(String(rawUrl || ""));
+        const hostname = parsed.hostname.toLowerCase();
+        return ["https:", "http:"].includes(parsed.protocol)
+            && !parsed.username && !parsed.password
+            && !["localhost", "127.0.0.1", "::1", "0.0.0.0"].includes(hostname)
+            && !hostname.endsWith(".local");
+    } catch (_) {
+        return false;
+    }
+}
+
 async function loadBaileys() {
     // Baileys v7 is ESM-first. Dynamic import keeps this small gateway CommonJS.
     return import("@whiskeysockets/baileys");
@@ -153,6 +168,11 @@ async function connect() {
                 if (!loggedOut) scheduleReconnect();
             }
         });
+        sock.ev.on("messages.upsert", ({ messages }) => {
+            for (const message of messages || []) {
+                relayIncomingMessage(message).catch((error) => logger.warn({ err: error.message }, "Relay chat inbound gagal"));
+            }
+        });
     } finally {
         connecting = false;
     }
@@ -166,6 +186,56 @@ async function sendMessage(phone, message) {
     }
     const result = await socket.sendMessage(`${phone}@s.whatsapp.net`, { text: message });
     return { id: result?.key?.id || null };
+}
+
+async function sendMediaMessage(phone, mediaUrl, caption) {
+    if (!socket || connectionState !== "connected") {
+        const error = new Error("WhatsApp belum terhubung. Scan QR terlebih dahulu.");
+        error.code = "WA_NOT_CONNECTED";
+        throw error;
+    }
+    if (!isAllowedMediaUrl(mediaUrl)) throw new Error("URL media tidak valid atau mengarah ke host lokal.");
+    const response = await fetch(mediaUrl, { redirect: "error" });
+    if (!response.ok) throw new Error(`Media tidak dapat diunduh (HTTP ${response.status}).`);
+    const contentType = String(response.headers.get("content-type") || "").toLowerCase();
+    if (!contentType.startsWith("image/")) throw new Error("Media campaign harus berupa gambar.");
+    const buffer = Buffer.from(await response.arrayBuffer());
+    if (!buffer.length || buffer.length > MAX_MEDIA_BYTES) throw new Error("Ukuran gambar maksimal 8 MB.");
+    const result = await socket.sendMessage(`${phone}@s.whatsapp.net`, { image: buffer, caption: String(caption || "").slice(0, MAX_MESSAGE_LENGTH) });
+    return { id: result?.key?.id || null };
+}
+
+function extractIncomingText(message) {
+    const content = message?.message || {};
+    return String(content.conversation || content.extendedTextMessage?.text || content.imageMessage?.caption || content.videoMessage?.caption || content.documentMessage?.caption || "").trim();
+}
+
+function extractIncomingType(message) {
+    const content = message?.message || {};
+    if (content.imageMessage) return "image";
+    if (content.videoMessage) return "video";
+    if (content.documentMessage) return "document";
+    return "text";
+}
+
+async function relayIncomingMessage(message) {
+    const jid = String(message?.key?.remoteJid || "");
+    if (message?.key?.fromMe || !jid.endsWith("@s.whatsapp.net")) return;
+    const phone = jid.slice(0, -"@s.whatsapp.net".length);
+    if (!/^62\d{8,15}$/.test(phone) || !INBOUND_WEBHOOK_URL) return;
+    const response = await fetch(INBOUND_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-NexShop-WA-Gateway": "loopback", "X-WA-Gateway-Key": apiKey },
+        body: JSON.stringify({
+            phone,
+            pushName: message.pushName || "",
+            body: extractIncomingText(message),
+            messageType: extractIncomingType(message),
+            providerMessageId: message?.key?.id || null,
+            timestamp: message?.messageTimestamp ? String(message.messageTimestamp) : null
+        })
+    });
+    if (!response.ok) throw new Error(`Backend inbound menolak HTTP ${response.status}`);
 }
 
 async function resetSession() {
@@ -257,6 +327,20 @@ app.post("/send-message", requireApiKey, async (req, res) => {
     try {
         const sent = await sendMessage(phone, message);
         res.json({ success: true, message: "Pesan diterima gateway.", messageId: sent.id });
+    } catch (error) {
+        res.status(error.code === "WA_NOT_CONNECTED" ? 503 : 502).json({ success: false, message: error.message });
+    }
+});
+
+app.post("/send-media", requireApiKey, async (req, res) => {
+    const phone = normalizeIndonesianPhone(req.body?.phone);
+    const mediaUrl = typeof req.body?.mediaUrl === "string" ? req.body.mediaUrl.trim() : "";
+    const caption = typeof req.body?.caption === "string" ? req.body.caption.trim() : "";
+    if (!phone) return res.status(400).json({ success: false, message: "Nomor WhatsApp Indonesia tidak valid." });
+    if (!mediaUrl || mediaUrl.length > 2048 || caption.length > MAX_MESSAGE_LENGTH) return res.status(400).json({ success: false, message: "URL foto atau caption tidak valid." });
+    try {
+        const sent = await sendMediaMessage(phone, mediaUrl, caption);
+        res.json({ success: true, message: "Foto diterima gateway.", messageId: sent.id });
     } catch (error) {
         res.status(error.code === "WA_NOT_CONNECTED" ? 503 : 502).json({ success: false, message: error.message });
     }
