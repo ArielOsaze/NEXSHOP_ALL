@@ -18,6 +18,10 @@ assert.match(style, /sidebar-nav-group\.is-open[\s\S]*sidebar-section-items/);
 assert.match(style, /transition:[^;]*(max-height|opacity)/);
 assert.match(script, /setupSidebarGroups/);
 assert.match(script, /openNavGroupForView/);
-assert.match(script, /aria-expanded/);
+assert.match(dashboard, /sidebar-dashboard-link[\s\S]{0,180}data-view="dashboard"/);
+const overviewGroup = dashboard.match(/data-nav-items="overview"[\s\S]*?<\/div>\s*<\/li>/)?.[0] || "";
+assert.doesNotMatch(overviewGroup, /data-view="dashboard"/, "Dashboard harus berdiri sendiri");
+assert.match(style, /sidebar-dashboard-link/);
+assert.match(style, /sidebar-section-toggle[\s\S]*text-transform:\s*none/);
 
 console.log("sim32_dashboard_nav_accordion: passed");
