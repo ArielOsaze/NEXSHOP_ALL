@@ -49,6 +49,8 @@ const { startRetryPoller } = require("./jobs/notificationRetryPoller");
 const { startScheduledPublishPoller } = require("./jobs/scheduledPublishPoller");
 const { startCatalogSyncPoller } = require("./jobs/catalogSyncPoller");
 const { startWebhookRelayPoller } = require("./jobs/webhookRelayPoller");
+const { getWaApiConfig } = require("./config/settings");
+const { syncWaGatewayRuntimeKey } = require("./utils/waGatewayRuntimeSync");
 
 const app = express();
 
@@ -262,6 +264,22 @@ app.use((err, req, res, next) => {
 // =========================
 // Start Server
 // =========================
+async function syncWaGatewayRuntimeConfig(attempt = 0) {
+    try {
+        const { url, key } = await getWaApiConfig({ fresh: true });
+        const result = await syncWaGatewayRuntimeKey({ url, key });
+        if (result.attempted) {
+            console.log(`🔐 WA gateway runtime synchronized at ${result.url}`);
+        }
+    } catch (error) {
+        if (attempt < 4) {
+            setTimeout(() => syncWaGatewayRuntimeConfig(attempt + 1), 2000).unref();
+            return;
+        }
+        console.error("⚠️ WA gateway runtime sync gagal:", error.message);
+    }
+}
+
 app.listen(PORT, () => {
     console.log("=================================");
     console.log("🚀 NexShop Backend Running");
@@ -269,6 +287,11 @@ app.listen(PORT, () => {
     console.log(`📦 Environment  : ${process.env.NODE_ENV || "development"}`);
     console.log(`🗄️ Database     : Supabase`);
     console.log("=================================");
+
+    // Runtime key di gateway harus selalu mengikuti key yang tersimpan di
+    // dashboard/database. Gagal sementara akan dicoba ulang tanpa memblokir
+    // backend atau menampilkan nilai secret ke log.
+    syncWaGatewayRuntimeConfig();
 
     // Poller latar hanya nyala kalau ENABLE_POLLERS=1. Default mati supaya
     // menjalankan backend secara lokal tidak memicu notifikasi/payment/sync
