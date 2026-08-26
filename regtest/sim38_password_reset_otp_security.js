@@ -16,6 +16,7 @@ assert.match(phoneOtp, /const OTP_EXPIRY_MINUTES = 5;/, "OTP WhatsApp harus expi
 assert.match(auth, /passwordResetService/, "Auth harus memakai sumber expiry reset terpusat");
 assert.match(mailer, /Kode ini berlaku selama 5 menit/, "OTP email harus menyebut expiry 5 menit");
 assert.match(settings, /Kode ini berlaku selama 5 menit/, "Template OTP WhatsApp default harus menyebut expiry 5 menit");
+assert.match(migration, /otp_code = NULL/);
 assert.match(migration, /reset_password_token = NULL/);
 assert.match(migration, /wa_template_otp = regexp_replace/);
 assert.doesNotMatch(loginSecurity, /#\/forgot-password/, "Login alert tidak boleh mengirim link forgot-password generik");

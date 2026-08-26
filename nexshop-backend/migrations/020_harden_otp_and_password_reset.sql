@@ -8,6 +8,15 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_token TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_password_expires_at TIMESTAMPTZ;
 
 UPDATE users
+SET otp_code = NULL,
+    otp_expires_at = NULL,
+    otp_purpose = NULL,
+    otp_attempts = 0,
+    otp_sent_at = NULL
+WHERE otp_code IS NOT NULL
+   OR otp_expires_at IS NOT NULL;
+
+UPDATE users
 SET reset_password_token = NULL,
     reset_password_expires_at = NULL
 WHERE reset_password_token IS NOT NULL

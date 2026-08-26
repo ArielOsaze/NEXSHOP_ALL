@@ -117,6 +117,7 @@ function buildLoginSecurityMessage({ user, loginContext = "user", timestamp, ip,
         "Jika ini Anda, abaikan pesan ini.",
         "Jika ini bukan Anda, segera reset password melalui link berikut:",
         String(resetUrl || "Link reset aman tidak tersedia."),
+        "Link reset ini berlaku 5 menit dan hanya dapat digunakan sekali.",
         "",
         "Jangan berikan password atau OTP kepada siapa pun."
     ].join("\n");
