@@ -3132,7 +3132,12 @@ function renderPromoCodes() {
 // Logout
 // ================================
 
+function confirmAdminLogout() {
+    return window.confirm("Apakah Anda yakin akan logout?");
+}
+
 function logout() {
+    if (!confirmAdminLogout()) return;
     localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
     localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY);
     try { sessionStorage.removeItem(ADMIN_PIN_TRUST_KEY); } catch (e) { /* noop */ }
@@ -3143,6 +3148,7 @@ function logout() {
 // melempar error buat menghentikan pemanggilnya (apiFetch), jadi di sini
 // ditelan supaya gak jadi error liar di handler klik.
 function logoutAdminNow() {
+    if (!confirmAdminLogout()) return;
     try {
         forceAdminLogout("manual");
     } catch (e) { /* redirect sudah jalan */ }
