@@ -22,11 +22,11 @@ const webMessage = helper.buildLoginSecurityMessage({ ...common, loginContext: "
 const dashboardMessage = helper.buildLoginSecurityMessage({ ...common, loginContext: "admin" });
 
 assert.match(webMessage, /Peringatan Login Web Utama NexShop/);
-assert.match(webMessage, /Konteks: Web utama NexShop/);
+assert.doesNotMatch(webMessage, /Konteks:/i);
 assert.doesNotMatch(webMessage, /Peringatan Login Dashboard Admin NexShop/);
 assert.doesNotMatch(webMessage, /akses dashboard admin/i);
 assert.match(dashboardMessage, /Peringatan Login Dashboard Admin NexShop/);
-assert.match(dashboardMessage, /Konteks: Dashboard Admin NexShop/);
+assert.doesNotMatch(dashboardMessage, /Konteks:/i);
 assert.match(dashboardMessage, /dashboard admin NexShop/i);
 assert.notEqual(webMessage, dashboardMessage);
 

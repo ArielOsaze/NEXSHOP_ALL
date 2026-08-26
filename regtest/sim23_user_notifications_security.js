@@ -33,7 +33,10 @@ assert.match(message, /Jakarta, Indonesia/);
 assert.match(message, /Chrome/);
 assert.match(message, /203\.0\.113\.10/);
 assert.match(message, /https:\/\/nexshop\.cloud\/#\/reset-password\?token=[a-f0-9]{64}/);
+assert.match(message, /\*Detail Login\*/);
+assert.match(message, /\*Lokasi Login\*/);
 assert.match(message, /Jika ini bukan Anda/i);
+assert.doesNotMatch(message, /Konteks:/i);
 
 const adminMessage = buildLoginSecurityMessage({
     user: { fullname: "Ariel Admin", email: "admin@nexshop.com", role: "admin" },

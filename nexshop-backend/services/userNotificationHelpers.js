@@ -97,28 +97,33 @@ function buildLoginSecurityMessage({ user, loginContext = "user", timestamp, ip,
     const safeEmail = safeNotificationField(user?.email, "tidak tersedia", 160);
     const dashboardTitle = role === "staff" ? "🔐 *Peringatan Login Dashboard Staff NexShop*" : "🔐 *Peringatan Login Dashboard Admin NexShop*";
     const intro = isAdminDashboardLogin
-        ? `Halo ${name}, dashboard ${role === "staff" ? "staff" : "admin"} NexShop baru saja berhasil digunakan.`
-        : `Halo ${name}, web utama NexShop baru saja menerima login akun kamu.`;
+        ? `Halo ${name}, login ke dashboard ${role === "staff" ? "staff" : "admin"} NexShop berhasil.`
+        : `Halo ${name}, login ke web utama NexShop berhasil.`;
+    const locationLines = formatLocationDetails(location).map((line) => line.startsWith("Catatan:") ? `  ${line}` : `• ${line}`);
 
     return [
         isAdminDashboardLogin ? dashboardTitle : "🔐 *Peringatan Login Web Utama NexShop*",
         "",
         intro,
-        `Konteks: ${isAdminDashboardLogin ? "Dashboard Admin NexShop" : "Web utama NexShop"}`,
-        `Nama: ${name}`,
-        `Email: ${safeEmail}`,
-        `Peran: ${roleLabel}`,
-        ...(isAdminDashboardLogin ? ["Dashboard: https://nexshop.cloud/admin/dashboard"] : []),
-        `Waktu: ${formatWibTimestamp(timestamp)}`,
-        ...formatLocationDetails(location),
-        `IP: ${safeIp}`,
-        `Perangkat: ${device}`,
+        "",
+        "*Detail Login*",
+        `• Nama: ${name}`,
+        `• Email: ${safeEmail}`,
+        `• Peran: ${roleLabel}`,
+        ...(isAdminDashboardLogin ? ["• Dashboard: https://nexshop.cloud/admin/dashboard"] : []),
+        `• Waktu: ${formatWibTimestamp(timestamp)}`,
+        "",
+        "*Lokasi Login*",
+        ...locationLines,
+        `• IP: ${safeIp}`,
+        `• Perangkat: ${device}`,
+        "",
+        "*Jika ini bukan Anda*",
+        "Segera reset password melalui link berikut:",
+        String(resetUrl || "Link reset aman tidak tersedia."),
+        "Link reset berlaku 5 menit dan hanya dapat digunakan sekali.",
         "",
         "Jika ini Anda, abaikan pesan ini.",
-        "Jika ini bukan Anda, segera reset password melalui link berikut:",
-        String(resetUrl || "Link reset aman tidak tersedia."),
-        "Link reset ini berlaku 5 menit dan hanya dapat digunakan sekali.",
-        "",
         "Jangan berikan password atau OTP kepada siapa pun."
     ].join("\n");
 }
