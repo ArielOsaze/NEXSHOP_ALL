@@ -41,7 +41,6 @@ const aiRoutes = require("./routes/aiRoutes");
 const ratingRoutes = require("./routes/ratingRoutes");
 const musicRoutes = require("./routes/musicRoutes");
 const walletRoutes = require("./routes/walletRoutes");
-const waMarketingRoutes = require("./routes/waMarketingRoutes");
 const resellerApiRoutes = require("./routes/resellerApiRoutes");
 const sitemapController = require("./controllers/sitemapController");
 const ssrController = require("./controllers/ssrController");
@@ -50,7 +49,6 @@ const { startRetryPoller } = require("./jobs/notificationRetryPoller");
 const { startScheduledPublishPoller } = require("./jobs/scheduledPublishPoller");
 const { startCatalogSyncPoller } = require("./jobs/catalogSyncPoller");
 const { startWebhookRelayPoller } = require("./jobs/webhookRelayPoller");
-const { startWaMarketingPoller } = require("./services/waMarketingService");
 
 const app = express();
 
@@ -200,7 +198,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/promo", promoRoutes);
 app.use("/api/topup", topupRoutes);
 app.use("/api/wallet", walletRoutes);
-app.use("/api/admin/wa-marketing", waMarketingRoutes);
 app.use("/api/v1/reseller", resellerApiRoutes);
 app.use("/api/reseller", resellerRoutes);
 app.use("/api/settings", settingsRoutes);
@@ -282,7 +279,6 @@ app.listen(PORT, () => {
         startScheduledPublishPoller();
         startCatalogSyncPoller();
         startWebhookRelayPoller();
-        startWaMarketingPoller();
     } else {
         console.log("⏸️  Background pollers dimatikan (set ENABLE_POLLERS=1 untuk mengaktifkan)");
     }

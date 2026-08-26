@@ -21,6 +21,10 @@ assert.ok(controller.includes("isStrictLoopbackGatewayHost"), "provisioning haru
 assert.ok(!controller.includes("execSync(\"pm2 restart nexshop-wa-api\")"), "backend utama tidak boleh mengontrol PM2 gateway");
 assert.ok(controller.includes("`${url}/reset`"), "reset harus diminta ke gateway sendiri");
 
+const serverSource = fs.readFileSync(path.join(__dirname, "../nexshop-backend/server.js"), "utf8");
+assert.ok(!serverSource.includes("waMarketingRoutes"), "backend tidak boleh import route yang tidak ikut repo/deploy");
+assert.ok(!serverSource.includes("startWaMarketingPoller"), "backend tidak boleh memulai poller marketing yang tidak tersedia");
+
 const gateway = fs.readFileSync(path.join(__dirname, "../wa-gateway-server/server.js"), "utf8");
 assert.ok(gateway.includes('process.env.HOST || "127.0.0.1"'), "gateway harus private-by-default");
 assert.ok(gateway.includes("timingSafeEqual"), "API key gateway harus timing-safe");
