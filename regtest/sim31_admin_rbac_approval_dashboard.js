@@ -19,6 +19,9 @@ const approvalService = require("../nexshop-backend/services/adminApprovalServic
 assert.match(notification, /Peringatan Login Admin NexShop/);
 assert.match(notification, /Email:\s*`?\$\{safeEmail\}/i, "notif admin harus mencantumkan email admin");
 assert.match(auth, /login_context/);
+assert.match(auth, /requestedLoginContext/);
+assert.match(auth, /referer/);
+assert.match(auth, /request dari halaman \/admin\/login/);
 assert.match(auth, /loginContext === "admin"[\s\S]{0,180}includes\(user\.role\)/);
 assert.match(auth, /loginContext === "user"[\s\S]{0,180}includes\(user\.role\)/);
 

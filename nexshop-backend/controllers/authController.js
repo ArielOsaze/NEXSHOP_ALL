@@ -499,7 +499,11 @@ exports.resendOtp = async (req, res) => {
 exports.login = async (req, res) => {
     const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
     const password = typeof req.body.password === "string" ? req.body.password : "";
-    const loginContext = typeof req.body.login_context === "string" ? req.body.login_context.trim().toLowerCase() : "user";
+    const requestedLoginContext = typeof req.body.login_context === "string" ? req.body.login_context.trim().toLowerCase() : "";
+    const referer = String(req.get("referer") || "");
+    // Kompatibilitas terhadap JS lama yang masih tersimpan di cache browser:
+    // request dari halaman /admin/login tetap diperlakukan sebagai admin login.
+    const loginContext = requestedLoginContext || (/\/admin(?:\/|$)/i.test(referer) ? "admin" : "user");
 
     if (!isValidEmail(email) || !password || password.length > 128) {
         return res.status(401).json({ message: "Email atau password salah" });
