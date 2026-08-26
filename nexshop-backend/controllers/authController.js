@@ -573,7 +573,7 @@ exports.login = async (req, res) => {
         await clearPersistentFailedLogin(user.id);
         const session = issueUserSession(user);
         res.json({ message: "Login berhasil", ...session });
-        sendLoginSecurityNotification(user, req).catch((notificationError) => {
+        sendLoginSecurityNotification(user, req, { loginContext }).catch((notificationError) => {
             console.log("Login security notification gagal:", notificationError.message);
         });
     } catch (error) {
@@ -745,8 +745,9 @@ exports.googleCallback = async (req, res) => {
 
         await backfillLegacyPhone(outcome.user);
         const session = issueUserSession(outcome.user);
+        const googleLoginContext = /^\/admin(?:\/|$)/i.test(returnPath) ? "admin" : "user";
         if (state.action === "login") {
-            sendLoginSecurityNotification(outcome.user, req).catch((notificationError) => {
+            sendLoginSecurityNotification(outcome.user, req, { loginContext: googleLoginContext }).catch((notificationError) => {
                 console.log("Login security notification Google gagal:", notificationError.message);
             });
         }

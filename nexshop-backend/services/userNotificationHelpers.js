@@ -87,24 +87,28 @@ function formatLocationDetails(location) {
     return lines;
 }
 
-function buildLoginSecurityMessage({ user, timestamp, ip, location, userAgent, resetUrl }) {
+function buildLoginSecurityMessage({ user, loginContext = "user", timestamp, ip, location, userAgent, resetUrl }) {
     const name = resolveUserDisplayName(user);
     const safeIp = safeNotificationField(ip, "tidak tersedia", 80);
     const device = describeUserAgent(userAgent);
     const role = String(user?.role || "").trim().toLowerCase();
-    const isAdminLogin = role === "admin" || role === "staff";
-    const roleLabel = role === "staff" ? "Staff" : "Admin";
+    const isAdminDashboardLogin = loginContext === "admin";
+    const roleLabel = role === "staff" ? "Staff" : role === "admin" ? "Admin" : "Pengguna";
     const safeEmail = safeNotificationField(user?.email, "tidak tersedia", 160);
-    const adminTitle = role === "staff" ? "🔐 *Peringatan Login Staff NexShop*" : "🔐 *Peringatan Login Admin NexShop*";
-    const intro = isAdminLogin
-        ? `Halo ${name}, akses dashboard ${role === "staff" ? "staff" : "admin"} NexShop baru saja berhasil digunakan.`
-        : `Halo ${name}, akun NexShop kamu baru saja login.`;
+    const dashboardTitle = role === "staff" ? "🔐 *Peringatan Login Dashboard Staff NexShop*" : "🔐 *Peringatan Login Dashboard Admin NexShop*";
+    const intro = isAdminDashboardLogin
+        ? `Halo ${name}, dashboard ${role === "staff" ? "staff" : "admin"} NexShop baru saja berhasil digunakan.`
+        : `Halo ${name}, web utama NexShop baru saja menerima login akun kamu.`;
 
     return [
-        isAdminLogin ? adminTitle : "🔐 *Peringatan Login NexShop*",
+        isAdminDashboardLogin ? dashboardTitle : "🔐 *Peringatan Login Web Utama NexShop*",
         "",
         intro,
-        ...(isAdminLogin ? [`Nama: ${name}`, `Email: ${safeEmail}`, `Peran: ${roleLabel}`, "Dashboard: https://nexshop.cloud/admin/dashboard"] : []),
+        `Konteks: ${isAdminDashboardLogin ? "Dashboard Admin NexShop" : "Web utama NexShop"}`,
+        `Nama: ${name}`,
+        `Email: ${safeEmail}`,
+        `Peran: ${roleLabel}`,
+        ...(isAdminDashboardLogin ? ["Dashboard: https://nexshop.cloud/admin/dashboard"] : []),
         `Waktu: ${formatWibTimestamp(timestamp)}`,
         ...formatLocationDetails(location),
         `IP: ${safeIp}`,

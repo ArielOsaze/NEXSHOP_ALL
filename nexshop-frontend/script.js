@@ -1456,6 +1456,7 @@ document.getElementById("phoneOtpResendBtn").addEventListener("click", () => {
 });
 
 document.getElementById("logoutBtn").addEventListener("click", () => {
+    if (!window.confirm("Apakah Anda yakin akan logout?")) return;
     currentUser = null;
     saveUser();
     localStorage.removeItem(PUBLIC_TOKEN_STORAGE_KEY);

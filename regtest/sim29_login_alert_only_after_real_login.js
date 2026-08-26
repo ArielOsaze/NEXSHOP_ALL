@@ -8,8 +8,8 @@ const login = auth.slice(loginStart, googleStart);
 const google = auth.slice(googleStart, auth.indexOf("exports.googleExchange =", googleStart));
 
 assert.match(login, /const session = issueUserSession\(user\);[\s\S]*res\.json\(\{ message: "Login berhasil"/);
-assert.match(login, /res\.json\(\{ message: "Login berhasil"[\s\S]*sendLoginSecurityNotification\(user, req\)/);
-assert.match(google, /if \(state\.action === "login"\) \{[\s\S]*sendLoginSecurityNotification\(outcome\.user, req\)/);
+assert.match(login, /res\.json\(\{ message: "Login berhasil"[\s\S]*sendLoginSecurityNotification\(user, req, \{ loginContext \}\)/);
+assert.match(google, /if \(state\.action === "login"\) \{[\s\S]*sendLoginSecurityNotification\(outcome\.user, req, \{ loginContext: googleLoginContext \}\)/);
 assert.doesNotMatch(google, /if \(state\.action === "link"\)[\s\S]*sendLoginSecurityNotification/);
 
 console.log("sim29_login_alert_only_after_real_login: passed");

@@ -16,7 +16,7 @@ const dashboard = read("nexshop-frontend/admin/dashboard.html");
 const dashboardJs = read("nexshop-frontend/admin/js/dashboard.js");
 const approvalService = require("../nexshop-backend/services/adminApprovalService");
 
-assert.match(notification, /Peringatan Login Admin NexShop/);
+assert.match(notification, /Peringatan Login Dashboard Admin NexShop/);
 assert.match(notification, /Email:\s*`?\$\{safeEmail\}/i, "notif admin harus mencantumkan email admin");
 assert.match(auth, /login_context/);
 assert.match(auth, /requestedLoginContext/);
