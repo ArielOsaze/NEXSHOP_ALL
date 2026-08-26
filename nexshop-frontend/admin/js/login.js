@@ -69,7 +69,7 @@ form.addEventListener("submit", async (e) => {
             res = await fetch(`${API_BASE}/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password, captcha_token })
+                body: JSON.stringify({ email, password, captcha_token, login_context: "admin" })
             });
         } catch {
             throw new Error("Tidak dapat terhubung ke server NexShop. Periksa status backend lalu coba lagi.");

@@ -40,13 +40,23 @@ async function loadCurrentUser() {
                 roleBadge.textContent = "Staff";
                 roleBadge.classList.replace("bg-primary", "bg-secondary");
 
-                // Hide restricted menus
-                document.querySelectorAll('.nav-link[data-view="settings"], .nav-link[data-view="waApi"], .nav-link[data-view="aimgmt"]').forEach(el => {
+                // Staff tetap bisa melihat Settings Toko untuk mengajukan perubahan,
+                // tetapi area credential/integrasi sensitif tetap disembunyikan.
+                document.querySelectorAll('.nav-link[data-view="waApi"], .nav-link[data-view="aimgmt"], .nav-link[data-view="musicplayer"]').forEach(el => {
                     el.closest('.nav-item').style.display = 'none';
+                });
+                document.getElementById("staffSettingsApprovalNotice")?.classList.remove("d-none");
+                const logoInput = document.getElementById("storeLogoInput");
+                if (logoInput) logoInput.disabled = true;
+                document.querySelectorAll('#settingsTabApiKeys, #settingsTabAuthconfig, #settingsTabSecurity, #settingsTabMascot').forEach(el => el.classList.add("d-none"));
+                document.querySelectorAll('[data-settings-tab="apikeys"], [data-settings-tab="authconfig"], [data-settings-tab="security"], [data-settings-tab="mascot"]').forEach(el => el.closest(".nav-item")?.classList.add("d-none"));
+                document.querySelectorAll('#storeForm button[onclick="saveStoreSettings()"], #contentForm button[onclick="saveContentSettings()"], button[onclick="saveMascotSettings()"]').forEach(button => {
+                    button.innerHTML = '<i class="bi bi-send me-1"></i> Ajukan Approval Admin';
                 });
             } else {
                 roleBadge.textContent = "Admin";
             }
+            loadApprovals();
         }
     } catch (err) {
         console.error("Gagal memuat profil admin:", err);
@@ -626,12 +636,13 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         if (view === "musicplayer" && !musicPlayerLoaded) { loadMusicList(); musicPlayerLoaded = true; }
         if (view === "topSpenders") loadAdminTopSpenders();
         if (view === "reseller" && !resellerLoaded) loadResellerAll();
+        if (view === "approvals") loadApprovals();
     });
 });
 
 function switchView(view) {
-    if (currentUser && currentUser.role === "staff" && (view === "settings" || view === "waApi" || view === "aimgmt")) {
-        showToast("Akses ditolak. Fitur ini hanya untuk Super Admin.", true);
+    if (currentUser && currentUser.role === "staff" && (view === "waApi" || view === "aimgmt" || view === "musicplayer")) {
+        showToast("Akses ditolak. Fitur ini hanya untuk Admin.", true);
         return;
     }
 
@@ -658,6 +669,7 @@ function switchView(view) {
     if (view === "aimgmt") { loadKnowledgeBase(); loadMultiAiStatus(); loadMultiAiLogs(); startAiHealthCheckTimer(); }
     if (view === "topSpenders") loadAdminTopSpenders();
     if (view === "reseller" && !resellerLoaded) loadResellerAll();
+    if (view === "approvals") loadApprovals();
 }
 
 function openProductModal() {
@@ -1852,6 +1864,94 @@ async function unlockLoginIp(ip) {
     }
 }
 
+async function loadApprovals() {
+    const body = document.getElementById("approvalTableBody");
+    if (!body) return;
+    body.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4"><span class="spinner-border spinner-border-sm me-2"></span>Memuat...</td></tr>';
+    try {
+        const res = await apiFetch("/admin/approvals");
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || "Gagal memuat approval");
+        const requests = data.requests || [];
+        const pending = requests.filter((item) => item.status === "pending").length;
+        document.getElementById("approvalPendingCount").textContent = `${pending} pending`;
+        const navCount = document.getElementById("approvalNavCount");
+        if (navCount) { navCount.textContent = pending; navCount.classList.toggle("d-none", pending === 0 || currentUser?.role !== "admin"); }
+        if (!requests.length) {
+            body.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Belum ada pengajuan.</td></tr>';
+            return;
+        }
+        body.innerHTML = requests.map((item) => {
+            const requester = item.requester || {};
+            const fields = Object.keys(item.proposed_changes || {}).join(", ");
+            const statusClass = item.status === "approved" ? "success" : item.status === "rejected" ? "danger" : "warning";
+            const actions = currentUser?.role === "admin" && item.status === "pending"
+                ? `<button class="btn btn-sm btn-success me-1" onclick="reviewApproval('${escapeHtml(item.id)}','approve')">Approve</button><button class="btn btn-sm btn-outline-danger" onclick="reviewApproval('${escapeHtml(item.id)}','reject')">Tolak</button>`
+                : `<span class="text-muted small">${item.status === "pending" ? "Menunggu Admin" : "Selesai"}</span>`;
+            return `<tr>
+                <td><strong>${escapeHtml(requester.fullname || "Staff")}</strong><br><small class="text-muted">${escapeHtml(requester.email || "-")}</small></td>
+                <td><span class="badge text-bg-light">Store settings</span><br><small>${escapeHtml(fields)}</small></td>
+                <td class="small">${escapeHtml(item.request_note || "-")}</td>
+                <td><span class="badge text-bg-${statusClass}">${escapeHtml(item.status)}</span></td>
+                <td class="small">${escapeHtml(new Date(item.created_at).toLocaleString("id-ID"))}</td>
+                <td class="text-nowrap">${actions}</td>
+            </tr>`;
+        }).join("");
+    } catch (error) {
+        body.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-4">${escapeHtml(error.message)}</td></tr>`;
+    }
+}
+
+async function reviewApproval(id, action) {
+    if (action === "approve" && !window.confirm("Setujui request ini dan terapkan pengaturan?")) return;
+    const review_note = action === "reject" ? (window.prompt("Alasan penolakan (opsional):") || "") : "";
+    try {
+        await withAdminPin(async (security_pin) => {
+            const res = await apiFetch(`/admin/approvals/${encodeURIComponent(id)}/${action}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ review_note, security_pin })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal memproses approval");
+            showToast(data.message || "Approval diproses");
+            loadApprovals();
+        }, action === "approve" ? "menyetujui perubahan staff" : "menolak pengajuan staff");
+    } catch (error) { showToast(error.message, true); }
+}
+
+function collectStoreSettingsApprovalPayload() {
+    const value = (id) => document.getElementById(id)?.value ?? "";
+    return {
+        store_name: value("storeName").trim(),
+        tagline: value("storeTagline").trim(),
+        contact_whatsapp: value("storeWhatsapp").trim(),
+        contact_phone: value("storePhone").trim(),
+        contact_email: value("storeEmail").trim(),
+        contact_instagram: value("storeInstagram").trim(),
+        address: value("storeAddress").trim(),
+        trust_bar_enabled: Boolean(document.getElementById("storeTrustBar")?.checked),
+        trust_bar_orders_offset: Number(value("storeTrustOrdersOffset")) || 0,
+        trust_bar_games_offset: Number(value("storeTrustGamesOffset")) || 0,
+        ticker_text: value("storeTickerText").trim(),
+        ticker_speed_seconds: Number(value("storeTickerSpeed")) || 30
+    };
+}
+
+async function submitStoreSettingsApproval(payload, errorId = "storeError") {
+    const reason = document.getElementById("staffApprovalReason")?.value?.trim() || "";
+    const res = await apiFetch("/admin/approvals", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ request_type: "store_settings", proposed_changes: payload, request_note: reason })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || "Gagal mengirim pengajuan approval");
+    document.getElementById(errorId).textContent = "";
+    showToast("Pengajuan sudah dikirim ke Admin");
+    loadApprovals();
+}
+
 async function loadSettings() {
     settingsLoaded = true;
     try {
@@ -1947,6 +2047,13 @@ async function saveContentSettings() {
         refund_content: document.getElementById("refundContentInput").value
     };
 
+    if (currentUser?.role === "staff") {
+        try {
+            await submitStoreSettingsApproval(payload, "contentError");
+        } catch (err) { errorEl.textContent = err.message; }
+        return;
+    }
+
     try {
         const security_pin = await withAdminPin((pin) => pin, "menyimpan konten pengaturan");
         const res = await apiFetch("/settings/store", {
@@ -2007,6 +2114,13 @@ if (storeLogoInput) {
 async function saveStoreSettings() {
     const errorEl = document.getElementById("storeError");
     errorEl.textContent = "";
+
+    if (currentUser?.role === "staff") {
+        try {
+            await submitStoreSettingsApproval(collectStoreSettingsApprovalPayload(), "storeError");
+        } catch (err) { errorEl.textContent = err.message; }
+        return;
+    }
 
     try {
         const security_pin = await withAdminPin((pin) => pin, "menyimpan pengaturan toko");

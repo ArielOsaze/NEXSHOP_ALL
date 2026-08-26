@@ -27,11 +27,11 @@ router.get("/store", settingsController.getStoreSettingsPublic);
 // Admin
 router.put("/store", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.updateStoreSettingsAdmin);
 router.get("/security-pin", authMiddleware, adminMiddleware, settingsController.getAdminPinStatus);
-router.post("/security-pin/setup", authMiddleware, adminMiddleware, settingsController.setupAdminPin);
-router.post("/security-pin/verify", authMiddleware, adminMiddleware, adminPinVerifyLimiter, settingsController.verifyAdminPin);
-router.post("/security-pin/change/request", authMiddleware, adminMiddleware, requireAdminPin, pinChangeRequestLimiter, settingsController.requestAdminPinChangeOtp);
-router.post("/security-pin/change/verify-otp", authMiddleware, adminMiddleware, pinChangeOtpLimiter, settingsController.verifyAdminPinChangeOtp);
-router.post("/security-pin/change", authMiddleware, adminMiddleware, pinChangeOtpLimiter, settingsController.changeAdminPin);
+router.post("/security-pin/setup", authMiddleware, superAdminMiddleware, settingsController.setupAdminPin);
+router.post("/security-pin/verify", authMiddleware, superAdminMiddleware, adminPinVerifyLimiter, settingsController.verifyAdminPin);
+router.post("/security-pin/change/request", authMiddleware, superAdminMiddleware, requireAdminPin, pinChangeRequestLimiter, settingsController.requestAdminPinChangeOtp);
+router.post("/security-pin/change/verify-otp", authMiddleware, superAdminMiddleware, pinChangeOtpLimiter, settingsController.verifyAdminPinChangeOtp);
+router.post("/security-pin/change", authMiddleware, superAdminMiddleware, pinChangeOtpLimiter, settingsController.changeAdminPin);
 router.post("/api-keys", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.getApiKeysAdmin);
 router.post("/api-keys/reveal", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.revealApiKeysAdmin);
 router.put("/api-keys", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.updateApiKeysAdmin);

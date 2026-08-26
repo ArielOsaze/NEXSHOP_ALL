@@ -65,22 +65,34 @@
     </div>
 
     <ul class="nav flex-column" id="sidebarNav">
+        <li class="sidebar-section-label">Overview</li>
         <li class="nav-item"><a class="nav-link active" href="#" data-view="dashboard"><i class="bi bi-grid me-2"></i>Dashboard</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="products"><i class="bi bi-box-seam me-2"></i>Produk</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="stats"><i class="bi bi-graph-up me-2"></i>Statistik Penjualan</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="orders"><i class="bi bi-cart me-2"></i>Orders</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Topup TokoVoucher</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="topSpenders"><i class="bi bi-trophy me-2"></i>Top Spenders (HoF)</a></li>
+
+        <li class="sidebar-section-label">Orders</li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="orders"><i class="bi bi-cart me-2"></i>Semua Orders</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Topup &amp; Pesanan Game</a></li>
+
+        <li class="sidebar-section-label">Catalog &amp; Sales</li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="products"><i class="bi bi-box-seam me-2"></i>Produk Game / Gamepass</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="promo"><i class="bi bi-megaphone me-2"></i>Promo &amp; Banner</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="promocodes"><i class="bi bi-ticket-perforated me-2"></i>Kode Promo</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="ratings"><i class="bi bi-star me-2"></i>Rating &amp; Testimoni</a></li>
+
+        <li class="sidebar-section-label">Customers &amp; Partners</li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="users"><i class="bi bi-people me-2"></i>Users</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="reseller"><i class="bi bi-people-fill me-2"></i>Reseller</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="promo"><i class="bi bi-megaphone me-2"></i>Promo</a></li>
+
+        <li class="sidebar-section-label">Content &amp; Automation</li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="editorial"><i class="bi bi-pen-fill me-2"></i>NexShop News</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="promocodes"><i class="bi bi-ticket-perforated me-2"></i>Kode Promo</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="ratings"><i class="bi bi-star me-2"></i>Rating</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
-        <li class="nav-item"><a class="nav-link" href="#" data-view="waApi"><i class="bi bi-whatsapp me-2"></i>WhatsApp API</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="aimgmt"><i class="bi bi-robot me-2"></i>AI Management</a></li>
         <li class="nav-item"><a class="nav-link" href="#" data-view="musicplayer"><i class="bi bi-music-note-beamed me-2"></i>Music Player</a></li>
+
+        <li class="sidebar-section-label">Settings &amp; Approval</li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="settings"><i class="bi bi-gear me-2"></i>Settings Toko</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="waApi"><i class="bi bi-whatsapp me-2"></i>WhatsApp API</a></li>
+        <li class="nav-item"><a class="nav-link" href="#" data-view="approvals"><i class="bi bi-shield-check me-2"></i>Approval Staff <span class="badge rounded-pill text-bg-danger ms-auto d-none" id="approvalNavCount">0</span></a></li>
     </ul>
 
     <button onclick="logout()" class="btn btn-danger w-100 mt-5">
@@ -1684,6 +1696,12 @@
     <div id="settingsTabStore" class="card shadow-sm d-none">
         <div class="card-body">
             <form id="storeForm" class="row g-3" style="max-width:560px;">
+                <div id="staffSettingsApprovalNotice" class="col-12 alert alert-warning d-none small">
+                    <i class="bi bi-shield-exclamation me-1"></i>
+                    Kamu login sebagai <strong>Staff</strong>. Perubahan pengaturan tidak langsung diterapkan; request akan dikirim ke Admin untuk approval.
+                    <label class="form-label mt-2 mb-1">Alasan perubahan (opsional)</label>
+                    <input id="staffApprovalReason" class="form-control" maxlength="1000" placeholder="Jelaskan kebutuhan perubahan ini">
+                </div>
                 <div class="col-12">
                     <label class="form-label">Nama Toko</label>
                     <input id="storeName" class="form-control" placeholder="NexShop">
@@ -3261,6 +3279,33 @@ app.post("/api/callback/tokovoucher", express.raw({ type: "*/*" }), (req, res) =
 </div>
 </div>
 </div>
+
+<!-- ===== Staff approvals ===== -->
+<section id="view-approvals" class="view-section d-none">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2>Approval Staff</h2>
+            <p class="text-muted mb-0">Tinjau dan proses permintaan perubahan pengaturan dari staff.</p>
+        </div>
+        <button type="button" class="btn btn-outline-primary btn-sm" onclick="loadApprovals()"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+    </div>
+    <div class="alert alert-info small" role="note">
+        <i class="bi bi-info-circle me-1"></i>
+        Hanya <strong>Admin</strong> yang dapat menyetujui atau menolak. Setiap request menampilkan nama dan email pengaju.
+    </div>
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Daftar Pengajuan</h5>
+            <span class="badge text-bg-warning" id="approvalPendingCount">0 pending</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead><tr><th>Pengaju</th><th>Perubahan</th><th>Catatan</th><th>Status</th><th>Waktu</th><th>Aksi</th></tr></thead>
+                <tbody id="approvalTableBody"><tr><td colspan="6" class="text-center text-muted py-4">Memuat...</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</section>
 
 <!-- Security PIN gate for sensitive configuration and security controls -->
 <div class="modal fade" id="adminPinModal" tabindex="-1" aria-labelledby="adminPinModalTitle" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">

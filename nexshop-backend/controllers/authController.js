@@ -499,9 +499,14 @@ exports.resendOtp = async (req, res) => {
 exports.login = async (req, res) => {
     const email = typeof req.body.email === "string" ? req.body.email.trim().toLowerCase() : "";
     const password = typeof req.body.password === "string" ? req.body.password : "";
+    const loginContext = typeof req.body.login_context === "string" ? req.body.login_context.trim().toLowerCase() : "user";
 
     if (!isValidEmail(email) || !password || password.length > 128) {
         return res.status(401).json({ message: "Email atau password salah" });
+    }
+
+    if (!["user", "admin"].includes(loginContext)) {
+        return res.status(400).json({ message: "Konteks login tidak valid" });
     }
 
     try {
@@ -531,6 +536,13 @@ exports.login = async (req, res) => {
             recordFailedLogin(email);
             await recordPersistentFailedLogin(user);
             return res.status(401).json({ message: "Email atau password salah" });
+        }
+
+        if (loginContext === "admin" && !["admin", "staff"].includes(user.role)) {
+            return res.status(403).json({ message: "Akun ini tidak memiliki akses administrator atau staff." });
+        }
+        if (loginContext === "user" && ["admin", "staff"].includes(user.role)) {
+            return res.status(403).json({ message: "Gunakan halaman login admin untuk akun administrator atau staff." });
         }
 
         // Turnstile diperiksa setelah password valid agar super admin bisa

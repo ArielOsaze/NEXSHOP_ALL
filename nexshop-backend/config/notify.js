@@ -18,11 +18,19 @@ const WA_MUTED_TYPES = [];
 // jadi apapun yang muncul di dashboard bakal ke-push ke WA juga —
 // sendWhatsAppNotification sendiri udah nelan errornya sendiri kalau gagal
 // kirim, jadi aman dipanggil "fire-and-forget" di sini.
-async function notify(type, message) {
+async function notify(type, message, options = {}) {
+    const recipientRole = ["admin", "staff", "admin_staff"].includes(options.recipientRole)
+        ? options.recipientRole
+        : "admin_staff";
     try {
-        await supabase.from("admin_notifications").insert([{ type, message }]);
+        await supabase.from("admin_notifications").insert([{ type, message, recipient_role: recipientRole }]);
     } catch (err) {
-        console.log("Gagal simpan notifikasi:", err.message);
+        // Kompatibel terhadap deployment sebelum migration 019.
+        try {
+            await supabase.from("admin_notifications").insert([{ type, message }]);
+        } catch (fallbackError) {
+            console.log("Gagal simpan notifikasi:", fallbackError.message || err.message);
+        }
     }
 
     if (!WA_MUTED_TYPES.includes(type)) {

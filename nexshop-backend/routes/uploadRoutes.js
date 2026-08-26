@@ -3,6 +3,7 @@ const multer = require("multer");
 const jwt = require("jsonwebtoken");
 const { uploadImage, uploadAudio } = require("../controllers/uploadController");
 const authMiddleware = require("../middleware/authMiddleware");
+const superAdminMiddleware = require("../middleware/superAdminMiddleware");
 const { kycUploadLimiter } = require("../middleware/rateLimiter");
 
 const router = express.Router();
@@ -54,17 +55,23 @@ function uploadImageAuth(req, res, next) {
     return authMiddleware(req, res, next);
 }
 
+function sensitiveImageAuth(req, res, next) {
+    const type = String(req.query.type || "product").toLowerCase();
+    if (type === "logo" || type === "mascot") return superAdminMiddleware(req, res, next);
+    return uploadImageAuth(req, res, next);
+}
+
 function limitAnonymousKyc(req, res, next) {
     const type = String(req.query.type || "").toLowerCase();
     if (type === "kyc" || type === "ktp") return kycUploadLimiter(req, res, next);
     next();
 }
 
-router.post("/image", limitAnonymousKyc, uploadImageAuth, uploadImageConfig.single("image"), handleUploadError, uploadImage);
+router.post("/image", limitAnonymousKyc, sensitiveImageAuth, uploadImageConfig.single("image"), handleUploadError, uploadImage);
 // Note: Backwards compatibility untuk endpoint lama ("/")
-router.post("/", limitAnonymousKyc, uploadImageAuth, uploadImageConfig.single("image"), handleUploadError, uploadImage);
+router.post("/", limitAnonymousKyc, sensitiveImageAuth, uploadImageConfig.single("image"), handleUploadError, uploadImage);
 
-// Khusus untuk audio music player
-router.post("/audio", authMiddleware, uploadAudioConfig.single("audio"), handleUploadError, uploadAudio);
+// Music player adalah konfigurasi dashboard, jadi asset audio juga khusus Admin.
+router.post("/audio", authMiddleware, superAdminMiddleware, uploadAudioConfig.single("audio"), handleUploadError, uploadAudio);
 
 module.exports = router;

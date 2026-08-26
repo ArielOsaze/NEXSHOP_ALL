@@ -52,15 +52,17 @@ function buildLoginSecurityMessage({ user, timestamp, ip, location, userAgent, r
     const role = String(user?.role || "").trim().toLowerCase();
     const isAdminLogin = role === "admin" || role === "staff";
     const roleLabel = role === "staff" ? "Staff" : "Admin";
+    const safeEmail = String(user?.email || "tidak tersedia").trim().slice(0, 160);
+    const adminTitle = role === "staff" ? "🔐 *Peringatan Login Staff NexShop*" : "🔐 *Peringatan Login Admin NexShop*";
     const intro = isAdminLogin
-        ? `Halo ${name}, akses dashboard admin NexShop baru saja berhasil digunakan.`
+        ? `Halo ${name}, akses dashboard ${role === "staff" ? "staff" : "admin"} NexShop baru saja berhasil digunakan.`
         : `Halo ${name}, akun NexShop kamu baru saja login.`;
 
     return [
-        isAdminLogin ? "🔐 *Peringatan Login Admin NexShop*" : "🔐 *Peringatan Login NexShop*",
+        isAdminLogin ? adminTitle : "🔐 *Peringatan Login NexShop*",
         "",
         intro,
-        ...(isAdminLogin ? [`Peran: ${roleLabel}`, "Dashboard: https://nexshop.cloud/admin/dashboard"] : []),
+        ...(isAdminLogin ? [`Nama: ${name}`, `Email: ${safeEmail}`, `Peran: ${roleLabel}`, "Dashboard: https://nexshop.cloud/admin/dashboard"] : []),
         `Waktu: ${formatWibTimestamp(timestamp)}`,
         `Lokasi perkiraan: ${safeLocation}`,
         `IP: ${safeIp}`,
