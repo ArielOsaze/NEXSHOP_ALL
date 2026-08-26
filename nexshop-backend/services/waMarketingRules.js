@@ -4,6 +4,7 @@ const { toFonntePhone } = require("../utils/phoneNumber");
 
 const ABANDONED_CHECKOUT_DELAY_DAYS = 7;
 const DEFAULT_CAMPAIGN_COOLDOWN_HOURS = 24;
+const ABANDONED_FOLLOWUP_COOLDOWN_DAYS = 7;
 
 function validDate(value) {
     const date = value instanceof Date ? value : new Date(value || 0);
@@ -61,6 +62,28 @@ function normalizeIncomingContact({ phone, pushName, registeredUser }) {
     };
 }
 
+function pickLatestAbandonedCheckoutRows(rows) {
+    const latestByUser = new Map();
+    for (const row of rows || []) {
+        const userKey = String(row?.user_id || "");
+        if (!userKey) continue;
+        const existing = latestByUser.get(userKey);
+        if (!existing || new Date(row.created_at).getTime() > new Date(existing.created_at).getTime()) {
+            latestByUser.set(userKey, row);
+        }
+    }
+    return [...latestByUser.values()].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+}
+
+function hasRecentAbandonedFollowup({ followups = [], now = new Date(), cooldownDays = ABANDONED_FOLLOWUP_COOLDOWN_DAYS } = {}) {
+    const cutoff = new Date(new Date(now).getTime() - Number(cooldownDays) * 24 * 60 * 60 * 1000).getTime();
+    return (followups || []).some((followup) => {
+        if (!["queued", "sending", "sent"].includes(followup?.status)) return false;
+        const createdAt = new Date(followup?.created_at || 0).getTime();
+        return Number.isFinite(createdAt) && createdAt >= cutoff;
+    });
+}
+
 function personalizeCampaignMessage(template, contact, promoCode = "") {
     return String(template || "")
         .replace(/\{name\}/g, String(contact?.display_name || "Pengguna NexShop"))
@@ -69,10 +92,13 @@ function personalizeCampaignMessage(template, contact, promoCode = "") {
 
 module.exports = {
     ABANDONED_CHECKOUT_DELAY_DAYS,
+    ABANDONED_FOLLOWUP_COOLDOWN_DAYS,
     DEFAULT_CAMPAIGN_COOLDOWN_HOURS,
     shouldScheduleAbandonedCheckout,
     buildAbandonedCheckoutMessage,
     shouldSendCampaignToContact,
     normalizeIncomingContact,
-    personalizeCampaignMessage
+    personalizeCampaignMessage,
+    pickLatestAbandonedCheckoutRows,
+    hasRecentAbandonedFollowup
 };

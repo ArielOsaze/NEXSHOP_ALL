@@ -11,7 +11,9 @@ const {
     buildAbandonedCheckoutMessage,
     shouldSendCampaignToContact,
     normalizeIncomingContact,
-    personalizeCampaignMessage
+    personalizeCampaignMessage,
+    pickLatestAbandonedCheckoutRows,
+    hasRecentAbandonedFollowup
 } = require("./waMarketingRules");
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || "https://nexshop.cloud").replace(/\/$/, "");
@@ -90,6 +92,15 @@ async function getRegisteredUserByPhone(phone) {
 async function queueAndSendFollowup({ sourceType, sourceId, user, phone, productName, now }) {
     const normalized = toFonntePhone(phone);
     if (!normalized || !user?.id) return { skipped: true, reason: "registered_user_phone_missing" };
+    const cooldownCutoff = new Date(new Date(now).getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentFollowups, error: recentFollowupsError } = await supabase.from("wa_marketing_followups")
+        .select("status, created_at")
+        .eq("user_id", user.id)
+        .in("status", ["queued", "sending", "sent"])
+        .gte("created_at", cooldownCutoff)
+        .limit(20);
+    if (recentFollowupsError) throw recentFollowupsError;
+    if (hasRecentAbandonedFollowup({ followups: recentFollowups, now })) return { skipped: true, reason: "user_followup_cooldown" };
     const createdAt = new Date(now).toISOString();
     const { data: queued, error: queueError } = await supabase.from("wa_marketing_followups").insert([{
         user_id: user.id,
@@ -141,6 +152,7 @@ async function runAbandonedCheckoutFollowups({ now = new Date() } = {}) {
         }
     ];
 
+    const candidates = [];
     for (const source of orderSources) {
         const { data: rows, error } = await supabase.from(source.table)
             .select(source.select)
@@ -151,14 +163,20 @@ async function runAbandonedCheckoutFollowups({ now = new Date() } = {}) {
             .limit(100);
         if (error) throw error;
         for (const row of rows || []) {
-            if (!shouldScheduleAbandonedCheckout({ status: "pending", createdAt: row.created_at, now: current })) continue;
-            try {
-                const user = await getRegisteredUserById(row.user_id);
-                const result = await queueAndSendFollowup({ sourceType: source.sourceType, sourceId: row.id, user, phone: source.phone(row, user), productName: source.name(row), now: current });
-                if (!result.skipped) processed += 1;
-            } catch (error) {
-                failures.push(`${source.sourceType}:${row.id}:${error.message}`);
+            if (shouldScheduleAbandonedCheckout({ status: "pending", createdAt: row.created_at, now: current })) {
+                candidates.push({ ...row, sourceType: source.sourceType, source });
             }
+        }
+    }
+
+    for (const row of pickLatestAbandonedCheckoutRows(candidates)) {
+        const source = row.source;
+        try {
+            const user = await getRegisteredUserById(row.user_id);
+            const result = await queueAndSendFollowup({ sourceType: source.sourceType, sourceId: row.id, user, phone: source.phone(row, user), productName: source.name(row), now: current });
+            if (!result.skipped) processed += 1;
+        } catch (error) {
+            failures.push(`${source.sourceType}:${row.id}:${error.message}`);
         }
     }
     return { processed, failures };
