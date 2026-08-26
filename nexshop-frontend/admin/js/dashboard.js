@@ -2113,6 +2113,40 @@ async function saveApiKeys() {
     }
 }
 
+async function provisionWaGateway() {
+    const button = document.getElementById("waProvisionBtn");
+    const errorEl = document.getElementById("apiKeysError");
+    const urlInput = document.getElementById("waapiUrl");
+    const keyInput = document.getElementById("waapiKey");
+    const originalHtml = button.innerHTML;
+    errorEl.textContent = "";
+    button.disabled = true;
+    button.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status"></span> Menyimpan...`;
+
+    try {
+        await withAdminPin(async (security_pin) => {
+            const res = await apiFetch("/settings/wa-api/provision", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ security_pin, waapi_url: urlInput.value.trim() })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal mengonfigurasi WA Gateway");
+
+            urlInput.value = data.waapi_url || urlInput.value.trim();
+            keyInput.value = "••••••••••••••••";
+            showToast(data.message || "WA Gateway berhasil dikonfigurasi.");
+            loadApiKeys(security_pin).catch(() => {});
+            refreshWaQr().catch(() => {});
+        }, "membuat atau merotasi key WA Gateway");
+    } catch (error) {
+        if (error.message !== "unauthorized") errorEl.textContent = error.message;
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalHtml;
+    }
+}
+
 async function testApiGames() {
     const btn = document.getElementById("agTestBtn");
     if (!btn) return;

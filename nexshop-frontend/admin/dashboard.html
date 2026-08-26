@@ -1938,15 +1938,21 @@
                     <input id="waapiUrl" class="form-control" placeholder="http://127.0.0.1:8080 (WA API server)">
                 </div>
                 <div class="col-12">
-                    <label class="form-label">API Key WA API Server</label>
-                    <input id="waapiKey" type="password" class="form-control" placeholder="Samakan dengan API key di server WA API (Baileys)">
+                    <label class="form-label">API Key WA Gateway</label>
+                    <input id="waapiKey" type="password" class="form-control" placeholder="Klik Generate / Rotasi Key dari Dashboard" readonly>
                 </div>
                 <div class="col-12">
                     <label class="form-label">Nomor Tujuan Notifikasi</label>
                     <input id="waapiTargetNumber" class="form-control" placeholder="62812xxxxxxxx">
                 </div>
                 <div class="col-12">
-                    <div class="form-text">Diisi &amp; disimpan di sini (database), <strong>tidak perlu edit file <code>.env</code> di VPS</strong>. Kalau dikosongkan, sistem jatuh ke <code>WA_API_URL</code>/<code>WA_API_KEY</code> di <code>.env</code> sebagai fallback. Key di sini <strong>harus sama persis</strong> dengan API key yang dikonfig di server WA API (Baileys)-nya sendiri, kalau tidak semua kirim WA akan gagal. Nomor tujuan di bawah dipakai notifikasi ke <strong>admin</strong>.</div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="waProvisionBtn" onclick="provisionWaGateway()">
+                            <i class="bi bi-shield-lock"></i> Generate / Rotasi Key dari Dashboard
+                        </button>
+                        <span class="form-text m-0">Cukup sekali setelah gateway berjalan di VPS; tidak perlu isi <code>WA_API_KEY</code> di <code>.env</code>.</span>
+                    </div>
+                    <div class="form-text mt-2">Dashboard mengirim key baru lewat koneksi lokal backend → gateway, lalu menyimpannya di database dan data runtime VPS. URL harus <code>http://127.0.0.1:8080</code> karena backend dan gateway berjalan di VPS yang sama. Nomor tujuan dipakai notifikasi ke <strong>admin</strong>.</div>
                 </div>
 
                 <div class="col-12 mt-4"><h6 class="text-uppercase text-muted small mb-0">WhatsApp API (WA API) - Notifikasi Pelanggan</h6></div>

@@ -24,6 +24,13 @@ function isLocalGatewayHost(rawHost) {
     return version === 4 ? isPrivateIpv4(host) : version === 6 && isPrivateIpv6(host);
 }
 
+// Provision endpoint di gateway tidak punya API key sebelum setup pertama,
+// jadi hanya backend yang berjalan di VPS yang sama yang boleh memakainya.
+function isStrictLoopbackGatewayHost(rawHost) {
+    const host = unwrapIpv6Host(rawHost).toLowerCase();
+    return host === "localhost" || host === "127.0.0.1" || host === "::1";
+}
+
 /**
  * WA gateway bukan webhook milik pihak luar. Endpoint ini sengaja dapat
  * memakai HTTP saat ditempatkan di localhost/LAN privat; gateway publik tetap
@@ -59,4 +66,4 @@ function validateWaGatewayUrlShape(rawUrl) {
     return { ok: true, url: parsed.origin };
 }
 
-module.exports = { validateWaGatewayUrlShape, isLocalGatewayHost };
+module.exports = { validateWaGatewayUrlShape, isLocalGatewayHost, isStrictLoopbackGatewayHost };

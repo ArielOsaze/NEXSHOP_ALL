@@ -6,16 +6,16 @@ const path = require("path");
 const express = require("express");
 const QRCode = require("qrcode");
 const P = require("pino");
+const { createRuntimeConfigStore, normalizeApiKey } = require("./runtimeConfig");
 
 const PORT = Number(process.env.PORT || 8080);
 const HOST = process.env.HOST || "127.0.0.1";
-const API_KEY = String(process.env.WA_API_KEY || "").trim();
+const ENV_API_KEY = String(process.env.WA_API_KEY || "").trim(); // kompatibilitas migrasi lama saja
 const MAX_MESSAGE_LENGTH = Number(process.env.MAX_MESSAGE_LENGTH || 4096);
 const AUTH_DIR = path.resolve(process.env.WA_AUTH_DIR || path.join(__dirname, "data", "auth_info"));
+const RUNTIME_CONFIG_PATH = path.resolve(process.env.WA_RUNTIME_CONFIG || path.join(path.dirname(AUTH_DIR), "gateway-config.json"));
+const configStore = createRuntimeConfigStore({ configPath: RUNTIME_CONFIG_PATH });
 
-if (!API_KEY || API_KEY.length < 24) {
-    throw new Error("WA_API_KEY wajib diisi dan minimal 24 karakter. Jangan gunakan key bawaan.");
-}
 if (!Number.isInteger(PORT) || PORT < 1 || PORT > 65535) {
     throw new Error("PORT WA gateway tidak valid.");
 }
@@ -24,6 +24,7 @@ if (!Number.isInteger(MAX_MESSAGE_LENGTH) || MAX_MESSAGE_LENGTH < 100 || MAX_MES
 }
 
 const logger = P({ level: process.env.LOG_LEVEL || "info" });
+let apiKey = "";
 let socket = null;
 let connectionState = "starting";
 let latestQr = null;
@@ -33,9 +34,22 @@ let connecting = false;
 let shuttingDown = false;
 
 function apiKeyMatches(candidate) {
+    if (!apiKey) return false;
     const supplied = Buffer.from(String(candidate || ""));
-    const expected = Buffer.from(API_KEY);
+    const expected = Buffer.from(apiKey);
     return supplied.length === expected.length && crypto.timingSafeEqual(supplied, expected);
+}
+
+function isLoopbackRequest(req) {
+    const address = String(req.socket?.remoteAddress || "").replace(/^::ffff:/, "");
+    return address === "127.0.0.1" || address === "::1";
+}
+
+function requireLocalBackend(req, res, next) {
+    if (!isLoopbackRequest(req)) {
+        return res.status(403).json({ success: false, message: "Provisioning gateway hanya boleh dari backend lokal VPS." });
+    }
+    next();
 }
 
 function requireApiKey(req, res, next) {
@@ -180,6 +194,21 @@ app.use((req, res, next) => {
     next();
 });
 
+// Endpoint bootstrap ini tidak memakai API key karena ia dipakai untuk membuat
+// key pertama. Ia aman karena gateway default bind 127.0.0.1 dan request harus
+// benar-benar berasal dari socket loopback (backend NexShop di VPS yang sama).
+app.post("/internal/configure", requireLocalBackend, async (req, res) => {
+    try {
+        const nextKey = normalizeApiKey(req.body?.apiKey);
+        await configStore.setApiKey(nextKey);
+        apiKey = nextKey;
+        logger.info({ configPath: configStore.getConfigPath() }, "WA gateway dikonfigurasi dari Admin NexShop");
+        res.json({ success: true, message: "Key WA gateway tersimpan di runtime data VPS." });
+    } catch (error) {
+        res.status(400).json({ success: false, message: error.message || "Konfigurasi gateway tidak valid." });
+    }
+});
+
 app.get("/health", requireApiKey, (req, res) => {
     res.json({
         success: true,
@@ -248,15 +277,43 @@ app.use((error, req, res, next) => {
     res.status(400).json({ success: false, message: "Request gateway tidak valid." });
 });
 
-const server = app.listen(PORT, HOST, () => {
-    logger.info({ host: HOST, port: PORT }, "NexShop WA gateway berjalan");
-    connect().catch((error) => logger.error({ err: error.message }, "WA gateway gagal memulai koneksi"));
+let server = null;
+
+async function initializeGatewayConfig() {
+    await configStore.load();
+    apiKey = configStore.getApiKey();
+    // Migrasi sekali dari deploy lama yang sudah punya WA_API_KEY di .env.
+    // Setelah tersimpan, key berikutnya dikelola Dashboard dan .env tidak perlu disentuh lagi.
+    if (!apiKey && ENV_API_KEY) {
+        try {
+            await configStore.setApiKey(ENV_API_KEY);
+            apiKey = configStore.getApiKey();
+            logger.info({ configPath: configStore.getConfigPath() }, "WA_API_KEY lama dimigrasikan ke runtime config");
+        } catch (error) {
+            logger.warn({ err: error.message }, "WA_API_KEY .env tidak valid; tunggu provisioning dari Dashboard");
+        }
+    }
+    if (!apiKey) logger.warn("Gateway belum diprovision. Admin NexShop dapat membuat key dari Settings > API Keys.");
+}
+
+async function startGateway() {
+    await initializeGatewayConfig();
+    server = app.listen(PORT, HOST, () => {
+        logger.info({ host: HOST, port: PORT }, "NexShop WA gateway berjalan");
+        connect().catch((error) => logger.error({ err: error.message }, "WA gateway gagal memulai koneksi"));
+    });
+}
+
+startGateway().catch((error) => {
+    logger.fatal({ err: error.message }, "WA gateway gagal memulai");
+    process.exit(1);
 });
 
 async function shutdown() {
     shuttingDown = true;
     if (reconnectTimer) clearTimeout(reconnectTimer);
     try { if (socket?.end) socket.end(new Error("Gateway dihentikan")); } catch (_) {}
+    if (!server) return process.exit(0);
     server.close(() => process.exit(0));
     setTimeout(() => process.exit(1), 10000).unref();
 }

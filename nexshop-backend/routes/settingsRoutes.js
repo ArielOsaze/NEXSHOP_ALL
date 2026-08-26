@@ -44,6 +44,7 @@ router.post("/test-user-whatsapp", authMiddleware, superAdminMiddleware, require
 // QR adalah kredensial login WhatsApp. Status boleh dibaca oleh admin yang
 // sudah login, sedangkan reset sesi tetap membutuhkan Security PIN.
 router.get("/wa-api/status", authMiddleware, superAdminMiddleware, settingsController.getWaApiStatus);
+router.post("/wa-api/provision", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.provisionWaApiGatewayAdmin);
 router.post("/wa-api/rescan", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.forceWaRescan);
 router.post("/apigames/test", authMiddleware, superAdminMiddleware, requireAdminPin, testApiGamesLimiter, settingsController.testApiGamesAdmin);
 

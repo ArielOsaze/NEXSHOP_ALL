@@ -8,7 +8,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const { assertSafeOutboundUrl } = require("../utils/safeOutboundUrl");
-const { validateWaGatewayUrlShape } = require("../utils/waGatewayUrl");
+const { validateWaGatewayUrlShape, isStrictLoopbackGatewayHost } = require("../utils/waGatewayUrl");
 const { isAllowedChromeExecutable } = require("../utils/chromeExecutable");
 
 const PIN_CHANGE_OTP_TTL_MS = 5 * 60 * 1000;
@@ -435,6 +435,59 @@ exports.updateApiKeysAdmin = async (req, res) => {
         res.json({ message: "Konfigurasi berhasil disimpan" });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
+    }
+};
+
+/**
+ * Bootstrap/rotasi key gateway dari Admin Dashboard. Tidak menulis .env:
+ * gateway menyimpan key runtime sendiri di volume data VPS, lalu backend
+ * menyimpan key yang sama di tabel api_keys.
+ */
+exports.provisionWaApiGatewayAdmin = async (req, res) => {
+    if (!["admin", "staff"].includes(req.user.role)) {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    try {
+        const current = await getWaApiConfig({ fresh: true });
+        const requestedUrl = String(req.body?.waapi_url || current.url || "http://127.0.0.1:8080").trim();
+        const validation = validateWaGatewayUrlShape(requestedUrl);
+        if (!validation.ok) return res.status(400).json({ message: `URL Gateway WA ditolak: ${validation.reason}` });
+
+        const parsedUrl = new URL(validation.url);
+        if (!isStrictLoopbackGatewayHost(parsedUrl.hostname)) {
+            return res.status(400).json({ message: "Provisioning dari Dashboard hanya tersedia untuk gateway yang berjalan di VPS/backend yang sama (http://127.0.0.1:8080)." });
+        }
+
+        const nextKey = crypto.randomBytes(48).toString("base64url");
+        try {
+            await axios.post(`${validation.url}/internal/configure`, { apiKey: nextKey }, { timeout: 10000 });
+        } catch (gatewayError) {
+            return res.status(502).json({
+                message: gatewayError.response?.data?.message
+                    || `Gateway belum dapat diprovision. Pastikan proses nexshop-wa-api berjalan di ${validation.url}.`,
+                gateway_status: gatewayError.response?.status || null
+            });
+        }
+
+        const { error } = await updateApiKeys({ waapi_url: validation.url, waapi_key: nextKey });
+        if (error) {
+            // Hindari backend kehilangan akses jika database menolak penyimpanan key baru.
+            if (String(current.key || "").length >= 24) {
+                await axios.post(`${validation.url}/internal/configure`, { apiKey: current.key }, { timeout: 10000 }).catch(() => {});
+            }
+            return res.status(500).json({ message: "Gateway sudah merespons, tapi key gagal disimpan ke database. Konfigurasi gateway dikembalikan ke key sebelumnya." });
+        }
+
+        notify("settings", `🔐 ${req.user.email} membuat/merotasi key NexShop WA Gateway`);
+        await logSensitiveAction(req, "PROVISION_WA_GATEWAY", { waapi_url: validation.url });
+        return res.json({
+            success: true,
+            message: "WA Gateway berhasil dikonfigurasi dari Dashboard. Key tersimpan aman dan tidak perlu diisi di .env VPS.",
+            waapi_url: validation.url
+        });
+    } catch (error) {
+        console.error("Provision WA gateway error:", error.message);
+        return res.status(500).json({ message: "Gagal mengonfigurasi WA Gateway dari Dashboard." });
     }
 };
 
