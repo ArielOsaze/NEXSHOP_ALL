@@ -5,6 +5,7 @@
 const ADMIN_TOKEN_STORAGE_KEY = "nexshop-admin-token";
 const token = localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
 let adminPinResolver = null;
+let adminLogoutResolver = null;
 const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
     ? (window.location.port === "3000" ? "/api" : "http://localhost:3000/api")
     : (window.location.protocol.startsWith("http") ? "/api" : "https://nexshop.cloud/api");
@@ -3132,26 +3133,51 @@ function renderPromoCodes() {
 // Logout
 // ================================
 
-function confirmAdminLogout() {
-    return window.confirm("Apakah Anda yakin akan logout?");
+function requestAdminLogoutConfirmation() {
+    const modalEl = document.getElementById("logoutConfirmModal");
+    if (!modalEl || !window.bootstrap?.Modal) return Promise.resolve(false);
+    return new Promise((resolve) => {
+        adminLogoutResolver = resolve;
+        modalEl.addEventListener("hidden.bs.modal", () => {
+            if (adminLogoutResolver !== resolve) return;
+            adminLogoutResolver = null;
+            resolve(false);
+        }, { once: true });
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
 }
 
+function settleAdminLogoutConfirmation(confirmed) {
+    const resolve = adminLogoutResolver;
+    adminLogoutResolver = null;
+    const modalEl = document.getElementById("logoutConfirmModal");
+    if (modalEl && window.bootstrap?.Modal) bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+    if (resolve) resolve(Boolean(confirmed));
+}
+
+document.getElementById("adminLogoutSubmit")?.addEventListener("click", () => settleAdminLogoutConfirmation(true));
+document.getElementById("adminLogoutCancel")?.addEventListener("click", () => settleAdminLogoutConfirmation(false));
+
 function logout() {
-    if (!confirmAdminLogout()) return;
-    localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
-    localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY);
-    try { sessionStorage.removeItem(ADMIN_PIN_TRUST_KEY); } catch (e) { /* noop */ }
-    window.location.href = "/admin/login.html";
+    requestAdminLogoutConfirmation().then((confirmed) => {
+        if (!confirmed) return;
+        localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+        localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY);
+        try { sessionStorage.removeItem(ADMIN_PIN_TRUST_KEY); } catch (e) { /* noop */ }
+        window.location.href = "/admin/login.html";
+    });
 }
 
 // Dipakai tombol "Keluar" di overlay gerbang — forceAdminLogout sengaja
 // melempar error buat menghentikan pemanggilnya (apiFetch), jadi di sini
 // ditelan supaya gak jadi error liar di handler klik.
 function logoutAdminNow() {
-    if (!confirmAdminLogout()) return;
-    try {
-        forceAdminLogout("manual");
-    } catch (e) { /* redirect sudah jalan */ }
+    requestAdminLogoutConfirmation().then((confirmed) => {
+        if (!confirmed) return;
+        try {
+            forceAdminLogout("manual");
+        } catch (e) { /* redirect sudah jalan */ }
+    });
 }
 
 // ================================

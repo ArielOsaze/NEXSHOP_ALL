@@ -260,6 +260,23 @@ function closestFromEvent(target, selector) {
 
 /* ---------- Overlay helpers ---------- */
 let lastFocusedElement = null;
+let publicLogoutResolver = null;
+
+function requestPublicLogoutConfirmation() {
+    const overlay = document.getElementById("logoutConfirmOverlay");
+    if (!overlay) return Promise.resolve(false);
+    return new Promise((resolve) => {
+        publicLogoutResolver = resolve;
+        openOverlay("logoutConfirmOverlay");
+    });
+}
+
+function settlePublicLogoutConfirmation(confirmed) {
+    const resolve = publicLogoutResolver;
+    publicLogoutResolver = null;
+    closeOverlay("logoutConfirmOverlay");
+    if (resolve) resolve(Boolean(confirmed));
+}
 
 function getFocusableElements(container) {
     return [...container.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')]
@@ -282,6 +299,11 @@ function openOverlay(id) {
 function closeOverlay(id) {
     const el = document.getElementById(id);
     if (!el) return;
+    if (id === "logoutConfirmOverlay" && publicLogoutResolver) {
+        const resolve = publicLogoutResolver;
+        publicLogoutResolver = null;
+        queueMicrotask(() => resolve(false));
+    }
     el.classList.remove("active");
     el.setAttribute("aria-hidden", "true");
 
@@ -313,6 +335,8 @@ document.querySelectorAll(".overlay").forEach(ov => {
         if (e.target === ov) closeOverlay(ov.id);
     });
 });
+document.getElementById("logoutConfirmCancel")?.addEventListener("click", () => settlePublicLogoutConfirmation(false));
+document.getElementById("logoutConfirmSubmit")?.addEventListener("click", () => settlePublicLogoutConfirmation(true));
 document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
         document.querySelectorAll(".overlay.active").forEach(ov => closeOverlay(ov.id));
@@ -1455,8 +1479,8 @@ document.getElementById("phoneOtpResendBtn").addEventListener("click", () => {
     document.getElementById("phoneForm").classList.remove("hidden");
 });
 
-document.getElementById("logoutBtn").addEventListener("click", () => {
-    if (!window.confirm("Apakah Anda yakin akan logout?")) return;
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+    if (!await requestPublicLogoutConfirmation()) return;
     currentUser = null;
     saveUser();
     localStorage.removeItem(PUBLIC_TOKEN_STORAGE_KEY);

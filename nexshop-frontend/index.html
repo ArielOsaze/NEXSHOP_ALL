@@ -61,7 +61,7 @@
     <script defer src="/clean-url.js?v=20260825"></script>
     <script defer src="/cookie-consent.js?v=20260825-no-float"></script>
     <script src="/product-description.js"></script>
-    <link rel="stylesheet" href="/style.css?v=20260825-nexbot-rigged">
+    <link rel="stylesheet" href="/style.css?v=20260827-logout-modal">
 <link rel="stylesheet" href="/tailwind.css?v=20260824-cyan-brand">
 
 <style>
@@ -1474,7 +1474,23 @@ Cek Transaksi
     </div>
 </div>
 
-    <script src="/nexbot.js?v=20260825-production"></script>
+<!-- Custom logout confirmation -->
+<div class="overlay logout-confirm-overlay" id="logoutConfirmOverlay" aria-hidden="true">
+    <div class="logout-confirm-modal" role="dialog" aria-modal="true" aria-labelledby="logoutConfirmTitle" aria-describedby="logoutConfirmDescription">
+        <div class="logout-confirm-icon" aria-hidden="true"><i class="fa-solid fa-arrow-right-from-bracket"></i></div>
+        <div class="logout-confirm-copy">
+            <span class="logout-confirm-eyebrow">Akun NexShop</span>
+            <h2 id="logoutConfirmTitle">Keluar dari NexShop?</h2>
+            <p id="logoutConfirmDescription">Sesi kamu akan diakhiri di perangkat ini. Kamu bisa login kembali kapan saja.</p>
+        </div>
+        <div class="logout-confirm-actions">
+            <button type="button" class="logout-confirm-btn logout-confirm-btn--cancel" id="logoutConfirmCancel">Batal</button>
+            <button type="button" class="logout-confirm-btn logout-confirm-btn--danger" id="logoutConfirmSubmit"><i class="fa-solid fa-arrow-right-from-bracket" aria-hidden="true"></i> Ya, Logout</button>
+        </div>
+    </div>
+</div>
+
+<script src="/nexbot.js?v=20260825-production"></script>
 <script src="/auth-security.js?v=20260825"></script>
 <script src="/script.js?v=20260827-login-context-notification"></script>
 </body>
