@@ -17,7 +17,7 @@ assert.match(index, /class="[^"]*music-cover-image[^"]*"/);
 assert.match(style, /\.music-cover-image\s*\{[\s\S]*?opacity:\s*0/);
 assert.match(style, /\.music-cover-image\.is-loaded\s*\{[\s\S]*?opacity:\s*1/);
 assert.match(index, /style\.css\?v=20260828-navbar-spacing-1/);
-assert.match(index, /script\.js\?v=20260827-black-vinyl-2/);
+assert.match(index, /script\.js\?v=20260828-music-csp-fix-1/);
 assert.match(index, /class="[^"]*music-disc-shell[^"]*"/);
 assert.match(style, /\.music-disc-shell\s*\{[\s\S]*?background:/);
 assert.match(style, /\.music-disc-shell\s*\{[\s\S]*?border:/);

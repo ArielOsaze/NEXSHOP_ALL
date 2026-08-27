@@ -17,7 +17,7 @@ function check(name, condition) {
 
 console.log("NEXSHOP REGTEST 17: CLEAN URL & BRANDING BERITA\n");
 
-const nginx = read("nginx-nexshop.conf");
+const nginx = read("nginx-nexshop.conf").replace(/\r\n/g, "\n");
 const publicRoutes = ["berita", "marketplace", "reseller", "portal-reseller", "docs-reseller", "login"];
 
 check(

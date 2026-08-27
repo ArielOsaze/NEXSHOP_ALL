@@ -17,10 +17,10 @@ assert.doesNotMatch(html, /"@type": "LocalBusiness"/, "Homepage tidak boleh memb
 // Non-critical libraries must not block HTML parsing; the music shell is CSS/HTML-only on first paint.
 assert.match(html, /<script defer src="\/product-description\.js/);
 assert.match(html, /<script defer src="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/qrcodejs/);
-assert.match(html, /<audio id="heroAudioPlayer" src="" preload="none"><\/audio>/);
+assert.match(html, /<audio id="heroAudioPlayer" src="" preload="none"(?: crossorigin="anonymous")?><\/audio>/);
 assert.doesNotMatch(script, /heroAudioPlayer\.src = data\.music\.audio_url;/);
 assert.match(script, /const ensureAudioSource = \(\) =>/);
-assert.match(script, /if \(!ensureAudioSource\(\)\) return;\s*heroAudioPlayer\.play\(/);
+assert.match(script, /if \(!ensureAudioSource\(\)\)[\s\S]{0,300}heroAudioPlayer\.play\(/);
 assert.match(script, /function ensureAuthCaptcha\(\)/);
 assert.match(script, /if \(id === "authOverlay"\) void ensureAuthCaptcha\(\);/);
 assert.doesNotMatch(script, /async function initAuthSecurity\(\) \{[\s\S]{0,700}security\.mountCaptcha/, "Captcha tidak boleh dimount saat homepage baru dibuka");
@@ -30,7 +30,7 @@ assert.match(script, /musicCoverImg\.src\s*=\s*coverUrl/);
 assert.doesNotMatch(script, /aida-public\//, "hero tidak boleh memakai artwork generate lama");
 assert.match(html, /class="[^"]*music-disc-shell[^"]*"/);
 assert.match(html, /style\.css\?v=20260828-navbar-spacing-1/);
-assert.match(html, /script\.js\?v=20260827-black-vinyl-2/);
+assert.match(html, /script\.js\?v=20260828-music-csp-fix-1/);
 assert.match(html, /<img src="\/images\/oss-logo\.png" alt="OSS Logo" loading="lazy" decoding="async">/);
 assert.match(html, /<img data-src="\/images\/nexbot-mascot\.webp"/);
 assert.match(html, /<img data-src="\/images\/nexbot-mascot-wave\.webp"/);

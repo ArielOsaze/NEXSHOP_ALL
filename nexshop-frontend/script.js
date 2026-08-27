@@ -4924,7 +4924,10 @@ async function initMusicPlayer() {
             const ensureAudioSource = () => {
                 if (!heroAudioPlayer || !audioUrl) return false;
                 if (heroAudioPlayer.dataset.sourceReady !== "true") {
+                    try { heroAudioPlayer.crossOrigin = "anonymous"; } catch (_) {}
+                    heroAudioPlayer.preload = "auto";
                     heroAudioPlayer.src = audioUrl;
+                    try { heroAudioPlayer.load(); } catch (_) {}
                     heroAudioPlayer.dataset.sourceReady = "true";
                 }
                 return true;
@@ -4949,6 +4952,23 @@ async function initMusicPlayer() {
                 });
             }
 
+            if (heroAudioPlayer) {
+                heroAudioPlayer.addEventListener("error", () => {
+                    const mediaErr = heroAudioPlayer.error;
+                    console.error("Audio load error:", mediaErr);
+                    isPlaying = false;
+                    if (musicPlayIcon) {
+                        musicPlayIcon.classList.remove("fa-pause");
+                        musicPlayIcon.classList.add("fa-play", "ml-1");
+                    }
+                    if (musicDisc) musicDisc.classList.remove("animate-spin-slow");
+                    if (typeof showToast === "function") {
+                        const code = mediaErr ? mediaErr.code : "unknown";
+                        showToast("Audio gagal dimuat (kode " + code + "). Coba lagi.", "error");
+                    }
+                });
+            }
+
             if (musicPlayBtn && heroAudioPlayer) {
                 musicPlayBtn.addEventListener("click", () => {
                     if (isPlaying) {
@@ -4960,7 +4980,10 @@ async function initMusicPlayer() {
                         }
                         if (musicDisc) musicDisc.classList.remove("animate-spin-slow");
                     } else {
-                        if (!ensureAudioSource()) return;
+                        if (!ensureAudioSource()) {
+                            if (typeof showToast === "function") showToast("Audio belum tersedia.", "error");
+                            return;
+                        }
                         heroAudioPlayer.play().then(() => {
                             isPlaying = true;
                             if (musicPlayIcon) {
@@ -4970,6 +4993,17 @@ async function initMusicPlayer() {
                             if (musicDisc) musicDisc.classList.add("animate-spin-slow");
                         }).catch(err => {
                             console.error("Audio play failed:", err);
+                            isPlaying = false;
+                            if (musicPlayIcon) {
+                                musicPlayIcon.classList.remove("fa-pause");
+                                musicPlayIcon.classList.add("fa-play", "ml-1");
+                            }
+                            if (musicDisc) musicDisc.classList.remove("animate-spin-slow");
+                            const msg = err && err.name === "NotAllowedError"
+                                ? "Browser memblokir autoplay. Tap sekali lagi untuk memutar."
+                                : (err && err.message ? err.message : "Audio gagal diputar. Coba lagi.");
+                            if (typeof showToast === "function") showToast(msg, "error");
+                            else alert(msg);
                         });
                     }
                 });
