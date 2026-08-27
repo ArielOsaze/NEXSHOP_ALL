@@ -290,6 +290,7 @@ function getFocusableElements(container) {
 function openOverlay(id) {
     const el = document.getElementById(id);
     if (!el) return;
+    if (id === "authOverlay") void ensureAuthCaptcha();
     const wasOpen = el.classList.contains("active");
     if (!wasOpen) lastFocusedElement = document.activeElement;
     el.setAttribute("aria-hidden", "false");
@@ -1012,14 +1013,26 @@ const GOOGLE_OAUTH_MESSAGES = {
     access_denied: "Akun ini tidak dapat menggunakan login Google."
 };
 
+let authCaptchaPromise = null;
+
+function ensureAuthCaptcha() {
+    const security = window.NexShopAuthSecurity;
+    if (!security) return Promise.resolve();
+    if (!authCaptchaPromise) {
+        authCaptchaPromise = Promise.all([
+            security.mountCaptcha("login", "loginTurnstile", "loginTurnstileStatus"),
+            security.mountCaptcha("register", "registerTurnstile", "registerTurnstileStatus")
+        ]).catch((error) => {
+            authCaptchaPromise = null;
+            throw error;
+        });
+    }
+    return authCaptchaPromise;
+}
+
 async function initAuthSecurity() {
     const security = window.NexShopAuthSecurity;
     if (!security) return;
-
-    await Promise.all([
-        security.mountCaptcha("login", "loginTurnstile", "loginTurnstileStatus"),
-        security.mountCaptcha("register", "registerTurnstile", "registerTurnstileStatus")
-    ]);
 
     const beginGoogle = async () => {
         const errorEl = document.getElementById("loginError");
@@ -1219,6 +1232,7 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
     const errorEl = document.getElementById("regError");
 
     try {
+        await ensureAuthCaptcha();
         const captcha_token = window.NexShopAuthSecurity
             ? await window.NexShopAuthSecurity.captchaToken("register")
             : "";
@@ -1332,6 +1346,7 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
     let data;
 
     try {
+        await ensureAuthCaptcha();
         const captcha_token = window.NexShopAuthSecurity
             ? await window.NexShopAuthSecurity.captchaToken("login")
             : "";
@@ -4807,8 +4822,19 @@ async function initMusicPlayer() {
             const musicPlayIcon = document.getElementById("musicPlayIcon");
             const musicDisc = document.getElementById("musicDisc");
 
+            const audioUrl = data.music.audio_url || "";
             if (musicCoverImg) musicCoverImg.src = data.music.cover_url || "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=500&auto=format&fit=crop";
-            if (heroAudioPlayer) heroAudioPlayer.src = data.music.audio_url;
+
+            // Musik bukan elemen visual first paint. Pertahankan file/kualitas
+            // asli, tetapi unduh hanya saat pengguna memang menekan Play.
+            const ensureAudioSource = () => {
+                if (!heroAudioPlayer || !audioUrl) return false;
+                if (heroAudioPlayer.dataset.sourceReady !== "true") {
+                    heroAudioPlayer.src = audioUrl;
+                    heroAudioPlayer.dataset.sourceReady = "true";
+                }
+                return true;
+            };
 
             // Show play button
             if (musicPlayBtn) {
@@ -4840,15 +4866,17 @@ async function initMusicPlayer() {
                         }
                         if (musicDisc) musicDisc.classList.remove("animate-spin-slow");
                     } else {
-                        heroAudioPlayer.play().catch(err => {
+                        if (!ensureAudioSource()) return;
+                        heroAudioPlayer.play().then(() => {
+                            isPlaying = true;
+                            if (musicPlayIcon) {
+                                musicPlayIcon.classList.remove("fa-play", "ml-1");
+                                musicPlayIcon.classList.add("fa-pause");
+                            }
+                            if (musicDisc) musicDisc.classList.add("animate-spin-slow");
+                        }).catch(err => {
                             console.error("Audio play failed:", err);
                         });
-                        isPlaying = true;
-                        if (musicPlayIcon) {
-                            musicPlayIcon.classList.remove("fa-play", "ml-1");
-                            musicPlayIcon.classList.add("fa-pause");
-                        }
-                        if (musicDisc) musicDisc.classList.add("animate-spin-slow");
                     }
                 });
             }

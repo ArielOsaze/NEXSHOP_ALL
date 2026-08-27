@@ -17,6 +17,13 @@ assert.doesNotMatch(html, /"@type": "LocalBusiness"/, "Homepage tidak boleh memb
 // Non-critical libraries must not block HTML parsing; image resolution/src must remain unchanged.
 assert.match(html, /<script defer src="\/product-description\.js/);
 assert.match(html, /<script defer src="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/qrcodejs/);
+assert.match(html, /<audio id="heroAudioPlayer" src="" preload="none"><\/audio>/);
+assert.doesNotMatch(script, /heroAudioPlayer\.src = data\.music\.audio_url;/);
+assert.match(script, /const ensureAudioSource = \(\) =>/);
+assert.match(script, /if \(!ensureAudioSource\(\)\) return;\s*heroAudioPlayer\.play\(/);
+assert.match(script, /function ensureAuthCaptcha\(\)/);
+assert.match(script, /if \(id === "authOverlay"\) void ensureAuthCaptcha\(\);/);
+assert.doesNotMatch(script, /async function initAuthSecurity\(\) \{[\s\S]{0,700}security\.mountCaptcha/, "Captcha tidak boleh dimount saat homepage baru dibuka");
 assert.match(html, /id="musicCoverImg"[^>]*fetchpriority="high"/);
 assert.match(html, /src="https:\/\/lh3\.googleusercontent\.com\//);
 assert.match(html, /fonts\.googleapis\.com/);
