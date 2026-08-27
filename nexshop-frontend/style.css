@@ -9905,6 +9905,24 @@ html:not(.dark) .home-glass-badge {
     .logout-confirm-btn { width: 100%; }
 }
 
+/* The real artwork comes only from Admin > Music Player. It fades in over
+   the black first-paint shell after the public music payload resolves. */
+.music-cover-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 9999px;
+    opacity: 0;
+    z-index: 1;
+    transition: opacity 240ms ease;
+}
+
+.music-cover-image.is-loaded {
+    opacity: 1;
+}
+
 /* Music player: keep the black cassette/vinyl shell visible on first paint.
    These rules are explicit because the shipped Tailwind bundle does not
    contain arbitrary color/border utilities used by the player markup. */

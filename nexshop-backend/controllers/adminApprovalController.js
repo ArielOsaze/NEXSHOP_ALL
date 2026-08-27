@@ -23,7 +23,7 @@ function visibleRequest(request, requesterMap, reviewerMap) {
         reviewed_at: request.reviewed_at,
         applied_at: request.applied_at,
         requester: requesterMap.get(String(request.requester_id)) || { id: request.requester_id },
-        reviewer: request.reviewer_id ? reviewerMap.get(String(request.reviewer_id)) || { id: request.reviewer_id } : null
+        reviewer: request.reviewed_by ? reviewerMap.get(String(request.reviewed_by)) || { id: request.reviewed_by } : null
     };
 }
 

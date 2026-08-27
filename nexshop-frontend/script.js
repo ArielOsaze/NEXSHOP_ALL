@@ -4902,11 +4902,24 @@ async function initMusicPlayer() {
             const musicPlayBtn = document.getElementById("musicPlayBtn");
             const musicPlayIcon = document.getElementById("musicPlayIcon");
             const musicDisc = document.getElementById("musicDisc");
+            const musicCoverImg = document.getElementById("musicCoverImg");
 
             const audioUrl = data.music.audio_url || "";
+            const coverUrl = typeof data.music.cover_url === "string" ? data.music.cover_url.trim() : "";
 
-            // Cover artwork is intentionally not used here. The black disc is
-            // rendered in index.html on first paint and never gets overwritten.
+            // Use only the cover uploaded through Admin > Music Player. There is
+            // no generated/external artwork fallback. The black shell stays
+            // visible until this real admin-uploaded image is ready.
+            if (musicCoverImg) {
+                musicCoverImg.classList.remove("is-loaded");
+                musicCoverImg.onload = () => musicCoverImg.classList.add("is-loaded");
+                musicCoverImg.onerror = () => {
+                    musicCoverImg.removeAttribute("src");
+                    musicCoverImg.classList.remove("is-loaded");
+                };
+                if (coverUrl) musicCoverImg.src = coverUrl;
+            }
+
             // asli, tetapi unduh hanya saat pengguna memang menekan Play.
             const ensureAudioSource = () => {
                 if (!heroAudioPlayer || !audioUrl) return false;

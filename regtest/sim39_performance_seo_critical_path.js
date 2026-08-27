@@ -24,7 +24,10 @@ assert.match(script, /if \(!ensureAudioSource\(\)\) return;\s*heroAudioPlayer\.p
 assert.match(script, /function ensureAuthCaptcha\(\)/);
 assert.match(script, /if \(id === "authOverlay"\) void ensureAuthCaptcha\(\);/);
 assert.doesNotMatch(script, /async function initAuthSecurity\(\) \{[\s\S]{0,700}security\.mountCaptcha/, "Captcha tidak boleh dimount saat homepage baru dibuka");
-assert.doesNotMatch(html, /id="musicCoverImg"|aida-public\//, "Cover musik remote tidak boleh menimpa disk first paint");
+assert.match(html, /id="musicCoverImg"[^>]*src=""/, "cover hero harus dimulai kosong dan diisi dari API upload admin");
+assert.match(script, /const coverUrl = typeof data\.music\.cover_url === "string"/);
+assert.match(script, /musicCoverImg\.src\s*=\s*coverUrl/);
+assert.doesNotMatch(script, /aida-public\//, "hero tidak boleh memakai artwork generate lama");
 assert.match(html, /class="[^"]*music-disc-shell[^"]*"/);
 assert.match(html, /style\.css\?v=20260827-black-vinyl-2/);
 assert.match(html, /script\.js\?v=20260827-black-vinyl-2/);

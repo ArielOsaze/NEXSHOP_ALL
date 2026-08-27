@@ -1902,8 +1902,10 @@ async function loadApprovals() {
         const res = await apiFetch("/admin/approvals");
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Gagal memuat approval");
-        const requests = data.requests || [];
-        const pending = requests.filter((item) => item.status === "pending").length;
+        const requests = Array.isArray(data.requests) ? data.requests : [];
+        const pending = Number.isInteger(data.pendingCount)
+            ? data.pendingCount
+            : requests.filter((item) => item.status === "pending").length;
         document.getElementById("approvalPendingCount").textContent = `${pending} pending`;
         const navCount = document.getElementById("approvalNavCount");
         if (navCount) { navCount.textContent = pending; navCount.classList.toggle("d-none", pending === 0 || currentUser?.role !== "admin"); }

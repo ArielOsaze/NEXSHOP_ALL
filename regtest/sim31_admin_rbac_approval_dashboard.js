@@ -14,6 +14,7 @@ const musicRoutes = read("nexshop-backend/routes/musicRoutes.js");
 const server = read("nexshop-backend/server.js");
 const dashboard = read("nexshop-frontend/admin/dashboard.html");
 const dashboardJs = read("nexshop-frontend/admin/js/dashboard.js");
+const approvalController = read("nexshop-backend/controllers/adminApprovalController.js");
 const approvalService = require("../nexshop-backend/services/adminApprovalService");
 
 assert.match(notification, /Peringatan Login Dashboard Admin NexShop/);
@@ -41,6 +42,8 @@ assert.match(dashboard, /view-approvals/);
 assert.match(dashboard, /sidebar-dashboard-link/);
 assert.match(dashboardJs, /\/admin\/approvals/);
 assert.match(dashboardJs, /submitStoreSettingsApproval|requestStoreSettingsApproval/);
+assert.match(approvalController, /reviewer: request\.reviewed_by/);
+assert.doesNotMatch(approvalController, /reviewer: request\.reviewer_id/, "approval harus memakai kolom DB reviewed_by");
 
 const normalized = approvalService.normalizeStoreSettingsPayload({ store_name: "Toko Baru", security_pin: "[REDACTED]", api_key: "[REDACTED]" });
 assert.deepStrictEqual(normalized, { store_name: "Toko Baru" }, "payload approval tidak boleh membawa secret/arbitrary field");

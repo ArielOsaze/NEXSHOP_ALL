@@ -9,10 +9,13 @@ const index = fs.readFileSync(path.join(root, "nexshop-frontend/index.html"), "u
 const script = fs.readFileSync(path.join(root, "nexshop-frontend/script.js"), "utf8");
 const style = fs.readFileSync(path.join(root, "nexshop-frontend/style.css"), "utf8");
 
-assert.doesNotMatch(index, /id=["']musicCoverImg["']/);
-assert.doesNotMatch(index, /aida-public\//);
-assert.doesNotMatch(script, /musicCoverImg/);
-assert.doesNotMatch(script, /cover_url/);
+assert.match(index, /id=["']musicCoverImg["'][^>]*src=["']["']/);
+assert.match(script, /const coverUrl = typeof data\.music\.cover_url === "string"/);
+assert.match(script, /musicCoverImg\.src\s*=\s*coverUrl/);
+assert.doesNotMatch(script, /coverUrl\s*=\s*data\.music\.cover_url\s*\|\|/);
+assert.match(index, /class="[^"]*music-cover-image[^"]*"/);
+assert.match(style, /\.music-cover-image\s*\{[\s\S]*?opacity:\s*0/);
+assert.match(style, /\.music-cover-image\.is-loaded\s*\{[\s\S]*?opacity:\s*1/);
 assert.match(index, /style\.css\?v=20260827-black-vinyl-2/);
 assert.match(index, /script\.js\?v=20260827-black-vinyl-2/);
 assert.match(index, /class="[^"]*music-disc-shell[^"]*"/);

@@ -327,7 +327,8 @@ Cek Transaksi
     <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/20 to-brand-cyan/20 blur-3xl rounded-full animate-pulse"></div>
     <div class="relative w-full h-full rounded-full animate-float-slow">
         <div id="musicDisc" class="music-disc-shell relative w-full h-full rounded-full flex items-center justify-center overflow-hidden group transition-transform duration-700 ease-linear">
-            <!-- Black vinyl shell is rendered on first paint; no remote cover overlay. -->
+            <!-- Admin-uploaded cover is injected after /api/music/public resolves. The black shell remains the first-paint fallback. -->
+            <img id="musicCoverImg" class="music-cover-image" src="" alt="Cover lagu aktif" loading="eager" fetchpriority="high" decoding="async">
             <div class="absolute inset-[10%] rounded-full border border-white/5"></div>
             <div class="absolute inset-[15%] rounded-full border border-white/5"></div>
             <div class="absolute inset-[20%] rounded-full border border-white/5"></div>
