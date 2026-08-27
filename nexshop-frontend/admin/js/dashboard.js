@@ -2857,7 +2857,10 @@ function renderTopupOrders() {
     tbody.innerHTML = topupOrders.map(o => `
         <tr>
             <td><code>${escapeHtml(o.id)}</code></td>
-            <td>${escapeHtml(o.nama_produk || o.kode_produk)}</td>
+            <td>
+                <span class="badge bg-primary-subtle text-primary-emphasis me-1">${escapeHtml(o.order_category_label || "Orders")}</span>
+                ${escapeHtml(o.nama_produk || o.kode_produk)}
+            </td>
             <td>${escapeHtml(o.tujuan)}${o.server_id ? " | " + escapeHtml(o.server_id) : ""}</td>
             <td>Rp ${Number(o.harga).toLocaleString("id-ID")}</td>
             <td>${statusBadge(o.status)}</td>

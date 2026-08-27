@@ -146,10 +146,13 @@ function bersihkanProduk(p, manualName, displayCategory) {
         target_kind: contract.target.kind,
         checkout_contract: {
             version: contract.version,
+            format_form: contract.format_form,
+            order_category: contract.order_category,
             review_required: contract.review_required,
             target: contract.target,
             server_id: contract.server_id
         },
+        order_category: contract.order_category,
         item_icon: p.item_icon || null,
         cek_tagihan: isPascabayarProduct(p)
     };

@@ -23,6 +23,7 @@ let syncInterval = null;
 const CATALOG_PAGE_SIZE = 200;
 
 const catalogFilter = {
+    order_category: "orders",
     category: "",
     operator: "",
     status: "",
@@ -142,7 +143,8 @@ function resetSyncUI() {
 // ===========================================================
 async function loadCatalogSummary() {
     try {
-        const res = await apiFetch("/topup/admin/catalog-summary");
+        const params = new URLSearchParams({ order_category: catalogFilter.order_category });
+        const res = await apiFetch(`/topup/admin/catalog-summary?${params.toString()}`);
         if (!res.ok) throw new Error("Gagal memuat ringkasan katalog");
         const data = await res.json();
 
@@ -238,6 +240,7 @@ function renderOperatorSelect() {
 // ===========================================================
 function buildCatalogQuery(extra = {}) {
     const params = new URLSearchParams();
+    if (catalogFilter.order_category) params.set("order_category", catalogFilter.order_category);
     if (catalogFilter.category) params.set("category", catalogFilter.category);
     if (catalogFilter.operator) params.set("operator", catalogFilter.operator);
     if (catalogFilter.status) params.set("status", catalogFilter.status);
@@ -336,6 +339,9 @@ function renderProductTable() {
                         <span class="badge badge-code font-monospace">${escapeHtml(p.kode_produk || "-")}</span>
                         ${p.operator_name ? `<span class="badge badge-meta">${escapeHtml(p.operator_name)}</span>` : ""}
                         ${p.source_jenis_name ? `<span class="badge badge-meta">${escapeHtml(p.source_jenis_name)}</span>` : ""}
+                        ${p.order_category === "orders"
+                            ? '<span class="badge bg-primary-subtle text-primary-emphasis">Orders</span>'
+                            : '<span class="badge bg-secondary-subtle text-secondary-emphasis">Catalog &amp; Sales</span>'}
                         ${p.butuh_server_id ? `<span class="badge badge-server"><i class="bi bi-person-vcard"></i> Server ID</span>` : ""}
                     </div>
                 </td>
@@ -518,6 +524,10 @@ function openProductDrawer(id) {
                         <span class="fw-medium">${escapeHtml(p.operator_name || "-")}</span>
                     </div>
                     <div class="col-6">
+                        <span class="text-muted small d-block">Area Admin</span>
+                        <span class="badge ${p.order_category === "orders" ? "bg-primary-subtle text-primary-emphasis" : "bg-secondary-subtle text-secondary-emphasis"}">${p.order_category === "orders" ? "Orders" : "Catalog & Sales"}</span>
+                    </div>
+                    <div class="col-6">
                         <span class="text-muted small d-block">Kategori</span>
                         <span class="fw-medium">${escapeHtml(p.nexshop_category || p.kategori || "-")}</span>
                     </div>
@@ -670,6 +680,24 @@ function prefillCategoryMap(tokovoucherName, nexshopName) {
 // Init
 // ===========================================================
 function bindCatalogFilters() {
+    const orderCategorySelect = el("catalogOrderCategorySelect");
+    if (orderCategorySelect) {
+        orderCategorySelect.value = catalogFilter.order_category;
+        orderCategorySelect.addEventListener("change", async (e) => {
+            catalogFilter.order_category = e.target.value;
+            catalogFilter.category = "";
+            catalogFilter.operator = "";
+            catalogFilter.q = "";
+            catalogPage = 0;
+            topupSelectedIds.clear();
+            const searchInput = el("topupSearchInput");
+            if (searchInput) searchInput.value = "";
+            topupSearchQuery = "";
+            await loadCatalogSummary();
+            await window.loadTopupProducts();
+        });
+    }
+
     const categorySelect = el("catalogCategorySelect");
     if (categorySelect) {
         categorySelect.addEventListener("change", (e) => {

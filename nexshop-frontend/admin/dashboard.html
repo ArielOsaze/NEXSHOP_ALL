@@ -79,13 +79,13 @@
             <button type="button" class="sidebar-section-toggle" data-nav-group="orders" aria-expanded="false"><span>Orders</span><i class="bi bi-chevron-down"></i></button>
             <div class="sidebar-section-items" data-nav-items="orders">
                 <div class="nav-item"><a class="nav-link" href="#" data-view="orders"><i class="bi bi-cart me-2"></i>Semua Orders</a></div>
-                <div class="nav-item"><a class="nav-link" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Topup &amp; Pesanan Game</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Game &amp; Gamepass</a></div>
             </div>
         </li>
         <li class="sidebar-nav-group" data-nav-group-wrap="catalog-sales">
             <button type="button" class="sidebar-section-toggle" data-nav-group="catalog-sales" aria-expanded="false"><span>Catalog &amp; Sales</span><i class="bi bi-chevron-down"></i></button>
             <div class="sidebar-section-items" data-nav-items="catalog-sales">
-                <div class="nav-item"><a class="nav-link" href="#" data-view="products"><i class="bi bi-box-seam me-2"></i>Produk Game / Gamepass</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="products"><i class="bi bi-box-seam me-2"></i>Produk Toko</a></div>
                 <div class="nav-item"><a class="nav-link" href="#" data-view="promo"><i class="bi bi-megaphone me-2"></i>Promo &amp; Banner</a></div>
                 <div class="nav-item"><a class="nav-link" href="#" data-view="promocodes"><i class="bi bi-ticket-perforated me-2"></i>Kode Promo</a></div>
                 <div class="nav-item"><a class="nav-link" href="#" data-view="ratings"><i class="bi bi-star me-2"></i>Rating &amp; Testimoni</a></div>
@@ -277,13 +277,13 @@
     </div>
 </section>
 
-<!-- ===== Produk (non-diamond) view ===== -->
+<!-- ===== Produk toko biasa view ===== -->
 <section id="view-products" class="view-section d-none">
 
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h2>Produk</h2>
-            <p class="text-muted mb-0">Kelola produk toko (non-diamond)</p>
+            <h2>Produk Toko</h2>
+            <p class="text-muted mb-0">Kelola produk toko biasa (bukan katalog TokoVoucher)</p>
         </div>
 
         <div class="d-flex gap-2 flex-wrap">
@@ -441,12 +441,12 @@
     </div>
 </section>
 
-<!-- ===== Topup TokoVoucher view ===== -->
+<!-- ===== Orders Game & Gamepass view ===== -->
 <section id="view-topup" class="view-section d-none">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h2>Topup TokoVoucher</h2>
-            <p class="text-muted mb-0">Kelola produk topup dari TokoVoucher &amp; pantau pesanan masuk</p>
+            <h2>Orders Game &amp; Gamepass</h2>
+            <p class="text-muted mb-0">Kelola katalog game/gamepass TokoVoucher dan pantau order TP</p>
         </div>
         <div class="d-flex gap-2">
             <span class="badge bg-dark-subtle text-dark border" id="tvBalanceBadge">Saldo TokoVoucher: —</span>
@@ -454,8 +454,8 @@
     </div>
 
     <ul class="nav nav-tabs mb-3" id="topupTabs">
-        <li class="nav-item"><button class="nav-link active" data-topup-tab="products">Produk</button></li>
-        <li class="nav-item"><button class="nav-link" data-topup-tab="orders">Pesanan</button></li>
+        <li class="nav-item"><button class="nav-link active" data-topup-tab="products">Game &amp; Gamepass</button></li>
+        <li class="nav-item"><button class="nav-link" data-topup-tab="orders">Orders</button></li>
     </ul>
 
     <!-- Produk tab (Katalog) -->
@@ -587,6 +587,13 @@
                     </div>
 
                     <div class="row g-2 catalog-filter-bar">
+                        <div class="col-12 col-md-6 col-xl-2">
+                            <label class="form-label small text-muted mb-1" for="catalogOrderCategorySelect">Area</label>
+                            <select class="form-select form-select-sm" id="catalogOrderCategorySelect">
+                                <option value="orders" selected>Orders — Game &amp; Gamepass</option>
+                                <option value="catalog-sales">Catalog &amp; Sales — PPOB</option>
+                            </select>
+                        </div>
                         <div class="col-12 col-md-6 col-xl-3">
                             <label class="form-label small text-muted mb-1" for="catalogCategorySelect">Kategori</label>
                             <select class="form-select form-select-sm" id="catalogCategorySelect">
@@ -607,10 +614,10 @@
                                 <option value="inactive">Nonaktif</option>
                             </select>
                         </div>
-                        <div class="col-12 col-md-6 col-xl-4">
+                        <div class="col-12 col-md-6 col-xl-2">
                             <label class="form-label small text-muted mb-1" for="topupSearchInput">Cari produk</label>
                             <div class="d-flex gap-2">
-                                <input type="text" id="topupSearchInput" class="form-control form-control-sm" placeholder="Nama produk / kode…" autocomplete="off">
+                                <input type="text" id="topupSearchInput" class="form-control form-control-sm" placeholder="Nama / kode…" autocomplete="off">
                                 <button onclick="loadTopupProducts()" class="btn btn-outline-secondary btn-sm flex-shrink-0" title="Muat ulang">
                                     <i class="bi bi-arrow-clockwise"></i>
                                 </button>

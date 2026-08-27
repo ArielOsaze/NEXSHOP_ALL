@@ -894,10 +894,13 @@ exports.getProducts = async (req, res) => {
                 p.target_kind = productContract.target.kind;
                 p.checkout_contract = {
                     version: productContract.version,
+                    format_form: productContract.format_form,
+                    order_category: productContract.order_category,
                     review_required: productContract.review_required,
                     target: productContract.target,
                     server_id: productContract.server_id
                 };
+                p.order_category = productContract.order_category;
                 delete p.harga_beli;
             }); // harga modal = margin internal, kontrak checkout saja yang dipublikasikan
 
@@ -1068,9 +1071,12 @@ async function loadAdminCatalog(columns = "*") {
         .filter((p) => !isForeignProduct(p.kategori, p.kode_produk, p.nama))
         .map((p) => {
             const op = resolveOperator(p);
+            const nexshopCategory = resolveNexshopCategory(p, categoryMap);
+            const orderContract = getProductContract({ ...p, kategori: nexshopCategory });
             return {
                 ...p,
-                nexshop_category: resolveNexshopCategory(p, categoryMap),
+                nexshop_category: nexshopCategory,
+                order_category: orderContract.order_category,
                 operator_id: op.id,
                 operator_name: op.name
             };
@@ -1096,6 +1102,7 @@ exports.getAllProductsAdmin = async (req, res) => {
         const catalog = await loadAdminCatalog();
 
         const category = String(req.query.category || "").trim();
+        const orderCategory = String(req.query.order_category || "").trim().toLowerCase();
         const operator = String(req.query.operator || "").trim();
         const status = String(req.query.status || "").trim(); // "active" | "inactive" | ""
         const q = String(req.query.q || "").trim().toLowerCase();
@@ -1109,6 +1116,7 @@ exports.getAllProductsAdmin = async (req, res) => {
         }
 
         let list = catalog;
+        if (orderCategory) list = list.filter((p) => p.order_category === orderCategory);
         if (category) list = list.filter((p) => p.nexshop_category === category);
         if (operator) list = list.filter((p) => p.operator_id === operator);
         if (status === "active") list = list.filter((p) => !!p.is_active);
@@ -2247,7 +2255,32 @@ exports.getAllOrders = async (req, res) => {
             .order("created_at", { ascending: false });
 
         if (error) return res.status(500).json({ message: "Database Error" });
-        res.json(data || []);
+
+        const codes = [...new Set((data || []).map((o) => String(o.kode_produk || "").trim()).filter(Boolean))];
+        const productByCode = new Map();
+        if (codes.length) {
+            const { data: products } = await supabase
+                .from("topup_products")
+                .select("kode_produk, nama, kategori, source_category_name, source_jenis_name, source_format_form, source_requires_server_id, source_operator_name")
+                .in("kode_produk", codes);
+            (products || []).forEach((p) => productByCode.set(String(p.kode_produk), p));
+        }
+
+        const enriched = (data || []).map((order) => {
+            const product = productByCode.get(String(order.kode_produk || ""));
+            const contract = getProductContract({
+                ...(product || {}),
+                nama: product?.nama || order.nama_produk,
+                kategori: product?.kategori || "Gaming"
+            });
+            return {
+                ...order,
+                order_category: contract.order_category,
+                order_category_label: contract.order_category === "orders" ? "Orders" : "Catalog & Sales",
+                order_channel: "topup"
+            };
+        });
+        res.json(enriched);
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }
@@ -2773,9 +2806,13 @@ exports.getCatalogSummary = async (req, res) => {
 
         // loadAdminCatalog() udah paginasi + resolve kategori/operator, jadi
         // ringkasan ini PASTI konsisten sama isi tabel produk di sebelahnya.
-        const products = await loadAdminCatalog(
-            "id, nama, kode_produk, kategori, source_category_name, source_operator_id, source_operator_name, source_status, is_active, auto_managed, manual_category_override"
+        const allProducts = await loadAdminCatalog(
+            "id, nama, kode_produk, kategori, source_category_name, source_jenis_name, source_format_form, source_requires_server_id, source_operator_id, source_operator_name, source_status, is_active, auto_managed, manual_category_override"
         );
+        const requestedOrderCategory = String(req.query.order_category || "").trim().toLowerCase();
+        const products = ["orders", "catalog-sales"].includes(requestedOrderCategory)
+            ? allProducts.filter((p) => p.order_category === requestedOrderCategory)
+            : allProducts;
 
         const globalStats = { total: products.length, active: 0, inactive: 0, foreign: 0 };
         const summary = {};
@@ -3390,10 +3427,13 @@ exports.getPublicCatalog = async (req, res) => {
             p.target_kind = productContract.target.kind;
             p.checkout_contract = {
                 version: productContract.version,
+                format_form: productContract.format_form,
+                order_category: productContract.order_category,
                 review_required: productContract.review_required,
                 target: productContract.target,
                 server_id: productContract.server_id
             };
+            p.order_category = productContract.order_category;
 
             // Cleanup unnecessary fields from payload
             delete p.harga_beli; // harga modal = margin internal, jangan pernah keluar ke client

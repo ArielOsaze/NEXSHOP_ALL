@@ -15,7 +15,16 @@ function isGameProduct(product) {
     const values = [product?.kategori, product?.source_category_name, product?.source_jenis_name]
         .map(lower)
         .filter(Boolean);
-    return values.some((value) => /topup\s*game|game\s*topup|voucher\s*game|game\s*voucher|^gaming$|^games?$/.test(value));
+    const nameValues = [product?.nama, product?.source_operator_name, product?.operator_nama]
+        .map(lower)
+        .filter(Boolean);
+    const categoryIsGame = values.some((value) => /topup\s*game|game\s*topup|voucher\s*game|game\s*voucher|game\s*pass|gamepass|^gaming$|^games?$/.test(value));
+    const explicitlyNamedGamePass = nameValues.some((value) => /\bgame\s*pass\b|\bgamepass\b/.test(value));
+    return categoryIsGame || explicitlyNamedGamePass;
+}
+
+function getProductAdminCategory(product) {
+    return isGameProduct(product) ? "orders" : "catalog-sales";
 }
 
 function isGameVoucher(product) {
@@ -165,6 +174,7 @@ function getProductContract(product = {}) {
     return {
         version: CONTRACT_VERSION,
         format_form: formatForm,
+        order_category: getProductAdminCategory(product),
         review_required: formatForm === "3" || target.kind === "custom",
         target,
         server_id: server
@@ -200,6 +210,7 @@ function buildSupplierTransactionInput(contract, values = {}) {
 module.exports = {
     CONTRACT_VERSION,
     getProductContract,
+    getProductAdminCategory,
     buildSupplierTransactionInput,
     isGameProduct,
     isGameVoucher
