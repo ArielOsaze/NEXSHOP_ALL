@@ -1418,11 +1418,17 @@ nav#mainNav.nav-scrolled {
 }
 
 @media (min-width: 1536px) {
+    #mainNav .nx-brand-lockup {
+        gap: 0.75rem;
+    }
+
     #mainNav .nx-main-nav-desktop {
         display: flex;
         flex: 1 1 auto;
         min-width: 0;
         justify-content: center;
+        margin-left: clamp(1rem, 2vw, 2.5rem);
+        margin-right: clamp(1rem, 2vw, 2.5rem);
     }
 
     #mainNav .nx-main-nav-mobile {
