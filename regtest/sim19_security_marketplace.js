@@ -71,7 +71,7 @@ check(
 );
 check(
     "URL Gateway WA melewati validasi anti-SSRF sebelum disimpan dan dipanggil",
-    settings.includes("validateWebhookUrlShape(target)") &&
+    settings.includes("validateWaGatewayUrlShape(target)") &&
         settings.includes("await assertSafeOutboundUrl(outboundTarget)")
 );
 check(

@@ -86,6 +86,22 @@ const {
     getAdminRuntimeConfig
 } = require("../services/runtimeConfigService");
 
+async function getSafeWaApiConfig(options = {}) {
+    const config = await getWaApiConfig(options);
+    const target = config.url;
+    const shape = validateWaGatewayUrlShape(target);
+    if (!shape.ok) throw new Error(`URL Gateway WA ditolak: ${shape.reason}`);
+
+    const parsed = new URL(shape.url);
+    let outboundTarget = shape.url;
+    if (!isStrictLoopbackGatewayHost(parsed.hostname)) {
+        const safeOutbound = await assertSafeOutboundUrl(outboundTarget);
+        if (!safeOutbound.ok) throw new Error(`URL Gateway WA ditolak: ${safeOutbound.reason}`);
+        outboundTarget = new URL(safeOutbound.url).origin;
+    }
+    return { ...config, url: outboundTarget };
+}
+
 // ===========================================================
 // STORE SETTINGS — nama toko, tagline, kontak, logo
 // ===========================================================
@@ -449,7 +465,7 @@ exports.provisionWaApiGatewayAdmin = async (req, res) => {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
-        const current = await getWaApiConfig({ fresh: true });
+        const current = await getSafeWaApiConfig({ fresh: true });
         const requestedUrl = String(req.body?.waapi_url || current.url || "http://127.0.0.1:8080").trim();
         const validation = validateWaGatewayUrlShape(requestedUrl);
         if (!validation.ok) return res.status(400).json({ message: `URL Gateway WA ditolak: ${validation.reason}` });
@@ -578,7 +594,7 @@ exports.testWhatsAppAdmin = async (req, res) => {
         // URL/Key WA API & nomor tujuan diambil dari dashboard (Settings >
         // API Keys), .env cuma fallback. Nomor tujuan tetap boleh
         // di-override dari form test.
-        const { url, key, targetNumber } = await getWaApiConfig({ fresh: true });
+        const { url, key, targetNumber } = await getSafeWaApiConfig({ fresh: true });
         const number = (req.body.number || targetNumber || "").trim();
         const message = (req.body.message || "").trim() || "Test notifikasi WhatsApp dari NexShop Admin Dashboard ✅";
         const mediaUrl = (req.body.mediaUrl || "").trim();
@@ -694,7 +710,7 @@ exports.testApiGamesAdmin = async (req, res) => {
 // ===========================================================
 exports.getWaApiStatus = async (req, res) => {
     try {
-        const { url, key, targetNumber } = await getWaApiConfig();
+        const { url, key, targetNumber } = await getSafeWaApiConfig();
         if (!key) return res.status(400).json({ success: false, message: "API Key WA Gateway belum dikonfigurasi." });
         const response = await axios.get(`${url}/health`, {
             headers: { "X-API-Key": key },
@@ -732,7 +748,7 @@ exports.getWaApiStatus = async (req, res) => {
 
 exports.forceWaRescan = async (req, res) => {
     try {
-        const { url, key } = await getWaApiConfig();
+        const { url, key } = await getSafeWaApiConfig();
         if (!key) return res.status(400).json({ success: false, message: "API Key WA Gateway belum dikonfigurasi." });
         // Hanya gateway yang boleh menghapus kredensialnya sendiri. Backend
         // utama tidak tahu lokasi sesi gateway dan tidak perlu akses PM2.
