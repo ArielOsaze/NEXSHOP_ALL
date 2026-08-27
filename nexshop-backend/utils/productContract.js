@@ -19,10 +19,20 @@ function isGameProduct(product) {
 }
 
 function isGameVoucher(product) {
-    const values = [product?.kategori, product?.source_category_name, product?.source_jenis_name]
+    const categoryValues = [product?.kategori, product?.source_category_name, product?.source_jenis_name]
         .map(lower)
         .filter(Boolean);
-    return values.some((value) => /voucher\s*game|game\s*voucher/.test(value));
+    const nameValues = [product?.nama, product?.source_operator_name, product?.operator_nama]
+        .map(lower)
+        .filter(Boolean);
+
+    if (categoryValues.some((value) => /voucher\s*game|game\s*voucher/.test(value))) return true;
+
+    // Beberapa hasil sync lama menyimpan Voucher Game sebagai kategori
+    // "Gaming". Gunakan nama/operator hanya sebagai fallback bila konteks
+    // kategorinya memang game, agar Voucher Pulsa/Data tidak ikut berubah.
+    const gamingContext = categoryValues.some((value) => /topup\s*game|game\s*topup|^gaming$|^games?$/.test(value));
+    return gamingContext && nameValues.some((value) => /\bvoucher\b/.test(value));
 }
 
 function isBankTransfer(product) {

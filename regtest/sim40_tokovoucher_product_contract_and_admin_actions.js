@@ -36,6 +36,21 @@ function testVoucherDoesNotAskForGameId() {
     });
 }
 
+function testVoucherNameOverridesLegacyGamingClassification() {
+    const contract = getProductContract({
+        kategori: "Gaming",
+        source_category_name: "Gaming",
+        source_operator_name: "Voucher Free Fire & FFMAX",
+        nama: "Voucher Free Fire & FFMAX",
+        butuh_server_id: true
+    });
+
+    assert.strictEqual(contract.target.kind, "recipient_phone");
+    assert.strictEqual(contract.target.visible, false);
+    assert.strictEqual(contract.target.required, false);
+    assert.strictEqual(contract.server_id.required, false);
+}
+
 function testGameTopupKeepsPlayerAndServerFields() {
     const contract = getProductContract({
         kategori: "Gaming",
@@ -66,6 +81,15 @@ function testNonGamingAndUnknownFormatAreExplicit() {
     assert.strictEqual(phone.target.kind, "phone");
     assert.strictEqual(phone.target.visible, true);
     assert.strictEqual(phone.target.required, true);
+
+    const dataVoucher = getProductContract({
+        kategori: "Paket Data",
+        nama: "VOUCHER INDOSAT",
+        butuh_server_id: false
+    });
+    assert.strictEqual(dataVoucher.target.kind, "phone");
+    assert.strictEqual(dataVoucher.target.visible, true);
+    assert.strictEqual(dataVoucher.target.required, true);
 
     const custom = getProductContract({ kategori: "Lainnya", source_format_form: "3" });
     assert.strictEqual(custom.review_required, true);
@@ -126,6 +150,7 @@ function testIntegrationWiring() {
 }
 
 testVoucherDoesNotAskForGameId();
+testVoucherNameOverridesLegacyGamingClassification();
 testGameTopupKeepsPlayerAndServerFields();
 testNonGamingAndUnknownFormatAreExplicit();
 testAdminOrderActionPolicy();
