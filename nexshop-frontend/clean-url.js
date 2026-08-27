@@ -17,6 +17,7 @@
 
     const path = window.location.pathname.replace(/\/$/, "") || "/";
     const cleanPath = fileToClean[path];
+    const serverNativeCleanPaths = new Set(["/admin/login", "/admin/dashboard"]);
 
     // Konfigurasi Nginx lama masih melayani file .html secara langsung. Begitu
     // dokumennya sudah benar, sembunyikan ekstensi tanpa membuat navigation baru
@@ -25,6 +26,11 @@
         window.history.replaceState(window.history.state, "", cleanPath + window.location.search + window.location.hash);
         return;
     }
+
+    // Login/dashboard admin memang dilayani langsung oleh exact location
+    // Nginx. Halaman ini sengaja tidak punya canonical SEO karena privat;
+    // menebak dari canonical yang kosong akan membuat loop clean URL ↔ .html.
+    if (serverNativeCleanPaths.has(path)) return;
 
     const fallbackFile = cleanToFile[path];
     if (!fallbackFile) return;
