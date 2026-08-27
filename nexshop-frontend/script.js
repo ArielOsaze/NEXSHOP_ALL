@@ -61,6 +61,13 @@ function showAppLoader(message = "Memuat data NexShop...") {
     appLoader.setAttribute("aria-busy", "true");
 }
 
+function loadDeferredNexBotImages() {
+    document.querySelectorAll("#nexbotWidget img[data-src]").forEach((image) => {
+        image.src = image.dataset.src;
+        image.removeAttribute("data-src");
+    });
+}
+
 function hideAppLoader() {
     if (!appLoader) return;
     appLoader.classList.remove("is-visible");
@@ -70,6 +77,7 @@ function hideAppLoader() {
     setTimeout(() => {
         const nexbot = document.getElementById("nexbotWidget");
         if (nexbot) {
+            loadDeferredNexBotImages();
             nexbot.style.opacity = "1";
             nexbot.style.pointerEvents = "auto";
         }
@@ -395,6 +403,41 @@ async function loadPromo() {
     }
 }
 
+function hydratePromoSlide(index) {
+    const inner = document.getElementById("promoCarouselInner");
+    const slide = inner?.children[index];
+    if (!slide) return;
+
+    slide.querySelectorAll("source[data-srcset]").forEach((source) => {
+        source.srcset = source.dataset.srcset;
+        source.removeAttribute("data-srcset");
+    });
+    slide.querySelectorAll("img[data-src]").forEach((image) => {
+        image.loading = "eager";
+        image.src = image.dataset.src;
+        image.removeAttribute("data-src");
+    });
+}
+
+function watchPromoVisibility() {
+    const section = document.getElementById("promoCarouselSection");
+    if (!section) return;
+    const hydrateVisibleSlides = () => {
+        hydratePromoSlide(promoIndex);
+        hydratePromoSlide((promoIndex + 1) % promoSlides.length);
+    };
+    if (!("IntersectionObserver" in window)) {
+        hydrateVisibleSlides();
+        return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        hydrateVisibleSlides();
+        observer.disconnect();
+    }, { rootMargin: "150px 0px" });
+    observer.observe(section);
+}
+
 function renderPromoCarousel() {
     const inner = document.getElementById("promoCarouselInner");
     const indicators = document.getElementById("promoIndicators");
@@ -402,23 +445,25 @@ function renderPromoCarousel() {
     if (!inner || !indicators) return;
 
     inner.innerHTML = promoSlides.map((slide, i) => {
+        const desktopImage = slide.image_url || "";
+        const mobileImage = slide.mobile_image_url || desktopImage;
+        const pictureMarkup = (alt, className) => `
+            <picture>
+                <source media="(max-width: 768px)" data-srcset="${mobileImage}">
+                <img data-src="${desktopImage}" data-promo-image alt="${alt}" class="${className}" loading="lazy" decoding="async">
+            </picture>
+        `;
         if (slide.full_image) {
             return `
                 <a href="${slide.cta_link || '#'}" class="min-w-full h-full shrink-0 relative block">
-                    <picture>
-                        <source media="(max-width: 768px)" srcset="${slide.mobile_image_url || slide.image_url}">
-                        <img src="${slide.image_url}" alt="${slide.title}" class="absolute inset-0 w-full h-full object-cover">
-                    </picture>
+                    ${pictureMarkup(slide.title, "absolute inset-0 w-full h-full object-cover")}
                 </a>
             `;
         }
 
         return `
             <div class="min-w-full h-full shrink-0 relative flex items-center p-6 sm:p-12">
-                <picture>
-                    <source media="(max-width: 768px)" srcset="${slide.mobile_image_url || slide.image_url}">
-                    <img src="${slide.image_url}" alt="" class="absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay">
-                </picture>
+                ${pictureMarkup("", "absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay")}
                 <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
                 <div class="relative z-10 max-w-lg">
                     ${slide.badge_text ? `<span class="inline-block px-3 py-1 bg-brand-indigo text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3">${escapeHtml(slide.badge_text)}</span>` : ''}
@@ -435,12 +480,15 @@ function renderPromoCarousel() {
     `).join("");
 
     promoIndex = 0;
+    watchPromoVisibility();
     startPromoAutoplay();
 }
 
 function goToPromoSlide(index) {
     if (promoSlides.length === 0) return;
     promoIndex = (index + promoSlides.length) % promoSlides.length;
+    hydratePromoSlide(promoIndex);
+    hydratePromoSlide((promoIndex + 1) % promoSlides.length);
 
     const inner = document.getElementById("promoCarouselInner");
     if (inner) {
