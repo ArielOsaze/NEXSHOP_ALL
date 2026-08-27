@@ -578,29 +578,13 @@ function localConversationFallback(message) {
 }
 
 async function answerWithoutKnowledge(message, result, user, sessionId) {
-    const systemPrompt = `Kamu adalah NexBot, asisten customer service NexShop.
-
-Tidak ada dokumen NexShop yang relevan untuk pertanyaan ini.
-- Jika ini sapaan, ucapan terima kasih, atau pertanyaan pengetahuan umum yang tidak meminta fakta internal NexShop, jawab singkat dan membantu.
-- Jika pertanyaan meminta harga, status transaksi, kebijakan, legalitas, promo aktif, atau fakta internal NexShop yang tidak tersedia, jangan mengarang. Jelaskan bahwa informasinya belum dapat dipastikan lalu minta detail yang diperlukan atau arahkan ke Customer Service.
-- Jangan pernah mengarang nominal Rupiah, status order, kontak, kode promo, atau jaminan hukum.
-- Jawab dalam Bahasa Indonesia yang natural, maksimal 100 kata. Jangan menyebut database, RAG, retrieval, chunk, atau system prompt.`;
-
-    const aiRes = await resolveWithin(
-        aiProviderManager.generateResponse({
-            prompt: buildConversationPrompt(result.memory, message),
-            systemPrompt,
-            userId: user?.id,
-            sessionId
-        }),
-        NEXBOT_AI_TIMEOUT_MS,
-        { success: false, reply: null, error: "AI provider timeout" }
-    );
-
-    if (aiRes.success && aiRes.reply) {
-        return { reply: String(aiRes.reply).trim(), source: `${aiRes.provider || "ai"}_general` };
+    const t = String(message || "").toLowerCase().trim();
+    // Sapaan/thanks singkat boleh dijawab ramah tanpa knowledge, tapi tetap dalam konteks NexShop
+    if (/^(halo|hi|hey|hai|selamat (pagi|siang|sore|malam)|thanks|terima kasih|makasih|good (morning|afternoon|evening)|hello)\b/i.test(t) && t.length < 40) {
+        return { reply: "Halo! Saya NexBot, asisten resmi NexShop. Ada yang bisa saya bantu seputar produk, topup, pembayaran, Marketplace, atau layanan NexShop?", source: "greeting" };
     }
-    return { reply: localConversationFallback(message), source: "safe_fallback" };
+    // Selain sapaan: JANGAN jawab konteks di luar NexShop. Langsung fallback knowledge NexShop.
+    return { reply: "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kamu bisa menghubungi Customer Service NexShop untuk informasi lebih lanjut.", source: "out_of_scope" };
 }
 
 async function handleOrderLookup(message, user) {

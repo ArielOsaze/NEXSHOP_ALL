@@ -3,7 +3,23 @@
 // ================================
 
 const ADMIN_TOKEN_STORAGE_KEY = "nexshop-admin-token";
-const token = localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
+// Token admin sekarang sessionStorage agar close tab wajib password lagi (tidak persisten di localStorage).
+// Migrasi sekali: jika ada token lama di localStorage, pindahkan ke sessionStorage untuk tab ini saja, lalu hapus localStorage.
+try {
+    const _oldDashboardToken = localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
+    if (_oldDashboardToken && !sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)) {
+        sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, _oldDashboardToken);
+    }
+    if (_oldDashboardToken) localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+} catch (e) { /* storage blocked */ }
+try {
+    const _oldActivity = localStorage.getItem("nexshop_admin_last_activity");
+    if (_oldActivity && !sessionStorage.getItem("nexshop_admin_last_activity")) {
+        sessionStorage.setItem("nexshop_admin_last_activity", _oldActivity);
+    }
+    if (_oldActivity) localStorage.removeItem("nexshop_admin_last_activity");
+} catch (e) { /* noop */ }
+const token = sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
 let adminPinResolver = null;
 let adminLogoutResolver = null;
 const API_BASE = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
@@ -138,7 +154,8 @@ async function apiFetch(path, options = {}) {
         if (info.code === "ADMIN_ACCESS_REVOKED") return forceAdminLogout("forbidden");
 
         if (res.status === 401) {
-            localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+            try { sessionStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY); } catch (e) {}
+            try { localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY); } catch (e) {}
             showToast("Sesi kamu berakhir, silakan login kembali.", true);
             setTimeout(() => window.location.href = "/admin/login.html", 1200);
             throw new Error("unauthorized");
@@ -237,8 +254,9 @@ async function submitAdminPin() {
 // ===========================================================
 // GERBANG AKSES + SESI IDLE DASHBOARD ADMIN
 //
-// Punya token di localStorage TIDAK otomatis berarti boleh masuk. Sebelum
-// gerbang ini kebuka:
+// Punya token di sessionStorage TIDAK otomatis berarti boleh masuk. Token
+// sekarang sessionStorage (hilang saat tab ditutup) jadi close tab wajib
+// login password lagi. Sebelum gerbang ini kebuka:
 //   1. role user diambil ULANG dari server (/settings/me) dan harus
 //      admin/staff -- bukan cuma ngandelin isi token;
 //   2. Security PIN 6 digit wajib diverifikasi ke server (kalau belum
@@ -290,8 +308,10 @@ function setAdminGateStatus(html, isError = false) {
 }
 
 function forceAdminLogout(reason = "expired") {
-    localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
-    localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY);
+    try { sessionStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY); } catch (e) {}
+    try { sessionStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY); } catch (e) {}
+    try { localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY); } catch (e) {}
+    try { localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY); } catch (e) {}
     try { sessionStorage.removeItem(ADMIN_PIN_TRUST_KEY); } catch (e) { /* noop */ }
     if (reason !== "manual") localStorage.setItem("nexshop_admin_logout_reason", reason);
     window.location.replace("/admin/login.html");
@@ -422,8 +442,8 @@ function showAdminIdleWarning() {
 function markAdminActivity() {
     if (!adminGateOpen) return;
     try {
-        localStorage.setItem(ADMIN_LAST_ACTIVITY_KEY, String(Date.now()));
-    } catch (e) { /* localStorage penuh/diblokir — timer tetap jalan */ }
+        sessionStorage.setItem(ADMIN_LAST_ACTIVITY_KEY, String(Date.now()));
+    } catch (e) { /* storage penuh/diblokir — timer tetap jalan */ }
 
     hideAdminIdleWarning();
     if (adminIdleTimer) clearTimeout(adminIdleTimer);
@@ -443,7 +463,7 @@ function keepAdminSessionAlive() {
 // balik aktif kita cek ulang pakai timestamp — bukan cuma ngandelin timer.
 function checkAdminIdleOnFocus() {
     if (!adminGateOpen) return;
-    const last = Number(localStorage.getItem(ADMIN_LAST_ACTIVITY_KEY) || 0);
+    const last = Number(sessionStorage.getItem(ADMIN_LAST_ACTIVITY_KEY) || 0);
     if (last && Date.now() - last > ADMIN_IDLE_LIMIT_MS) forceAdminLogout("idle");
     else markAdminActivity();
 }
@@ -3245,8 +3265,10 @@ document.getElementById("adminLogoutCancel")?.addEventListener("click", () => se
 function logout() {
     requestAdminLogoutConfirmation().then((confirmed) => {
         if (!confirmed) return;
-        localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
-        localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY);
+        try { sessionStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY); } catch (e) {}
+        try { sessionStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY); } catch (e) {}
+        try { localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY); } catch (e) {}
+        try { localStorage.removeItem(ADMIN_LAST_ACTIVITY_KEY); } catch (e) {}
         try { sessionStorage.removeItem(ADMIN_PIN_TRUST_KEY); } catch (e) { /* noop */ }
         window.location.href = "/admin/login.html";
     });

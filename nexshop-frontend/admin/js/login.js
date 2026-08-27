@@ -3,8 +3,18 @@ const API_BASE = (window.location.hostname === "localhost" || window.location.ho
     : (window.location.protocol.startsWith("http") ? "/api" : "https://nexshop.cloud/api");
 const ADMIN_TOKEN_STORAGE_KEY = "nexshop-admin-token";
 
-// Already logged in? Skip straight to dashboard.
-if (localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)) {
+// Migrasi token lama dari localStorage ke sessionStorage agar close tab wajib password lagi.
+// Token sekarang sessionStorage (hilang saat tab ditutup), bukan localStorage persisten.
+try {
+    const _oldToken = localStorage.getItem(ADMIN_TOKEN_STORAGE_KEY);
+    if (_oldToken && !sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)) {
+        sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, _oldToken);
+    }
+    if (_oldToken) localStorage.removeItem(ADMIN_TOKEN_STORAGE_KEY);
+} catch (e) { /* storage blocked */ }
+
+// Already logged in in this tab? Skip straight to dashboard.
+if (sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)) {
     window.location.href = "/admin/dashboard.html";
 }
 
@@ -89,7 +99,7 @@ form.addEventListener("submit", async (e) => {
             throw new Error("Akun ini tidak memiliki akses administrator atau staff.");
         }
 
-        localStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, data.token);
+        sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, data.token);
         window.location.href = "/admin/dashboard.html";
 
     } catch (err) {

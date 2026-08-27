@@ -43,9 +43,9 @@
     }
 
     function editToken() {
-        // token is a global const set at the top of dashboard.js
+        // token is a global const set at the top of dashboard.js (sessionStorage)
         if (typeof token !== "undefined") return token;
-        return localStorage.getItem("nexshop-admin-token");
+        return sessionStorage.getItem("nexshop-admin-token") || localStorage.getItem("nexshop-admin-token");
     }
 
     function toast(msg, isError = false) {

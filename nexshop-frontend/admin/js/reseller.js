@@ -9,7 +9,8 @@ let resellerTiers = [];
 let resellerLoaded = false;
 
 function rsGetAdminToken() {
-    return localStorage.getItem("nexshop-admin-token") ||
+    return sessionStorage.getItem("nexshop-admin-token") ||
+           localStorage.getItem("nexshop-admin-token") ||
            localStorage.getItem("adminToken") ||
            localStorage.getItem("token") || "";
 }
