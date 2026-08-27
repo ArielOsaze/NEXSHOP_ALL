@@ -7,6 +7,7 @@ const BASE_URL = "https://api.tokovoucher.net";
 
 const api = axios.create({
     baseURL: BASE_URL,
+    timeout: 30000,
     httpsAgent: new https.Agent({ family: 4 })
 });
 
@@ -106,28 +107,21 @@ async function getProdukList(jenisId) {
 }
 
 // Eksekusi transaksi topup (dipanggil setelah pembayaran iPaymu berhasil)
-//
-// PENTING: tujuan & server_id dikirim sebagai parameter TERPISAH ke TokoVoucher
-// (sesuai dokumentasi resmi mereka: .../transaksi?...&tujuan=[tujuan]&server_id=[server_id]).
-// Sebelumnya kode ini malah menggabungkan manual jadi "tujuan|server_id" dalam satu
-// string -- itu yang bikin error "bad user id ... strconv.ParseInt: parsing
-// \"60034816|\": invalid syntax" pas checkout Diamond ML: user_id yang sampai ke
-// backend TokoVoucher ikutan kebawa karakter "|" nya, jadi gagal di-parse sebagai
-// angka murni. Kirim terpisah = server_id-nya diproses TokoVoucher sendiri, tujuan
-// tetap bersih cuma angka player id.
+// POST JSON sesuai dokumentasi TokoVoucher. Secret tidak pernah dikirim
+// sebagai query parameter agar tidak masuk URL/access log.
 async function createTransaction({ refId, kodeProduk, tujuan, serverId }) {
     const { memberCode, secret } = await getCreds();
-    const params = {
+    const payload = {
         ref_id: refId,
         produk: kodeProduk,
         tujuan,
         member_code: memberCode,
-        secret
+        signature: buildRefSignature(memberCode, secret, refId)
     };
-    if (serverId) {
-        params.server_id = serverId;
-    }
-    const { data } = await api.get(`/v1/transaksi`, { params });
+    if (serverId) payload.server_id = serverId;
+    const { data } = await api.post(`/v1/transaksi`, payload, {
+        headers: { "Content-Type": "application/json" }
+    });
     return data;
 }
 

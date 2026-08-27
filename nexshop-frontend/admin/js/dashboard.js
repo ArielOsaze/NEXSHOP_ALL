@@ -2811,17 +2811,25 @@ async function exportOrdersCsv() {
 }
 
 async function updateOrderStatusAdmin(orderId, newStatus) {
-    if (!confirm(`Ubah status order #${orderId} menjadi "${newStatus}"?`)) return;
+    const isAction = ["cancelled", "refunded"].includes(newStatus);
+    const action = newStatus === "cancelled" ? "cancel" : "refund";
+    const actionLabel = action === "cancel" ? "membatalkan" : "merefund";
+    if (!confirm(`${isAction ? `Konfirmasi ${actionLabel}` : "Ubah status"} order #${orderId}${isAction ? "?" : ` menjadi "${newStatus}"?`}`)) return;
     try {
-        const res = await apiFetch(`/orders/${orderId}/status`, {
-            method: "PUT",
+        const isTopup = String(orderId).startsWith("TP");
+        const endpoint = isAction
+            ? (isTopup ? `/topup/admin/orders/${orderId}/actions` : `/orders/${orderId}/actions`)
+            : `/orders/${orderId}/status`;
+        const options = {
+            method: isAction ? "POST" : "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ status: newStatus })
-        });
+            body: JSON.stringify(isAction ? { action, reason: "Aksi dari dashboard admin" } : { status: newStatus })
+        };
+        const res = await apiFetch(endpoint, options);
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal mengubah status order");
+        if (!res.ok) throw new Error(data.message || "Gagal memproses aksi order");
 
-        showToast(data.message || "Status order berhasil diubah");
+        showToast(data.message || (isAction ? `Aksi ${action} berhasil diproses` : "Status order berhasil diubah"));
         if (typeof loadOrders === "function") loadOrders();
         loadTopupOrders();
     } catch (err) {
@@ -2833,7 +2841,8 @@ async function updateOrderStatusAdmin(orderId, newStatus) {
 function statusBadge(status) {
     const map = {
         pending: "bg-secondary", paid: "bg-info", processing: "bg-warning",
-        sukses: "bg-success", gagal: "bg-danger", failed: "bg-danger"
+        sukses: "bg-success", gagal: "bg-danger", failed: "bg-danger",
+        cancelled: "bg-dark", refunded: "bg-primary"
     };
     return `<span class="badge ${map[status] || "bg-secondary"}">${escapeHtml(status || "-")}</span>`;
 }

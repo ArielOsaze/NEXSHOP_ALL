@@ -1533,6 +1533,16 @@
             const op = String(product?.operator || "").toLowerCase();
             const nama = String(product?.nama || "").toLowerCase();
 
+            const contract = product?.checkout_contract;
+            if (contract?.target) {
+                return {
+                    label: contract.target.label,
+                    placeholder: contract.target.placeholder,
+                    visible: contract.target.visible !== false,
+                    required: contract.target.required !== false
+                };
+            }
+
             if (kode.includes("TFBANK") || op.includes("transfer bank") || op.includes("transfer dana") || nama.includes("transfer antar bank")) {
                 return { label: "Nomor Rekening", placeholder: "Masukkan Nomor Rekening Tujuan" };
             }
@@ -1592,17 +1602,25 @@
             document.getElementById("mktCheckoutInquiryGroup").classList.toggle("hidden", !product.cek_tagihan);
 
             const isBankTransfer = isProductBankTransfer(product);
-            const isGame = product.kategori.toLowerCase() === "gaming" || product.kategori.toLowerCase() === "voucher game";
+            const productContract = product.checkout_contract || {
+                target: { visible: true, required: true },
+                server_id: { visible: !!product.butuh_server_id, required: !!product.butuh_server_id }
+            };
             const targetMeta = getMarketplaceTargetFieldMeta(product.kategori, product.cek_tagihan, product);
+            const targetWrap = document.getElementById("mktCheckoutTargetLabelWrap");
+            targetWrap.classList.toggle("hidden", targetMeta.visible === false);
+            const targetInput = document.getElementById("mktCheckoutTarget");
+            targetInput.required = targetMeta.required !== false;
+            targetInput.value = "";
             document.getElementById("mktCheckoutTargetLabel").textContent = targetMeta.label;
-            document.getElementById("mktCheckoutTarget").placeholder = targetMeta.placeholder;
+            targetInput.placeholder = targetMeta.placeholder;
 
             resetMarketplaceBankSelector();
 
             if (isBankTransfer) {
                 document.getElementById("mktCheckoutBankGroup").classList.remove("hidden");
                 document.getElementById("mktCheckoutServerGroup").classList.add("hidden");
-            } else if (isGame && product.butuh_server_id) {
+            } else if (productContract.server_id?.visible || productContract.server_id?.required) {
                 document.getElementById("mktCheckoutServerGroup").classList.remove("hidden");
                 document.getElementById("mktCheckoutBankGroup").classList.add("hidden");
             } else {
@@ -1725,6 +1743,18 @@
             }
 
             const isBankTransfer = isProductBankTransfer(currentMktCheckoutProduct);
+            const productContract = currentMktCheckoutProduct.checkout_contract || {
+                target: { visible: true, required: true },
+                server_id: { required: !!currentMktCheckoutProduct.butuh_server_id }
+            };
+            let targetValue = undefined;
+            if (productContract.target?.visible !== false) {
+                targetValue = document.getElementById("mktCheckoutTarget").value.trim();
+                if (productContract.target?.required !== false && !targetValue) {
+                    errEl.textContent = `${productContract.target?.label || "Data tujuan"} wajib diisi.`;
+                    return;
+                }
+            }
             let serverIdValue = undefined;
 
             if (isBankTransfer) {
@@ -1734,10 +1764,10 @@
                     return;
                 }
                 serverIdValue = bankId;
-            } else if (currentMktCheckoutProduct.butuh_server_id) {
+            } else if (productContract.server_id?.required) {
                 const sVal = document.getElementById("mktCheckoutServer").value.trim();
                 if (!sVal) {
-                    errEl.textContent = "Server ID wajib diisi untuk produk ini.";
+                    errEl.textContent = `${productContract.server_id?.label || "Server ID"} wajib diisi.`;
                     return;
                 }
                 serverIdValue = sVal;
@@ -1750,7 +1780,7 @@
             try {
                 const payload = {
                     kode_produk: currentMktCheckoutProduct.kode_produk,
-                    tujuan: document.getElementById("mktCheckoutTarget").value.trim(),
+                    tujuan: targetValue,
                     server_id: serverIdValue,
                     recipient_phone: document.getElementById("mktCheckoutPhone").value.trim(),
                     recipient_email: document.getElementById("mktCheckoutEmail").value.trim() || undefined,

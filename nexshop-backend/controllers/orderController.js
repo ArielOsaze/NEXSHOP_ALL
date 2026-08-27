@@ -9,6 +9,7 @@ const { sendTelegramNotification } = require("../config/telegram");
 const { sendWhatsAppNotification } = require("../config/whatsapp");
 const { sendUserWhatsApp } = require("../services/userWhatsAppService");
 const { processNotificationEvent } = require("../services/notificationDeliveryService");
+const { performAdminOrderAction } = require("../services/adminOrderActionService");
 const { cariCheckoutProdukPending, responsCheckoutPending } = require("../services/pendingCheckoutService");
 const { normalizePhoneNumber } = require("../utils/phoneNumber");
 const { getCheckoutIdentity } = require("../services/userProfileService");
@@ -607,20 +608,29 @@ exports.handleNotification = async (req, res) => {
     }
 };
 
-// ADMIN — Ubah status pesanan (cancel, refund, mark as paid, dsb.)
+// ADMIN — Ubah status pesanan biasa. Cancel/refund memakai action service
+// agar ada policy, idempotency, dan audit trail; status paid tetap hanya untuk
+// rekonsiliasi/admin workflow yang sudah ada.
 exports.updateOrderStatusAdmin = async (req, res) => {
     if (!["admin", "staff"].includes(req.user.role)) {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     const { id } = req.params;
     const { status } = req.body;
-    if (!["pending", "paid", "expired", "failed", "cancelled", "refunded"].includes(status)) {
+    if (["cancelled", "refunded"].includes(status)) {
+        req.body.action = status === "cancelled" ? "cancel" : "refund";
+        return exports.adminOrderAction(req, res);
+    }
+    if (String(id).startsWith("TP")) {
+        return res.status(400).json({ message: "Gunakan endpoint action topup untuk order TP" });
+    }
+    if (!["pending", "paid", "expired", "failed"].includes(status)) {
         return res.status(400).json({ message: "Status pesanan tidak valid" });
     }
     try {
         const { data, error } = await supabase
             .from("orders")
-            .update({ status })
+            .update({ status, updated_at: new Date().toISOString() })
             .eq("id", id)
             .select()
             .maybeSingle();
@@ -633,5 +643,30 @@ exports.updateOrderStatusAdmin = async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: "Server Error" });
+    }
+};
+
+exports.adminOrderAction = async (req, res) => {
+    if (!["admin", "staff"].includes(req.user.role)) {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    if (String(req.params.id).startsWith("TP")) {
+        return res.status(400).json({ message: "Gunakan endpoint action topup untuk order TP" });
+    }
+    const action = String(req.body.action || "").trim().toLowerCase();
+    try {
+        const result = await performAdminOrderAction({
+            orderType: "regular",
+            orderId: req.params.id,
+            action,
+            adminUserId: req.user.id,
+            reason: String(req.body.reason || "").trim().slice(0, 500)
+        });
+        if (!result.ok) return res.status(result.httpStatus || 409).json({ code: result.code, message: result.message });
+        if (!result.alreadyDone) notify("order", `📦 Admin ${req.user.email} menjalankan ${action} order #${req.params.id}`);
+        res.json({ message: result.alreadyDone ? "Aksi sudah pernah diproses" : `Aksi ${action} berhasil diproses`, data: result.order, already_done: !!result.alreadyDone });
+    } catch (err) {
+        console.error("adminOrderAction:", err);
+        res.status(500).json({ code: "ADMIN_ORDER_ACTION_FAILED", message: "Aksi pesanan gagal diproses" });
     }
 };

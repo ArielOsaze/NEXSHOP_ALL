@@ -221,9 +221,10 @@ async function refundWallet({
     referenceId,
     originalOrderId,
     reason = "Pengembalian dana pesanan gagal",
-    type = "REFUND"
+    type = "REFUND",
+    refundReferenceId = null
 }) {
-    const refundRefId = `RF-${referenceId || originalOrderId}-${Date.now()}`;
+    const refundRefId = refundReferenceId || `RF-${referenceId || originalOrderId}-${Date.now()}`;
     return await creditWallet({
         userId,
         type,

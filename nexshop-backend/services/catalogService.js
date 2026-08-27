@@ -1,6 +1,7 @@
 const supabase = require("../config/db");
 const tokovoucher = require("../config/tokovoucher");
 const { isForeignProduct } = require("../utils/topupHelpers");
+const { getProductContract } = require("../utils/productContract");
 const crypto = require("crypto");
 
 let syncLock = false;
@@ -48,17 +49,20 @@ function normalizeProduct(raw, categoryMap) {
     const rawCategoryName = raw.kategori_nama || raw.kategori || raw.category || raw.category_name || "Lainnya";
     const operatorName = raw.operator_nama || raw.operator || raw.operator_name || raw.brand || "";
     const jenisName = raw.jenis_nama || raw.jenis || raw.jenis_name || raw.type || "";
+    const formatForm = raw.format_form || raw.jenis_format_form || raw.form_format || null;
     const price = parseInt(raw.price || raw.harga || raw.harga_beli || 0, 10);
     const status = raw.status === "aktif" || raw.status === "active" || raw.status === 1 || raw.status === "1" ? "active" : "inactive";
-    
-    // Server ID requirement heuristic
-    const butuhServerId = Boolean(
-        raw.is_server_id || 
-        raw.butuh_server_id || 
-        /mobile legends|free fire|genshin|valorant/i.test(operatorName)
-    );
-
     const nexshopCategory = categoryMap[rawCategoryName] || rawCategoryName;
+    const contract = getProductContract({
+        kategori: nexshopCategory,
+        source_category_name: rawCategoryName,
+        source_jenis_name: jenisName,
+        source_format_form: formatForm,
+        source_requires_server_id: raw.is_server_id ?? raw.butuh_server_id
+    });
+    // Use the supplier's official format_form when present. The legacy
+    // operator-name heuristic is intentionally gone: it made game vouchers
+    // inherit a Player ID/server form even when the supplier did not require it.
 
     return {
         kode_produk: kodeProduk,
@@ -74,12 +78,14 @@ function normalizeProduct(raw, categoryMap) {
         source_operator_name: operatorName,
         source_jenis_id: raw.jenis_id || raw.id_jenis || null,
         source_jenis_name: jenisName,
+        source_format_form: formatForm,
+        source_requires_server_id: contract.server_id.required,
         source_status: status,
         source_last_seen_at: new Date().toISOString(),
         source_raw_hash: crypto.createHash('md5').update(JSON.stringify(raw)).digest('hex'),
         operator_logo: raw.operator_logo || null,
         item_icon: null,
-        butuh_server_id: butuhServerId,
+        butuh_server_id: contract.server_id.required,
         source_missing_count: 0
     };
 }
@@ -100,16 +106,21 @@ async function fetchCatalogFull() {
 
         const jenisMap = new Map();
         if (Array.isArray(response.data.jenis)) {
-            response.data.jenis.forEach(j => jenisMap.set(j.id, j.nama));
+            response.data.jenis.forEach(j => jenisMap.set(j.id, {
+                nama: j.nama,
+                format_form: j.format_form || j.format || j.form_format || null
+            }));
         }
 
         const allProducts = [];
         response.data.produk.forEach(p => {
             p.kategori_nama = catMap.get(p.kategori_id) || null;
             const opInfo = opMap.get(p.operator_id);
+            const jenisInfo = jenisMap.get(p.jenis_id);
             p.operator_nama = opInfo ? opInfo.nama : null;
             p.operator_logo = opInfo ? opInfo.logo : null;
-            p.jenis_nama = jenisMap.get(p.jenis_id) || null;
+            p.jenis_nama = jenisInfo ? jenisInfo.nama : null;
+            p.jenis_format_form = jenisInfo ? jenisInfo.format_form : null;
             allProducts.push(p);
         });
 
@@ -167,7 +178,7 @@ exports.syncFullCatalog = async (triggerType = 'manual') => {
         while (fetchMore) {
             const { data, error } = await supabase
                 .from("topup_products")
-                .select("kode_produk, source_raw_hash, auto_managed, manual_image_override, operator_logo, is_active, item_icon")
+                .select("kode_produk, source_raw_hash, auto_managed, manual_image_override, operator_logo, is_active, item_icon, butuh_server_id")
                 .range(from, from + pageSize - 1);
                 
             if (error) {
@@ -225,6 +236,8 @@ exports.syncFullCatalog = async (triggerType = 'manual') => {
                         source_operator_name: normalized.source_operator_name,
                         source_jenis_id: normalized.source_jenis_id,
                         source_jenis_name: normalized.source_jenis_name,
+                        source_format_form: normalized.source_format_form,
+                        source_requires_server_id: normalized.source_requires_server_id,
                         source_status: normalized.source_status,
                         source_last_seen_at: now,
                         source_last_synced_at: now,

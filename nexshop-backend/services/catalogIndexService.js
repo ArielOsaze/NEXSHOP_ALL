@@ -7,6 +7,7 @@ const {
     isGameProduct,
     isPascabayarProduct
 } = require("../utils/topupHelpers");
+const { getProductContract, isGameVoucher } = require("../utils/productContract");
 
 // ===========================================================
 // INDEKS KATALOG PUBLIK (untuk lazy loading & pencarian sisi server)
@@ -61,8 +62,8 @@ function invalidateCatalogIndex() {
 async function ambilSemuaProdukAktif() {
     const kolom = [
         "id", "nama", "kode_produk", "kategori", "sort_order",
-        "source_category_name", "source_operator_id", "source_operator_name",
-        "harga_beli", "harga_jual", "butuh_server_id", "source_status",
+        "source_category_name", "source_operator_id", "source_operator_name", "source_jenis_name",
+        "source_format_form", "source_requires_server_id", "harga_beli", "harga_jual", "butuh_server_id", "source_status",
         "operator_logo", "item_icon", "manual_category_override", "manual_name_override"
     ].join(", ");
 
@@ -133,14 +134,22 @@ function ringkasGrup(grup) {
 // Bersihkan produk dari field internal SEBELUM disimpan di cache, supaya
 // tidak mungkin bocor lewat jalur mana pun. harga_beli (harga modal) adalah
 // margin internal dan tidak boleh pernah sampai ke client.
-function bersihkanProduk(p, manualName) {
+function bersihkanProduk(p, manualName, displayCategory) {
+    const contract = getProductContract({ ...p, kategori: displayCategory || p.kategori });
     return {
         id: p.id,
         nama: manualName ? p.nama : cleanProductName(p.nama),
         kode_produk: p.kode_produk,
         kategori: p.kategori,
         harga_jual: p.harga_jual,
-        butuh_server_id: !!p.butuh_server_id,
+        butuh_server_id: contract.server_id.required,
+        target_kind: contract.target.kind,
+        checkout_contract: {
+            version: contract.version,
+            review_required: contract.review_required,
+            target: contract.target,
+            server_id: contract.server_id
+        },
         item_icon: p.item_icon || null,
         cek_tagihan: isPascabayarProduct(p)
     };
@@ -175,8 +184,9 @@ async function bangunIndeks() {
             displayCategory = petaKategori.get(p.kategori);
         }
 
-        const produkBersih = bersihkanProduk(p, p.manual_name_override);
-        const isGame = isGameProduct(p, displayCategory);
+        const produkBersih = bersihkanProduk(p, p.manual_name_override, displayCategory);
+        const isVoucherGame = isGameVoucher({ ...p, kategori: displayCategory });
+        const isGame = isGameProduct({ ...p, kategori: displayCategory }, displayCategory) && !isVoucherGame;
 
         if (isGame) {
             // Grup game memakai nama operator (Mobile Legends, PUBG, ...);

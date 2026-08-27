@@ -43,6 +43,8 @@ const { hitungHargaReseller } = require("../utils/resellerPricing");
 const walletService = require("../services/walletService");
 const { dispatchResellerWebhook } = require("../services/resellerWebhookService");
 const { cariCheckoutTopupPending, responsCheckoutPending } = require("../services/pendingCheckoutService");
+const { getProductContract, buildSupplierTransactionInput, isGameVoucher } = require("../utils/productContract");
+const adminOrderActionService = require("../services/adminOrderActionService");
 
 const IPAYMU_PAYMENT_METHODS = Object.freeze({
     qris: "qris",
@@ -886,7 +888,18 @@ exports.getProducts = async (req, res) => {
             });
             
             terapkanHargaReseller(data, konteksReseller);
-            data.forEach((p) => { delete p.harga_beli; }); // margin internal, jangan bocor ke publik
+            data.forEach((p) => {
+                const productContract = getProductContract(p);
+                p.butuh_server_id = productContract.server_id.required;
+                p.target_kind = productContract.target.kind;
+                p.checkout_contract = {
+                    version: productContract.version,
+                    review_required: productContract.review_required,
+                    target: productContract.target,
+                    server_id: productContract.server_id
+                };
+                delete p.harga_beli;
+            }); // harga modal = margin internal, kontrak checkout saja yang dipublikasikan
 
             allData.push(...data);
             if (data.length < pageSize) break;
@@ -910,7 +923,7 @@ exports.getProducts = async (req, res) => {
         // milik etalase ini. Kalau di sini tetap sempit sementara
         // Marketplace sudah menolak semua produk game, produk-produk itu
         // malah hilang dari DUA etalase sekaligus.
-        const gameOnly = indoOnly.filter((p) => isGameProduct(p, p.kategori));
+        const gameOnly = indoOnly.filter((p) => isGameProduct(p, p.kategori) && !isGameVoucher({ ...p, kategori: p.kategori }));
 
         // Buang SKU utilitas "Cek Nama/ID/Nickname/..." (lihat
         // isCheckerUtilityProduct) -- ini API verifikasi akun TokoVoucher,
@@ -1655,8 +1668,8 @@ exports.create = async (req, res) => {
     let { kode_produk, tujuan, server_id, recipient_email, recipient_phone, promo_code, payment_method, payment_channel } = req.body;
     const userId = req.user ? req.user.id : null;
 
-    if (!kode_produk || !tujuan) {
-        return res.status(400).json({ message: "Produk dan nomor/tujuan wajib diisi" });
+    if (!kode_produk) {
+        return res.status(400).json({ message: "Produk wajib dipilih" });
     }
 
     // Wajib diisi & harus nomor asli -- fallback default sebelumnya
@@ -1685,7 +1698,7 @@ exports.create = async (req, res) => {
     }
 
     try {
-        let buyerName = `Player ${tujuan}`;
+        let buyerName = "NexShop Customer";
         if (userId) {
             const checkoutProfile = await getCheckoutIdentity(userId);
             if (checkoutProfile.error === "PHONE_ONBOARDING_REQUIRED") {
@@ -1699,7 +1712,7 @@ exports.create = async (req, res) => {
         }
         const { data: product, error: prodErr } = await supabase
             .from("topup_products")
-            .select("nama, kode_produk, harga_beli, harga_jual, butuh_server_id, kategori, source_operator_name")
+            .select("nama, kode_produk, harga_beli, harga_jual, butuh_server_id, kategori, source_category_name, source_jenis_name, source_format_form, source_requires_server_id, source_operator_name")
             .eq("kode_produk", kode_produk)
             .eq("is_active", true)
             .maybeSingle();
@@ -1708,7 +1721,31 @@ exports.create = async (req, res) => {
             return res.status(404).json({ message: "Produk topup tidak ditemukan atau tidak aktif" });
         }
 
-        // Berlaku untuk Topup Game dan seluruh produk Marketplace karena
+        const productContract = getProductContract(product);
+        try {
+            const supplierInput = buildSupplierTransactionInput(productContract, {
+                kode_produk: product.kode_produk,
+                tujuan,
+                recipient_phone: normalizedPhone,
+                server_id
+            });
+            // Voucher Game tidak meminta Player ID/User ID di browser. TokoVoucher
+            // tetap menerima `tujuan` berupa nomor HP penerima secara server-side.
+            tujuan = supplierInput.tujuan;
+            server_id = supplierInput.server_id || null;
+        } catch (contractError) {
+            return res.status(400).json({
+                code: "PRODUCT_INPUT_INVALID",
+                message: contractError.message
+            });
+        }
+
+        if (productContract.review_required) {
+            return res.status(409).json({
+                code: "PRODUCT_CONTRACT_REVIEW_REQUIRED",
+                message: "Produk ini belum memiliki kontrak field supplier yang tervalidasi admin"
+            });
+        }
         // keduanya checkout lewat endpoint ini. Wallet juga tidak boleh
         // membuat order pengganti selama invoice produk yang sama masih pending.
         if (userId) {
@@ -1737,16 +1774,8 @@ exports.create = async (req, res) => {
             product.harga_jual = hasil.harga;
         }
 
-        if (product.butuh_server_id && !server_id) {
-            const isBank = (product.kode_produk && product.kode_produk.toUpperCase().includes("TFBANK")) ||
-                /transfer\s*bank|transfer\s*dana/i.test(product.source_operator_name || "") ||
-                /transfer\s*bank/i.test(product.nama || "");
-            return res.status(400).json({
-                message: isBank
-                    ? "Bank ID / Kode Bank wajib dipilih untuk transfer antar bank"
-                    : "Server ID wajib diisi untuk produk ini"
-            });
-        }
+        // server_id sudah divalidasi dan dibersihkan melalui productContract di atas.
+        // Jangan mengirim server_id kosong ke supplier.
 
         // Cart topup selalu 1 item (id = kode_produk, biar bisa dipakai admin
         // buat batasi kode promo ke produk topup tertentu lewat kode_produk-nya
@@ -1803,6 +1832,7 @@ exports.create = async (req, res) => {
                 kode_produk: product.kode_produk,
                 nama_produk: product.nama,
                 tujuan,
+                target_kind: productContract.target.kind,
                 server_id: server_id || null,
                 recipient_email: recipient_email || null,
                 recipient_phone: normalizedPhone,
@@ -1837,6 +1867,7 @@ exports.create = async (req, res) => {
                 kode_produk: product.kode_produk,
                 nama_produk: product.nama,
                 tujuan,
+                target_kind: productContract.target.kind,
                 server_id: server_id || null,
                 recipient_email: recipient_email || null,
                 recipient_phone: normalizedPhone,
@@ -1864,6 +1895,7 @@ exports.create = async (req, res) => {
             kode_produk: product.kode_produk,
             nama_produk: product.nama,
             tujuan,
+            target_kind: productContract.target.kind,
             server_id: server_id || null,
             recipient_email: recipient_email || null,
             recipient_phone: normalizedPhone,
@@ -2061,12 +2093,16 @@ exports.getPublicStatus = async (req, res) => {
     try {
         const { data, error } = await supabase
             .from("topup_orders")
-            .select("id, status, harga, nama_produk, tujuan")
+            .select("id, status, harga, nama_produk, tujuan, target_kind")
             .eq("id", req.params.id)
             .maybeSingle();
 
         if (error || !data) return res.status(404).json({ message: "Order tidak ditemukan" });
-        res.json(data);
+        res.json({
+            ...data,
+            tujuan: data.target_kind === "recipient_phone" ? null : data.tujuan,
+            target_label: data.target_kind === "recipient_phone" ? "Voucher Game" : "Tujuan"
+        });
     } catch (err) {
         res.status(500).json({ message: "Server Error" });
     }
@@ -2080,7 +2116,7 @@ exports.getPublicDetail = async (req, res) => {
     try {
         const { data: order, error } = await supabase
             .from("topup_orders")
-            .select("id, status, harga, subtotal, discount_amount, promo_code, nama_produk, kode_produk, tujuan, server_id, payment_method, tv_sn, created_at, updated_at")
+            .select("id, status, harga, subtotal, discount_amount, promo_code, nama_produk, kode_produk, tujuan, target_kind, server_id, payment_method, tv_sn, created_at, updated_at")
             .eq("id", req.params.id)
             .maybeSingle();
 
@@ -2097,7 +2133,7 @@ exports.getPublicDetail = async (req, res) => {
             const [{ data: productRow }, categoryMap] = await Promise.all([
                 supabase
                     .from("topup_products")
-                    .select("kategori, source_category_id, source_category_name, manual_category_override")
+                    .select("kategori, source_category_id, source_category_name, source_jenis_name, source_format_form, source_requires_server_id, manual_category_override")
                     .eq("kode_produk", order.kode_produk)
                     .maybeSingle(),
                 loadCategoryMap()
@@ -2108,7 +2144,11 @@ exports.getPublicDetail = async (req, res) => {
             }
         }
 
-        const targetMeta = getTargetFieldMeta(displayCategory, isPascabayar);
+        const productContract = getProductContract({
+            ...(productRow || {}),
+            kategori: displayCategory
+        });
+        const targetMeta = productContract.target;
         const serialNumber = order.status === "sukses" ? order.tv_sn : null;
 
         // PLN Prabayar: SN-nya gabungan "<no token>/<keterangan pelanggan>" --
@@ -2130,8 +2170,8 @@ exports.getPublicDetail = async (req, res) => {
             type: "topup",
             status: order.status,
             nama_produk: order.nama_produk,
-            tujuan: order.tujuan,
-            target_label: targetMeta.resultLabel,
+            tujuan: productContract.target.kind === "recipient_phone" ? null : order.tujuan,
+            target_label: targetMeta.result_label,
             server_id: order.server_id,
             payment_method: order.payment_method,
             // SN cuma ditampilin kalau statusnya udah sukses
@@ -3258,7 +3298,7 @@ exports.getPublicCatalog = async (req, res) => {
         
         while (true) {
             const { data, error } = await supabase.from("topup_products")
-                .select("id, nama, kode_produk, kategori, source_category_id, source_category_name, source_operator_id, source_operator_name, harga_beli, harga_jual, butuh_server_id, source_status, operator_logo, item_icon, manual_category_override, manual_name_override")
+                .select("id, nama, kode_produk, kategori, source_category_id, source_category_name, source_operator_id, source_operator_name, source_jenis_name, source_format_form, source_requires_server_id, harga_beli, harga_jual, butuh_server_id, source_status, operator_logo, item_icon, manual_category_override, manual_name_override")
                 .eq("is_active", true)
                 .neq("kategori", "Gaming")
                 .order("kategori")
@@ -3319,7 +3359,7 @@ exports.getPublicCatalog = async (req, res) => {
             // produk yang kategorinya kebaca "Topup Game"/"Voucher Game"
             // (tergantung mapping admin & fallback DEFAULT_CATEGORY_MAP)
             // tetap lolos dan nyasar ke Marketplace.
-            if (isGameProduct(p, displayCategory)) return;
+            if (isGameProduct({ ...p, kategori: displayCategory }, displayCategory) && !isGameVoucher({ ...p, kategori: displayCategory })) return;
 
             // Buang SKU utilitas "Cek Nama/ID/Nickname/..." (lihat
             // isCheckerUtilityProduct di topupHelpers.js) -- SKU ini API
@@ -3345,6 +3385,15 @@ exports.getPublicCatalog = async (req, res) => {
             // nampilin tombol Cek Tagihan. Yang dikirim cuma boolean-nya --
             // id/nama kategori asli TokoVoucher tetap disembunyiin dari client.
             p.cek_tagihan = isPascabayarProduct(p);
+            const productContract = getProductContract({ ...p, kategori: displayCategory });
+            p.butuh_server_id = productContract.server_id.required;
+            p.target_kind = productContract.target.kind;
+            p.checkout_contract = {
+                version: productContract.version,
+                review_required: productContract.review_required,
+                target: productContract.target,
+                server_id: productContract.server_id
+            };
 
             // Cleanup unnecessary fields from payload
             delete p.harga_beli; // harga modal = margin internal, jangan pernah keluar ke client
@@ -3354,6 +3403,9 @@ exports.getPublicCatalog = async (req, res) => {
             delete p.source_category_name;
             delete p.source_operator_name;
             delete p.source_operator_id;
+            delete p.source_jenis_name;
+            delete p.source_format_form;
+            delete p.source_requires_server_id;
             
             const opLogo = p.operator_logo;
             delete p.operator_logo; 
@@ -3446,3 +3498,29 @@ for (const nama of HANDLER_PENGUBAH_KATALOG) {
         }
     };
 }
+
+exports.adminOrderAction = async (req, res) => {
+    if (!["admin", "staff"].includes(req.user.role)) {
+        return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    }
+    const orderId = String(req.params.id || "");
+    if (!orderId.startsWith("TP")) {
+        return res.status(400).json({ message: "Order topup harus memakai ID TP" });
+    }
+    const action = String(req.body.action || "").trim().toLowerCase();
+    try {
+        const result = await adminOrderActionService.performAdminOrderAction({
+            orderType: "topup",
+            orderId,
+            action,
+            adminUserId: req.user.id,
+            reason: String(req.body.reason || "").trim().slice(0, 500)
+        });
+        if (!result.ok) return res.status(result.httpStatus || 409).json({ code: result.code, message: result.message });
+        if (!result.alreadyDone) notify("topup", `📦 Admin ${req.user.email} menjalankan ${action} order #${orderId}`);
+        res.json({ message: result.alreadyDone ? "Aksi sudah pernah diproses" : `Aksi ${action} berhasil diproses`, data: result.order, already_done: !!result.alreadyDone });
+    } catch (err) {
+        console.error("topup adminOrderAction:", err);
+        res.status(500).json({ code: "ADMIN_ORDER_ACTION_FAILED", message: "Aksi pesanan topup gagal diproses" });
+    }
+};
