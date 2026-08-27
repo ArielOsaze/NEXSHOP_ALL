@@ -14,7 +14,7 @@ assert.match(html, /"alternateName": \["NexShop Gaming Marketplace", "NexShop To
 assert.match(html, /"potentialAction":/);
 assert.doesNotMatch(html, /"@type": "LocalBusiness"/, "Homepage tidak boleh memberi sinyal alamat sebagai identitas utama");
 
-// Non-critical libraries must not block HTML parsing; image resolution/src must remain unchanged.
+// Non-critical libraries must not block HTML parsing; the music shell is CSS/HTML-only on first paint.
 assert.match(html, /<script defer src="\/product-description\.js/);
 assert.match(html, /<script defer src="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/qrcodejs/);
 assert.match(html, /<audio id="heroAudioPlayer" src="" preload="none"><\/audio>/);
@@ -24,14 +24,16 @@ assert.match(script, /if \(!ensureAudioSource\(\)\) return;\s*heroAudioPlayer\.p
 assert.match(script, /function ensureAuthCaptcha\(\)/);
 assert.match(script, /if \(id === "authOverlay"\) void ensureAuthCaptcha\(\);/);
 assert.doesNotMatch(script, /async function initAuthSecurity\(\) \{[\s\S]{0,700}security\.mountCaptcha/, "Captcha tidak boleh dimount saat homepage baru dibuka");
-assert.match(html, /id="musicCoverImg"[^>]*fetchpriority="high"/);
+assert.doesNotMatch(html, /id="musicCoverImg"|aida-public\//, "Cover musik remote tidak boleh menimpa disk first paint");
+assert.match(html, /id="musicDisc"[^>]*bg-\[#111\]/);
+assert.match(html, /script\.js\?v=20260827-black-vinyl/);
 assert.match(html, /<img src="\/images\/oss-logo\.png" alt="OSS Logo" loading="lazy" decoding="async">/);
 assert.match(html, /<img data-src="\/images\/nexbot-mascot\.webp"/);
 assert.match(html, /<img data-src="\/images\/nexbot-mascot-wave\.webp"/);
 assert.match(script, /function hydratePromoSlide\(index\)/);
 assert.match(script, /data-srcset=/);
 assert.match(script, /function loadDeferredNexBotImages\(\)/);
-assert.match(html, /src="https:\/\/lh3\.googleusercontent\.com\//);
+assert.doesNotMatch(html, /src="https:\/\/lh3\.googleusercontent\.com\//, "Aset cover Google lama tidak boleh kembali ke player");
 assert.match(html, /fonts\.googleapis\.com/);
 assert.match(html, /fonts\.gstatic\.com/);
 

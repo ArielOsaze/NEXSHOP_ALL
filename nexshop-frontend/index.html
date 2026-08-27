@@ -326,11 +326,20 @@ Cek Transaksi
 <div class="absolute inset-0 flex items-center justify-center">
     <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/20 to-brand-cyan/20 blur-3xl rounded-full animate-pulse"></div>
     <div class="relative w-full h-full rounded-full animate-float-slow">
-        <div id="musicDisc" class="relative w-full h-full rounded-full bg-gradient-to-tr from-brand-indigo/80 to-brand-cyan/80 backdrop-blur-md shadow-2xl flex items-center justify-center overflow-hidden group border border-white/20">
-            <img id="musicCoverImg" alt="NexShop Mascot" class="absolute inset-0 w-full h-full object-cover" fetchpriority="high" decoding="async" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-KvRSCJhh3MLyRjzgq86VY_O7Y0-dTVhPwG7z8fksfZupbcbzgNmsbXvqtOQuiNCsPA_kCHj9bRZs7i4iZdA8-ndy0gflDVNXrQvx0YThIntEhlIpaFs3rqychUVuyI6PVygjeycJ7B1LjpZ7Cl7p8eWcg0-rUJNLS25W41sHdQtzA4wk9VbJpCn2NtrruDLpOvz9ya5E7GVCn0K8bOfAfi1v0gTEx6a8xioo_4b86N0_8IeZgH0iQw"/>
-            
-            <!-- Transparent Play/Pause Button (Hidden if music disabled) -->
-            <button type="button" id="musicPlayBtn" class="hidden absolute z-10 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/20 backdrop-blur-sm border border-white/10 items-center justify-center text-white hover:bg-black/40 hover:scale-110 transition-all shadow-[0_0_20px_rgba(0,0,0,0.3)]">
+        <div id="musicDisc" class="relative w-full h-full rounded-full bg-[#111] border-4 border-[#222] shadow-[0_0_20px_rgba(0,0,0,0.8)] flex items-center justify-center overflow-hidden group transition-transform duration-700 ease-linear" style="box-shadow: inset 0 0 20px rgba(255,255,255,0.1), 0 0 15px rgba(0,0,0,0.5);">
+            <!-- Black vinyl shell is rendered on first paint; no remote cover overlay. -->
+            <div class="absolute inset-[10%] rounded-full border border-white/5"></div>
+            <div class="absolute inset-[15%] rounded-full border border-white/5"></div>
+            <div class="absolute inset-[20%] rounded-full border border-white/5"></div>
+            <div class="absolute inset-[25%] rounded-full border border-white/5"></div>
+            <div class="relative w-[40%] h-[40%] rounded-full bg-gradient-to-br from-[#272727] to-[#0b0b0b] border-[3px] border-[#333] shadow-lg flex items-center justify-center">
+                <i class="fa-solid fa-compact-disc text-3xl sm:text-5xl text-white/10" aria-hidden="true"></i>
+                <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-gray-900 rounded-full border border-[#222] shadow-inner"></span>
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 pointer-events-none mix-blend-overlay"></div>
+
+            <!-- Play/Pause button remains functional without changing the disc artwork. -->
+            <button type="button" id="musicPlayBtn" class="hidden absolute z-10 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-black/30 backdrop-blur-sm border border-white/10 items-center justify-center text-white hover:bg-black/50 hover:scale-110 transition-all shadow-[0_0_20px_rgba(0,0,0,0.3)]" aria-label="Putar musik">
                 <i class="fa-solid fa-play text-xl sm:text-2xl ml-1" id="musicPlayIcon"></i>
             </button>
         </div>
@@ -1508,6 +1517,6 @@ Cek Transaksi
 
 <script src="/nexbot.js?v=20260825-production"></script>
 <script src="/auth-security.js?v=20260825"></script>
-<script src="/script.js?v=20260827-deferred-sections"></script>
+<script src="/script.js?v=20260827-black-vinyl"></script>
 </body>
 </html>

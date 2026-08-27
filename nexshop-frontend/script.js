@@ -4896,21 +4896,17 @@ async function initMusicPlayer() {
         if (!response.ok) return;
         const data = await response.json();
 
-        const defaultMascot = document.getElementById("defaultMascot");
-        const musicPlayerUI = document.getElementById("musicPlayerUI");
-
         if (data.enabled && data.music) {
             // Setup player UI
-            const musicCoverImg = document.getElementById("musicCoverImg");
             const heroAudioPlayer = document.getElementById("heroAudioPlayer");
             const musicPlayBtn = document.getElementById("musicPlayBtn");
             const musicPlayIcon = document.getElementById("musicPlayIcon");
             const musicDisc = document.getElementById("musicDisc");
 
             const audioUrl = data.music.audio_url || "";
-            if (musicCoverImg) musicCoverImg.src = data.music.cover_url || "https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?q=80&w=500&auto=format&fit=crop";
 
-            // Musik bukan elemen visual first paint. Pertahankan file/kualitas
+            // Cover artwork is intentionally not used here. The black disc is
+            // rendered in index.html on first paint and never gets overwritten.
             // asli, tetapi unduh hanya saat pengguna memang menekan Play.
             const ensureAudioSource = () => {
                 if (!heroAudioPlayer || !audioUrl) return false;
