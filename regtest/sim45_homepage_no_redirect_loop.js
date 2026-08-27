@@ -6,7 +6,7 @@ const path = require("path");
 const root = path.join(__dirname, "..");
 const nginx = fs.readFileSync(path.join(root, "nginx-nexshop.conf"), "utf8").replace(/\r\n/g, "\n");
 
-const exactRootServesIndex = /location\s*=\s*\/\s*\{\s*rewrite\s+\^\s+\/index\.html\s+break;\s*\}/s.test(nginx);
+const exactRootServesIndex = /location\s*=\s*\/\s*\{\s*try_files\s+\/index\.html\s+=404;\s*\}/s.test(nginx);
 const legacyIndexRedirectsToRoot = /location\s*=\s*\/index\.html\s*\{\s*return\s+301\s+\/;\s*\}/s.test(nginx);
 const genericRouteCanStillServeFiles = /location\s+\/\s*\{\s*try_files\s+\$uri\s+\$uri\/\s+=404;\s*\}/s.test(nginx);
 
