@@ -13,6 +13,7 @@ assert.doesNotMatch(index, /id=["']musicCoverImg["']/);
 assert.doesNotMatch(index, /aida-public\//);
 assert.doesNotMatch(script, /musicCoverImg/);
 assert.doesNotMatch(script, /cover_url/);
+assert.match(index, /style\.css\?v=20260827-black-vinyl-2/);
 assert.match(index, /script\.js\?v=20260827-black-vinyl-2/);
 assert.match(index, /class="[^"]*music-disc-shell[^"]*"/);
 assert.match(style, /\.music-disc-shell\s*\{[\s\S]*?background:/);

@@ -26,6 +26,7 @@ assert.match(script, /if \(id === "authOverlay"\) void ensureAuthCaptcha\(\);/);
 assert.doesNotMatch(script, /async function initAuthSecurity\(\) \{[\s\S]{0,700}security\.mountCaptcha/, "Captcha tidak boleh dimount saat homepage baru dibuka");
 assert.doesNotMatch(html, /id="musicCoverImg"|aida-public\//, "Cover musik remote tidak boleh menimpa disk first paint");
 assert.match(html, /class="[^"]*music-disc-shell[^"]*"/);
+assert.match(html, /style\.css\?v=20260827-black-vinyl-2/);
 assert.match(html, /script\.js\?v=20260827-black-vinyl-2/);
 assert.match(html, /<img src="\/images\/oss-logo\.png" alt="OSS Logo" loading="lazy" decoding="async">/);
 assert.match(html, /<img data-src="\/images\/nexbot-mascot\.webp"/);
