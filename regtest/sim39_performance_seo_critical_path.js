@@ -41,6 +41,12 @@ assert.match(script, /const refreshedUserPromise = refreshCurrentUserProfile\(\)
 assert.match(script, /hideAppLoader\(\);[\s\S]{0,500}initialRequests\.finally/);
 assert.doesNotMatch(script, /new Promise\(\(resolve\) => setTimeout\(\(\) => resolve\(false\), 12000\)\)/, "Loader tidak boleh menahan first render 12 detik");
 
+const bootstrapSource = script.slice(script.indexOf("async function bootstrapApp"), script.indexOf("function startApp"));
+assert.match(script, /function loadSectionWhenNear\(/);
+assert.match(script, /function runBackgroundTask\(/);
+assert.match(bootstrapSource, /initDeferredHomepageData\(\);/);
+assert.doesNotMatch(bootstrapSource, /loadProducts\(\)|loadTopupProducts\(\)|loadNexshopNews\(\)|loadTestimonials\(\)|loadLeaderboard\(\)/, "Data section bawah tidak boleh bersaing pada first render");
+
 // Static assets are compressible and should be served with compression enabled.
 assert.match(nginx, /gzip\s+on;/);
 assert.match(nginx, /application\/javascript/);

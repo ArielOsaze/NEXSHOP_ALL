@@ -31,6 +31,7 @@ let initialLoading = true;
 // Startup data enriches an already-rendered storefront. It must never put the
 // full-page loader back over the hero while requests finish in the background.
 let initialBackgroundLoading = true;
+let backgroundRequestDepth = 0;
 let loaderShowTimer = null;
 let initialReadyDispatched = false;
 
@@ -88,16 +89,23 @@ function hideAppLoader() {
     notifyInitialReady();
 }
 
+function runBackgroundTask(task) {
+    backgroundRequestDepth += 1;
+    return Promise.resolve()
+        .then(task)
+        .finally(() => { backgroundRequestDepth = Math.max(0, backgroundRequestDepth - 1); });
+}
+
 function beginAppRequest() {
     activeRequests += 1;
-    if (initialLoading || initialBackgroundLoading) return;
+    if (initialLoading || initialBackgroundLoading || backgroundRequestDepth > 0) return;
     clearTimeout(loaderShowTimer);
     loaderShowTimer = setTimeout(() => showAppLoader(), 160);
 }
 
 function endAppRequest() {
     activeRequests = Math.max(0, activeRequests - 1);
-    if (activeRequests > 0 || initialLoading || initialBackgroundLoading) return;
+    if (activeRequests > 0 || initialLoading || initialBackgroundLoading || backgroundRequestDepth > 0) return;
     clearTimeout(loaderShowTimer);
     hideAppLoader();
 }
@@ -4743,6 +4751,39 @@ function initNavScroll() {
     }, { passive: true });
 }
 
+function loadSectionWhenNear(selector, loader) {
+    const section = document.querySelector(selector);
+    if (!section) return;
+
+    let started = false;
+    let observer = null;
+    const start = () => {
+        if (started) return;
+        started = true;
+        observer?.disconnect();
+        void runBackgroundTask(loader).catch((error) => {
+            console.error(`Failed to load ${selector}:`, error);
+        });
+    };
+
+    if (!("IntersectionObserver" in window)) {
+        start();
+        return;
+    }
+    observer = new IntersectionObserver((entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) start();
+    });
+    observer.observe(section);
+}
+
+function initDeferredHomepageData() {
+    loadSectionWhenNear("#leaderboardSection", loadLeaderboard);
+    loadSectionWhenNear("#topup", loadTopupProducts);
+    loadSectionWhenNear("#games", loadProducts);
+    loadSectionWhenNear("#news", loadNexshopNews);
+    loadSectionWhenNear("#testimonials", loadTestimonials);
+}
+
 async function bootstrapApp() {
     initMobileMenu();
     initNavScroll();
@@ -4754,21 +4795,17 @@ async function bootstrapApp() {
     checkForgotPasswordLink();
     refreshAccountUI();
 
-    // Data akun, katalog, statistik, konten, dan musik memperkaya halaman.
-    // Hero/kerangka UI tidak boleh menunggu semuanya sebelum terlihat.
+    // Data akun, trust bar, promo, dan musik memberi konteks di hero. Katalog,
+    // berita, testimoni, dan leaderboard dimuat saat section-nya mendekat.
     const refreshedUserPromise = refreshCurrentUserProfile();
     initNexBotChat();
+    initDeferredHomepageData();
 
     const initialRequests = Promise.allSettled([
         refreshedUserPromise,
         loadPromo(),
         loadStoreSettings(),
-        loadProducts(),
-        loadTopupProducts(),
         loadTrustStats(),
-        loadNexshopNews(),
-        loadTestimonials(),
-        loadLeaderboard(),
         checkPaymentReturn(),
         initMusicPlayer()
     ]);
