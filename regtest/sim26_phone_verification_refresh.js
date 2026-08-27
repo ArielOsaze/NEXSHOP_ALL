@@ -12,7 +12,8 @@ assert.match(hasPhone, /phone_normalized/);
 const bootstrapStart = source.indexOf("async function bootstrapApp()");
 const bootstrapEnd = source.indexOf("function startApp()", bootstrapStart);
 const bootstrap = source.slice(bootstrapStart, bootstrapEnd);
-assert.match(bootstrap, /const refreshedUser = await refreshCurrentUserProfile\(\)/);
+assert.match(bootstrap, /const refreshedUserPromise = refreshCurrentUserProfile\(\)/);
+assert.match(bootstrap, /refreshedUserPromise\s*\.then\(\(refreshedUser\)/);
 assert.match(bootstrap, /if \(refreshedUser && currentUser && !hasVerifiedPhone\(currentUser\)\)/);
 
 console.log("sim26_phone_verification_refresh: passed");
