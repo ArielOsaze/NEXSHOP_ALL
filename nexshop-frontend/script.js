@@ -28,6 +28,9 @@ const appLoader = document.getElementById("appLoader");
 const appLoaderMessage = document.getElementById("appLoaderMessage");
 let activeRequests = 0;
 let initialLoading = true;
+// Startup data enriches an already-rendered storefront. It must never put the
+// full-page loader back over the hero while requests finish in the background.
+let initialBackgroundLoading = true;
 let loaderShowTimer = null;
 let initialReadyDispatched = false;
 
@@ -41,15 +44,15 @@ function notifyInitialReady() {
     }, 320);
 }
 
-// Safety net: if the app-ready class hasn't been applied within 5 seconds of
-// script execution (regardless of loader/fetch state), force it. This prevents
-// a blank hero on slow or stalled network conditions.
+// Safety net: if the app-ready class hasn't been applied within 900ms of
+// script execution, release the visible shell even when a browser extension
+// or third-party resource blocks startup work.
 window.setTimeout(() => {
     if (!initialReadyDispatched) {
         if (appLoader) { appLoader.classList.remove("is-visible"); appLoader.setAttribute("aria-busy", "false"); }
         notifyInitialReady();
     }
-}, 5000);
+}, 900);
 
 function showAppLoader(message = "Memuat data NexShop...") {
     if (!appLoader) return;
@@ -79,14 +82,14 @@ function hideAppLoader() {
 
 function beginAppRequest() {
     activeRequests += 1;
-    if (initialLoading) return;
+    if (initialLoading || initialBackgroundLoading) return;
     clearTimeout(loaderShowTimer);
     loaderShowTimer = setTimeout(() => showAppLoader(), 160);
 }
 
 function endAppRequest() {
     activeRequests = Math.max(0, activeRequests - 1);
-    if (activeRequests > 0 || initialLoading) return;
+    if (activeRequests > 0 || initialLoading || initialBackgroundLoading) return;
     clearTimeout(loaderShowTimer);
     hideAppLoader();
 }
@@ -103,6 +106,7 @@ window.fetch = (...args) => {
 
 function finishInitialLoading(force = false) {
     initialLoading = false;
+    initialBackgroundLoading = false;
     if (force || activeRequests === 0) hideAppLoader();
     else showAppLoader("Menyiapkan data toko...");
 }
@@ -4686,11 +4690,15 @@ async function bootstrapApp() {
     checkResetPasswordLink();
     checkForgotPasswordLink();
     refreshAccountUI();
-    const refreshedUser = await refreshCurrentUserProfile();
+
+    // Data akun, katalog, statistik, konten, dan musik memperkaya halaman.
+    // Hero/kerangka UI tidak boleh menunggu semuanya sebelum terlihat.
+    const refreshedUserPromise = refreshCurrentUserProfile();
     initNexBotChat();
-    loadPromo();
 
     const initialRequests = Promise.allSettled([
+        refreshedUserPromise,
+        loadPromo(),
         loadStoreSettings(),
         loadProducts(),
         loadTopupProducts(),
@@ -4701,17 +4709,19 @@ async function bootstrapApp() {
         checkPaymentReturn(),
         initMusicPlayer()
     ]);
-    // A stalled third-party/network request must not leave the page covered by
-    // an indefinitely animated loader. Requests continue in the background.
-    const completed = await Promise.race([
-        initialRequests.then(() => true),
-        new Promise((resolve) => setTimeout(() => resolve(false), 12000))
-    ]);
-    finishInitialLoading(!completed);
 
-    if (refreshedUser && currentUser && !hasVerifiedPhone(currentUser)) {
-        openPhoneOnboarding();
-    }
+    // Keep every visual animation intact, but expose the pre-rendered shell
+    // immediately. Startup requests remain non-blocking in the background.
+    hideAppLoader();
+    initialRequests.finally(() => finishInitialLoading(true));
+
+    refreshedUserPromise
+        .then((refreshedUser) => {
+            if (refreshedUser && currentUser && !hasVerifiedPhone(currentUser)) {
+                openPhoneOnboarding();
+            }
+        })
+        .catch(() => {});
 }
 
 
