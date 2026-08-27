@@ -2,6 +2,8 @@ const crypto = require("crypto");
 const { sendUserWhatsApp } = require("./userWhatsAppService");
 const { normalizePhoneNumber, toFonntePhone } = require("../utils/phoneNumber");
 
+const { upsertVerifiedUserContact } = require("./whatsappContactService");
+
 const OTP_EXPIRY_MINUTES = 5;
 const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
 const OTP_MAX_ATTEMPTS = 5;
@@ -151,6 +153,13 @@ async function verifyPhoneOtp(supabase, { userId, otp }) {
         const err = new Error("Kode OTP sudah dipakai atau tidak lagi aktif. Minta kode baru.");
         err.code = "OTP_ALREADY_USED";
         throw err;
+    }
+    try {
+        await upsertVerifiedUserContact(updated);
+    } catch (contactError) {
+        // Kontak bersifat sinkronisasi tambahan; kegagalannya tidak boleh
+        // membatalkan verifikasi OTP yang sudah berhasil.
+        console.error("Sinkronisasi kontak WhatsApp gagal:", contactError.message);
     }
     return updated;
 }

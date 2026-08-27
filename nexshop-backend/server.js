@@ -44,6 +44,7 @@ const ratingRoutes = require("./routes/ratingRoutes");
 const musicRoutes = require("./routes/musicRoutes");
 const walletRoutes = require("./routes/walletRoutes");
 const resellerApiRoutes = require("./routes/resellerApiRoutes");
+const whatsappContactRoutes = require("./routes/whatsappContactRoutes");
 const sitemapController = require("./controllers/sitemapController");
 const ssrController = require("./controllers/ssrController");
 const { startTopupStatusPoller } = require("./jobs/topupStatusPoller");
@@ -158,7 +159,7 @@ const WEBHOOK_PATHS = ["/orders/notification", "/topup/notification", "/topup/to
 
 // Dicek relatif terhadap mount point "/api" (req.path di dalam middleware
 // yang dipasang di app.use("/api", ...) udah dipotong prefix-nya).
-const ADMIN_API_PREFIXES = ["/admin", "/topup/admin", "/reseller/admin", "/wallet/admin", "/webhooks/admin", "/stats/overview", "/stats/export-orders", "/stats/system-health", "/settings"];
+const ADMIN_API_PREFIXES = ["/admin", "/topup/admin", "/reseller/admin", "/wallet/admin", "/webhooks/admin", "/stats/overview", "/stats/export-orders", "/stats/system-health", "/settings", "/whatsapp/contacts"];
 
 function isAdminApiPath(path) {
     return ADMIN_API_PREFIXES.some((prefix) => path === prefix || path.startsWith(prefix + "/"));
@@ -217,6 +218,7 @@ app.use("/api/ai", aiRoutes);
 app.use("/api/admin/ai", aiRoutes);
 app.use("/api/ratings", ratingRoutes);
 app.use("/api/music", musicRoutes);
+app.use("/api/whatsapp/contacts", whatsappContactRoutes);
 app.use("/api/stats", statsRoutes); // sama router — /api/stats/public dibuka publik, /api/stats/overview tetap butuh admin
 
 // Endpoint diagnostik hanya tersedia saat development.

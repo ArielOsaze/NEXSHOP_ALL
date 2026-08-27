@@ -1,5 +1,51 @@
+/* Brand motion: mark first, then a smooth text reveal with a calm interval. */
+.nx-brand-lockup {
+    --nx-brand-motion-duration: 7.2s;
+    display: inline-flex;
+    align-items: center;
+    min-width: 0;
+}
+
+.nx-brand-mark {
+    transform-origin: 50% 50%;
+    animation: nxBrandMarkPulse var(--nx-brand-motion-duration) cubic-bezier(.22, 1, .36, 1) infinite;
+    will-change: transform, filter;
+}
+
+.nx-brand-name {
+    display: inline-block;
+    min-width: 0;
+    transform-origin: left center;
+    animation: nxBrandNameReveal var(--nx-brand-motion-duration) cubic-bezier(.22, 1, .36, 1) infinite;
+    will-change: transform, opacity, clip-path;
+}
+
+@keyframes nxBrandMarkPulse {
+    0%, 12%, 100% { transform: scale(1); filter: brightness(1); }
+    22% { transform: scale(1.045); filter: brightness(1.16) drop-shadow(0 0 12px rgba(0, 194, 232, .38)); }
+    34% { transform: scale(1); filter: brightness(1); }
+}
+
+@keyframes nxBrandNameReveal {
+    0%, 13% { opacity: 0; transform: translate3d(-12px, 0, 0); clip-path: inset(0 100% 0 0); }
+    28%, 72% { opacity: 1; transform: translate3d(0, 0, 0); clip-path: inset(0 0 0 0); }
+    86%, 100% { opacity: 0; transform: translate3d(-6px, 0, 0); clip-path: inset(0 100% 0 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nx-brand-mark,
+    .nx-brand-name {
+        animation: none;
+        transform: none;
+        clip-path: none;
+        opacity: 1;
+        will-change: auto;
+    }
+}
+
+
 /* =========================================================
-   NexShop â€” theme tokens
+   NexShop — theme tokens
    Display: Sora (headings, brand)
    Body: Inter (body, UI elements)
    Accent/numeric: Space Grotesk (badges, stat-like numbers)
