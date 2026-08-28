@@ -19,7 +19,7 @@ assert(/\.app-shell\s*>\s*main\s*\{[^}]*width\s*:\s*calc\(100%\s*-\s*260px\)/s.t
     'desktop app-shell main width must exclude the fixed sidebar');
 assert(/@media\s*\(max-width\s*:\s*991px\)[\s\S]*?\.app-shell\s*>\s*main\s*\{[^}]*margin-left\s*:\s*0/s.test(css),
     'mobile app-shell main must remove desktop sidebar offset');
-assert(/css\/style\.css\?v=20260828-approval-layout-1/.test(html),
+assert(/css\/style\.css\?v=20260828-approval-layout-2/.test(html),
     'dashboard must bump the CSS cache-buster for the approval layout fix');
 
 console.log('PASS sim48: desktop Approval Staff layout reserves sidebar and mobile releases it');

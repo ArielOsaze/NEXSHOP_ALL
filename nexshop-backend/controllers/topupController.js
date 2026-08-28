@@ -2756,6 +2756,36 @@ exports.getBalance = async (req, res) => {
     }
 };
 
+// ADMIN — buat tiket deposit saldo TokoVoucher (Admin + Security PIN)
+exports.createDeposit = async (req, res) => {
+    if (req.user.role !== "admin") {
+        return res.status(403).json({ message: "Akses deposit hanya untuk Admin." });
+    }
+
+    const nominal = Number(req.body?.nominal);
+    const kode = String(req.body?.kode || "").trim();
+    if (!Number.isSafeInteger(nominal) || nominal < 1000 || nominal > 100000000) {
+        return res.status(400).json({ message: "Nominal deposit harus bilangan bulat antara Rp1.000 dan Rp100.000.000." });
+    }
+    if (!/^[A-Za-z0-9_-]{1,32}$/.test(kode)) {
+        return res.status(400).json({ message: "Kode metode pembayaran tidak valid." });
+    }
+
+    try {
+        const result = await tokovoucher.createDeposit({ nominal, kode });
+        if (!result || result.status === 0 || result.status === "0") {
+            return res.status(400).json({
+                message: result?.error_msg || result?.message || "TokoVoucher menolak pembuatan tiket deposit.",
+                data: result?.data || null
+            });
+        }
+        res.json(result);
+    } catch (err) {
+        console.error("TokoVoucher deposit error:", err.message);
+        res.status(502).json({ message: "Gagal membuat tiket deposit TokoVoucher. Coba lagi sebentar." });
+    }
+};
+
 // ==========================================
 // NEW CATALOG SYNC & MANAGEMENT
 // ==========================================

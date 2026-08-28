@@ -3,9 +3,20 @@ const router = express.Router();
 const topupController = require("../controllers/topupController");
 const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
+const superAdminMiddleware = require("../middleware/superAdminMiddleware");
+const { requireAdminPin } = require("../middleware/adminPinMiddleware");
 const optionalAuthMiddleware = require("../middleware/optionalAuthMiddleware");
+const rateLimit = require("express-rate-limit");
 
 const { checkNicknameLimiter, inquiryLimiter } = require("../middleware/rateLimiter");
+
+const adminDepositLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak tiket deposit. Coba lagi 15 menit." }
+});
 
 // Publik
 
@@ -61,6 +72,7 @@ router.put("/admin/category-logo", authMiddleware, adminMiddleware, topupControl
 router.get("/admin/orders", authMiddleware, adminMiddleware, topupController.getAllOrders);
 router.post("/admin/orders/:id/actions", authMiddleware, adminMiddleware, topupController.adminOrderAction);
 router.get("/admin/balance", authMiddleware, adminMiddleware, topupController.getBalance);
+router.post("/admin/deposit", authMiddleware, superAdminMiddleware, requireAdminPin, adminDepositLimiter, topupController.createDeposit);
 router.post("/admin/sync-full", authMiddleware, adminMiddleware, topupController.syncFullCatalog);
 router.get("/admin/sync-status", authMiddleware, adminMiddleware, topupController.getSyncStatus);
 router.get("/admin/catalog-summary", authMiddleware, adminMiddleware, topupController.getCatalogSummary);

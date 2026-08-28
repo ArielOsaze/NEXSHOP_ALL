@@ -48,6 +48,17 @@ async function checkBalance() {
     return data;
 }
 
+// Buat tiket deposit saldo TokoVoucher. Dokumentasi resmi memakai GET dan
+// memang mensyaratkan secret di query string; fungsi ini hanya dipanggil di
+// backend supaya secret tidak pernah sampai ke browser atau payload frontend.
+async function createDeposit({ nominal, kode }) {
+    const { memberCode, secret } = await getCreds();
+    const { data } = await api.get(`/v1/deposit`, {
+        params: { member_code: memberCode, secret, nominal, kode }
+    });
+    return data;
+}
+
 // Cari produk berdasarkan kode/prefix, mis. "ML" buat semua produk Mobile Legends
 async function searchProducts(kode) {
     const { memberCode, secret } = await getCreds();
@@ -203,6 +214,7 @@ async function verifyWebhookSignature(headerSignature, refId) {
 
 module.exports = {
     checkBalance,
+    createDeposit,
     searchProducts,
     getFullCatalog,
     getCategories,

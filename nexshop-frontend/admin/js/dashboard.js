@@ -2554,6 +2554,91 @@ async function loadTvBalance() {
     }
 }
 
+function openTvDepositModal() {
+    const modalEl = document.getElementById("tvDepositModal");
+    if (!modalEl) return;
+    document.getElementById("tvDepositError")?.classList.add("d-none");
+    document.getElementById("tvDepositResult")?.classList.add("d-none");
+    document.getElementById("tvDepositNominal").value = "10000";
+    document.getElementById("tvDepositKode").value = "qris";
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
+
+function renderTvDepositResult(result) {
+    const data = result?.data || {};
+    const resultEl = document.getElementById("tvDepositResult");
+    const errorEl = document.getElementById("tvDepositError");
+    const messageEl = document.getElementById("tvDepositResultMessage");
+    const payEl = document.getElementById("tvDepositPaymentInfo");
+    const payNameEl = document.getElementById("tvDepositPaymentName");
+    const totalEl = document.getElementById("tvDepositTotal");
+    const expiredEl = document.getElementById("tvDepositExpired");
+    const qrEl = document.getElementById("tvDepositQr");
+
+    errorEl?.classList.add("d-none");
+    resultEl?.classList.remove("d-none");
+    messageEl.textContent = result?.message || "Tiket deposit berhasil dibuat.";
+    payEl.textContent = data.pay ? String(data.pay) : "Instruksi pembayaran belum tersedia.";
+    payNameEl.textContent = data.pay_name ? `Atas nama: ${data.pay_name}` : (data.metode ? `Metode: ${data.metode}` : "");
+    totalEl.textContent = data.total_transfer != null
+        ? `Total transfer: Rp ${Number(data.total_transfer).toLocaleString("id-ID")}`
+        : "";
+    expiredEl.textContent = data.expired_at ? `Berlaku sampai: ${data.expired_at}` : "";
+
+    qrEl.classList.add("d-none");
+    qrEl.removeAttribute("src");
+    try {
+        const payUrl = new URL(String(data.pay || ""), window.location.origin);
+        if (payUrl.protocol === "https:" && /\.(png|jpe?g|webp)(\?.*)?$/i.test(payUrl.pathname)) {
+            qrEl.src = payUrl.href;
+            qrEl.classList.remove("d-none");
+        }
+    } catch (_) { /* pay bisa berupa nomor rekening/VA, bukan URL */ }
+}
+
+async function submitTvDeposit() {
+    const nominal = Number(document.getElementById("tvDepositNominal")?.value);
+    const kode = document.getElementById("tvDepositKode")?.value.trim() || "";
+    const button = document.getElementById("tvDepositSubmit");
+    const errorEl = document.getElementById("tvDepositError");
+    const resultEl = document.getElementById("tvDepositResult");
+
+    errorEl.classList.add("d-none");
+    resultEl.classList.add("d-none");
+    if (!Number.isSafeInteger(nominal) || nominal < 1000 || nominal > 100000000) {
+        errorEl.textContent = "Nominal harus bilangan bulat Rp1.000–Rp100.000.000.";
+        errorEl.classList.remove("d-none");
+        return;
+    }
+    if (!/^[A-Za-z0-9_-]{1,32}$/.test(kode)) {
+        errorEl.textContent = "Kode metode pembayaran tidak valid.";
+        errorEl.classList.remove("d-none");
+        return;
+    }
+
+    button.disabled = true;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Membuat tiket...';
+    try {
+        await withAdminPin(async (security_pin) => {
+            const res = await apiFetch("/topup/admin/deposit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nominal, kode, security_pin })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.message || "Gagal membuat tiket deposit.");
+            renderTvDepositResult(data);
+        }, "membuat tiket deposit saldo TokoVoucher");
+    } catch (err) {
+        if (err.message === "unauthorized") return;
+        errorEl.textContent = err.message || "Gagal membuat tiket deposit.";
+        errorEl.classList.remove("d-none");
+    } finally {
+        button.disabled = false;
+        button.innerHTML = '<i class="bi bi-shield-lock me-1"></i> Buat Tiket Deposit';
+    }
+}
+
 // Katalog produk topup sekarang SEPENUHNYA dipegang js/catalogSync.js
 // (window.loadTopupProducts + renderProductTable). Yang tinggal di sini
 // cuma state seleksi dan aksi massal yang dipanggil dari toolbar.

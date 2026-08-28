@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/style.css?v=20260828-approval-layout-1">
+<link rel="stylesheet" href="css/style.css?v=20260828-approval-layout-2">
 <script src="../theme-init.js?v=20260822-catalog"></script>
 <script defer src="/clean-url.js?v=20260828-admin-loop-1"></script>
 </head>
@@ -451,8 +451,11 @@
             <h2>Orders Game &amp; Gamepass</h2>
             <p class="text-muted mb-0">Kelola katalog game/gamepass TokoVoucher dan pantau order TP</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex gap-2 align-items-center flex-wrap">
             <span class="badge bg-dark-subtle text-dark border" id="tvBalanceBadge">Saldo TokoVoucher: —</span>
+            <button type="button" class="btn btn-primary btn-sm" onclick="openTvDepositModal()">
+                <i class="bi bi-wallet2 me-1"></i> Deposit Saldo
+            </button>
         </div>
     </div>
 
@@ -832,6 +835,46 @@
         </div>
     </div>
 </section>
+
+<!-- Deposit saldo TokoVoucher dibuat sebagai tiket pembayaran -->
+<div class="modal fade" id="tvDepositModal" tabindex="-1" aria-labelledby="tvDepositModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tvDepositModalTitle"><i class="bi bi-wallet2 me-2"></i>Deposit Saldo TokoVoucher</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted mb-3">Buat tiket pembayaran langsung dari dashboard. Saldo baru masuk setelah pembayaran berhasil dikonfirmasi TokoVoucher.</p>
+                <div class="mb-3">
+                    <label class="form-label" for="tvDepositNominal">Nominal deposit</label>
+                    <input id="tvDepositNominal" type="number" class="form-control" min="1000" max="100000000" step="1000" value="10000" inputmode="numeric" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="tvDepositKode">Metode pembayaran</label>
+                    <input id="tvDepositKode" class="form-control font-monospace" value="qris" maxlength="32" pattern="[A-Za-z0-9_-]+" required>
+                    <div class="form-text">Default <code>qris</code>. Kode mengikuti metode pembayaran yang aktif di akun TokoVoucher.</div>
+                </div>
+                <div id="tvDepositError" class="alert alert-danger d-none small mb-0" role="alert"></div>
+                <div id="tvDepositResult" class="d-none mt-3" aria-live="polite">
+                    <div class="alert alert-success small mb-3" id="tvDepositResultMessage"></div>
+                    <div class="border rounded p-3 bg-body-tertiary">
+                        <div class="small text-muted mb-1">Instruksi pembayaran</div>
+                        <div id="tvDepositPaymentInfo" class="fw-semibold text-break"></div>
+                        <div id="tvDepositPaymentName" class="small text-muted mt-1"></div>
+                        <div id="tvDepositTotal" class="mt-2"></div>
+                        <div id="tvDepositExpired" class="small text-muted mt-1"></div>
+                        <img id="tvDepositQr" class="img-fluid rounded mt-3 d-none" alt="QR pembayaran deposit TokoVoucher" style="max-height:280px">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+                <button type="button" class="btn btn-primary" id="tvDepositSubmit" onclick="submitTvDeposit()"><i class="bi bi-shield-lock me-1"></i> Buat Tiket Deposit</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- ===== Users view ===== -->
 <section id="view-users" class="view-section d-none">
