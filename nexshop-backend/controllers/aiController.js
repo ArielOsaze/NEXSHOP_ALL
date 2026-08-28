@@ -3,6 +3,7 @@
 const axios = require("axios");
 const { getStoreSettings, getApiKeys, DEFAULT_GEMINI_MODEL, callGeminiWithFallback } = require("../config/settings");
 const { normalizeQuery, detectIntent, detectEntities, rankKnowledge, buildKnowledgeResponse } = require("../utils/nexbotEngine");
+const { isNexShopScope, formatProfessionalReply, OUT_OF_SCOPE_REPLY } = require("../utils/nexbotPolicy");
 const nexbotCatalog = require("../utils/nexbotCatalog");
 const { getResellerContext } = require("../services/resellerService");
 const { hitungHargaReseller } = require("../utils/resellerPricing");
@@ -86,12 +87,16 @@ const BUILTIN_KNOWLEDGE = [
     { id: "builtin-marketplace", title: "Marketplace NexShop (E-Wallet, Pulsa, Tagihan)", category: "Guide", keywords: "marketplace ppob e-wallet ewallet dompet digital dana ovo gopay shopeepay linkaja pulsa paket data kuota pln token listrik tagihan e-toll layanan digital one stop", content: "Selain topup game, NexShop punya halaman Marketplace di nexshop.cloud/marketplace untuk kebutuhan digital harian. Layanan yang tersedia di sana: isi ulang E-Wallet (antara lain DANA, OVO, GoPay, ShopeePay, LinkAja), pulsa semua operator, paket data dan voucher kuota, token listrik PLN, saldo E-Toll, voucher game, layanan hiburan/streaming, serta pembayaran tagihan (PDAM, BPJS, internet pascabayar, TV kabel, multifinance, asuransi). Ketersediaan produk mengikuti katalog yang sedang aktif.", priority: 6, status: "active" },
     { id: "builtin-marketplace-cara", title: "Cara Beli di Marketplace NexShop", category: "Guide", keywords: "cara beli marketplace cara isi ulang e-wallet ewallet dompet digital cara topup pulsa cara beli paket data cara bayar pln token listrik cara isi dana ovo gopay langkah checkout marketplace nomor tujuan", content: "Langkah membeli di halaman Marketplace: buka nexshop.cloud/marketplace, pilih kategori di panel Kategori atau ketik nama layanan di kolom pencarian, klik kartu penyedia layanan yang dituju, pilih nominal atau produk yang diinginkan, isi nomor tujuan (nomor HP, nomor pelanggan, atau ID akun sesuai jenis layanan), pilih metode pembayaran, lalu selesaikan pembayaran. Pesanan diproses otomatis setelah pembayaran terkonfirmasi, dan statusnya bisa dicek lewat menu Cek Transaksi.", priority: 6, status: "active" },
     { id: "builtin-pascabayar", title: "Cek Tagihan Pascabayar", category: "Guide", keywords: "pascabayar cek tagihan pdam bpjs telkom indihome multifinance tagihan listrik pascabayar inquiry", content: "Untuk produk pascabayar (misalnya PLN pascabayar, PDAM, BPJS, internet pascabayar, dan multifinance), NexShop menyediakan tombol Cek Tagihan di halaman checkout Marketplace. Masukkan nomor pelanggan lalu klik Cek Tagihan untuk melihat nama pelanggan dan jumlah tagihan sebelum melanjutkan pembayaran.", priority: 5, status: "active" },
-    { id: "builtin-reseller", title: "Program Reseller NexShop", category: "Guide", keywords: "reseller jualan lagi harga khusus diskon reseller daftar reseller tier silver gold platinum mitra agen", content: "NexShop punya program reseller untuk yang mau menjual ulang produknya. Informasi dan pendaftarannya ada di halaman nexshop.cloud/reseller. Reseller yang pengajuannya sudah disetujui admin otomatis mendapat potongan harga di setiap produk, tanpa kode promo dan tanpa minimum transaksi. Besar potongannya mengikuti tingkatan reseller yang diberikan admin. Harga reseller dihitung di server dan langsung tampil saat akun reseller login.", priority: 5, status: "active" },
-    { id: "builtin-berita", title: "NexShop News", category: "Guide", keywords: "berita artikel news portal berita nexshop news baca artikel", content: "NexShop punya portal berita sendiri bernama NexShop News di nexshop.cloud/berita, berisi artikel editorial seputar game dan dunia digital yang ditulis tim NexShop.", priority: 3, status: "active" },
+    { id: "builtin-reseller", title: "Program Reseller NexShop", category: "Guide", keywords: "reseller jualan lagi harga khusus diskon reseller daftar reseller tier silver gold platinum mitra agen partner portal", content: "Program Reseller NexShop ditujukan untuk mitra yang menjual kembali produk digital melalui Partner Portal atau integrasi API. Akun Portal Reseller benar-benar terpisah dari akun belanja NexShop. Pengajuan, KYC, status review, harga tier, saldo mitra, transaksi, serta konfigurasi API dikelola dari nexshop.cloud/portal-reseller.", priority: 6, status: "active" },
+    { id: "builtin-reseller-onboarding", title: "Pendaftaran dan KYC Portal Reseller NexShop", category: "Guide", keywords: "cara daftar reseller pendaftaran partner portal daftar baru kyc akun portal benar-benar terpisah akun belanja storefront email berbeda nama lengkap whatsapp nik foto ktp turnstile verifikasi keamanan", content: "Pendaftaran reseller dilakukan langsung di tab Daftar Baru & KYC pada Partner Portal NexShop. Akun belanja/storefront tidak dapat dipakai untuk login portal dan tidak otomatis menjadi akun reseller. Gunakan email khusus portal yang belum pernah dipakai untuk akun NexShop serta password portal tersendiri.\n\nData wajib:\n- Email Portal Reseller khusus dan password minimal 8 karakter.\n- Nama Lengkap sesuai KTP dan nomor WhatsApp aktif.\n- NIK 16 digit dan Foto KTP asli yang jelas.\n\nLengkapi profil usaha bila ada, selesaikan verifikasi keamanan, lalu kirim formulir satu kali. Satu pengiriman membuat identity portal terpisah, pengajuan reseller, dan berkas KYC.", priority: 8, status: "active" },
+    { id: "builtin-reseller-approval", title: "Status Review dan Aktivasi Portal Reseller NexShop", category: "Guide", keywords: "portal reseller status pendaftaran status kyc review verifikasi admin pending menunggu verifikasi approved rejected suspended 3x24 jam cek status verifikasi terkini transaksi api", content: "Setelah formulir berhasil dikirim, akun Portal Reseller terbentuk dengan status pending atau Menunggu Verifikasi. Pengguna dapat masuk ke dashboard dan memilih Cek Status Verifikasi Terkini tanpa membuat akun ulang. Review admin berlangsung maksimal 3x24 jam kerja.\n\nBatas status:\n- Pending: boleh memantau status, membaca panduan, dan melihat katalog, tetapi belum dapat melakukan transaksi reseller atau memakai API.\n- Approved: transaksi reseller, harga tier, saldo mitra, serta integrasi API dapat digunakan.\n- Rejected: ikuti catatan peninjauan atau hubungi Customer Service sebelum memperbaiki data.\n- Suspended: akses dibekukan dan penyelesaiannya melalui admin NexShop.", priority: 8, status: "active" },
+    { id: "builtin-reseller-security", title: "Keamanan dan 2FA Portal Reseller", category: "TechnicalSupport", keywords: "keamanan portal reseller 2fa opsional authenticator totp kode 6 digit recovery code sekali pakai pengaturan login", content: "Portal Reseller mendukung 2FA opsional melalui aplikasi authenticator. Aktifkan dari menu Pengaturan dan konfirmasi setup dengan kode 6 digit. Setelah aktif, setiap login memerlukan kode authenticator atau satu recovery code yang belum pernah dipakai. Recovery code bersifat sekali pakai, harus disimpan di tempat aman, dan tidak dapat diminta kembali dalam bentuk plaintext. Jangan pernah membagikan password portal, kode authenticator, recovery code, API Key, atau Secret Key.", priority: 8, status: "active" },
+    { id: "builtin-reseller-api", title: "API Key dan Secret Key Reseller NexShop", category: "Guide", keywords: "api reseller api key secret key webhook ip whitelist integrasi backend server approved portal", content: "API Key dan Secret Key reseller tersedia setelah pengajuan disetujui admin. Kredensial dipakai hanya dari backend/server toko, bukan dari JavaScript browser, aplikasi publik, screenshot, atau repository. Simpan Secret Key sebagai environment variable. Atur IP Whitelist dan Webhook URL HTTPS dari menu API & Integrasi, lalu gunakan dokumentasi endpoint reseller sebagai kontrak implementasi.", priority: 8, status: "active" },
+    { id: "builtin-berita", title: "Portal Berita NexShop News", category: "Guide", keywords: "berita artikel news portal berita nexshop news baca artikel", content: "NexShop punya portal berita sendiri bernama NexShop News di nexshop.cloud/berita, berisi artikel editorial seputar game dan dunia digital yang ditulis tim NexShop.", priority: 3, status: "active" },
     { id: "builtin-promo", title: "Promo NexShop Hari Ini", category: "Promotion", keywords: "promo hari ini diskon voucher kupon kode promo cashback penawaran terbaru", content: "Promo NexShop dapat berubah mengikuti periode dan ketersediaan produk. Promo yang sedang aktif ditampilkan pada banner dan kartu produk di website. Jika tidak ada label promo pada produk yang dipilih, gunakan harga terbaru yang tampil saat checkout. Reseller yang sudah disetujui mendapatkan harga sesuai tier secara otomatis saat login dan tidak perlu memasukkan kode promo.", priority: 5, status: "active" },
     { id: "builtin-faq", title: "FAQ dan Bantuan NexShop", category: "Guide", keywords: "faq pertanyaan umum bantuan pusat bantuan informasi nexshop tanya apa saja", content: "NexBot dapat membantu menjelaskan produk, cara topup dan checkout, metode pembayaran, NexShop Wallet, Marketplace, reseller, refund, serta cara mengecek status pesanan. Untuk pemeriksaan transaksi tertentu, kirim Nomor Order ID atau email yang digunakan saat checkout. Jika pertanyaannya membutuhkan pemeriksaan manual, hubungi Customer Service resmi NexShop.", priority: 4, status: "active" },
     { id: "builtin-process", title: "Waktu Proses Pesanan", category: "Order", keywords: "berapa lama proses pesanan masuk pending menunggu belum masuk kapan selesai durasi topup", content: "Pesanan mulai diproses setelah pembayaran terkonfirmasi. Lama proses dapat berbeda mengikuti jenis produk dan respons provider. Pantau status melalui menu Cek Transaksi menggunakan Nomor Order ID. Jika status tidak berubah atau produk belum masuk setelah proses provider selesai, siapkan Nomor Order ID lalu hubungi Customer Service NexShop.", priority: 5, status: "active" },
-    { id: "builtin-account", title: "Akun dan Login NexShop", category: "TechnicalSupport", keywords: "akun daftar registrasi login masuk lupa password otp email verifikasi tidak bisa login", content: "Akun NexShop digunakan untuk menyimpan identitas transaksi, melihat riwayat, memakai NexShop Wallet, dan mengakses fitur reseller. Jika login gagal, periksa kembali email dan password, lalu gunakan alur pemulihan akun yang tersedia. Jangan pernah membagikan password, OTP, API Key, atau Secret Key kepada siapa pun, termasuk pihak yang mengaku sebagai admin.", priority: 5, status: "active" },
+    { id: "builtin-account", title: "Akun dan Login NexShop", category: "TechnicalSupport", keywords: "akun daftar registrasi login masuk lupa password otp email verifikasi tidak bisa login storefront belanja", content: "Akun belanja NexShop digunakan untuk menyimpan identitas transaksi, melihat riwayat, dan memakai NexShop Wallet. Akun ini terpisah dari akun Portal Reseller dan tidak dapat dipakai untuk login ke Partner Portal. Jika login storefront gagal, periksa kembali email dan password, lalu gunakan alur pemulihan akun yang tersedia. Jangan pernah membagikan password atau OTP kepada siapa pun, termasuk pihak yang mengaku sebagai admin.", priority: 5, status: "active" },
     { id: "builtin-harga-cek", title: "Cara Mengetahui Harga Produk", category: "Pricing", keywords: "harga berapa biaya tarif daftar harga cek harga list harga", content: "Harga setiap produk NexShop bisa berubah sewaktu-waktu mengikuti harga penyedia. Harga terbaru selalu tampil di halaman produknya: menu Topup untuk topup game, dan halaman Marketplace untuk E-Wallet, pulsa, paket data, PLN, dan tagihan. Kamu juga bisa menanyakan harga suatu layanan langsung ke NexBot, dan angkanya diambil dari katalog yang sedang aktif.", priority: 4, status: "active" }
 ];
 
@@ -115,7 +120,7 @@ const TEMPLATE_KNOWLEDGE_BY_QUERY = Object.freeze({
     "cara topup": "builtin-topup",
     "cara topup ml": "builtin-topup",
     "apa itu marketplace nexshop": "builtin-marketplace",
-    "cara daftar reseller": "builtin-reseller",
+    "cara daftar reseller": "builtin-reseller-onboarding",
     "kebijakan refund": "builtin-refund",
     "promo hari ini": "builtin-promo",
     "faq nexshop": "builtin-faq"
@@ -583,8 +588,10 @@ async function answerWithoutKnowledge(message, result, user, sessionId) {
     if (/^(halo|hi|hey|hai|selamat (pagi|siang|sore|malam)|thanks|terima kasih|makasih|good (morning|afternoon|evening)|hello)\b/i.test(t) && t.length < 40) {
         return { reply: "Halo! Saya NexBot, asisten resmi NexShop. Ada yang bisa saya bantu seputar produk, topup, pembayaran, Marketplace, atau layanan NexShop?", source: "greeting" };
     }
-    // Selain sapaan: JANGAN jawab konteks di luar NexShop. Langsung fallback knowledge NexShop.
-    return { reply: "Maaf, informasi tersebut belum tersedia di knowledge NexShop. Kamu bisa menghubungi Customer Service NexShop untuk informasi lebih lanjut.", source: "out_of_scope" };
+    // Pertanyaan yang masih berada di domain NexShop tetapi belum menemukan
+    // fakta resmi dipisahkan dari pertanyaan luar domain. Dengan begitu
+    // analytics bisa membedakan knowledge gap dari upaya meminta topik lain.
+    return { reply: unavailableReply(), source: "knowledge_gap" };
 }
 
 async function handleOrderLookup(message, user) {
@@ -691,17 +698,23 @@ async function answer(message, sessionId, user) {
 
     let reply = "";
     let source = "knowledge";
+    const inScope = isNexShopScope(message, result);
+    // Nama produk bersifat dinamis. Kandidat pertanyaan harga boleh melakukan
+    // lookup katalog read-only agar produk baru tidak tertolak hanya karena
+    // belum masuk regex scope statis.
+    const catalogProbeAllowed = inScope || isPriceQuestion(message);
 
-    // Pertanyaan harga dijawab dari katalog hidup, bukan dari model bahasa
-    // (harga berubah tiap admin sync katalog; model kecil gampang ngarang
-    // nominal). handlePriceQuery balikin null kalau customer gak nyebut
-    // layanan yang beneran ada di katalog -- jadi pertanyaan macam "berapa
-    // lama prosesnya" gak kesangkut dan tetap lanjut ke alur knowledge.
-    const priceReply = (!templateKnowledge && !isContact && !isBudgetQuery && !isOrderQuery)
+    // Scope guard dijalankan sebelum provider AI. Probe katalog hanya mengubah
+    // status scope bila benar-benar menemukan produk aktif.
+    const priceReply = (catalogProbeAllowed && !templateKnowledge && !isContact && !isBudgetQuery && !isOrderQuery)
         ? await resolveWithin(handlePriceQuery(message, user), NEXBOT_DB_TIMEOUT_MS, null)
         : null;
+    const resolvedScope = inScope || Boolean(priceReply);
 
-    if (templateKnowledge) {
+    if (!resolvedScope) {
+        reply = OUT_OF_SCOPE_REPLY;
+        source = "out_of_scope";
+    } else if (templateKnowledge) {
         reply = renderKnowledgeFallback([templateKnowledge]);
         source = "template_knowledge";
     } else if (isContact) {
@@ -784,6 +797,10 @@ Jawab persis kalimat ini SAJA, tanpa tambahan apapun: "Maaf, informasi tersebut 
             }
         }
     }
+
+    // Setiap jalur (template, katalog, provider AI, fallback, dan handoff)
+    // melewati formatter yang sama agar kontrak visual NexBot konsisten.
+    reply = formatProfessionalReply(reply);
 
     const knowledgeIds = result.selected.map((item) => String(item.id));
     // Penyimpanan memory/analytics tidak boleh menahan jawaban ke browser.

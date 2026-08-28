@@ -1068,48 +1068,126 @@
                     <i class="fa-solid fa-user-check" aria-hidden="true"></i>
                     Bab 3
                 </div>
-                <h2>Cara Mendaftar Menjadi Reseller</h2>
-                <p>Pendaftaran program reseller NexShop 100% gratis tanpa dipungut biaya apapun.</p>
+                <h2>Cara Mendaftar Menjadi Reseller NexShop</h2>
+                <p>
+                    Pendaftaran mitra dilakukan langsung di <strong>Partner Portal</strong> dan tidak dipungut biaya.
+                    Ikuti urutan berikut agar akun, KYC, dan akses API terbentuk dengan benar.
+                </p>
+
+                <div class="docs-card" style="border-color:rgba(56,189,248,0.34);background:rgba(14,116,144,0.10);">
+                    <h3><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Penting: akun portal benar-benar terpisah</h3>
+                    <p>
+                        Akun belanja/storefront NexShop <strong>tidak dapat dipakai</strong> untuk masuk ke Partner Portal dan
+                        tidak otomatis menjadi akun reseller. Gunakan email khusus Portal Reseller yang
+                        <strong>belum pernah dipakai untuk akun NexShop</strong>, lalu buat password portal tersendiri.
+                        Jangan memasukkan password akun belanja pada formulir portal.
+                    </p>
+                </div>
 
                 <div class="docs-steps">
                     <div class="docs-step">
                         <div class="docs-step-num">1</div>
                         <div class="docs-step-body">
-                            <h3>Miliki Akun NexShop &amp; Login</h3>
+                            <h3>Buka tab “Daftar Baru &amp; KYC”</h3>
                             <p>
-                                Pastikan Anda sudah mendaftar dan memiliki akun pengguna di NexShop melalui halaman
-                        <a href="/login" style="color:var(--mkt-accent);font-weight:600;">Masuk / Daftar Akun</a>.
+                                Buka <a href="/portal-reseller?mode=register" style="color:var(--mkt-accent);font-weight:600;">Partner Portal NexShop</a>.
+                                Tautan tersebut langsung membuka tab <strong>Daftar Baru &amp; KYC</strong>; Anda tidak perlu
+                                membuat atau login ke akun belanja NexShop lebih dahulu.
                             </p>
                         </div>
                     </div>
+
                     <div class="docs-step">
                         <div class="docs-step-num">2</div>
                         <div class="docs-step-body">
-                            <h3>Buka Formulir Pendaftaran Reseller</h3>
-                            <p>
-                        Masuk ke halaman <a href="/reseller#form-daftar" style="color:var(--mkt-accent);font-weight:600;">Pendaftaran Reseller</a>,
-                                lalu lengkapi: Nama Lengkap, Nomor WhatsApp aktif, Nama Usaha/Website (opsional),
-                                Kanal Penjualan, dan Estimasi Transaksi Bulanan.
+                            <h3>Siapkan identitas portal dan data KYC</h3>
+                            <p>Isi data sesuai dokumen dan kondisi usaha yang sebenarnya:</p>
+                            <ul class="docs-list">
+                                <li><strong>Wajib:</strong> email Portal Reseller khusus, password portal minimal 8 karakter, Nama Lengkap sesuai KTP, nomor WhatsApp aktif, NIK 16 digit, dan Foto KTP asli yang jelas.</li>
+                                <li><strong>Profil usaha:</strong> Nama Usaha/Toko, Kanal Penjualan, Estimasi Transaksi Bulanan, serta Catatan Tambahan bila diperlukan.</li>
+                                <li><strong>Berkas KTP:</strong> JPG atau PNG, maksimal 5 MB, tidak buram, tidak terpotong, dan seluruh data utama dapat dibaca.</li>
+                            </ul>
+                            <p class="docs-step-note">
+                                KTP diproses melalui penyimpanan privat dan dienkripsi untuk pemeriksaan admin terautentikasi;
+                                berkas KYC bukan dokumen publik.
                             </p>
                         </div>
                     </div>
+
                     <div class="docs-step">
                         <div class="docs-step-num">3</div>
                         <div class="docs-step-body">
-                            <h3>Peninjauan oleh Admin (Maks. 3×24 Jam Kerja)</h3>
+                            <h3>Selesaikan verifikasi keamanan dan kirim formulir</h3>
                             <p>
-                                Tim admin NexShop akan meninjau pengajuan dan menghubungi nomor WhatsApp yang Anda daftarkan
-                                untuk verifikasi data dan pengaktifan akses reseller.
+                                Selesaikan verifikasi keamanan/Turnstile (“bukan robot”), periksa kembali email, NIK,
+                                nomor WhatsApp, serta Foto KTP, lalu tekan
+                                <strong>Daftar Akun Portal Reseller &amp; Kirim Berkas KYC</strong> satu kali.
+                            </p>
+                            <p class="docs-step-note">
+                                Satu pengiriman membuat tiga hal sekaligus: identity Portal Reseller terpisah, pengajuan
+                                reseller, dan berkas KYC. Jangan mengulang formulir atau mendaftar lewat login storefront.
                             </p>
                         </div>
                     </div>
+
                     <div class="docs-step">
                         <div class="docs-step-num">4</div>
                         <div class="docs-step-body">
-                            <h3>Status Aktif &amp; Siap Digunakan</h3>
+                            <h3>Akun terbentuk dengan status “Menunggu Verifikasi”</h3>
                             <p>
-                                Begitu disetujui, akun Anda langsung berstatus Reseller.
-                                Anda dapat langsung bertransaksi di web NexShop atau membuat API Key dan Secret Key untuk server website Anda sendiri.
+                                Setelah pengiriman berhasil, sistem memasukkan Anda ke Partner Portal dengan status
+                                <strong>pending/menunggu verifikasi</strong>. Anda dapat membuka dashboard, membaca panduan,
+                                melihat katalog, dan menekan <strong>Cek Status Verifikasi Terkini</strong> tanpa membuat akun baru.
+                            </p>
+                            <p class="docs-step-note">
+                                Selama masih pending, akun <strong>belum dapat melakukan transaksi reseller atau memakai API</strong>.
+                                Jangan melakukan deposit atau mengandalkan API Key sebelum status disetujui.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="docs-step">
+                        <div class="docs-step-num">5</div>
+                        <div class="docs-step-body">
+                            <h3>Admin meninjau identitas dan KYC</h3>
+                            <p>
+                                Tim NexShop memeriksa kecocokan identitas, kelengkapan KYC, profil usaha, dan kelayakan
+                                pengajuan. Waktu peninjauan maksimal <strong>3&times;24 jam kerja</strong>. Pantau status di
+                                dashboard dan pastikan nomor WhatsApp yang didaftarkan tetap aktif bila tim memerlukan klarifikasi.
+                            </p>
+                            <ul class="docs-list">
+                                <li><strong>Approved:</strong> akses transaksi reseller dibuka dan tier awal ditetapkan admin.</li>
+                                <li><strong>Rejected:</strong> baca catatan peninjauan atau hubungi Customer Service sebelum memperbaiki data.</li>
+                                <li><strong>Suspended:</strong> akses dibekukan; penyelesaiannya wajib melalui admin NexShop.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="docs-step">
+                        <div class="docs-step-num">6</div>
+                        <div class="docs-step-body">
+                            <h3>Mulai memakai saldo, harga reseller, dan integrasi API</h3>
+                            <p>
+                                Setelah disetujui, login memakai <strong>email dan password Portal Reseller</strong> yang dibuat
+                                pada langkah 2. Harga modal mengikuti tier aktif. Pasangan <strong>API Key</strong> dan
+                                <strong>Secret Key</strong> tersedia untuk integrasi server; simpan Secret Key hanya di environment
+                                backend dan jangan menaruhnya di browser atau source publik.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="docs-step">
+                        <div class="docs-step-num">7</div>
+                        <div class="docs-step-body">
+                            <h3>Aktifkan 2FA opsional untuk memperkuat login</h3>
+                            <p>
+                                Di menu <strong>Pengaturan &rarr; Two-Factor Authentication</strong>, Anda dapat mengaktifkan
+                                2FA opsional menggunakan aplikasi authenticator. Konfirmasi setup dengan kode 6 digit,
+                                kemudian simpan seluruh <strong>recovery code</strong> di tempat aman.
+                            </p>
+                            <p class="docs-step-note">
+                                Setelah 2FA aktif, login memerlukan kode authenticator atau satu recovery code yang belum pernah
+                                dipakai. Recovery code bersifat sekali pakai dan tidak dapat diminta kembali dalam bentuk plaintext.
                             </p>
                         </div>
                     </div>

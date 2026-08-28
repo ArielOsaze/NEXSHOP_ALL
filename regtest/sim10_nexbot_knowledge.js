@@ -169,7 +169,7 @@ const templateMappings = {
     "cara membeli produk": "builtin-produk",
     "cara top up": "builtin-topup",
     "apa itu marketplace nexshop": "builtin-marketplace",
-    "cara daftar reseller": "builtin-reseller",
+    "cara daftar reseller": "builtin-reseller-onboarding",
     "kebijakan refund": "builtin-refund",
     "promo hari ini": "builtin-promo",
     "faq nexshop": "builtin-faq"

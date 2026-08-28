@@ -7,6 +7,10 @@
 let PRODUCTS = [];
 let selectedCategory = "Semua";
 let searchQuery = "";
+const HOME_PRODUCT_BATCH_SIZE = 20;
+let activeHomeProducts = [];
+let visibleHomeProductCount = 0;
+let homeProductObserver = null;
 let topupSearchQuery = "";
 let cachedStoreSettings = null; // diisi loadStoreSettings(), dipakai buat WA CTA di renderTrackResult
 
@@ -576,10 +580,7 @@ function renderCategories() {
     });
 }
 
-function renderProducts() {
-    const grid = document.getElementById("cardGrid");
-    if (!grid) return;
-
+function filteredHomeProducts() {
     let data = selectedCategory === "Semua"
         ? PRODUCTS
         : PRODUCTS.filter(p => p.category === selectedCategory);
@@ -593,26 +594,114 @@ function renderProducts() {
             (p.description && p.description.toLowerCase().includes(query))
         );
     }
+    return data;
+}
+
+function renderHomeProductCard(p) {
+    return `
+        <article class="group relative home-glass-card rounded-2xl sm:rounded-3xl flex flex-col h-full" data-product-card data-id="${p.id}" tabindex="0">
+            <div class="relative w-full aspect-[4/3] rounded-t-2xl sm:rounded-t-3xl overflow-hidden bg-transparent shrink-0">
+                <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 fallback-clear" loading="lazy" decoding="async">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 pointer-events-none"></div>
+                ${(isFlashSaleActive(p) || p.badge) ? `<div class="absolute top-2 left-2 flex flex-col gap-1">${isFlashSaleActive(p) ? '<span class="bg-red-500 text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1 border border-white/10"><i class="fa-solid fa-bolt text-[8px] sm:text-[10px]" aria-hidden="true"></i> FLASH SALE</span>' : ""}${p.badge ? `<span class="bg-black/50 backdrop-blur-md text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full uppercase tracking-widest border border-white/10">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}
+            </div>
+            <div class="p-[clamp(6px,2vw,20px)] flex flex-col flex-1">
+                <div class="flex-1">
+                    ${p.category ? `<div class="text-[clamp(0.5rem,1.5vw,0.625rem)] font-bold text-brand-indigo dark:text-brand-cyan uppercase tracking-wider mb-1 truncate">${escapeHtml(p.category)}</div>` : ""}
+                    <h4 class="font-bold text-gray-900 dark:text-white text-[clamp(0.65rem,2.2vw,1.125rem)] leading-tight line-clamp-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors">${escapeHtml(p.name)}</h4>
+                    <div class="flex items-center gap-1 text-[clamp(0.55rem,1.7vw,0.75rem)] text-gray-500 dark:text-gray-400 mt-1 sm:mt-2 font-medium">
+                        <i class="fa-solid fa-star text-amber-400 text-[clamp(0.5rem,1.5vw,0.75rem)]" aria-hidden="true"></i> <span>${p.rating || 5} · ${p.sold || 0} sold</span>
+                    </div>
+                </div>
+                <div class="flex items-center justify-between mt-2 sm:mt-4 shrink-0">
+                    <div class="font-bold text-gray-900 dark:text-white text-[clamp(0.65rem,2vw,1rem)] truncate">${priceBlockHtml(p, "sm")}</div>
+                    <div class="flex gap-1 sm:gap-2 relative z-10 shrink-0">
+                        <button class="w-[clamp(24px,5vw,32px)] h-[clamp(24px,5vw,32px)] rounded-full bg-brand-indigo/10 dark:bg-white/5 flex items-center justify-center text-brand-indigo dark:text-brand-cyan hover:bg-brand-indigo hover:text-white transition-colors" data-product-action="add" data-id="${p.id}" title="Tambah ke keranjang">
+                            <i class="fa-solid fa-cart-plus text-[clamp(0.75rem,2.5vw,1rem)]" aria-hidden="true"></i>
+                        </button>
+                        <button class="w-[clamp(24px,5vw,32px)] h-[clamp(24px,5vw,32px)] rounded-full bg-gray-900 dark:bg-white flex items-center justify-center text-white dark:text-gray-900 hover:scale-110 transition-transform" data-product-action="buy" data-id="${p.id}" title="Beli sekarang">
+                            <i class="fa-solid fa-bag-shopping text-[clamp(0.75rem,2.5vw,1rem)]" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </article>
+    `;
+}
+
+function disconnectHomeProductObserver() {
+    if (homeProductObserver) homeProductObserver.disconnect();
+    homeProductObserver = null;
+}
+
+function setupHomeProductObserver() {
+    disconnectHomeProductObserver();
+    const sentinel = document.getElementById("homeProductLoadMoreSentinel");
+    if (!sentinel || visibleHomeProductCount >= activeHomeProducts.length || !("IntersectionObserver" in window)) return;
+
+    homeProductObserver = new IntersectionObserver((entries) => {
+        if (entries.some(entry => entry.isIntersecting)) loadMoreHomeProducts();
+    }, { rootMargin: "700px" });
+    homeProductObserver.observe(sentinel);
+}
+
+function renderHomeProductProgress() {
+    const zone = document.getElementById("homeProductLoadMoreZone");
+    if (!zone) return;
+    const total = activeHomeProducts.length;
+    const remaining = Math.max(0, total - visibleHomeProductCount);
+
+    if (!total || !remaining) {
+        zone.innerHTML = total ? `<p class="home-product-progress-copy">Menampilkan semua ${total} Produk</p>` : "";
+        disconnectHomeProductObserver();
+        return;
+    }
+
+    zone.innerHTML = `
+        <div class="home-product-progress-card">
+            <p class="home-product-progress-copy">Menampilkan ${visibleHomeProductCount} dari ${activeHomeProducts.length} Produk</p>
+            <p class="home-product-progress-remaining">${remaining} produk lainnya tersedia</p>
+            <button type="button" id="homeProductLoadMoreBtn" class="home-product-loadmore-btn">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> Muat ${Math.min(HOME_PRODUCT_BATCH_SIZE, remaining)} Produk Lagi
+            </button>
+            <span id="homeProductLoadMoreSentinel" aria-hidden="true"></span>
+        </div>
+    `;
+    document.getElementById("homeProductLoadMoreBtn")?.addEventListener("click", loadMoreHomeProducts);
+    setupHomeProductObserver();
+}
+
+function loadMoreHomeProducts() {
+    if (visibleHomeProductCount >= activeHomeProducts.length) return;
+    const grid = document.getElementById("cardGrid");
+    if (!grid) return;
+
+    const nextBatch = activeHomeProducts.slice(visibleHomeProductCount, visibleHomeProductCount + HOME_PRODUCT_BATCH_SIZE);
+    visibleHomeProductCount += nextBatch.length;
+    grid.insertAdjacentHTML("beforeend", nextBatch.map(renderHomeProductCard).join(""));
+    renderHomeProductProgress();
+}
+
+function renderProducts() {
+    const grid = document.getElementById("cardGrid");
+    if (!grid) return;
+
+    activeHomeProducts = filteredHomeProducts();
+    visibleHomeProductCount = Math.min(HOME_PRODUCT_BATCH_SIZE, activeHomeProducts.length);
 
     const countBadge = document.getElementById("searchCountBadge");
-    if (countBadge) {
-        countBadge.textContent = `${data.length} Produk`;
-    }
+    if (countBadge) countBadge.textContent = `${activeHomeProducts.length} Produk`;
 
     const searchClearBtn = document.getElementById("searchClearBtn");
-    if (searchClearBtn) {
-        searchClearBtn.classList.toggle("hidden", !searchQuery.trim());
-    }
+    if (searchClearBtn) searchClearBtn.classList.toggle("hidden", !searchQuery.trim());
 
     const renderVersion = ++productRenderVersion;
     grid.style.opacity = 0;
     grid.style.transform = "translateY(10px)";
 
     requestAnimationFrame(() => {
-        // Pencarian/filter dapat berubah lebih cepat dari frame render. Abaikan
-        // render lama supaya markup dan event yang tampil selalu versi terakhir.
         if (renderVersion !== productRenderVersion) return;
-        if (data.length === 0) {
+        if (activeHomeProducts.length === 0) {
             grid.innerHTML = `
                 <div class="catalog-empty-state">
                     <div class="empty-icon"><i class="fa-solid fa-box-open" aria-hidden="true"></i></div>
@@ -621,6 +710,9 @@ function renderProducts() {
                     ${searchQuery || selectedCategory !== "Semua" ? `<button type="button" class="btn-primary btn-sm reset-search-btn" id="resetSearchBtn"><i class="fa-solid fa-rotate-left"></i> Reset Filter</button>` : ""}
                 </div>
             `;
+            disconnectHomeProductObserver();
+            const zone = document.getElementById("homeProductLoadMoreZone");
+            if (zone) zone.innerHTML = "";
             const resetBtn = document.getElementById("resetSearchBtn");
             if (resetBtn) {
                 resetBtn.addEventListener("click", () => {
@@ -633,35 +725,8 @@ function renderProducts() {
                 });
             }
         } else {
-            grid.innerHTML = data.map(p => `
-                <article class="group relative home-glass-card rounded-2xl sm:rounded-3xl flex flex-col h-full" data-product-card data-id="${p.id}" tabindex="0">
-                    <div class="relative w-full aspect-[4/3] rounded-t-2xl sm:rounded-t-3xl overflow-hidden bg-transparent shrink-0">
-                        <img src="${escapeHtml(safeUrl(p.image))}" alt="${escapeHtml(p.name)}" class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 fallback-clear" loading="lazy" decoding="async">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 pointer-events-none"></div>
-                        ${(isFlashSaleActive(p) || p.badge) ? `<div class="absolute top-2 left-2 flex flex-col gap-1">${isFlashSaleActive(p) ? '<span class="bg-red-500 text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2 sm:py-1 rounded-full shadow-lg backdrop-blur-md flex items-center gap-1 border border-white/10"><i class="fa-solid fa-bolt text-[8px] sm:text-[10px]" aria-hidden="true"></i> FLASH SALE</span>' : ""}${p.badge ? `<span class="bg-black/50 backdrop-blur-md text-white text-[8px] sm:text-[10px] font-bold px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full uppercase tracking-widest border border-white/10">${escapeHtml(p.badge)}</span>` : ""}</div>` : ""}
-                    </div>
-                    <div class="p-[clamp(6px,2vw,20px)] flex flex-col flex-1">
-                        <div class="flex-1">
-                            ${p.category ? `<div class="text-[clamp(0.5rem,1.5vw,0.625rem)] font-bold text-brand-indigo dark:text-brand-cyan uppercase tracking-wider mb-1 truncate">${escapeHtml(p.category)}</div>` : ""}
-                            <h4 class="font-bold text-gray-900 dark:text-white text-[clamp(0.65rem,2.2vw,1.125rem)] leading-tight line-clamp-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors">${escapeHtml(p.name)}</h4>
-                            <div class="flex items-center gap-1 text-[clamp(0.55rem,1.7vw,0.75rem)] text-gray-500 dark:text-gray-400 mt-1 sm:mt-2 font-medium">
-                                <i class="fa-solid fa-star text-amber-400 text-[clamp(0.5rem,1.5vw,0.75rem)]" aria-hidden="true"></i> <span>${p.rating || 5} · ${p.sold || 0} sold</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between mt-2 sm:mt-4 shrink-0">
-                            <div class="font-bold text-gray-900 dark:text-white text-[clamp(0.65rem,2vw,1rem)] truncate">${priceBlockHtml(p, "sm")}</div>
-                            <div class="flex gap-1 sm:gap-2 relative z-10 shrink-0">
-                                <button class="w-[clamp(24px,5vw,32px)] h-[clamp(24px,5vw,32px)] rounded-full bg-brand-indigo/10 dark:bg-white/5 flex items-center justify-center text-brand-indigo dark:text-brand-cyan hover:bg-brand-indigo hover:text-white transition-colors" data-product-action="add" data-id="${p.id}" title="Tambah ke keranjang">
-                                    <i class="fa-solid fa-cart-plus text-[clamp(0.75rem,2.5vw,1rem)]" aria-hidden="true"></i>
-                                </button>
-                                <button class="w-[clamp(24px,5vw,32px)] h-[clamp(24px,5vw,32px)] rounded-full bg-gray-900 dark:bg-white flex items-center justify-center text-white dark:text-gray-900 hover:scale-110 transition-transform" data-product-action="buy" data-id="${p.id}" title="Beli sekarang">
-                                    <i class="fa-solid fa-bag-shopping text-[clamp(0.75rem,2.5vw,1rem)]" aria-hidden="true"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </article>
-            `).join("");
+            grid.innerHTML = activeHomeProducts.slice(0, visibleHomeProductCount).map(renderHomeProductCard).join("");
+            renderHomeProductProgress();
         }
 
         grid.style.opacity = 1;

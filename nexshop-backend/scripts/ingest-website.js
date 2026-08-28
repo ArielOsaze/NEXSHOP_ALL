@@ -13,7 +13,7 @@ const PUBLIC_ROUTES = [
     { url: `${BASE_URL}/`, title: 'NexShop Beranda' },
     { url: `${BASE_URL}/legalitas`, title: 'Legalitas NexShop' },
     { url: `${BASE_URL}/berita`, title: 'Portal Berita NexShop' },
-    // Tambahkan halaman public lainnya sesuai kebutuhan
+    { url: `${BASE_URL}/docs-reseller`, title: 'Dokumentasi Reseller NexShop', category: "ResellerDocumentation" },
 ];
 
 async function ingestWeb() {
@@ -28,7 +28,7 @@ async function ingestWeb() {
             try {
                 const res = await axios.get(route.url);
                 const html = res.data;
-                const chunks = parseHtmlToChunks(html, route.url, route.title);
+                const chunks = parseHtmlToChunks(html, route.url, route.title, route.category);
                 await upsertChunks(chunks);
                 totalChunks += chunks.length;
             } catch (err) {
@@ -40,7 +40,8 @@ async function ingestWeb() {
         const frontendDir = path.join(__dirname, '../../nexshop-frontend');
         const localRoutes = [
             { file: 'index.html', title: 'NexShop Beranda' },
-            { file: 'legalitas.html', title: 'Legalitas NexShop' }
+            { file: 'legalitas.html', title: 'Legalitas NexShop' },
+            { file: 'docs-reseller.html', title: 'Dokumentasi Reseller NexShop', category: "ResellerDocumentation" }
         ];
 
         for (const route of localRoutes) {
@@ -48,7 +49,7 @@ async function ingestWeb() {
             if (fs.existsSync(filePath)) {
                 console.log(`\nReading ${filePath}...`);
                 const html = fs.readFileSync(filePath, 'utf8');
-                const chunks = parseHtmlToChunks(html, `${BASE_URL}/${route.file}`, route.title);
+                const chunks = parseHtmlToChunks(html, `${BASE_URL}/${route.file}`, route.title, route.category);
                 await upsertChunks(chunks);
                 totalChunks += chunks.length;
             }
@@ -97,7 +98,7 @@ async function ingestWeb() {
     process.exit(0);
 }
 
-function parseHtmlToChunks(html, sourceUrl, sourceTitle) {
+function parseHtmlToChunks(html, sourceUrl, sourceTitle, category = "Website") {
     const $ = cheerio.load(html);
 
     // Hapus tag yang tidak diperlukan
@@ -115,8 +116,10 @@ function parseHtmlToChunks(html, sourceUrl, sourceTitle) {
             const hash = crypto.createHash('md5').update(textContent).digest('hex');
             chunks.push({
                 title: title.substring(0, 100),
-                category: "Website",
-                keywords: "website page info",
+                category,
+                keywords: category === "ResellerDocumentation"
+                    ? "reseller portal kyc 2fa api key webhook callback ref id signature retry transaksi saldo"
+                    : "website page info",
                 content: textContent.substring(0, 2000), // Batasi panjang content
                 status: "active",
                 priority: 5,

@@ -31,7 +31,8 @@ const ALIASES = [
     { canonical: "pln", terms: ["token pln", "token listrik", "listrik pln", "pln"] },
     { canonical: "tagihan", terms: ["tagihan", "pascabayar", "ppob", "pdam", "bpjs", "indihome"] },
     { canonical: "marketplace", terms: ["marketplace", "one stop solution", "layanan digital"] },
-    { canonical: "reseller", terms: ["reseller", "harga reseller", "jualan lagi", "jadi agen"] }
+    { canonical: "reseller", terms: ["reseller", "harga reseller", "jualan lagi", "jadi agen"] },
+    { canonical: "portal reseller", terms: ["portal reseller", "partner portal", "portal mitra", "kyc reseller", "pendaftaran reseller", "2fa portal", "api reseller"] }
 ];
 
 const ENTITY_CATALOG = [
@@ -61,6 +62,7 @@ const ENTITY_CATALOG = [
     { name: "Tagihan", terms: ["tagihan", "pascabayar", "ppob", "pdam", "bpjs", "indihome"] },
     { name: "E-Toll", terms: ["e toll", "etoll", "kartu tol"] },
     { name: "Marketplace", terms: ["marketplace"] },
+    { name: "Portal Reseller", terms: ["portal reseller", "partner portal", "portal mitra", "kyc reseller", "pendaftaran reseller", "2fa portal", "api reseller"] },
     { name: "Reseller", terms: ["reseller"] }
 ];
 
@@ -78,6 +80,7 @@ const INTENTS = {
     Refund: ["refund", "batal", "uang kembali", "garansi", "komplain"],
     Order: ["status pesanan", "status order", "pesanan", "lacak", "tracking", "belum masuk", "berapa lama", "lama proses", "kapan selesai", "diproses"],
     TechnicalSupport: ["error", "gagal", "tidak bisa", "masalah", "kendala", "login", "otp"],
+    Security: ["2fa", "two factor", "authenticator", "recovery code", "kode pemulihan", "totp", "keamanan akun"],
     Promotion: ["promo", "diskon", "voucher", "kupon", "kode promo"],
     // Intent khusus layanan Marketplace/PPOB, biar pertanyaan "bisa isi
     // saldo DANA gak?" gak keklasifikasi jadi Payment (metode bayar) --
@@ -174,9 +177,20 @@ function normalizeQuery(input) {
     return { raw: text, tokens: tokenize(text), canonical, expandedTerms: [...expandedTerms] };
 }
 
+function intentPhraseMatches(text, phrase) {
+    const normalizedPhrase = String(phrase || "").toLowerCase();
+    if (!normalizedPhrase) return false;
+    if (normalizedPhrase.includes(" ")) return text.includes(normalizedPhrase);
+    if (new RegExp(`\\b${escapeRegExp(normalizedPhrase)}\\b`).test(text)) return true;
+    return tokenize(text).some((token) => token === normalizedPhrase);
+}
+
 function detectIntent(normalized) {
     const text = typeof normalized === "string" ? normalized : normalized.raw;
-    const scores = Object.entries(INTENTS).map(([intent, phrases]) => ({ intent, score: phrases.reduce((score, phrase) => score + (text.includes(phrase) ? (phrase.includes(" ") ? 3 : 1) : 0), 0) })).filter((item) => item.score > 0).sort((a, b) => b.score - a.score);
+    const scores = Object.entries(INTENTS).map(([intent, phrases]) => ({
+        intent,
+        score: phrases.reduce((score, phrase) => score + (intentPhraseMatches(text, phrase) ? (phrase.includes(" ") ? 3 : 1) : 0), 0)
+    })).filter((item) => item.score > 0).sort((a, b) => b.score - a.score);
     return scores[0]?.intent || "GeneralQuestion";
 }
 
@@ -203,6 +217,12 @@ const PRODUCT_SCOPED_PATTERN = /game ?pass|gamepass|xbox|steam|mobile legends|fr
 function inferKnowledgeIntent(item) {
     const text = `${item.title || ""} ${item.category || ""} ${item.keywords || ""}`.toLowerCase();
     const cat = String(item.category || "").toLowerCase();
+
+    // Security account harus menang sebelum category safeguard agar artikel
+    // 2FA/recovery code tidak jatuh ke Trust hanya karena ada kata "aman".
+    if (/2fa|two factor|authenticator|recovery code|kode pemulihan|totp|keamanan akun/.test(text)) {
+        return "Security";
+    }
 
     // Marketplace adalah layanan yang dijual, bukan sekadar metode bayar.
     // Deteksi sebelum safeguard kategori Guide agar chunk isi DANA/pulsa/PLN
@@ -298,7 +318,8 @@ function scoreKnowledge(item, query, intent, entities) {
         Marketplace: ["Marketplace", "Guide", "Purchase", "Pricing"],
         Order: ["Order", "TechnicalSupport", "Refund"],
         Refund: ["Refund", "Order", "TechnicalSupport"],
-        TechnicalSupport: ["TechnicalSupport", "Guide", "Order"]
+        TechnicalSupport: ["TechnicalSupport", "Guide", "Order", "Security"],
+        Security: ["Security", "TechnicalSupport", "Trust"]
     };
 
     const isStrictIntent = ["Trust", "Legality", "Payment", "Refund", "Escrow", "Marketplace"].includes(intent);

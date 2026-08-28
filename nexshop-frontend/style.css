@@ -9994,3 +9994,77 @@ html:not(.dark) .home-glass-badge {
     border: 3px solid #32383d;
     box-shadow: inset 0 0 12px rgba(255,255,255,.08), 0 3px 10px rgba(0,0,0,.55);
 }
+
+/* Main catalog: progressive rendering keeps large catalogs responsive without
+   implying the first visible batch is the complete product list. */
+.home-product-loadmore-zone {
+    display: flex;
+    justify-content: center;
+    min-height: 0;
+    padding: 1.5rem 0 0;
+}
+
+.home-product-progress-card {
+    width: min(100%, 34rem);
+    display: grid;
+    justify-items: center;
+    gap: .4rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--soft-border);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .12);
+    text-align: center;
+}
+
+.home-product-progress-copy {
+    margin: 0;
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: .92rem;
+    font-weight: 750;
+}
+
+.home-product-progress-remaining {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: .82rem;
+}
+
+.home-product-loadmore-btn {
+    min-height: 42px;
+    margin-top: .35rem;
+    padding: .6rem 1rem;
+    border: 1px solid rgba(34, 211, 238, .28);
+    border-radius: 12px;
+    background: rgba(34, 211, 238, .09);
+    color: var(--text-cyan);
+    font: inherit;
+    font-size: .82rem;
+    font-weight: 750;
+    cursor: pointer;
+    transition: transform .18s ease, background .18s ease, border-color .18s ease;
+}
+
+.home-product-loadmore-btn:hover {
+    transform: translateY(-1px);
+    border-color: rgba(34, 211, 238, .5);
+    background: rgba(34, 211, 238, .16);
+}
+
+.home-product-loadmore-btn:focus-visible {
+    outline: 3px solid rgba(34, 211, 238, .38);
+    outline-offset: 3px;
+}
+
+#homeProductLoadMoreSentinel {
+    display: block;
+    width: 100%;
+    height: 1px;
+}
+
+@media (max-width: 480px) {
+    .home-product-loadmore-zone { padding-top: 1rem; }
+    .home-product-progress-card { padding: .9rem 1rem; border-radius: 14px; }
+    .home-product-loadmore-btn { width: 100%; }
+}
