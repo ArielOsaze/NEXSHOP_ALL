@@ -148,13 +148,40 @@ async function upsertChunks(chunks) {
 
         if (existing) {
             console.log(`   ⏭️  Skip: Hash ${chunk.content_hash} (Already exists)`);
-        } else {
-            const { error } = await supabase.from('knowledge_base').insert([chunk]);
+            continue;
+        }
+
+        // content berubah, tetapi heading/title sudah pernah di-ingest. Update
+        // row lama agar constraint title unik tidak membuat dokumentasi resmi
+        // baru gagal masuk atau menyisakan fakta basi.
+        const { data: existingByTitle, error: titleLookupError } = await supabase
+            .from('knowledge_base')
+            .select('id, content_hash')
+            .eq('title', chunk.title)
+            .maybeSingle();
+
+        if (titleLookupError) {
+            console.error(`   ❌ Failed to check title ${chunk.title}:`, titleLookupError.message);
+            continue;
+        }
+
+        if (existingByTitle) {
+            const { error } = await supabase
+                .from('knowledge_base')
+                .update(chunk).eq('id', existingByTitle.id);
             if (error) {
-                console.error(`   ❌ Failed to insert chunk from ${chunk.source_url}:`, error.message);
+                console.error(`   ❌ Failed to update chunk from ${chunk.source_url}:`, error.message);
             } else {
-                console.log(`   ✅ Inserted: ${chunk.title}`);
+                console.log(`   ♻️  Updated: ${chunk.title}`);
             }
+            continue;
+        }
+
+        const { error } = await supabase.from('knowledge_base').insert([chunk]);
+        if (error) {
+            console.error(`   ❌ Failed to insert chunk from ${chunk.source_url}:`, error.message);
+        } else {
+            console.log(`   ✅ Inserted: ${chunk.title}`);
         }
     }
 }
