@@ -12,6 +12,15 @@ const { validateWebhookUrlShape, assertSafeOutboundUrl } = require("../utils/saf
 const { decryptDocument, parseDocumentRef, isDocumentRef } = require("../utils/secureDocument");
 const { generateWebhookSignature } = require("../services/resellerWebhookService");
 const { getTurnstileConfig, isTurnstileRequired, verifyTurnstile } = require("../services/turnstileService");
+const {
+    buildOtpAuthUri,
+    decryptSecret,
+    encryptSecret,
+    generateRecoveryCodes,
+    generateTotpSecret,
+    normalizeRecoveryCode,
+    verifyTotp
+} = require("../services/resellerTwoFactorService");
 
 // ===========================================================
 // PROGRAM RESELLER & PARTNER PORTAL NEXSHOP
@@ -114,6 +123,84 @@ function validasiIpWhitelist(raw) {
     }
     // Buang duplikat supaya daftarnya rapi & idempoten.
     return { ok: true, value: [...new Set(bersih)].join(",") };
+}
+
+function createPortalAccessToken(user, portalAccount, twoFactorVerified = false) {
+    return jwt.sign(
+        {
+            id: user.id,
+            portal_account_id: portalAccount.id,
+            auth_context: "reseller_portal",
+            email: portalAccount.email,
+            fullname: user.fullname,
+            role: user.role,
+            is_reseller: true,
+            reseller_status: user.reseller_status || portalAccount.status || "pending",
+            two_factor_verified: Boolean(twoFactorVerified)
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "14d" }
+    );
+}
+
+async function loadPortalTwoFactor(portalAccountId) {
+    const result = await supabase
+        .from("reseller_portal_2fa")
+        .select("id, portal_account_id, secret_ciphertext, recovery_codes_hashes, enabled, last_used_at, updated_at")
+        .eq("portal_account_id", portalAccountId)
+        .maybeSingle();
+    if (result.error && !isMissingTableError(result.error)) throw result.error;
+    return result.error ? null : result.data;
+}
+
+async function verifyPortalPassword(portalAccountId, password) {
+    const { data, error } = await supabase
+        .from("reseller_portal_accounts")
+        .select("id, user_id, email, password_hash, status")
+        .eq("id", portalAccountId)
+        .maybeSingle();
+    if (error) {
+        if (isMissingTableError(error)) return { setupMissing: true };
+        throw error;
+    }
+    if (!data || !password || !await bcrypt.compare(String(password), data.password_hash)) return null;
+    return data;
+}
+
+async function consumeRecoveryCode(factor, code) {
+    const normalized = normalizeRecoveryCode(code);
+    if (!normalized) return false;
+    const hashes = Array.isArray(factor.recovery_codes_hashes) ? factor.recovery_codes_hashes : [];
+    for (let index = 0; index < hashes.length; index += 1) {
+        if (!await bcrypt.compare(normalized, String(hashes[index]))) continue;
+        const remaining = hashes.filter((_, itemIndex) => itemIndex !== index);
+        const { data, error } = await supabase
+            .from("reseller_portal_2fa")
+            .update({ recovery_codes_hashes: remaining, last_used_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+            .eq("id", factor.id)
+            .eq("updated_at", factor.updated_at)
+            .select("id");
+        if (error) throw error;
+        return Array.isArray(data) && data.length > 0;
+    }
+    return false;
+}
+
+function issuePortalTwoFactorChallenge(user, portalAccount) {
+    return jwt.sign(
+        {
+            kind: "portal_2fa_challenge",
+            auth_context: "reseller_portal",
+            id: user.id,
+            portal_account_id: portalAccount.id,
+            email: portalAccount.email,
+            fullname: user.fullname,
+            role: user.role,
+            reseller_status: user.reseller_status || portalAccount.status || "pending"
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "5m" }
+    );
 }
 
 // ===========================================================
@@ -311,19 +398,10 @@ exports.resellerRegister = async (req, res) => {
             }
         } catch (_) {}
 
-        const token = jwt.sign(
-            {
-                id: userId,
-                portal_account_id: portalAccountId,
-                auth_context: "reseller_portal",
-                email,
-                fullname,
-                role: userRole,
-                is_reseller: true,
-                reseller_status: "pending"
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: "14d" }
+        const token = createPortalAccessToken(
+            { id: userId, fullname, role: userRole, reseller_status: "pending" },
+            { id: portalAccountId, email },
+            false
         );
 
         return res.status(201).json({
@@ -397,25 +475,23 @@ exports.resellerLogin = async (req, res) => {
         }
 
         const status = user.reseller_status || portalAccount.status || "pending";
+        const twoFactor = await loadPortalTwoFactor(portalAccount.id);
+        if (twoFactor?.enabled) {
+            return res.json({
+                message: "Masukkan kode authenticator untuk melanjutkan login.",
+                code: "PORTAL_2FA_REQUIRED",
+                two_factor_required: true,
+                challenge_token: issuePortalTwoFactorChallenge(user, portalAccount),
+                user: { email: portalAccount.email, fullname: user.fullname }
+            });
+        }
+
         await supabase
             .from("reseller_portal_accounts")
             .update({ last_login_at: new Date().toISOString(), updated_at: new Date().toISOString() })
             .eq("id", portalAccount.id);
 
-        const token = jwt.sign(
-            {
-                id: user.id,
-                portal_account_id: portalAccount.id,
-                auth_context: "reseller_portal",
-                email: portalAccount.email,
-                fullname: user.fullname,
-                role: user.role,
-                is_reseller: true,
-                reseller_status: status
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: "14d" }
-        );
+        const token = createPortalAccessToken(user, portalAccount, false);
 
         return res.json({
             message: status === "approved"
@@ -436,6 +512,156 @@ exports.resellerLogin = async (req, res) => {
     } catch (err) {
         console.error("resellerLogin error:", err);
         return res.status(500).json({ message: "Terjadi kesalahan server saat login Portal Reseller" });
+    }
+};
+
+exports.verifyResellerTwoFactor = async (req, res) => {
+    const challengeToken = String(req.body.challenge_token || "");
+    const code = String(req.body.code || "");
+    if (!challengeToken || !code) return res.status(400).json({ message: "Challenge dan kode authenticator wajib diisi." });
+
+    let challenge;
+    try {
+        challenge = jwt.verify(challengeToken, process.env.JWT_SECRET);
+    } catch (_) {
+        return res.status(401).json({ message: "Challenge 2FA sudah tidak berlaku. Silakan login ulang.", code: "PORTAL_2FA_CHALLENGE_INVALID" });
+    }
+    if (challenge.kind !== "portal_2fa_challenge" || challenge.auth_context !== "reseller_portal" || !challenge.portal_account_id || !challenge.id) {
+        return res.status(401).json({ message: "Challenge 2FA tidak valid.", code: "PORTAL_2FA_CHALLENGE_INVALID" });
+    }
+
+    try {
+        const factor = await loadPortalTwoFactor(challenge.portal_account_id);
+        if (!factor?.enabled) return res.status(401).json({ message: "2FA akun ini belum aktif.", code: "PORTAL_2FA_NOT_ENABLED" });
+
+        let verified = false;
+        try {
+            verified = verifyTotp(decryptSecret(factor.secret_ciphertext), code);
+        } catch (_) {
+            return res.status(503).json({ message: "Konfigurasi 2FA tidak dapat dibaca server.", code: "PORTAL_2FA_UNAVAILABLE" });
+        }
+        if (!verified) verified = await consumeRecoveryCode(factor, code);
+        if (!verified) return res.status(401).json({ message: "Kode authenticator atau recovery code salah.", code: "PORTAL_2FA_INVALID" });
+
+        const { data: portalAccount, error: portalErr } = await supabase
+            .from("reseller_portal_accounts")
+            .select("id, user_id, email, status")
+            .eq("id", challenge.portal_account_id)
+            .maybeSingle();
+        if (portalErr) throw portalErr;
+        const { data: user, error: userErr } = await supabase
+            .from("users")
+            .select("id, email, fullname, role, phone, reseller_status, account_scope, is_blacklisted")
+            .eq("id", challenge.id)
+            .maybeSingle();
+        if (userErr) throw userErr;
+        if (!portalAccount || !user || portalAccount.user_id !== user.id || user.account_scope !== "portal_only") {
+            return res.status(403).json({ message: "Identity Portal Reseller tidak valid.", code: "PORTAL_IDENTITY_INVALID" });
+        }
+        if (portalAccount.status === "suspended" || user.is_blacklisted) {
+            return res.status(403).json({ message: "Akun Portal Reseller sedang dibekukan.", code: "RESELLER_PORTAL_SUSPENDED" });
+        }
+
+        const now = new Date().toISOString();
+        await supabase.from("reseller_portal_2fa").update({ last_used_at: now, updated_at: now }).eq("id", factor.id);
+        await supabase.from("reseller_portal_accounts").update({ last_login_at: now, updated_at: now }).eq("id", portalAccount.id);
+        const token = createPortalAccessToken(user, portalAccount, true);
+        return res.json({
+            message: "Login Portal Reseller berhasil",
+            token,
+            status: user.reseller_status || portalAccount.status || "pending",
+            user: { id: user.id, portal_account_id: portalAccount.id, fullname: user.fullname, email: portalAccount.email, phone: user.phone, role: user.role, reseller_status: user.reseller_status || portalAccount.status || "pending" }
+        });
+    } catch (err) {
+        if (isMissingTableError(err)) return res.status(503).json({ message: "Fitur 2FA belum siap di server.", code: "PORTAL_2FA_NOT_SETUP" });
+        console.error("verifyResellerTwoFactor:", err.message);
+        return res.status(500).json({ message: "Verifikasi 2FA gagal diproses." });
+    }
+};
+
+exports.getResellerTwoFactorStatus = async (req, res) => {
+    try {
+        const factor = await loadPortalTwoFactor(req.user.portal_account_id);
+        return res.json({ enabled: Boolean(factor?.enabled), configured: Boolean(factor) });
+    } catch (err) {
+        if (isMissingTableError(err)) return res.json({ enabled: false, configured: false });
+        console.error("getResellerTwoFactorStatus:", err.message);
+        return res.status(500).json({ message: "Status 2FA tidak dapat dibaca." });
+    }
+};
+
+exports.setupResellerTwoFactor = async (req, res) => {
+    const password = String(req.body.password || "");
+    if (!password) return res.status(400).json({ message: "Password Portal Reseller wajib dikonfirmasi." });
+    try {
+        const account = await verifyPortalPassword(req.user.portal_account_id, password);
+        if (account?.setupMissing) return res.status(503).json({ message: "Portal Reseller belum siap di server.", code: "RESELLER_PORTAL_NOT_SETUP" });
+        if (!account) return res.status(401).json({ message: "Password Portal Reseller salah.", code: "PORTAL_REAUTH_REQUIRED" });
+        if (account.status === "suspended") return res.status(403).json({ message: "Akun sedang dibekukan.", code: "RESELLER_PORTAL_SUSPENDED" });
+
+        const existing = await loadPortalTwoFactor(account.id);
+        if (existing?.enabled) return res.status(409).json({ message: "2FA sudah aktif di akun ini.", code: "PORTAL_2FA_ALREADY_ENABLED" });
+
+        const secret = generateTotpSecret();
+        const recoveryCodes = generateRecoveryCodes();
+        const recoveryHashes = await Promise.all(recoveryCodes.map((code) => bcrypt.hash(normalizeRecoveryCode(code), 12)));
+        const { error } = await supabase.from("reseller_portal_2fa").upsert([{
+            portal_account_id: account.id,
+            secret_ciphertext: encryptSecret(secret),
+            recovery_codes_hashes: recoveryHashes,
+            enabled: false,
+            updated_at: new Date().toISOString()
+        }], { onConflict: "portal_account_id" });
+        if (error) throw error;
+        return res.json({
+            message: "Scan secret ini di aplikasi authenticator, lalu konfirmasi dengan kode 6 digit.",
+            secret,
+            otpauth_url: buildOtpAuthUri(secret, account.email),
+            recovery_codes: recoveryCodes
+        });
+    } catch (err) {
+        if (isMissingTableError(err)) return res.status(503).json({ message: "Migration 024 untuk 2FA belum diterapkan.", code: "PORTAL_2FA_NOT_SETUP" });
+        console.error("setupResellerTwoFactor:", err.message);
+        return res.status(500).json({ message: "Setup 2FA gagal diproses." });
+    }
+};
+
+exports.enableResellerTwoFactor = async (req, res) => {
+    const code = String(req.body.code || "");
+    if (!code) return res.status(400).json({ message: "Kode authenticator wajib diisi untuk mengaktifkan 2FA." });
+    try {
+        const factor = await loadPortalTwoFactor(req.user.portal_account_id);
+        if (!factor) return res.status(400).json({ message: "Mulai setup 2FA terlebih dahulu.", code: "PORTAL_2FA_SETUP_REQUIRED" });
+        if (factor.enabled) return res.json({ enabled: true });
+        if (!verifyTotp(decryptSecret(factor.secret_ciphertext), code)) return res.status(401).json({ message: "Kode authenticator salah. 2FA belum diaktifkan.", code: "PORTAL_2FA_INVALID" });
+        const { error } = await supabase.from("reseller_portal_2fa").update({ enabled: true, updated_at: new Date().toISOString() }).eq("id", factor.id).eq("enabled", false);
+        if (error) throw error;
+        return res.json({ message: "2FA Portal Reseller berhasil diaktifkan.", enabled: true });
+    } catch (err) {
+        if (isMissingTableError(err)) return res.status(503).json({ message: "Migration 024 untuk 2FA belum diterapkan.", code: "PORTAL_2FA_NOT_SETUP" });
+        console.error("enableResellerTwoFactor:", err.message);
+        return res.status(500).json({ message: "2FA belum dapat diaktifkan." });
+    }
+};
+
+exports.disableResellerTwoFactor = async (req, res) => {
+    const password = String(req.body.password || "");
+    const code = String(req.body.code || "");
+    if (!password || !code) return res.status(400).json({ message: "Password portal dan kode authenticator wajib diisi." });
+    try {
+        const account = await verifyPortalPassword(req.user.portal_account_id, password);
+        if (account?.setupMissing) return res.status(503).json({ message: "Portal Reseller belum siap di server.", code: "RESELLER_PORTAL_NOT_SETUP" });
+        if (!account) return res.status(401).json({ message: "Password Portal Reseller salah.", code: "PORTAL_REAUTH_REQUIRED" });
+        const factor = await loadPortalTwoFactor(account.id);
+        if (!factor?.enabled) return res.json({ enabled: false });
+        if (!verifyTotp(decryptSecret(factor.secret_ciphertext), code)) return res.status(401).json({ message: "Kode authenticator salah. 2FA tetap aktif.", code: "PORTAL_2FA_INVALID" });
+        const { error } = await supabase.from("reseller_portal_2fa").update({ enabled: false, updated_at: new Date().toISOString() }).eq("id", factor.id);
+        if (error) throw error;
+        return res.json({ message: "2FA Portal Reseller berhasil dinonaktifkan.", enabled: false });
+    } catch (err) {
+        if (isMissingTableError(err)) return res.status(503).json({ message: "Migration 024 untuk 2FA belum diterapkan.", code: "PORTAL_2FA_NOT_SETUP" });
+        console.error("disableResellerTwoFactor:", err.message);
+        return res.status(500).json({ message: "2FA belum dapat dinonaktifkan." });
     }
 };
 

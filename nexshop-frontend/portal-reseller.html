@@ -1296,6 +1296,18 @@
                 </form>
             </div>
 
+            <div id="portalTwoFactorChallenge" hidden style="margin-top:1rem;padding:1rem;border:1px solid rgba(56,189,248,0.3);border-radius:12px;background:rgba(14,116,144,0.12);">
+                <h3 style="margin:0 0 0.45rem;color:#fff;font-size:1rem;">Verifikasi 2FA</h3>
+                <p style="margin:0 0 0.9rem;color:#bae6fd;font-size:0.8rem;line-height:1.5;">Masukkan kode 6 digit dari aplikasi authenticator. Kamu juga bisa memakai satu recovery code.</p>
+                <form id="formTwoFactorVerify">
+                    <label class="form-label" for="twoFactorCode">Kode authenticator / recovery code</label>
+                    <input id="twoFactorCode" name="code" required inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="123456 atau XXXXX-XXXXX" style="width:100%;padding:0.7rem 0.95rem;margin:0.35rem 0 0.75rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;box-sizing:border-box;">
+                    <p id="twoFactorError" role="alert" aria-live="polite" style="display:none;background:rgba(239,68,68,0.15);color:#fca5a5;padding:0.65rem 0.8rem;border-radius:8px;font-size:0.8rem;margin:0 0 0.75rem;"></p>
+                    <button type="submit" id="btnTwoFactorVerify" style="width:100%;padding:0.75rem;border:none;border-radius:10px;background:#0891b2;color:#fff;font-weight:800;cursor:pointer;">Verifikasi &amp; Masuk</button>
+                </form>
+                <button type="button" id="btnTwoFactorBack" style="margin-top:0.65rem;padding:0.45rem 0.7rem;border:1px solid rgba(255,255,255,0.15);border-radius:8px;background:transparent;color:#cbd5e1;cursor:pointer;">Kembali ke login</button>
+            </div>
+
             <!-- TAB 2: FORM DAFTAR MITRA & KYC -->
             <div id="authPaneRegister" style="display:none;">
                 <form id="formResellerRegister">
@@ -1968,12 +1980,46 @@
 
                         <div style="margin-bottom:1.5rem;">
                             <label class="form-label">Two-Factor Authentication (2FA)</label>
-                            <div style="display:flex;align-items:center;justify-content:space-between;padding:0.85rem 1.15rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;">
-                                <div>
-                                    <div style="font-weight:700;font-size:0.88rem;color:#ffffff;">Proteksi OTP Login WhatsApp</div>
-                                    <div style="font-size:0.76rem;color:#94a3b8;">Minta kode OTP 6 digit setiap kali login dari perangkat baru.</div>
+                            <div style="padding:0.95rem 1.15rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+                                    <div>
+                                        <div style="font-weight:700;font-size:0.88rem;color:#ffffff;">Authenticator App (TOTP)</div>
+                                        <div style="font-size:0.76rem;color:#94a3b8;">Opsional. Login akan meminta kode 6 digit setelah password jika diaktifkan.</div>
+                                    </div>
+                                    <span id="twoFactorStatusBadge" class="tv-badge-status">Memuat…</span>
                                 </div>
-                                <span class="tv-badge-status tv-badge-sukses">Aktif</span>
+                                <div id="twoFactorActionArea" style="margin-top:0.85rem;">
+                                    <button type="button" id="btnTwoFactorSetup" class="tv-btn-deposit-action">Aktifkan 2FA</button>
+                                </div>
+                                <form id="formTwoFactorSetup" hidden style="margin-top:0.85rem;">
+                                    <label class="form-label" for="twoFactorSetupPassword">Konfirmasi password portal</label>
+                                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                                        <input type="password" id="twoFactorSetupPassword" required autocomplete="current-password" placeholder="Password Portal Reseller" style="flex:1;min-width:220px;padding:0.65rem 0.8rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;">
+                                        <button type="submit" class="tv-btn-deposit-action" id="btnTwoFactorSetupSubmit">Mulai Setup</button>
+                                    </div>
+                                </form>
+                                <div id="twoFactorSetupResult" hidden style="margin-top:0.85rem;padding:0.85rem;border-radius:10px;background:rgba(37,99,235,0.1);border:1px solid rgba(59,130,246,0.25);">
+                                    <p style="margin:0 0 0.45rem;color:#bae6fd;font-size:0.8rem;">Tambahkan secret ini ke Google/Microsoft Authenticator. Recovery code hanya ditampilkan sekarang—simpan offline dan jangan bagikan.</p>
+                                    <code id="twoFactorSecret" style="display:block;color:#fff;word-break:break-all;margin-bottom:0.45rem;"></code>
+                                    <code id="twoFactorOtpAuth" style="display:block;color:#93c5fd;word-break:break-all;font-size:0.72rem;margin-bottom:0.65rem;"></code>
+                                    <pre id="twoFactorRecoveryCodes" style="white-space:pre-wrap;color:#fde68a;font-size:0.78rem;margin:0 0 0.75rem;"></pre>
+                                    <form id="formTwoFactorEnable">
+                                        <label class="form-label" for="twoFactorEnableCode">Kode 6 digit untuk mengonfirmasi</label>
+                                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                                            <input type="text" id="twoFactorEnableCode" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="flex:1;min-width:150px;padding:0.65rem 0.8rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;">
+                                            <button type="submit" class="tv-btn-deposit-action" id="btnTwoFactorEnable">Aktifkan Sekarang</button>
+                                        </div>
+                                    </form>
+                                </div>
+                                <form id="formTwoFactorDisable" hidden style="margin-top:0.85rem;">
+                                    <p style="margin:0 0 0.65rem;color:#fbbf24;font-size:0.78rem;">Menonaktifkan 2FA memerlukan password portal dan kode authenticator aktif.</p>
+                                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                                        <input type="password" id="twoFactorDisablePassword" required autocomplete="current-password" placeholder="Password Portal Reseller" style="flex:1;min-width:200px;padding:0.65rem 0.8rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;">
+                                        <input type="text" id="twoFactorDisableCode" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Kode 6 digit" style="width:140px;padding:0.65rem 0.8rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;">
+                                        <button type="submit" class="tv-btn-deposit-action" id="btnTwoFactorDisable">Nonaktifkan</button>
+                                    </div>
+                                </form>
+                                <p id="twoFactorSettingsMessage" role="alert" aria-live="polite" style="display:none;margin:0.7rem 0 0;color:#fca5a5;font-size:0.8rem;"></p>
                             </div>
                         </div>
 
@@ -2278,7 +2324,176 @@
             localStorage.removeItem("nexshop-reseller-user");
         }
 
+        let portalTwoFactorChallenge = "";
+
+        function showTwoFactorSettingsMessage(message, success = false) {
+            const el = document.getElementById("twoFactorSettingsMessage");
+            if (!el) return;
+            el.textContent = message || "";
+            el.style.display = message ? "block" : "none";
+            el.style.color = success ? "#86efac" : "#fca5a5";
+        }
+
+        function portalJsonHeaders() {
+            const token = getResellerToken();
+            return { "Content-Type": "application/json", Authorization: `Bearer ${token}` };
+        }
+
+        function renderTwoFactorStatus(enabled) {
+            const badge = document.getElementById("twoFactorStatusBadge");
+            const setupButton = document.getElementById("btnTwoFactorSetup");
+            const setupForm = document.getElementById("formTwoFactorSetup");
+            const disableForm = document.getElementById("formTwoFactorDisable");
+            const result = document.getElementById("twoFactorSetupResult");
+            if (badge) {
+                badge.textContent = enabled ? "Aktif" : "Nonaktif (opsional)";
+                badge.className = `tv-badge-status${enabled ? " tv-badge-sukses" : ""}`;
+            }
+            if (setupButton) setupButton.hidden = Boolean(enabled);
+            if (setupForm) setupForm.hidden = true;
+            if (result && enabled) result.hidden = true;
+            if (disableForm) disableForm.hidden = !enabled;
+        }
+
+        async function loadTwoFactorStatus() {
+            const token = getResellerToken();
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/2fa/status`, { headers: { Authorization: `Bearer ${token}` } });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || "Status 2FA tidak dapat dibaca.");
+                renderTwoFactorStatus(Boolean(data.enabled));
+            } catch (err) {
+                showTwoFactorSettingsMessage(err.message || "Status 2FA tidak dapat dibaca.");
+            }
+        }
+
+        function showPortalTwoFactorChallenge(challengeToken) {
+            portalTwoFactorChallenge = challengeToken || "";
+            const loginForm = document.getElementById("formResellerLogin");
+            const challenge = document.getElementById("portalTwoFactorChallenge");
+            const input = document.getElementById("twoFactorCode");
+            if (loginForm) loginForm.hidden = true;
+            if (challenge) challenge.hidden = false;
+            if (input) input.focus();
+        }
+
+        function hidePortalTwoFactorChallenge() {
+            portalTwoFactorChallenge = "";
+            const loginForm = document.getElementById("formResellerLogin");
+            const challenge = document.getElementById("portalTwoFactorChallenge");
+            if (loginForm) loginForm.hidden = false;
+            if (challenge) challenge.hidden = true;
+            const input = document.getElementById("twoFactorCode");
+            if (input) input.value = "";
+        }
+
+        async function submitPortalTwoFactorVerification(event) {
+            event.preventDefault();
+            const errorEl = document.getElementById("twoFactorError");
+            const button = document.getElementById("btnTwoFactorVerify");
+            if (!portalTwoFactorChallenge) {
+                hidePortalTwoFactorChallenge();
+                return;
+            }
+            errorEl.style.display = "none";
+            button.disabled = true;
+            button.textContent = "Memverifikasi…";
+            try {
+                const res = await fetch(`${API_BASE}/reseller/auth/2fa/verify`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ challenge_token: portalTwoFactorChallenge, code: document.getElementById("twoFactorCode").value.trim() })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || "Kode 2FA tidak valid.");
+                hidePortalTwoFactorChallenge();
+                setResellerSession(data.token, data.user);
+                showToast("Login berhasil!");
+                loadPortalOverview();
+            } catch (err) {
+                errorEl.textContent = err.message || "Verifikasi 2FA gagal.";
+                errorEl.style.display = "block";
+            } finally {
+                button.disabled = false;
+                button.textContent = "Verifikasi & Masuk";
+            }
+        }
+
+        async function startPortalTwoFactorSetup(event) {
+            event.preventDefault();
+            const button = document.getElementById("btnTwoFactorSetupSubmit");
+            button.disabled = true;
+            showTwoFactorSettingsMessage("");
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/2fa/setup`, {
+                    method: "POST",
+                    headers: portalJsonHeaders(),
+                    body: JSON.stringify({ password: document.getElementById("twoFactorSetupPassword").value })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || "Setup 2FA gagal.");
+                document.getElementById("twoFactorSecret").textContent = `Secret: ${data.secret}`;
+                document.getElementById("twoFactorOtpAuth").textContent = data.otpauth_url || "";
+                document.getElementById("twoFactorRecoveryCodes").textContent = `Recovery codes:\n${(data.recovery_codes || []).join("\n")}`;
+                document.getElementById("twoFactorSetupResult").hidden = false;
+                document.getElementById("formTwoFactorSetup").hidden = true;
+                document.getElementById("twoFactorSetupPassword").value = "";
+                showTwoFactorSettingsMessage("Secret dan recovery code dibuat. Simpan recovery code, lalu konfirmasi kode authenticator.", true);
+            } catch (err) {
+                showTwoFactorSettingsMessage(err.message || "Setup 2FA gagal.");
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function confirmPortalTwoFactorEnable(event) {
+            event.preventDefault();
+            const button = document.getElementById("btnTwoFactorEnable");
+            button.disabled = true;
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/2fa/enable`, {
+                    method: "POST",
+                    headers: portalJsonHeaders(),
+                    body: JSON.stringify({ code: document.getElementById("twoFactorEnableCode").value.trim() })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || "2FA belum dapat diaktifkan.");
+                document.getElementById("twoFactorEnableCode").value = "";
+                showTwoFactorSettingsMessage(data.message || "2FA aktif.", true);
+                renderTwoFactorStatus(true);
+            } catch (err) {
+                showTwoFactorSettingsMessage(err.message || "2FA belum dapat diaktifkan.");
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        async function disablePortalTwoFactor(event) {
+            event.preventDefault();
+            const button = document.getElementById("btnTwoFactorDisable");
+            button.disabled = true;
+            try {
+                const res = await fetch(`${API_BASE}/reseller/portal/2fa/disable`, {
+                    method: "POST",
+                    headers: portalJsonHeaders(),
+                    body: JSON.stringify({ password: document.getElementById("twoFactorDisablePassword").value, code: document.getElementById("twoFactorDisableCode").value.trim() })
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.message || "2FA tetap aktif.");
+                document.getElementById("twoFactorDisablePassword").value = "";
+                document.getElementById("twoFactorDisableCode").value = "";
+                showTwoFactorSettingsMessage(data.message || "2FA dinonaktifkan.", true);
+                renderTwoFactorStatus(false);
+            } catch (err) {
+                showTwoFactorSettingsMessage(err.message || "2FA tetap aktif.");
+            } finally {
+                button.disabled = false;
+            }
+        }
+
         function showPortalAuth(message = "") {
+            hidePortalTwoFactorChallenge();
             const secAuth = document.getElementById("sectionAuth");
             const secDash = document.getElementById("sectionDashboard");
             if (secAuth) secAuth.style.display = "block";
@@ -2361,6 +2576,8 @@
                 loadPortalOrders();
             } else if (viewId === "view-mutations") {
                 loadPortalMutations();
+            } else if (viewId === "view-settings") {
+                loadTwoFactorStatus();
             } else if (viewId === "view-dashboard") {
                 renderDynamicChart(lastDailyChartData);
             }
@@ -3055,6 +3272,11 @@
                 if (!res.ok) {
                     window.NexShopAuthSecurity?.resetCaptcha("reseller-login");
                     throw new Error(data.message || "Email atau password salah");
+                }
+
+                if (data.code === "PORTAL_2FA_REQUIRED" && data.challenge_token) {
+                    showPortalTwoFactorChallenge(data.challenge_token);
+                    return;
                 }
 
                 window.NexShopAuthSecurity?.resetCaptcha("reseller-login");
@@ -3885,6 +4107,16 @@
         document.addEventListener("DOMContentLoaded", () => {
             window.NexShopAuthSecurity?.mountCaptcha("reseller-login", "resellerLoginTurnstile", "resellerLoginTurnstileStatus");
             window.NexShopAuthSecurity?.mountCaptcha("reseller-register", "resellerRegisterTurnstile", "resellerRegisterTurnstileStatus");
+            document.getElementById("formTwoFactorVerify")?.addEventListener("submit", submitPortalTwoFactorVerification);
+            document.getElementById("btnTwoFactorBack")?.addEventListener("click", hidePortalTwoFactorChallenge);
+            document.getElementById("btnTwoFactorSetup")?.addEventListener("click", () => {
+                document.getElementById("formTwoFactorSetup").hidden = false;
+                document.getElementById("btnTwoFactorSetup").hidden = true;
+                document.getElementById("twoFactorSetupPassword")?.focus();
+            });
+            document.getElementById("formTwoFactorSetup")?.addEventListener("submit", startPortalTwoFactorSetup);
+            document.getElementById("formTwoFactorEnable")?.addEventListener("submit", confirmPortalTwoFactorEnable);
+            document.getElementById("formTwoFactorDisable")?.addEventListener("submit", disablePortalTwoFactor);
             loadKontakAdmin();
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get("mode") === "register") {

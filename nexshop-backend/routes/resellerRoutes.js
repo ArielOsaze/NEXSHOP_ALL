@@ -7,6 +7,7 @@ const adminMiddleware = require("../middleware/adminMiddleware");
 const {
     resellerApplyLimiter,
     resellerLoginLimiter,
+    resellerTwoFactorVerifyLimiter,
     resellerWebhookTestLimiter
 } = require("../middleware/rateLimiter");
 
@@ -16,6 +17,7 @@ router.post("/auth/register", resellerApplyLimiter, resellerController.resellerR
 // ini sama sekali tanpa limiter, jadi password akun mitra bisa di-brute-force
 // tanpa batas padahal akun itu memegang saldo deposit.
 router.post("/auth/login", resellerLoginLimiter, resellerController.resellerLogin);
+router.post("/auth/2fa/verify", resellerTwoFactorVerifyLimiter, resellerController.verifyResellerTwoFactor);
 
 // Publik — dipakai halaman info reseller buat nampilin tabel tingkatan
 router.get("/tiers", resellerController.getPublicTiers);
@@ -27,6 +29,10 @@ router.post("/apply", resellerPortalAuthMiddleware, resellerApplyLimiter, resell
 
 // Partner Portal — identity reseller terpisah dari storefront
 router.get("/portal/overview", resellerPortalAuthMiddleware, resellerController.getPortalOverview);
+router.get("/portal/2fa/status", resellerPortalAuthMiddleware, resellerController.getResellerTwoFactorStatus);
+router.post("/portal/2fa/setup", resellerPortalAuthMiddleware, resellerController.setupResellerTwoFactor);
+router.post("/portal/2fa/enable", resellerPortalAuthMiddleware, resellerController.enableResellerTwoFactor);
+router.post("/portal/2fa/disable", resellerPortalAuthMiddleware, resellerController.disableResellerTwoFactor);
 router.get("/portal/secret", resellerPortalAuthMiddleware, resellerController.revealSecretKey);
 router.post("/portal/api-key/generate", resellerPortalAuthMiddleware, resellerController.generateOrRotateApiKey);
 router.put("/portal/settings", resellerPortalAuthMiddleware, resellerController.updatePortalSettings);

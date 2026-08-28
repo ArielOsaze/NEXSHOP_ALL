@@ -36,7 +36,7 @@ const storefrontAttempt = runPortalMiddleware({ id: 10, email: "buyer@example.co
 assert.strictEqual(storefrontAttempt.nextCalled, false, "storefront JWT must not pass the portal middleware");
 assert.strictEqual(storefrontAttempt.response.status, 403, "storefront JWT must be rejected with HTTP 403");
 assert.strictEqual(storefrontAttempt.response.body.code, "PORTAL_ACCOUNT_REQUIRED", "storefront JWT must receive the portal boundary error");
-const portalAttempt = runPortalMiddleware({ id: 11, portal_account_id: "portal-uuid", auth_context: "reseller_portal" });
+const portalAttempt = runPortalMiddleware({ id: 11, portal_account_id: "portal-uuid", auth_context: "reseller_portal", two_factor_verified: true });
 assert.strictEqual(portalAttempt.nextCalled, true, "dedicated portal JWT must pass the portal middleware");
 
 assert.match(controller, /auth_context:\s*["']reseller_portal["']/, "portal JWT must carry a dedicated auth context");

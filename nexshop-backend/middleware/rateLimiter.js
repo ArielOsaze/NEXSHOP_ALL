@@ -174,7 +174,16 @@ const resellerLoginLimiter = rateLimit({
     message: { message: "Terlalu banyak percobaan login Partner Portal. Coba lagi dalam beberapa menit." }
 });
 
+const resellerTwoFactorVerifyLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 15,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak percobaan kode 2FA. Coba lagi dalam beberapa menit." }
+});
+
 // Open API reseller (/api/v1/reseller/*). Dibatasi PER API KEY, bukan per
+
 // IP: satu mitra biasanya memanggil dari satu server, jadi kunci per-IP
 // akan salah sasaran begitu beberapa mitra berbagi jaringan/NAT yang sama.
 // Kalau kunci API belum terbaca, jatuh ke IP.
@@ -220,4 +229,4 @@ const walletNotificationLimiter = rateLimit({
     message: { message: "Terlalu banyak notifikasi masuk." }
 });
 
-module.exports = { resellerLoginLimiter, resellerApiLimiter, resellerWebhookTestLimiter, walletNotificationLimiter, loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter, kycUploadLimiter };
+module.exports = { resellerLoginLimiter, resellerApiLimiter, resellerWebhookTestLimiter, walletNotificationLimiter, loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter, kycUploadLimiter, resellerTwoFactorVerifyLimiter };
