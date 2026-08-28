@@ -1302,7 +1302,7 @@
         .tv-auth-trust-list li { display: grid; grid-template-columns: 2rem 1fr; gap: 0.75rem; align-items: start; color: var(--tv-text-secondary); font-size: 0.87rem; line-height: 1.55; }
         .tv-auth-trust-icon { width: 2rem; height: 2rem; display: grid; place-items: center; border-radius: 8px; color: var(--tv-accent-indigo); background: rgba(113,112,255,0.1); border: 1px solid rgba(113,112,255,0.18); }
         .tv-auth-trust-list strong { display: block; color: var(--tv-text-primary); font-weight: 590; margin-bottom: 0.08rem; }
-        .tv-auth-card { margin: 0; max-width: none; background: rgba(15,16,17,0.86); border: 1px solid rgba(255,255,255,0.09); box-shadow: 0 22px 60px rgba(0,0,0,0.34), inset 0 1px rgba(255,255,255,0.045); border-radius: 18px; padding: clamp(1.15rem, 3vw, 2rem); }
+        .tv-auth-card { margin: 0; max-width: none; min-width: 0; container-type: inline-size; background: rgba(15,16,17,0.86); border: 1px solid rgba(255,255,255,0.09); box-shadow: 0 22px 60px rgba(0,0,0,0.34), inset 0 1px rgba(255,255,255,0.045); border-radius: 18px; padding: clamp(1.15rem, 3vw, 2rem); }
         .tv-auth-card-head { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1.55rem; }
         .tv-auth-card-logo { width: 2.8rem; height: 2.8rem; object-fit: contain; filter: drop-shadow(0 6px 16px rgba(113,112,255,0.3)); }
         .tv-auth-card-title { margin: 0; color: var(--tv-text-primary); font-size: 1.1rem; font-weight: 590; letter-spacing: -0.02em; }
@@ -1318,6 +1318,15 @@
         .tv-form-grid, .tv-split-grid { display: grid; gap: 1.15rem; }
         .tv-form-grid { grid-template-columns: 1fr 1fr; margin-bottom: 1.15rem; }
         .tv-split-grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+        .tv-register-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+        .tv-register-grid > div { min-width: 0; }
+        .tv-register-grid input, .tv-register-grid select { min-width: 0; }
+        .tv-auth-error-message { display: none; min-width: 0; overflow-wrap: anywhere; }
+
+        @container (max-width: 560px) {
+            .tv-auth-tabs { grid-template-columns: 1fr; }
+            .tv-register-grid { grid-template-columns: 1fr; }
+        }
 
         @media (max-width: 760px) {
             .tv-auth-layout { min-height: auto; width: 100%; min-width: 0; grid-template-columns: minmax(0, 1fr) !important; gap: 1.3rem; }
@@ -1330,7 +1339,7 @@
             #sectionAuth { padding: 0.85rem !important; }
             .tv-auth-card { padding: 1rem; border-radius: 14px; }
             .tv-auth-tabs { grid-template-columns: 1fr; }
-            .tv-form-grid, .tv-split-grid, .tv-distributor-portal [style*="grid-template-columns:1fr 1fr"], .tv-distributor-portal [style*="grid-template-columns:1.2fr 1fr"] { grid-template-columns: 1fr !important; }
+            .tv-form-grid, .tv-split-grid, .tv-register-grid, .tv-distributor-portal [style*="grid-template-columns:1fr 1fr"], .tv-distributor-portal [style*="grid-template-columns:1.2fr 1fr"] { grid-template-columns: 1fr !important; }
             .tv-distributor-portal [style*="grid-template-columns:repeat(3,1fr)"] { grid-template-columns: 1fr !important; }
             .tv-console-main { padding: 1rem 0.85rem 5rem; }
             .tv-top-widgets-grid, .tv-main-grid-row { grid-template-columns: 1fr; }
@@ -1366,7 +1375,7 @@
                 </div>
 
             <!-- Tab Switcher (Masuk vs Daftar) -->
-            <div class="tv-auth-tabs" style="display:flex;background:rgba(255,255,255,0.06);border-radius:12px;padding:4px;margin-bottom:1.5rem;">
+            <div class="tv-auth-tabs">
                 <button type="button" id="tabBtnLogin" onclick="switchAuthTab('login')"
                     style="flex:1;padding:0.65rem;border:none;border-radius:8px;font-weight:700;font-size:0.86rem;cursor:pointer;background:#2563eb;color:#fff;transition:all 0.15s ease;">
                     <i class="fa-solid fa-right-to-bracket" style="font-size:1rem;vertical-align:middle;margin-right:4px;" aria-hidden="true"></i> Masuk Portal Reseller
@@ -1384,7 +1393,7 @@
             <!-- TAB 1: FORM LOGIN MITRA -->
             <div id="authPaneLogin">
                 <form id="formResellerLogin">
-                    <div id="loginErrorMsg" role="alert" aria-live="polite" style="display:none;background:rgba(239,68,68,0.15);color:#fca5a5;padding:0.75rem 1rem;border-radius:8px;font-size:0.84rem;font-weight:600;margin-bottom:1rem;border:1px solid rgba(239,68,68,0.3);"></div>
+                    <div id="loginErrorMsg" class="tv-auth-error-message" role="alert" aria-live="polite" style="display:none;background:rgba(239,68,68,0.15);color:#fca5a5;padding:0.75rem 1rem;border-radius:8px;font-size:0.84rem;font-weight:600;margin-bottom:1rem;border:1px solid rgba(239,68,68,0.3);"></div>
 
                     <div style="margin-bottom:1.15rem;">
                         <label class="form-label" for="loginEmail">Email Portal Reseller (harus berbeda dari akun belanja) <span style="color:#ef4444;">*</span></label>
@@ -1421,9 +1430,9 @@
             <!-- TAB 2: FORM DAFTAR MITRA & KYC -->
             <div id="authPaneRegister" style="display:none;">
                 <form id="formResellerRegister">
-                    <div id="regErrorMsg" style="display:none;background:rgba(239,68,68,0.15);color:#fca5a5;padding:0.75rem 1rem;border-radius:8px;font-size:0.84rem;font-weight:600;margin-bottom:1rem;border:1px solid rgba(239,68,68,0.3);"></div>
+                    <div id="regErrorMsg" class="tv-auth-error-message" style="display:none;background:rgba(239,68,68,0.15);color:#fca5a5;padding:0.75rem 1rem;border-radius:8px;font-size:0.84rem;font-weight:600;margin-bottom:1rem;border:1px solid rgba(239,68,68,0.3);"></div>
 
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:0.95rem;">
+                    <div class="tv-register-grid">
                         <div>
                             <label class="form-label" for="regEmail">Email Portal Reseller (wajib berbeda) <span style="color:#ef4444;">*</span></label>
                             <input type="email" id="regEmail" required placeholder="mitra@domain.com" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
@@ -1434,7 +1443,7 @@
                         </div>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:0.95rem;">
+                    <div class="tv-register-grid">
                         <div>
                             <label class="form-label" for="regFullname">Nama Lengkap (KTP) <span style="color:#ef4444;">*</span></label>
                             <input type="text" id="regFullname" required placeholder="Nama Lengkap" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
@@ -1445,7 +1454,7 @@
                         </div>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:0.95rem;">
+                    <div class="tv-register-grid">
                         <div>
                             <label class="form-label" for="regNik">NIK KTP (16 Digit) <span style="color:#ef4444;">*</span></label>
                             <input type="text" id="regNik" required maxlength="16" placeholder="33xxxxxxxxxxxxxx" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
@@ -1456,7 +1465,7 @@
                         </div>
                     </div>
 
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:0.95rem;">
+                    <div class="tv-register-grid">
                         <div>
                             <label class="form-label" for="regChannel">Kanal Penjualan</label>
                             <select id="regChannel" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);border-radius:8px;font-size:0.86rem;box-sizing:border-box;background:#0b1120;color:#fff;">
