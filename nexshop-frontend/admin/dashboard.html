@@ -82,7 +82,7 @@
             <button type="button" class="sidebar-section-toggle" data-nav-group="orders" aria-expanded="false"><span>Orders</span><i class="bi bi-chevron-down"></i></button>
             <div class="sidebar-section-items" data-nav-items="orders">
                 <div class="nav-item"><a class="nav-link" href="#" data-view="orders"><i class="bi bi-cart me-2"></i>Semua Orders</a></div>
-                <div class="nav-item"><a class="nav-link" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Game &amp; Gamepass</a></div>
+                <div class="nav-item"><a class="nav-link" href="#" data-view="topup"><i class="bi bi-gem me-2"></i>Produk Topup</a></div>
             </div>
         </li>
         <li class="sidebar-nav-group" data-nav-group-wrap="catalog-sales">
@@ -444,12 +444,12 @@
     </div>
 </section>
 
-<!-- ===== Orders Game & Gamepass view ===== -->
+<!-- ===== Orders Produk Topup view ===== -->
 <section id="view-topup" class="view-section d-none">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
         <div>
-            <h2>Orders Game &amp; Gamepass</h2>
-            <p class="text-muted mb-0">Kelola katalog game/gamepass TokoVoucher dan pantau order TP</p>
+            <h2>Orders Produk Topup</h2>
+            <p class="text-muted mb-0">Kelola katalog produk topup TokoVoucher dan pantau order TP</p>
         </div>
         <div class="d-flex gap-2 align-items-center flex-wrap">
             <span class="badge bg-dark-subtle text-dark border" id="tvBalanceBadge">Saldo TokoVoucher: —</span>
@@ -460,7 +460,7 @@
     </div>
 
     <ul class="nav nav-tabs mb-3" id="topupTabs">
-        <li class="nav-item"><button class="nav-link active" data-topup-tab="products">Game &amp; Gamepass</button></li>
+        <li class="nav-item"><button class="nav-link active" data-topup-tab="products">Produk Topup</button></li>
         <li class="nav-item"><button class="nav-link" data-topup-tab="orders">Orders</button></li>
     </ul>
 
@@ -596,7 +596,7 @@
                         <div class="col-12 col-md-6 col-xl-2">
                             <label class="form-label small text-muted mb-1" for="catalogOrderCategorySelect">Area</label>
                             <select class="form-select form-select-sm" id="catalogOrderCategorySelect">
-                                <option value="orders" selected>Orders — Game &amp; Gamepass</option>
+                                <option value="orders" selected>Orders — Produk Topup</option>
                                 <option value="catalog-sales">Catalog &amp; Sales — PPOB</option>
                             </select>
                         </div>

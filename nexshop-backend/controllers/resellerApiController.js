@@ -15,7 +15,7 @@ const { dispatchResellerWebhook } = require("../services/resellerWebhookService"
 function rupiahLog(n) {
     return "Rp " + Number(n || 0).toLocaleString("id-ID");
 }
-const { checkNickname } = require("../utils/topupHelpers");
+const apigames = require("../config/apigames");
 
 const TOKOVOUCHER_STATUS_MAP = Object.freeze({
     0: "gagal",
@@ -498,32 +498,81 @@ exports.getProducts = async (req, res) => {
  * Validasi ID/Server akun game pelanggan sebelum checkout
  */
 exports.checkNickname = async (req, res) => {
-    const { kode_game, user_id, zone_id } = req.body;
-    if (!kode_game || !user_id) {
+    const { kode_game, user_id, zone_id } = req.body || {};
+    const kategori = String(kode_game || "").trim().toLowerCase();
+    const tujuan = String(user_id || "").trim();
+    const serverId = zone_id == null || String(zone_id).trim() === ""
+        ? null
+        : String(zone_id).trim();
+
+    if (!kategori || !tujuan) {
         return res.status(400).json({
             success: false,
+            code: "INVALID_REQUEST",
             message: "Field 'kode_game' dan 'user_id' wajib diisi"
+        });
+    }
+    if (kategori.length > 40 || tujuan.length > 60 || (serverId && serverId.length > 30)) {
+        return res.status(400).json({
+            success: false,
+            code: "INVALID_REQUEST",
+            message: "Format input terlalu panjang"
         });
     }
 
     try {
-        const result = await checkNickname(kode_game, user_id, zone_id);
-        if (!result || !result.success) {
+        // ApiGames menerima kategori dan target sebagai object. Kode dengan
+        // tanda hubung (mobile-legends/free-fire) dinormalisasi oleh adapter.
+        const result = await apigames.checkNickname({
+            kategori,
+            tujuan,
+            serverId
+        });
+
+        if (result?.reason === "provider_unavailable" || result?.reason === "service_not_configured") {
+            return res.status(503).json({
+                success: false,
+                code: "NICKNAME_PROVIDER_UNAVAILABLE",
+                message: "Layanan cek nickname sedang tidak tersedia"
+            });
+        }
+        if (!result?.available) {
             return res.status(400).json({
                 success: false,
-                message: result?.message || "Akun game tidak ditemukan atau format ID salah"
+                code: "UNSUPPORTED_GAME",
+                message: "Kode game belum didukung untuk cek nickname"
+            });
+        }
+        if (!result.is_valid) {
+            return res.status(422).json({
+                success: false,
+                code: "INVALID_GAME_ACCOUNT",
+                message: "User ID atau Zone ID tidak valid",
+                data: {
+                    kode_game: kategori,
+                    user_id: tujuan,
+                    zone_id: serverId,
+                    username: null
+                }
             });
         }
 
-        res.json({
+        return res.json({
             success: true,
+            message: "Nickname berhasil ditemukan",
             data: {
-                username: result.username || result.name || "Player",
-                user_id: user_id,
-                zone_id: zone_id || null
+                kode_game: kategori,
+                user_id: tujuan,
+                zone_id: serverId,
+                username: result.username
             }
         });
     } catch (err) {
-        res.status(500).json({ success: false, message: "Gagal memeriksa nickname akun" });
+        console.error("Reseller check nickname error:", err.message);
+        return res.status(502).json({
+            success: false,
+            code: "NICKNAME_PROVIDER_ERROR",
+            message: "Provider cek nickname gagal merespons"
+        });
     }
 };

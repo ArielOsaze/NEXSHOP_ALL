@@ -1377,6 +1377,38 @@ Content-Type:      application/json</code></pre>
                         </table>
                     </div>
                 </div>
+
+                <div class="docs-card">
+                    <h3><i class="fa-solid fa-user-check" aria-hidden="true"></i> Kode Error Validasi Nickname</h3>
+                    <div style="overflow-x:auto;">
+                        <table class="docs-tier-table">
+                            <thead>
+                                <tr>
+                                    <th>HTTP</th>
+                                    <th>code</th>
+                                    <th>Artinya &amp; tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>400</td>
+                                    <td><span class="docs-code">UNSUPPORTED_GAME</span></td>
+                                    <td><span class="docs-code">kode_game</span> belum didukung oleh provider validasi nickname.</td>
+                                </tr>
+                                <tr>
+                                    <td>422</td>
+                                    <td><span class="docs-code">INVALID_GAME_ACCOUNT</span></td>
+                                    <td>User ID atau Zone ID tidak valid. Jangan lanjutkan order.</td>
+                                </tr>
+                                <tr>
+                                    <td>503</td>
+                                    <td><span class="docs-code">NICKNAME_PROVIDER_UNAVAILABLE</span></td>
+                                    <td>Provider sedang tidak tersedia atau belum dikonfigurasi. Retry terbatas, jangan menganggap akun valid.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </section>
 
             <!-- ── Bab 7: API Get Produk & Harga ── -->
@@ -1442,8 +1474,8 @@ Content-Type:      application/json</code></pre>
                         <span class="docs-http-method docs-http-method--post">POST</span>
                         <span class="docs-endpoint-url">/api/v1/reseller/check-nickname</span>
                     </div>
-                    <p class="docs-endpoint-desc">
-                        Mengecek username / nickname akun game pemain sebelum transaksi dibuat.
+                        <p class="docs-endpoint-desc">
+                        Mengecek username / nickname akun game pemain sebelum transaksi dibuat. Endpoint ini memakai provider validasi game NexShop (bukan endpoint TokoVoucher), sehingga hasilnya hanya tersedia untuk kode game yang didukung dan ketika provider sedang aktif.
                     </p>
                     <div class="docs-code-block">
                         <div class="docs-code-header">
@@ -1464,6 +1496,7 @@ Content-Type:      application/json</code></pre>
                         <pre class="docs-code-content"><code>{
   <span class="property">"success"</span>: <span class="keyword">true</span>,
   <span class="property">"data"</span>: {
+    <span class="property">"kode_game"</span>: <span class="string">"mobile-legends"</span>,
     <span class="property">"username"</span>: <span class="string">"SkyWalker_99"</span>,
     <span class="property">"user_id"</span>: <span class="string">"12345678"</span>,
     <span class="property">"zone_id"</span>: <span class="string">"2123"</span>

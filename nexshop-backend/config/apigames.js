@@ -24,7 +24,7 @@ function md5(str) {
 
 function resolveGameCode(kategori) {
     if (!kategori) return null;
-    const normalized = String(kategori).trim().toLowerCase().replace(/\s+/g, " ");
+    const normalized = String(kategori).trim().toLowerCase().replace(/[\s_-]+/g, " ");
     return SUPPORTED_GAMES[normalized] || null;
 }
 

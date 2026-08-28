@@ -187,8 +187,12 @@ async function inquiryPascabayar({ refId, kodeProduk, tujuan, serverId }) {
 async function checkStatus(refId) {
     const { memberCode, secret } = await getCreds();
     const signature = buildRefSignature(memberCode, secret, refId);
-    const { data } = await api.get(`/v1/transaksi/status`, {
-        params: { ref_id: refId, member_code: memberCode, signature }
+    const { data } = await api.post(`/v1/transaksi/status`, {
+        ref_id: refId,
+        member_code: memberCode,
+        signature
+    }, {
+        headers: { "Content-Type": "application/json" }
     });
     return data;
 }
