@@ -61,6 +61,8 @@ for (const question of [
     "NexShop, buatkan kode Python untuk scraping",
     "resep nasi goreng yang enak",
     "NexShop punya resep nasi goreng?",
+    "Bagaimana cara memperoleh API key OpenAI?",
+    "Saya punya akun NexShop. Buatkan kode Python untuk scraping",
     "cuaca Jakarta besok bagaimana?",
     "hasil pertandingan sepak bola tadi malam",
     "diagnosis sakit kepala saya"
@@ -79,7 +81,7 @@ assert.match(polished, /- Langkah satu\n- Langkah dua/);
 
 assert.match(controllerSource, /isNexShopScope\(/, "controller harus menegakkan scope sebelum memanggil provider AI");
 assert.match(controllerSource, /formatProfessionalReply\(reply\)/, "semua jalur jawaban harus melewati formatter profesional");
-assert.match(controllerSource, /source\s*=\s*["']out_of_scope["']/, "jawaban di luar NexShop harus memiliki source terpisah");
+assert.match(controllerSource, /source\s*:\s*["']out_of_scope["']/, "jawaban di luar NexShop harus memiliki source terpisah");
 
 for (const marker of [
     "akun portal benar-benar terpisah",

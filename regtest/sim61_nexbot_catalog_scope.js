@@ -10,11 +10,11 @@ const { isPriceQuestion } = require(path.join(root, "nexshop-backend", "utils", 
 
 assert.strictEqual(isPriceQuestion("harga Genshin Impact berapa?"), true,
   "pertanyaan harga untuk nama produk dinamis harus dikenali sebagai kandidat katalog");
-assert.match(controller, /const catalogProbeAllowed = inScope \|\| isPriceQuestion\(message\);/,
-  "scope gate harus memberi kandidat harga kesempatan lookup katalog read-only");
-assert.match(controller, /const resolvedScope = inScope \|\| Boolean\(priceReply\);/,
+assert.match(controller, /const preRagPriceReply = \(!preRagScope && isPriceQuestion\(message\)\)/,
+  "harga produk dinamis boleh memakai catalog probe sebelum RAG");
+assert.match(controller, /const scopeEstablished = preRagScope \|\| Boolean\(preRagPriceReply\);/,
   "produk yang benar-benar ditemukan di katalog harus menjadi scope NexShop");
-assert.match(controller, /if \(!resolvedScope\) \{\s*reply = OUT_OF_SCOPE_REPLY;/,
-  "kandidat harga yang tidak ada di katalog harus tetap ditolak sebelum provider AI");
+assert.match(controller, /if \(!scopeEstablished\) \{\s*const reply = formatProfessionalReply\(OUT_OF_SCOPE_REPLY\);/,
+  "kandidat harga yang tidak ada di katalog harus return out-of-scope sebelum RAG/provider");
 
 console.log("PASS sim61: produk katalog dinamis lolos scope NexBot tanpa membuka topik luar domain");

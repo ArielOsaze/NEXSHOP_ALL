@@ -685,36 +685,44 @@ async function answer(message, sessionId, user) {
         || /status\s+(pesanan|order)(\s+saya)?|lacak\s+(pesanan|order)|pesanan\s+saya|cek\s+(pesanan|order)/i.test(message)
     );
     const normalized = normalizeQuery(message);
+    const preRagResult = {
+        query: normalized,
+        intent: detectIntent(normalized),
+        entities: detectEntities(normalized),
+        memory: { conversation: [], userMemory: null },
+        selected: []
+    };
+    // Hard scope boundary: this runs before conversation memory, knowledge
+    // retrieval, and provider calls. The only allowed pre-RAG read is a price
+    // catalog probe for dynamically named products.
+    const preRagScope = isNexShopScope(message, preRagResult);
+    const preRagPriceReply = (!preRagScope && isPriceQuestion(message))
+        ? await resolveWithin(handlePriceQuery(message, user), NEXBOT_DB_TIMEOUT_MS, null)
+        : null;
+    const scopeEstablished = preRagScope || Boolean(preRagPriceReply);
+    if (!scopeEstablished) {
+        const reply = formatProfessionalReply(OUT_OF_SCOPE_REPLY);
+        return {
+            reply,
+            source: "out_of_scope",
+            handoff: false,
+            intent: preRagResult.intent,
+            entities: preRagResult.entities,
+            knowledgeIds: []
+        };
+    }
+
     const directPath = templateKnowledge || isContact || isBudgetQuery || isOrderQuery;
     const result = directPath
-        ? {
-            query: normalized,
-            intent: detectIntent(normalized),
-            entities: detectEntities(normalized),
-            memory: { conversation: [], userMemory: null },
-            selected: templateKnowledge ? [templateKnowledge] : []
-        }
+        ? { ...preRagResult, selected: templateKnowledge ? [templateKnowledge] : [] }
         : await retrieveKnowledge(message, sessionId, user);
 
     let reply = "";
     let source = "knowledge";
-    const inScope = isNexShopScope(message, result);
-    // Nama produk bersifat dinamis. Kandidat pertanyaan harga boleh melakukan
-    // lookup katalog read-only agar produk baru tidak tertolak hanya karena
-    // belum masuk regex scope statis.
-    const catalogProbeAllowed = inScope || isPriceQuestion(message);
-
-    // Scope guard dijalankan sebelum provider AI. Probe katalog hanya mengubah
-    // status scope bila benar-benar menemukan produk aktif.
-    const priceReply = (catalogProbeAllowed && !templateKnowledge && !isContact && !isBudgetQuery && !isOrderQuery)
+    const priceReply = preRagPriceReply || (!templateKnowledge && !isContact && !isBudgetQuery && !isOrderQuery
         ? await resolveWithin(handlePriceQuery(message, user), NEXBOT_DB_TIMEOUT_MS, null)
-        : null;
-    const resolvedScope = inScope || Boolean(priceReply);
-
-    if (!resolvedScope) {
-        reply = OUT_OF_SCOPE_REPLY;
-        source = "out_of_scope";
-    } else if (templateKnowledge) {
+        : null);
+    if (templateKnowledge) {
         reply = renderKnowledgeFallback([templateKnowledge]);
         source = "template_knowledge";
     } else if (isContact) {
