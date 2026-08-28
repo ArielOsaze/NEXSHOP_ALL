@@ -3395,6 +3395,33 @@ i[class*="fa-"] {
     }
 }
 
+/* Dropdown reseller/docs: beri napas visual yang cukup di antara item.
+   Screenshot mobile menunjukkan panel terbuka terasa menempel karena gap
+   default terlalu kecil dan padding panel cuma setengah rem. Scope ini hanya
+   untuk dua halaman reseller, jadi navbar Marketplace dan halaman lain tidak
+   ikut berubah. */
+@media (max-width: 768px) {
+    .reseller-page .mkt-nav-links,
+    .reseller-docs-page .mkt-nav-links {
+        gap: 0.5rem;
+        top: calc(100% + 0.65rem);
+    }
+
+    .reseller-page .mkt-nav.is-open .mkt-nav-links,
+    .reseller-docs-page .mkt-nav.is-open .mkt-nav-links {
+        padding: 0.8rem;
+    }
+
+    .reseller-page .mkt-nav-links a,
+    .reseller-docs-page .mkt-nav-links a {
+        display: flex;
+        align-items: center;
+        min-height: 2.75rem;
+        padding: 0.7rem 0.9rem;
+        line-height: 1.35;
+    }
+}
+
 @media (max-width: 340px) {
     .marketplace-page .mkt-nav {
         gap: 0.5rem;
