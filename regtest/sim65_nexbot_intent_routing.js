@@ -8,6 +8,13 @@ const root = path.resolve(__dirname, "..");
 const controller = fs.readFileSync(path.join(root, "nexshop-backend/controllers/aiController.js"), "utf8");
 const catalog = fs.readFileSync(path.join(root, "nexshop-backend/utils/nexbotCatalog.js"), "utf8");
 
+const { isNexShopScope } = require("../nexshop-backend/utils/nexbotPolicy");
+
+assert.strictEqual(isNexShopScope("kalau salah masukin id bisa refund?"), true,
+    "pertanyaan refund dengan ID harus berada di scope NexShop");
+assert.strictEqual(isNexShopScope("salah input zone id bisa uang kembali?"), true,
+    "pertanyaan pengembalian dana dengan Zone ID harus berada di scope NexShop");
+
 assert.match(controller, /function isRefundQuery\(message\)/,
     "pertanyaan salah ID/refund harus punya intent routing deterministik");
 assert.match(controller, /isRefundQuery\(message\)/,
