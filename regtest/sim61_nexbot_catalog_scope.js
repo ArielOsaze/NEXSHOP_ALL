@@ -10,7 +10,9 @@ const { isPriceQuestion } = require(path.join(root, "nexshop-backend", "utils", 
 
 assert.strictEqual(isPriceQuestion("harga Genshin Impact berapa?"), true,
   "pertanyaan harga untuk nama produk dinamis harus dikenali sebagai kandidat katalog");
-assert.match(controller, /const preRagPriceReply = \(!preRagScope && nexbotCatalog\.isPriceQuestion\(message\)\)/,
+assert.match(controller, /const priceQuestion = nexbotCatalog\.isPriceQuestion\(message\);/,
+  "pertanyaan harga harus dikenali sebelum routing knowledge");
+assert.match(controller, /const preRagPriceReply = priceQuestion\s*\n\s*\? await resolveWithin\(handlePriceQuery\(message, user\)/,
   "harga produk dinamis boleh memakai catalog probe sebelum RAG");
 assert.match(controller, /const scopeEstablished = preRagScope \|\| Boolean\(preRagPriceReply\);/,
   "produk yang benar-benar ditemukan di katalog harus menjadi scope NexShop");

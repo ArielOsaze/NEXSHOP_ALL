@@ -75,7 +75,7 @@ async function loadCatalogIndex({ fresh = false } = {}) {
 
     const { data, error } = await supabase
         .from("topup_products")
-        .select("kategori, source_operator_name")
+        .select("kategori, source_operator_name, source_jenis_name")
         .eq("is_active", true)
         .limit(5000);
 
@@ -83,19 +83,22 @@ async function loadCatalogIndex({ fresh = false } = {}) {
         // Katalog gagal dimuat bukan alasan buat menjatuhkan chat --
         // pertanyaannya tinggal jatuh ke alur knowledge biasa.
         console.log("[nexbot-catalog] gagal memuat katalog:", error.message);
-        return { kategori: [], operator: [], error: true };
+        return { kategori: [], operator: [], game: [], error: true };
     }
 
     const kategori = new Set();
     const operator = new Set();
+    const game = new Set();
     for (const row of data || []) {
         if (row.kategori) kategori.add(String(row.kategori).trim());
         if (row.source_operator_name) operator.add(String(row.source_operator_name).trim());
+        if (row.source_jenis_name) game.add(String(row.source_jenis_name).trim());
     }
 
     const index = {
         kategori: [...kategori].filter(Boolean),
         operator: [...operator].filter(Boolean),
+        game: [...game].filter(Boolean),
         error: false
     };
     cache = { data: index, ts: now };
@@ -117,6 +120,9 @@ async function matchCatalogTarget(rawMessage) {
     }
     for (const name of index.kategori) {
         kandidat.push({ type: "kategori", value: name, term: normalizeTerm(name) });
+    }
+    for (const name of index.game) {
+        kandidat.push({ type: "game", value: name, term: normalizeTerm(name) });
     }
     for (const alias of CATALOG_ALIASES) {
         for (const t of alias.terms) {
@@ -152,7 +158,11 @@ function rupiah(value) {
 const FETCH_MULTIPLIER = 5;
 
 async function fetchProductsForTarget(target, { limit = 6 } = {}) {
-    const kolom = target.type === "operator" ? "source_operator_name" : "kategori";
+    const kolom = target.type === "operator"
+        ? "source_operator_name"
+        : target.type === "game"
+            ? "source_jenis_name"
+            : "kategori";
     const { data, error } = await supabase
         .from("topup_products")
         .select("nama, harga_jual, harga_beli, kategori, source_operator_name")

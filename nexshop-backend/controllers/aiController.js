@@ -13,6 +13,7 @@ const supabase = require("../config/db");
 const NEXBOT_DB_TIMEOUT_MS = 3000;
 const NEXBOT_AI_TIMEOUT_MS = 9000;
 const NEXBOT_CHAT_TIMEOUT_MS = 14000;
+const PRICE_CATALOG_UNAVAILABLE_REPLY = "Maaf, produk atau game yang ditanyakan belum ditemukan di katalog aktif NexShop. Sebutkan nama game atau layanan yang ingin dicek, lalu aku akan mencarikan harga terbaru.";
 
 function resolveWithin(task, timeoutMs, fallback) {
     let timer;
@@ -70,7 +71,7 @@ const BUILTIN_KNOWLEDGE = [
     { id: "builtin-trust", title: "Keamanan Bertransaksi di NexShop", category: "Trust", keywords: "aman terpercaya keamanan transaksi kepercayaan", content: "NexShop terdaftar resmi di sistem OSS pemerintah dengan NIB 1408260072494, menggunakan mekanisme escrow untuk transaksi yang mendukungnya, dan memproses pembayaran melalui iPaymu sebagai payment gateway resmi. Kombinasi ini yang jadi dasar keamanan bertransaksi di NexShop.", priority: 6, status: "active" },
     { id: "builtin-topup", title: "Cara Topup Diamond", category: "Guide", keywords: "cara topup diamond ml mlbb mobile legends free fire pubg", content: "Buka menu Topup, pilih game, masukkan User ID dan Zone ID bila diminta, pilih nominal, lalu selesaikan pembayaran. Pesanan diproses otomatis setelah pembayaran terkonfirmasi.", priority: 5, status: "active" },
     { id: "builtin-produk", title: "Cara Membeli Produk", category: "Guide", keywords: "cara membeli produk beli produk checkout keranjang cart pesan barang", content: "Buka menu Produk, pilih item yang kamu inginkan, klik Beli atau tambahkan ke keranjang. Lanjutkan ke Checkout, isi data penerima (nama, kontak, alamat/ID sesuai jenis produk), pilih metode pembayaran, lalu selesaikan pembayaran. Pesanan diproses otomatis setelah pembayaran terkonfirmasi dan status pesanan bisa dicek lewat menu Cek Transaksi.", priority: 5, status: "active" },
-    { id: "builtin-refund", title: "Kebijakan Refund", category: "Policy", keywords: "refund pengembalian dana batal garansi", content: "Untuk kendala saldo atau item yang tidak masuk, siapkan Nomor Order ID dan hubungi Customer Service NexShop agar pesanan dapat diperiksa secara manual.", priority: 5, status: "active" },
+    { id: "builtin-refund", title: "Kebijakan Refund", category: "Policy", keywords: "refund pengembalian dana batal garansi", content: "Jika User ID atau Zone ID salah, segera hubungi Customer Service NexShop dan siapkan Nomor Order ID. Refund tidak otomatis dan tidak selalu dijamin karena perlu pemeriksaan status pesanan serta kemungkinan proses provider; CS akan mengonfirmasi apakah pembatalan atau pengembalian dana masih dapat dilakukan.", priority: 5, status: "active" },
 
     // ------------------------------------------------------------------
     // MARKETPLACE / PPOB
@@ -137,6 +138,12 @@ function normalizeTemplateQuery(value) {
 function getTemplateKnowledge(message) {
     const id = TEMPLATE_KNOWLEDGE_BY_QUERY[normalizeTemplateQuery(message)];
     return id ? BUILTIN_KNOWLEDGE.find((item) => item.id === id) || null : null;
+}
+
+function isRefundQuery(message) {
+    const text = String(message || "").toLowerCase();
+    if (/\b(refund|pengembalian\s+dana|uang\s+kembali)\b/.test(text)) return true;
+    return /(?:salah|keliru|salah\s+(?:memasukkan|masukin|input)).{0,50}\b(?:id|user\s+id|zone\s+id)\b|\b(?:id|user\s+id|zone\s+id)\b.{0,50}(?:salah|keliru)/.test(text);
 }
 
 // ============================================================================
@@ -305,7 +312,11 @@ async function handlePriceQuery(message, user) {
         return hitungHargaReseller(Number(row.harga_jual), Number(row.harga_beli), diskon);
     };
 
-    const label = target.type === "operator" ? target.value : `kategori ${target.value}`;
+    const label = target.type === "operator"
+        ? target.value
+        : target.type === "game"
+            ? target.value
+            : `kategori ${target.value}`;
     const termurah = hargaFinal(rows[0]);
 
     const daftar = rows
@@ -675,6 +686,7 @@ async function handleOrderLookup(message, user) {
 
 async function answer(message, sessionId, user) {
     const templateKnowledge = getTemplateKnowledge(message);
+    const refundQuery = isRefundQuery(message);
     const isContact = isContactQuery(message);
     const isBudgetQuery = !isContact && isBudgetQuestion(message);
     // Intent Order juga mencakup pertanyaan informasional seperti "berapa
@@ -696,7 +708,8 @@ async function answer(message, sessionId, user) {
     // retrieval, and provider calls. The only allowed pre-RAG read is a price
     // catalog probe for dynamically named products.
     const preRagScope = isNexShopScope(message, preRagResult);
-    const preRagPriceReply = (!preRagScope && nexbotCatalog.isPriceQuestion(message))
+    const priceQuestion = nexbotCatalog.isPriceQuestion(message);
+    const preRagPriceReply = priceQuestion
         ? await resolveWithin(handlePriceQuery(message, user), NEXBOT_DB_TIMEOUT_MS, null)
         : null;
     const scopeEstablished = preRagScope || Boolean(preRagPriceReply);
@@ -711,20 +724,33 @@ async function answer(message, sessionId, user) {
             knowledgeIds: []
         };
     }
+    if (priceQuestion && !preRagPriceReply) {
+        const reply = formatProfessionalReply(PRICE_CATALOG_UNAVAILABLE_REPLY);
+        return {
+            reply,
+            source: "price_catalog_unavailable",
+            handoff: false,
+            intent: preRagResult.intent,
+            entities: preRagResult.entities,
+            knowledgeIds: []
+        };
+    }
 
-    const directPath = templateKnowledge || isContact || isBudgetQuery || isOrderQuery;
+    const directPath = templateKnowledge || refundQuery || isContact || isBudgetQuery || isOrderQuery || Boolean(preRagPriceReply);
+    const refundKnowledge = BUILTIN_KNOWLEDGE.find((item) => item.id === "builtin-refund");
     const result = directPath
-        ? { ...preRagResult, selected: templateKnowledge ? [templateKnowledge] : [] }
+        ? { ...preRagResult, selected: templateKnowledge ? [templateKnowledge] : refundQuery ? [refundKnowledge] : [] }
         : await retrieveKnowledge(message, sessionId, user);
 
     let reply = "";
     let source = "knowledge";
-    const priceReply = preRagPriceReply || (!templateKnowledge && !isContact && !isBudgetQuery && !isOrderQuery
-        ? await resolveWithin(handlePriceQuery(message, user), NEXBOT_DB_TIMEOUT_MS, null)
-        : null);
+    const priceReply = preRagPriceReply;
     if (templateKnowledge) {
         reply = renderKnowledgeFallback([templateKnowledge]);
         source = "template_knowledge";
+    } else if (refundQuery) {
+        reply = renderKnowledgeFallback([refundKnowledge]);
+        source = "refund_policy";
     } else if (isContact) {
         reply = await resolveWithin(handleContactQuery(), NEXBOT_DB_TIMEOUT_MS, localConversationFallback(message));
         source = "contact_info";
