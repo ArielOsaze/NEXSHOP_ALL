@@ -17,12 +17,14 @@ const { getTurnstileConfig, isTurnstileRequired, verifyTurnstile } = require("..
 // PROGRAM RESELLER & PARTNER PORTAL NEXSHOP
 //
 // Alurnya:
-// 1. User login -> lengkapi data KYC KTP & usaha -> ajukan diri jadi reseller.
+// 1. Pendaftar membuat akun Portal Reseller dengan email + password TERPISAH
+//    dari akun storefront NexShop, lalu mengisi data KYC KTP & usaha.
 // 2. Admin meninjau data usaha & foto KTP di Admin Dashboard -> Setujui / Tolak.
-// 3. Setelah disetujui (status: 'approved'), user mendapatkan:
-//    - Potongan harga otomatis di seluruh etalase web saat login.
+// 3. Setelah disetujui (status: 'approved'), identity portal mendapatkan:
+//    - Potongan harga otomatis di etalase web saat memakai jalur reseller.
 //    - Akses ke Partner Portal (/portal-reseller) untuk mengelola API Key,
 //      Secret Key, IP Whitelist, Webhook Endpoint, dan daftar harga modal.
+// JWT customer biasa tidak pernah diterima oleh endpoint portal.
 // ===========================================================
 
 const BELUM_SETUP = "Fitur kemitraan NexShop saat ini sedang tidak tersedia. Silakan coba lagi nanti.";
@@ -152,102 +154,100 @@ exports.resellerRegister = async (req, res) => {
     }
 
     try {
-        const { data: existingUser, error: findErr } = await supabase
-            .from("users")
-            .select("id, email, fullname, role, reseller_status, phone")
-            .eq("email", email)
-            .maybeSingle();
-
-        if (findErr && !isMissingTableError(findErr)) {
-            console.error("resellerRegister find user error:", findErr);
+        // Schema dedicated wajib tersedia. Jangan pernah fallback ke login
+        // customer lama karena itu menggabungkan dua boundary autentikasi.
+        const { error: portalSchemaErr } = await supabase
+            .from("reseller_portal_accounts")
+            .select("id")
+            .limit(1);
+        if (portalSchemaErr) {
+            if (isMissingTableError(portalSchemaErr)) {
+                return res.status(503).json({ message: "Akun Portal Reseller belum siap. Admin perlu menerapkan migration 023 terlebih dahulu.", code: "RESELLER_PORTAL_NOT_SETUP" });
+            }
+            throw portalSchemaErr;
         }
 
-        let userId;
-        let userRole = "user";
+        const { data: existingUser, error: findErr } = await supabase
+            .from("users")
+            .select("id, email")
+            .eq("email", email)
+            .maybeSingle();
+        if (findErr) {
+            if (isMissingTableError(findErr)) return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
+            throw findErr;
+        }
 
+        // Email akun Portal harus identity baru. Tidak boleh mengadopsi,
+        // menimpa, atau memakai password akun belanja utama.
         if (existingUser) {
-            // ==========================================================
-            // KEAMANAN — JANGAN PERNAH MENIMPA AKUN YANG SUDAH ADA
-            //
-            // Versi sebelumnya: kalau email-nya sudah kedaftar, endpoint ini
-            // nge-hash password yang BARU DIKIRIM PENDAFTAR lalu nimpa
-            // password akun lama, terus nerbitin JWT pakai id + role akun itu.
-            // Efeknya: siapa pun yang tau alamat email seorang user (termasuk
-            // email admin) bisa nembak endpoint publik ini, ngeganti password
-            // korban, dan langsung dapet token dengan role korban -> ambil
-            // alih akun + eskalasi hak akses penuh, tanpa perlu tau password
-            // lama sama sekali.
-            //
-            // Sekarang: pendaftaran email yang sudah terdaftar DITOLAK. Kalau
-            // itu memang akun dia sendiri, dia harus login dulu (tab "Masuk"),
-            // baru ngirim pengajuan lewat POST /api/reseller/apply yang
-            // terproteksi authMiddleware. Password akun eksisting tidak
-            // pernah disentuh oleh jalur publik ini.
-            // ==========================================================
             return res.status(409).json({
-                message: "Email ini sudah terdaftar di NexShop. Silakan masuk lewat tab \"Masuk Portal\" memakai password akun kamu, lalu kirim pengajuan kemitraan dari dalam portal.",
-                code: "EMAIL_ALREADY_REGISTERED"
+                message: "Email tersebut sudah dipakai akun belanja NexShop. Untuk keamanan, buat akun Portal Reseller dengan email dan password yang berbeda.",
+                code: "PORTAL_EMAIL_MUST_BE_SEPARATE"
             });
-        } else {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            const insertUserPayload = {
+        }
+
+        const internalPassword = await bcrypt.hash(crypto.randomBytes(32).toString("base64url"), 10);
+        const { data: newUser, error: insertUserErr } = await supabase
+            .from("users")
+            .insert([{
                 fullname,
                 email,
-                password: hashedPassword,
+                password: internalPassword,
                 phone: whatsapp,
                 role: "user",
                 email_verified: true,
-                reseller_status: "pending"
-            };
+                reseller_status: "pending",
+                account_scope: "portal_only"
+            }])
+            .select("id, email, fullname, role")
+            .maybeSingle();
 
-            let { data: newUser, error: insertUserErr } = await supabase
-                .from("users")
-                .insert([insertUserPayload])
-                .select("id, email, fullname, role")
-                .maybeSingle();
-
-            // Fallback jika kolom reseller_status belum ada di tabel users
-            if (insertUserErr && String(insertUserErr.message || "").toLowerCase().includes("reseller_status")) {
-                delete insertUserPayload.reseller_status;
-                const retry = await supabase
-                    .from("users")
-                    .insert([insertUserPayload])
-                    .select("id, email, fullname, role")
-                    .maybeSingle();
-                newUser = retry.data;
-                insertUserErr = retry.error;
+        if (insertUserErr) {
+            console.error("resellerRegister insert portal identity error:", insertUserErr);
+            if (insertUserErr.code === "23505") {
+                return res.status(409).json({
+                    message: "Email tersebut baru saja dipakai akun lain. Gunakan email Portal Reseller yang berbeda.",
+                    code: "PORTAL_EMAIL_MUST_BE_SEPARATE"
+                });
             }
-
-            if (insertUserErr) {
-                console.error("resellerRegister insert user error:", insertUserErr);
-                if (insertUserErr.code === "23505") {
-                    // Race: akun dengan email/WhatsApp ini keburu dibuat di
-                    // antara pengecekan di atas dan INSERT ini. Sama seperti
-                    // cabang existingUser -- JANGAN diam-diam "adopsi" akun
-                    // itu lalu nerbitin token buatnya. Pendaftar belum
-                    // membuktikan dia pemilik akunnya.
-                    return res.status(409).json({
-                        message: "Email atau nomor WhatsApp ini sudah terdaftar pada akun lain. Silakan masuk lewat tab \"Masuk Portal\" untuk melanjutkan pengajuan kemitraan.",
-                        code: "EMAIL_ALREADY_REGISTERED"
-                    });
-                }
-                return res.status(400).json({ message: "Gagal membuat akun user: " + (insertUserErr.message || "Periksa data Anda") });
+            if (isMissingTableError(insertUserErr) || String(insertUserErr.message || "").toLowerCase().includes("account_scope")) {
+                return res.status(503).json({ message: "Identity Portal Reseller belum siap. Admin perlu menerapkan migration 023 terlebih dahulu.", code: "RESELLER_PORTAL_NOT_SETUP" });
             }
-
-            if (newUser) {
-                userId = newUser.id;
-                userRole = newUser.role || "user";
-            }
+            throw insertUserErr;
         }
 
-        // Sampai titik ini userId HARUS berasal dari baris users yang baru saja
-        // kita INSERT sendiri di request ini. Jalur fallback lama (cari user by
-        // email lalu pakai id-nya) sengaja dihapus: itu jalan masuk yang sama
-        // ke pengambilalihan akun -- token diterbitkan untuk akun yang tidak
-        // pernah diautentikasi di request ini.
-        if (!userId) {
-            return res.status(500).json({ message: "Gagal memproses data akun pengguna." });
+        const portalPasswordHash = await bcrypt.hash(password, 10);
+        const { data: portalAccount, error: portalAccountErr } = await supabase
+            .from("reseller_portal_accounts")
+            .insert([{
+                user_id: newUser.id,
+                email,
+                password_hash: portalPasswordHash,
+                status: "pending"
+            }])
+            .select("id")
+            .maybeSingle();
+        if (portalAccountErr || !portalAccount) {
+            await supabase.from("users").delete().eq("id", newUser.id);
+            if (portalAccountErr && isMissingTableError(portalAccountErr)) {
+                return res.status(503).json({ message: "Akun Portal Reseller belum siap. Admin perlu menerapkan migration 023 terlebih dahulu.", code: "RESELLER_PORTAL_NOT_SETUP" });
+            }
+            if (portalAccountErr?.code === "23505") {
+                return res.status(409).json({ message: "Email Portal Reseller sudah terdaftar. Gunakan email lain.", code: "PORTAL_EMAIL_ALREADY_REGISTERED" });
+            }
+            throw portalAccountErr || new Error("Portal account tidak terbentuk");
         }
+
+        const userId = newUser.id;
+        const userRole = newUser.role || "user";
+        const portalAccountId = portalAccount.id;
+        const rollbackPortalIdentity = async () => {
+            await supabase.from("reseller_portal_accounts").delete().eq("id", portalAccountId);
+            await supabase.from("users").delete().eq("id", userId);
+        };
+
+        // Sampai titik ini identity portal dan password portal sudah terbentuk.
+        // Tidak ada jalur yang memakai kredensial akun storefront.
 
         // Simpan atau perbarui pengajuan ke reseller_applications
         const appPayload = {
@@ -273,35 +273,19 @@ exports.resellerRegister = async (req, res) => {
 
         let appErr;
         if (existingApp) {
-            // Update pengajuan pending yang sudah ada
             const updateAppRes = await supabase
                 .from("reseller_applications")
                 .update(appPayload)
                 .eq("id", existingApp.id);
             appErr = updateAppRes.error;
-
-            if (appErr && (String(appErr.message || "").toLowerCase().includes("ktp_url") || String(appErr.message || "").toLowerCase().includes("nik") || appErr.code === "42703")) {
-                delete appPayload.ktp_url;
-                delete appPayload.nik;
-                const retryUpdate = await supabase.from("reseller_applications").update(appPayload).eq("id", existingApp.id);
-                appErr = retryUpdate.error;
-            }
         } else {
-            // Insert pengajuan baru
             const insertAppRes = await supabase
                 .from("reseller_applications")
                 .insert([appPayload]);
             appErr = insertAppRes.error;
 
-            // Fallback jika migrasi 010 (kolom ktp_url atau nik) belum di-apply
-            if (appErr && (String(appErr.message || "").toLowerCase().includes("ktp_url") || String(appErr.message || "").toLowerCase().includes("nik") || appErr.code === "42703")) {
-                delete appPayload.ktp_url;
-                delete appPayload.nik;
-                const retryApp = await supabase.from("reseller_applications").insert([appPayload]);
-                appErr = retryApp.error;
-            }
-
-            // Jika terkena unique constraint idx_reseller_app_one_pending karena race condition, fallback update
+            // Race condition pada unique pending index: ambil baris pending
+            // yang sudah dibuat request lain dan perbarui secara idempoten.
             if (appErr && (appErr.code === "23505" || String(appErr.message || "").includes("idx_reseller_app_one_pending"))) {
                 const fallbackUpdate = await supabase
                     .from("reseller_applications")
@@ -314,10 +298,11 @@ exports.resellerRegister = async (req, res) => {
 
         if (appErr) {
             console.error("resellerRegister application insert/update error:", appErr);
-            if (isMissingTableError(appErr)) {
-                return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
+            await rollbackPortalIdentity();
+            if (isMissingTableError(appErr) || String(appErr.message || "").toLowerCase().includes("ktp_url") || String(appErr.message || "").toLowerCase().includes("nik") || appErr.code === "42703") {
+                return res.status(503).json({ message: "Modul KYC belum siap di server. Admin perlu menerapkan migration 010 dan 023 terlebih dahulu.", code: "RESELLER_KYC_NOT_SETUP" });
             }
-            return res.status(500).json({ message: "Gagal menyimpan pengajuan kemitraan: " + (appErr.message || "") });
+            return res.status(500).json({ message: "Gagal menyimpan pengajuan kemitraan." });
         }
 
         try {
@@ -327,13 +312,22 @@ exports.resellerRegister = async (req, res) => {
         } catch (_) {}
 
         const token = jwt.sign(
-            { id: userId, email, fullname, role: userRole, is_reseller: true, reseller_status: "pending" },
+            {
+                id: userId,
+                portal_account_id: portalAccountId,
+                auth_context: "reseller_portal",
+                email,
+                fullname,
+                role: userRole,
+                is_reseller: true,
+                reseller_status: "pending"
+            },
             process.env.JWT_SECRET,
             { expiresIn: "14d" }
         );
 
         return res.status(201).json({
-            message: "Pendaftaran akun mitra reseller berhasil! Pengajuan identitas (KYC) Anda sedang diverifikasi admin (Maksimal 3x24 Jam kerja).",
+            message: "Akun Portal Reseller berhasil dibuat! Pengajuan KYC Anda sedang diverifikasi admin (Maksimal 3x24 Jam kerja).",
             token,
             status: "pending",
             user: {
@@ -353,105 +347,87 @@ exports.resellerRegister = async (req, res) => {
 
 exports.resellerLogin = async (req, res) => {
     const email = String(req.body.email || "").trim().toLowerCase();
-    const password = String(req.body.password || "").trim();
+    const password = typeof req.body.password === "string" ? req.body.password : "";
 
     if (!await requireResellerHumanVerification(req, res)) return;
 
     if (!email || !password) {
-        return res.status(400).json({ message: "Email dan password wajib diisi" });
+        return res.status(400).json({ message: "Email dan password Portal wajib diisi" });
     }
 
     try {
-        const { data: user, error: userErr } = await supabase
-            .from("users")
-            // KEAMANAN: dulu memakai .ilike() -- di PostgREST, ilike
-            // memperlakukan % dan _ sebagai wildcard. Nilai email seperti
-            // "a%@%" karena itu mencocokkan akun LAIN, dan .maybeSingle()
-            // ikut error kalau kecocokannya lebih dari satu. Email sudah
-            // dinormalisasi ke huruf kecil di atas, jadi pencocokan persis
-            // (.eq) sudah cukup dan tidak punya wildcard sama sekali.
-            // Kolom inti akun dipisah dari kolom program reseller. Ini
-            // memastikan migrasi reseller yang belum diterapkan tidak
-            // menyamar sebagai kredensial salah pada layar login.
-            .select("id, fullname, email, password, role, phone, is_blacklisted")
+        // Login portal hanya membaca credential dari tabel dedicated. Tidak ada
+        // fallback ke users.email/users.password milik akun belanja.
+        const { data: portalAccount, error: portalErr } = await supabase
+            .from("reseller_portal_accounts")
+            .select("id, user_id, email, password_hash, status")
             .eq("email", email)
             .maybeSingle();
 
-        if (userErr && !isMissingTableError(userErr)) {
-            console.error("resellerLogin error:", userErr);
+        if (portalErr) {
+            if (isMissingTableError(portalErr)) {
+                return res.status(503).json({ message: "Akun Portal Reseller belum siap. Admin perlu menerapkan migration 023 terlebih dahulu.", code: "RESELLER_PORTAL_NOT_SETUP" });
+            }
+            console.error("resellerLogin portal account error:", portalErr);
             return res.status(500).json({ message: "Database Error" });
         }
 
-        if (!user) {
-            return res.status(401).json({ message: "Email atau password salah. Pastikan Anda sudah mendaftar pada tab 'Daftar Akun Baru & KYC'." });
+        if (!portalAccount || !await bcrypt.compare(password, portalAccount.password_hash)) {
+            return res.status(401).json({ message: "Email atau password Portal Reseller salah." });
+        }
+        if (portalAccount.status === "suspended") {
+            return res.status(403).json({ message: "Akun Portal Reseller sedang dibekukan. Hubungi admin NexShop.", code: "RESELLER_PORTAL_SUSPENDED" });
         }
 
-        const validPassword = await bcrypt.compare(password, user.password);
-        if (!validPassword) {
-            return res.status(401).json({ message: "Email atau password salah." });
-        }
-
-        if (user.is_blacklisted) {
-            return res.status(403).json({ message: "Akun Anda telah diblokir. Hubungi admin NexShop." });
-        }
-
-        // Status program reseller memang ada di migrasi 008. Jangan
-        // menganggap akun biasa sebagai reseller bila skema ini belum ada;
-        // beri petunjuk setup yang eksplisit agar user tidak melihat pesan
-        // "email/password salah" untuk masalah server.
-        const { data: resellerUser, error: resellerUserErr } = await supabase
+        const { data: user, error: userErr } = await supabase
             .from("users")
-            .select("reseller_status")
-            .eq("id", user.id)
+            .select("id, email, fullname, role, phone, reseller_status, account_scope, is_blacklisted")
+            .eq("id", portalAccount.user_id)
             .maybeSingle();
-        let status = "none";
-        if (resellerUserErr) {
-            if (!isMissingTableError(resellerUserErr)) {
-                console.error("resellerLogin reseller status error:", resellerUserErr);
-                return res.status(500).json({ message: "Database Error" });
-            }
-            // Jika tabel missing, status tetap "none"
-        } else if (resellerUser) {
-            status = resellerUser.reseller_status || "none";
+        if (userErr) {
+            if (isMissingTableError(userErr)) return res.status(503).json({ message: BELUM_SETUP, code: "RESELLER_NOT_SETUP" });
+            console.error("resellerLogin portal owner error:", userErr);
+            return res.status(500).json({ message: "Database Error" });
+        }
+        if (!user || user.account_scope !== "portal_only") {
+            return res.status(403).json({ message: "Identity Portal Reseller tidak valid. Hubungi admin NexShop.", code: "PORTAL_IDENTITY_INVALID" });
+        }
+        if (user.is_blacklisted) {
+            return res.status(403).json({ message: "Akun Portal Reseller telah diblokir. Hubungi admin NexShop." });
         }
 
-        // Jika status pada users belum terisi (data lama), cek riwayat
-        // pengajuan terakhir yang menjadi sumber status cadangan.
-        if (status === "none") {
-            const { data: latestApp, error: latestAppErr } = await supabase
-                .from("reseller_applications")
-                .select("status")
-                .eq("user_id", user.id)
-                .order("created_at", { ascending: false })
-                .limit(1)
-                .maybeSingle();
-            
-            if (latestAppErr) {
-                if (!isMissingTableError(latestAppErr)) {
-                    console.error("resellerLogin application status error:", latestAppErr);
-                    return res.status(500).json({ message: "Database Error" });
-                }
-            } else if (latestApp && latestApp.status) {
-                status = latestApp.status;
-            }
-        }
+        const status = user.reseller_status || portalAccount.status || "pending";
+        await supabase
+            .from("reseller_portal_accounts")
+            .update({ last_login_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+            .eq("id", portalAccount.id);
 
         const token = jwt.sign(
-            { id: user.id, email: user.email, fullname: user.fullname, role: user.role, is_reseller: true, reseller_status: status },
+            {
+                id: user.id,
+                portal_account_id: portalAccount.id,
+                auth_context: "reseller_portal",
+                email: portalAccount.email,
+                fullname: user.fullname,
+                role: user.role,
+                is_reseller: true,
+                reseller_status: status
+            },
             process.env.JWT_SECRET,
             { expiresIn: "14d" }
         );
 
         return res.json({
-            message: status === "approved" 
-                ? "Login Partner Portal berhasil" 
-                : "Login berhasil. Akun Anda saat ini sedang dalam proses verifikasi identitas (KYC) oleh admin (Maksimal 3x24 Jam kerja).",
+            message: status === "approved"
+                ? "Login Portal Reseller berhasil"
+                : "Login Portal Reseller berhasil. Pengajuan KYC masih menunggu proses admin.",
             token,
             status,
             user: {
                 id: user.id,
+                portal_account_id: portalAccount.id,
                 fullname: user.fullname,
-                email: user.email,
+                email: portalAccount.email,
                 phone: user.phone,
                 role: user.role,
                 reseller_status: status
@@ -459,7 +435,7 @@ exports.resellerLogin = async (req, res) => {
         });
     } catch (err) {
         console.error("resellerLogin error:", err);
-        return res.status(500).json({ message: "Terjadi kesalahan server saat login reseller" });
+        return res.status(500).json({ message: "Terjadi kesalahan server saat login Portal Reseller" });
     }
 };
 
@@ -693,6 +669,15 @@ exports.decideApplication = async (req, res) => {
         const { error: userErr } = await supabase.from("users").update(userPayload).eq("id", app.user_id);
         if (userErr) throw userErr;
 
+        // Status akses portal disinkronkan dengan status reseller internal.
+        // Password/identity portal tetap terpisah; yang berubah hanya status
+        // approval yang dikelola admin.
+        const { error: portalStatusErr } = await supabase
+            .from("reseller_portal_accounts")
+            .update({ status: action === "approve" ? "approved" : "rejected", updated_at: now })
+            .eq("user_id", app.user_id);
+        if (portalStatusErr && !isMissingTableError(portalStatusErr)) throw portalStatusErr;
+
         // Jika disetujui, pastikan pasangan API Key & Secret Key dibuat otomatis
         if (action === "approve") {
             try {
@@ -811,6 +796,15 @@ exports.updateResellerUser = async (req, res) => {
             throw error;
         }
         if (!data || !data.length) return res.status(404).json({ message: "User tidak ditemukan" });
+
+        const portalStatus = status === "suspended" ? "suspended" : status === "approved" ? "approved" : status === "none" ? "rejected" : null;
+        if (portalStatus) {
+            const { error: portalStatusErr } = await supabase
+                .from("reseller_portal_accounts")
+                .update({ status: portalStatus, updated_at: new Date().toISOString() })
+                .eq("user_id", id);
+            if (portalStatusErr && !isMissingTableError(portalStatusErr)) throw portalStatusErr;
+        }
 
         notify("reseller", `🔧 ${req.user.email} mengubah reseller ${data[0].fullname}: status ${data[0].reseller_status}, tier ${data[0].reseller_tier || "-"}`);
         res.json({ message: "Data reseller diperbarui", data: data[0] });

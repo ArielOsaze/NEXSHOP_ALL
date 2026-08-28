@@ -1259,12 +1259,16 @@
             <div style="display:flex;background:rgba(255,255,255,0.06);border-radius:12px;padding:4px;margin-bottom:1.5rem;">
                 <button type="button" id="tabBtnLogin" onclick="switchAuthTab('login')"
                     style="flex:1;padding:0.65rem;border:none;border-radius:8px;font-weight:700;font-size:0.86rem;cursor:pointer;background:#2563eb;color:#fff;transition:all 0.15s ease;">
-                    <i class="fa-solid fa-right-to-bracket" style="font-size:1rem;vertical-align:middle;margin-right:4px;" aria-hidden="true"></i> Masuk Mitra
+                    <i class="fa-solid fa-right-to-bracket" style="font-size:1rem;vertical-align:middle;margin-right:4px;" aria-hidden="true"></i> Masuk Portal Reseller
                 </button>
                 <button type="button" id="tabBtnRegister" onclick="switchAuthTab('register')"
                     style="flex:1;padding:0.65rem;border:none;border-radius:8px;font-weight:700;font-size:0.86rem;cursor:pointer;background:transparent;color:#94a3b8;transition:all 0.15s ease;">
                     <i class="fa-solid fa-user-check" style="font-size:1rem;vertical-align:middle;margin-right:4px;" aria-hidden="true"></i> Daftar Baru &amp; KYC
                 </button>
+            </div>
+
+            <div style="margin:-0.35rem 0 1.25rem;padding:0.75rem 0.9rem;border:1px solid rgba(56,189,248,0.25);border-radius:10px;background:rgba(14,116,144,0.12);color:#bae6fd;font-size:0.8rem;line-height:1.55;">
+                <strong>Akun portal terpisah.</strong> Partner Portal memakai email dan password khusus yang berbeda dari akun belanja NexShop. Login akun belanja biasa tidak dapat membuka portal ini.
             </div>
 
             <!-- TAB 1: FORM LOGIN MITRA -->
@@ -1273,7 +1277,7 @@
                     <div id="loginErrorMsg" role="alert" aria-live="polite" style="display:none;background:rgba(239,68,68,0.15);color:#fca5a5;padding:0.75rem 1rem;border-radius:8px;font-size:0.84rem;font-weight:600;margin-bottom:1rem;border:1px solid rgba(239,68,68,0.3);"></div>
 
                     <div style="margin-bottom:1.15rem;">
-                        <label class="form-label" for="loginEmail">Email Akun Mitra <span style="color:#ef4444;">*</span></label>
+                        <label class="form-label" for="loginEmail">Email Portal Reseller (harus berbeda dari akun belanja) <span style="color:#ef4444;">*</span></label>
                         <input type="email" id="loginEmail" required autocomplete="email" inputmode="email" class="form-control" placeholder="nama@domain.com" aria-describedby="loginErrorMsg" style="width:100%;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;font-size:0.9rem;box-sizing:border-box;">
                     </div>
 
@@ -1299,11 +1303,11 @@
 
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:0.95rem;">
                         <div>
-                            <label class="form-label" for="regEmail">Email Mitra <span style="color:#ef4444;">*</span></label>
+                            <label class="form-label" for="regEmail">Email Portal Reseller (wajib berbeda) <span style="color:#ef4444;">*</span></label>
                             <input type="email" id="regEmail" required placeholder="mitra@domain.com" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
                         </div>
                         <div>
-                            <label class="form-label" for="regPassword">Password Akun <span style="color:#ef4444;">*</span></label>
+                            <label class="form-label" for="regPassword">Password Portal Reseller <span style="color:#ef4444;">*</span></label>
                             <input type="password" id="regPassword" required minlength="8" placeholder="Min. 8 Karakter" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
                         </div>
                     </div>
@@ -1384,7 +1388,7 @@
 
                     <button type="submit" id="btnRegisterSubmit" style="width:100%;padding:0.8rem;border:none;border-radius:12px;background:linear-gradient(135deg,#00c2e8,#0891b2);color:#fff;font-weight:800;font-size:0.94rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 16px rgba(0,194,232,0.4);">
                         <i class="fa-solid fa-user-check" aria-hidden="true"></i>
-                        <span>Daftar Akun Mitra &amp; Kirim Berkas KYC</span>
+                        <span>Daftar Akun Portal Reseller &amp; Kirim Berkas KYC</span>
                     </button>
                 </form>
             </div>
@@ -2993,19 +2997,11 @@
                 });
                 const data = await res.json().catch(() => ({}));
 
-                // Email sudah terdaftar. Server sengaja MENOLAK (bukan
-                // menimpa akun lama seperti perilaku sebelumnya, yang bisa
-                // dipakai mengambil alih akun orang lain). Arahkan langsung
-                // ke tab Masuk supaya pendaftar tidak buntu di sini.
-                if (res.status === 409 || data.code === "EMAIL_ALREADY_REGISTERED") {
-                    switchAuthTab("login");
-                    const inputEmailLogin = document.getElementById("loginEmail");
-                    if (inputEmailLogin) inputEmailLogin.value = payload.email || "";
-                    const errLogin = document.getElementById("loginErrorMsg");
-                    if (errLogin) {
-                        errLogin.textContent = data.message || "Email ini sudah terdaftar. Silakan masuk memakai password akunmu.";
-                        errLogin.style.display = "block";
-                    }
+                // Email yang sudah dipakai akun storefront tidak boleh diarahkan
+                // ke login portal. User harus membuat credential portal terpisah.
+                if (data.code === "PORTAL_EMAIL_MUST_BE_SEPARATE" || data.code === "PORTAL_EMAIL_ALREADY_REGISTERED") {
+                    errEl.textContent = data.message || "Gunakan email dan password Portal Reseller yang berbeda dari akun belanja.";
+                    errEl.style.display = "block";
                     return;
                 }
 
@@ -3027,7 +3023,7 @@
                 errEl.style.display = "block";
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = `<i class="fa-solid fa-user-check" aria-hidden="true"></i> <span>Daftar Akun Mitra &amp; Kirim Berkas KYC</span>`;
+                btn.innerHTML = `<i class="fa-solid fa-user-check" aria-hidden="true"></i> <span>Daftar Akun Portal Reseller &amp; Kirim Berkas KYC</span>`;
             }
         });
 
@@ -3127,6 +3123,11 @@
                 }
 
                 if (res.status === 403) {
+                    if (data.code === "PORTAL_ACCOUNT_REQUIRED" || data.code === "PORTAL_TOKEN_INVALID" || data.code === "PORTAL_IDENTITY_INVALID") {
+                        clearResellerSession();
+                        showPortalAuth(data.message || "Sesi akun belanja tidak dapat digunakan di Partner Portal. Gunakan akun Portal Reseller terpisah.");
+                        return;
+                    }
                     if (data.code === "RESELLER_NOT_REGISTERED") {
                         // Akun ini valid tapi belum pernah daftar jadi reseller sama
                         // sekali -- jangan tampilkan dashboard, arahkan ke form daftar.
@@ -3140,12 +3141,12 @@
                     }
                 }
                 
-                if (res.status === 503 && data.code === "RESELLER_NOT_SETUP") {
+                if (res.status === 503 && (data.code === "RESELLER_NOT_SETUP" || data.code === "RESELLER_PORTAL_NOT_SETUP")) {
                     clearResellerSession();
                     showPortalAuth();
                     const errEl = document.getElementById("loginErrorMsg");
                     if (errEl) {
-                        errEl.innerHTML = `Fitur Reseller belum di-setup di database. Silakan jalankan migration <code>008_create_reseller.sql</code> terlebih dahulu.`;
+                        errEl.textContent = data.message || "Portal Reseller belum siap di server. Admin perlu menerapkan migration terbaru.";
                         errEl.style.display = "block";
                     }
                     return;

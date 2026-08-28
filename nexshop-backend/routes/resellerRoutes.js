@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const resellerController = require("../controllers/resellerController");
 const authMiddleware = require("../middleware/authMiddleware");
+const resellerPortalAuthMiddleware = require("../middleware/resellerPortalAuthMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 const {
     resellerApplyLimiter,
@@ -19,22 +20,23 @@ router.post("/auth/login", resellerLoginLimiter, resellerController.resellerLogi
 // Publik — dipakai halaman info reseller buat nampilin tabel tingkatan
 router.get("/tiers", resellerController.getPublicTiers);
 
-// User yang sudah login
-router.get("/me", authMiddleware, resellerController.getMyResellerStatus);
-router.post("/apply", authMiddleware, resellerApplyLimiter, resellerController.applyReseller);
+// Endpoint status/pengajuan Portal Reseller wajib memakai identity portal.
+// JWT customer dari toko utama tidak diterima di boundary ini.
+router.get("/me", resellerPortalAuthMiddleware, resellerController.getMyResellerStatus);
+router.post("/apply", resellerPortalAuthMiddleware, resellerApplyLimiter, resellerController.applyReseller);
 
-// Partner Portal — Reseller Aktif
-router.get("/portal/overview", authMiddleware, resellerController.getPortalOverview);
-router.get("/portal/secret", authMiddleware, resellerController.revealSecretKey);
-router.post("/portal/api-key/generate", authMiddleware, resellerController.generateOrRotateApiKey);
-router.put("/portal/settings", authMiddleware, resellerController.updatePortalSettings);
-router.get("/portal/products", authMiddleware, resellerController.getPortalProducts);
-router.get("/portal/orders", authMiddleware, resellerController.getPortalOrders);
+// Partner Portal — identity reseller terpisah dari storefront
+router.get("/portal/overview", resellerPortalAuthMiddleware, resellerController.getPortalOverview);
+router.get("/portal/secret", resellerPortalAuthMiddleware, resellerController.revealSecretKey);
+router.post("/portal/api-key/generate", resellerPortalAuthMiddleware, resellerController.generateOrRotateApiKey);
+router.put("/portal/settings", resellerPortalAuthMiddleware, resellerController.updatePortalSettings);
+router.get("/portal/products", resellerPortalAuthMiddleware, resellerController.getPortalProducts);
+router.get("/portal/orders", resellerPortalAuthMiddleware, resellerController.getPortalOrders);
 // Unduhan rincian harga per level reseller (CSV siap-Excel atau JSON).
 // Harga dihitung di server memakai hitungHargaReseller() yang sama dengan
 // checkout, jadi isi file tidak pernah berbeda dari harga yang ditagih.
-router.get("/portal/price-list", authMiddleware, resellerController.getResellerPriceList);
-router.post("/portal/test-webhook", authMiddleware, resellerWebhookTestLimiter, resellerController.testPortalWebhook);
+router.get("/portal/price-list", resellerPortalAuthMiddleware, resellerController.getResellerPriceList);
+router.post("/portal/test-webhook", resellerPortalAuthMiddleware, resellerWebhookTestLimiter, resellerController.testPortalWebhook);
 
 // Admin & staff
 // Foto KTP hanya bisa dilihat lewat endpoint ini (didekripsi on-the-fly,

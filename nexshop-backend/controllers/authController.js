@@ -538,6 +538,16 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Email atau password salah" });
         }
 
+        // Identity Portal Reseller sengaja tidak memiliki sesi storefront.
+        // Walaupun seseorang mengetahui email portal, kredensialnya tidak boleh
+        // membuka akun belanja utama atau mendapatkan JWT customer biasa.
+        if (user.account_scope === "portal_only") {
+            return res.status(403).json({
+                message: "Akun ini khusus Portal Reseller. Gunakan halaman Masuk Portal Reseller.",
+                code: "PORTAL_ACCOUNT_ONLY"
+            });
+        }
+
         if (user.login_locked_until && new Date(user.login_locked_until) > new Date()) {
             return res.status(429).json({ message: "Terlalu banyak percobaan login. Coba lagi beberapa menit lagi atau gunakan lupa password." });
         }
