@@ -19,6 +19,8 @@ assert.match(controller, /salah.*(?:memasukkan|masukin|input).*ID|ID.*salah/i,
 
 assert.match(catalog, /game:\s*\[\]/,
     "fallback katalog harus tetap memiliki daftar game saat database gagal");
+assert.match(catalog, /function normalizeGameFamily\(name\)/,
+    "varian region game harus dinormalisasi ke game family");
 assert.match(catalog, /source_jenis_name/,
     "indeks katalog harus membaca nama game dari source_jenis_name");
 assert.match(catalog, /type:\s*["']game["']/,

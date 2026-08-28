@@ -105,6 +105,14 @@ async function loadCatalogIndex({ fresh = false } = {}) {
     return index;
 }
 
+function normalizeGameFamily(name) {
+    return String(name || "")
+        .trim()
+        .replace(/\s+(?:id|ru|kr|th|ph|sg|my|vn|mena|global|sea|br|us|eu)\s*$/i, "")
+        .replace(/\s+\[[a-z]{2,5}\]\s*$/i, "")
+        .trim();
+}
+
 // Cari kategori/operator yang disebut customer. Yang dipilih adalah
 // kecocokan TERPANJANG: "pulsa telkomsel" harus menang atas "pulsa" dan
 // atas "telkomsel", kalau tidak jawabannya jadi terlalu umum.
@@ -122,7 +130,17 @@ async function matchCatalogTarget(rawMessage) {
         kandidat.push({ type: "kategori", value: name, term: normalizeTerm(name) });
     }
     for (const name of index.game) {
-        kandidat.push({ type: "game", value: name, term: normalizeTerm(name) });
+        const family = normalizeGameFamily(name);
+        const familyNorm = normalizeTerm(family);
+        if (!familyNorm) continue;
+        kandidat.push({ type: "game", value: family, term: normalizeTerm(name) });
+        if (familyNorm !== normalizeTerm(name)) {
+            kandidat.push({ type: "game", value: family, term: familyNorm });
+        }
+        const firstToken = familyNorm.split(" ")[0];
+        if (firstToken && firstToken.length >= 4 && firstToken !== familyNorm) {
+            kandidat.push({ type: "game", value: family, term: firstToken });
+        }
     }
     for (const alias of CATALOG_ALIASES) {
         for (const t of alias.terms) {
@@ -199,6 +217,7 @@ module.exports = {
     fetchProductsForTarget,
     loadCatalogIndex,
     normalizeTerm,
+    normalizeGameFamily,
     containsTerm,
     rupiah,
     CATALOG_ALIASES
