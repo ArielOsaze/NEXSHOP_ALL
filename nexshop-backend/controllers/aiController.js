@@ -696,7 +696,7 @@ async function answer(message, sessionId, user) {
     // retrieval, and provider calls. The only allowed pre-RAG read is a price
     // catalog probe for dynamically named products.
     const preRagScope = isNexShopScope(message, preRagResult);
-    const preRagPriceReply = (!preRagScope && isPriceQuestion(message))
+    const preRagPriceReply = (!preRagScope && nexbotCatalog.isPriceQuestion(message))
         ? await resolveWithin(handlePriceQuery(message, user), NEXBOT_DB_TIMEOUT_MS, null)
         : null;
     const scopeEstablished = preRagScope || Boolean(preRagPriceReply);
