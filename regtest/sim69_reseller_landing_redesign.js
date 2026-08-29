@@ -25,8 +25,8 @@ const count = (value, pattern) => (value.match(pattern) || []).length;
 // Page structure and safe adaptation of the Stitch reference.
 test("reseller page uses one h1 and the dedicated local stylesheet/script", () => {
     assert.strictEqual(count(page, /<h1\b/gi), 1);
-    assert.match(page, /href="\/reseller\.css\?v=20260829-reseller-redesign-1"/);
-    assert.match(page, /src="\/reseller\.js\?v=20260829-reseller-redesign-1"/);
+    assert.match(page, /href="\/reseller\.css\?v=20260829-reseller-motion-1"/);
+    assert.match(page, /src="\/reseller\.js\?v=20260829-reseller-motion-1"/);
     assert.doesNotMatch(page, /cdn\.tailwindcss\.com|@url:`|aida-public|aida\/AEtj/);
     assert.doesNotMatch(page, /<style\b/i);
 });

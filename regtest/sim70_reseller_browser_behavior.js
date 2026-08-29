@@ -129,6 +129,7 @@ function serveStatic(req, res) {
             assert.ok(faqOpen.text.length > 20, `viewport ${width}: FAQ answer has content`);
             assert.strictEqual(await page.$eval("#faq-trigger-1", (el) => el.getAttribute("aria-expanded")), "true");
             await page.$eval("#faq-trigger-1", (element) => element.click());
+            await new Promise((resolve) => setTimeout(resolve, 500));
             assert.strictEqual(await page.$eval("#faq-panel-1", (el) => el.hidden), true, `viewport ${width}: FAQ closes`);
         }
 
