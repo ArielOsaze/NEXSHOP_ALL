@@ -11,7 +11,7 @@ const manifest = fs.readFileSync(path.join(root, "nexshop-frontend/manifest.json
 
 assert.match(
     dashboard,
-    /dashboard\.js\?v=20260828-(?!logout-modal)[A-Za-z0-9_-]+/,
+    /dashboard\.js\?v=20260829-[A-Za-z0-9_-]+/,
     "dashboard.js harus memiliki cache-buster setelah perubahan endpoint action"
 );
 assert.doesNotMatch(dashboard, /dashboard\.js\?v=20260827-logout-modal/);
