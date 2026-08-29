@@ -27,7 +27,8 @@ check(
 check(
     "seluruh URL bersih dilayani tanpa redirect internal kembali ke .html",
     publicRoutes.every((route) => nginx.includes(`location = /${route} { rewrite ^ /${route}.html break; }`)
-        || nginx.includes(`location = /${route} {\n        rewrite ^ /${route}.html break;`))
+        || nginx.includes(`location = /${route} {\n        rewrite ^ /${route}.html break;`)
+        || nginx.includes(`location = /${route} {\n        expires -1;\n        rewrite ^ /${route}.html break;`))
 );
 check(
     "login dan dashboard admin juga memiliki URL tanpa ekstensi",
