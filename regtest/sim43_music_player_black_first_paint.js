@@ -17,7 +17,7 @@ assert.match(index, /class="[^"]*music-cover-image[^"]*"/);
 assert.match(style, /\.music-cover-image\s*\{[\s\S]*?opacity:\s*0/);
 assert.match(style, /\.music-cover-image\.is-loaded\s*\{[\s\S]*?opacity:\s*1/);
 assert.match(index, /style\.css\?v=20260828-progressive-products-1/);
-assert.match(index, /script\.js\?v=20260828-progressive-products-1/);
+assert.match(index, /script\.js\?v=20260829-visual-regression-1/);
 assert.match(index, /class="[^"]*music-disc-shell[^"]*"/);
 assert.match(style, /\.music-disc-shell\s*\{[\s\S]*?background:/);
 assert.match(style, /\.music-disc-shell\s*\{[\s\S]*?border:/);
