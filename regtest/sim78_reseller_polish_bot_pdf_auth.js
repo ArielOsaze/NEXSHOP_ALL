@@ -38,7 +38,7 @@ check("portal CSS memiliki guard untuk dynamic inline text color", /\[style\*=[^
 check("API docs memakai selector theme reseller untuk endpoint/code/table", /docs-endpoint-card|docs-code|docs-api/i.test(docsCss) && /docs-endpoint-card|docs-code|docs-api/i.test(docs));
 check("PDF link publik dan header attachment tersedia", docs.includes('href="/api/docs/reseller.pdf"') && /Content-Type[\s\S]{0,80}application\/pdf/.test(pdfController) && /Content-Disposition[\s\S]{0,100}attachment/.test(pdfController));
 const pdfRenderSource = pdfService.slice(pdfService.indexOf("async function renderResellerDocsPdf"), pdfService.indexOf("async function getResellerDocsPdf"));
-check("PDF renderer tidak memakai inline style yang diblokir CSP", !/addStyleTag\(\{\s*content:/.test(pdfRenderSource) && /addStyleTag\(\{\s*url:/.test(pdfRenderSource));
+check("PDF renderer tidak memakai inline style yang diblokir CSP", !/addStyleTag\(/.test(pdfRenderSource) && /media="print"[^>]+docs-reseller-print\.css/.test(docs));
 check("middleware selalu mengikat token ke identity portal yang terdaftar", /reseller_portal_accounts/.test(portalMiddleware) && /portal_account_id/.test(portalMiddleware) && /user_id/.test(portalMiddleware) && /account_scope/.test(portalMiddleware));
 check("register tidak auto-login atau mengeluarkan access token", /requires_login:\s*true/.test(registerSource) && !/\n\s*token,/.test(registerSource) && !/setResellerSession\(data\.token/.test(registerHandler));
 check("NexBot mengenali pola pertanyaan menghubungi CS dan membersihkan reasoning provider", /function isContactQuery/.test(aiController) && /menghubungi/.test(aiController) && /stripProviderReasoning/.test(aiController));

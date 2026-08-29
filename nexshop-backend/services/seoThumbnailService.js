@@ -257,8 +257,6 @@ async function renderResellerDocsPdf() {
       window.scrollTo(0, 0);
     });
     await page.emulateMediaType("print");
-    const printStylesUrl = new URL("/docs-reseller-print.css?v=20260830-pdf-1", targetUrl).toString();
-    await page.addStyleTag({ url: printStylesUrl });
 
     const pdf = await page.pdf({
       format: "A4",
