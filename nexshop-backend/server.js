@@ -121,6 +121,15 @@ app.use(cors({
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: false, limit: "100kb" }));
 
+// API responses are private by default. Public catalog endpoints may explicitly
+// override this with a documented cache policy after their data is built.
+app.use((req, res, next) => {
+    if (req.path.startsWith("/api/")) {
+        res.setHeader("Cache-Control", "no-store");
+    }
+    next();
+});
+
 // Observe API responses before the rate limiters so repeated 429 responses
 // themselves become a signal. The observer is response-finish only and never
 // blocks or changes the request outcome.

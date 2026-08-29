@@ -188,6 +188,12 @@ check(
 );
 
 check(
+    "API responses default no-store untuk mencegah caching data/session",
+    backendServer.includes('req.path.startsWith("/api/")') &&
+        backendServer.includes('res.setHeader("Cache-Control", "no-store")')
+);
+
+check(
     "CORS origin asing ditolak tanpa error bubbling 500",
     backendServer.includes("callback(null, false)") &&
         !backendServer.includes("callback(new Error(\"CORS: origin tidak diizinkan")
