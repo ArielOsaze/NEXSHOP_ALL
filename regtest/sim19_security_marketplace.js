@@ -194,6 +194,11 @@ check(
 );
 
 check(
+    "HTML clean URLs memakai cache policy no-cache eksplisit",
+    (nginx.match(/expires -1;/g) || []).length >= 15
+);
+
+check(
     "CORS origin asing ditolak tanpa error bubbling 500",
     backendServer.includes("callback(null, false)") &&
         !backendServer.includes("callback(new Error(\"CORS: origin tidak diizinkan")
