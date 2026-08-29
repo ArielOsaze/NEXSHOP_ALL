@@ -188,6 +188,12 @@ check(
 );
 
 check(
+    "CORS origin asing ditolak tanpa error bubbling 500",
+    backendServer.includes("callback(null, false)") &&
+        !backendServer.includes("callback(new Error(\"CORS: origin tidak diizinkan")
+);
+
+check(
     "library CDN versi-pinned memiliki SRI dan Google Fonts self-hosted",
     htmlFiles.every((file) => !/["']https:\/\/fonts\.googleapis\.com/.test(fs.readFileSync(file, "utf8"))) &&
         htmlFiles.every((file) => {
