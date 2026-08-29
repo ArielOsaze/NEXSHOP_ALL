@@ -180,7 +180,7 @@
         const category = document.getElementById("editCategoryFilter")?.value        || "";
 
         const tbody = document.getElementById("editorialTableBody");
-        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4"><span style="opacity:.5">Memuat...</span></td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4"><span data-csp-style="s443072299c4fef">Memuat...</span></td></tr>`;
 
         const params = new URLSearchParams({ page: _state.page, limit: 20 });
         if (search)   params.set("search",   search);
@@ -222,26 +222,26 @@
         }
         tbody.innerHTML = _state.articles.map(art => `
             <tr>
-                <td><input type="checkbox" class="form-check-input edit-row-check" data-id="${art.id}" onchange="editorialRowCheck(this)" ${_state.selected.has(art.id) ? "checked" : ""}></td>
-                <td style="max-width:280px;">
-                    <div class="fw-semibold" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px;" title="${editSafe(art.title,200)}">${editSafe(art.title,80)}</div>
-                    ${art.excerpt ? `<div class="text-muted small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px;">${editSafe(art.excerpt,80)}</div>` : ""}
-                    <div class="small mt-1 font-monospace" style="font-size:0.68rem;color:var(--text-dim);">/berita/${editSafe(art.slug,60)}</div>
+                <td><input type="checkbox" class="form-check-input edit-row-check" data-id="${art.id}" data-csp-onchange="editorialRowCheck(this)" ${_state.selected.has(art.id) ? "checked" : ""}></td>
+                <td data-csp-style="sc388235ac6981b">
+                    <div class="fw-semibold" data-csp-style="sa76891724bd566" title="${editSafe(art.title,200)}">${editSafe(art.title,80)}</div>
+                    ${art.excerpt ? `<div class="text-muted small" data-csp-style="sa76891724bd566">${editSafe(art.excerpt,80)}</div>` : ""}
+                    <div class="small mt-1 font-monospace" data-csp-style="s4a17b70ac0d765">/berita/${editSafe(art.slug,60)}</div>
                 </td>
-                <td><span class="badge bg-dark-subtle border" style="color:var(--text-muted)">${editSafe(art.category,40)}</span></td>
+                <td><span class="badge bg-dark-subtle border" data-csp-style="s500708668cdda3">${editSafe(art.category,40)}</span></td>
                 <td class="text-muted small text-nowrap">${editSafe(art.author,40)}</td>
                 <td>${statusBadge(art.status)}</td>
                 <td class="text-muted small text-nowrap">${editFmtDate(art.published_at || art.created_at)}</td>
                 <td class="text-muted small text-nowrap">${art.view_count || 0}</td>
                 <td>
                     <div class="d-flex gap-1 flex-nowrap">
-                        <button class="btn btn-xs btn-outline-primary" onclick="editorialOpenEdit(${art.id})" title="Edit"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-xs btn-outline-primary" data-csp-onclick="editorialOpenEdit(${art.id})" title="Edit"><i class="bi bi-pencil"></i></button>
                         ${art.status !== "published"
-                            ? `<button class="btn btn-xs btn-outline-success" onclick="editorialPublishOne(${art.id})" title="Publish"><i class="bi bi-send-check"></i></button>`
-                            : `<button class="btn btn-xs btn-outline-secondary" onclick="editorialUnpublishOne(${art.id})" title="Draft"><i class="bi bi-file-earmark"></i></button>`
+                            ? `<button class="btn btn-xs btn-outline-success" data-csp-onclick="editorialPublishOne(${art.id})" title="Publish"><i class="bi bi-send-check"></i></button>`
+                            : `<button class="btn btn-xs btn-outline-secondary" data-csp-onclick="editorialUnpublishOne(${art.id})" title="Draft"><i class="bi bi-file-earmark"></i></button>`
                         }
         <a class="btn btn-xs btn-outline-light" href="/berita/${encodeURIComponent(art.slug)}" target="_blank" title="Lihat publik"><i class="bi bi-box-arrow-up-right"></i></a>
-                        <button class="btn btn-xs btn-outline-danger" onclick="editorialDeleteOne(${art.id},'${editSafe(art.title,60)}')" title="Hapus"><i class="bi bi-trash"></i></button>
+                        <button class="btn btn-xs btn-outline-danger" data-csp-onclick="editorialDeleteOne(${art.id},'${editSafe(art.title,60)}')" title="Hapus"><i class="bi bi-trash"></i></button>
                     </div>
                 </td>
             </tr>
@@ -700,12 +700,12 @@
             return;
         }
         list.innerHTML = sources.map(s => `
-            <div class="card p-3 position-relative" id="src-${s.id}" style="background:var(--bg-panel);border:1px solid var(--line);">
-                <button class="btn btn-xs btn-outline-danger position-absolute top-0 end-0 m-2" onclick="editorialDeleteSource(${s.id})" title="Hapus sumber"><i class="bi bi-trash"></i></button>
+            <div class="card p-3 position-relative" id="src-${s.id}" data-csp-style="s31a951a799f3cf">
+                <button class="btn btn-xs btn-outline-danger position-absolute top-0 end-0 m-2" data-csp-onclick="editorialDeleteSource(${s.id})" title="Hapus sumber"><i class="bi bi-trash"></i></button>
                 <div class="small fw-semibold mb-1">${editSafe(s.source_name, 80)}</div>
-                <a href="${editSafe(s.source_url, 500)}" target="_blank" rel="noopener noreferrer" class="small text-violet" style="word-break:break-all;">${editSafe(s.source_url, 80)}</a>
+                <a href="${editSafe(s.source_url, 500)}" target="_blank" rel="noopener noreferrer" class="small text-violet" data-csp-style="s96c1ef40ed3d51">${editSafe(s.source_url, 80)}</a>
                 ${s.source_title ? `<div class="small text-muted fst-italic mt-1">${editSafe(s.source_title, 100)}</div>` : ""}
-                ${s.notes ? `<div class="small text-muted mt-1 pt-1" style="border-top:1px solid var(--line);font-size:0.72rem;"><i class="bi bi-lock me-1"></i>${editSafe(s.notes, 200)}</div>` : ""}
+                ${s.notes ? `<div class="small text-muted mt-1 pt-1" data-csp-style="s63137008f00be2"><i class="bi bi-lock me-1"></i>${editSafe(s.notes, 200)}</div>` : ""}
             </div>
         `).join("");
     }

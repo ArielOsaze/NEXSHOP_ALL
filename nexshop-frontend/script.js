@@ -488,7 +488,7 @@ function renderPromoCarousel() {
     }).join("");
 
     indicators.innerHTML = promoSlides.map((_, i) => `
-        <button class="transition-all duration-300 ${i === 0 ? 'w-6 h-2 rounded-full bg-brand-cyan' : 'w-2 h-2 rounded-full bg-black/20 dark:bg-white/50'}" onclick="goToPromoSlide(${i})"></button>
+        <button class="transition-all duration-300 ${i === 0 ? 'w-6 h-2 rounded-full bg-brand-cyan' : 'w-2 h-2 rounded-full bg-black/20 dark:bg-white/50'}" data-csp-onclick="goToPromoSlide(${i})"></button>
     `).join("");
 
     promoIndex = 0;
@@ -973,7 +973,7 @@ function avatarFallback(target, user) {
 function renderAvatar(target, user, { header = false } = {}) {
     const url = avatarUrlFor(user);
     if (!url) return avatarFallback(target, user);
-    target.innerHTML = `<img src="${escapeHtml(url)}" alt="Foto profil ${escapeHtml(user.fullname || "pengguna")}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">`;
+    target.innerHTML = `<img src="${escapeHtml(url)}" alt="Foto profil ${escapeHtml(user.fullname || "pengguna")}" data-csp-style="s0ad25958c28d80">`;
     const image = target.querySelector("img");
     image.addEventListener("error", () => avatarFallback(target, user), { once: true });
     if (header) target.setAttribute("aria-label", `Akun ${user.fullname || "saya"}`);
@@ -1992,8 +1992,8 @@ async function renderRatingPrompt(orderData, container) {
         if (eligibility.reason === "already_rated") {
             // Tampilkan status "sudah dirating" agar user tahu
             container.innerHTML = `
-                <div style="text-align:center;padding:0.75rem 0;color:var(--text-muted);font-size:0.95rem;">
-                    <i class="fa-solid fa-star-half-stroke" style="color:#facc15;margin-right:0.4rem;"></i>
+                <div data-csp-style="sf77fb4918dcb8b">
+                    <i class="fa-solid fa-star-half-stroke" data-csp-style="sa013b8b517563c"></i>
                     Rating sudah diberikan untuk pesanan ini. Terima kasih!
                 </div>`;
             container.classList.remove("hidden");
@@ -2005,12 +2005,12 @@ async function renderRatingPrompt(orderData, container) {
     // Inject HTML rating form sepenuhnya ke container
     // (innerHTML di-reset sehingga tidak ada duplicate listener lama)
     container.innerHTML = `
-        <h4 style="margin-bottom:0.5rem;font-size:1.05rem;color:var(--text);"><i class="fa-solid fa-star" aria-hidden="true"></i> Bagaimana pengalamanmu berbelanja di NexShop?</h4>
-        <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:1rem;">Masukan kamu membantu kami meningkatkan layanan.</p>
-        <div id="rp_stars_${uid}" style="display:flex;justify-content:center;gap:0.5rem;margin-bottom:1rem;">
+        <h4 data-csp-style="s1fee06f0d807b5"><i class="fa-solid fa-star" aria-hidden="true"></i> Bagaimana pengalamanmu berbelanja di NexShop?</h4>
+        <p data-csp-style="sb9abdd477e5d33">Masukan kamu membantu kami meningkatkan layanan.</p>
+        <div id="rp_stars_${uid}" data-csp-style="s91bfab96183152">
             ${[1, 2, 3, 4, 5].map(n => `
                 <button type="button" class="rp-star" data-score="${n}" aria-label="Bintang ${n}"
-                    style="background:transparent;border:none;color:var(--text-muted);font-size:1.5rem;cursor:pointer;padding:0.15rem;">
+                    data-csp-style="s513fbeb438c6f8">
                     <i class="fa-regular fa-star"></i>
                 </button>`).join("")}
         </div>
@@ -2018,32 +2018,27 @@ async function renderRatingPrompt(orderData, container) {
             ${isTopup ? `
             <input id="rp_name_${uid}" type="text" maxlength="60"
                 placeholder="Nama kamu (opsional, tampil di testimoni)"
-                style="width:100%;padding:0.65rem 0.75rem;border-radius:8px;border:1px solid var(--line);
-                       background:var(--bg-body);color:var(--text);margin-bottom:0.6rem;
-                       font-family:inherit;font-size:0.92rem;box-sizing:border-box;">
+                data-csp-style="s1f8a8dd32095fb">
             ` : ""}
-            <label style="display:flex;align-items:flex-start;gap:0.5rem;margin-bottom:0.75rem;
-                   font-size:0.85rem;color:var(--text-muted);cursor:pointer;">
-                <input type="checkbox" id="rp_showname_${uid}" style="margin-top:0.2rem;flex-shrink:0;">
+            <label data-csp-style="sf4ddc78f509c0b">
+                <input type="checkbox" id="rp_showname_${uid}" data-csp-style="s802a0a708fc7af">
                 <span>Tampilkan nama saya apa adanya di testimoni publik. Jika tidak dicentang, nama akan otomatis disensor (contoh: "Budi S.").</span>
             </label>
             <textarea id="rp_txt_${uid}" placeholder="Ceritakan pengalamanmu (opsional)" maxlength="500"
-                style="width:100%;min-height:80px;padding:0.75rem;border-radius:8px;border:1px solid var(--line);
-                       background:var(--bg-body);color:var(--text);margin-bottom:0.5rem;
-                       resize:vertical;font-family:inherit;font-size:0.92rem;box-sizing:border-box;"></textarea>
-            <div style="text-align:right;color:var(--text-muted);font-size:0.8rem;margin-bottom:1rem;">
+                data-csp-style="s9be546d8bef71b"></textarea>
+            <div data-csp-style="sf0103375d7ef76">
                 <span id="rp_cnt_${uid}">0</span>/500
             </div>
             <div id="rp_err_${uid}" class="hidden"
-                style="color:var(--danger);font-size:0.9rem;margin-bottom:1rem;"></div>
-            <div style="display:flex;gap:0.5rem;justify-content:center;">
-                <button type="button" id="rp_submit_${uid}" class="btn-primary" style="flex:1;">Kirim Rating</button>
-                <button type="button" id="rp_skip_${uid}" class="btn-secondary" style="flex:1;">Nanti saja</button>
+                data-csp-style="s97747e85c8068a"></div>
+            <div data-csp-style="s03a251c3dc17d9">
+                <button type="button" id="rp_submit_${uid}" class="btn-primary" data-csp-style="s6253876a649a63">Kirim Rating</button>
+                <button type="button" id="rp_skip_${uid}" class="btn-secondary" data-csp-style="s6253876a649a63">Nanti saja</button>
             </div>
         </div>
         <div id="rp_done_${uid}" class="hidden"
-            style="color:var(--success);font-weight:600;font-size:1.05rem;text-align:center;margin-top:1rem;">
-            <i class="fa-solid fa-check-circle" style="margin-right:0.5rem;"></i>Terima kasih atas penilaian Anda!
+            data-csp-style="sda7ee5a2779501">
+            <i class="fa-solid fa-check-circle" data-csp-style="s6fbf2d30b5b584"></i>Terima kasih atas penilaian Anda!
         </div>
     `;
     container.classList.remove("hidden");
@@ -2075,7 +2070,7 @@ async function renderRatingPrompt(orderData, container) {
             selectedScore = parseInt(star.dataset.score, 10);
             stars.forEach(s => {
                 s.innerHTML = parseInt(s.dataset.score, 10) <= selectedScore
-                    ? '<i class="fa-solid fa-star" style="color:#facc15"></i>'
+                    ? '<i class="fa-solid fa-star" data-csp-style="sfecc85c94a43a3"></i>'
                     : '<i class="fa-regular fa-star"></i>';
             });
             form.classList.remove("hidden");
@@ -2526,7 +2521,7 @@ function renderTrackResult(data, options = {}) {
     // type yang sudah lunas, bukan cuma "order".
     const ratingSlotId = isPaid ? `rp_slot_${data.id.replace(/[^a-zA-Z0-9]/g, "")}` : "";
     const ratingSlotHtml = isPaid
-        ? `<div id="${ratingSlotId}" style="margin-top:1.5rem;"></div>`
+        ? `<div id="${ratingSlotId}" data-csp-style="s3574ea2cbf3f23"></div>`
         : "";
 
     document.getElementById("trackResult").innerHTML = `
@@ -3934,7 +3929,7 @@ function renderTopupPaymentGrid() {
                     ` : `
                         <div class="text-amber-500 font-bold mt-1.5 flex items-center justify-between">
                             <span>Saldo kurang ${rupiah(twState.product.harga_jual - window.currentUserWallet.balance)}</span>
-                            <button type="button" class="py-1 px-3 bg-brand-indigo hover:bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-sm transition-all" onclick="openWalletModal(event)">+ Top Up</button>
+                            <button type="button" class="py-1 px-3 bg-brand-indigo hover:bg-indigo-600 text-white rounded-lg font-bold text-xs shadow-sm transition-all" data-csp-onclick="openWalletModal(event)">+ Top Up</button>
                         </div>
                     `
             ) : ''}
@@ -4030,7 +4025,7 @@ function renderTwSummary() {
     if (isWallet) {
         if (!localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY)) {
             walletExtraSummary = `
-                <div class="tw-summary-row" style="color:#f59e0b;font-weight:700;">
+                <div class="tw-summary-row" data-csp-style="sb1781bceab75f5">
                     <span>Status Wallet</span>
                     <strong>Silakan login untuk membayar via Saldo</strong>
                 </div>
@@ -4038,23 +4033,23 @@ function renderTwSummary() {
         } else if (window.currentUserWallet) {
             if (hasSufficientBalance) {
                 walletExtraSummary = `
-                    <div class="tw-summary-row" style="color:#38bdf8;">
+                    <div class="tw-summary-row" data-csp-style="s1d6ef4938045e8">
                         <span>Saldo NexShop Wallet</span>
                         <strong>${rupiah(userBal)}</strong>
                     </div>
-                    <div class="tw-summary-row" style="color:#34d399;font-weight:800;">
+                    <div class="tw-summary-row" data-csp-style="s98aecb76ce6091">
                         <span>Saldo Setelah Transaksi</span>
                         <strong>${rupiah(userBal - total)}</strong>
                     </div>
                 `;
             } else {
                 walletExtraSummary = `
-                    <div class="tw-summary-row" style="color:#ef4444;font-weight:800;">
+                    <div class="tw-summary-row" data-csp-style="s30bb1604c6776b">
                         <span>Saldo Kurang</span>
                         <strong>${rupiah(shortage)}</strong>
                     </div>
-                    <div style="text-align:right;margin-top:6px;">
-                        <button type="button" class="btn-wallet-action primary" data-wallet-trigger style="padding:0.4rem 0.85rem;font-size:0.78rem;border-radius:10px;display:inline-flex;align-items:center;gap:6px;">
+                    <div data-csp-style="s1fcff4da4d54fe">
+                        <button type="button" class="btn-wallet-action primary" data-wallet-trigger data-csp-style="s7d7af16b1a9ace">
                             <i class="fa-solid fa-plus"></i> + Top Up Saldo Sekarang
                         </button>
                     </div>
@@ -4688,8 +4683,8 @@ function renderLeaderboard(data) {
 
     // Helper untuk avatar
     const getAvatar = (user) => {
-        if (user.avatar_url) return `<img src="${user.avatar_url}" class="w-full h-full object-cover" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; object-fit: cover; display: block; flex-shrink: 0;">`;
-        return `<div class="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-2xl font-bold text-gray-400 dark:text-gray-500" style="width: 100%; height: 100%; max-width: 100%; max-height: 100%; flex-shrink: 0;"><i class="fa-solid fa-user"></i></div>`;
+        if (user.avatar_url) return `<img src="${user.avatar_url}" class="w-full h-full object-cover" data-csp-style="s5f356df6c4cf93">`;
+        return `<div class="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-2xl font-bold text-gray-400 dark:text-gray-500" data-csp-style="sf8db272f53af3a"><i class="fa-solid fa-user"></i></div>`;
     };
 
     // Helper untuk rank badge
@@ -4705,7 +4700,7 @@ function renderLeaderboard(data) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
             <div class="hof-avatar hof-avatar--2 rounded-full p-1 bg-gradient-to-b from-slate-300 to-slate-200 dark:from-slate-400 dark:to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
-                <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-2 border-white dark:border-gray-900 relative z-10 bg-white dark:bg-gray-900 flex-shrink-0">
+                <div data-csp-style="s44d93e31176999" class="w-full h-full rounded-full overflow-hidden border-2 border-white dark:border-gray-900 relative z-10 bg-white dark:bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[1])}
                 </div>
                 ${getRankBadge(2)}
@@ -4722,21 +4717,21 @@ function renderLeaderboard(data) {
     // Render Rank 1 (Center)
     if (top3[0]) {
         podiumHtml += `
-        <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300 z-10" style="transform: translateY(-1rem);">
+        <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300 z-10" data-csp-style="sce91e6b7ce92fb">
             <div class="hof-avatar hof-avatar--1 rounded-full p-1.5 bg-gradient-to-b from-amber-400 via-amber-300 to-amber-100 dark:to-gray-800 mb-3 md:mb-5 shadow-[0_0_30px_rgba(251,191,36,0.4)]">
-                <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-4 border-white dark:border-gray-900 relative z-10 bg-white dark:bg-gray-900 flex-shrink-0">
+                <div data-csp-style="s44d93e31176999" class="w-full h-full rounded-full overflow-hidden border-4 border-white dark:border-gray-900 relative z-10 bg-white dark:bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[0])}
                 </div>
                 ${getRankBadge(1)}
-                <div class="absolute left-1/2 -translate-x-1/2 text-xl md:text-3xl animate-bounce" style="top: -1.25rem; color: #fbbf24;">
+                <div class="absolute left-1/2 -translate-x-1/2 text-xl md:text-3xl animate-bounce" data-csp-style="s2e7ddd3247a3af">
                     <i class="fa-solid fa-crown drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]"></i>
                 </div>
             </div>
             <div class="glass-panel w-full p-3 md:p-8 text-center border-t-4 border-amber-400 relative overflow-hidden group shadow-[0_0_30px_rgba(139,92,246,0.1)]">
                 <div class="absolute inset-0 bg-gradient-to-t from-amber-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div class="font-bold text-sm md:text-2xl mb-1 truncate relative z-10" style="color: #fbbf24;">${escapeHtml(top3[0].name)}</div>
-                ${top3[0].badge ? `<div class="inline-block px-1 md:px-2.5 py-0.5 md:py-1 rounded text-[8px] md:text-xs font-bold mb-1 md:mb-2 border uppercase tracking-wider relative z-10" style="background-color: rgba(251,191,36,0.15); color: #fbbf24; border-color: rgba(251,191,36,0.4);">${escapeHtml(top3[0].badge)}</div>` : ''}
-                <div class="font-bold text-xs md:text-lg mt-1 relative z-10" style="color: #f59e0b;">${rupiah(top3[0].total_spent)}</div>
+                <div class="font-bold text-sm md:text-2xl mb-1 truncate relative z-10" data-csp-style="s797a9e27e87fbf">${escapeHtml(top3[0].name)}</div>
+                ${top3[0].badge ? `<div class="inline-block px-1 md:px-2.5 py-0.5 md:py-1 rounded text-[8px] md:text-xs font-bold mb-1 md:mb-2 border uppercase tracking-wider relative z-10" data-csp-style="s2f156018aebc31">${escapeHtml(top3[0].badge)}</div>` : ''}
+                <div class="font-bold text-xs md:text-lg mt-1 relative z-10" data-csp-style="s3eb702d32a9b56">${rupiah(top3[0].total_spent)}</div>
             </div>
         </div>`;
     }
@@ -4746,16 +4741,16 @@ function renderLeaderboard(data) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
             <div class="hof-avatar hof-avatar--3 rounded-full p-1 bg-gradient-to-b from-orange-400 to-orange-200 dark:from-orange-600 dark:to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(234,88,12,0.3)]">
-                <div style="aspect-ratio: 1/1; width: 100%; height: 100%; max-width: 100%; max-height: 100%;" class="w-full h-full rounded-full overflow-hidden border-2 border-white dark:border-gray-900 relative z-10 bg-white dark:bg-gray-900 flex-shrink-0">
+                <div data-csp-style="s44d93e31176999" class="w-full h-full rounded-full overflow-hidden border-2 border-white dark:border-gray-900 relative z-10 bg-white dark:bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[2])}
                 </div>
                 ${getRankBadge(3)}
             </div>
             <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-orange-500 dark:border-orange-600 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-orange-600/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <div class="font-bold text-xs md:text-xl mb-1 truncate relative z-10" style="color: #f97316;">${escapeHtml(top3[2].name)}</div>
-                ${top3[2].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold mb-1 md:mb-2 border uppercase tracking-wider relative z-10" style="background-color: rgba(249,115,22,0.1); color: #f97316; border-color: rgba(249,115,22,0.3);">${escapeHtml(top3[2].badge)}</div>` : ''}
-                <div class="font-medium text-[10px] md:text-sm mt-1 relative z-10" style="color: #ea580c;">${rupiah(top3[2].total_spent)}</div>
+                <div class="font-bold text-xs md:text-xl mb-1 truncate relative z-10" data-csp-style="s77e1c160b15c54">${escapeHtml(top3[2].name)}</div>
+                ${top3[2].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold mb-1 md:mb-2 border uppercase tracking-wider relative z-10" data-csp-style="s6341cce4399c4e">${escapeHtml(top3[2].badge)}</div>` : ''}
+                <div class="font-medium text-[10px] md:text-sm mt-1 relative z-10" data-csp-style="sc783171758fcdf">${rupiah(top3[2].total_spent)}</div>
             </div>
         </div>`;
     }
@@ -5179,7 +5174,7 @@ function renderOneStopOperators() {
 
             const fallbackIcon = `<i class="fa-solid fa-gamepad text-4xl text-gray-400" aria-hidden="true"></i>`;
             const imgHtml = op.operator_logo
-                ? `<img src="${safeUrl(op.operator_logo)}" alt="${op.operator}" onerror="this.outerHTML='${fallbackIcon}'" class="w-full h-full object-contain drop-shadow-lg" loading="lazy">`
+                ? `<img src="${safeUrl(op.operator_logo)}" alt="${op.operator}" data-csp-onerror="this.outerHTML='${fallbackIcon}'" class="w-full h-full object-contain drop-shadow-lg" loading="lazy">`
                 : fallbackIcon;
 
             const opData = JSON.stringify({
@@ -5478,7 +5473,7 @@ async function loadWalletMutations() {
     if (!listEl) return;
 
     if (!token) {
-        listEl.innerHTML = `<div style="text-align:center;padding:1.5rem;font-size:0.8rem;color:var(--mkt-text-dim,#94a3b8);">Silakan login untuk melihat mutasi saldo.</div>`;
+        listEl.innerHTML = `<div data-csp-style="s284c4147f1e4ea">Silakan login untuk melihat mutasi saldo.</div>`;
         return;
     }
 
@@ -5519,7 +5514,7 @@ async function loadWalletMutations() {
             const iconClass = isIn ? "fa-arrow-trend-up" : "fa-arrow-trend-down";
             return `
                 <div class="wallet-mutation-item">
-                    <div style="display:flex;align-items:center;gap:10px;">
+                    <div data-csp-style="s4f4fe079274452">
                         <div class="wallet-mutation-icon ${isIn ? 'in' : 'out'}">
                             <i class="fa-solid ${iconClass}"></i>
                         </div>
@@ -5535,7 +5530,7 @@ async function loadWalletMutations() {
             `;
         }).join("");
     } catch (err) {
-        listEl.innerHTML = `<div style="text-align:center;padding:1.5rem;font-size:0.8rem;color:#f87171;">Gagal memuat mutasi.</div>`;
+        listEl.innerHTML = `<div data-csp-style="s4d9e3f141488cb">Gagal memuat mutasi.</div>`;
     }
 }
 

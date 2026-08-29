@@ -145,7 +145,7 @@
             "</div>" +
             (endpoint.owner_note ? '<div class="text-muted small">' + esc(potong(endpoint.owner_note, 60)) + "</div>" : "") +
             "</td>" +
-            '<td class="small font-monospace" style="max-width:260px;word-break:break-all;">' + esc(endpoint.target_url) + "</td>" +
+            '<td class="small font-monospace" data-csp-style="s1104ee9ae4c187">' + esc(endpoint.target_url) + "</td>" +
             "<td>" + routing + "</td>" +
             '<td class="text-center"><span class="text-success">' + (endpoint.total_delivered || 0) + "</span> / " +
             '<span class="text-danger">' + (endpoint.total_failed || 0) + "</span></td>" +
@@ -244,7 +244,7 @@
                         '<td><span class="badge ' + (BADGE_STATUS[d.status] || "text-bg-secondary") + '">' +
                         esc(LABEL_STATUS[d.status] || d.status) + "</span></td>" +
                         '<td class="text-center small">' + (d.attempt_count || 0) + "</td>" +
-                        '<td class="small text-muted" style="max-width:240px;word-break:break-word;">' + keterangan + "</td>" +
+                        '<td class="small text-muted" data-csp-style="se465f15bd3d46e">' + keterangan + "</td>" +
                         '<td class="text-end">' +
                         (bisaRetry
                             ? '<button type="button" class="btn btn-sm btn-outline-primary" data-wh-delivery-action="retry"><i class="bi bi-arrow-clockwise"></i> Kirim ulang</button>'

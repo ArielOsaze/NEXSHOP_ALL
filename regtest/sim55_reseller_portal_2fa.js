@@ -40,8 +40,9 @@ check("TOTP valid diterima dan kode salah ditolak", runtime.verifyTotp(runtimeSe
 
 const csp = fs.readFileSync(path.join(root, "nginx-nexshop.conf"), "utf8");
 const inline = [...portal.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)]
-    .filter(m => !/\bsrc\s*=/i.test(m[1]) && m[2].trim())
-    .map(m => "'sha256-" + crypto.createHash("sha256").update(m[2], "utf8").digest("base64") + "'");
+    .filter(m => !/\bsrc\s*=\s*/i.test(m[1]) && !/type\s*=\s*["']application\/ld\+json["']/i.test(m[1]) && m[2].trim())
+    .map(m => m[2].replace(/\r\n/g, "\n"))
+    .map(body => "'sha256-" + crypto.createHash("sha256").update(body, "utf8").digest("base64") + "'");
 check("CSP mencakup inline script portal terbaru", inline.every(hash => csp.includes(hash)));
 
 console.log("PASS sim55: optional Portal Reseller 2FA contract");

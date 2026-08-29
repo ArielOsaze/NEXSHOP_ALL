@@ -96,7 +96,7 @@ async function loadResellerTiers() {
                     </div>
                 </td>
                 <td>
-                    <button class="btn btn-sm btn-primary" onclick="simpanTier('${t.code}')">Simpan</button>
+                    <button class="btn btn-sm btn-primary" data-csp-onclick="simpanTier('${t.code}')">Simpan</button>
                 </td>
             </tr>
         `).join("");
@@ -160,7 +160,7 @@ async function loadResellerApplications() {
         body.innerHTML = rows.map((a) => {
             const waHref = `https://wa.me/${String(a.whatsapp || "").replace(/\D/g, "")}`;
             const ktpBtn = a.ktp_url
-                ? `<button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 mt-1" onclick="showKtpModal('${escapeHtml(a.ktp_url)}', '${escapeHtml(a.fullname)}', '${escapeHtml(a.nik || '-')}')">
+                ? `<button class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 mt-1" data-csp-onclick="showKtpModal('${escapeHtml(a.ktp_url)}', '${escapeHtml(a.fullname)}', '${escapeHtml(a.nik || '-')}')">
                        <i class="bi bi-person-badge"></i> Lihat KTP
                    </button>`
                 : `<span class="text-muted small d-block mt-1"><i class="bi bi-x-circle me-1"></i>Tanpa KTP</span>`;
@@ -172,10 +172,10 @@ async function loadResellerApplications() {
                             ${opsiTier || `<option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option>`}
                         </select>
                         <div class="d-flex gap-1">
-                            <button class="btn btn-sm btn-success flex-grow-1" onclick="putusanReseller('${a.id}', 'approve')">
+                            <button class="btn btn-sm btn-success flex-grow-1" data-csp-onclick="putusanReseller('${a.id}', 'approve')">
                                 <i class="bi bi-check-lg"></i> Setujui
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="putusanReseller('${a.id}', 'reject')">Tolak</button>
+                            <button class="btn btn-sm btn-outline-danger" data-csp-onclick="putusanReseller('${a.id}', 'reject')">Tolak</button>
                         </div>
                     </div>`
                 : `<span class="badge ${a.status === "approved" ? "bg-success" : "bg-secondary"}">${a.status === "approved" ? "Disetujui" : "Ditolak"}</span>
@@ -197,7 +197,7 @@ async function loadResellerApplications() {
                         <div>${escapeHtml(a.channel || "-")}</div>
                         <div class="text-muted small">${escapeHtml(a.monthly_estimate || "-")}</div>
                     </td>
-                    <td class="small" style="max-width:220px;">${escapeHtml(a.note || "-")}</td>
+                    <td class="small" data-csp-style="sf89ca3e588c11b">${escapeHtml(a.note || "-")}</td>
                     <td class="small text-muted">${rsTanggal(a.created_at)}</td>
                     <td>${aksi}</td>
                 </tr>
@@ -366,12 +366,12 @@ async function loadResellerList() {
                     <td><span class="badge ${dibekukan ? "bg-warning text-dark" : "bg-success"}">${dibekukan ? "Dibekukan" : "Aktif"}</span></td>
                     <td>
                         <div class="d-flex gap-1 flex-wrap">
-                            <button class="btn btn-sm btn-primary" onclick="simpanTierReseller('${r.id}')">Simpan tier</button>
+                            <button class="btn btn-sm btn-primary" data-csp-onclick="simpanTierReseller('${r.id}')">Simpan tier</button>
                             <button class="btn btn-sm btn-outline-${dibekukan ? "success" : "warning"}"
-                                onclick="ubahStatusReseller('${r.id}', '${dibekukan ? "approved" : "suspended"}')">
+                                data-csp-onclick="ubahStatusReseller('${r.id}', '${dibekukan ? "approved" : "suspended"}')">
                                 ${dibekukan ? "Aktifkan" : "Bekukan"}
                             </button>
-                            <button class="btn btn-sm btn-outline-danger" onclick="ubahStatusReseller('${r.id}', 'none')">Cabut</button>
+                            <button class="btn btn-sm btn-outline-danger" data-csp-onclick="ubahStatusReseller('${r.id}', 'none')">Cabut</button>
                         </div>
                     </td>
                 </tr>

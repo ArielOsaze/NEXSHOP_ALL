@@ -636,6 +636,11 @@ main{
 .notif-item .time{ font-size:10.5px; color:var(--text-muted); margin-top:2px; }
 .activity-feed-item{ display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); }
 .activity-feed-item:last-child{ border-bottom:none; }
+.activity-feed-item .activity-feed-dot{ width:8px; height:8px; border-radius:50%; margin-top:6px; flex-shrink:0; }
+.activity-feed-item .activity-feed-dot.order{ background:#22C55E; }
+.activity-feed-item .activity-feed-dot.topup{ background:#22D3EE; }
+.activity-feed-item .activity-feed-dot.security{ background:#F0475C; }
+.activity-feed-item .activity-feed-dot:not(.order):not(.topup):not(.security){ background:#8B5CF6; }
 
 .sidebar .nav-link{
     cursor:pointer;

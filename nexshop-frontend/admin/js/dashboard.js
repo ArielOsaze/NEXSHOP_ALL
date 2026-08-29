@@ -68,7 +68,7 @@ async function loadCurrentUser() {
                 if (logoInput) logoInput.disabled = true;
                 document.querySelectorAll('#settingsTabApiKeys, #settingsTabAuthconfig, #settingsTabSecurity, #settingsTabMascot').forEach(el => el.classList.add("d-none"));
                 document.querySelectorAll('[data-settings-tab="apikeys"], [data-settings-tab="authconfig"], [data-settings-tab="security"], [data-settings-tab="mascot"]').forEach(el => el.closest(".nav-item")?.classList.add("d-none"));
-                document.querySelectorAll('#storeForm button[onclick="saveStoreSettings()"], #contentForm button[onclick="saveContentSettings()"], button[onclick="saveMascotSettings()"]').forEach(button => {
+                document.querySelectorAll('#storeForm button[data-csp-onclick="saveStoreSettings()"], #contentForm button[data-csp-onclick="saveContentSettings()"], button[data-csp-onclick="saveMascotSettings()"]').forEach(button => {
                     button.innerHTML = '<i class="bi bi-send me-1"></i> Ajukan Approval Admin';
                 });
             } else {
@@ -783,7 +783,7 @@ function renderProducts() {
             <td>${idx + 1}<div class="text-muted small">#${escapeHtml(product.id)} · urutan: ${escapeHtml(product.sort_order ?? "-")}</div></td>
             <td>
                 ${product.image
-            ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" style="width:70px;height:70px;object-fit:cover;border-radius:10px;">`
+            ? `<img src="${escapeHtml(product.image)}" alt="${escapeHtml(product.name)}" data-csp-style="s477ba6589a8fd3">`
             : "-"}
             </td>
             <td><strong>${escapeHtml(product.name)}</strong>${product.is_flash_sale ? ' <span class="badge bg-danger">🔥 Flash Sale</span>' : ""}</td>
@@ -792,14 +792,14 @@ function renderProducts() {
             <td>${escapeHtml(product.category || "-")}</td>
             <td>
                 <div class="form-check form-switch m-0 p-0 d-flex justify-content-center">
-                    <input class="form-check-input ms-0" type="checkbox" onchange="toggleProductStatus(${product.id}, this.checked)" ${product.is_active !== false ? 'checked' : ''}>
+                    <input class="form-check-input ms-0" type="checkbox" data-csp-onchange="toggleProductStatus(${product.id}, this.checked)" ${product.is_active !== false ? 'checked' : ''}>
                 </div>
             </td>
             <td>
-                <button class="btn btn-warning btn-sm" onclick="editProduct(${Number(product.id)})">
+                <button class="btn btn-warning btn-sm" data-csp-onclick="editProduct(${Number(product.id)})">
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-danger btn-sm" onclick="deleteProduct(${Number(product.id)})">
+                <button class="btn btn-danger btn-sm" data-csp-onclick="deleteProduct(${Number(product.id)})">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -1285,7 +1285,7 @@ async function loadUsers(security_pin) {
                             <td>${escapeHtml(u.name || "-")}</td>
                             <td>${escapeHtml(u.email || "-")}</td>
                             <td>
-                                <select class="form-select form-select-sm" style="width:110px;" onchange="changeUserRole(${Number(u.id)}, this.value)" ${isStaff ? "disabled" : ""}>
+                                <select class="form-select form-select-sm" data-csp-style="s0dfe35f39af371" data-csp-onchange="changeUserRole(${Number(u.id)}, this.value)" ${isStaff ? "disabled" : ""}>
                                     <option value="user" ${u.role === "user" ? "selected" : ""}>user</option>
                                     <option value="staff" ${u.role === "staff" ? "selected" : ""}>staff</option>
                                     <option value="admin" ${u.role === "admin" ? "selected" : ""}>admin</option>
@@ -1298,14 +1298,14 @@ async function loadUsers(security_pin) {
                             </td>
                             <td>
                                 <button class="btn btn-sm ${u.is_blacklisted ? "btn-success" : "btn-outline-danger"}"
-                                        onclick="toggleUserBlacklist(${Number(u.id)}, ${!u.is_blacklisted})" ${isStaff ? "disabled" : ""}>
+                                        data-csp-onclick="toggleUserBlacklist(${Number(u.id)}, ${!u.is_blacklisted})" ${isStaff ? "disabled" : ""}>
                                     <i class="bi ${u.is_blacklisted ? "bi-unlock" : "bi-slash-circle"}"></i>
                                     ${u.is_blacklisted ? "Buka Blokir" : "Blokir"}
                                 </button>
-                                <button class="btn btn-sm btn-outline-info" onclick="openUserDetail(${Number(u.id)})">
+                                <button class="btn btn-sm btn-outline-info" data-csp-onclick="openUserDetail(${Number(u.id)})">
                                     <i class="bi bi-clock-history"></i> Riwayat
                                 </button>
-                                <button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${Number(u.id)}, '${escapeHtml(u.email || "").replace(/'/g, "\\'")}')" ${isStaff ? "disabled" : ""}>
+                                <button class="btn btn-sm btn-outline-danger" data-csp-onclick="deleteUser(${Number(u.id)}, '${escapeHtml(u.email || "").replace(/'/g, "\\'")}')" ${isStaff ? "disabled" : ""}>
                                     <i class="bi bi-trash"></i> Hapus
                                 </button>
                             </td>
@@ -1372,7 +1372,7 @@ async function openUserDetail(id) {
             </div>
 
             <h6>Riwayat Transaksi</h6>
-            <div class="table-responsive" style="max-height:340px;">
+            <div class="table-responsive" data-csp-style="se4ba253652819c">
                 <table class="table table-sm table-hover align-middle mb-0">
                     <thead><tr><th>Tanggal</th><th>Tipe</th><th>Item</th><th>Nominal</th><th>Status</th></tr></thead>
                     <tbody>
@@ -1569,7 +1569,7 @@ async function loadPendingOtp(security_pin) {
                 : `<span class="badge bg-success">Berlaku</span>`}
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary" onclick="adminResendOtp(${Number(u.id)})">
+                                <button class="btn btn-sm btn-outline-primary" data-csp-onclick="adminResendOtp(${Number(u.id)})">
                                     <i class="bi bi-envelope-arrow-up"></i> Kirim Ulang
                                 </button>
                             </td>
@@ -1644,7 +1644,7 @@ function renderPromoSlides() {
             <td>${escapeHtml(slide.sort_order ?? 0)}</td>
             <td>
                 ${slide.image_url
-            ? `<img src="${escapeHtml(slide.image_url)}" alt="${escapeHtml(slide.title)}" style="width:70px;height:44px;object-fit:cover;border-radius:8px;">`
+            ? `<img src="${escapeHtml(slide.image_url)}" alt="${escapeHtml(slide.title)}" data-csp-style="s60575a62468a56">`
             : "-"}
             </td>
             <td><span class="badge bg-secondary text-capitalize">${escapeHtml(slide.type || "promo")}</span></td>
@@ -1655,10 +1655,10 @@ function renderPromoSlides() {
             : `<span class="badge bg-secondary">Nonaktif</span>`}
             </td>
             <td>
-                <button class="btn btn-warning btn-sm" onclick="editPromoSlide(${Number(slide.id)})">
+                <button class="btn btn-warning btn-sm" data-csp-onclick="editPromoSlide(${Number(slide.id)})">
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button class="btn btn-danger btn-sm" onclick="deletePromoSlide(${Number(slide.id)})">
+                <button class="btn btn-danger btn-sm" data-csp-onclick="deletePromoSlide(${Number(slide.id)})">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -1917,12 +1917,12 @@ async function loadBlockedIps(security_pin) {
         }
 
         container.innerHTML = data.map(item => `
-            <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2" style="border-color:var(--line)!important;">
+            <div class="d-flex justify-content-between align-items-center border rounded p-2 mb-2" data-csp-style="s9056d6bb0348f5">
                 <div>
                     <strong>${escapeHtml(item.ip)}</strong>
                     <div class="text-muted small">Kena blokir ${timeAgo(item.blockedAt)}</div>
                 </div>
-                <button class="btn btn-success btn-sm" onclick="unlockLoginIp('${escapeHtml(item.ip)}')">
+                <button class="btn btn-success btn-sm" data-csp-onclick="unlockLoginIp('${escapeHtml(item.ip)}')">
                     <i class="bi bi-unlock"></i> Buka Blokir
                 </button>
             </div>
@@ -2008,7 +2008,7 @@ async function loadApprovals() {
             const fields = Object.keys(item.proposed_changes || {}).join(", ");
             const statusClass = item.status === "approved" ? "success" : item.status === "rejected" ? "danger" : "warning";
             const actions = currentUser?.role === "admin" && item.status === "pending"
-                ? `<button class="btn btn-sm btn-success me-1" onclick="reviewApproval('${escapeHtml(item.id)}','approve')">Approve</button><button class="btn btn-sm btn-outline-danger" onclick="reviewApproval('${escapeHtml(item.id)}','reject')">Tolak</button>`
+                ? `<button class="btn btn-sm btn-success me-1" data-csp-onclick="reviewApproval('${escapeHtml(item.id)}','approve')">Approve</button><button class="btn btn-sm btn-outline-danger" data-csp-onclick="reviewApproval('${escapeHtml(item.id)}','reject')">Tolak</button>`
                 : `<span class="text-muted small">${item.status === "pending" ? "Menunggu Admin" : "Selesai"}</span>`;
             return `<tr>
                 <td><strong>${escapeHtml(requester.fullname || "Staff")}</strong><br><small class="text-muted">${escapeHtml(requester.email || "-")}</small></td>
@@ -2137,10 +2137,10 @@ function drawFaqRows() {
         <div class="border rounded p-2 d-flex flex-column gap-2">
             <div class="d-flex gap-2 align-items-start">
                 <div class="flex-grow-1">
-                    <input class="form-control form-control-sm mb-2" placeholder="Pertanyaan" value="${escapeHtml(f.q)}" oninput="faqRows[${i}].q=this.value">
-                    <textarea class="form-control form-control-sm" rows="2" placeholder="Jawaban" oninput="faqRows[${i}].a=this.value">${escapeHtml(f.a)}</textarea>
+                    <input class="form-control form-control-sm mb-2" placeholder="Pertanyaan" value="${escapeHtml(f.q)}" data-csp-oninput="faqRows[${i}].q=this.value">
+                    <textarea class="form-control form-control-sm" rows="2" placeholder="Jawaban" data-csp-oninput="faqRows[${i}].a=this.value">${escapeHtml(f.a)}</textarea>
                 </div>
-                <button type="button" class="btn btn-outline-danger btn-sm" onclick="removeFaqRow(${i})"><i class="bi bi-trash"></i></button>
+                <button type="button" class="btn btn-outline-danger btn-sm" data-csp-onclick="removeFaqRow(${i})"><i class="bi bi-trash"></i></button>
             </div>
         </div>
     `).join("");
@@ -3044,13 +3044,13 @@ function renderTopupOrders() {
             <td>${o.created_at ? new Date(o.created_at).toLocaleString("id-ID") : "-"}</td>
             <td>
                 <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-secondary btn-sm" onclick="recheckTopupStatus('${o.id}')" title="Cek ulang status ke TokoVoucher">
+                    <button class="btn btn-outline-secondary btn-sm" data-csp-onclick="recheckTopupStatus('${o.id}')" title="Cek ulang status ke TokoVoucher">
                         <i class="bi bi-arrow-repeat"></i>
                     </button>
-                    <button class="btn btn-outline-danger btn-sm" onclick="updateOrderStatusAdmin('${o.id}', 'cancelled')" title="Batalkan pesanan">
+                    <button class="btn btn-outline-danger btn-sm" data-csp-onclick="updateOrderStatusAdmin('${o.id}', 'cancelled')" title="Batalkan pesanan">
                         <i class="bi bi-x-circle"></i>
                     </button>
-                    <button class="btn btn-outline-warning btn-sm" onclick="updateOrderStatusAdmin('${o.id}', 'refunded')" title="Refund pesanan">
+                    <button class="btn btn-outline-warning btn-sm" data-csp-onclick="updateOrderStatusAdmin('${o.id}', 'refunded')" title="Refund pesanan">
                         <i class="bi bi-arrow-counterclockwise"></i>
                     </button>
                 </div>
@@ -3307,12 +3307,12 @@ function renderPromoCodes() {
             <td>
                 <div class="form-check form-switch mb-0">
                     <input class="form-check-input" type="checkbox" ${pc.is_active ? "checked" : ""}
-                        onchange="togglePromoCodeActive(${Number(pc.id)}, this.checked)">
+                        data-csp-onchange="togglePromoCodeActive(${Number(pc.id)}, this.checked)">
                 </div>
             </td>
             <td>
-                <button class="btn btn-warning btn-sm" onclick="editPromoCode(${Number(pc.id)})"><i class="bi bi-pencil"></i></button>
-                <button class="btn btn-danger btn-sm" onclick="deletePromoCode(${Number(pc.id)})"><i class="bi bi-trash"></i></button>
+                <button class="btn btn-warning btn-sm" data-csp-onclick="editPromoCode(${Number(pc.id)})"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-danger btn-sm" data-csp-onclick="deletePromoCode(${Number(pc.id)})"><i class="bi bi-trash"></i></button>
             </td>
         </tr>`;
     }).join("");
@@ -3441,11 +3441,10 @@ function renderActivityFeed() {
     }
     feed.innerHTML = latestNotifications.slice(0, 8).map(n => `
         <div class="activity-feed-item">
-            <span class="dot ${n.type}" style="margin-top:6px;width:8px;height:8px;border-radius:50%;flex-shrink:0;background:${n.type === "order" ? "#22C55E" : n.type === "topup" ? "#22D3EE" : n.type === "security" ? "#F0475C" : "#8B5CF6"
-        }"></span>
+            <span class="dot activity-feed-dot ${n.type}"></span>
             <div>
-                <div style="font-size:13px;">${escapeHtml(n.message)}</div>
-                <div class="text-muted" style="font-size:11px;">${timeAgo(n.created_at)}</div>
+                <div data-csp-style="scdcef186c815d7">${escapeHtml(n.message)}</div>
+                <div class="text-muted" data-csp-style="s025fe512917159">${timeAgo(n.created_at)}</div>
             </div>
         </div>
     `).join("");
@@ -4081,7 +4080,7 @@ function renderCmdKResults() {
     }
 
     listEl.innerHTML = filtered.map((item, idx) => `
-        <div class="cmd-k-item" onclick="execCmdKAction(${idx})">
+        <div class="cmd-k-item" data-csp-onclick="execCmdKAction(${idx})">
             <div><i class="bi ${item.icon} me-2 text-primary"></i><strong>${escapeHtml(item.title)}</strong></div>
             <span class="text-muted small">Buka <i class="bi bi-chevron-right"></i></span>
         </div>
@@ -4182,7 +4181,7 @@ async function loadKnowledgeBase() {
             <tr>
                 <td colspan="6" class="text-center text-danger py-4">
                     <div><i class="bi bi-exclamation-triangle fs-4 d-block mb-1"></i>Gagal memuat Knowledge Base: ${escapeHtml(err.message)}</div>
-                    <button class="btn btn-outline-primary btn-sm mt-2" onclick="loadKnowledgeBase()"><i class="bi bi-arrow-clockwise me-1"></i> Coba Lagi</button>
+                    <button class="btn btn-outline-primary btn-sm mt-2" data-csp-onclick="loadKnowledgeBase()"><i class="bi bi-arrow-clockwise me-1"></i> Coba Lagi</button>
                 </td>
             </tr>`;
     } finally {
@@ -4231,7 +4230,7 @@ function renderKnowledgeTable(itemsToRender = knowledgeBaseList) {
             <tr>
                 <td colspan="6" class="text-center py-4 text-muted">
                     <div>Belum ada data Knowledge Base yang cocok.</div>
-                    <button class="btn btn-primary btn-sm mt-2" onclick="openAddKnowledgeModal()"><i class="bi bi-plus-circle me-1"></i> Tambah Knowledge Pertama</button>
+                    <button class="btn btn-primary btn-sm mt-2" data-csp-onclick="openAddKnowledgeModal()"><i class="bi bi-plus-circle me-1"></i> Tambah Knowledge Pertama</button>
                 </td>
             </tr>`;
         return;
@@ -4250,8 +4249,8 @@ function renderKnowledgeTable(itemsToRender = knowledgeBaseList) {
             </td>
             <td><span class="badge bg-info text-dark">P-${item.priority || 0}</span></td>
             <td class="text-end">
-                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="openEditKnowledgeModal('${item.id}')"><i class="bi bi-pencil"></i> Edit</button>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteKnowledge('${item.id}')"><i class="bi bi-trash"></i> Hapus</button>
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" data-csp-onclick="openEditKnowledgeModal('${item.id}')"><i class="bi bi-pencil"></i> Edit</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-csp-onclick="deleteKnowledge('${item.id}')"><i class="bi bi-trash"></i> Hapus</button>
             </td>
         </tr>
     `).join("");
@@ -4936,7 +4935,7 @@ function renderTopSpendersTable() {
             </td>
             <td>
                 <div class="d-flex align-items-center gap-2">
-                    ${ts.avatar_url ? `<img src="${ts.avatar_url}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">` : `<div style="width:32px;height:32px;border-radius:50%;background:#495057;display:flex;align-items:center;justify-content:center;"><i class="bi bi-person text-white"></i></div>`}
+                    ${ts.avatar_url ? `<img src="${ts.avatar_url}" data-csp-style="s95c1be9e92d1db">` : `<div data-csp-style="s85a2e7ee2d0b8c"><i class="bi bi-person text-white"></i></div>`}
                     <div class="fw-bold">${escapeHtml(ts.display_name)}</div>
                 </div>
             </td>
@@ -4950,10 +4949,10 @@ function renderTopSpendersTable() {
                 </span>
             </td>
             <td class="text-end">
-                <button onclick="editTopSpender(${ts.id})" class="btn btn-warning btn-sm" title="Edit">
+                <button data-csp-onclick="editTopSpender(${ts.id})" class="btn btn-warning btn-sm" title="Edit">
                     <i class="bi bi-pencil"></i>
                 </button>
-                <button onclick="deleteTopSpender(${ts.id})" class="btn btn-danger btn-sm" title="Hapus">
+                <button data-csp-onclick="deleteTopSpender(${ts.id})" class="btn btn-danger btn-sm" title="Hapus">
                     <i class="bi bi-trash"></i>
                 </button>
             </td>
@@ -5249,8 +5248,8 @@ async function loadCustomTestimonials() {
         tbody.innerHTML = customTestimonials.map(t => {
             const stars = "★".repeat(t.score) + "☆".repeat(5 - t.score);
             const avatarHtml = t.avatar_url
-                ? `<img src="${escapeHtml(t.avatar_url)}" style="width:40px;height:40px;object-fit:cover;border-radius:50%;">`
-                : `<div class="d-flex align-items-center justify-content-center rounded-circle bg-secondary text-white" style="width:40px;height:40px;font-size:.75rem;">${escapeHtml((t.name || "?").charAt(0).toUpperCase())}</div>`;
+                ? `<img src="${escapeHtml(t.avatar_url)}" data-csp-style="sf5611d5ae226f9">`
+                : `<div class="d-flex align-items-center justify-content-center rounded-circle bg-secondary text-white" data-csp-style="sa9fa791baffc3b">${escapeHtml((t.name || "?").charAt(0).toUpperCase())}</div>`;
             const statusBadge = t.is_active
                 ? `<span class="badge bg-success">Aktif</span>`
                 : `<span class="badge bg-secondary">Nonaktif</span>`;
@@ -5261,11 +5260,11 @@ async function loadCustomTestimonials() {
                     <td><strong>${escapeHtml(t.name)}</strong></td>
                     <td class="text-warning text-nowrap">${stars}</td>
                     <td>${escapeHtml(t.product_name || "-")}</td>
-                    <td style="max-width:260px;">${escapeHtml(t.comment)}</td>
+                    <td data-csp-style="s45ae2b3c40aebf">${escapeHtml(t.comment)}</td>
                     <td>${statusBadge}</td>
                     <td class="text-nowrap">
-                        <button class="btn btn-sm btn-outline-warning me-1" onclick="editCustomTestimonial(${t.id})" title="Edit"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm btn-outline-danger" onclick="deleteCustomTestimonial(${t.id})" title="Hapus"><i class="bi bi-trash"></i></button>
+                        <button class="btn btn-sm btn-outline-warning me-1" data-csp-onclick="editCustomTestimonial(${t.id})" title="Edit"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger" data-csp-onclick="deleteCustomTestimonial(${t.id})" title="Hapus"><i class="bi bi-trash"></i></button>
                     </td>
                 </tr>`;
         }).join("");
@@ -5454,10 +5453,10 @@ async function loadMusicList() {
 
         tbody.innerHTML = musicList.map((m) => `
             <tr>
-                <td><img src="${escapeHtml(m.cover_url)}" style="width:50px;height:50px;object-fit:cover;border-radius:50%;"></td>
+                <td><img src="${escapeHtml(m.cover_url)}" data-csp-style="sc9dd896fb0c936"></td>
                 <td><strong>${escapeHtml(m.title)}</strong></td>
                 <td>
-                    <audio controls src="${escapeHtml(m.audio_url)}" style="height:32px; max-width:200px;"></audio>
+                    <audio controls src="${escapeHtml(m.audio_url)}" data-csp-style="se2990223052759"></audio>
                 </td>
                 <td>
                     ${m.is_active
@@ -5465,9 +5464,9 @@ async function loadMusicList() {
                 : '<span class="badge bg-secondary">Tidak Aktif</span>'}
                 </td>
                 <td>
-                    ${!m.is_active ? `<button class="btn btn-sm btn-outline-success me-1" onclick="setActiveMusic(${m.id})" title="Jadikan Lagu Aktif"><i class="bi bi-check-circle"></i></button>` : ''}
-                    <button class="btn btn-sm btn-outline-warning me-1" onclick="editMusic(${m.id})" title="Edit"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteMusic(${m.id})" title="Hapus"><i class="bi bi-trash"></i></button>
+                    ${!m.is_active ? `<button class="btn btn-sm btn-outline-success me-1" data-csp-onclick="setActiveMusic(${m.id})" title="Jadikan Lagu Aktif"><i class="bi bi-check-circle"></i></button>` : ''}
+                    <button class="btn btn-sm btn-outline-warning me-1" data-csp-onclick="editMusic(${m.id})" title="Edit"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" data-csp-onclick="deleteMusic(${m.id})" title="Hapus"><i class="bi bi-trash"></i></button>
                 </td>
             </tr>
         `).join("");
@@ -5757,7 +5756,7 @@ function renderWaCampaigns(campaigns) {
 }
 
 function renderWaContacts(contacts) {
-    const tbody = document.getElementById("waContactsTbody"); tbody.innerHTML = contacts.length ? contacts.map((contact) => `<tr><td>${escapeHtml(contact.display_name)}</td><td>${escapeHtml(contact.phone_normalized)}</td><td><button class="btn btn-sm ${contact.marketing_opt_in ? "btn-success" : "btn-outline-secondary"}" onclick="toggleWaContactOptIn('${contact.id}', ${!contact.marketing_opt_in})">${contact.marketing_opt_in ? "Opt-in" : "Opt-in?"}</button></td><td>${contact.user_id ? "Terdaftar" : "Tamu"}</td></tr>`).join("") : '<tr><td colspan="4" class="text-muted">Belum ada chat inbound.</td></tr>';
+    const tbody = document.getElementById("waContactsTbody"); tbody.innerHTML = contacts.length ? contacts.map((contact) => `<tr><td>${escapeHtml(contact.display_name)}</td><td>${escapeHtml(contact.phone_normalized)}</td><td><button class="btn btn-sm ${contact.marketing_opt_in ? "btn-success" : "btn-outline-secondary"}" data-csp-onclick="toggleWaContactOptIn('${contact.id}', ${!contact.marketing_opt_in})">${contact.marketing_opt_in ? "Opt-in" : "Opt-in?"}</button></td><td>${contact.user_id ? "Terdaftar" : "Tamu"}</td></tr>`).join("") : '<tr><td colspan="4" class="text-muted">Belum ada chat inbound.</td></tr>';
 }
 
 async function toggleWaContactOptIn(id, value) {

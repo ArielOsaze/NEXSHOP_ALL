@@ -1343,6 +1343,8 @@
             .tv-section-card, .tv-table-header-bar { padding: 1rem; }
         }
     </style>
+<link rel="stylesheet" href="/inline-styles.css?v=aa0fee6">
+<script defer src="/csp-legacy-handlers.js?v=aa0fee6"></script>
 </head>
 
 <body class="tv-distributor-portal">
@@ -1350,7 +1352,7 @@
     <!-- =============================================================== -->
     <!-- AUTH SECTION (GUEST / LOGIN / REGISTER)                         -->
     <!-- =============================================================== -->
-    <div id="sectionAuth" style="display:none;padding:2rem 1.25rem;">
+    <div id="sectionAuth" data-csp-style="s6a091ae82c7ec9">
         <div class="tv-auth-layout">
             <section class="tv-auth-intro" aria-labelledby="portalAuthHeadline">
                 <span class="tv-auth-kicker"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> NexShop Partner Portal</span>
@@ -1373,99 +1375,97 @@
 
             <!-- Tab Switcher (Masuk vs Daftar) -->
             <div class="tv-auth-tabs">
-                <button type="button" id="tabBtnLogin" onclick="switchAuthTab('login')"
-                    style="flex:1;padding:0.65rem;border:none;border-radius:8px;font-weight:700;font-size:0.86rem;cursor:pointer;background:#2563eb;color:#fff;transition:all 0.15s ease;">
-                    <i class="fa-solid fa-right-to-bracket" style="font-size:1rem;vertical-align:middle;margin-right:4px;" aria-hidden="true"></i> Masuk Portal Reseller
+                <button type="button" id="tabBtnLogin" data-csp-onclick="h9499b9134d8993" data-csp-style="s6127fc805b9a59">
+                    <i class="fa-solid fa-right-to-bracket" data-csp-style="sb89b65ec3e827d" aria-hidden="true"></i> Masuk Portal Reseller
                 </button>
-                <button type="button" id="tabBtnRegister" onclick="switchAuthTab('register')"
-                    style="flex:1;padding:0.65rem;border:none;border-radius:8px;font-weight:700;font-size:0.86rem;cursor:pointer;background:transparent;color:#94a3b8;transition:all 0.15s ease;">
-                    <i class="fa-solid fa-user-check" style="font-size:1rem;vertical-align:middle;margin-right:4px;" aria-hidden="true"></i> Daftar Baru &amp; KYC
+                <button type="button" id="tabBtnRegister" data-csp-onclick="h565fef13a99a44" data-csp-style="sc07d4979c47463">
+                    <i class="fa-solid fa-user-check" data-csp-style="sb89b65ec3e827d" aria-hidden="true"></i> Daftar Baru &amp; KYC
                 </button>
             </div>
 
-            <div class="tv-auth-separation-note" style="margin:-0.35rem 0 1.25rem;padding:0.75rem 0.9rem;border:1px solid rgba(56,189,248,0.25);border-radius:10px;background:rgba(14,116,144,0.12);color:#bae6fd;font-size:0.8rem;line-height:1.55;">
+            <div class="tv-auth-separation-note" data-csp-style="s40782bc0dac034">
                 <strong>Akun portal terpisah.</strong> Partner Portal memakai email dan password khusus yang berbeda dari akun belanja NexShop. Login akun belanja biasa tidak dapat membuka portal ini.
             </div>
 
             <!-- TAB 1: FORM LOGIN MITRA -->
             <div id="authPaneLogin">
                 <form id="formResellerLogin">
-                    <div id="loginErrorMsg" class="tv-auth-error-message" role="alert" aria-live="polite" style="display:none;background:rgba(239,68,68,0.15);color:#fca5a5;padding:0.75rem 1rem;border-radius:8px;font-size:0.84rem;font-weight:600;margin-bottom:1rem;border:1px solid rgba(239,68,68,0.3);"></div>
+                    <div id="loginErrorMsg" class="tv-auth-error-message" role="alert" aria-live="polite" data-csp-style="sc6479dc91a2daf"></div>
 
-                    <div style="margin-bottom:1.15rem;">
-                        <label class="form-label" for="loginEmail">Email Portal Reseller (harus berbeda dari akun belanja) <span style="color:#ef4444;">*</span></label>
-                        <input type="email" id="loginEmail" required autocomplete="email" inputmode="email" class="form-control" placeholder="nama@domain.com" aria-describedby="loginErrorMsg" style="width:100%;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;font-size:0.9rem;box-sizing:border-box;">
+                    <div data-csp-style="se7da744a288024">
+                        <label class="form-label" for="loginEmail">Email Portal Reseller (harus berbeda dari akun belanja) <span data-csp-style="sc0b89d302c9562">*</span></label>
+                        <input type="email" id="loginEmail" required autocomplete="email" inputmode="email" class="form-control" placeholder="nama@domain.com" aria-describedby="loginErrorMsg" data-csp-style="sf3d0ebe3e343fd">
                     </div>
 
-                    <div style="margin-bottom:1.5rem;">
-                        <label class="form-label" for="loginPassword">Password <span style="color:#ef4444;">*</span></label>
-                        <input type="password" id="loginPassword" required autocomplete="current-password" class="form-control" placeholder="••••••••" aria-describedby="loginErrorMsg" style="width:100%;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;font-size:0.9rem;box-sizing:border-box;">
+                    <div data-csp-style="se12e213489f747">
+                        <label class="form-label" for="loginPassword">Password <span data-csp-style="sc0b89d302c9562">*</span></label>
+                        <input type="password" id="loginPassword" required autocomplete="current-password" class="form-control" placeholder="••••••••" aria-describedby="loginErrorMsg" data-csp-style="sf3d0ebe3e343fd">
                     </div>
 
                     <div id="resellerLoginTurnstile" class="auth-turnstile" hidden></div>
                     <p id="resellerLoginTurnstileStatus" class="auth-error hidden" role="alert" aria-live="polite"></p>
 
-                    <button type="submit" id="btnLoginSubmit" class="tv-auth-primary" style="width:100%;padding:0.8rem;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-weight:800;font-size:0.94rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 16px rgba(37,99,235,0.4);">
+                    <button type="submit" id="btnLoginSubmit" class="tv-auth-primary" data-csp-style="s7f69e69ed7629e">
                         <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
                         <span>Masuk ke Konsol Distributor</span>
                     </button>
                 </form>
             </div>
 
-            <div id="portalTwoFactorChallenge" hidden style="margin-top:1rem;padding:1rem;border:1px solid rgba(56,189,248,0.3);border-radius:12px;background:rgba(14,116,144,0.12);">
-                <h3 style="margin:0 0 0.45rem;color:#fff;font-size:1rem;">Verifikasi 2FA</h3>
-                <p style="margin:0 0 0.9rem;color:#bae6fd;font-size:0.8rem;line-height:1.5;">Masukkan kode 6 digit dari aplikasi authenticator. Kamu juga bisa memakai satu recovery code.</p>
+            <div id="portalTwoFactorChallenge" hidden data-csp-style="sd77065eea06b50">
+                <h3 data-csp-style="s01664af0749b9f">Verifikasi 2FA</h3>
+                <p data-csp-style="s4711d3e95e641d">Masukkan kode 6 digit dari aplikasi authenticator. Kamu juga bisa memakai satu recovery code.</p>
                 <form id="formTwoFactorVerify">
                     <label class="form-label" for="twoFactorCode">Kode authenticator / recovery code</label>
-                    <input id="twoFactorCode" name="code" required inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="123456 atau XXXXX-XXXXX" style="width:100%;padding:0.7rem 0.95rem;margin:0.35rem 0 0.75rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;box-sizing:border-box;">
-                    <p id="twoFactorError" role="alert" aria-live="polite" style="display:none;background:rgba(239,68,68,0.15);color:#fca5a5;padding:0.65rem 0.8rem;border-radius:8px;font-size:0.8rem;margin:0 0 0.75rem;"></p>
-                    <button type="submit" id="btnTwoFactorVerify" style="width:100%;padding:0.75rem;border:none;border-radius:10px;background:#0891b2;color:#fff;font-weight:800;cursor:pointer;">Verifikasi &amp; Masuk</button>
+                    <input id="twoFactorCode" name="code" required inputmode="numeric" autocomplete="one-time-code" maxlength="12" placeholder="123456 atau XXXXX-XXXXX" data-csp-style="s4f4f7f6fe122a9">
+                    <p id="twoFactorError" role="alert" aria-live="polite" data-csp-style="s6ac9f57d01db90"></p>
+                    <button type="submit" id="btnTwoFactorVerify" data-csp-style="s2011cd47c9f282">Verifikasi &amp; Masuk</button>
                 </form>
-                <button type="button" id="btnTwoFactorBack" style="margin-top:0.65rem;padding:0.45rem 0.7rem;border:1px solid rgba(255,255,255,0.15);border-radius:8px;background:transparent;color:#cbd5e1;cursor:pointer;">Kembali ke login</button>
+                <button type="button" id="btnTwoFactorBack" data-csp-style="s8aa9d14f1a601d">Kembali ke login</button>
             </div>
 
             <!-- TAB 2: FORM DAFTAR MITRA & KYC -->
-            <div id="authPaneRegister" style="display:none;">
+            <div id="authPaneRegister" data-csp-style="sd0466aa33fa806">
                 <form id="formResellerRegister">
-                    <div id="regErrorMsg" class="tv-auth-error-message" style="display:none;background:rgba(239,68,68,0.15);color:#fca5a5;padding:0.75rem 1rem;border-radius:8px;font-size:0.84rem;font-weight:600;margin-bottom:1rem;border:1px solid rgba(239,68,68,0.3);"></div>
+                    <div id="regErrorMsg" class="tv-auth-error-message" data-csp-style="sc6479dc91a2daf"></div>
 
                     <div class="tv-register-grid">
                         <div>
-                            <label class="form-label" for="regEmail">Email Portal Reseller (wajib berbeda) <span style="color:#ef4444;">*</span></label>
-                            <input type="email" id="regEmail" required placeholder="mitra@domain.com" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
+                            <label class="form-label" for="regEmail">Email Portal Reseller (wajib berbeda) <span data-csp-style="sc0b89d302c9562">*</span></label>
+                            <input type="email" id="regEmail" required placeholder="mitra@domain.com" data-csp-style="s366a3e19b27d65">
                         </div>
                         <div>
-                            <label class="form-label" for="regPassword">Password Portal Reseller <span style="color:#ef4444;">*</span></label>
-                            <input type="password" id="regPassword" required minlength="8" placeholder="Min. 8 Karakter" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
+                            <label class="form-label" for="regPassword">Password Portal Reseller <span data-csp-style="sc0b89d302c9562">*</span></label>
+                            <input type="password" id="regPassword" required minlength="8" placeholder="Min. 8 Karakter" data-csp-style="s366a3e19b27d65">
                         </div>
                     </div>
 
                     <div class="tv-register-grid">
                         <div>
-                            <label class="form-label" for="regFullname">Nama Lengkap (KTP) <span style="color:#ef4444;">*</span></label>
-                            <input type="text" id="regFullname" required placeholder="Nama Lengkap" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
+                            <label class="form-label" for="regFullname">Nama Lengkap (KTP) <span data-csp-style="sc0b89d302c9562">*</span></label>
+                            <input type="text" id="regFullname" required placeholder="Nama Lengkap" data-csp-style="s366a3e19b27d65">
                         </div>
                         <div>
-                            <label class="form-label" for="regWhatsapp">No. WhatsApp <span style="color:#ef4444;">*</span></label>
-                            <input type="tel" id="regWhatsapp" required placeholder="08xxxxxxxxxx" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
+                            <label class="form-label" for="regWhatsapp">No. WhatsApp <span data-csp-style="sc0b89d302c9562">*</span></label>
+                            <input type="tel" id="regWhatsapp" required placeholder="08xxxxxxxxxx" data-csp-style="s366a3e19b27d65">
                         </div>
                     </div>
 
                     <div class="tv-register-grid">
                         <div>
-                            <label class="form-label" for="regNik">NIK KTP (16 Digit) <span style="color:#ef4444;">*</span></label>
-                            <input type="text" id="regNik" required maxlength="16" placeholder="33xxxxxxxxxxxxxx" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
+                            <label class="form-label" for="regNik">NIK KTP (16 Digit) <span data-csp-style="sc0b89d302c9562">*</span></label>
+                            <input type="text" id="regNik" required maxlength="16" placeholder="33xxxxxxxxxxxxxx" data-csp-style="s366a3e19b27d65">
                         </div>
                         <div>
                             <label class="form-label" for="regStoreName">Nama Usaha / Toko</label>
-                            <input type="text" id="regStoreName" placeholder="Contoh: Rex Topup" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;">
+                            <input type="text" id="regStoreName" placeholder="Contoh: Rex Topup" data-csp-style="s366a3e19b27d65">
                         </div>
                     </div>
 
                     <div class="tv-register-grid">
                         <div>
                             <label class="form-label" for="regChannel">Kanal Penjualan</label>
-                            <select id="regChannel" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);border-radius:8px;font-size:0.86rem;box-sizing:border-box;background:#0b1120;color:#fff;">
+                            <select id="regChannel" data-csp-style="s562c5b18e8fe04">
                                 <option value="Website Sendiri (API/Integrasi)">Website Sendiri (API/Integrasi)</option>
                                 <option value="WhatsApp / Bot Otomatis">WhatsApp / Bot Otomatis</option>
                                 <option value="Konter Fisik / Toko Offline">Konter Fisik / Toko Offline</option>
@@ -1474,7 +1474,7 @@
                         </div>
                         <div>
                             <label class="form-label" for="regMonthly">Estimasi Transaksi</label>
-                            <select id="regMonthly" style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);border-radius:8px;font-size:0.86rem;box-sizing:border-box;background:#0b1120;color:#fff;">
+                            <select id="regMonthly" data-csp-style="s562c5b18e8fe04">
                                 <option value="Rp 5 - 20 Juta / Bulan">Rp 5 - 20 Juta / Bulan</option>
                                 <option value="Rp 20 - 50 Juta / Bulan">Rp 20 - 50 Juta / Bulan</option>
                                 <option value="> Rp 50 Juta / Bulan">&gt; Rp 50 Juta / Bulan</option>
@@ -1483,14 +1483,14 @@
                     </div>
 
                     <!-- Upload Foto KTP -->
-                    <div style="margin-bottom:0.95rem;">
-                        <label class="form-label">Foto KTP Asli (KYC) <span style="color:#ef4444;">*</span></label>
-                        <div id="ktpDropzone" style="border:2px dashed rgba(255,255,255,0.15);border-radius:12px;padding:1rem;text-align:center;background:rgba(255,255,255,0.02);cursor:pointer;">
-                            <input type="file" id="ktpFile" accept="image/*" style="display:none;">
+                    <div data-csp-style="sc0cf36691966f4">
+                        <label class="form-label">Foto KTP Asli (KYC) <span data-csp-style="sc0b89d302c9562">*</span></label>
+                        <div id="ktpDropzone" data-csp-style="sd45a618d56869b">
+                            <input type="file" id="ktpFile" accept="image/*" data-csp-style="sd0466aa33fa806">
                             <div id="ktpUploadPrompt">
-                                <i class="fa-regular fa-image" style="font-size:2rem;color:#38bdf8;" aria-hidden="true"></i>
-                                <div style="font-size:0.84rem;font-weight:700;color:#ffffff;margin-top:4px;">Klik untuk Unggah Foto KTP</div>
-                                <div style="font-size:0.74rem;color:#94a3b8;">Format JPG, PNG (Maks 5MB)</div>
+                                <i class="fa-regular fa-image" data-csp-style="s70c22bdd5565f7" aria-hidden="true"></i>
+                                <div data-csp-style="s2706ff4a0d9ff6">Klik untuk Unggah Foto KTP</div>
+                                <div data-csp-style="s59429616482a6c">Format JPG, PNG (Maks 5MB)</div>
                             </div>
                             <!-- BUG FIX: style lama menulis `display` DUA KALI
                                  ("display:none; ... ;display:inline-block"). Deklarasi
@@ -1499,22 +1499,22 @@
                                  tombol hapus melayang padahal belum ada file dipilih.
                                  Sekarang cuma satu deklarasi display, dan JS yang
                                  mengubahnya jadi inline-block setelah file dibaca. -->
-                            <div id="ktpPreviewBox" style="display:none;position:relative;">
-                                <img id="ktpPreviewImg" src="" alt="KTP" style="max-height:120px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);">
-                                <button type="button" onclick="removeKtpFile(event)" style="position:absolute;top:-6px;right:-6px;background:#ef4444;color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer;">&times;</button>
+                            <div id="ktpPreviewBox" data-csp-style="sb2ab78c0b299c7">
+                                <img id="ktpPreviewImg" src="" alt="KTP" data-csp-style="s79894e6e448395">
+                                <button type="button" data-csp-onclick="h37a42970c29ca5" data-csp-style="sa4d614ce31a35f">&times;</button>
                             </div>
                         </div>
                     </div>
 
-                    <div style="margin-bottom:1.35rem;">
+                    <div data-csp-style="se13d3bb5fe5799">
                         <label class="form-label" for="regNote">Catatan Tambahan (Opsional)</label>
-                        <textarea id="regNote" rows="2" placeholder="Catatan untuk verifikator..." style="width:100%;padding:0.65rem 0.85rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;font-size:0.86rem;box-sizing:border-box;"></textarea>
+                        <textarea id="regNote" rows="2" placeholder="Catatan untuk verifikator..." data-csp-style="s366a3e19b27d65"></textarea>
                     </div>
 
                     <div id="resellerRegisterTurnstile" class="auth-turnstile" hidden></div>
                     <p id="resellerRegisterTurnstileStatus" class="auth-error hidden" role="alert" aria-live="polite"></p>
 
-                    <button type="submit" id="btnRegisterSubmit" class="tv-auth-primary" style="width:100%;padding:0.8rem;border:none;border-radius:12px;background:linear-gradient(135deg,#00c2e8,#0891b2);color:#fff;font-weight:800;font-size:0.94rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 16px rgba(0,194,232,0.4);">
+                    <button type="submit" id="btnRegisterSubmit" class="tv-auth-primary" data-csp-style="s8ace4e6d67ca68">
                         <i class="fa-solid fa-user-check" aria-hidden="true"></i>
                         <span>Daftar Akun Portal Reseller &amp; Kirim Berkas KYC</span>
                     </button>
@@ -1527,9 +1527,9 @@
     <!-- =============================================================== -->
     <!-- MAIN CONSOLE LAYOUT (TOKOVOUCHER DISTRIBUTOR CONSOLE)            -->
     <!-- =============================================================== -->
-    <div id="sectionDashboard" class="tv-console-layout" style="display:none;">
+    <div id="sectionDashboard" class="tv-console-layout" data-csp-style="sd0466aa33fa806">
 
-        <button type="button" class="tv-mobile-menu-button" onclick="toggleSidebar()" aria-label="Buka menu portal reseller">
+        <button type="button" class="tv-mobile-menu-button" data-csp-onclick="h0a5a82aa568e3b" aria-label="Buka menu portal reseller">
             <i class="fa-solid fa-bars" aria-hidden="true"></i>
         </button>
 
@@ -1537,7 +1537,7 @@
         <aside class="tv-sidebar" id="tvSidebar">
             <div class="tv-sidebar-brand">
         <a href="/portal-reseller" class="tv-brand-logo-wrap">
-                    <img src="/images/nexshop-logo.webp" alt="NexShop" style="width:36px;height:36px;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(59,130,246,0.5));">
+                    <img src="/images/nexshop-logo.webp" alt="NexShop" data-csp-style="sc155b01ceee6e6">
                     <div class="tv-brand-text">
                         <div class="tv-brand-title">
                             <span>NexShop</span> <span class="tv-brand-tag" id="portalBrandTier">MITRA</span>
@@ -1545,42 +1545,42 @@
                         <div class="tv-brand-sub">Partner Portal</div>
                     </div>
                 </a>
-                <button type="button" class="tv-sidebar-toggle" onclick="toggleSidebar()" aria-label="Toggle Sidebar">
+                <button type="button" class="tv-sidebar-toggle" data-csp-onclick="h0a5a82aa568e3b" aria-label="Toggle Sidebar">
                     <i class="fa-solid fa-bars" aria-hidden="true"></i>
                 </button>
             </div>
 
             <!-- Sidebar Navigation Menu Items -->
             <nav class="tv-sidebar-menu">
-                <button type="button" class="tv-nav-link active" data-view="view-dashboard" onclick="switchConsoleView('view-dashboard')">
+                <button type="button" class="tv-nav-link active" data-view="view-dashboard" data-csp-onclick="h6df6860044a3f8">
                     <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
                     <span>Dashboard</span>
                 </button>
-                <button type="button" class="tv-nav-link" data-view="view-products" onclick="switchConsoleView('view-products')">
+                <button type="button" class="tv-nav-link" data-view="view-products" data-csp-onclick="h4309e6fbb968ac">
                     <i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i>
                     <span>Produk</span>
                 </button>
-                <button type="button" class="tv-nav-link" data-view="view-deposit" onclick="switchConsoleView('view-deposit')">
+                <button type="button" class="tv-nav-link" data-view="view-deposit" data-csp-onclick="h0a767897a96027">
                     <i class="fa-solid fa-wallet" aria-hidden="true"></i>
                     <span>Deposit</span>
                 </button>
-                <button type="button" class="tv-nav-link" data-view="view-mutations" onclick="switchConsoleView('view-mutations')">
+                <button type="button" class="tv-nav-link" data-view="view-mutations" data-csp-onclick="hdbaed16f27aecb">
                     <i class="fa-solid fa-receipt" aria-hidden="true"></i>
                     <span>Mutasi Saldo</span>
                 </button>
-                <button type="button" class="tv-nav-link" data-view="view-transactions" onclick="switchConsoleView('view-transactions')">
+                <button type="button" class="tv-nav-link" data-view="view-transactions" data-csp-onclick="hff03fa2c1bdaf8">
                     <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
                     <span>Transaksi</span>
                 </button>
-                <button type="button" class="tv-nav-link" data-view="view-settings" onclick="switchConsoleView('view-settings')">
+                <button type="button" class="tv-nav-link" data-view="view-settings" data-csp-onclick="heb24272fa8d33c">
                     <i class="fa-solid fa-gear" aria-hidden="true"></i>
                     <span>Pengaturan</span>
                 </button>
-                <button type="button" class="tv-nav-link" data-view="view-api" onclick="switchConsoleView('view-api')">
+                <button type="button" class="tv-nav-link" data-view="view-api" data-csp-onclick="ha6a778a50133b9">
                     <i class="fa-solid fa-code" aria-hidden="true"></i>
                     <span>Integrasi API</span>
                 </button>
-                <button type="button" class="tv-nav-link" data-view="view-tiers" onclick="switchConsoleView('view-tiers')">
+                <button type="button" class="tv-nav-link" data-view="view-tiers" data-csp-onclick="h3a7a9b8e160e7b">
                     <i class="fa-solid fa-award" aria-hidden="true"></i>
                     <span>Tingkatan Reseller</span>
                 </button>
@@ -1596,8 +1596,8 @@
                         <span class="tv-badge-tier" id="sidebarTierBadge">—</span>
                     </div>
                 </div>
-                <button type="button" class="tv-btn-logout-icon" onclick="logoutReseller()" title="Keluar">
-                    <i class="fa-solid fa-right-from-bracket" style="font-size:1.15rem;" aria-hidden="true"></i>
+                <button type="button" class="tv-btn-logout-icon" data-csp-onclick="hcce0dd2284e2f5" title="Keluar">
+                    <i class="fa-solid fa-right-from-bracket" data-csp-style="s6783001e682c5c" aria-hidden="true"></i>
                 </button>
             </div>
         </aside>
@@ -1611,10 +1611,10 @@
                 <div class="tv-card-widget">
                     <div class="tv-widget-user-wrap">
                         <div class="tv-widget-avatar-box">
-                            <i class="fa-solid fa-award" style="font-size:1.7rem;" aria-hidden="true"></i>
+                            <i class="fa-solid fa-award" data-csp-style="sfbca97161d3fed" aria-hidden="true"></i>
                         </div>
                         <div class="tv-widget-user-meta">
-                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <div data-csp-style="s74120396a7017d">
                                 <div class="tv-widget-user-name" id="topWidgetFullName">Memuat akun mitra...</div>
                                 <div id="topWidgetStatusChip">
                                     <span class="tv-badge-status"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Memeriksa status</span>
@@ -1622,9 +1622,9 @@
                             </div>
                             <div class="tv-widget-user-email" id="topWidgetEmail">...</div>
                             <div class="tv-widget-member-code">
-                                <span style="color:#94a3b8;font-weight:600;">Member Code</span>
-                                <span id="topWidgetMemberCode" style="color:#60a5fa;">...</span>
-                                <i class="fa-regular fa-copy" style="font-size:0.85rem;cursor:pointer;" aria-hidden="true"></i>
+                                <span data-csp-style="sca33e64018152d">Member Code</span>
+                                <span id="topWidgetMemberCode" data-csp-style="s2b7e55d4fb8569">...</span>
+                                <i class="fa-regular fa-copy" data-csp-style="sd2808fce886046" aria-hidden="true"></i>
                             </div>
                         </div>
                     </div>
@@ -1637,8 +1637,8 @@
                             <div class="tv-widget-balance-label">Kredit / Saldo Modal</div>
                             <div class="tv-widget-balance-amount" id="topWidgetBalance">Rp 0</div>
                         </div>
-                        <button type="button" class="tv-btn-deposit-action" onclick="switchConsoleView('view-deposit')">
-                            <i class="fa-solid fa-circle-plus" style="font-size:1rem;color:#38bdf8;" aria-hidden="true"></i>
+                        <button type="button" class="tv-btn-deposit-action" data-csp-onclick="h0a767897a96027">
+                            <i class="fa-solid fa-circle-plus" data-csp-style="s458a35f5729f99" aria-hidden="true"></i>
                             <span>Deposit</span>
                         </button>
                     </div>
@@ -1648,9 +1648,9 @@
                 <div class="tv-card-widget">
                     <div class="tv-widget-security-wrap">
                         <div class="tv-widget-shield-icon">
-                            <i class="fa-solid fa-shield-halved" style="font-size:1.7rem;" aria-hidden="true"></i>
+                            <i class="fa-solid fa-shield-halved" data-csp-style="sfbca97161d3fed" aria-hidden="true"></i>
                         </div>
-                        <div style="flex:1;min-width:0;">
+                        <div data-csp-style="s0070778df76ac3">
                             <div class="tv-security-title">Indikator Keamanan Akun</div>
                             <!-- Diisi renderSecurityIndicator() dari
                                  security_indicator milik respons API.
@@ -1659,8 +1659,8 @@
                                  pun tetap terlihat "aman", dan 2FA dicentang
                                  padahal fiturnya belum ada sama sekali. -->
                             <div class="tv-security-links" id="tvSecurityList">
-                                <span class="tv-security-link-item" style="cursor:default;">
-                                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size:0.8rem;color:#64748b;" aria-hidden="true"></i>
+                                <span class="tv-security-link-item" data-csp-style="s023e69287043e1">
+                                    <i class="fa-solid fa-circle-notch fa-spin" data-csp-style="s0bdb15e7cc3886" aria-hidden="true"></i>
                                     <span>Memeriksa status keamanan…</span>
                                 </span>
                             </div>
@@ -1670,24 +1670,24 @@
             </div>
 
             <!-- ── Alert Banner Saat Akun Belum Diverifikasi (Pending KYC) ── -->
-            <div id="tvPendingBanner" class="tv-pending-banner" style="display:none;">
+            <div id="tvPendingBanner" class="tv-pending-banner" data-csp-style="sd0466aa33fa806">
                 <div class="tv-pending-badge-icon">
                     <i class="fa-solid fa-hourglass-half" aria-hidden="true"></i>
                 </div>
-                <div style="flex:1;">
-                    <div style="font-size:0.98rem;font-weight:900;color:#fbbf24;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
-                        <i class="fa-solid fa-triangle-exclamation" style="font-size:1.2rem;color:#f59e0b;" aria-hidden="true"></i>
+                <div data-csp-style="s6253876a649a63">
+                    <div data-csp-style="sb687a22b9ac446">
+                        <i class="fa-solid fa-triangle-exclamation" data-csp-style="sdea1b05a7bad53" aria-hidden="true"></i>
                         <span>Akun Belum Diverifikasi oleh Admin (Maksimal 3x24 Jam Kerja)</span>
                     </div>
-                    <div style="font-size:0.86rem;color:#e2e8f0;line-height:1.6;margin-bottom:10px;">
+                    <div data-csp-style="sbe0deb3f9b02a8">
                         Pendaftaran kemitraan Anda telah diterima dan saat ini sedang menunggu tinjauan berkas KYC KTP oleh tim admin NexShop. <strong>Notifikasi ini akan otomatis hilang setelah pengajuan Anda disetujui (ACC) oleh admin</strong>. Selama masa peninjauan, Anda tetap dapat melihat seluruh katalog harga modal reseller dan mempelajari dokumentasi REST API.
                     </div>
-                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-                        <a data-wa-pesan="Halo Admin NexShop, saya sudah mendaftar reseller dan sedang menunggu verifikasi KYC." target="_blank" rel="noopener noreferrer" class="tv-btn-deposit-action" style="display:none;text-decoration:none;background:rgba(34,197,94,0.15);border-color:rgba(34,197,94,0.4);color:#4ade80;">
-                            <i class="fa-brands fa-whatsapp" style="font-size:1rem;color:#22c55e;" aria-hidden="true"></i> Konfirmasi via WhatsApp
+                    <div data-csp-style="sdefeae6db5822b">
+                        <a data-wa-pesan="Halo Admin NexShop, saya sudah mendaftar reseller dan sedang menunggu verifikasi KYC." target="_blank" rel="noopener noreferrer" class="tv-btn-deposit-action" data-csp-style="s2ef32fd5d4fb51">
+                            <i class="fa-brands fa-whatsapp" data-csp-style="s61bae81a14ad2d" aria-hidden="true"></i> Konfirmasi via WhatsApp
                         </a>
-                        <button type="button" class="tv-btn-deposit-action" onclick="loadPortalOverview()">
-                            <i class="fa-solid fa-rotate" style="font-size:1rem;" aria-hidden="true"></i> Cek Status Verifikasi Terkini
+                        <button type="button" class="tv-btn-deposit-action" data-csp-onclick="hba2dd665f04b3a">
+                            <i class="fa-solid fa-rotate" data-csp-style="s1521f41034cec4" aria-hidden="true"></i> Cek Status Verifikasi Terkini
                         </button>
                     </div>
                 </div>
@@ -1740,12 +1740,12 @@
                         <!-- Chart Date Picker Bar -->
                         <div class="tv-chart-controls-bar">
                             <div class="tv-date-range-badge">
-                                <i class="fa-regular fa-calendar" style="font-size:1.05rem;color:#38bdf8;" aria-hidden="true"></i>
+                                <i class="fa-regular fa-calendar" data-csp-style="s8fd626ff55e47c" aria-hidden="true"></i>
                                 <span id="chartDateRangeLabel">7 Hari Terakhir</span>
                             </div>
-                            <div style="display:flex;gap:6px;">
-                                <button type="button" class="tv-btn-deposit-action" style="padding:4px 8px;" onclick="loadPortalOverview()" title="Perbarui Grafik">
-                                    <i class="fa-solid fa-rotate" style="font-size:1rem;" aria-hidden="true"></i>
+                            <div data-csp-style="sccc58d95e35d92">
+                                <button type="button" class="tv-btn-deposit-action" data-csp-style="sa80179ab74b9f5" data-csp-onclick="hba2dd665f04b3a" title="Perbarui Grafik">
+                                    <i class="fa-solid fa-rotate" data-csp-style="s1521f41034cec4" aria-hidden="true"></i>
                                 </button>
                             </div>
                         </div>
@@ -1763,7 +1763,7 @@
                         </div>
 
                         <div class="tv-news-list" id="tvNewsFeedList">
-                            <div style="color:#94a3b8;font-size:0.84rem;padding:1rem;">Memuat berita terbaru...</div>
+                            <div data-csp-style="s30dbad31780f25">Memuat berita terbaru...</div>
                         </div>
                     </div>
 
@@ -1774,25 +1774,25 @@
             <!-- VIEW 2: PRODUK (KATALOG TOKOVOUCHER GOLD PRODUCT MATRIX)   -->
             <!-- =========================================================== -->
             <div id="view-products" class="tv-console-view">
-                <div class="tv-table-card" style="padding:1.4rem 1.6rem;">
+                <div class="tv-table-card" data-csp-style="sd4727e3df8408a">
                     
                     <!-- 1. Header Row (Title & Action Buttons) -->
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:12px;">
-                        <div style="min-width:0;">
-                            <h2 style="font-size:1.35rem;font-weight:900;color:#ffffff;margin:0 0 4px;">Katalog Produk &amp; Harga Modal Reseller</h2>
+                    <div data-csp-style="s3641c866df35ca">
+                        <div data-csp-style="sc4f140a8098106">
+                            <h2 data-csp-style="sced740d8b6a949">Katalog Produk &amp; Harga Modal Reseller</h2>
                             <!-- Klaim "termurah se-Indonesia" dihapus: itu
                                  pernyataan pemasaran yang tidak bisa
                                  dibuktikan dan bukan informasi yang berguna
                                  di konsol kerja mitra. -->
-                            <p style="font-size:0.84rem;color:#94a3b8;margin:0;">Harga modal sesuai tingkatan akunmu, tersinkron langsung dengan katalog NexShop.</p>
+                            <p data-csp-style="seb76c21511d0cf">Harga modal sesuai tingkatan akunmu, tersinkron langsung dengan katalog NexShop.</p>
                         </div>
-                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-                            <button type="button" class="tv-btn-deposit-action" onclick="openRequestProductModal()" style="border-color:#38bdf8;color:#38bdf8;background:rgba(56,189,248,0.1);">
-                                <i class="fa-solid fa-circle-plus" style="font-size:1.1rem;" aria-hidden="true"></i>
+                        <div data-csp-style="saf08793cbb3e47">
+                            <button type="button" class="tv-btn-deposit-action" data-csp-onclick="h3c669b33755a18" data-csp-style="s956db22dfc65d8">
+                                <i class="fa-solid fa-circle-plus" data-csp-style="s9c527edffcab84" aria-hidden="true"></i>
                                 <span>Request Produk</span>
                             </button>
-                            <button type="button" class="tv-btn-deposit-action" onclick="downloadProductsExcel()" style="border-color:#10b981;color:#10b981;background:rgba(16,185,129,0.1);">
-                                <i class="fa-solid fa-file-arrow-down" style="font-size:1.1rem;" aria-hidden="true"></i>
+                            <button type="button" class="tv-btn-deposit-action" data-csp-onclick="he6a7823da8b7b4" data-csp-style="sad2de5f62fc3ae">
+                                <i class="fa-solid fa-file-arrow-down" data-csp-style="s9c527edffcab84" aria-hidden="true"></i>
                                 <span>Unduh Harga Tier Saya</span>
                             </button>
                             <!-- Unduhan rincian harga untuk SEMUA level.
@@ -1800,19 +1800,15 @@
                                  /portal/price-list) supaya identik dengan
                                  harga yang ditagih saat checkout. -->
                             <div class="tv-dl-split">
-                                <button type="button" id="btnDownloadPriceList" class="tv-btn-deposit-action"
-                                    onclick="downloadPriceListPerLevel('csv')"
-                                    title="Unduh rincian harga untuk semua level reseller (CSV siap dibuka di Excel)"
-                                    style="border-color:#00c2e8;color:#5eeafb;background:rgba(0,194,232,0.12);">
-                                    <i class="fa-solid fa-table-list" style="font-size:1.1rem;" aria-hidden="true"></i>
+                                <button type="button" id="btnDownloadPriceList" class="tv-btn-deposit-action" data-csp-onclick="h8a13282b7d814a"
+                                    title="Unduh rincian harga untuk semua level reseller (CSV siap dibuka di Excel)" data-csp-style="sa4234d0ef12da2">
+                                    <i class="fa-solid fa-table-list" data-csp-style="s9c527edffcab84" aria-hidden="true"></i>
                                     <span>Rincian Harga Semua Level</span>
                                 </button>
-                                <button type="button" class="tv-btn-deposit-action tv-dl-split-alt"
-                                    onclick="downloadPriceListPerLevel('json')"
+                                <button type="button" class="tv-btn-deposit-action tv-dl-split-alt" data-csp-onclick="h18ee31b2a3e36d"
                                     title="Unduh versi JSON untuk diproses otomatis oleh sistem tokomu"
-                                    aria-label="Unduh rincian harga semua level dalam format JSON"
-                                    style="border-color:#00c2e8;color:#5eeafb;background:rgba(0,194,232,0.12);">
-                                    <i class="fa-solid fa-code" style="font-size:1rem;" aria-hidden="true"></i>
+                                    aria-label="Unduh rincian harga semua level dalam format JSON" data-csp-style="sa4234d0ef12da2">
+                                    <i class="fa-solid fa-code" data-csp-style="s1521f41034cec4" aria-hidden="true"></i>
                                     <span>JSON</span>
                                 </button>
                             </div>
@@ -1821,63 +1817,63 @@
 
                     <!-- 2. Horizontal Category Tabs Filter -->
                     <div class="tv-prod-category-tabs-scroll" id="tvCategoryTabsScroll">
-                        <button type="button" class="tv-cat-tab-btn active" onclick="selectProductCategory('all', this)">Semua Kategori</button>
-                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Topup Game', this)">Topup Game</button>
-                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Voucher Game', this)">Voucher Game</button>
-                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Hiburan', this)">Hiburan</button>
-                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Pulsa', this)">Pulsa</button>
-                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Paket Data', this)">Paket Data</button>
-                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Voucher Data', this)">Voucher Data</button>
-                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Telpon & SMS', this)">Telpon &amp; SMS</button>
-                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('PLN', this)">PLN</button>
-                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('E-Money', this)">E-Money</button>
-                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Pascabayar', this)">Pascabayar</button>
-                        <button type="button" class="tv-cat-tab-btn" onclick="selectProductCategory('Transfer Dana', this)">Transfer Dana</button>
+                        <button type="button" class="tv-cat-tab-btn active" data-csp-onclick="ha653325c41a73d">Semua Kategori</button>
+                        <button type="button" class="tv-cat-tab-btn" data-csp-onclick="h7c176691fe78bd">Topup Game</button>
+                        <button type="button" class="tv-cat-tab-btn" data-csp-onclick="hafa84800d93dad">Voucher Game</button>
+                        <button type="button" class="tv-cat-tab-btn" data-csp-onclick="hbc9a56d167bf8d">Hiburan</button>
+                        <button type="button" class="tv-cat-tab-btn" data-csp-onclick="hc4c3be16456284">Pulsa</button>
+                        <button type="button" class="tv-cat-tab-btn" data-csp-onclick="h263c44d693bf1d">Paket Data</button>
+                        <button type="button" class="tv-cat-tab-btn" data-csp-onclick="h1c4ad0f6f0d9a3">Voucher Data</button>
+                        <button type="button" class="tv-cat-tab-btn" data-csp-onclick="h7fa7a76ec7787a">Telpon &amp; SMS</button>
+                        <button type="button" class="tv-cat-tab-btn" data-csp-onclick="hfbb7981a685bf3">PLN</button>
+                        <button type="button" class="tv-cat-tab-btn" data-csp-onclick="h8775898a0bac59">E-Money</button>
+                        <button type="button" class="tv-cat-tab-btn" data-csp-onclick="hf558750beef1b1">Pascabayar</button>
+                        <button type="button" class="tv-cat-tab-btn" data-csp-onclick="hf1d9f6322ad0b7">Transfer Dana</button>
                     </div>
 
                     <!-- 3. Operator Search Bar -->
-                    <div style="margin-bottom:1.1rem;">
-                        <div class="tv-search-input-wrap" style="max-width:100%;">
+                    <div data-csp-style="s5d6e5a9c918513">
+                        <div class="tv-search-input-wrap" data-csp-style="s000d7b68ecb970">
                             <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
-                            <input type="text" id="inputSearchOperator" placeholder="Cari Operator / Game (misal: Free Fire, Mobile Legends, Telkomsel, PLN, DANA)..." oninput="filterOperatorGrid()">
+                            <input type="text" id="inputSearchOperator" placeholder="Cari Operator / Game (misal: Free Fire, Mobile Legends, Telkomsel, PLN, DANA)..." data-csp-oninput="h0c43c7b8e4d7cc">
                         </div>
                     </div>
 
                     <!-- 4. Interactive Operator Badges Grid (With Logos) -->
                     <div class="tv-operator-grid-box" id="tvOperatorGridBox">
-                        <div style="color:#94a3b8;font-size:0.84rem;padding:1rem;">Memuat daftar operator &amp; game...</div>
+                        <div data-csp-style="s30dbad31780f25">Memuat daftar operator &amp; game...</div>
                     </div>
 
                     <!-- 5. Sub-variant / Denom Tabs Bar -->
-                    <div class="tv-subvariant-tabs-scroll" id="tvSubvariantTabsScroll" style="display:none;">
+                    <div class="tv-subvariant-tabs-scroll" id="tvSubvariantTabsScroll" data-csp-style="sd0466aa33fa806">
                         <!-- Generated Dynamically -->
                     </div>
 
                     <!-- 6. View Mode Toggle & SKU Search -->
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.15rem;padding-top:1rem;border-top:1px solid rgba(255,255,255,0.08);flex-wrap:wrap;gap:10px;">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <span style="font-size:0.84rem;font-weight:700;color:#94a3b8;">Tampilan:</span>
-                            <button type="button" id="btnViewGrid" class="tv-btn-deposit-action" style="padding:4px 10px;border-color:#3b82f6;background:rgba(37,99,235,0.25);color:#fff;" onclick="setProductDisplayMode('grid')">
-                                <i class="fa-solid fa-table-cells-large" style="font-size:1rem;" aria-hidden="true"></i> Grid Foto
+                    <div data-csp-style="s8a1c79c8b792ed">
+                        <div data-csp-style="s68443324e11c71">
+                            <span data-csp-style="scd824982a2ef64">Tampilan:</span>
+                            <button type="button" id="btnViewGrid" class="tv-btn-deposit-action" data-csp-style="sc660a4208159e6" data-csp-onclick="h941a242d6ca3d5">
+                                <i class="fa-solid fa-table-cells-large" data-csp-style="s1521f41034cec4" aria-hidden="true"></i> Grid Foto
                             </button>
-                            <button type="button" id="btnViewTable" class="tv-btn-deposit-action" style="padding:4px 10px;" onclick="setProductDisplayMode('table')">
-                                <i class="fa-solid fa-list" style="font-size:1rem;" aria-hidden="true"></i> Tabel Rinci
+                            <button type="button" id="btnViewTable" class="tv-btn-deposit-action" data-csp-style="s4a72685d2f82e2" data-csp-onclick="h33f66a62c3a2a2">
+                                <i class="fa-solid fa-list" data-csp-style="s1521f41034cec4" aria-hidden="true"></i> Tabel Rinci
                             </button>
-                            <span id="labelTotalFilteredProducts" style="font-size:0.8rem;color:#60a5fa;font-weight:700;margin-left:8px;">0 Produk</span>
+                            <span id="labelTotalFilteredProducts" data-csp-style="s7ba512e43750d3">0 Produk</span>
                         </div>
-                        <div class="tv-search-input-wrap" style="max-width:320px;">
+                        <div class="tv-search-input-wrap" data-csp-style="s85b149ccc5f308">
                             <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                            <input type="text" id="inputSearchProduct" placeholder="Cari Kode SKU / Denom..." oninput="filterPortalProducts()">
+                            <input type="text" id="inputSearchProduct" placeholder="Cari Kode SKU / Denom..." data-csp-oninput="h0d946258cf7080">
                         </div>
                     </div>
 
                     <!-- 7. Product Cards Grid View -->
                     <div id="tvProductsGridView" class="tv-product-cards-grid">
-                        <div style="grid-column:1/-1;text-align:center;padding:3rem;color:#94a3b8;">Memuat katalog produk dengan foto...</div>
+                        <div data-csp-style="s4e223036c3bb3f">Memuat katalog produk dengan foto...</div>
                     </div>
 
                     <!-- 8. Dense Table View -->
-                    <div id="tvProductsTableView" style="display:none;overflow-x:auto;">
+                    <div id="tvProductsTableView" data-csp-style="s947a090cd01e76">
                         <table class="tv-data-table">
                             <thead>
                                 <tr>
@@ -1894,7 +1890,7 @@
                             </thead>
                             <tbody id="tvProductsTableBody">
                                 <tr>
-                                    <td colspan="9" style="text-align:center;padding:2rem;color:#94a3b8;">Memuat katalog produk...</td>
+                                    <td colspan="9" data-csp-style="sd2b55713109ca5">Memuat katalog produk...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1907,82 +1903,82 @@
             <!-- VIEW 3: DEPOSIT (TOPUP SALDO MODAL RESELLER)               -->
             <!-- =========================================================== -->
             <div id="view-deposit" class="tv-console-view">
-                <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:1.35rem;">
+                <div data-csp-style="s56aff50eaf4b65">
                     <!-- CARD 1: FORM PENGISIAN DEPOSIT -->
                     <div class="tv-section-card" id="depositFormCard">
                         <div class="tv-section-title">
                             <span>Form Pengisian Saldo Deposit Modal</span>
                         </div>
-                        <form id="formDepositSimulator" onsubmit="handleDepositSubmit(event)">
-                            <div style="margin-bottom:1.15rem;">
+                        <form id="formDepositSimulator" data-csp-onsubmit="h1b2c35d69e50fa">
+                            <div data-csp-style="se7da744a288024">
                                 <label class="form-label">Pilih Metode Pembayaran Deposit</label>
-                                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">
-                                    <button type="button" class="tv-btn-deposit-action" style="justify-content:center;padding:0.75rem;border-color:#3b82f6;background:rgba(37,99,235,0.25);" onclick="selectPaymentMethod('qris')">
-                                        <i class="fa-solid fa-qrcode" style="font-size:1.1rem;color:#38bdf8;" aria-hidden="true"></i> QRIS Instan
+                                <div data-csp-style="s5d40a7605a1b80">
+                                    <button type="button" class="tv-btn-deposit-action" data-csp-style="s43a0ebe61b9298" data-csp-onclick="h373653e602c3e6">
+                                        <i class="fa-solid fa-qrcode" data-csp-style="s628542215071ba" aria-hidden="true"></i> QRIS Instan
                                     </button>
-                                    <button type="button" class="tv-btn-deposit-action" style="justify-content:center;padding:0.75rem;" onclick="selectPaymentMethod('bca')">
+                                    <button type="button" class="tv-btn-deposit-action" data-csp-style="s4421161b980868" data-csp-onclick="he620e4e5448e33">
                                         BCA VA
                                     </button>
-                                    <button type="button" class="tv-btn-deposit-action" style="justify-content:center;padding:0.75rem;" onclick="selectPaymentMethod('mandiri')">
+                                    <button type="button" class="tv-btn-deposit-action" data-csp-style="s4421161b980868" data-csp-onclick="h24f25a7b763944">
                                         Mandiri VA
                                     </button>
                                 </div>
                             </div>
 
-                            <div style="margin-bottom:1.15rem;">
+                            <div data-csp-style="se7da744a288024">
                                 <label class="form-label">Nominal Deposit (Rp)</label>
-                                <input type="number" id="inputDepositAmount" value="100000" min="20000" step="10000" class="form-control" style="width:100%;padding:0.75rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;font-size:1.15rem;font-weight:800;box-sizing:border-box;">
+                                <input type="number" id="inputDepositAmount" value="100000" min="20000" step="10000" class="form-control" data-csp-style="sf2644808982644">
                             </div>
 
-                            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.35rem;">
-                                <button type="button" class="tv-btn-deposit-action" onclick="setDepositPreset(50000)">Rp 50.000</button>
-                                <button type="button" class="tv-btn-deposit-action" onclick="setDepositPreset(100000)">Rp 100.000</button>
-                                <button type="button" class="tv-btn-deposit-action" onclick="setDepositPreset(250000)">Rp 250.000</button>
-                                <button type="button" class="tv-btn-deposit-action" onclick="setDepositPreset(500000)">Rp 500.000</button>
-                                <button type="button" class="tv-btn-deposit-action" onclick="setDepositPreset(1000000)">Rp 1.000.000</button>
+                            <div data-csp-style="s21b5b90537a34d">
+                                <button type="button" class="tv-btn-deposit-action" data-csp-onclick="h3c768efc9077c5">Rp 50.000</button>
+                                <button type="button" class="tv-btn-deposit-action" data-csp-onclick="h2470867054c99e">Rp 100.000</button>
+                                <button type="button" class="tv-btn-deposit-action" data-csp-onclick="h503492bbc7e131">Rp 250.000</button>
+                                <button type="button" class="tv-btn-deposit-action" data-csp-onclick="h7a6422d974f27d">Rp 500.000</button>
+                                <button type="button" class="tv-btn-deposit-action" data-csp-onclick="hac655637af018c">Rp 1.000.000</button>
                             </div>
 
-                            <button type="submit" id="btnSubmitDeposit" style="width:100%;padding:0.85rem;border:none;border-radius:12px;background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;font-weight:800;font-size:0.95rem;cursor:pointer;box-shadow:0 4px 16px rgba(37,99,235,0.4);display:inline-flex;align-items:center;justify-content:center;gap:8px;">
+                            <button type="submit" id="btnSubmitDeposit" data-csp-style="sbe479bf8a2cd51">
                                 <span>Lanjutkan Pembayaran Deposit</span>
-                                <i class="fa-solid fa-arrow-right" style="font-size:1.1rem;" aria-hidden="true"></i>
+                                <i class="fa-solid fa-arrow-right" data-csp-style="s9c527edffcab84" aria-hidden="true"></i>
                             </button>
                         </form>
                     </div>
 
                     <!-- CARD 2: DIRECT QRIS DISPLAY -->
-                    <div class="tv-section-card" id="depositQrisCard" style="display:none;text-align:center;">
-                        <div class="tv-section-title" style="justify-content:center;">
+                    <div class="tv-section-card" id="depositQrisCard" data-csp-style="s3365ad0ede053f">
+                        <div class="tv-section-title" data-csp-style="s3dc9c801db6bd4">
                             <span>Scan QRIS untuk Deposit Saldo</span>
                         </div>
-                        <div style="font-size:1.6rem;font-weight:900;color:#38bdf8;margin:0.5rem 0;" id="resellerQrisAmount">Rp 0</div>
-                        <div style="background:#ffffff;padding:12px;border-radius:16px;display:inline-block;margin-bottom:12px;border:2px solid #38bdf8;box-shadow:0 8px 24px rgba(0,0,0,0.5);">
-                            <img id="resellerQrisImage" src="" alt="QRIS Code" style="width:230px;height:230px;object-fit:contain;display:block;border-radius:8px;">
+                        <div data-csp-style="s5cf23e2936c94a" id="resellerQrisAmount">Rp 0</div>
+                        <div data-csp-style="sad14f7b3412f07">
+                            <img id="resellerQrisImage" src="" alt="QRIS Code" data-csp-style="s23c16aeacaf8c8">
                         </div>
-                        <div style="display:flex;align-items:center;justify-content:center;gap:6px;font-size:0.85rem;color:#fbbf24;font-weight:800;margin-bottom:6px;">
-                            <i class="fa-solid fa-hourglass-half mkt-spin" style="font-size:1.1rem;" aria-hidden="true"></i>
+                        <div data-csp-style="sb116fe9a5e28aa">
+                            <i class="fa-solid fa-hourglass-half mkt-spin" data-csp-style="s9c527edffcab84" aria-hidden="true"></i>
                             <span>Menunggu Pembayaran...</span>
                         </div>
-                        <div style="font-size:0.78rem;color:#94a3b8;margin-bottom:1.2rem;line-height:1.4;">
+                        <div data-csp-style="s01a5b72d932c8b">
                             Buka aplikasi BCA Mobile, GoPay, OVO, Dana, ShopeePay atau mobile banking apa saja lalu scan QR di atas.
                         </div>
-                        <button type="button" class="tv-btn-deposit-action" onclick="cancelDepositQris()" style="margin:0 auto;color:#f87171;border-color:rgba(248,113,113,0.3);">
+                        <button type="button" class="tv-btn-deposit-action" data-csp-onclick="h97c31caad6d751" data-csp-style="sd118e0f2f104e0">
                             Batalkan Deposit
                         </button>
                     </div>
 
                     <!-- CARD 3: DEPOSIT SUCCESS -->
-                    <div class="tv-section-card" id="depositSuccessCard" style="display:none;text-align:center;padding:2rem 1.5rem;">
-                        <div style="width:64px;height:64px;border-radius:50%;background:rgba(52,211,153,0.15);border:2px solid #34d399;color:#34d399;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;">
+                    <div class="tv-section-card" id="depositSuccessCard" data-csp-style="s9ad551cc058417">
+                        <div data-csp-style="s77cd3b205120c5">
                             <i class="fa-solid fa-check"></i>
                         </div>
-                        <h3 style="font-size:1.25rem;font-weight:900;color:#ffffff;margin:0 0 6px;">Deposit Berhasil!</h3>
-                        <p style="font-size:0.85rem;color:#94a3b8;margin:0 0 1.25rem;" id="resellerDepositSuccessMsg">Saldo deposit modal berhasil ditambahkan ke akun reseller kamu.</p>
-                        <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:0.85rem;border-radius:12px;margin-bottom:1.5rem;display:inline-block;min-width:200px;">
-                            <span style="font-size:0.75rem;color:#94a3b8;display:block;">Saldo Modal Sekarang</span>
-                            <strong style="font-size:1.45rem;font-weight:900;color:#34d399;" id="resellerDepositNewBalance">Rp 0</strong>
+                        <h3 data-csp-style="s9b1a65bcf84596">Deposit Berhasil!</h3>
+                        <p data-csp-style="s5662ea9eb34763" id="resellerDepositSuccessMsg">Saldo deposit modal berhasil ditambahkan ke akun reseller kamu.</p>
+                        <div data-csp-style="s60ffbd0c2bb0e1">
+                            <span data-csp-style="s6e8fe7b69ef459">Saldo Modal Sekarang</span>
+                            <strong data-csp-style="se19324b74382ef" id="resellerDepositNewBalance">Rp 0</strong>
                         </div>
                         <div>
-                            <button type="button" class="tv-btn-deposit-action" onclick="resetDepositView()" style="background:#2563eb;color:#fff;border-color:#3b82f6;padding:0.75rem 1.5rem;margin:0 auto;">
+                            <button type="button" class="tv-btn-deposit-action" data-csp-onclick="h2ae2a7309f6460" data-csp-style="sfa02f27bf61583">
                                 Selesai &amp; Kembali ke Konsol
                             </button>
                         </div>
@@ -1993,12 +1989,12 @@
                         <div class="tv-section-title">
                             <span>Petunjuk Pembayaran Saldo</span>
                         </div>
-                        <div style="font-size:0.86rem;color:#cbd5e1;line-height:1.7;">
-                            <ul style="padding-left:1.2rem;margin:0;">
-                                <li style="margin-bottom:8px;">Pembayaran via QRIS terverifikasi otomatis secara instan dalam hitungan detik tanpa biaya admin tambahan.</li>
-                                <li style="margin-bottom:8px;">Saldo deposit langsung bertambah di konsol Anda dan siap digunakan untuk transaksi API.</li>
-                                <li style="margin-bottom:8px;">Minimal deposit Rp 10.000. Tidak ada batas masa berlaku saldo.</li>
-                                <li style="margin-bottom:8px;">Setelah transfer, status pembayaran akan otomatis terdeteksi tanpa perlu refresh halaman.</li>
+                        <div data-csp-style="sfd979c3ab9ac39">
+                            <ul data-csp-style="s640bac6948e554">
+                                <li data-csp-style="sc500155b62b4a0">Pembayaran via QRIS terverifikasi otomatis secara instan dalam hitungan detik tanpa biaya admin tambahan.</li>
+                                <li data-csp-style="sc500155b62b4a0">Saldo deposit langsung bertambah di konsol Anda dan siap digunakan untuk transaksi API.</li>
+                                <li data-csp-style="sc500155b62b4a0">Minimal deposit Rp 10.000. Tidak ada batas masa berlaku saldo.</li>
+                                <li data-csp-style="sc500155b62b4a0">Setelah transfer, status pembayaran akan otomatis terdeteksi tanpa perlu refresh halaman.</li>
                             </ul>
                         </div>
                     </div>
@@ -2012,11 +2008,11 @@
                 <div class="tv-table-card">
                     <div class="tv-table-header-bar">
                         <div>
-                            <h3 style="font-size:1.1rem;font-weight:800;color:#ffffff;margin:0 0 2px;">Mutasi Saldo &amp; Ledger Pembukuan</h3>
-                            <p style="font-size:0.8rem;color:#94a3b8;margin:0;">Catatan transaksi debit dan kredit saldo modal reseller Anda.</p>
+                            <h3 data-csp-style="sa194ac13b0b69d">Mutasi Saldo &amp; Ledger Pembukuan</h3>
+                            <p data-csp-style="s52a348caf63411">Catatan transaksi debit dan kredit saldo modal reseller Anda.</p>
                         </div>
                     </div>
-                    <div style="overflow-x:auto;">
+                    <div data-csp-style="sfbff25e9fc50ca">
                         <table class="tv-data-table">
                             <thead>
                                 <tr>
@@ -2029,7 +2025,7 @@
                             </thead>
                             <tbody id="tvMutationsTableBody">
                                 <tr>
-                                    <td colspan="5" style="text-align:center;padding:2rem;color:#94a3b8;">Belum ada mutasi saldo tercatat.</td>
+                                    <td colspan="5" data-csp-style="sd2b55713109ca5">Belum ada mutasi saldo tercatat.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -2044,15 +2040,15 @@
                 <div class="tv-table-card">
                     <div class="tv-table-header-bar">
                         <div>
-                            <h3 style="font-size:1.1rem;font-weight:800;color:#ffffff;margin:0 0 2px;">Riwayat Transaksi Pesanan API</h3>
-                            <p style="font-size:0.8rem;color:#94a3b8;margin:0;">Seluruh status pesanan produk yang diproses melalui sistem NexShop.</p>
+                            <h3 data-csp-style="sa194ac13b0b69d">Riwayat Transaksi Pesanan API</h3>
+                            <p data-csp-style="s52a348caf63411">Seluruh status pesanan produk yang diproses melalui sistem NexShop.</p>
                         </div>
                         <div class="tv-search-input-wrap">
                             <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-                            <input type="text" id="inputSearchTrx" placeholder="Cari Order ID / No. Tujuan..." oninput="filterPortalOrders()">
+                            <input type="text" id="inputSearchTrx" placeholder="Cari Order ID / No. Tujuan..." data-csp-oninput="h1f582852b261cb">
                         </div>
                     </div>
-                    <div style="overflow-x:auto;">
+                    <div data-csp-style="sfbff25e9fc50ca">
                         <table class="tv-data-table">
                             <thead>
                                 <tr>
@@ -2067,7 +2063,7 @@
                             </thead>
                             <tbody id="tvOrdersTableBody">
                                 <tr>
-                                    <td colspan="7" style="text-align:center;padding:2rem;color:#94a3b8;">Memuat riwayat transaksi...</td>
+                                    <td colspan="7" data-csp-style="sd2b55713109ca5">Memuat riwayat transaksi...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -2079,70 +2075,70 @@
             <!-- VIEW 6: PENGATURAN (PROFIL & KEAMANAN AKUN)                 -->
             <!-- =========================================================== -->
             <div id="view-settings" class="tv-console-view">
-                <div class="tv-section-card" style="max-width:800px;">
+                <div class="tv-section-card" data-csp-style="s8749909fa93663">
                     <div class="tv-section-title">
                         <span>Pengaturan Profil &amp; Keamanan Mitra</span>
                     </div>
-                    <form id="formResellerProfile" onsubmit="handleSaveProfile(event)">
-                        <div class="tv-form-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:1.15rem;margin-bottom:1.15rem;">
+                    <form id="formResellerProfile" data-csp-onsubmit="h0c25a4462c8d8e">
+                        <div class="tv-form-grid" data-csp-style="s116462f33ff055">
                             <div>
                                 <label class="form-label">Nama Lengkap</label>
-                                <input type="text" id="settingsFullName" class="form-control" style="width:100%;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;box-sizing:border-box;">
+                                <input type="text" id="settingsFullName" class="form-control" data-csp-style="s3af0c34fd5567a">
                             </div>
                             <div>
                                 <label class="form-label">Email Akun</label>
-                                <input type="email" id="settingsEmail" class="form-control" readonly style="width:100%;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:#94a3b8;border-radius:10px;box-sizing:border-box;">
+                                <input type="email" id="settingsEmail" class="form-control" readonly data-csp-style="sa55019b7d4b031">
                             </div>
                         </div>
                     </form>
 
                     <section class="tv-security-panel" aria-labelledby="twoFactorSettingsTitle">
-                        <div style="margin-bottom:1.5rem;">
+                        <div data-csp-style="se12e213489f747">
                             <label class="form-label" id="twoFactorSettingsTitle">Two-Factor Authentication (2FA)</label>
-                            <div style="padding:0.95rem 1.15rem;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;">
-                                <div style="display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;">
+                            <div data-csp-style="s8e34c5f632cecc">
+                                <div data-csp-style="s231d0c39088d6c">
                                     <div>
-                                        <div style="font-weight:700;font-size:0.88rem;color:#ffffff;">Authenticator App (TOTP)</div>
-                                        <div style="font-size:0.76rem;color:#94a3b8;">Opsional. Login akan meminta kode 6 digit setelah password jika diaktifkan.</div>
+                                        <div data-csp-style="s099f722ffd1e92">Authenticator App (TOTP)</div>
+                                        <div data-csp-style="s99b1eae88dc047">Opsional. Login akan meminta kode 6 digit setelah password jika diaktifkan.</div>
                                     </div>
                                     <span id="twoFactorStatusBadge" class="tv-badge-status">Memuat…</span>
                                 </div>
-                                <div id="twoFactorActionArea" style="margin-top:0.85rem;">
+                                <div id="twoFactorActionArea" data-csp-style="s68c68e6397b746">
                                     <button type="button" id="btnTwoFactorSetup" class="tv-btn-deposit-action">Aktifkan 2FA</button>
                                 </div>
-                                <form id="formTwoFactorSetup" hidden style="margin-top:0.85rem;">
+                                <form id="formTwoFactorSetup" hidden data-csp-style="s68c68e6397b746">
                                     <label class="form-label" for="twoFactorSetupPassword">Konfirmasi password portal</label>
-                                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                                        <input type="password" id="twoFactorSetupPassword" required autocomplete="current-password" placeholder="Password Portal Reseller" style="flex:1;min-width:220px;padding:0.65rem 0.8rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;">
+                                    <div data-csp-style="s3100dac6e56f52">
+                                        <input type="password" id="twoFactorSetupPassword" required autocomplete="current-password" placeholder="Password Portal Reseller" data-csp-style="sc51778d8240167">
                                         <button type="submit" class="tv-btn-deposit-action" id="btnTwoFactorSetupSubmit">Mulai Setup</button>
                                     </div>
                                 </form>
-                                <div id="twoFactorSetupResult" hidden style="margin-top:0.85rem;padding:0.85rem;border-radius:10px;background:rgba(37,99,235,0.1);border:1px solid rgba(59,130,246,0.25);">
-                                    <p style="margin:0 0 0.45rem;color:#bae6fd;font-size:0.8rem;">Tambahkan secret ini ke Google/Microsoft Authenticator. Recovery code hanya ditampilkan sekarang—simpan offline dan jangan bagikan.</p>
-                                    <code id="twoFactorSecret" style="display:block;color:#fff;word-break:break-all;margin-bottom:0.45rem;"></code>
-                                    <code id="twoFactorOtpAuth" style="display:block;color:#93c5fd;word-break:break-all;font-size:0.72rem;margin-bottom:0.65rem;"></code>
-                                    <pre id="twoFactorRecoveryCodes" style="white-space:pre-wrap;color:#fde68a;font-size:0.78rem;margin:0 0 0.75rem;"></pre>
+                                <div id="twoFactorSetupResult" hidden data-csp-style="s60dace206fb0d1">
+                                    <p data-csp-style="se17808cbc06dbb">Tambahkan secret ini ke Google/Microsoft Authenticator. Recovery code hanya ditampilkan sekarang—simpan offline dan jangan bagikan.</p>
+                                    <code id="twoFactorSecret" data-csp-style="safac7581ef1d1e"></code>
+                                    <code id="twoFactorOtpAuth" data-csp-style="sda8abdde84a145"></code>
+                                    <pre id="twoFactorRecoveryCodes" data-csp-style="s3e9c9990429148"></pre>
                                     <form id="formTwoFactorEnable">
                                         <label class="form-label" for="twoFactorEnableCode">Kode 6 digit untuk mengonfirmasi</label>
-                                        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                                            <input type="text" id="twoFactorEnableCode" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="flex:1;min-width:150px;padding:0.65rem 0.8rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;">
+                                        <div data-csp-style="s3100dac6e56f52">
+                                            <input type="text" id="twoFactorEnableCode" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" data-csp-style="s49da26d5025e7f">
                                             <button type="submit" class="tv-btn-deposit-action" id="btnTwoFactorEnable">Aktifkan Sekarang</button>
                                         </div>
                                     </form>
                                 </div>
-                                <form id="formTwoFactorDisable" hidden style="margin-top:0.85rem;">
-                                    <p style="margin:0 0 0.65rem;color:#fbbf24;font-size:0.78rem;">Menonaktifkan 2FA memerlukan password portal dan kode authenticator aktif.</p>
-                                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-                                        <input type="password" id="twoFactorDisablePassword" required autocomplete="current-password" placeholder="Password Portal Reseller" style="flex:1;min-width:200px;padding:0.65rem 0.8rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;">
-                                        <input type="text" id="twoFactorDisableCode" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Kode 6 digit" style="width:140px;padding:0.65rem 0.8rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:8px;">
+                                <form id="formTwoFactorDisable" hidden data-csp-style="s68c68e6397b746">
+                                    <p data-csp-style="sda43406f8757ef">Menonaktifkan 2FA memerlukan password portal dan kode authenticator aktif.</p>
+                                    <div data-csp-style="s3100dac6e56f52">
+                                        <input type="password" id="twoFactorDisablePassword" required autocomplete="current-password" placeholder="Password Portal Reseller" data-csp-style="sf97e73641f9b4e">
+                                        <input type="text" id="twoFactorDisableCode" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Kode 6 digit" data-csp-style="sbdc08cd465cb93">
                                         <button type="submit" class="tv-btn-deposit-action" id="btnTwoFactorDisable">Nonaktifkan</button>
                                     </div>
                                 </form>
-                                <p id="twoFactorSettingsMessage" role="alert" aria-live="polite" style="display:none;margin:0.7rem 0 0;color:#fca5a5;font-size:0.8rem;"></p>
+                                <p id="twoFactorSettingsMessage" role="alert" aria-live="polite" data-csp-style="sfc2766df74e8e8"></p>
                             </div>
                         </div>
 
-                        <button type="submit" form="formResellerProfile" style="padding:0.75rem 1.6rem;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,0.35);">
+                        <button type="submit" form="formResellerProfile" data-csp-style="s6e07a330028fb1">
                             Simpan Perubahan
                         </button>
                     </section>
@@ -2154,62 +2150,62 @@
             <!-- =========================================================== -->
             <div id="view-api" class="tv-console-view">
                 <!-- Banner Khusus View API Jika Belum Di-ACC -->
-                <div id="apiPendingNotice" class="tv-pending-banner" style="display:flex;margin-bottom:1.35rem;">
+                <div id="apiPendingNotice" class="tv-pending-banner" data-csp-style="s8f0eccf5687f63">
                     <div class="tv-pending-badge-icon">
                         <i class="fa-solid fa-lock" aria-hidden="true"></i>
                     </div>
-                    <div style="flex:1;">
-                        <div style="font-size:0.95rem;font-weight:800;color:#fbbf24;margin-bottom:3px;">
+                    <div data-csp-style="s6253876a649a63">
+                        <div data-csp-style="s918e4697df47f9">
                             Akses Kredensial API Terkunci Sementara (Menunggu ACC Admin)
                         </div>
-                        <div style="font-size:0.84rem;color:#cbd5e1;line-height:1.5;">
+                        <div data-csp-style="s5590f0c4c624da">
                             Pembuatan Secret Key production dan Webhook Relay otomatis aktif setelah permohonan kemitraan Anda disetujui (ACC) oleh admin NexShop (maksimal 3x24 jam). Anda tetap dapat membaca dokumentasi endpoint REST API di bawah ini.
                         </div>
                     </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:1.35rem;">
+                <div data-csp-style="s56aff50eaf4b65">
                     <div class="tv-section-card">
                         <div class="tv-section-title">
                             <span>Kredensial REST API Mitra</span>
                             <button type="button" id="btnRotateApiKey" class="tv-btn-deposit-action">
-                                <i class="fa-solid fa-arrows-rotate" style="font-size:0.95rem;" aria-hidden="true"></i>
+                                <i class="fa-solid fa-arrows-rotate" data-csp-style="s232f9fa6107ec3" aria-hidden="true"></i>
                                 <span>Rotate / Buat Key Baru</span>
                             </button>
                         </div>
 
-                        <div style="margin-bottom:1.15rem;">
+                        <div data-csp-style="se7da744a288024">
                             <label class="form-label">API KEY (Header: <code>X-NexShop-Api-Key</code>)</label>
-                            <div style="display:flex;gap:6px;">
-                                <input type="text" id="inputApiKey" readonly value="Memuat API Key..." style="flex:1;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;font-family:'Fira Code',monospace;font-size:0.84rem;">
-                                <button type="button" class="tv-btn-deposit-action" onclick="copyValue('inputApiKey', 'API Key')">Salin</button>
+                            <div data-csp-style="sccc58d95e35d92">
+                                <input type="text" id="inputApiKey" readonly value="Memuat API Key..." data-csp-style="scb60744b11edd8">
+                                <button type="button" class="tv-btn-deposit-action" data-csp-onclick="h48a276985ce401">Salin</button>
                             </div>
                         </div>
 
-                        <div style="margin-bottom:1.15rem;">
+                        <div data-csp-style="se7da744a288024">
                             <label class="form-label">SECRET KEY (Header: <code>X-NexShop-Secret</code>)</label>
-                            <div style="display:flex;gap:6px;">
-                                <input type="password" id="inputSecretKey" readonly value="••••••••••••••••" style="flex:1;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;font-family:'Fira Code',monospace;font-size:0.84rem;">
-                                <button type="button" id="btnToggleSecret" class="tv-btn-deposit-action" onclick="toggleSecretKey()">Buka</button>
-                                <button type="button" class="tv-btn-deposit-action" onclick="copyValue('inputSecretKey', 'Secret Key')">Salin</button>
+                            <div data-csp-style="sccc58d95e35d92">
+                                <input type="password" id="inputSecretKey" readonly value="••••••••••••••••" data-csp-style="scb60744b11edd8">
+                                <button type="button" id="btnToggleSecret" class="tv-btn-deposit-action" data-csp-onclick="h3f7855d2a007d0">Buka</button>
+                                <button type="button" class="tv-btn-deposit-action" data-csp-onclick="headbbf48b7e842">Salin</button>
                             </div>
                         </div>
 
                         <form id="formPortalSettings">
-                            <div style="margin-bottom:1.15rem;">
+                            <div data-csp-style="se7da744a288024">
                                 <label class="form-label" for="inputIpWhitelist">IP Whitelist (Pisahkan koma)</label>
-                                <input type="text" id="inputIpWhitelist" placeholder="Contoh: 103.123.45.67, alamat IP publik server kamu" style="width:100%;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;box-sizing:border-box;font-size:0.86rem;">
+                                <input type="text" id="inputIpWhitelist" placeholder="Contoh: 103.123.45.67, alamat IP publik server kamu" data-csp-style="s54c2d31936ccbe">
                             </div>
 
-                            <div style="margin-bottom:1.35rem;">
+                            <div data-csp-style="se13d3bb5fe5799">
                                 <label class="form-label" for="inputWebhookUrl">Webhook Relay Callback URL</label>
-                                <div style="display:flex;gap:6px;">
-                                    <input type="url" id="inputWebhookUrl" placeholder="https://website-anda.com/api/callback" style="flex:1;padding:0.7rem 0.95rem;border:1px solid rgba(255,255,255,0.12);background:rgba(9,14,26,0.85);color:#fff;border-radius:10px;box-sizing:border-box;font-size:0.86rem;">
+                                <div data-csp-style="sccc58d95e35d92">
+                                    <input type="url" id="inputWebhookUrl" placeholder="https://website-anda.com/api/callback" data-csp-style="s37ff828860e428">
                                     <button type="button" id="btnTestWebhook" class="tv-btn-deposit-action">Tes</button>
                                 </div>
                             </div>
 
-                            <button type="submit" id="btnSaveSettings" style="padding:0.75rem 1.6rem;border:none;border-radius:10px;background:#2563eb;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(37,99,235,0.35);">
+                            <button type="submit" id="btnSaveSettings" data-csp-style="s6e07a330028fb1">
                                 Simpan Pengaturan Keamanan
                             </button>
                         </form>
@@ -2219,11 +2215,11 @@
                         <div class="tv-section-title">
                             <span>Panduan &amp; Dokumentasi API</span>
                         </div>
-                        <p style="font-size:0.86rem;color:#cbd5e1;line-height:1.7;margin-bottom:1.25rem;">
+                        <p data-csp-style="s4c324e42d25d7d">
                             Integrasikan transaksi game, pulsa, dan tagihan pascabayar ke website toko online atau bot WhatsApp Anda secara otomatis menggunakan REST API standar industri.
                         </p>
-                    <a href="/docs-reseller" class="tv-btn-deposit-action" style="background:#2563eb;color:#fff;text-decoration:none;padding:0.75rem 1.35rem;display:inline-flex;border-color:#3b82f6;">
-                            <i class="fa-solid fa-book-open" style="font-size:1.15rem;color:#93c5fd;" aria-hidden="true"></i>
+                    <a href="/docs-reseller" class="tv-btn-deposit-action" data-csp-style="s4e8ca4987121d1">
+                            <i class="fa-solid fa-book-open" data-csp-style="se8ed8e8a02d94c" aria-hidden="true"></i>
                             <span>Buka Dokumentasi REST API Lengkap</span>
                         </a>
                     </div>
@@ -2234,17 +2230,17 @@
             <!-- VIEW 8: UPGRADE LEVEL / TIER                                -->
             <!-- =========================================================== -->
             <div id="view-tiers" class="tv-console-view">
-                <div class="tv-section-card" style="margin-bottom:1.25rem;">
+                <div class="tv-section-card" data-csp-style="s8f77880b0fd635">
                     <div class="tv-section-title"><span>Tingkatan Reseller</span></div>
-                    <p style="font-size:0.86rem;color:#94a3b8;line-height:1.7;margin:0;">
+                    <p data-csp-style="s193d09b9ca4a84">
                         Daftar tingkatan di bawah dimuat langsung dari konfigurasi NexShop, jadi
                         persentasenya selalu sama dengan yang diterapkan pada harga modal kamu.
                         Kenaikan tingkatan ditetapkan admin berdasarkan riwayat transaksi &mdash;
                         hubungi tim kemitraan bila ingin meninjau tingkatan akunmu.
                     </p>
                 </div>
-                <div id="tvTierGrid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.35rem;">
-                    <div class="tv-section-card" style="color:#94a3b8;font-size:0.86rem;">
+                <div id="tvTierGrid" data-csp-style="s829b74715455ec">
+                    <div class="tv-section-card" data-csp-style="s53262f9cb7b5d2">
                         <i class="fa-solid fa-circle-notch fa-spin" aria-hidden="true"></i> Memuat tingkatan…
                     </div>
                 </div>
@@ -2260,7 +2256,7 @@
                     <h2 id="portalPurchaseTitle">Beli dengan Saldo Reseller</h2>
                     <p class="tv-purchase-help">Harga dihitung ulang oleh server sesuai tier akunmu.</p>
                 </div>
-                <button type="button" class="tv-purchase-close" onclick="closePortalPurchase()" aria-label="Tutup form pembelian">
+                <button type="button" class="tv-purchase-close" data-csp-onclick="h612421649f1dc7" aria-label="Tutup form pembelian">
                     <i class="fa-solid fa-xmark" aria-hidden="true"></i>
                 </button>
             </div>
@@ -2297,14 +2293,14 @@
     </div>
 
     <!-- ── Floating Help Button ── -->
-    <a data-wa-pesan="Halo Admin NexShop, saya butuh bantuan mengenai Partner Portal." target="_blank" rel="noopener noreferrer" class="tv-fab-help" style="display:none;">
+    <a data-wa-pesan="Halo Admin NexShop, saya butuh bantuan mengenai Partner Portal." target="_blank" rel="noopener noreferrer" class="tv-fab-help" data-csp-style="sd0466aa33fa806">
         <span class="tv-fab-dot"></span>
-        <i class="fa-solid fa-headset" style="font-size:1.2rem;" aria-hidden="true"></i>
+        <i class="fa-solid fa-headset" data-csp-style="s564fd1833f7401" aria-hidden="true"></i>
         <span>Bantuan</span>
     </a>
 
     <!-- Toast Notification -->
-    <div id="mktToast" style="display:none;position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;border:1px solid rgba(255,255,255,0.15);padding:0.8rem 1.6rem;border-radius:50px;font-size:0.88rem;font-weight:700;box-shadow:0 12px 36px rgba(0,0,0,0.6);z-index:9999;"></div>
+    <div id="mktToast" data-csp-style="s5ad0c660cba583"></div>
 
     <!-- =============================================================== -->
     <!-- JAVASCRIPT LOGIC & INTERACTIONS                                -->

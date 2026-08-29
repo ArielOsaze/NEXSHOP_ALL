@@ -34,6 +34,7 @@ const portal = read("nexshop-frontend/portal-reseller.html");
 const nginx = read("nginx-nexshop.conf");
 const backendServer = read("nexshop-backend/server.js");
 const htmlFiles = [];
+const jsFiles = [];
 function collectHtml(dir) {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
         const full = path.join(dir, entry.name);
@@ -42,6 +43,14 @@ function collectHtml(dir) {
     }
 }
 collectHtml(path.join(root, "nexshop-frontend"));
+function collectJs(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory() && entry.name !== "node_modules") collectJs(full);
+        else if (entry.name.endsWith(".js")) jsFiles.push(full);
+    }
+}
+collectJs(path.join(root, "nexshop-frontend"));
 const marketplaceNavbar = marketplace.match(/<nav class="mkt-nav"[\s\S]*?<\/nav>/)?.[0] || "";
 const categoryClickHandler = marketplace.slice(
     marketplace.indexOf('wrap.querySelectorAll(".cat-btn")'),
@@ -163,8 +172,8 @@ const cspMatch = nginx.match(/add_header Content-Security-Policy "([^"]+)" alway
 check(
     "CSP memakai allowlist/hash tanpa unsafe-inline/eval atau scheme-wide media",
     cspMatch && cspMatch[1].includes("https://cdnjs.cloudflare.com") &&
-        cspMatch[1].includes("script-src-attr 'unsafe-hashes'") &&
-        cspMatch[1].includes("style-src-attr 'unsafe-hashes'") &&
+        cspMatch[1].includes("script-src-attr 'none'") &&
+        cspMatch[1].includes("style-src-attr 'none'") &&
         !cspMatch[1].includes("unsafe-inline") &&
         !cspMatch[1].includes("unsafe-eval") &&
         !/img-src[^;]*\shttps:\s/.test(cspMatch[1]) &&
@@ -186,6 +195,17 @@ check(
             const cdnTags = [...html.matchAll(/<(?:script|link)\b[^>]*(?:src|href)=["']https:\/\/(?:cdnjs\.cloudflare\.com\/ajax\/libs|cdn\.jsdelivr\.net\/npm)[^>]*>/gi)];
             return cdnTags.every((tag) => /\bintegrity=["']sha384-/i.test(tag[0]));
         })
+);
+
+check(
+    "inline event/style attribute dipindahkan ke dispatcher/CSS lokal",
+    htmlFiles.every((file) => {
+        const html = fs.readFileSync(file, "utf8")
+            .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, "");
+        return !/\s(?:onclick|onchange|oninput|onsubmit|onkeyup|onkeydown|onload|onerror|style)\s*=\s*["']/i.test(html);
+    }) &&
+        jsFiles.every((file) => !/(?<![\w-])(?:onclick|onchange|oninput|onsubmit|onkeyup|onkeydown|onload|onerror)\s*=\s*["']/i.test(fs.readFileSync(file, "utf8"))) &&
+        !/\b(?:eval|new\s+Function)\s*\(/.test(read("nexshop-frontend/csp-legacy-handlers.js"))
 );
 
 if (cspMatch) {

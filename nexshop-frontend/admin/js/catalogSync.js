@@ -331,7 +331,7 @@ function renderProductTable() {
             <tr class="${rowClass}">
                 <td class="text-center">
                     <input class="form-check-input topup-checkbox" type="checkbox" value="${p.id}" ${isChecked}
-                        onchange="toggleTopupSelect(${JSON.stringify(p.id)}, this.checked)">
+                        data-csp-onchange="toggleTopupSelect(${JSON.stringify(p.id)}, this.checked)">
                 </td>
                 <td>
                     <div class="fw-semibold mb-1">${highlightSearchMatch(p.nama || "-")}</div>
@@ -356,7 +356,7 @@ function renderProductTable() {
                         : '<span class="badge bg-secondary">Nonaktif</span>'}
                 </td>
                 <td class="text-end">
-                    <button class="btn btn-sm btn-outline-primary" onclick="openProductDrawer(${JSON.stringify(p.id)})">
+                    <button class="btn btn-sm btn-outline-primary" data-csp-onclick="openProductDrawer(${JSON.stringify(p.id)})">
                         <i class="bi bi-pencil-square"></i>
                     </button>
                 </td>
@@ -371,7 +371,7 @@ function renderProductTable() {
 // Seleksi checkbox
 //
 // Fungsi ini SEBELUMNYA gak pernah didefinisikan di mana pun, padahal tiap
-// checkbox produk manggil onchange="toggleTopupSelect(...)". Jadi tiap
+// checkbox produk manggil data-csp-onchange="toggleTopupSelect(...)". Jadi tiap
 // admin nyentang produk, browser cuma ngelempar ReferenceError diam-diam
 // dan seleksi selalu kosong -- semua tombol aksi massal jawabnya "Pilih
 // minimal 1 produk dulu" walaupun udah dicentang banyak.
@@ -543,7 +543,7 @@ function openProductDrawer(id) {
             </div>
         </div>
 
-        <form id="productEditForm" onsubmit="return false;">
+        <form id="productEditForm" data-csp-onsubmit="return false;">
             <input type="hidden" id="drawProdId" value="${escapeHtml(String(p.id))}">
 
             <div class="mb-3">
@@ -551,7 +551,7 @@ function openProductDrawer(id) {
                 <div class="input-group">
                     <span class="input-group-text">Rp</span>
                     <input type="number" class="form-control" id="drawHargaJual" value="${Number(p.harga_jual) || 0}" min="0">
-                    <button class="btn btn-outline-secondary" type="button" onclick="document.getElementById('drawHargaJual').value=${suggested}">
+                    <button class="btn btn-outline-secondary" type="button" data-csp-onclick="document.getElementById('drawHargaJual').value=${suggested}">
                         Saran ${formatRupiah(suggested)}
                     </button>
                 </div>
@@ -656,7 +656,7 @@ function renderCategoryMapTable() {
             <td><span class="badge badge-meta">${escapeHtml(m.nexshop_category_name)}</span></td>
             <td class="text-end">
                 <button class="btn btn-sm btn-link p-0 text-decoration-none"
-                    onclick="prefillCategoryMap(${JSON.stringify(m.tokovoucher_category_name)}, ${JSON.stringify(m.nexshop_category_name)})"
+                    data-csp-onclick="prefillCategoryMap(${JSON.stringify(m.tokovoucher_category_name)}, ${JSON.stringify(m.nexshop_category_name)})"
                     title="Ubah mapping ini">
                     <i class="bi bi-pencil"></i>
                 </button>

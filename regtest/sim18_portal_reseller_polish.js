@@ -14,6 +14,7 @@ const marketplaceTheme = read("nexshop-frontend/marketplace-theme.css");
 const docs = read("nexshop-frontend/docs-reseller.html");
 const consent = read("nexshop-frontend/cookie-consent.js");
 const cleanUrl = read("nexshop-frontend/clean-url.js");
+const inlineStyles = read("nexshop-frontend/inline-styles.css");
 const controller = read("nexshop-backend/controllers/resellerController.js");
 
 let passed = 0;
@@ -94,7 +95,8 @@ check(
 );
 check(
     "banner verifikasi tidak berkedip pending sebelum respons server",
-    portal.includes('id="tvPendingBanner" class="tv-pending-banner" style="display:none;"') &&
+    portal.includes('id="tvPendingBanner" class="tv-pending-banner" data-csp-style="') &&
+        inlineStyles.includes("display:none;") &&
         portal.includes("Memeriksa status")
 );
 
