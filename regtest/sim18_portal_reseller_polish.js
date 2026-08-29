@@ -7,6 +7,7 @@ const root = path.join(__dirname, "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const portal = read("nexshop-frontend/portal-reseller.html");
 const reseller = read("nexshop-frontend/reseller.html");
+const resellerCss = read("nexshop-frontend/reseller.css");
 const marketplace = read("nexshop-frontend/marketplace.html");
 const script = read("nexshop-frontend/script.js");
 const style = read("nexshop-frontend/style.css");
@@ -55,9 +56,10 @@ check(
 );
 check(
     "navbar reseller memiliki scope mobile dan target sentuh 44px",
-    reseller.includes('class="reseller-page"') &&
-        marketplaceTheme.includes(".reseller-page .mkt-nav-toggle") &&
-        marketplaceTheme.includes("2.75rem")
+    reseller.includes('class="rs-page"') &&
+        reseller.includes('id="resellerNavToggle"') &&
+        reseller.includes('href="/reseller.css?v=20260829-reseller-redesign-1"') &&
+        resellerCss.includes("min-height: 44px")
 );
 check(
     "consent tersimpan di cookie dan localStorage agar tidak muncul berulang",

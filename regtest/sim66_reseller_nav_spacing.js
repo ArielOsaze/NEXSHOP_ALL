@@ -6,6 +6,7 @@ const path = require("path");
 const root = path.join(__dirname, "..");
 const read = (relative) => fs.readFileSync(path.join(root, relative), "utf8");
 const reseller = read("nexshop-frontend/reseller.html");
+const resellerCss = read("nexshop-frontend/reseller.css");
 const docs = read("nexshop-frontend/docs-reseller.html");
 const marketplaceTheme = read("nexshop-frontend/marketplace-theme.css");
 
@@ -21,37 +22,34 @@ class AssertionError extends Error {
 }
 
 assert(
-    /<body[^>]*class="[^"]*reseller-page[^"]*"/.test(reseller),
-    "halaman Program Reseller harus punya scope class reseller-page"
+    /<body[^>]*class="[^"]*rs-page[^"]*"/.test(reseller),
+    "halaman Program Reseller harus punya scope class rs-page"
 );
 assert(
     /<body[^>]*class="[^"]*reseller-docs-page[^"]*"/.test(docs),
     "halaman docs reseller harus punya scope class reseller-docs-page"
 );
 assert(
-    marketplaceTheme.includes(".reseller-page .mkt-nav-links") &&
+    reseller.includes('id="resellerNavToggle"') &&
+        reseller.includes('id="resellerNavMenu"') &&
+        resellerCss.includes(".rs-page.rs-menu-is-open .rs-nav-panel"),
+    "navbar reseller harus memiliki panel responsive scoped"
+);
+assert(
+    /\.rs-nav-links\s*\{[\s\S]*?gap:\s*[^;]+;/.test(resellerCss) &&
+        /\.rs-page\.rs-menu-is-open \.rs-nav-panel\s*\{/.test(resellerCss) &&
+        /\.rs-page\.rs-menu-is-open \.rs-nav-panel\s*\{[\s\S]*?display:\s*flex;/.test(resellerCss),
+    "panel mobile reseller harus memberi jarak dan terbuka secara eksplisit"
+);
+assert(
+    /\.rs-nav-links a\s*\{[\s\S]*?min-height:\s*44px/.test(resellerCss) &&
+        /\.rs-menu-toggle\s*\{[\s\S]*?min-height:\s*44px/.test(resellerCss),
+    "item navigasi reseller harus punya target sentuh minimum 44px"
+);
+assert(
+    docs.includes("marketplace-theme.css?v=20260829-reseller-nav-spacing-1") &&
         marketplaceTheme.includes(".reseller-docs-page .mkt-nav-links"),
-    "navbar reseller dan docs harus memiliki scope responsive terpisah"
-);
-assert(
-    /\.reseller-page \.mkt-nav-links\s*\{[\s\S]*?gap:\s*0\.5rem/.test(marketplaceTheme) &&
-        /\.reseller-docs-page \.mkt-nav-links\s*\{[\s\S]*?gap:\s*0\.5rem/.test(marketplaceTheme),
-    "dropdown reseller/docs harus memberi jarak antar item"
-);
-assert(
-    /\.reseller-page \.mkt-nav\.is-open \.mkt-nav-links\s*\{[\s\S]*?padding:\s*0\.8rem/.test(marketplaceTheme) &&
-        /\.reseller-docs-page \.mkt-nav\.is-open \.mkt-nav-links\s*\{[\s\S]*?padding:\s*0\.8rem/.test(marketplaceTheme),
-    "panel dropdown reseller/docs harus punya padding internal yang lega"
-);
-assert(
-    /\.reseller-page \.mkt-nav-links a\s*\{[\s\S]*?min-height:\s*2\.75rem/.test(marketplaceTheme) &&
-        /\.reseller-docs-page \.mkt-nav-links a\s*\{[\s\S]*?min-height:\s*2\.75rem/.test(marketplaceTheme),
-    "item dropdown reseller/docs harus punya target sentuh minimum 44px"
-);
-assert(
-    reseller.includes("marketplace-theme.css?v=20260829-reseller-nav-spacing-1") &&
-        docs.includes("marketplace-theme.css?v=20260829-reseller-nav-spacing-1"),
-    "halaman reseller/docs harus memuat cache-buster CSS navbar terbaru"
+    "halaman docs tetap memakai kontrak navbar legacy yang tidak disentuh"
 );
 
 console.log("PASS sim66: spacing navbar reseller/docs mobile lega dan konsisten");

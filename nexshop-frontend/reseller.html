@@ -1,764 +1,210 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Program Reseller — Harga Khusus Topup &amp; PPOB | NexShop</title>
-    <meta name="description"
-        content="Daftar jadi reseller NexShop dan dapatkan harga khusus untuk topup game, e-wallet, pulsa, paket data, PLN, dan tagihan. Tanpa biaya pendaftaran.">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Program Reseller NexShop — Harga Khusus Produk Digital</title>
+    <meta name="description" content="Program Reseller NexShop: gratis bergabung, tanpa minimum deposit, harga reseller otomatis, dan akses Partner Portal serta API untuk produk digital.">
     <link rel="canonical" href="https://nexshop.cloud/reseller">
     <meta name="author" content="Ariel">
-
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://nexshop.cloud/reseller">
     <meta property="og:title" content="Program Reseller NexShop">
-    <meta property="og:description"
-        content="Harga khusus untuk topup game, e-wallet, pulsa, dan tagihan. Daftar gratis, tanpa minimum deposit.">
+    <meta property="og:description" content="Jual ulang top up game, e-wallet, pulsa, paket data, PLN, voucher, dan tagihan dengan harga reseller NexShop.">
     <meta property="og:image" content="https://nexshop.cloud/api/seo/thumbnail?page=reseller">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:site_name" content="NexShop">
-
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Program Reseller NexShop">
-    <meta name="twitter:description" content="Harga khusus untuk topup game, e-wallet, pulsa, dan tagihan. Daftar gratis.">
+    <meta name="twitter:description" content="Program reseller untuk produk digital NexShop dengan harga otomatis dan integrasi API.">
     <meta name="twitter:image" content="https://nexshop.cloud/api/seo/thumbnail?page=reseller">
-
-    <!-- JSON-LD -->
     <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "CollectionPage",
-  "name": "Program Reseller NexShop",
-  "description": "Daftar jadi reseller NexShop dan dapatkan harga khusus untuk topup game, e-wallet, pulsa, paket data, PLN, dan tagihan.",
-  "url": "https://nexshop.cloud/reseller",
-  "publisher": {
-    "@type": "Organization",
-    "name": "NexShop",
-    "url": "https://nexshop.cloud",
-    "logo": { "@type": "ImageObject", "url": "https://nexshop.cloud/favicon.ico" },
-    "founder": { "@type": "Person", "name": "Ariel" }
-  },
-  "creator": { "@type": "Person", "name": "Ariel" }
-}
-</script>
-
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "Program Reseller NexShop",
+      "description": "Program reseller NexShop untuk top up game, e-wallet, pulsa, paket data, PLN, voucher, dan tagihan.",
+      "url": "https://nexshop.cloud/reseller",
+      "publisher": {
+        "@type": "Organization",
+        "name": "NexShop",
+        "url": "https://nexshop.cloud",
+        "logo": { "@type": "ImageObject", "url": "https://nexshop.cloud/favicon.ico" },
+        "founder": { "@type": "Person", "name": "Ariel" }
+      }
+    }
+    </script>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <link rel="manifest" href="/manifest.json">
     <link rel="stylesheet" href="/fonts/google-fonts.css">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha384-nRgPTkuX86pH8yjPJUAFuASXQSSl2/bBUiNV47vSYpKFxHJhbcrGnmlYpYJMeD7a" crossorigin="anonymous">
     <script src="/theme-init.js"></script>
     <script defer src="/clean-url.js?v=20260825"></script>
     <script defer src="/legal-modal.js?v=20260825"></script>
     <script defer src="/cookie-consent.js?v=20260825-no-float"></script>
-    <link rel="stylesheet" href="/style.css?v=20260825-nexbot-rigged">
-    <link rel="stylesheet" href="/marketplace-theme.css?v=20260829-reseller-nav-spacing-1">
-
-    <style>
-        /* Halaman ini pakai tema yang sama dengan Marketplace
-           (marketplace-theme.css). Di bawah cuma komponen yang khusus ada di
-           halaman reseller: tabel tingkatan, langkah pendaftaran, dan form. */
-        .rs-section {
-            display: flex;
-            flex-direction: column;
-            gap: 1.25rem;
-        }
-
-        .rs-section-head {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .rs-section-head h2 {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: clamp(1.4rem, 3vw, 1.9rem);
-            font-weight: 700;
-            margin: 0;
-            color: var(--mkt-text);
-        }
-
-        .rs-section-head p {
-            margin: 0;
-            max-width: 38rem;
-            font-size: 0.92rem;
-            line-height: 1.7;
-            color: var(--mkt-text-dim);
-        }
-
-        .rs-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 1rem;
-        }
-
-        .rs-card {
-            padding: 1.4rem;
-            border-radius: var(--mkt-radius);
-            background: var(--mkt-glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--mkt-line);
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-        }
-
-        .rs-card-icon {
-            width: 2.75rem;
-            height: 2.75rem;
-            border-radius: 999px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(34, 211, 238, 0.1);
-            color: var(--mkt-secondary);
-        }
-
-        .rs-card h3 {
-            margin: 0;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--mkt-text);
-        }
-
-        .rs-card p {
-            margin: 0;
-            font-size: 0.85rem;
-            line-height: 1.65;
-            color: var(--mkt-text-dim);
-        }
-
-        /* ── Tingkatan reseller ─────────────────────────── */
-        .rs-tier {
-            position: relative;
-            padding: 1.6rem 1.4rem;
-            border-radius: var(--mkt-radius);
-            background: var(--mkt-glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--mkt-line);
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            text-align: center;
-        }
-
-        .rs-tier--sorot {
-            border-color: rgba(0, 194, 232, 0.5);
-            background: rgba(0, 194, 232, 0.07);
-        }
-
-        .rs-tier-name {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--mkt-text);
-        }
-
-        .rs-tier-percent {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 2.4rem;
-            font-weight: 800;
-            line-height: 1;
-            color: var(--mkt-primary);
-        }
-
-        .rs-tier-percent span {
-            font-size: 1rem;
-            font-weight: 600;
-            color: var(--mkt-text-dim);
-        }
-
-        .rs-tier p {
-            margin: 0;
-            font-size: 0.82rem;
-            line-height: 1.6;
-            color: var(--mkt-text-dim);
-        }
-
-        /* ── Langkah ────────────────────────────────────── */
-        .rs-steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1rem;
-            counter-reset: langkah;
-        }
-
-        .rs-step {
-            padding: 1.3rem;
-            border-radius: var(--mkt-radius);
-            background: var(--mkt-surface-2);
-            border: 1px solid var(--mkt-line);
-        }
-
-        .rs-step::before {
-            counter-increment: langkah;
-            content: counter(langkah);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 2rem;
-            height: 2rem;
-            margin-bottom: 0.75rem;
-            border-radius: 999px;
-            background: var(--mkt-primary-strong);
-            color: #fff;
-            font-weight: 700;
-            font-size: 0.85rem;
-        }
-
-        .rs-step h3 {
-            margin: 0 0 0.35rem;
-            font-size: 0.95rem;
-            font-weight: 700;
-            color: var(--mkt-text);
-        }
-
-        .rs-step p {
-            margin: 0;
-            font-size: 0.84rem;
-            line-height: 1.6;
-            color: var(--mkt-text-dim);
-        }
-
-        /* ── Form & status ──────────────────────────────── */
-        .rs-panel {
-            max-width: 44rem;
-            width: 100%;
-            margin: 0 auto;
-            padding: 1.75rem;
-            border-radius: var(--mkt-radius);
-            background: var(--mkt-glass-solid);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--mkt-line-strong);
-            box-shadow: var(--mkt-shadow);
-        }
-
-        .rs-panel h2 {
-            margin: 0 0 0.35rem;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--mkt-text);
-        }
-
-        .rs-panel > p {
-            margin: 0 0 1.25rem;
-            font-size: 0.86rem;
-            color: var(--mkt-text-dim);
-        }
-
-        .rs-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .rs-form-row {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 1rem;
-        }
-
-        .rs-form label {
-            display: flex;
-            flex-direction: column;
-            gap: 0.45rem;
-            font-size: 0.72rem;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            color: var(--mkt-text-dim);
-        }
-
-        .rs-form input,
-        .rs-form select,
-        .rs-form textarea {
-            width: 100%;
-            padding: 0.8rem 0.95rem;
-            border-radius: var(--mkt-radius-sm);
-            border: 1px solid var(--mkt-line);
-            background: var(--mkt-surface-2);
-            color: var(--mkt-text);
-            font-family: inherit;
-            font-size: 0.9rem;
-            font-weight: 400;
-            outline: none;
-            transition: border-color 0.18s, box-shadow 0.18s;
-        }
-
-        .rs-form textarea {
-            min-height: 5.5rem;
-            resize: vertical;
-        }
-
-        .rs-form input:focus,
-        .rs-form select:focus,
-        .rs-form textarea:focus {
-            border-color: var(--mkt-primary);
-            box-shadow: 0 0 0 2px rgba(0, 194, 232, 0.2);
-        }
-
-        .rs-form-note {
-            font-size: 0.75rem;
-            color: var(--mkt-text-muted);
-            margin: 0;
-        }
-
-        .rs-alert {
-            display: flex;
-            gap: 0.85rem;
-            align-items: flex-start;
-            padding: 1rem 1.1rem;
-            border-radius: var(--mkt-radius-sm);
-            border: 1px solid var(--mkt-line);
-            background: var(--mkt-surface-2);
-            font-size: 0.86rem;
-            line-height: 1.6;
-            color: var(--mkt-text-dim);
-        }
-
-        .rs-alert strong {
-            color: var(--mkt-text);
-        }
-
-        .rs-alert > i[class*='fa-'] {
-            flex: 0 0 auto;
-            color: var(--mkt-secondary);
-        }
-
-        .rs-alert--sukses {
-            border-color: rgba(34, 211, 238, 0.45);
-        }
-
-        .rs-alert--tunggu {
-            border-color: rgba(8, 145, 178, 0.45);
-        }
-
-        .rs-alert--tunggu > i[class*='fa-'] {
-            color: var(--mkt-tertiary);
-        }
-
-        .rs-alert--gagal {
-            border-color: rgba(248, 113, 113, 0.45);
-            color: #f87171;
-        }
-
-        .rs-alert--gagal > i[class*='fa-'] {
-            color: #f87171;
-        }
-
-        .rs-status-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 0.85rem;
-        }
-
-        .rs-status-meta span {
-            font-size: 0.72rem;
-            padding: 4px 10px;
-            border-radius: 999px;
-            background: var(--mkt-surface-3);
-            border: 1px solid var(--mkt-line);
-            color: var(--mkt-text-dim);
-        }
-
-        .rs-faq {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
-            max-width: 44rem;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        .rs-faq details {
-            padding: 1rem 1.15rem;
-            border-radius: var(--mkt-radius-sm);
-            background: var(--mkt-surface-2);
-            border: 1px solid var(--mkt-line);
-        }
-
-        .rs-faq summary {
-            cursor: pointer;
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: var(--mkt-text);
-            list-style: none;
-        }
-
-        .rs-faq summary::-webkit-details-marker {
-            display: none;
-        }
-
-        .rs-faq p {
-            margin: 0.7rem 0 0;
-            font-size: 0.85rem;
-            line-height: 1.7;
-            color: var(--mkt-text-dim);
-        }
-
-        @media (max-width: 640px) {
-            .rs-form-row {
-                grid-template-columns: minmax(0, 1fr);
-            }
-        }
-    </style>
-<link rel="stylesheet" href="/inline-styles.css?v=20260829-visual-regression-1">
-<script defer src="/csp-legacy-handlers.js?v=20260829-visual-regression-1"></script>
+    <link rel="stylesheet" href="/style.css?v=20260829-visual-regression-2">
+    <link rel="stylesheet" href="/reseller.css?v=20260829-reseller-redesign-1">
+    <script defer src="/reseller.js?v=20260829-reseller-redesign-1"></script>
 </head>
-
-<body class="reseller-page" data-nexbot="auto">
-
-    <div class="mkt-bg-layer" aria-hidden="true">
-        <div class="mkt-bg-veil"></div>
-    </div>
-
-    <nav class="mkt-nav" role="navigation" aria-label="Navigasi NexShop">
-        <a href="/" class="mkt-nav-brand" aria-label="NexShop - Halaman Utama">
-            <span class="mkt-brand-mark">
-                <img src="/images/nexshop-logo.webp" alt="NexShop" width="40" height="40">
-            </span>
-            <span class="mkt-brand-text">NexShop</span>
-            <span class="nx-tag">Reseller</span>
-        </a>
-
-        <ul class="mkt-nav-links" id="catNavLinks">
-            <li><a href="/">Beranda</a></li>
-            <li><a href="/marketplace">Marketplace</a></li>
-            <li><a href="/#topup">Topup Diamond</a></li>
-            <li><a href="/berita">Portal Berita</a></li>
-                    <li><a href="/reseller" class="active">Reseller</a></li>
-        </ul>
-
-        <div class="mkt-nav-actions">
-            <!-- Cuma kelihatan di mobile: buka/tutup panel dropdown yang
-                 isinya .mkt-nav-links di atas (lihat @media 768px di
-                 marketplace-theme.css). -->
-            <button type="button" class="mkt-nav-toggle" id="mktNavToggle" aria-label="Buka menu navigasi"
-                aria-expanded="false" aria-controls="catNavLinks">
-                <i class="fa-solid fa-bars mkt-nav-toggle-open" aria-hidden="true"></i>
-                <i class="fa-solid fa-xmark mkt-nav-toggle-close" aria-hidden="true"></i>
-            </button>
-
-            <a href="/" class="mkt-nav-back" aria-label="Kembali ke toko NexShop">
-                <i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i>
-                <span>Ke Toko</span>
+<body class="rs-page" data-nexbot="auto">
+    <header class="rs-header">
+        <nav class="rs-nav rs-container" aria-label="Navigasi Program Reseller">
+            <a class="rs-brand" href="/" aria-label="NexShop, halaman utama">
+                <span class="rs-brand-mark"><img src="/images/nexshop-logo.webp" alt="NexShop" width="40" height="40"></span>
+                <span class="rs-brand-copy"><strong>NexShop</strong><small>RESELLER</small></span>
             </a>
-        </div>
-    </nav>
-    <div class="mkt-nav-scrim" id="mktNavScrim" aria-hidden="true"></div>
-
-    <main class="mkt-main" id="main-content">
-        <section class="mkt-hero">
-            <div class="mkt-hero-tag">
-                <i class="fa-solid fa-award" aria-hidden="true"></i> Program Reseller
-            </div>
-            <h1>Jual Ulang Produk NexShop dengan Harga Khusus</h1>
-            <p>Daftar sekali, lalu setiap pembelian topup game, e-wallet, pulsa, paket data, PLN, dan tagihan otomatis
-                pakai harga reseller kamu. Gratis, tanpa minimum deposit.</p>
-            <div data-csp-style="s1f60669f6a5e7f">
-                <a href="/portal-reseller?mode=register" class="mkt-btn-primary" data-csp-style="s85c99bc292e540">
-                    <i class="fa-solid fa-user-check" aria-hidden="true"></i>
-                    <span>Daftar Mitra Reseller &amp; KYC</span>
-                </a>
-                <a href="/portal-reseller?mode=login" class="mkt-btn-secondary" data-csp-style="s9b6fa76e210b40">
-                    <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
-                    <span>Buka Partner Portal</span>
-                </a>
-                <a href="/docs-reseller" class="mkt-btn-secondary" data-csp-style="s295806f8392a36">
-                    <i class="fa-solid fa-book-open" aria-hidden="true"></i>
-                    <span>Dokumentasi API</span>
-                </a>
-            </div>
-        </section>
-
-        <!-- Keuntungan -->
-        <section class="rs-section">
-            <div class="rs-section-head">
-                <h2>Kenapa jadi reseller NexShop?</h2>
-                <p>Potongan harga langsung menempel di akun Portal Reseller kamu — bukan kode promo yang harus diketik ulang tiap transaksi.</p>
-            </div>
-            <div class="rs-grid">
-                <article class="rs-card">
-                    <div class="rs-card-icon"><i class="fa-solid fa-tag" aria-hidden="true"></i></div>
-                    <h3>Harga otomatis</h3>
-                    <p>Begitu akun Portal Reseller disetujui, harga di seluruh katalog langsung berubah jadi harga reseller saat kamu masuk ke Partner Portal atau memakai jalur reseller. Gak ada kode yang perlu dimasukkan manual.</p>
-                </article>
-                <article class="rs-card">
-                    <div class="rs-card-icon"><i class="fa-solid fa-key" aria-hidden="true"></i></div>
-                    <h3>API &amp; Integrasi Website</h3>
-                    <p>Dapatkan akses API Key, Secret Key, IP Whitelist, dan Webhook Relay untuk menghubungkan katalog NexShop ke web toko Anda sendiri.</p>
-                </article>
-                <article class="rs-card">
-                    <div class="rs-card-icon"><i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i></div>
-                    <h3>Fleksibel sesuai jalur</h3>
-                    <p>Belanja langsung di web bisa dibayar per transaksi. Untuk order otomatis lewat Open API, isi saldo reseller di Partner Portal agar pesanan dapat diproses instan.</p>
-                </article>
-                <article class="rs-card">
-                    <div class="rs-card-icon"><i class="fa-solid fa-headset" aria-hidden="true"></i></div>
-                    <h3>Jalur bantuan khusus</h3>
-                    <p>Kendala transaksi reseller ditangani lewat WhatsApp yang kamu daftarkan, jadi gak perlu antre di jalur umum.</p>
-                </article>
-            </div>
-        </section>
-
-        <!-- Tingkatan -->
-        <section class="rs-section">
-            <div class="rs-section-head">
-                <h2>Tingkatan &amp; potongan harga</h2>
-                <p>Tingkat awal ditentukan admin saat pengajuan disetujui, lalu bisa dinaikkan seiring volume transaksi kamu.</p>
-            </div>
-            <div class="rs-grid" id="rsTierGrid">
-                <div class="mkt-skeleton"></div>
-                <div class="mkt-skeleton"></div>
-                <div class="mkt-skeleton"></div>
-            </div>
-            <p class="rs-form-note" data-csp-style="s5a2dfef236e7d7">Potongan dihitung dari harga jual normal tiap produk.
-                Untuk produk bermargin sangat tipis (mis. pulsa &amp; tagihan), potongan menyesuaikan otomatis agar
-                harga tetap wajar.</p>
-        </section>
-
-        <!-- Cara kerja -->
-        <section class="rs-section">
-            <div class="rs-section-head">
-                <h2>Cara daftarnya</h2>
-            </div>
-            <div class="rs-steps">
-                <article class="rs-step">
-                    <h3>1. Buat Akun Portal Reseller</h3>
-                    <p>Di Partner Portal, buat email dan password khusus yang berbeda dari akun belanja NexShop, lalu lengkapi profil usaha atau website Anda.</p>
-                </article>
-                <article class="rs-step">
-                    <h3>2. Unggah Foto KTP (KYC)</h3>
-                    <p>Lampirkan foto e-KTP dan nomor NIK untuk verifikasi keamanan kemitraan resmi.</p>
-                </article>
-                <article class="rs-step">
-                    <h3>3. Persetujuan &amp; Akses API</h3>
-                    <p>Admin meninjau maksimal 3x24 jam kerja. Setelah disetujui, API Key dan harga modal khusus Anda langsung aktif.</p>
-                </article>
-            </div>
-        </section>
-
-        <!-- Formulir / Akses Partner Portal -->
-        <section class="rs-section" id="form-daftar">
-            <div class="rs-panel" data-csp-style="s51282a2c75a98f">
-                <div data-csp-style="s00671bb19eaeda">
-                    <i class="fa-solid fa-table-columns" data-csp-style="s36690bbee96481" aria-hidden="true"></i>
+            <button class="rs-menu-toggle" id="resellerNavToggle" type="button" aria-expanded="false" aria-controls="resellerNavMenu" aria-label="Buka menu navigasi">
+                <i class="fa-solid fa-bars rs-menu-open" aria-hidden="true"></i>
+                <i class="fa-solid fa-xmark rs-menu-close" aria-hidden="true"></i>
+            </button>
+            <div class="rs-nav-panel" id="resellerNavMenu">
+                <ul class="rs-nav-links">
+                    <li><a href="#benefits">Keuntungan</a></li>
+                    <li><a href="#tiers">Tingkatan</a></li>
+                    <li><a href="#how-it-works">Cara daftar</a></li>
+                    <li><a href="#api-preview">API</a></li>
+                    <li><a href="#faq">FAQ</a></li>
+                </ul>
+                <div class="rs-nav-actions">
+                    <a class="rs-button rs-button-ghost rs-button-small" href="/portal-reseller?mode=login">Masuk Partner Portal</a>
+                    <a class="rs-button rs-button-primary rs-button-small" href="/portal-reseller?mode=register">Daftar Reseller</a>
                 </div>
-                <h2 data-csp-style="s9231059e2b9425">Partner Portal Reseller Resmi</h2>
-                <p data-csp-style="s8aca4459dc43cf">
-                    Pendaftaran akun reseller, verifikasi berkas KTP (KYC), manajemen API Key, Secret Key, IP Whitelist, dan Webhook kini dikelola secara mandiri di Partner Portal.
-                </p>
+            </div>
+        </nav>
+    </header>
 
-                <div data-csp-style="saa831f704e1605">
-                <a href="/portal-reseller?mode=register" class="mkt-btn-primary" data-csp-style="sd76a8a2c6ae2da">
-                        <i class="fa-solid fa-user-check" aria-hidden="true"></i>
-                        <span>Daftar Akun Portal Reseller &amp; KYC</span>
-                    </a>
-                <a href="/portal-reseller?mode=login" class="mkt-btn-secondary" data-csp-style="s310e4a30443151">
-                        <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
-                        <span>Masuk Partner Portal</span>
-                    </a>
+    <main>
+        <section class="rs-hero rs-container" aria-labelledby="hero-title">
+            <div class="rs-hero-copy">
+                <p class="rs-eyebrow"><span class="rs-eyebrow-icon" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span> Platform Reseller B2B NexShop</p>
+                <h1 id="hero-title">Bangun bisnis produk digital dengan harga reseller.</h1>
+                <p class="rs-hero-lead">Satu Partner Portal untuk menjual ulang top up game, e-wallet, pulsa, paket data, PLN, voucher, dan tagihan. Gratis bergabung, Tanpa minimum deposit.</p>
+                <div class="rs-hero-actions">
+                    <a class="rs-button rs-button-primary" href="/portal-reseller?mode=register">Daftar Reseller Sekarang <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a>
+                    <a class="rs-button rs-button-secondary" href="/docs-reseller">Lihat Dokumentasi API <i class="fa-solid fa-code" aria-hidden="true"></i></a>
+                </div>
+                <p class="rs-hero-note"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Peninjauan maksimal 3×24 jam kerja setelah dokumen lengkap.</p>
+            </div>
+            <div class="rs-hero-visual" aria-label="Preview visual ekosistem reseller NexShop">
+                <div class="rs-hero-glow" aria-hidden="true"></div>
+                <div class="rs-portal-window">
+                    <div class="rs-window-bar"><span></span><span></span><span></span><b>Partner Portal</b><i class="fa-solid fa-lock" aria-hidden="true"></i></div>
+                    <div class="rs-window-body">
+                        <div class="rs-portal-sidebar" aria-hidden="true">
+                            <span class="rs-sidebar-logo">N</span>
+                            <span class="is-active"></span><span></span><span></span><span></span>
+                        </div>
+                        <div class="rs-portal-content">
+                            <div class="rs-portal-heading"><div><small>PARTNER PORTAL</small><strong>Ekosistem dalam satu integrasi</strong></div><span class="rs-status-dot">Akses terpisah</span></div>
+                            <div class="rs-portal-cards">
+                                <div><span class="rs-mini-icon"><i class="fa-solid fa-bolt" aria-hidden="true"></i></span><small>Transaksi</small><strong>Real-time</strong></div>
+                                <div><span class="rs-mini-icon rs-mini-icon-blue"><i class="fa-solid fa-key" aria-hidden="true"></i></span><small>Integrasi</small><strong>API ready</strong></div>
+                            </div>
+                            <div class="rs-network-card">
+                                <div class="rs-network-line rs-network-line-a" aria-hidden="true"></div>
+                                <div class="rs-network-line rs-network-line-b" aria-hidden="true"></div>
+                                <div class="rs-network-node rs-network-node-center"><i class="fa-solid fa-link" aria-hidden="true"></i><span>API NexShop</span></div>
+                                <div class="rs-network-node rs-network-node-one"><i class="fa-solid fa-gamepad" aria-hidden="true"></i><span>Game</span></div>
+                                <div class="rs-network-node rs-network-node-two"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i><span>Pulsa</span></div>
+                                <div class="rs-network-node rs-network-node-three"><i class="fa-solid fa-wallet" aria-hidden="true"></i><span>E-wallet</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="rs-hero-float rs-hero-float-top"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i><span>Partner Portal<br><b>terpisah</b></span></div>
+                <div class="rs-hero-float rs-hero-float-bottom"><i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>Harga reseller<br><b>otomatis</b></span></div>
+            </div>
+        </section>
+
+        <section class="rs-section rs-section-border" id="benefits" aria-labelledby="benefits-title">
+            <div class="rs-container">
+                <div class="rs-section-heading">
+                    <p class="rs-kicker">Dibuat untuk bertumbuh</p>
+                    <h2 id="benefits-title">Semua fondasi bisnis reseller, tanpa kerumitan.</h2>
+                    <p>Gunakan jalur transaksi yang sesuai kebutuhan—langsung dari portal atau melalui integrasi API.</p>
+                </div>
+                <div class="rs-feature-grid">
+                    <article class="rs-feature-card"><span class="rs-feature-icon"><i class="fa-solid fa-tag" aria-hidden="true"></i></span><h3>Harga reseller otomatis</h3><p>Setelah disetujui, harga reseller melekat pada akun Portal Reseller dan diterapkan otomatis saat bertransaksi.</p></article>
+                    <article class="rs-feature-card"><span class="rs-feature-icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span><h3>Produk digital lengkap</h3><p>Jual top up game, e-wallet, pulsa, paket data, PLN, voucher, dan berbagai kebutuhan tagihan.</p></article>
+                    <article class="rs-feature-card"><span class="rs-feature-icon"><i class="fa-solid fa-code" aria-hidden="true"></i></span><h3>Siap diintegrasikan</h3><p>Kelola API Key, Secret Key, IP Whitelist, dan Webhook Relay dari Partner Portal terpisah.</p></article>
+                    <article class="rs-feature-card"><span class="rs-feature-icon"><i class="fa-solid fa-headset" aria-hidden="true"></i></span><h3>Jalur bantuan khusus</h3><p>Kendala transaksi reseller ditangani melalui jalur bantuan yang terhubung dengan data pendaftaranmu.</p></article>
                 </div>
             </div>
         </section>
 
-        <!-- FAQ -->
-        <section class="rs-section">
-            <div class="rs-section-head">
-                <h2>Pertanyaan yang sering muncul</h2>
+        <section class="rs-section rs-tiers-section" id="tiers" aria-labelledby="tiers-title">
+            <div class="rs-container">
+                <div class="rs-section-heading rs-section-heading-split"><div><p class="rs-kicker">Tingkatkan margin</p><h2 id="tiers-title">Tingkatan yang tumbuh bersama bisnismu.</h2></div><p>Potongan menyesuaikan margin masing-masing produk agar harga tetap wajar dan berkelanjutan.</p></div>
+                <div class="rs-tier-grid">
+                    <article class="rs-tier-card"><span class="rs-tier-label">01 / Awal</span><h3>Silver</h3><div class="rs-discount" aria-label="2% off">2% <small>off</small></div><p>Tingkat awal untuk reseller baru setelah pengajuan disetujui.</p><ul><li><i class="fa-solid fa-check" aria-hidden="true"></i> Harga reseller otomatis</li><li><i class="fa-solid fa-check" aria-hidden="true"></i> Akses Partner Portal</li></ul></article>
+                    <article class="rs-tier-card rs-tier-card-featured"><span class="rs-tier-badge">Pilihan populer</span><span class="rs-tier-label">02 / Bertumbuh</span><h3>Gold</h3><div class="rs-discount" aria-label="3,5% off">3,5% <small>off</small></div><p>Untuk mitra dengan transaksi yang semakin rutin.</p><ul><li><i class="fa-solid fa-check" aria-hidden="true"></i> Semua benefit Silver</li><li><i class="fa-solid fa-check" aria-hidden="true"></i> Potongan lebih kompetitif</li></ul></article>
+                    <article class="rs-tier-card"><span class="rs-tier-label">03 / Volume</span><h3>Platinum</h3><div class="rs-discount" aria-label="hingga 5% off">hingga 5% <small>off</small></div><p>Untuk volume besar dan hubungan kemitraan jangka panjang.</p><ul><li><i class="fa-solid fa-check" aria-hidden="true"></i> Semua benefit Gold</li><li><i class="fa-solid fa-check" aria-hidden="true"></i> Potongan mengikuti margin produk</li></ul></article>
+                </div>
+                <p class="rs-caption"><i class="fa-solid fa-circle-info" aria-hidden="true"></i> Persentase di atas adalah tingkatan program. Potongan aktual menyesuaikan margin masing-masing produk.</p>
             </div>
-            <div class="rs-faq">
-                <details>
-                    <summary>Apakah ada biaya pendaftaran?</summary>
-                    <p>Tidak ada. Pendaftaran gratis dan tidak ada biaya bulanan. Kamu tetap membayar per transaksi
-                        seperti pembeli biasa, hanya dengan harga yang lebih rendah.</p>
-                </details>
-                <details>
-                    <summary>Berapa lama proses peninjauannya?</summary>
-                    <p>Maksimal 3x24 jam kerja. Admin menghubungi lewat nomor WhatsApp yang kamu daftarkan,
-                        jadi pastikan nomornya aktif.</p>
-                </details>
-                <details>
-                    <summary>Apakah semua produk dapat potongan yang sama?</summary>
-                    <p>Potongan dihitung dari harga jual normal tiap produk. Untuk produk yang margin normalnya sangat
-                        tipis, potongan menyesuaikan otomatis supaya harga tetap masuk akal — jadi persentase yang benar-benar
-                        kamu terima di produk itu bisa sedikit lebih kecil.</p>
-                </details>
-                <details>
-                    <summary>Bisakah status reseller dicabut?</summary>
-                    <p>Bisa, kalau ditemukan penyalahgunaan (mis. transaksi mencurigakan atau pelanggaran ketentuan
-                        layanan). Admin akan memberi tahu lewat WhatsApp sebelum status dibekukan.</p>
-                </details>
-                <details>
-                    <summary>Bisakah harga reseller digabung dengan kode promo?</summary>
-                    <p>Bisa, selama kode promonya masih berlaku. Potongan reseller dihitung lebih dulu, lalu kode promo
-                        dipotong dari harga tersebut.</p>
-                </details>
+        </section>
+
+        <section class="rs-section rs-section-border" id="how-it-works" aria-labelledby="how-title">
+            <div class="rs-container">
+                <div class="rs-section-heading"><p class="rs-kicker">Mulai dengan jelas</p><h2 id="how-title">Cara daftar reseller NexShop.</h2><p>Partner Portal dibuat terpisah dari akun utama NexShop supaya akses bisnis tetap jelas dan aman.</p></div>
+                <div class="rs-steps-grid">
+                    <article class="rs-step"><span class="rs-step-number">01</span><h3>Buat akun Partner Portal</h3><p>Gunakan email dan password khusus untuk akun reseller, terpisah dari akun belanja utama.</p></article>
+                    <article class="rs-step"><span class="rs-step-number">02</span><h3>Lengkapi KYC</h3><p>Isi profil usaha dan unggah dokumen yang dibutuhkan untuk proses peninjauan kemitraan.</p></article>
+                    <article class="rs-step"><span class="rs-step-number">03</span><h3>Tunggu persetujuan</h3><p>Admin meninjau pengajuan maksimal 3×24 jam kerja setelah data dan dokumen lengkap.</p></article>
+                    <article class="rs-step"><span class="rs-step-number">04</span><h3>Aktifkan akses bisnis</h3><p>Setelah disetujui, gunakan harga reseller dan kelola API Key, Secret Key, IP Whitelist, serta Webhook Relay di portal.</p></article>
+                </div>
             </div>
+        </section>
+
+        <section class="rs-section rs-api-section" id="api-preview" aria-labelledby="api-title">
+            <div class="rs-container rs-api-layout">
+                <div class="rs-api-copy"><p class="rs-kicker">Untuk developer</p><h2 id="api-title">Integrasi tanpa menebak-nebak.</h2><p>Partner Portal menyediakan API Key, Secret Key, IP Whitelist, dan Webhook Relay. Detail kontrak tersedia di dokumentasi resmi.</p><a class="rs-text-link" href="/docs-reseller">Baca Dokumentasi API <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div>
+                <div class="rs-code-card" aria-label="Preview kode API dengan placeholder">
+                    <div class="rs-code-header"><span><i class="fa-solid fa-terminal" aria-hidden="true"></i> API preview</span><span class="rs-code-dot">NexShop</span></div>
+                    <pre><code><span class="rs-code-method">POST</span> /api/v2/transaction/create
+<span class="rs-code-key">Authorization:</span> Bearer {API_KEY}
+<span class="rs-code-key">X-NexShop-Secret:</span> {SECRET_KEY}
+
+{
+  <span class="rs-code-key">"product_code"</span>: <span class="rs-code-string">"PRODUCT_CODE"</span>,
+  <span class="rs-code-key">"target"</span>: <span class="rs-code-string">"TARGET_PLACEHOLDER"</span>,
+  <span class="rs-code-key">"ref_id"</span>: <span class="rs-code-string">"YOUR_REFERENCE_ID"</span>
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section class="rs-section rs-section-border" id="faq" aria-labelledby="faq-title">
+            <div class="rs-container rs-faq-layout">
+                <div class="rs-section-heading rs-section-heading-left"><p class="rs-kicker">Masih ada pertanyaan?</p><h2 id="faq-title">Yang perlu kamu tahu sebelum mulai.</h2><p>Informasi program dibuat transparan supaya kamu bisa menilai jalur kemitraan dengan tenang.</p></div>
+                <div class="rs-faq-list">
+                    <div class="rs-faq-item"><h3><button class="rs-faq-trigger" type="button" aria-expanded="false" aria-controls="faq-panel-1" id="faq-trigger-1">Apakah ada biaya pendaftaran?<i class="fa-solid fa-plus" aria-hidden="true"></i></button></h3><div class="rs-faq-panel" id="faq-panel-1" role="region" aria-labelledby="faq-trigger-1" hidden><p>Gratis bergabung dan tidak ada biaya pendaftaran. Kamu tetap membayar sesuai transaksi yang dilakukan, dengan harga reseller setelah akun disetujui.</p></div></div>
+                    <div class="rs-faq-item"><h3><button class="rs-faq-trigger" type="button" aria-expanded="false" aria-controls="faq-panel-2" id="faq-trigger-2">Apakah ada minimum deposit?<i class="fa-solid fa-plus" aria-hidden="true"></i></button></h3><div class="rs-faq-panel" id="faq-panel-2" role="region" aria-labelledby="faq-trigger-2" hidden><p>Tidak ada minimum deposit untuk bergabung. Jalur pembayaran dan saldo untuk integrasi API mengikuti ketentuan yang tersedia di Partner Portal.</p></div></div>
+                    <div class="rs-faq-item"><h3><button class="rs-faq-trigger" type="button" aria-expanded="false" aria-controls="faq-panel-3" id="faq-trigger-3">Berapa lama proses peninjauannya?<i class="fa-solid fa-plus" aria-hidden="true"></i></button></h3><div class="rs-faq-panel" id="faq-panel-3" role="region" aria-labelledby="faq-trigger-3" hidden><p>Peninjauan maksimal 3×24 jam kerja setelah data dan dokumen KYC lengkap. Pastikan nomor WhatsApp yang didaftarkan aktif.</p></div></div>
+                    <div class="rs-faq-item"><h3><button class="rs-faq-trigger" type="button" aria-expanded="false" aria-controls="faq-panel-4" id="faq-trigger-4">Apakah akun reseller sama dengan akun belanja biasa?<i class="fa-solid fa-plus" aria-hidden="true"></i></button></h3><div class="rs-faq-panel" id="faq-panel-4" role="region" aria-labelledby="faq-trigger-4" hidden><p>Tidak. Partner Portal terpisah dari akun utama NexShop. Pendaftaran, login, KYC, saldo, transaksi, API Key, Secret Key, IP Whitelist, dan Webhook Relay dikelola di portal tersebut.</p></div></div>
+                    <div class="rs-faq-item"><h3><button class="rs-faq-trigger" type="button" aria-expanded="false" aria-controls="faq-panel-5" id="faq-trigger-5">Apakah semua produk mendapat potongan yang sama?<i class="fa-solid fa-plus" aria-hidden="true"></i></button></h3><div class="rs-faq-panel" id="faq-panel-5" role="region" aria-labelledby="faq-trigger-5" hidden><p>Tidak selalu. Potongan menyesuaikan margin masing-masing produk, sehingga persentase aktual dapat berbeda untuk produk dengan margin yang tipis.</p></div></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="rs-final-cta" aria-labelledby="cta-title">
+            <div class="rs-container rs-final-cta-inner"><div><p class="rs-kicker rs-kicker-light">Siap mulai?</p><h2 id="cta-title">Bangun kanal produk digitalmu bersama NexShop.</h2><p>Daftar gratis melalui Partner Portal, lalu lengkapi proses KYC dan tunggu persetujuan.</p></div><a class="rs-button rs-button-light" href="/portal-reseller?mode=register">Daftar Reseller <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div>
         </section>
     </main>
 
-    <footer class="nx-footer nx-footer--market">
-        <div class="nx-footer__container">
-            <div class="nx-footer__grid">
-                <div>
-                    <a href="/" class="nx-footer__brand" aria-label="NexShop - Beranda">
-                        <span class="nx-footer__brand-mark">
-                            <img src="/images/nexshop-logo.webp" alt="" width="38" height="38" loading="lazy">
-                        </span>
-                        <span class="nx-footer__brand-logo">NEXSHOP<span>RESELLER</span></span>
-                    </a>
-                    <p class="nx-footer__brand-desc" data-csp-style="s37d13c6019cbff">
-                        Harga khusus untuk topup game, e-wallet, pulsa, paket data, dan tagihan.
-                    </p>
-                </div>
-
-                <div>
-                    <h4 class="nx-footer__heading" data-csp-style="s4555334f959080">Navigasi</h4>
-                    <ul class="nx-footer__link-list" data-csp-style="s4555334f959080">
-                        <li><a href="/" class="nx-footer__link">Beranda</a></li>
-                        <li><a href="/marketplace" class="nx-footer__link">Marketplace</a></li>
-                        <li><a href="/#topup" class="nx-footer__link">Topup Diamond</a></li>
-                        <li><a href="/berita" class="nx-footer__link">Portal Berita</a></li>
-                    </ul>
-                </div>
-
-                <div class="nx-footer__legal" data-csp-style="se3bb78ea1040f1">
-                    <h4 class="nx-footer__heading">Legalitas</h4>
-                    <div class="nx-footer__legal-name">
-                        <strong>NexShop</strong>
-                        <span>&middot;</span>
-                        <span>Usaha Mikro</span>
-                    </div>
-                    <div class="nx-footer__legal-ids">
-                        <span>NIB 1408260072494</span>
-                        <span>KBLI 60390</span>
-                    </div>
-                    <a href="/legalitas" class="nx-footer__legal-link">
-                        Informasi legalitas <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-                    </a>
-                </div>
+    <footer class="rs-footer">
+        <div class="rs-container">
+            <div class="rs-footer-grid">
+                <div class="rs-footer-brand"><a class="rs-brand" href="/" aria-label="NexShop, halaman utama"><span class="rs-brand-mark"><img src="/images/nexshop-logo.webp" alt="" width="40" height="40" loading="lazy"></span><span class="rs-brand-copy"><strong>NexShop</strong><small>RESELLER</small></span></a><p>Program reseller untuk produk digital dengan akses bisnis yang terpisah dan jelas.</p></div>
+                <div><h2>Program</h2><ul><li><a href="#benefits">Keuntungan</a></li><li><a href="#tiers">Tingkatan harga</a></li><li><a href="#how-it-works">Cara daftar</a></li><li><a href="#faq">FAQ</a></li></ul></div>
+                <div><h2>Resources</h2><ul><li><a href="/docs-reseller">Dokumentasi API</a></li><li><a href="/portal-reseller?mode=login">Masuk Partner Portal</a></li><li><a href="/berita">Portal Berita</a></li><li><a href="/legalitas">Informasi legalitas</a></li></ul></div>
+                <div class="rs-footer-legal"><h2>Legalitas</h2><p><strong>NexShop</strong> · Usaha Mikro</p><p>NIB 1408260072494<br>KBLI 60390</p><a href="/legalitas">Lihat informasi legalitas <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div>
             </div>
-
-            <div class="nx-footer__bottom">
-                <p>&copy; 2026 NexShop. All Rights Reserved. <span class="nx-footer__credit">Dikembangkan oleh Ariel.</span></p>
-                <p class="nx-footer__bottom-note">Potongan harga reseller mengikuti tingkatan yang berlaku dan dapat
-                    berubah sewaktu-waktu.</p>
-            </div>
+            <div class="rs-footer-bottom"><p>© 2026 NexShop. All Rights Reserved. <span>Dikembangkan oleh Ariel.</span></p><p>Potongan harga reseller mengikuti tingkatan yang berlaku dan dapat berubah sewaktu-waktu.</p></div>
         </div>
     </footer>
-
-    <script>
-        const API_BASE = (() => {
-            const host = window.location.hostname;
-            if (host === "localhost" || host === "127.0.0.1") {
-                return window.location.port === "3000" ? "/api" : "http://localhost:3000/api";
-            }
-            return window.location.protocol.startsWith("http") ? "/api" : "https://nexshop.cloud/api";
-        })();
-
-        const PUBLIC_TOKEN_STORAGE_KEY = "nexshop-public-token";
-
-        // Buka/tutup panel dropdown kategori di mobile (nav-nya sendiri
-        // sudah tinggi tetap lewat CSS, gak perlu sinkronisasi JS lagi).
-        (function setupMktNavToggle() {
-            const nav = document.querySelector(".mkt-nav");
-            const toggleBtn = document.getElementById("mktNavToggle");
-            const scrim = document.getElementById("mktNavScrim");
-            if (!nav || !toggleBtn) return;
-
-            function closeNav() {
-                nav.classList.remove("is-open");
-                toggleBtn.setAttribute("aria-expanded", "false");
-            }
-            function openNav() {
-                nav.classList.add("is-open");
-                toggleBtn.setAttribute("aria-expanded", "true");
-            }
-
-            toggleBtn.addEventListener("click", () => {
-                nav.classList.contains("is-open") ? closeNav() : openNav();
-            });
-            if (scrim) scrim.addEventListener("click", closeNav);
-            document.addEventListener("keydown", (e) => {
-                if (e.key === "Escape") closeNav();
-            });
-            nav.querySelectorAll(".mkt-nav-links a").forEach((a) => {
-                a.addEventListener("click", closeNav);
-            });
-            window.addEventListener("resize", () => {
-                if (window.innerWidth > 768) closeNav();
-            });
-        })();
-
-        function escapeHtml(str) {
-            return String(str ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-        }
-
-        function getToken() {
-            return localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) || localStorage.getItem("token");
-        }
-
-        // ── Tingkatan reseller ───────────────────────────────────────────
-        const DEFAULT_TIERS = [
-            { name: "Silver", discount_percent: 3, description: "Potongan harga otomatis langsung aktif untuk transaksi awal mitra." },
-            { name: "Gold", discount_percent: 6, description: "Potongan lebih besar untuk mitra dengan transaksi rutin bulanan." },
-            { name: "Platinum", discount_percent: 10, description: "Tingkat tertinggi dengan potongan harga maksimal dan prioritas proses API." }
-        ];
-
-        function renderTiersHtml(tiers) {
-            const grid = document.getElementById("rsTierGrid");
-            if (!grid) return;
-            const tertinggi = Math.max(...tiers.map((t) => Number(t.discount_percent) || 0));
-            grid.innerHTML = tiers.map((t) => {
-                const persen = Number(t.discount_percent) || 0;
-                const sorot = persen === tertinggi && tiers.length > 1;
-                return `
-                    <article class="rs-tier ${sorot ? "rs-tier--sorot" : ""}">
-                        <div class="rs-tier-name">${escapeHtml(t.name)}</div>
-                        <div class="rs-tier-percent">${String(persen).replace(".", ",")}<span>% off</span></div>
-                        <p>${escapeHtml(t.description || "Potongan berlaku otomatis di seluruh katalog.")}</p>
-                    </article>
-                `;
-            }).join("");
-        }
-
-        async function loadTiers() {
-            const grid = document.getElementById("rsTierGrid");
-            if (!grid) return;
-            try {
-                const res = await fetch(`${API_BASE}/reseller/tiers`);
-                if (!res.ok) throw new Error("Gagal memuat tiers");
-                const tiers = await res.json();
-                if (Array.isArray(tiers) && tiers.length > 0) {
-                    renderTiersHtml(tiers);
-                    return;
-                }
-            } catch (err) {
-                console.warn("loadTiers fallback to default:", err.message);
-            }
-            // Fallback tiers jika server belum mengembalikan data
-            renderTiersHtml(DEFAULT_TIERS);
-        }
-
-        // Jalankan saat dokumen siap
-        if (document.readyState === "loading") {
-            document.addEventListener("DOMContentLoaded", loadTiers);
-        } else {
-            loadTiers();
-        }
-    </script>
-    <script src="/nexbot.js?v=20260825-production"></script>
+    <script defer src="/nexbot.js?v=20260825-production"></script>
 </body>
-
 </html>
