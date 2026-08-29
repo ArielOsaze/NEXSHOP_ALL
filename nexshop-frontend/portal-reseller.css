@@ -230,6 +230,24 @@ body.rs-portal-page::after {
     background: var(--portal-surface-soft);
 }
 
+.rs-portal-page button,
+.rs-portal-page input,
+.rs-portal-page select,
+.rs-portal-page textarea {
+    font-family: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
+}
+
+.rs-portal-page button {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.005em;
+    touch-action: manipulation;
+}
+
+.rs-portal-page button i {
+    width: 1em;
+    text-align: center;
+}
+
 .rs-portal-page .tv-auth-tabs button {
     min-height: 44px;
     padding: 10px 12px !important;

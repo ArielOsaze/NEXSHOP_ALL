@@ -6836,6 +6836,14 @@ input::placeholder {
    pas app loader selesai (efek samping, bukan fix asli) — makanya cuma
    marketplace.html (yang gak load script.js) yang kena.
 */
+/* A hidden chat panel must leave the document hit-testing tree. On mobile the
+   panel is fixed and nearly viewport-sized; opacity alone would intercept taps
+   on every page CTA behind it. */
+.nexbot-window.hidden {
+    display: none !important;
+    pointer-events: none !important;
+}
+
 .nexbot-window {
     position: absolute;
     bottom: 64px;

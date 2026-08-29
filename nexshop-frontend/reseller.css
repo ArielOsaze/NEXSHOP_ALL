@@ -196,6 +196,8 @@ body.rs-page::after {
 }
 
 .rs-button {
+    position: relative;
+    z-index: 2;
     min-height: 48px;
     display: inline-flex;
     align-items: center;
@@ -209,8 +211,23 @@ body.rs-page::after {
     line-height: 1.25;
     text-align: center;
     text-decoration: none;
+    letter-spacing: 0.005em;
+    font-variant-numeric: tabular-nums;
+    touch-action: manipulation;
     cursor: pointer;
     transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.rs-button i,
+.rs-menu-toggle i {
+    width: 1em;
+    text-align: center;
+}
+
+.rs-menu-toggle {
+    position: relative;
+    z-index: 2;
+    touch-action: manipulation;
 }
 
 .rs-button:hover {
