@@ -77,18 +77,6 @@ app.set("trust proxy", 1);
 // =========================
 app.disable("x-powered-by");
 
-app.use((req, res, next) => {
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    res.setHeader("X-Frame-Options", "DENY");
-    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-    res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
-    if (process.env.NODE_ENV === "production") {
-        res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-    }
-    next();
-});
-
 const allowedOrigins = ["https://nexshop.cloud", "https://www.nexshop.cloud"];
 const isProduction = process.env.NODE_ENV === "production";
 if (!isProduction) allowedOrigins.push("http://127.0.0.1:5500", "http://localhost:5500");

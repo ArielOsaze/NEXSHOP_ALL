@@ -32,6 +32,16 @@ const marketplace = read("nexshop-frontend/marketplace.html");
 const marketplaceTheme = read("nexshop-frontend/marketplace-theme.css");
 const portal = read("nexshop-frontend/portal-reseller.html");
 const nginx = read("nginx-nexshop.conf");
+const backendServer = read("nexshop-backend/server.js");
+const htmlFiles = [];
+function collectHtml(dir) {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) collectHtml(full);
+        else if (entry.name.endsWith(".html")) htmlFiles.push(full);
+    }
+}
+collectHtml(path.join(root, "nexshop-frontend"));
 const marketplaceNavbar = marketplace.match(/<nav class="mkt-nav"[\s\S]*?<\/nav>/)?.[0] || "";
 const categoryClickHandler = marketplace.slice(
     marketplace.indexOf('wrap.querySelectorAll(".cat-btn")'),
@@ -151,28 +161,40 @@ check(
 
 const cspMatch = nginx.match(/add_header Content-Security-Policy "([^"]+)" always;/);
 check(
-    "CSP mengizinkan CDN yang benar, memisahkan handler legacy, dan mengaktifkan HSTS",
+    "CSP memakai allowlist/hash tanpa unsafe-inline/eval atau scheme-wide media",
     cspMatch && cspMatch[1].includes("https://cdnjs.cloudflare.com") &&
-        cspMatch[1].includes("script-src-attr 'unsafe-inline'") &&
-        nginx.includes('Strict-Transport-Security "max-age=31536000; includeSubDomains" always')
+        cspMatch[1].includes("script-src-attr 'unsafe-hashes'") &&
+        cspMatch[1].includes("style-src-attr 'unsafe-hashes'") &&
+        !cspMatch[1].includes("unsafe-inline") &&
+        !cspMatch[1].includes("unsafe-eval") &&
+        !/img-src[^;]*\shttps:\s/.test(cspMatch[1]) &&
+        !/media-src[^;]*\shttps:\s/.test(cspMatch[1])
+);
+
+check(
+    "Nginx menjadi satu owner HSTS dan menyembunyikan versi server",
+    nginx.includes("server_tokens off;") &&
+        nginx.includes('Strict-Transport-Security "max-age=31536000; includeSubDomains" always') &&
+        !backendServer.includes("Strict-Transport-Security")
+);
+
+check(
+    "library CDN versi-pinned memiliki SRI dan Google Fonts self-hosted",
+    htmlFiles.every((file) => !/["']https:\/\/fonts\.googleapis\.com/.test(fs.readFileSync(file, "utf8"))) &&
+        htmlFiles.every((file) => {
+            const html = fs.readFileSync(file, "utf8");
+            const cdnTags = [...html.matchAll(/<(?:script|link)\b[^>]*(?:src|href)=["']https:\/\/(?:cdnjs\.cloudflare\.com\/ajax\/libs|cdn\.jsdelivr\.net\/npm)[^>]*>/gi)];
+            return cdnTags.every((tag) => /\bintegrity=["']sha384-/i.test(tag[0]));
+        })
 );
 
 if (cspMatch) {
     const csp = cspMatch[1];
-    const htmlFiles = [];
-    function walk(dir) {
-        for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-            const full = path.join(dir, entry.name);
-            if (entry.isDirectory()) walk(full);
-            else if (entry.name.endsWith(".html")) htmlFiles.push(full);
-        }
-    }
-    walk(path.join(root, "nexshop-frontend"));
     let hashesValid = true;
     for (const file of htmlFiles) {
-        const html = fs.readFileSync(file, "utf8");
+        const html = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
         for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)) {
-            if (/\bsrc\s*=/.test(match[1]) || !match[2].trim()) continue;
+            if (/\bsrc\s*=/.test(match[1]) || /type\s*=\s*["']application\/ld\+json["']/i.test(match[1]) || !match[2].trim()) continue;
             const digest = crypto.createHash("sha256").update(match[2], "utf8").digest("base64");
             if (!csp.includes(`'sha256-${digest}'`)) hashesValid = false;
         }
