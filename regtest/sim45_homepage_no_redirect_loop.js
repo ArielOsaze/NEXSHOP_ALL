@@ -8,7 +8,7 @@ const nginx = fs.readFileSync(path.join(root, "nginx-nexshop.conf"), "utf8").rep
 
 const exactRootServesIndex = /location\s*=\s*\/\s*\{\s*(?:expires\s+-1;\s*)?try_files\s+\/index\.html\s+=404;\s*\}/s.test(nginx);
 const legacyIndexRedirectsToRoot = /location\s*=\s*\/index\.html\s*\{\s*return\s+301\s+\/;\s*\}/s.test(nginx);
-const genericRouteCanStillServeFiles = /location\s+\/\s*\{\s*try_files\s+\$uri\s+\$uri\/\s+=404;\s*\}/s.test(nginx);
+const genericRouteCanStillServeFiles = /location\s+\/\s*\{\s*(?:expires\s+-1;\s*)?try_files\s+\$uri\s+\$uri\/\s+=404;\s*\}/s.test(nginx);
 
 if (!exactRootServesIndex) {
     throw new Error("Homepage / must serve /index.html directly before the generic directory route; otherwise / -> /index.html -> / loops.");
