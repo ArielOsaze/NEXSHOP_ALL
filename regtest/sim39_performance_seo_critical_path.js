@@ -29,8 +29,8 @@ assert.match(script, /const coverUrl = typeof data\.music\.cover_url === "string
 assert.match(script, /musicCoverImg\.src\s*=\s*coverUrl/);
 assert.doesNotMatch(script, /aida-public\//, "hero tidak boleh memakai artwork generate lama");
 assert.match(html, /class="[^"]*music-disc-shell[^"]*"/);
-assert.match(html, /style\.css\?v=20260828-progressive-products-1/);
-assert.match(html, /script\.js\?v=20260829-visual-regression-1/);
+assert.match(html, /style\.css\?v=20260829-visual-regression-2/);
+assert.match(html, /script\.js\?v=20260829-visual-regression-2/);
 assert.match(html, /<img src="\/images\/oss-logo\.png" alt="OSS Logo" loading="lazy" decoding="async">/);
 assert.match(html, /<img data-src="\/images\/nexbot-mascot\.webp"/);
 assert.match(html, /<img data-src="\/images\/nexbot-mascot-wave\.webp"/);

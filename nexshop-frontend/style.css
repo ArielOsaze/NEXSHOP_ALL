@@ -8335,6 +8335,17 @@ html:not(.dark) .home-glass-badge {
     min-width: 0;
 }
 
+/* Avatar foto profil harus tetap terukur walau legacy data-csp-style
+   belum tersinkron pada tab lama. */
+#accountAvatar img,
+#accountBtnAvatar img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    border-radius: inherit;
+}
+
 .testimonial-card__name {
     font-weight: 700;
     font-size: 0.83rem;

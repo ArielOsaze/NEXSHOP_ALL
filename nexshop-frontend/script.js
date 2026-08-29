@@ -4841,7 +4841,12 @@ function initDeferredHomepageData() {
     loadSectionWhenNear("#topup", loadTopupProducts);
     loadSectionWhenNear("#games", loadProducts);
     loadSectionWhenNear("#news", loadNexshopNews);
-    loadSectionWhenNear("#testimonials", loadTestimonials);
+    // Testimonial hanya mengambil satu response publik kecil dan harus tersedia
+    // ketika section sudah dirender. Eager load menghindari race saat News
+    // menambah tinggi DOM setelah IntersectionObserver pertama berjalan.
+    void runBackgroundTask(loadTestimonials).catch((error) => {
+        console.error("Failed to load testimonials:", error);
+    });
 }
 
 async function bootstrapApp() {

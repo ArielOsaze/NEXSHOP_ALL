@@ -37,7 +37,7 @@ async function headImage(url) {
     assert.equal(cssResponse.status, 200);
     assert.match(home, /id="news" aria-labelledby="newsTitle"/);
     assert.match(home, /id="testimonials" aria-labelledby="testimonialsTitle"/);
-    assert.match(home, /script\.js\?v=20260829-visual-regression-1/);
+    assert.match(home, /script\.js\?v=20260829-visual-regression-2/);
     assert.match(home, /inline-styles\.css\?v=20260829-visual-regression-1/);
     assert.match(admin, /dashboard\.js\?v=20260829-visual-regression-1/);
     assert.match(admin, /style\.css\?v=20260829-visual-regression-1/);
