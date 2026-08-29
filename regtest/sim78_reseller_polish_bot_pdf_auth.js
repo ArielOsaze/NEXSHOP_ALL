@@ -18,6 +18,7 @@ const resellerController = read("nexshop-backend/controllers/resellerController.
 const registerSource = resellerController.slice(resellerController.indexOf("exports.resellerRegister"), resellerController.indexOf("exports.resellerLogin"));
 const registerHandler = portal.slice(portal.indexOf("// ── Submit Register ──"), portal.indexOf("// ── Submit Login ──"));
 const aiController = read("nexshop-backend/controllers/aiController.js");
+const engine = require(path.join(root, "nexshop-backend/utils/nexbotEngine"));
 
 let passed = 0;
 function check(label, condition) {
@@ -42,6 +43,13 @@ check("PDF renderer tidak memakai inline style yang diblokir CSP", !/addStyleTag
 check("middleware selalu mengikat token ke identity portal yang terdaftar", /reseller_portal_accounts/.test(portalMiddleware) && /portal_account_id/.test(portalMiddleware) && /user_id/.test(portalMiddleware) && /account_scope/.test(portalMiddleware));
 check("register tidak auto-login atau mengeluarkan access token", /requires_login:\s*true/.test(registerSource) && !/\n\s*token,/.test(registerSource) && !/setResellerSession\(data\.token/.test(registerHandler));
 check("NexBot mengenali pola pertanyaan menghubungi CS dan membersihkan reasoning provider", /function isContactQuery/.test(aiController) && /menghubungi/.test(aiController) && /stripProviderReasoning/.test(aiController));
+
+const webhookQuery = engine.normalizeQuery("bagaimana cara verifikasi signature webhook NexShop?");
+const webhookRanked = engine.rankKnowledge([
+    { id: "canonical-webhook", title: "Verifikasi Signature Webhook Reseller NexShop", category: "Security", keywords: "webhook callback signature hmac verifikasi x-nexshop-signature", content: "HMAC_SHA256(webhook_secret, raw_body)", priority: 10 },
+    { id: "registration", title: "Pendaftaran dan KYC Portal Reseller NexShop", category: "Guide", keywords: "cara daftar reseller verifikasi akun", content: "Pendaftaran akun", priority: 8 },
+], webhookQuery, engine.detectIntent(webhookQuery), engine.detectEntities(webhookQuery));
+check("NexBot memprioritaskan knowledge webhook yang paling relevan", webhookRanked[0]?.id === "canonical-webhook");
 
 function get(url) {
     return new Promise((resolve, reject) => {

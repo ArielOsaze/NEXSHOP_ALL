@@ -80,7 +80,7 @@ const INTENTS = {
     Refund: ["refund", "batal", "uang kembali", "garansi", "komplain"],
     Order: ["status pesanan", "status order", "pesanan", "lacak", "tracking", "belum masuk", "berapa lama", "lama proses", "kapan selesai", "diproses"],
     TechnicalSupport: ["error", "gagal", "tidak bisa", "masalah", "kendala", "login", "otp"],
-    Security: ["2fa", "two factor", "authenticator", "recovery code", "kode pemulihan", "totp", "keamanan akun"],
+    Security: ["2fa", "two factor", "authenticator", "recovery code", "kode pemulihan", "totp", "keamanan akun", "signature", "hmac", "webhook"],
     Promotion: ["promo", "diskon", "voucher", "kupon", "kode promo"],
     // Intent khusus layanan Marketplace/PPOB, biar pertanyaan "bisa isi
     // saldo DANA gak?" gak keklasifikasi jadi Payment (metode bayar) --
@@ -223,6 +223,9 @@ function inferKnowledgeIntent(item) {
     if (/2fa|two factor|authenticator|recovery code|kode pemulihan|totp|keamanan akun/.test(text)) {
         return "Security";
     }
+    if (/webhook|hmac|signature|x-nexshop-signature/.test(text)) {
+        return "Security";
+    }
 
     // Marketplace adalah layanan yang dijual, bukan sekadar metode bayar.
     // Deteksi sebelum safeguard kategori Guide agar chunk isi DANA/pulsa/PLN
@@ -276,6 +279,14 @@ function specificEntities(entities) {
     );
 }
 
+const KNOWLEDGE_TOPIC_TERMS = ["webhook", "signature", "hmac", "x-nexshop-signature"];
+
+function topicMatches(queryText, label) {
+    const queryMatches = KNOWLEDGE_TOPIC_TERMS.filter((term) => intentPhraseMatches(queryText, term));
+    const itemMatches = KNOWLEDGE_TOPIC_TERMS.filter((term) => tokenMatches(term, label));
+    return { queryMatches: queryMatches.length, itemMatches: itemMatches.length };
+}
+
 function scoreKnowledge(item, query, intent, entities) {
     const title = String(item.title || "").toLowerCase();
     const keywords = String(item.keywords || "").toLowerCase();
@@ -296,6 +307,7 @@ function scoreKnowledge(item, query, intent, entities) {
 
     const knowledgeIntent = inferKnowledgeIntent(item);
     const semantic = similarity(query.raw, label);
+    const topic = topicMatches(query.raw, label);
 
     // Kekerabatan antar-intent. Sebelumnya cuma 4 intent yang punya kerabat,
     // jadi 11 intent sisanya kena penalti mismatch penuh (-25) walau
@@ -309,7 +321,7 @@ function scoreKnowledge(item, query, intent, entities) {
         Escrow: ["Trust", "Escrow", "Payment"],
         Payment: ["Payment", "Escrow", "Purchase"],
         Purchase: ["Purchase", "Guide", "Payment", "Pricing"],
-        Guide: ["Guide", "Purchase", "Definition", "TechnicalSupport"],
+        Guide: ["Guide", "Purchase", "Definition", "TechnicalSupport", "Security"],
         Pricing: ["Pricing", "Purchase", "Promotion", "Guide"],
         Promotion: ["Promotion", "Pricing"],
         Definition: ["Definition", "Comparison", "Guide"],
@@ -348,6 +360,7 @@ function scoreKnowledge(item, query, intent, entities) {
         Math.min(20, titleTokens * 8) +
         Math.min(12, matchedTokens * 3) +
         semantic * 20 +
+        Math.min(40, topic.queryMatches * topic.itemMatches * 10) +
         Math.min(6, Number(item.priority) || 0)
     );
 
