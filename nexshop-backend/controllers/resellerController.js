@@ -326,7 +326,6 @@ exports.resellerRegister = async (req, res) => {
         }
 
         const userId = newUser.id;
-        const userRole = newUser.role || "user";
         const portalAccountId = portalAccount.id;
         const rollbackPortalIdentity = async () => {
             await supabase.from("reseller_portal_accounts").delete().eq("id", portalAccountId);
@@ -398,15 +397,9 @@ exports.resellerRegister = async (req, res) => {
             }
         } catch (_) {}
 
-        const token = createPortalAccessToken(
-            { id: userId, fullname, role: userRole, reseller_status: "pending" },
-            { id: portalAccountId, email },
-            false
-        );
-
         return res.status(201).json({
-            message: "Akun Portal Reseller berhasil dibuat! Pengajuan KYC Anda sedang diverifikasi admin (Maksimal 3x24 Jam kerja).",
-            token,
+            message: "Akun Portal Reseller berhasil dibuat! Silakan login menggunakan email dan password Portal setelah pendaftaran selesai. Pengajuan KYC Anda sedang diverifikasi admin (Maksimal 3x24 Jam kerja).",
+            requires_login: true,
             status: "pending",
             user: {
                 id: userId,

@@ -1495,6 +1495,53 @@ body.rs-portal-page::after {
     }
 }
 
+.rs-portal-page .tv-console-main [style*="color:#ffffff"],
+.rs-portal-page .tv-console-main [style*="color: #ffffff"] {
+    color: var(--portal-ink) !important;
+}
+
+.rs-portal-page .tv-console-main [style*="color:#60a5fa"],
+.rs-portal-page .tv-console-main [style*="color: #60a5fa"] {
+    color: var(--portal-accent) !important;
+}
+
+.rs-portal-page .tv-console-main [style*="color:#38bdf8"],
+.rs-portal-page .tv-console-main [style*="color: #38bdf8"],
+.rs-portal-page .tv-console-main [style*="color:#94a3b8"],
+.rs-portal-page .tv-console-main [style*="color: #94a3b8"],
+.rs-portal-page .tv-console-main [style*="color:#cbd5e1"],
+.rs-portal-page .tv-console-main [style*="color: #cbd5e1"] {
+    color: var(--portal-muted) !important;
+}
+
+.rs-portal-page .tv-console-main [style*="color:#4ade80"],
+.rs-portal-page .tv-console-main [style*="color: #4ade80"] {
+    color: #067647 !important;
+}
+
+.rs-portal-page .tv-console-main [style*="color:#f87171"],
+.rs-portal-page .tv-console-main [style*="color: #f87171"],
+.rs-portal-page .tv-console-main [style*="color:#fca5a5"],
+.rs-portal-page .tv-console-main [style*="color: #fca5a5"] {
+    color: #b42318 !important;
+}
+
+.rs-portal-page .tv-console-main input::placeholder,
+.rs-portal-page .tv-console-main textarea::placeholder,
+.rs-portal-page .tv-console-main select::placeholder {
+    color: #667085 !important;
+    opacity: 1 !important;
+}
+
+.rs-portal-page .tv-console-main .tv-data-table td,
+.rs-portal-page .tv-console-main .tv-data-table td * {
+    color: var(--portal-ink);
+}
+
+.rs-portal-page .tv-console-main .tv-data-table td code {
+    color: var(--portal-accent) !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .rs-portal-page *,
     .rs-portal-page *::before,

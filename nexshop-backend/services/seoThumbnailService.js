@@ -257,23 +257,8 @@ async function renderResellerDocsPdf() {
       window.scrollTo(0, 0);
     });
     await page.emulateMediaType("print");
-    await page.addStyleTag({
-      content: `
-        .mkt-nav, .mkt-nav-scrim, .docs-sidebar, .docs-mobile-toc,
-        .nx-footer, .nexshop-cookie-banner, .nexshop-cookie-manage,
-        .docs-pdf-download { display: none !important; }
-        body { background: #fff !important; color: #111827 !important; }
-        .mkt-bg-layer { display: none !important; }
-        header { max-width: none !important; padding: 18mm 14mm 8mm !important; }
-        .docs-layout { display: block !important; max-width: none !important; padding: 0 14mm 14mm !important; }
-        .docs-content { gap: 12mm !important; }
-        .docs-section { break-inside: auto; }
-        .docs-card, .docs-endpoint-card, .docs-step, .docs-callout,
-        pre, table, details { break-inside: avoid; }
-        .docs-tab-pane { display: block !important; margin-bottom: 6mm !important; }
-        * { box-shadow: none !important; text-shadow: none !important; }
-      `,
-    });
+    const printStylesUrl = new URL("/docs-reseller-print.css?v=20260830-pdf-1", targetUrl).toString();
+    await page.addStyleTag({ url: printStylesUrl });
 
     const pdf = await page.pdf({
       format: "A4",

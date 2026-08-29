@@ -512,8 +512,20 @@ async function saveAnalytics({ query, intent, entities, selected, source, failed
 // ============================================================================
 
 function isContactQuery(rawMessage) {
-    const t = String(rawMessage || "").toLowerCase();
-    return /(hubungi|kontak|contact)\s*(cs|customer service|admin|kami)?|customer service|hubungi\s*cs|nomor\s*(wa|whatsapp|admin|cs)|sosmed|social\s*media|instagram|hubungi\s*admin/.test(t);
+    const t = String(rawMessage || "").toLowerCase().replace(/\s+/g, " ").trim();
+    return /(?:hubungi|menghubungi|kontak|contact)\s*(?:cs|customer service|admin|kami|siapa)?|customer service|nomor\s*(?:wa|whatsapp|admin|cs)|sosmed|social\s*media|instagram|hubungi\s*admin/.test(t);
+}
+
+function stripProviderReasoning(reply) {
+    let text = String(reply || "");
+    // Some providers expose a private reasoning channel as <think> XML.
+    // Remove both closed and truncated blocks before anything reaches the UI.
+    text = text
+        .replace(/<think\b[^>]*>[\s\S]*?<\/think\s*>/gi, "")
+        .replace(/<think\b[^>]*>[\s\S]*$/gi, "")
+        .replace(/<analysis\b[^>]*>[\s\S]*?<\/analysis\s*>/gi, "")
+        .replace(/<analysis\b[^>]*>[\s\S]*$/gi, "");
+    return text.replace(/^\s+|\s+$/g, "");
 }
 
 async function handleContactQuery() {
@@ -820,7 +832,7 @@ Jawab persis kalimat ini SAJA, tanpa tambahan apapun: "Maaf, informasi tersebut 
             );
 
             if (aiRes.success && aiRes.reply) {
-                const cleanedReply = stripStrayFallback(aiRes.reply, result.selected.length > 0);
+                const cleanedReply = stripStrayFallback(stripProviderReasoning(aiRes.reply), result.selected.length > 0);
                 reply = cleanedReply || renderKnowledgeFallback(result.selected);
                 source = cleanedReply ? aiRes.provider : "knowledge_fallback";
             } else {
@@ -1196,3 +1208,6 @@ exports.saveAdminAiConfig = async (req, res) => {
         return res.status(500).json({ success: false, message: err.message });
     }
 };
+
+exports.isContactQuery = isContactQuery;
+exports.stripProviderReasoning = stripProviderReasoning;

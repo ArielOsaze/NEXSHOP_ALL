@@ -87,7 +87,7 @@ const server = http.createServer(async (req, res) => {
         state.registers.push(body);
         return json(res, 201, {
             message: "Akun Portal Reseller berhasil dibuat",
-            token: "local-register-token",
+            requires_login: true,
             status: "pending",
             user: { email: body.email, fullname: body.fullname, reseller_status: "pending" }
         });
@@ -103,7 +103,7 @@ const server = http.createServer(async (req, res) => {
         });
     }
     if (pathname === "/api/reseller/portal/overview") {
-        if (!["Bearer local-login-token", "Bearer local-register-token"].includes(req.headers.authorization || "")) return json(res, 401, { message: "Sesi tidak valid" });
+        if (req.headers.authorization !== "Bearer local-login-token") return json(res, 401, { message: "Sesi tidak valid" });
         return json(res, 200, {
             user: { email: "mitra.qa@example.test", fullname: "Mitra QA", phone: "08123456789", reseller_status: "approved", balance: 0 },
             metrics: { today: {}, yesterday: {}, this_month: {}, last_month: {}, daily_chart: [] },
@@ -204,7 +204,12 @@ fs.writeFileSync(fixturePath, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAA
         await page.waitForSelector("#formResellerRegister");
         await fillRegisterForm();
         await page.$eval("#formResellerRegister", (form) => form.requestSubmit());
-        await page.waitForFunction(() => localStorage.getItem("nexshop-reseller-token") === "local-register-token", { timeout: 10000 });
+        await page.waitForFunction(() => {
+            const err = document.getElementById("loginErrorMsg");
+            return localStorage.getItem("nexshop-reseller-token") === null
+                && document.getElementById("authPaneLogin")?.style.display === "block"
+                && err?.textContent.includes("Pendaftaran berhasil");
+        }, { timeout: 10000 });
         assert(state.registers.length === 1, "register endpoint tidak dipanggil setelah upload KYC sukses");
         assert(state.registers[0].captcha_token === "local-captcha", "register harus mengirim captcha token");
         assert(state.registers[0].ktp_url === "kyc:kyc/2026-08/local-fixture.bin", "register harus mengirim referensi KTP terenkripsi");

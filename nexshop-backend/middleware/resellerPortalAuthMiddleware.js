@@ -24,12 +24,31 @@ module.exports = async (req, res, next) => {
             });
         }
 
+        // Signature-valid is not enough: a token can outlive a portal-account
+        // deletion, scope change, or suspension. Re-bind every request to the
+        // currently registered Portal account and its owner.
+        const [{ data: portalAccount, error: portalError }, { data: owner, error: ownerError }] = await Promise.all([
+            supabase.from("reseller_portal_accounts").select("id,user_id,status").eq("id", decoded.portal_account_id).eq("user_id", decoded.id).maybeSingle(),
+            supabase.from("users").select("id,account_scope").eq("id", decoded.id).maybeSingle()
+        ]);
+        if (portalError || ownerError) {
+            const error = portalError || ownerError;
+            if (isMissingTableError(error)) {
+                return res.status(503).json({ message: "Portal Reseller belum selesai dikonfigurasi.", code: "PORTAL_ACCOUNT_STORE_UNAVAILABLE" });
+            }
+            return res.status(503).json({ message: "Identity Portal Reseller belum dapat diverifikasi.", code: "PORTAL_IDENTITY_UNAVAILABLE" });
+        }
+        if (!portalAccount || !owner || owner.account_scope !== "portal_only") {
+            return res.status(403).json({ message: "Akun Portal Reseller terdaftar diperlukan. Akun belanja tidak dapat membuka portal.", code: "PORTAL_ACCOUNT_REQUIRED" });
+        }
+        if (["suspended", "disabled", "rejected"].includes(String(portalAccount.status || "").toLowerCase())) {
+            return res.status(403).json({ message: "Akun Portal Reseller tidak aktif.", code: "PORTAL_ACCOUNT_INACTIVE" });
+        }
+
         if (decoded.two_factor_verified === true) {
             req.user = decoded;
             return next();
         }
-
-        // Kalau 2FA aktif, token lama/direct-login tanpa verifikasi TOTP
         // diperiksa terhadap status factor di database sebelum diterima.
         const { data: factor, error } = await supabase
             .from("reseller_portal_2fa")

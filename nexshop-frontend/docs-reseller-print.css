@@ -1,0 +1,83 @@
+/* PDF-only external stylesheet: CSP-safe print presentation for reseller API docs. */
+body.reseller-docs-page {
+    background: #ffffff !important;
+    color: #101828 !important;
+}
+
+body.reseller-docs-page .docs-topbar,
+body.reseller-docs-page .docs-sidebar,
+body.reseller-docs-page .docs-mobile-toggle,
+body.reseller-docs-page .docs-actions,
+body.reseller-docs-page .docs-back-to-top,
+body.reseller-docs-page .docs-contact-actions,
+body.reseller-docs-page .docs-pdf-download,
+body.reseller-docs-page nav {
+    display: none !important;
+}
+
+body.reseller-docs-page > header {
+    max-width: none !important;
+    margin: 0 0 10mm !important;
+    padding: 0 0 8mm !important;
+    border-bottom: 2px solid #d0d5dd !important;
+}
+
+body.reseller-docs-page .docs-layout,
+body.reseller-docs-page .docs-main,
+body.reseller-docs-page .docs-content,
+body.reseller-docs-page main {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+body.reseller-docs-page .docs-section,
+body.reseller-docs-page .docs-card,
+body.reseller-docs-page .docs-api-card,
+body.reseller-docs-page .docs-code-wrap,
+body.reseller-docs-page .docs-table-wrap {
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+
+body.reseller-docs-page .docs-section {
+    margin: 0 0 24px !important;
+    padding-top: 0 !important;
+}
+
+body.reseller-docs-page .docs-card,
+body.reseller-docs-page .docs-api-card {
+    border-color: #d0d5dd !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+}
+
+body.reseller-docs-page pre,
+body.reseller-docs-page code {
+    color: #101828 !important;
+    background: #f2f4f7 !important;
+    border-color: #d0d5dd !important;
+}
+
+body.reseller-docs-page a {
+    color: #075fd3 !important;
+}
+
+body.reseller-docs-page table {
+    width: 100% !important;
+    border-color: #d0d5dd !important;
+}
+
+body.reseller-docs-page th,
+body.reseller-docs-page td {
+    color: #101828 !important;
+    border-color: #d0d5dd !important;
+}
+
+@page {
+    size: A4;
+    margin: 16mm 14mm;
+}
