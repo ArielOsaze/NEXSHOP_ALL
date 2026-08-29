@@ -218,6 +218,10 @@ function inferKnowledgeIntent(item) {
     const text = `${item.title || ""} ${item.category || ""} ${item.keywords || ""}`.toLowerCase();
     const cat = String(item.category || "").toLowerCase();
 
+    if (cat === "definition") {
+        return "Definition";
+    }
+
     // Security account harus menang sebelum category safeguard agar artikel
     // 2FA/recovery code tidak jatuh ke Trust hanya karena ada kata "aman".
     if (/2fa|two factor|authenticator|recovery code|kode pemulihan|totp|keamanan akun/.test(text)) {
