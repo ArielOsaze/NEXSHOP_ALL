@@ -1021,3 +1021,32 @@ main{
     .admin-logout-actions { flex-direction: column-reverse; }
     .admin-logout-btn { width: 100%; }
 }
+
+/* Image guard: dynamic admin rows must stay thumbnails even if a stale
+   bundle or a provider response omits the data-csp-style marker. */
+#view-products #products > tr > td:nth-child(2) img,
+#view-products #products > tr > td:nth-child(2) img[data-csp-style="s477ba6589a8fd3"] {
+    display:block;
+    width:70px!important;
+    height:70px!important;
+    max-width:70px!important;
+    object-fit:cover;
+    border-radius:10px;
+}
+#view-promo #promoSlides > tr > td:nth-child(2) img,
+#view-promo #promoSlides > tr > td:nth-child(2) img[data-csp-style="s60575a62468a56"] {
+    display:block;
+    width:70px!important;
+    height:44px!important;
+    max-width:70px!important;
+    object-fit:cover;
+    border-radius:8px;
+}
+#view-ratings #customTestimonialsTbody > tr > td:first-child img,
+#view-ratings #customTestimonialsTbody > tr > td:first-child img[data-csp-style="sf5611d5ae226f9"] {
+    width:40px!important;
+    height:40px!important;
+    max-width:40px!important;
+    object-fit:cover;
+    border-radius:50%;
+}
