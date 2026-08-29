@@ -18,7 +18,7 @@ assert(/\/admin\/deposit/.test(routes), "admin deposit route is missing");
 assert(/superAdminMiddleware[\s\S]*requireAdminPin/.test(routes), "deposit route must be Admin-only and PIN-gated");
 assert(/id=\"tvDepositModal\"/.test(html), "dashboard needs the deposit modal");
 assert(/function submitTvDeposit\s*\(/.test(js), "dashboard needs the deposit submit flow");
-assert(/approval-layout-2/.test(html), "dashboard CSS cache-buster must invalidate stale layout CSS");
+assert(/20260829-visual-regression-1/.test(html), "dashboard CSS cache-buster must invalidate stale visual/layout assets");
 assert(/\.app-shell\s*>\s*main\s*\{[^}]*margin-left\s*:\s*260px/s.test(css), "desktop main must reserve the fixed sidebar");
 
 console.log("PASS sim52: TokoVoucher deposit is server-side Admin+PIN gated and dashboard layout cache is versioned");
