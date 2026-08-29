@@ -2729,8 +2729,8 @@ async function bulkSetTopupStatus(isActive) {
     }
 }
 
-// Toggle "butuh server id" massal buat produk terpilih (mis. abis sync
-// produk Mobile Legends baru yang semuanya perlu Zone ID)
+
+
 async function bulkSetTopupButuhServerId(butuhServerId) {
     if (topupSelectedIds.size === 0) return showToast("Pilih minimal 1 produk dulu", true);
     if (!confirm(`${butuhServerId ? "Aktifkan" : "Matikan"} "Butuh Server ID" utk ${topupSelectedIds.size} produk terpilih?`)) return;

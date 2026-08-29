@@ -33,10 +33,10 @@ function testNonGamingStaysOutsideOrders() {
 }
 
 function testAdminNavigationMatchesDataOwnership() {
-    assert.match(dashboard, /data-nav-group="orders"[\s\S]*data-view="topup"[^>]*>[\s\S]*Game &amp; Gamepass/);
+    assert.match(dashboard, /data-nav-group="orders"[\s\S]*data-view="topup"[^>]*>[\s\S]*Produk Topup/);
     assert.match(dashboard, /data-nav-group="catalog-sales"[\s\S]*data-view="products"[^>]*>[\s\S]*Produk Toko/);
     assert.doesNotMatch(dashboard, /data-view="products"[^>]*>[\s\S]*Produk Game\s*\/\s*Gamepass/);
-    assert.match(dashboard, /<h2>Orders Game &amp; Gamepass<\/h2>/);
+    assert.match(dashboard, /<h2>Orders Produk Topup<\/h2>/);
 }
 
 function testCategoryIsCarriedAcrossCatalogAndAdminOrderFeed() {

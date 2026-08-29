@@ -4967,9 +4967,7 @@ async function initMusicPlayer() {
             const audioUrl = data.music.audio_url || "";
             const coverUrl = typeof data.music.cover_url === "string" ? data.music.cover_url.trim() : "";
 
-            // Use only the cover uploaded through Admin > Music Player. There is
-            // no generated/external artwork fallback. The black shell stays
-            // visible until this real admin-uploaded image is ready.
+
             if (musicCoverImg) {
                 musicCoverImg.classList.remove("is-loaded");
                 musicCoverImg.onload = () => musicCoverImg.classList.add("is-loaded");

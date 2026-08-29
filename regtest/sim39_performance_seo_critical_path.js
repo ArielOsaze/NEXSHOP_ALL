@@ -29,8 +29,8 @@ assert.match(script, /const coverUrl = typeof data\.music\.cover_url === "string
 assert.match(script, /musicCoverImg\.src\s*=\s*coverUrl/);
 assert.doesNotMatch(script, /aida-public\//, "hero tidak boleh memakai artwork generate lama");
 assert.match(html, /class="[^"]*music-disc-shell[^"]*"/);
-assert.match(html, /style\.css\?v=20260828-navbar-spacing-1/);
-assert.match(html, /script\.js\?v=20260828-music-csp-fix-1/);
+assert.match(html, /style\.css\?v=20260828-progressive-products-1/);
+assert.match(html, /script\.js\?v=20260828-progressive-products-1/);
 assert.match(html, /<img src="\/images\/oss-logo\.png" alt="OSS Logo" loading="lazy" decoding="async">/);
 assert.match(html, /<img data-src="\/images\/nexbot-mascot\.webp"/);
 assert.match(html, /<img data-src="\/images\/nexbot-mascot-wave\.webp"/);
@@ -38,8 +38,8 @@ assert.match(script, /function hydratePromoSlide\(index\)/);
 assert.match(script, /data-srcset=/);
 assert.match(script, /function loadDeferredNexBotImages\(\)/);
 assert.doesNotMatch(html, /src="https:\/\/lh3\.googleusercontent\.com\//, "Aset cover Google lama tidak boleh kembali ke player");
-assert.match(html, /fonts\.googleapis\.com/);
-assert.match(html, /fonts\.gstatic\.com/);
+assert.match(html, /fonts\/google-fonts\.css/, "Font harus di-self-host agar supply chain tidak bergantung pada Google Fonts");
+assert.doesNotMatch(html, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
 
 // First paint must not wait for the secondary data fan-out.
 assert.match(script, /let initialBackgroundLoading = true;/);

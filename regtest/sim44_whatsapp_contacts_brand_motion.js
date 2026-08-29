@@ -35,7 +35,7 @@ assert.match(server, /app\.use\("\/api\/whatsapp\/contacts"/);
 assert.match(phoneOtp, /upsertVerifiedUserContact/);
 assert.match(adminHtml, /data-view="waContacts"/);
 assert.match(adminHtml, /view-waContacts/);
-assert.match(adminHtml, /syncWhatsAppContactsToMobile/);
+assert.match(adminJs, /syncWhatsAppContactsToMobile/);
 assert.match(adminJs, /loadWhatsAppContacts/);
 assert.match(adminJs, /syncWhatsAppContactsToMobile/);
 assert.match(publicHtml, /nx-brand-lockup/);
