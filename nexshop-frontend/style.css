@@ -7807,6 +7807,39 @@ input::placeholder {
 }
 
 /* Hall of Fame avatar styles */
+.hof-avatar-media {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+.hof-avatar-image {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.hof-avatar-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #98a2b3;
+    background: #f2f4f7;
+    font-size: clamp(1.1rem, 2vw, 1.8rem);
+}
+
+.hof-avatar-fallback i {
+    color: #667085;
+}
+
 .hof-avatar {
     position: relative;
     flex-shrink: 0;

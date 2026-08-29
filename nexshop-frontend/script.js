@@ -4681,10 +4681,14 @@ function renderLeaderboard(data) {
 
     let podiumHtml = `<div class="flex flex-row items-end justify-center gap-2 md:gap-6 lg:gap-10 mb-12 min-h-[300px]"> `;
 
-    // Helper untuk avatar
+    // Helper untuk avatar. Invalid atau diblokir CSP tidak boleh menghilangkan
+    // profil: fallback tetap terlihat dan avatar URL dibatasi ke http(s).
     const getAvatar = (user) => {
-        if (user.avatar_url) return `<img src="${user.avatar_url}" class="w-full h-full object-cover" data-csp-style="s5f356df6c4cf93">`;
-        return `<div class="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center text-2xl font-bold text-gray-400 dark:text-gray-500" data-csp-style="sf8db272f53af3a"><i class="fa-solid fa-user"></i></div>`;
+        const avatarUrl = safeUrl(user?.avatar_url || "");
+        if (!avatarUrl) {
+            return '<span class="hof-avatar-media"><span class="hof-avatar-fallback" aria-hidden="true"><i class="fa-solid fa-user"></i></span></span>';
+        }
+        return `<span class="hof-avatar-media"><img src="${escapeHtml(avatarUrl)}" class="hof-avatar-image fallback-remove" alt="" loading="lazy" decoding="async"><span class="hof-avatar-fallback" aria-hidden="true"><i class="fa-solid fa-user"></i></span></span>`;
     };
 
     // Helper untuk rank badge

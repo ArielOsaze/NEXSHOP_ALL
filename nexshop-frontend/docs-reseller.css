@@ -1,0 +1,420 @@
+/* NexShop Reseller Documentation — scoped visual layer */
+body.reseller-docs-page {
+    --docs-bg: #f7f9fc;
+    --docs-surface: #ffffff;
+    --docs-surface-soft: #f8fafc;
+    --docs-ink: #101828;
+    --docs-ink-soft: #344054;
+    --docs-muted: #475467;
+    --docs-faint: #667085;
+    --docs-line: #e4e7ec;
+    --docs-line-strong: #d0d5dd;
+    --docs-blue: #075fd3;
+    --docs-blue-dark: #0647a0;
+    --docs-cyan: #00a8c7;
+    min-width: 320px;
+    background: var(--docs-bg) !important;
+    background-image: none !important;
+    color: var(--docs-ink) !important;
+    color-scheme: light;
+    font-family: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+body.reseller-docs-page .mkt-bg-layer,
+body.reseller-docs-page::before,
+body.reseller-docs-page::after {
+    display: none !important;
+}
+
+.reseller-docs-page :is(a, button, summary):focus-visible {
+    outline: 3px solid rgba(0, 168, 199, 0.4) !important;
+    outline-offset: 3px !important;
+}
+
+.reseller-docs-page .mkt-nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    min-height: 72px;
+    border-bottom: 1px solid var(--docs-line) !important;
+    background: rgba(255, 255, 255, 0.96) !important;
+    box-shadow: 0 4px 16px rgba(16, 24, 40, 0.04);
+    color: var(--docs-ink) !important;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+.reseller-docs-page .mkt-nav-brand,
+.reseller-docs-page .mkt-brand-text {
+    color: var(--docs-ink) !important;
+}
+
+.reseller-docs-page .mkt-nav-brand {
+    min-height: 44px;
+}
+
+.reseller-docs-page .mkt-nav-links a {
+    min-height: 44px;
+    color: var(--docs-muted) !important;
+    font-weight: 700;
+}
+
+.reseller-docs-page .mkt-nav-links a:hover,
+.reseller-docs-page .mkt-nav-links a.active {
+    color: var(--docs-blue) !important;
+}
+
+.reseller-docs-page .nx-tag {
+    border-color: #b8dbff !important;
+    background: #f3f8ff !important;
+    color: var(--docs-blue) !important;
+}
+
+.reseller-docs-page .mkt-nav-back,
+.reseller-docs-page .mkt-btn-primary {
+    border-color: var(--docs-blue) !important;
+    background: var(--docs-blue) !important;
+    color: #fff !important;
+    box-shadow: 0 8px 18px rgba(7, 95, 211, 0.16);
+}
+
+.reseller-docs-page .mkt-nav-back:hover,
+.reseller-docs-page .mkt-btn-primary:hover {
+    background: var(--docs-blue-dark) !important;
+}
+
+.reseller-docs-page .mkt-nav-toggle {
+    min-width: 44px;
+    min-height: 44px;
+    border: 1px solid var(--docs-line-strong) !important;
+    border-radius: 10px;
+    background: var(--docs-surface) !important;
+    color: var(--docs-ink) !important;
+}
+
+.reseller-docs-page > header {
+    width: min(1160px, calc(100% - 48px));
+    margin: 42px auto 0;
+    padding: clamp(30px, 5vw, 60px);
+    border: 1px solid var(--docs-line);
+    border-radius: 24px;
+    background:
+        radial-gradient(circle at 88% 18%, rgba(0, 168, 199, 0.1), transparent 28%),
+        linear-gradient(135deg, #ffffff, #f8fbff);
+    box-shadow: 0 18px 44px rgba(16, 24, 40, 0.06);
+}
+
+.reseller-docs-page .mkt-hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    padding: 7px 11px;
+    border: 1px solid #b8e8ee;
+    border-radius: 999px;
+    background: #effcff;
+    color: var(--docs-blue);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.reseller-docs-page > header h1 {
+    max-width: 870px;
+    margin: 21px 0 15px !important;
+    color: var(--docs-ink) !important;
+    font-size: clamp(2.25rem, 5vw, 4.35rem) !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.065em;
+    line-height: 1.03;
+}
+
+.reseller-docs-page .mkt-hero-accent {
+    color: var(--docs-blue) !important;
+    background: linear-gradient(90deg, var(--docs-blue), var(--docs-cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.reseller-docs-page > header > p {
+    max-width: 760px;
+    margin: 0 0 24px !important;
+    color: var(--docs-muted) !important;
+    font-size: 1rem !important;
+    line-height: 1.75;
+}
+
+.reseller-docs-page > header strong,
+.reseller-docs-page .docs-content strong {
+    color: var(--docs-ink) !important;
+}
+
+.reseller-docs-page .docs-pdf-download {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 12px 17px;
+    border: 1px solid var(--docs-line-strong) !important;
+    border-radius: 10px;
+    background: var(--docs-surface) !important;
+    color: var(--docs-ink) !important;
+    font-weight: 800;
+    box-shadow: 0 6px 14px rgba(16, 24, 40, 0.05);
+}
+
+.reseller-docs-page .docs-pdf-download:hover {
+    border-color: var(--docs-blue) !important;
+    color: var(--docs-blue) !important;
+}
+
+.reseller-docs-page .docs-layout {
+    width: min(1160px, calc(100% - 48px));
+    max-width: none;
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 28px;
+    padding: 34px 0 72px;
+}
+
+.reseller-docs-page .docs-sidebar,
+.reseller-docs-page .docs-mobile-toc {
+    border: 1px solid var(--docs-line) !important;
+    border-radius: 16px !important;
+    background: var(--docs-surface) !important;
+    box-shadow: 0 8px 20px rgba(16, 24, 40, 0.04);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.reseller-docs-page .docs-sidebar {
+    top: 92px;
+    padding: 16px !important;
+}
+
+.reseller-docs-page .docs-sidebar-title,
+.reseller-docs-page .docs-nav-section {
+    color: var(--docs-blue) !important;
+}
+
+.reseller-docs-page .docs-nav-section {
+    padding-top: 15px;
+}
+
+.reseller-docs-page .docs-nav a {
+    min-height: 44px;
+    padding: 8px 9px;
+    color: var(--docs-muted) !important;
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.reseller-docs-page .docs-nav a:hover,
+.reseller-docs-page .docs-nav a.active {
+    background: #effcff !important;
+    color: var(--docs-blue) !important;
+}
+
+.reseller-docs-page .docs-content {
+    gap: 42px;
+}
+
+.reseller-docs-page .docs-section h2,
+.reseller-docs-page .docs-card h3,
+.reseller-docs-page .docs-benefit-card h4,
+.reseller-docs-page .docs-step-body h3,
+.reseller-docs-page .docs-cta-banner h3,
+.reseller-docs-page .docs-faq summary {
+    color: var(--docs-ink) !important;
+}
+
+.reseller-docs-page .docs-section > p,
+.reseller-docs-page .docs-card p,
+.reseller-docs-page .docs-benefit-card p,
+.reseller-docs-page .docs-step-body p,
+.reseller-docs-page .docs-faq details p,
+.reseller-docs-page .docs-cta-banner p {
+    color: var(--docs-muted) !important;
+}
+
+.reseller-docs-page .docs-section a,
+.reseller-docs-page .docs-content a {
+    color: var(--docs-blue) !important;
+    font-weight: 700;
+}
+
+.reseller-docs-page .docs-section-badge {
+    border: 1px solid #b8e8ee;
+    background: #effcff !important;
+    color: var(--docs-blue) !important;
+}
+
+.reseller-docs-page .docs-card,
+.reseller-docs-page .docs-benefit-card,
+.reseller-docs-page .docs-step,
+.reseller-docs-page .docs-endpoint-card,
+.reseller-docs-page .docs-faq details {
+    border-color: var(--docs-line) !important;
+    background: var(--docs-surface) !important;
+    box-shadow: 0 6px 18px rgba(16, 24, 40, 0.035);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.reseller-docs-page .docs-step,
+.reseller-docs-page .docs-step-body p,
+.reseller-docs-page .docs-list,
+.reseller-docs-page .docs-callout {
+    color: var(--docs-muted) !important;
+}
+
+.reseller-docs-page .docs-step-num {
+    background: linear-gradient(135deg, var(--docs-blue), var(--docs-cyan)) !important;
+    color: #fff !important;
+}
+
+.reseller-docs-page .docs-callout--info {
+    border-color: #b8e8ee !important;
+    background: #effcff !important;
+}
+
+.reseller-docs-page .docs-callout--warn {
+    border-color: #f3c98b !important;
+    background: #fff9eb !important;
+}
+
+.reseller-docs-page .docs-callout--tip {
+    border-color: #a9e5cf !important;
+    background: #effcf7 !important;
+}
+
+.reseller-docs-page #docsTierWrap,
+.reseller-docs-page .docs-card > div:has(> .docs-tier-table) {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.reseller-docs-page .docs-tier-table th,
+.reseller-docs-page .docs-tier-table td {
+    border-color: var(--docs-line) !important;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.reseller-docs-page .docs-tier-table th,
+.reseller-docs-page .docs-tier-table td,
+.reseller-docs-page .docs-tier-badge {
+    color: var(--docs-muted) !important;
+}
+
+.reseller-docs-page .docs-tier-pct {
+    color: var(--docs-blue) !important;
+}
+
+.reseller-docs-page .docs-code {
+    border: 1px solid #c5e8ef;
+    background: #effcff !important;
+    color: var(--docs-blue-dark) !important;
+}
+
+.reseller-docs-page .docs-code-block {
+    border-color: #26364d !important;
+    background: #101b2b !important;
+}
+
+.reseller-docs-page .docs-code-header {
+    border-color: #344054 !important;
+    color: #d0d5dd !important;
+}
+
+.reseller-docs-page .docs-tab-btn {
+    min-height: 44px;
+    color: var(--docs-muted) !important;
+}
+
+.reseller-docs-page .docs-tab-btn.active {
+    color: var(--docs-blue) !important;
+    border-bottom-color: var(--docs-blue) !important;
+}
+
+.reseller-docs-page .docs-cta-banner {
+    border-color: #b8e8ee !important;
+    background: linear-gradient(135deg, #effcff, #f3f8ff) !important;
+}
+
+@media (max-width: 900px) {
+    .reseller-docs-page > header,
+    .reseller-docs-page .docs-layout {
+        width: min(calc(100% - 32px), 760px);
+    }
+
+    .reseller-docs-page > header {
+        margin-top: 24px;
+        padding: 28px 22px;
+    }
+
+    .reseller-docs-page .docs-layout {
+        padding-top: 24px;
+    }
+
+    .reseller-docs-page .docs-sidebar {
+        display: none;
+    }
+
+    .reseller-docs-page .docs-mobile-toc {
+        display: block;
+    }
+}
+
+@media (max-width: 640px) {
+    .reseller-docs-page .mkt-nav {
+        min-height: 66px;
+    }
+
+    .reseller-docs-page > header h1 {
+        font-size: clamp(2rem, 10vw, 3rem) !important;
+    }
+
+    .reseller-docs-page > header > p {
+        font-size: 0.9rem !important;
+    }
+
+    .reseller-docs-page .docs-layout {
+        width: min(calc(100% - 32px), 600px);
+        padding-bottom: 48px;
+    }
+
+    .reseller-docs-page .docs-content {
+        gap: 32px;
+    }
+
+    .reseller-docs-page .docs-card,
+    .reseller-docs-page .docs-step,
+    .reseller-docs-page .docs-endpoint-card {
+        padding: 16px !important;
+    }
+
+    .reseller-docs-page .docs-code-content {
+        font-size: 0.72rem;
+    }
+
+    .reseller-docs-page .docs-cta-banner {
+        padding: 20px !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reseller-docs-page *,
+    .reseller-docs-page *::before,
+    .reseller-docs-page *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}
