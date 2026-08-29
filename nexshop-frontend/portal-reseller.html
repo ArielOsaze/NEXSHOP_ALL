@@ -1344,10 +1344,12 @@
         }
     </style>
 <link rel="stylesheet" href="/inline-styles.css?v=20260829-visual-regression-1">
+<link rel="stylesheet" href="/portal-reseller.css?v=20260829-portal-reseller-redesign-1">
 <script defer src="/csp-legacy-handlers.js?v=20260829-visual-regression-1"></script>
+<script defer src="/portal-reseller-ui.js?v=20260829-portal-reseller-redesign-1"></script>
 </head>
 
-<body class="tv-distributor-portal">
+<body class="tv-distributor-portal rs-portal-page">
 
     <!-- =============================================================== -->
     <!-- AUTH SECTION (GUEST / LOGIN / REGISTER)                         -->
@@ -1532,6 +1534,7 @@
         <button type="button" class="tv-mobile-menu-button" data-csp-onclick="h0a5a82aa568e3b" aria-label="Buka menu portal reseller">
             <i class="fa-solid fa-bars" aria-hidden="true"></i>
         </button>
+        <button type="button" class="tv-sidebar-scrim" aria-label="Tutup menu portal reseller"></button>
 
         <!-- ── Left Sidebar ── -->
         <aside class="tv-sidebar" id="tvSidebar">
@@ -1551,7 +1554,7 @@
             </div>
 
             <!-- Sidebar Navigation Menu Items -->
-            <nav class="tv-sidebar-menu">
+            <nav class="tv-sidebar-menu" aria-label="Partner Portal">
                 <button type="button" class="tv-nav-link active" data-view="view-dashboard" data-csp-onclick="h6df6860044a3f8">
                     <i class="fa-solid fa-gauge-high" aria-hidden="true"></i>
                     <span>Dashboard</span>
@@ -1572,6 +1575,12 @@
                     <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
                     <span>Transaksi</span>
                 </button>
+                <button type="button" class="tv-nav-more" aria-expanded="false" aria-controls="tvNavSecondary">
+                    <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>
+                    <span>Lainnya</span>
+                    <i class="fa-solid fa-chevron-down tv-nav-more-chevron" aria-hidden="true"></i>
+                </button>
+                <div id="tvNavSecondary" class="tv-nav-secondary-group">
                 <button type="button" class="tv-nav-link" data-view="view-settings" data-csp-onclick="heb24272fa8d33c">
                     <i class="fa-solid fa-gear" aria-hidden="true"></i>
                     <span>Pengaturan</span>
@@ -1584,6 +1593,7 @@
                     <i class="fa-solid fa-award" aria-hidden="true"></i>
                     <span>Tingkatan Reseller</span>
                 </button>
+                </div>
             </nav>
 
             <!-- Bottom User Profile Area in Sidebar -->
@@ -1604,6 +1614,21 @@
 
         <!-- ── Main Content Area ── -->
         <main class="tv-console-main">
+
+            <header class="tv-portal-topbar">
+                <div>
+                    <div class="tv-portal-breadcrumb"><a href="/reseller">Reseller</a><span aria-hidden="true">/</span><span>Partner Portal</span></div>
+                    <div class="tv-portal-title-row">
+                        <span class="tv-portal-eyebrow">RESELLER PORTAL</span>
+                        <div id="tvPageTitle" class="tv-page-title" role="heading" aria-level="1">Dashboard</div>
+                        <p id="tvPageSubtitle" class="tv-page-subtitle">Ringkasan performa, saldo, dan aktivitas terbaru akun reseller.</p>
+                    </div>
+                </div>
+                <div class="tv-portal-topbar-actions">
+                    <span class="tv-topbar-status"><span class="tv-topbar-status-dot" aria-hidden="true"></span> Portal aktif</span>
+                    <a class="tv-topbar-link" href="/docs-reseller"><i class="fa-solid fa-book-open" aria-hidden="true"></i><span>Dokumentasi</span></a>
+                </div>
+            </header>
 
             <!-- ── Top Header Widgets Row (3 Cards) ── -->
             <div class="tv-top-widgets-grid">
@@ -2645,17 +2670,13 @@
             const paneReg = document.getElementById("authPaneRegister");
 
             if (mode === "register") {
-                btnReg.style.background = "#00c2e8";
-                btnReg.style.color = "#ffffff";
-                btnLogin.style.background = "transparent";
-                btnLogin.style.color = "#94a3b8";
+                btnReg.classList.add("active");
+                btnLogin.classList.remove("active");
                 paneLogin.style.display = "none";
                 paneReg.style.display = "block";
             } else {
-                btnLogin.style.background = "#2563eb";
-                btnLogin.style.color = "#ffffff";
-                btnReg.style.background = "transparent";
-                btnReg.style.color = "#94a3b8";
+                btnLogin.classList.add("active");
+                btnReg.classList.remove("active");
                 paneLogin.style.display = "block";
                 paneReg.style.display = "none";
             }
@@ -3782,7 +3803,7 @@
             const rawMax = Math.max(...list.map(d => Number(d.count) || 0));
             const maxVal = rawMax > 0 ? (rawMax % 2 === 0 ? rawMax : rawMax + 1) : 4;
 
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.07)";
+            ctx.strokeStyle = "rgba(16, 24, 40, 0.08)";
             ctx.lineWidth = 1;
             for (let i = 0; i <= 4; i++) {
                 const y = padding.top + (plotH / 4) * i;
@@ -3791,7 +3812,7 @@
                 ctx.lineTo(w - padding.right, y);
                 ctx.stroke();
 
-                ctx.fillStyle = "#94a3b8";
+                ctx.fillStyle = "#667085";
                 ctx.font = "11px 'Plus Jakarta Sans', sans-serif";
                 ctx.textAlign = "right";
                 const valLabel = Math.round(maxVal - (maxVal / 4) * i);
@@ -3838,10 +3859,10 @@
                 const mx = (p0.x + p1.x) / 2;
                 ctx.bezierCurveTo(mx, p0.y, mx, p1.y, p1.x, p1.y);
             }
-            ctx.strokeStyle = "#38bdf8";
+            ctx.strokeStyle = "#075fd3";
             ctx.lineWidth = 3;
-            ctx.shadowColor = "rgba(56, 189, 248, 0.5)";
-            ctx.shadowBlur = 10;
+            ctx.shadowColor = "rgba(7, 95, 211, 0.16)";
+            ctx.shadowBlur = 6;
             ctx.stroke();
             ctx.shadowBlur = 0;
 
@@ -3850,7 +3871,7 @@
                 ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
                 ctx.fillStyle = "#ffffff";
                 ctx.fill();
-                ctx.strokeStyle = "#0284c7";
+                ctx.strokeStyle = "#00a8c7";
                 ctx.lineWidth = 2.5;
                 ctx.stroke();
             });
