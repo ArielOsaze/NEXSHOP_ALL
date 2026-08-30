@@ -1344,7 +1344,7 @@
         }
     </style>
 <link rel="stylesheet" href="/inline-styles.css?v=20260829-visual-regression-1">
-<link rel="stylesheet" href="/portal-reseller.css?v=20260830-portal-rounded-logo-1">
+<link rel="stylesheet" href="/portal-reseller.css?v=20260830-portal-tier-notice-3">
 <script defer src="/csp-legacy-handlers.js?v=20260829-visual-regression-1"></script>
 <script defer src="/portal-reseller-ui.js?v=20260829-portal-reseller-redesign-1"></script>
 </head>
@@ -2260,8 +2260,9 @@
                     <p data-csp-style="s193d09b9ca4a84">
                         Daftar tingkatan di bawah dimuat langsung dari konfigurasi NexShop, jadi
                         persentasenya selalu sama dengan yang diterapkan pada harga modal kamu.
-                        Kenaikan tingkatan ditetapkan admin berdasarkan riwayat transaksi &mdash;
-                        hubungi tim kemitraan bila ingin meninjau tingkatan akunmu.
+                        Kenaikan tingkatan ditetapkan berdasarkan rata-rata transaksi bulanan:
+                        <strong>Silver belum memiliki minimum</strong>, <strong>Gold minimal Rp50.000.000</strong>,
+                        dan <strong>Platinum di atas Rp100.000.000</strong>. Hubungi tim kemitraan bila ingin meninjau tingkatan akunmu.
                     </p>
                 </div>
                 <div id="tvTierGrid" data-csp-style="s829b74715455ec">
@@ -3673,29 +3674,36 @@
                     return;
                 }
 
-                // Aksen warna diputar berurutan supaya tiap kartu tetap
-                // terbedakan berapa pun jumlah tingkatan yang dikonfigurasi
-                // admin -- tidak dipatok ke tiga tingkatan seperti versi lama.
+                // Aksen dan syarat berasal dari data server. Fallback hanya
+                // menjaga keterbacaan pada deployment yang belum mengirim field eligibility.
+                const fallbackRequirements = {
+                    silver: "Belum ada minimum transaksi bulanan.",
+                    gold: "Rata-rata transaksi per bulan minimal Rp50.000.000.",
+                    platinum: "Rata-rata transaksi per bulan di atas Rp100.000.000."
+                };
                 const aksen = ["#475467", "#075fd3", "#f59e0b", "#a855f7", "#10b981"];
                 const kodeAktif = activeTierInfo && activeTierInfo.code ? String(activeTierInfo.code) : null;
                 const namaAktif = activeTierInfo && activeTierInfo.name ? String(activeTierInfo.name) : null;
 
                 grid.innerHTML = tiers.map((t, i) => {
                     const warna = aksen[i % aksen.length];
+                    const kode = String(t.code || "").toLowerCase();
                     const ini = (kodeAktif && String(t.code) === kodeAktif)
                         || (namaAktif && String(t.name) === namaAktif);
                     const diskon = Number(t.discount_percent) || 0;
+                    const requirement = t.eligibility?.requirement || fallbackRequirements[kode] || "Syarat ditentukan oleh admin berdasarkan riwayat transaksi.";
 
                     return `
-                <div class="tv-section-card" style="border-top:4px solid ${warna};${ini ? "box-shadow:0 0 0 1px " + warna + ";" : ""}">
-                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
-                        <h4 style="font-size:1.2rem;font-weight:900;color:#ffffff;margin:0;">${escapeHtml(t.name || t.code || "-")}</h4>
+                <div class="tv-section-card tv-portal-tier-card" style="border-top:4px solid ${warna};${ini ? "box-shadow:0 0 0 1px " + warna + ";" : ""}">
+                    <div class="tv-portal-tier-heading">
+                        <h4 class="tv-portal-tier-title">${escapeHtml(t.name || t.code || "-")}</h4>
                         ${ini ? '<span class="tv-badge-status tv-badge-sukses">Tingkatan kamu</span>' : ""}
                     </div>
-                    <div style="font-size:1.55rem;font-weight:900;color:${warna};margin-bottom:8px;">Diskon ${diskon}%</div>
-                    <p style="font-size:0.84rem;color:#344054;line-height:1.6;margin:0;">
+                    <div class="tv-portal-tier-discount" style="color:${warna};">Diskon ${diskon}%</div>
+                    <p class="tv-portal-tier-description">
                         ${escapeHtml(t.description || "Potongan otomatis di seluruh katalog NexShop.")}
                     </p>
+                    <p class="tv-tier-requirement"><i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>${escapeHtml(requirement)}</span></p>
                 </div>`;
                 }).join("");
             } catch (err) {

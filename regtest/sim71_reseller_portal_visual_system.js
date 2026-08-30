@@ -14,7 +14,7 @@ function check(label, condition) {
     assert.ok(condition, label);
 }
 
-check("portal memuat stylesheet visual khusus", /portal-reseller\.css\?v=20260830-portal-rounded-logo-1/.test(portal));
+check("portal memuat stylesheet visual khusus", /portal-reseller\.css\?v=20260830-portal-tier-notice-3/.test(portal));
 check("portal memakai scope light reseller", /class="[^"]*rs-portal-page/.test(portal));
 check("portal memiliki app topbar", /class="tv-portal-topbar"/.test(portal));
 check("portal topbar memiliki judul dinamis", /id="tvPageTitle"/.test(portal));

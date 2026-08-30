@@ -895,15 +895,69 @@ body.rs-portal-page::after {
     color: var(--portal-ink-soft) !important;
 }
 
-.rs-portal-page .tv-pending-badge-icon {
-    width: 40px;
-    height: 40px;
-    display: grid;
-    place-items: center;
-    flex: 0 0 40px;
-    border-radius: 12px;
-    background: #fef0c7 !important;
-    color: var(--portal-amber) !important;
+.rs-portal-page .tv-pending-banner [data-csp-style="sb687a22b9ac446"] {
+    color: var(--portal-ink) !important;
+}
+
+.rs-portal-page .tv-pending-banner [data-csp-style="sbe0deb3f9b02a8"] {
+    color: var(--portal-ink-soft) !important;
+}
+
+.rs-portal-page .tv-pending-banner strong {
+    color: var(--portal-ink) !important;
+}
+
+.rs-portal-page .tv-portal-tier-card {
+    border: 1px solid var(--portal-line-strong);
+    border-radius: var(--portal-radius-md);
+    background: #fff;
+}
+
+.rs-portal-page .tv-portal-tier-heading {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.rs-portal-page .tv-portal-tier-title {
+    margin: 0;
+    color: var(--portal-ink) !important;
+    font-size: 1.2rem;
+    font-weight: 900;
+}
+
+.rs-portal-page .tv-portal-tier-discount {
+    margin-bottom: 8px;
+    font-size: 1.55rem;
+    font-weight: 900;
+}
+
+.rs-portal-page .tv-portal-tier-description {
+    margin: 0;
+    color: var(--portal-ink-soft) !important;
+    font-size: 0.84rem;
+    line-height: 1.6;
+}
+
+.rs-portal-page .tv-tier-requirement {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--portal-line);
+    color: var(--portal-ink) !important;
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1.5;
+}
+
+.rs-portal-page .tv-tier-requirement i {
+    flex: 0 0 auto;
+    margin-top: 3px;
+    color: var(--portal-blue) !important;
 }
 
 .rs-portal-page .tv-main-grid-row {
