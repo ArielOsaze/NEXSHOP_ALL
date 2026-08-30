@@ -75,7 +75,7 @@ const server = http.createServer((req, res) => {
         const state = await page.evaluate(() => ({
             button: document.getElementById("instagramShareCardBtn")?.textContent.trim(),
             stylesheet: Boolean(document.querySelector('link[href*="news-instagram-card.css?v=20260830-news-instagram-card-1"]')),
-            runtime: Boolean(document.querySelector('script[src*="news-instagram-card.js?v=20260830-news-instagram-card-2"]')),
+            runtime: Boolean(document.querySelector('script[src*="news-instagram-card.js?v=20260830-news-instagram-card-3"]')),
             title: document.querySelector('[itemprop="headline"]')?.textContent.trim(),
             canonical: document.querySelector('link[rel="canonical"]')?.href
         }));
@@ -94,6 +94,7 @@ const server = http.createServer((req, res) => {
                         url: data.url,
                         files: data.files?.map((file) => ({ name: file.name, type: file.type, size: file.size })) || []
                     };
+                    window.__shareFile = data.files?.[0];
                     if (data.files?.[0]) {
                         const bitmap = await createImageBitmap(data.files[0]);
                         window.__sharePayload.dimensions = { width: bitmap.width, height: bitmap.height };
@@ -105,6 +106,16 @@ const server = http.createServer((req, res) => {
         });
         await page.waitForFunction(() => window.__sharePayload?.dimensions?.width === 1080, { timeout: 30000 });
         const shared = await page.evaluate(() => window.__sharePayload);
+        await page.evaluate(() => new Promise((resolve, reject) => {
+            const preview = document.createElement("img");
+            preview.id = "qaShareCardPreview";
+            preview.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;object-fit:contain;background:#111827;z-index:999999;padding:24px";
+            preview.onload = resolve;
+            preview.onerror = reject;
+            preview.src = URL.createObjectURL(window.__shareFile);
+            document.body.appendChild(preview);
+        }));
+        await page.screenshot({ path: path.join(__dirname, "qa_news_instagram_card_9x16.png"), fullPage: false });
         if (shared.title !== article.title || !shared.text.includes("/berita/qa-instagram-card") || shared.url !== state.canonical || shared.files[0].type !== "image/png" || shared.files[0].size < 1000 || shared.dimensions.width !== 1080 || shared.dimensions.height !== 1920) {
             throw new Error(`payload native share bukan PNG 9:16 artikel: ${JSON.stringify(shared)}`);
         }

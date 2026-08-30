@@ -118,11 +118,14 @@
         ctx.fillStyle = "#00c2e8";
         ctx.font = "700 24px Arial, sans-serif";
         ctx.fillText("NEWS", 260, 78);
+        ctx.fillStyle = "rgba(157,180,189,0.72)";
+        ctx.font = "600 18px Arial, sans-serif";
+        ctx.fillText("EDITORIAL  /  GAMING & ESPORTS", 64, 112);
 
         const imageX = 64;
-        const imageY = 130;
+        const imageY = 140;
         const imageWidth = CARD_WIDTH - 128;
-        const imageHeight = 720;
+        const imageHeight = 820;
         roundedRect(ctx, imageX, imageY, imageWidth, imageHeight, 34);
         ctx.save();
         ctx.clip();
@@ -145,28 +148,42 @@
 
         ctx.fillStyle = "#8be9f7";
         ctx.font = "700 22px Arial, sans-serif";
-        ctx.fillText(String(meta.category).toUpperCase().slice(0, 38), 80, 820);
+        ctx.fillText(String(meta.category).toUpperCase().slice(0, 38), 92, 900);
 
         ctx.fillStyle = "#ffffff";
         ctx.font = "700 56px Arial, sans-serif";
         const titleLines = wrapText(ctx, meta.title, CARD_WIDTH - 128, 3);
-        titleLines.forEach((line, index) => ctx.fillText(line, 64, 970 + index * 68));
+        titleLines.forEach((line, index) => ctx.fillText(line, 64, 1050 + index * 72));
 
         ctx.fillStyle = "rgba(236,246,248,0.82)";
         ctx.font = "400 28px Arial, sans-serif";
         const excerptLines = wrapText(ctx, meta.excerpt, CARD_WIDTH - 128, 3);
-        excerptLines.forEach((line, index) => ctx.fillText(line, 64, 1270 + index * 42));
+        excerptLines.forEach((line, index) => ctx.fillText(line, 64, 1345 + index * 46));
 
+        ctx.fillStyle = "rgba(139,233,247,0.7)";
+        ctx.fillRect(64, 1490, CARD_WIDTH - 128, 2);
         ctx.fillStyle = "#9db4bd";
         ctx.font = "400 22px Arial, sans-serif";
         const date = formatDate(meta.date);
-        ctx.fillText(`${meta.author}${date ? `  •  ${date}` : ""}`, 64, 1510);
+        ctx.fillText(`${meta.author}${date ? `  •  ${date}` : ""}`, 64, 1560);
         ctx.fillStyle = "#00c2e8";
         ctx.font = "600 20px Arial, sans-serif";
-        ctx.fillText(meta.canonical.replace(/^https?:\/\//, "").slice(0, 66), 64, 1580);
-        ctx.fillStyle = "rgba(255,255,255,0.42)";
-        ctx.font = "400 18px Arial, sans-serif";
-        ctx.fillText("Baca selengkapnya di NexShop News", 64, 1650);
+        ctx.fillText(meta.canonical.replace(/^https?:\/\//, "").slice(0, 66), 64, 1630);
+
+        roundedRect(ctx, 64, 1710, CARD_WIDTH - 128, 132, 24);
+        ctx.fillStyle = "rgba(255,255,255,0.07)";
+        ctx.fill();
+        ctx.strokeStyle = "rgba(139,233,247,0.28)";
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.fillStyle = "#00c2e8";
+        ctx.fillRect(90, 1744, 5, 52);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "700 26px Arial, sans-serif";
+        ctx.fillText("Baca selengkapnya di NexShop News", 122, 1778);
+        ctx.fillStyle = "rgba(236,246,248,0.58)";
+        ctx.font = "400 20px Arial, sans-serif";
+        ctx.fillText("nexshop.cloud  •  Simpan untuk dibaca nanti", 122, 1818);
 
         return new Promise((resolve, reject) => {
             canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Gagal membuat PNG")), "image/png");
