@@ -58,6 +58,11 @@ const server = http.createServer((req, res) => {
                 const floatBottom = document.querySelector(".rs-hero-float-bottom");
                 const h1 = document.querySelector(".rs-hero h1");
                 const lead = document.querySelector(".rs-hero-lead");
+                const steps = document.querySelector(".rs-steps-grid");
+                const stepNumber = document.querySelector(".rs-step-number");
+                const stepsBefore = getComputedStyle(steps, "::before");
+                const stepsAfter = getComputedStyle(steps, "::after");
+                const stepNumberStyle = getComputedStyle(stepNumber);
                 const rect = (element) => {
                     const box = element?.getBoundingClientRect();
                     return box ? { left: Math.round(box.left), right: Math.round(box.right), width: Math.round(box.width) } : null;
@@ -80,7 +85,13 @@ const server = http.createServer((req, res) => {
                     leadFont: getComputedStyle(lead).fontFamily,
                     h1LineHeight: getComputedStyle(h1).lineHeight,
                     leadLineHeight: getComputedStyle(lead).lineHeight,
-                    boltCount: document.querySelectorAll(".fa-bolt, .fa-lightning").length
+                    boltCount: document.querySelectorAll(".fa-bolt, .fa-lightning").length,
+                    timelineBeforeDisplay: stepsBefore.display,
+                    timelineAfterDisplay: stepsAfter.display,
+                    timelineBeforeZ: stepsBefore.zIndex,
+                    timelineAfterZ: stepsAfter.zIndex,
+                    stepNumberZ: stepNumberStyle.zIndex,
+                    stepNumberBackground: stepNumberStyle.backgroundColor
                 };
             });
             if (state.overflow) throw new Error(`horizontal overflow at ${width}px: ${JSON.stringify(state)}`);
@@ -93,13 +104,28 @@ const server = http.createServer((req, res) => {
                 }
             }
             if (state.boltCount !== 0) throw new Error(`lightning icon remains at ${width}px`);
+            const compactSteps = width <= 1080;
+            if (compactSteps && (state.timelineBeforeDisplay !== "none" || state.timelineAfterDisplay !== "none")) {
+                throw new Error(`timeline line must be disabled when reseller steps are cards at ${width}px: ${JSON.stringify(state)}`);
+            }
+            if (!compactSteps && (state.timelineBeforeZ !== "0" || state.timelineAfterZ !== "0" || state.stepNumberZ !== "2" || /rgba\(0,\s*0,\s*0,\s*0\)|transparent/i.test(state.stepNumberBackground))) {
+                throw new Error(`timeline layer still crosses desktop step numbers at ${width}px: ${JSON.stringify(state)}`);
+            }
             if (!/Sora/i.test(state.h1Font)) throw new Error(`unexpected reseller display font at ${width}px: ${state.h1Font}`);
             if (!/Plus Jakarta Sans/i.test(state.bodyFont) || !/Plus Jakarta Sans/i.test(state.leadFont)) {
                 throw new Error(`unexpected reseller body font at ${width}px: ${JSON.stringify({ body: state.bodyFont, lead: state.leadFont })}`);
             }
-            results.push({ width, overflow: state.overflow, heroWidth: state.hero.width, floatBounds: [state.floatTop, state.floatBottom], h1Font: state.h1Font, bodyFont: state.bodyFont, leadFont: state.leadFont, h1LineHeight: state.h1LineHeight, leadLineHeight: state.leadLineHeight });
-            if (width === 390 || width === 1440) {
+            results.push({ width, overflow: state.overflow, heroWidth: state.hero.width, floatBounds: [state.floatTop, state.floatBottom], h1Font: state.h1Font, bodyFont: state.bodyFont, leadFont: state.leadFont, h1LineHeight: state.h1LineHeight, leadLineHeight: state.leadLineHeight, timeline: { beforeDisplay: state.timelineBeforeDisplay, afterDisplay: state.timelineAfterDisplay, beforeZ: state.timelineBeforeZ, afterZ: state.timelineAfterZ, numberZ: state.stepNumberZ, numberBackground: state.stepNumberBackground } });
+            if (width === 390) {
                 await page.screenshot({ path: path.join(__dirname, `qa_reseller_${width}.png`), fullPage: false });
+            }
+            if (width === 1440) {
+                await page.evaluate(() => document.querySelector(".rs-steps-grid")?.scrollIntoView({ block: "center", behavior: "instant" }));
+                await new Promise((resolve) => setTimeout(resolve, 900));
+                await page.screenshot({ path: path.join(__dirname, "qa_reseller_timeline_1440.png"), fullPage: false });
+                await page.evaluate(() => document.querySelector("#tiers")?.scrollIntoView({ block: "center", behavior: "instant" }));
+                await new Promise((resolve) => setTimeout(resolve, 900));
+                await page.screenshot({ path: path.join(__dirname, "qa_reseller_tiers_1440.png"), fullPage: false });
             }
             await page.close();
         }

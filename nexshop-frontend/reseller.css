@@ -798,10 +798,10 @@ body.rs-page::after {
 }
 
 .rs-tier-card-silver {
-    border-color: #cbd5e1;
-    border-top: 4px solid #94a3b8;
-    background: linear-gradient(160deg, #f8fafc 0%, #fff 72%);
-    box-shadow: 0 16px 34px rgba(100, 116, 139, 0.1);
+    border-color: #b8c2cf;
+    border-top: 5px solid #64748b;
+    background: linear-gradient(150deg, #eef2f6 0%, #fff 58%, #f8fafc 100%);
+    box-shadow: 0 18px 38px rgba(71, 85, 105, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.92);
 }
 
 .rs-tier-card-gold {
@@ -812,10 +812,20 @@ body.rs-page::after {
 }
 
 .rs-tier-card-platinum {
-    border-color: #c4b5fd;
-    border-top: 4px solid #6d5bd0;
-    background: linear-gradient(160deg, #f5f3ff 0%, #fff 72%);
-    box-shadow: 0 16px 34px rgba(109, 91, 208, 0.14);
+    border-color: #a78bfa;
+    border-top: 5px solid #6d5bd0;
+    background: linear-gradient(150deg, #ede9fe 0%, #fff 58%, #f7f3ff 100%);
+    box-shadow: 0 18px 38px rgba(109, 91, 208, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.94);
+}
+
+.rs-tier-card-silver .rs-tier-label,
+.rs-tier-card-silver h3 {
+    color: #475569;
+}
+
+.rs-tier-card-platinum .rs-tier-label,
+.rs-tier-card-platinum h3 {
+    color: #5b4ab8;
 }
 
 .rs-tier-card-silver .rs-discount,
@@ -923,6 +933,7 @@ body.rs-page::after {
 
 .rs-step {
     position: relative;
+    z-index: 1;
     min-height: 210px;
     padding: 0 26px;
     border-left: 1px solid var(--rs-line-strong);
@@ -1824,6 +1835,7 @@ body.rs-page::after {
 
 .rs-steps-grid {
     position: relative;
+    isolation: isolate;
 }
 
 .rs-steps-grid::before,
@@ -1833,6 +1845,7 @@ body.rs-page::after {
     top: 10px;
     left: 4%;
     right: 4%;
+    z-index: 0;
     height: 1px;
     pointer-events: none;
 }
@@ -1854,10 +1867,19 @@ body.rs-page::after {
 
 .rs-step-number {
     position: relative;
-    z-index: 1;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    min-height: 20px;
     width: max-content;
-    padding-right: 12px;
-    background: var(--rs-surface-soft);
+    margin-left: -10px;
+    margin-bottom: 34px;
+    padding: 0 10px;
+    color: var(--rs-cyan);
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    background: #fff;
 }
 
 .rs-code-card {
@@ -1971,6 +1993,13 @@ body.rs-page::after {
 @keyframes rs-code-sheen {
     from { transform: translateX(-150%); }
     to { transform: translateX(520%); }
+}
+
+@media (max-width: 1080px) {
+    .rs-steps-grid::before,
+    .rs-steps-grid::after {
+        display: none;
+    }
 }
 
 @media (max-width: 640px) {

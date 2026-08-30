@@ -14,9 +14,10 @@ const assert = (condition, message) => {
 };
 
 assert(article.includes("/news-instagram-card.css?v=20260830-news-instagram-card-1"), "News article must load the Instagram card stylesheet");
-assert(article.includes("/news-instagram-card.js?v=20260830-news-instagram-card-1"), "News article must load the Instagram card runtime");
-assert(/1080/.test(articleJs) && /1350/.test(articleJs), "Instagram card must use a portrait 4:5 canvas");
+assert(article.includes("/news-instagram-card.js?v=20260830-news-instagram-card-2"), "News article must load the cache-busted Instagram card runtime");
+assert(/1080/.test(articleJs) && /1920/.test(articleJs), "Instagram card must use a portrait 9:16 canvas");
 assert(/navigator\.share/.test(articleJs) && /files/.test(articleJs), "Instagram card must share an image file through the native share sheet when available");
+assert(/canonical[\s\S]*url:|url:\s*meta\.canonical/.test(articleJs), "native share must carry the canonical article URL");
 assert(/download/.test(articleJs) && /toBlob/.test(articleJs), "Instagram card must provide a PNG download fallback");
 assert(/instagram|Instagram/i.test(articleJs + articleCss), "Instagram card control must be user-visible and labeled");
 const rank2Badge = homepageJs.match(/if \(rank === 2\) return '([^']+)'/)?.[1] || "";

@@ -20,6 +20,10 @@ assert(!/2563eb|1d4ed8|4f46e5|6366f1|sapphire|indigo/i.test(rank2Css), "Hall of 
 assert(/hof-avatar\.hof-avatar--2[\s\S]*?(94a3b8|cbd5e1|e2e8f0|slate|silver|titanium)/i.test(homepageCss), "Hall of Fame rank 2 avatar must retain a visible titanium frame");
 assert(/from-slate|to-slate|rgba\(100,116,139/i.test(homepageJs), "Hall of Fame rank 2 avatar/badge must use a titanium runtime palette");
 
+assert(/\.rs-steps-grid::before,[\s\S]*?\.rs-steps-grid::after[\s\S]*?z-index\s*:\s*0/i.test(resellerCss), "reseller timeline lines must stay behind step content");
+assert(/\.rs-step-number\s*\{[\s\S]*?z-index\s*:\s*2[\s\S]*?background\s*:/i.test(resellerCss), "step numbers need an opaque layer above the timeline line");
+assert(/@media\s*\(max-width:\s*1080px\)[\s\S]*?\.rs-steps-grid::before,[\s\S]*?\.rs-steps-grid::after[\s\S]*?display\s*:\s*none/i.test(resellerCss), "timeline decoration must be disabled when steps become cards");
+
 // Reseller landing must be full-bleed while preserving a readable inner rhythm.
 assert(/\.rs-hero\s*\{[\s\S]*?width\s*:\s*100%[\s\S]*?max-width\s*:\s*none[\s\S]*?padding(?:-inline)?/i.test(resellerCss), "Reseller hero must be full-bleed with responsive inline padding");
 assert(/\.rs-hero-float-top\s*\{[\s\S]*?left\s*:\s*0(?:px)?/i.test(resellerCss), "Top hero float must stay inside the viewport on mobile");

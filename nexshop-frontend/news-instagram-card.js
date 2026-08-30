@@ -4,7 +4,7 @@
     const BUTTON_ID = "instagramShareCardBtn";
     const FEEDBACK_ID = "instagramShareFeedback";
     const CARD_WIDTH = 1080;
-    const CARD_HEIGHT = 1350;
+    const CARD_HEIGHT = 1920;
 
     const text = (selector, fallback = "") => {
         const value = document.querySelector(selector)?.textContent?.trim();
@@ -122,7 +122,7 @@
         const imageX = 64;
         const imageY = 130;
         const imageWidth = CARD_WIDTH - 128;
-        const imageHeight = 520;
+        const imageHeight = 720;
         roundedRect(ctx, imageX, imageY, imageWidth, imageHeight, 34);
         ctx.save();
         ctx.clip();
@@ -145,28 +145,28 @@
 
         ctx.fillStyle = "#8be9f7";
         ctx.font = "700 22px Arial, sans-serif";
-        ctx.fillText(String(meta.category).toUpperCase().slice(0, 38), 80, 590);
+        ctx.fillText(String(meta.category).toUpperCase().slice(0, 38), 80, 820);
 
         ctx.fillStyle = "#ffffff";
         ctx.font = "700 56px Arial, sans-serif";
         const titleLines = wrapText(ctx, meta.title, CARD_WIDTH - 128, 3);
-        titleLines.forEach((line, index) => ctx.fillText(line, 64, 760 + index * 68));
+        titleLines.forEach((line, index) => ctx.fillText(line, 64, 970 + index * 68));
 
         ctx.fillStyle = "rgba(236,246,248,0.82)";
         ctx.font = "400 28px Arial, sans-serif";
         const excerptLines = wrapText(ctx, meta.excerpt, CARD_WIDTH - 128, 3);
-        excerptLines.forEach((line, index) => ctx.fillText(line, 64, 1000 + index * 42));
+        excerptLines.forEach((line, index) => ctx.fillText(line, 64, 1270 + index * 42));
 
         ctx.fillStyle = "#9db4bd";
         ctx.font = "400 22px Arial, sans-serif";
         const date = formatDate(meta.date);
-        ctx.fillText(`${meta.author}${date ? `  •  ${date}` : ""}`, 64, 1180);
+        ctx.fillText(`${meta.author}${date ? `  •  ${date}` : ""}`, 64, 1510);
         ctx.fillStyle = "#00c2e8";
         ctx.font = "600 20px Arial, sans-serif";
-        ctx.fillText(meta.canonical.replace(/^https?:\/\//, "").slice(0, 66), 64, 1240);
+        ctx.fillText(meta.canonical.replace(/^https?:\/\//, "").slice(0, 66), 64, 1580);
         ctx.fillStyle = "rgba(255,255,255,0.42)";
         ctx.font = "400 18px Arial, sans-serif";
-        ctx.fillText("Baca selengkapnya di NexShop News", 64, 1290);
+        ctx.fillText("Baca selengkapnya di NexShop News", 64, 1650);
 
         return new Promise((resolve, reject) => {
             canvas.toBlob((blob) => blob ? resolve(blob) : reject(new Error("Gagal membuat PNG")), "image/png");
@@ -206,6 +206,7 @@
                 await navigator.share({
                     title: meta.title,
                     text: `${meta.title}\n${meta.canonical}`,
+                    url: meta.canonical,
                     files: [file]
                 });
                 feedback("Kartu Instagram siap dibagikan dari share sheet.");
