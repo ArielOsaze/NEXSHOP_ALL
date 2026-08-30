@@ -384,6 +384,7 @@
             "editArticleId": "", "editTitle": "", "editSlug": "",
             "editAuthor": "NexShop Editorial", "editExcerpt": "",
             "editImageUrl": "", "editImageFile": "", "editImageAlt": "", "editImageCredit": "",
+            "editInlineImageAlt": "", "editInlineImageCaption": "",
             "editTags": "", "editKeywords": "", "editSeoTitle": "",
             "editSeoDesc": "", "editScheduledAt": ""
         };
@@ -397,6 +398,8 @@
 
         const editorEl = document.getElementById("editContentEditor");
         if (editorEl) editorEl.innerHTML = "";
+        refreshInlineImagePositions();
+        setInlineImageStatus("Pilih posisi dan isi alt text, lalu klik “Tambah Foto di Tengah”.");
 
         const featEl = document.getElementById("editIsFeatured");
         if (featEl) featEl.checked = false;
@@ -456,6 +459,8 @@
 
         const editorEl = document.getElementById("editContentEditor");
         if (editorEl) editorEl.innerHTML = art.content || "";
+        refreshInlineImagePositions();
+        setInlineImageStatus("Pilih posisi dan isi alt text, lalu klik “Tambah Foto di Tengah”.");
 
         const featEl = document.getElementById("editIsFeatured");
         if (featEl) featEl.checked = !!art.is_featured;
@@ -630,6 +635,150 @@
         }
     }
     window.editInsertLink = editInsertLink;
+
+    // ─────────────────────────────────────────────────────────────────
+    // Inline article image — pilih posisi blok, upload, lalu sisipkan
+    // ─────────────────────────────────────────────────────────────────
+    function inlineImageBlocks() {
+        const editor = document.getElementById("editContentEditor");
+        if (!editor) return [];
+        return [...editor.childNodes].filter(node => {
+            if (node.nodeType === Node.ELEMENT_NODE) return true;
+            return node.nodeType === Node.TEXT_NODE && node.textContent.trim();
+        });
+    }
+
+    function inlineImageBlockLabel(node, index) {
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+            const text = node.textContent.trim().replace(/\s+/g, " ").slice(0, 56);
+            return `teks ${index + 1}${text ? `: ${text}` : ""}`;
+        }
+        const tag = node.tagName.toLowerCase();
+        if (tag === "figure" || tag === "img") return `foto ${index + 1}`;
+        const text = node.textContent.trim().replace(/\s+/g, " ").slice(0, 56);
+        return `${tag}${text ? `: ${text}` : ` ${index + 1}`}`;
+    }
+
+    function refreshInlineImagePositions() {
+        const select = document.getElementById("editInlineImagePosition");
+        if (!select) return;
+        const previous = select.value || "start";
+        const blocks = inlineImageBlocks();
+        const options = [`<option value="start">Di awal konten</option>`];
+
+        blocks.forEach((node, index) => {
+            const label = inlineImageBlockLabel(node, index).replace(/[<>"']/g, "");
+            options.push(`<option value="after:${index}">Setelah ${label}</option>`);
+        });
+        if (blocks.length) options.push(`<option value="end">Di akhir konten</option>`);
+        select.innerHTML = options.join("");
+        select.value = [...select.options].some(option => option.value === previous) ? previous : "start";
+    }
+    window.refreshInlineImagePositions = refreshInlineImagePositions;
+
+    function setInlineImageStatus(message, isError = false) {
+        const status = document.getElementById("editInlineImageStatus");
+        if (!status) return;
+        status.textContent = message;
+        status.classList.toggle("text-danger", isError);
+        status.classList.toggle("text-info", !isError);
+    }
+
+    function insertInlineImageAtPosition(url, alt, caption) {
+        const editor = document.getElementById("editContentEditor");
+        const select = document.getElementById("editInlineImagePosition");
+        if (!editor || !select || !/^https:\/\//i.test(url)) return false;
+
+        const figure = document.createElement("figure");
+        figure.className = "article-inline-image";
+        const image = document.createElement("img");
+        image.src = url;
+        image.alt = alt;
+        image.loading = "lazy";
+        figure.appendChild(image);
+        if (caption) {
+            const figcaption = document.createElement("figcaption");
+            figcaption.textContent = caption;
+            figure.appendChild(figcaption);
+        }
+
+        const blocks = inlineImageBlocks();
+        const placement = select.value || "start";
+        if (placement === "start") {
+            editor.insertBefore(figure, editor.firstChild);
+        } else if (placement === "end") {
+            editor.appendChild(figure);
+        } else {
+            const index = Number(placement.slice("after:".length));
+            const anchor = Number.isInteger(index) ? blocks[index] : null;
+            if (!anchor) return false;
+            editor.insertBefore(figure, anchor.nextSibling);
+        }
+
+        editor.dispatchEvent(new Event("input", { bubbles: true }));
+        return true;
+    }
+    window.insertInlineImageAtPosition = insertInlineImageAtPosition;
+
+    async function editorialInsertInlineImage() {
+        const input = document.getElementById("editInlineImageFile");
+        const file = input?.files?.[0];
+        if (!file) {
+            setInlineImageStatus("Pilih file gambar terlebih dahulu.", true);
+            return;
+        }
+        const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+        if (!allowedTypes.has(file.type)) {
+            setInlineImageStatus("File harus berupa JPG, PNG, WEBP, atau GIF.", true);
+            return;
+        }
+        if (file.size > 15 * 1024 * 1024) {
+            setInlineImageStatus("Ukuran gambar maksimal 15MB.", true);
+            return;
+        }
+
+        const alt = document.getElementById("editInlineImageAlt")?.value.trim() || "";
+        const caption = document.getElementById("editInlineImageCaption")?.value.trim() || "";
+        if (!alt) {
+            setInlineImageStatus("Alt text wajib diisi agar foto tetap ramah aksesibilitas dan SEO.", true);
+            return;
+        }
+
+        const button = document.getElementById("editInlineImageUploadBtn");
+        const formData = new FormData();
+        formData.append("image", file);
+        if (button) { button.disabled = true; button.textContent = "Mengunggah..."; }
+        setInlineImageStatus("Mengunggah foto ke storage NexShop...");
+
+        try {
+            const base = typeof API_BASE !== "undefined" ? API_BASE : "/api";
+            const { ok, json } = await callApi(`${base}/upload/image?type=product`, {
+                method: "POST",
+                body: formData
+            });
+            if (!ok || !json.url || !/^https:\/\//i.test(json.url)) {
+                setInlineImageStatus(json.message || "Gagal mengunggah foto.", true);
+                return;
+            }
+            if (!insertInlineImageAtPosition(json.url, alt, caption)) {
+                setInlineImageStatus("Posisi foto tidak valid. Pilih ulang posisi artikel.", true);
+                return;
+            }
+            if (input) input.value = "";
+            const altInput = document.getElementById("editInlineImageAlt");
+            const captionInput = document.getElementById("editInlineImageCaption");
+            if (altInput) altInput.value = "";
+            if (captionInput) captionInput.value = "";
+            setInlineImageStatus("Foto berhasil disisipkan. Simpan artikel untuk menyimpan posisi ini.");
+        } catch (error) {
+            setInlineImageStatus("Gagal mengunggah foto. Coba lagi.", true);
+            console.error("editorialInsertInlineImage error:", error);
+        } finally {
+            if (button) { button.disabled = false; button.innerHTML = '<i class="bi bi-image me-1"></i>Tambah Foto di Tengah'; }
+        }
+    }
+    window.editorialInsertInlineImage = editorialInsertInlineImage;
+
 
     // ─────────────────────────────────────────────────────────────────
     // Slug / SEO / word count
@@ -814,11 +963,19 @@
     // Attach field events
     // ─────────────────────────────────────────────────────────────────
     function attachFieldEvents() {
-        document.getElementById("editContentEditor")?.addEventListener("input", updateWordCount);
+        document.getElementById("editContentEditor")?.addEventListener("input", () => {
+            updateWordCount();
+            refreshInlineImagePositions();
+        });
         document.getElementById("editSeoTitle")?.addEventListener("input", updateSeoCounters);
         document.getElementById("editSeoDesc") ?.addEventListener("input", updateSeoCounters);
         document.getElementById("editImageUrl")?.addEventListener("blur",  previewImage);
         document.getElementById("editImageUploadBtn")?.addEventListener("click", editorialUploadImage);
+        document.getElementById("editInlineImageUploadBtn")?.addEventListener("click", () => {
+            document.getElementById("editInlineImageFile")?.click();
+        });
+        document.getElementById("editInlineImageFile")?.addEventListener("change", editorialInsertInlineImage);
+        refreshInlineImagePositions();
     }
 
     // ─────────────────────────────────────────────────────────────────

@@ -193,6 +193,28 @@
     max-width: 100%; border-radius: var(--radius-sm);
     margin: 1rem 0;
 }
+.article-body .article-inline-image {
+    margin: 2rem 0;
+    padding: 0;
+    text-align: center;
+}
+.article-body .article-inline-image img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 720px;
+    object-fit: contain;
+    margin: 0 auto;
+    border: 1px solid var(--line);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+}
+.article-body .article-inline-image figcaption {
+    margin-top: 0.65rem;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+    line-height: 1.5;
+    text-align: center;
+}
 .article-body code {
     background: var(--bg-panel-2); padding: 0.15rem 0.4rem;
     border-radius: 4px; font-size: 0.88rem;
@@ -508,6 +530,19 @@ function categoryIcon(cat) {
 }
 
 // ── SEO updater ─────────────────────────────────────────────
+function articleImageUrls(article) {
+    const urls = [];
+    const add = value => {
+        const url = String(value || "").trim();
+        if (/^https:\/\//i.test(url) && !urls.includes(url)) urls.push(url);
+    };
+    add(article && article.image_url);
+    const holder = document.createElement("div");
+    holder.innerHTML = article && article.content || "";
+    holder.querySelectorAll(".article-inline-image img, figure img").forEach(img => add(img.getAttribute("src")));
+    return urls;
+}
+
 function updateSeo(article) {
     const base     = "https://nexshop.cloud";
     const canon    = `${base}/berita/${encodeURIComponent(article.slug)}`;
@@ -547,8 +582,9 @@ function updateSeo(article) {
         },
         "mainEntityOfPage": { "@type": "WebPage", "@id": canon }
     };
-    if (article.image_url) {
-        schema.image = [article.image_url];
+    const imageUrls = articleImageUrls(article);
+    if (imageUrls.length) {
+        schema.image = imageUrls;
     }
     if (article.keywords && article.keywords.length) {
         schema.keywords = article.keywords.join(", ");
