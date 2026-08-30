@@ -57,19 +57,26 @@ const server = http.createServer((req, res) => {
         const hof = await home.evaluate(() => {
             const avatar = document.querySelector(".hof-avatar--2");
             const card = document.querySelector(".hof-podium-card--2");
+            const badge = document.querySelector(".hof-avatar--2 > .absolute");
             const avatarStyle = getComputedStyle(avatar);
             const cardStyle = getComputedStyle(card);
+            const badgeStyle = getComputedStyle(badge);
             return {
                 avatarFrame: avatar.classList.contains("hof-avatar--2") && avatarStyle.padding !== "0px" && avatarStyle.backgroundImage.includes("gradient"),
                 avatarBorder: avatarStyle.borderTopColor,
                 avatarShadow: avatarStyle.boxShadow,
                 cardTopBorder: cardStyle.borderTopColor,
                 cardBackground: cardStyle.backgroundImage,
+                rankBadgeBackground: badgeStyle.backgroundColor,
+                rankBadgeBorder: badgeStyle.borderTopColor,
                 hasProfileMedia: Boolean(avatar.querySelector(".hof-avatar-media"))
             };
         });
         if (!hof.avatarFrame || !hof.hasProfileMedia) throw new Error(`rank-2 avatar frame hilang/tidak terlihat: ${JSON.stringify(hof)}`);
-        if (/37,\s*99,\s*235|29,\s*78,\s*216/.test(`${hof.avatarBorder} ${hof.avatarShadow} ${hof.cardTopBorder} ${hof.cardBackground}`)) throw new Error(`rank-2 masih memakai warna blue: ${JSON.stringify(hof)}`);
+        if (!hof.rankBadgeBackground || /rgba?\(0,\s*0,\s*0(?:,\s*0)?\)|transparent/i.test(hof.rankBadgeBackground) || !/203,\s*213,\s*225|100,\s*116,\s*139|148,\s*163,\s*184/.test(hof.rankBadgeBackground)) {
+            throw new Error(`rank-2 number badge harus solid silver: ${JSON.stringify(hof)}`);
+        }
+        if (/37,\s*99,\s*235|29,\s*78,\s*216/.test(`${hof.avatarBorder} ${hof.avatarShadow} ${hof.cardTopBorder} ${hof.cardBackground} ${hof.rankBadgeBackground}`)) throw new Error(`rank-2 masih memakai warna blue: ${JSON.stringify(hof)}`);
         await home.screenshot({ path: path.join(__dirname, "qa_hof_titanium_1440.png"), fullPage: true });
 
         const reseller = await browser.newPage();

@@ -4710,7 +4710,7 @@ function renderLeaderboard(data) {
     // Helper untuk rank badge
     const getRankBadge = (rank) => {
         if (rank === 1) return '<div class="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 border-2 border-white dark:border-gray-900 flex items-center justify-center text-gray-900 font-bold text-sm shadow-[0_0_15px_rgba(251,191,36,0.5)] z-20">1</div>';
-        if (rank === 2) return '<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-gradient-to-br from-slate-100 via-slate-300 to-slate-600 dark:from-slate-200 dark:via-slate-400 dark:to-slate-700 border-2 border-white dark:border-gray-900 flex items-center justify-center text-slate-800 dark:text-white font-bold text-xs shadow-[0_0_14px_rgba(100,116,139,0.42)] z-20">2</div>';
+        if (rank === 2) return '<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full hof-rank-badge hof-rank-badge--2 border-2 flex items-center justify-center text-xs font-bold shadow-[0_0_14px_rgba(100,116,139,0.42)] z-20">2</div>';
         if (rank === 3) return '<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-gradient-to-br from-orange-300 to-orange-500 dark:from-orange-400 dark:to-orange-700 border-2 border-white dark:border-gray-900 flex items-center justify-center text-gray-900 font-bold text-xs shadow-lg z-20">3</div>';
         return '';
     };

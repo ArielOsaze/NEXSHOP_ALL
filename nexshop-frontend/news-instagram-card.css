@@ -1,0 +1,24 @@
+/* NexShop News — Instagram visual share card */
+.instagram-share-btn {
+    border-color: rgba(225, 29, 72, 0.38);
+    color: var(--text);
+}
+
+.instagram-share-btn:hover {
+    border-color: #e1306c;
+    color: #e1306c;
+    background: rgba(225, 29, 72, 0.08);
+}
+
+.instagram-share-btn.is-busy {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+.share-feedback {
+    width: 100%;
+    margin-top: 0.55rem;
+    color: var(--text-muted);
+    font-size: 0.76rem;
+    line-height: 1.45;
+}

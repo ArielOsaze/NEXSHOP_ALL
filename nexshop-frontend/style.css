@@ -7915,6 +7915,20 @@ input::placeholder {
     box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.12), 0 14px 30px rgba(234, 88, 12, 0.14);
 }
 
+/* Rank 2 position badge: explicit colors keep the silver fill solid even when
+   the generated Tailwind utility bundle does not contain slate utilities. */
+.hof-rank-badge--2 {
+    background-color: #cbd5e1 !important;
+    border-color: #f8fafc !important;
+    color: #334155 !important;
+}
+
+.dark .hof-rank-badge--2 {
+    background-color: #64748b !important;
+    border-color: #e2e8f0 !important;
+    color: #f8fafc !important;
+}
+
 /* Music Player Animations */
 .animate-spin-slow {
     animation: spin 3s linear infinite;

@@ -22,8 +22,8 @@ const avatar2Css = homepageCss.match(/\.hof-avatar\.hof-avatar--2\s*\{[\s\S]*?\n
 
 const rank2Render = homepageJs.match(/\/\/ Render Rank 2 \(Left\)[\s\S]*?\/\/ Render Rank 1/ )?.[0] || "";
 assert(!/brand-indigo|from-blue|to-blue|bg-blue|border-blue/i.test(rank2Render), "rank 2 runtime component must not retain a blue/indigo accent");
-assert(/style\.css\?v=20260830-hof-titanium-rank2-1/.test(homepage), "homepage must load the cache-busted titanium stylesheet");
-assert(/script\.js\?v=20260830-hof-titanium-rank2-1/.test(homepage), "homepage must load the cache-busted titanium runtime");
+assert(/style\.css\?v=20260830-hof-titanium-rank2-2/.test(homepage), "homepage must load the cache-busted titanium stylesheet");
+assert(/script\.js\?v=20260830-hof-titanium-rank2-2/.test(homepage), "homepage must load the latest solid-silver badge runtime");
 assert(/silver|titanium|slate|zinc|94a3b8|cbd5e1/i.test(rank2Js + rank2Css), "rank 2 must use a silver/titanium palette");
 assert(!/from-blue|to-blue|2563eb|1d4ed8|bg-blue|border-blue/i.test(rank2Js + rank2Css), "rank 2 must not use a blue palette");
 assert(/hof-avatar--2[\s\S]*?(silver|titanium|slate|zinc|94a3b8|cbd5e1)/i.test(homepageJs + homepageCss), "rank 2 profile avatar must retain an explicit titanium frame");
