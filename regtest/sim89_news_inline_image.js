@@ -21,7 +21,8 @@ assert(/insertInlineImageAtPosition/.test(editorialJs), "Editor must insert the 
 assert(/\/upload\/image\?type=product/.test(editorialJs), "Inline image upload must use the protected existing image upload endpoint");
 assert(/new FormData\(\)/.test(editorialJs), "Inline image upload must use multipart FormData");
 assert(/article-inline-image/.test(editorialJs), "Inline image must be stored as a dedicated figure block");
-assert(/article-inline-image/.test(articleHtml), "Public article page must style inline image blocks");
+assert(/articleImageUrls/.test(articleHtml), "Public SEO must collect hero and inline image URLs");
+assert(/startsWith\(["']\/["']\)/.test(articleHtml), "SEO image collection must normalize legacy root-relative image URLs");
 assert(/figure/.test(newsController) && /img/.test(newsController), "Backend sanitizer must preserve figure and img content blocks");
 assert(/router\.post\("\/image"/.test(uploadRoutes), "Protected image upload route must remain available");
 assert(/loading/.test(editorialJs), "Inline images must use lazy loading");

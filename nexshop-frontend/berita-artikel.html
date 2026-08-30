@@ -532,9 +532,13 @@ function categoryIcon(cat) {
 // ── SEO updater ─────────────────────────────────────────────
 function articleImageUrls(article) {
     const urls = [];
+    const publicBase = "https://nexshop.cloud";
     const add = value => {
-        const url = String(value || "").trim();
-        if (/^https:\/\//i.test(url) && !urls.includes(url)) urls.push(url);
+        const raw = String(value || "").trim();
+        const url = /^https:\/\//i.test(raw)
+            ? raw
+            : (raw.startsWith("/") && !raw.startsWith("//") ? `${publicBase}${raw}` : "");
+        if (url && !urls.includes(url)) urls.push(url);
     };
     add(article && article.image_url);
     const holder = document.createElement("div");
