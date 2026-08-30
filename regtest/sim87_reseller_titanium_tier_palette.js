@@ -22,13 +22,14 @@ const avatar2Css = homepageCss.match(/\.hof-avatar\.hof-avatar--2\s*\{[\s\S]*?\n
 
 const rank2Render = homepageJs.match(/\/\/ Render Rank 2 \(Left\)[\s\S]*?\/\/ Render Rank 1/ )?.[0] || "";
 assert(!/brand-indigo|from-blue|to-blue|bg-blue|border-blue/i.test(rank2Render), "rank 2 runtime component must not retain a blue/indigo accent");
-assert(/style\.css\?v=20260830-hof-titanium-rank2-2/.test(homepage), "homepage must load the cache-busted titanium stylesheet");
+assert(/style\.css\?v=20260830-hof-titanium-rank2-3/.test(homepage), "homepage must load the cache-busted titanium stylesheet");
 assert(/script\.js\?v=20260830-hof-titanium-rank2-2/.test(homepage), "homepage must load the latest solid-silver badge runtime");
 assert(/silver|titanium|slate|zinc|94a3b8|cbd5e1/i.test(rank2Js + rank2Css), "rank 2 must use a silver/titanium palette");
 assert(!/from-blue|to-blue|2563eb|1d4ed8|bg-blue|border-blue/i.test(rank2Js + rank2Css), "rank 2 must not use a blue palette");
 assert(/hof-avatar--2[\s\S]*?(silver|titanium|slate|zinc|94a3b8|cbd5e1)/i.test(homepageJs + homepageCss), "rank 2 profile avatar must retain an explicit titanium frame");
 assert(/padding:\s*3px\s*!important/i.test(avatar2Css), "rank 2 avatar frame must stay slim at 3px");
 assert(!/0 0 0 2px/i.test(avatar2Css), "rank 2 avatar frame must not use an oversized outer ring");
+assert(/rgba\(100,\s*116,\s*139,\s*0\)/i.test(avatar2Css), "rank 2 avatar frame must fade to transparent at the bottom");
 assert(/tanpa minimum transaksi bulanan/i.test(reseller), "Silver landing tier must explicitly say there is no monthly minimum");
 assert(/rs-tier-card-silver[\s\S]*#(?:94a3b8|9ca3af|cbd5e1)/i.test(resellerCss), "Silver landing tier must use a metallic silver palette");
 assert(/rs-tier-card-platinum[\s\S]*#(?:6366f1|6d5bd0|8b5cf6|a78bfa)/i.test(resellerCss), "Platinum landing tier must use a distinct pearl/iris platinum palette");

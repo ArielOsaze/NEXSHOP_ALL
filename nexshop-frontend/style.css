@@ -7870,9 +7870,9 @@ input::placeholder {
 /* Rank 2 keeps a visible metallic avatar frame, not only a card accent. */
 .hof-avatar.hof-avatar--2 {
     padding: 3px !important;
-    border: 1px solid #94a3b8;
-    background: linear-gradient(145deg, #f8fafc 0%, #cbd5e1 38%, #94a3b8 68%, #64748b 100%) !important;
-    box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.9), 0 6px 16px rgba(100, 116, 139, 0.26);
+    border: 1px solid rgba(203, 213, 225, 0.72);
+    background: linear-gradient(180deg, #f8fafc 0%, #cbd5e1 38%, rgba(148, 163, 184, 0.56) 72%, rgba(100, 116, 139, 0) 100%) !important;
+    box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.56), 0 6px 16px rgba(100, 116, 139, 0.2);
 }
 
 @media (min-width:768px) {
