@@ -96,8 +96,9 @@
     // ── apiFetch wrapper ─────────────────────────────────────────────
     async function callApi(url, options = {}) {
         const tok = editToken();
+        const isMultipart = options.body instanceof FormData;
         const headers = {
-            "Content-Type": "application/json",
+            ...(isMultipart ? {} : { "Content-Type": "application/json" }),
             ...(tok ? { "Authorization": `Bearer ${tok}` } : {}),
             ...(options.headers || {})
         };
@@ -382,7 +383,7 @@
         const fields = {
             "editArticleId": "", "editTitle": "", "editSlug": "",
             "editAuthor": "NexShop Editorial", "editExcerpt": "",
-            "editImageUrl": "", "editImageAlt": "", "editImageCredit": "",
+            "editImageUrl": "", "editImageFile": "", "editImageAlt": "", "editImageCredit": "",
             "editTags": "", "editKeywords": "", "editSeoTitle": "",
             "editSeoDesc": "", "editScheduledAt": ""
         };
@@ -408,6 +409,8 @@
 
         const imgWrap = document.getElementById("editImagePreviewWrap");
         if (imgWrap) imgWrap.style.display = "none";
+        const uploadStatus = document.getElementById("editImageUploadStatus");
+        if (uploadStatus) uploadStatus.textContent = "Pilih file gambar lalu upload, atau tetap gunakan URL HTTPS di atas. Maksimal 15MB.";
 
         setError("");
         updateWordCount();
@@ -671,6 +674,52 @@
     }
     window.editorialPreviewImage = editorialPreviewImage;
 
+    async function editorialUploadImage() {
+        const input = document.getElementById("editImageFile");
+        const button = document.getElementById("editImageUploadBtn");
+        const status = document.getElementById("editImageUploadStatus");
+        const file = input?.files?.[0];
+        if (!file) {
+            if (status) status.textContent = "Pilih file gambar terlebih dahulu.";
+            return;
+        }
+        const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+        if (!allowedTypes.has(file.type)) {
+            if (status) status.textContent = "File harus berupa JPG, PNG, WEBP, atau GIF.";
+            return;
+        }
+        if (file.size > 15 * 1024 * 1024) {
+            if (status) status.textContent = "Ukuran gambar maksimal 15MB.";
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("image", file);
+        if (button) { button.disabled = true; button.textContent = "Uploading..."; }
+        if (status) status.textContent = "Mengunggah gambar ke storage...";
+        try {
+            const base = typeof API_BASE !== "undefined" ? API_BASE : "/api";
+            const { ok, json } = await callApi(`${base}/upload/image?type=product`, {
+                method: "POST",
+                body: formData
+            });
+            if (!ok || !json.url) {
+                if (status) status.textContent = json.message || "Gagal mengunggah gambar.";
+                return;
+            }
+            const urlInput = document.getElementById("editImageUrl");
+            if (urlInput) urlInput.value = json.url;
+            previewImage();
+            if (status) status.textContent = "Gambar berhasil diupload dan URL sudah dimasukkan ke artikel.";
+        } catch (error) {
+            if (status) status.textContent = "Gagal mengunggah gambar. Coba lagi.";
+            console.error("editorialUploadImage error:", error);
+        } finally {
+            if (button) { button.disabled = false; button.textContent = "Upload Gambar"; }
+        }
+    }
+    window.editorialUploadImage = editorialUploadImage;
+
     function previewImage() {
         const url  = document.getElementById("editImageUrl")?.value.trim() || "";
         const img  = document.getElementById("editImagePreview");
@@ -769,6 +818,7 @@
         document.getElementById("editSeoTitle")?.addEventListener("input", updateSeoCounters);
         document.getElementById("editSeoDesc") ?.addEventListener("input", updateSeoCounters);
         document.getElementById("editImageUrl")?.addEventListener("blur",  previewImage);
+        document.getElementById("editImageUploadBtn")?.addEventListener("click", editorialUploadImage);
     }
 
     // ─────────────────────────────────────────────────────────────────

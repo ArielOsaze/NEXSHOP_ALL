@@ -1378,13 +1378,22 @@
                         <div class="col-12">
                             <div class="alert alert-secondary border-0 p-3" data-csp-style="s62d690508bf514">
                                 <i class="bi bi-image me-1 text-violet"></i>
-                                <strong>Gambar Utama (image_url)</strong> — Masukkan URL HTTPS gambar secara manual.
-                                Gambar tidak pernah diunduh/discrape otomatis.
+                                <strong>Gambar Utama (image_url)</strong> — Gunakan URL HTTPS atau upload gambar dari perangkat.
+                                Upload disimpan ke storage NexShop; tidak ada scraping otomatis.
                             </div>
                         </div>
                         <div class="col-12">
                             <label class="form-label" for="editImageUrl">URL Gambar Utama (HTTPS)</label>
                             <input id="editImageUrl" class="form-control font-monospace" type="url" placeholder="https://..." data-csp-oninput="h5dd33df62539b2">
+                            <div class="form-text">URL HTTPS tetap bisa dipakai. Untuk gambar dari perangkat, gunakan upload di bawah.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label" for="editImageFile">Upload Gambar Utama</label>
+                            <div class="input-group">
+                                <input id="editImageFile" class="form-control" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+                                <button id="editImageUploadBtn" class="btn btn-outline-primary" type="button">Upload Gambar</button>
+                            </div>
+                            <div id="editImageUploadStatus" class="form-text">Pilih file gambar lalu upload, atau tetap gunakan URL HTTPS di atas. Maksimal 15MB.</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label" for="editImageAlt">Alt Text Gambar</label>
@@ -3565,7 +3574,7 @@ app.post("/api/callback/tokovoucher", express.raw({ type: "*/*" }), (req, res) =
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25" integrity="sha384-nLoOnA/BDh8A/jxqtckg4DumuCGOBYUnNJLZdQz/zfYNp3wcjGSoWTAzgko06G/2" crossorigin="anonymous"></script>
 <script src="js/dashboard.js?v=20260830-tokovoucher-deposit-options-2"></script>
-<script src="js/editorial.js?v=20260829-visual-regression-1"></script>
+<script src="js/editorial.js?v=20260830-news-image-upload-1"></script>
 <script src="js/catalogSync.js?v=20260829-visual-regression-1"></script>
 <script src="js/reseller.js?v=20260829-visual-regression-1"></script>
 <script src="js/webhookRelay.js?v=20260829-visual-regression-1"></script>
