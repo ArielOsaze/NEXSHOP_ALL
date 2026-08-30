@@ -21,6 +21,8 @@ assert(/insertInlineImageAtPosition/.test(editorialJs), "Editor must insert the 
 assert(/\/upload\/image\?type=product/.test(editorialJs), "Inline image upload must use the protected existing image upload endpoint");
 assert(/new FormData\(\)/.test(editorialJs), "Inline image upload must use multipart FormData");
 assert(/article-inline-image/.test(editorialJs), "Inline image must be stored as a dedicated figure block");
+assert(/\.article-body \.article-inline-image\s*\{[^}]*text-align:\s*left/.test(articleHtml), "Inline image block must align with article text");
+assert(/\.article-body \.article-inline-image img\s*\{[^}]*margin:\s*0;/.test(articleHtml), "Inline image must not be auto-centered");
 assert(/articleImageUrls/.test(articleHtml), "Public SEO must collect hero and inline image URLs");
 assert(/\.article-body \.article-inline-image img[\s\S]*?width:\s*auto[\s\S]*?max-width:\s*100%[\s\S]*?height:\s*auto/.test(articleHtml), "Inline image must preserve uploaded aspect ratio without forced frame sizing");
 assert(!/\.article-body \.article-inline-image img[\s\S]*?object-fit:\s*contain/.test(articleHtml), "Inline image must not letterbox uploaded photos inside a forced box");
