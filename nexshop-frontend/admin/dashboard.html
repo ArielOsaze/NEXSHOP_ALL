@@ -13,7 +13,7 @@
 <script src="../theme-init.js?v=20260822-catalog"></script>
 <script defer src="/clean-url.js?v=20260828-admin-loop-1"></script>
 <link rel="stylesheet" href="/inline-styles.css?v=20260829-visual-regression-1">
-<script defer src="/csp-legacy-handlers.js?v=20260829-visual-regression-1"></script>
+<script defer src="/csp-legacy-handlers.js?v=20260831-wa-contact-api-1"></script>
 </head>
 <body>
 
@@ -70,9 +70,7 @@
         <li class="nav-item sidebar-dashboard-item">
             <a class="nav-link sidebar-dashboard-link active" href="#" data-view="dashboard"><i class="bi bi-grid-1x2-fill me-2"></i><span>Dashboard</span></a>
         </li>
-        <li class="nav-item sidebar-direct-contact">
-            <a class="nav-link" href="#" data-view="waContacts"><i class="bi bi-person-lines-fill me-2"></i><span>Kontak WhatsApp</span></a>
-        </li>
+
         <li class="sidebar-nav-group" data-nav-group-wrap="overview">
             <button type="button" class="sidebar-section-toggle" data-nav-group="overview" aria-expanded="false"><span><i class="bi bi-bar-chart-line me-2"></i>Overview</span><i class="bi bi-chevron-down"></i></button>
             <div class="sidebar-section-items" data-nav-items="overview">
@@ -914,32 +912,7 @@
     </div>
 </section>
 
-<!-- ===== WhatsApp contacts view ===== -->
-<section id="view-waContacts" class="view-section d-none">
-    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-        <div>
-            <h2><i class="bi bi-person-lines-fill me-2"></i>Kontak WhatsApp</h2>
-            <p class="text-muted mb-0">Kontak dibuat otomatis dari akun dengan nomor WhatsApp yang sudah terverifikasi OTP.</p>
-        </div>
-        <div class="d-flex gap-2">
-            <button type="button" class="btn btn-outline-primary btn-sm" data-csp-onclick="hdb2f646a369ae2"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
-            <button type="button" class="btn btn-primary btn-sm" data-csp-onclick="h8830f30d17f50c"><i class="bi bi-phone me-1"></i>Sync ke Mobile</button>
-        </div>
-    </div>
-    <div class="alert alert-info d-flex align-items-start gap-2 small" role="note">
-        <i class="bi bi-shield-check mt-1"></i>
-        <span>Sync memakai contact card <strong>.vcf</strong> melalui Share/Download. Browser tidak menulis ke daftar kontak mobile tanpa tindakan dan izin kamu.</span>
-    </div>
-    <div class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <strong>Daftar kontak terverifikasi</strong>
-            <span class="badge text-bg-primary" id="waContactsCount">0 kontak</span>
-        </div>
-        <div class="card-body p-0" id="waContactsContainer">
-            <p class="text-muted text-center py-5 mb-0">Klik Refresh untuk memuat kontak.</p>
-        </div>
-    </div>
-</section>
+
 
 <!-- ===== Promo view ===== -->
 <!-- ===================== RESELLER ===================== -->
@@ -2526,11 +2499,15 @@ app.post("/api/callback/tokovoucher", express.raw({ type: "*/*" }), (req, res) =
             </div>
         </div>
         <div class="col-xl-5">
-            <div class="card shadow-sm">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
-                    <h5>Kontak WhatsApp Terdaftar</h5>
-                    <p class="text-muted small">Chat inbound tersimpan berdasarkan nomor. Nama akun terdaftar menjadi nama utama; kontak baru memakai push name sampai terhubung.</p>
-                    <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Nama</th><th>Nomor</th><th>Promo</th><th></th></tr></thead><tbody id="waContactsTbody"></tbody></table></div>
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                        <h5 class="mb-0">Kontak Terverifikasi</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-csp-onclick="hwaSyncVerifiedContacts"><i class="bi bi-arrow-repeat me-1"></i>Sinkronkan ke WA API</button>
+                    </div>
+                    <p class="text-muted small mb-3">Kontak terverifikasi OTP disimpan di registry WA API. Sinkronisasi ini tidak mengirim pesan dan tidak otomatis mengaktifkan promo.</p>
+                    <div id="waVerifiedSyncResult" class="small mb-2" role="status" aria-live="polite"></div>
+                    <div class="table-responsive"><table class="table table-sm"><thead><tr><th>Nama</th><th>Nomor</th><th>Promo</th><th>Status</th></tr></thead><tbody id="waContactsTbody"></tbody></table></div>
                 </div>
             </div>
         </div>
@@ -3598,7 +3575,7 @@ app.post("/api/callback/tokovoucher", express.raw({ type: "*/*" }), (req, res) =
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" integrity="sha384-NrKB+u6Ts6AtkIhwPixiKTzgSKNblyhlk0Sohlgar9UHUBzai/sgnNNWWd291xqt" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.26.25" integrity="sha384-nLoOnA/BDh8A/jxqtckg4DumuCGOBYUnNJLZdQz/zfYNp3wcjGSoWTAzgko06G/2" crossorigin="anonymous"></script>
-<script src="js/dashboard.js?v=20260830-tokovoucher-deposit-options-2"></script>
+<script src="js/dashboard.js?v=20260831-wa-contact-api-1"></script>
 <script src="js/editorial.js?v=20260830-news-image-upload-2"></script>
 <script src="js/catalogSync.js?v=20260829-visual-regression-1"></script>
 <script src="js/reseller.js?v=20260829-visual-regression-1"></script>

@@ -43,7 +43,7 @@ let settingsLoaded = false;
 let waApiManagerLoaded = false;
 let ratingsLoaded = false;
 let musicPlayerLoaded = false;
-let whatsappContactsLoaded = false;
+
 let currentUser = null;
 
 async function loadCurrentUser() {
@@ -676,7 +676,6 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
 
         if (view === "orders" && !ordersLoaded) loadOrders();
         if (view === "users") openUsersSecurely();
-        if (view === "waContacts" && !whatsappContactsLoaded) loadWhatsAppContacts();
         if (view === "promo" && !promoLoaded) loadPromo();
         if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
         if (view === "topup") { window.initTopupCatalog?.(); loadTvBalance(); }
@@ -710,7 +709,6 @@ function switchView(view) {
 
     if (view === "orders" && !ordersLoaded) loadOrders();
     if (view === "users") openUsersSecurely();
-    if (view === "waContacts" && !whatsappContactsLoaded) loadWhatsAppContacts();
     if (view === "promo" && !promoLoaded) loadPromo();
     if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
     if (view === "topup") { window.initTopupCatalog?.(); loadTvBalance(); }
@@ -1464,72 +1462,6 @@ async function deleteUser(id, email) {
     }
 }
 
-// ================================
-// Kontak WhatsApp terverifikasi
-// ================================
-
-async function loadWhatsAppContacts() {
-    const container = document.getElementById("waContactsContainer");
-    const count = document.getElementById("waContactsCount");
-    if (!container) return;
-    container.innerHTML = `<div class="text-center text-muted py-5"><span class="spinner-border spinner-border-sm me-2"></span>Menyiapkan kontak terverifikasi...</div>`;
-
-    try {
-        const res = await apiFetch("/whatsapp/contacts");
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Gagal memuat kontak WhatsApp.");
-        const contacts = Array.isArray(data.contacts) ? data.contacts : [];
-        count.textContent = `${contacts.length} kontak`;
-        if (!contacts.length) {
-            container.innerHTML = `<div class="text-center text-muted py-5">Belum ada akun dengan nomor WhatsApp terverifikasi.</div>`;
-        } else {
-            container.innerHTML = `<div class="table-responsive"><table class="table table-hover align-middle mb-0">
-                <thead><tr><th>Nama user</th><th>Nomor WhatsApp</th><th>Terakhir diperbarui</th></tr></thead>
-                <tbody>${contacts.map((contact) => {
-                    const phone = escapeHtml(contact.phone_e164 || "");
-                    const name = escapeHtml(contact.display_name || "NexShop User");
-                    const updated = contact.updated_at ? new Date(contact.updated_at).toLocaleString("id-ID") : "—";
-                    return `<tr><td><strong>${name}</strong></td><td><a href="https://wa.me/${phone.replace(/\D/g, "")}" target="_blank" rel="noopener">${phone}</a></td><td class="text-muted small">${escapeHtml(updated)}</td></tr>`;
-                }).join("")}</tbody>
-            </table></div>`;
-        }
-        whatsappContactsLoaded = true;
-    } catch (error) {
-        console.error("Gagal memuat kontak WhatsApp:", error);
-        container.innerHTML = `<div class="text-center text-danger py-5">${escapeHtml(error.message || "Kontak belum dapat dimuat.")}</div>`;
-    }
-}
-
-async function syncWhatsAppContactsToMobile() {
-    try {
-        const res = await apiFetch("/whatsapp/contacts/export.vcf");
-        if (!res.ok) {
-            const data = await res.json().catch(() => ({}));
-            throw new Error(data.message || "Export kontak gagal.");
-        }
-        const blob = await res.blob();
-        const file = new File([blob], "nexshop-whatsapp-contacts.vcf", { type: "text/vcard" });
-        const canShareFile = typeof navigator.share === "function" && (!navigator.canShare || navigator.canShare({ files: [file] }));
-        if (canShareFile) {
-            await navigator.share({ title: "Kontak WhatsApp NexShop", text: "Kontak WhatsApp user terverifikasi NexShop", files: [file] });
-            showToast("Contact card siap ditambahkan ke Contacts mobile.");
-            return;
-        }
-        const objectUrl = URL.createObjectURL(blob);
-        const anchor = document.createElement("a");
-        anchor.href = objectUrl;
-        anchor.download = file.name;
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
-        setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-        showToast("File kontak diunduh. Buka file .vcf di mobile untuk menambahkannya.");
-    } catch (error) {
-        if (error?.name === "AbortError") return;
-        console.error("Sync kontak ke mobile gagal:", error);
-        showToast(error.message || "Sync kontak ke mobile gagal.", true);
-    }
-}
 
 // ================================
 // OTP Aktif (antisipasi email OTP gagal terkirim)
@@ -5743,6 +5675,27 @@ async function loadWaApiManager(force = false) {
         if (!contactsRes.ok && contactsRes.status !== 503) throw new Error(contacts.message || "Gagal memuat kontak");
         renderWaCampaigns(campaigns.campaigns || []); renderWaContacts(contacts.contacts || []); waApiManagerLoaded = true;
     } catch (error) { statusError.textContent = error.message || "Gagal memuat WhatsApp API."; }
+}
+
+async function syncVerifiedContactsToWaApi(event) {
+    const result = document.getElementById("waVerifiedSyncResult");
+    const button = event?.currentTarget;
+    if (button) button.disabled = true;
+    result.className = "small mb-2 text-muted";
+    result.textContent = "Menyinkronkan kontak terverifikasi ke registry WA API...";
+    try {
+        const res = await apiFetch("/wa-marketing/contacts/sync-verified", { method: "POST" });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.success === false) throw new Error(data.message || "Sinkronisasi kontak ke WA API gagal.");
+        result.className = "small mb-2 text-success";
+        result.textContent = data.message || `${data.synced || 0} kontak masuk ke registry WA API.`;
+        await loadWaApiManager(true);
+    } catch (error) {
+        result.className = "small mb-2 text-danger";
+        result.textContent = error.message || "Sinkronisasi kontak ke WA API gagal.";
+    } finally {
+        if (button) button.disabled = false;
+    }
 }
 
 function renderWaApiManagerStatus(data) {

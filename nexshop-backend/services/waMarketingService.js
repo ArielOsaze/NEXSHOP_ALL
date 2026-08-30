@@ -201,6 +201,53 @@ async function listContacts(limit = 100) {
     return data || [];
 }
 
+async function syncVerifiedContacts() {
+    const { data: verifiedContacts, error: verifiedError } = await supabase
+        .from("whatsapp_contacts")
+        .select("user_id, display_name, phone_e164")
+        .order("display_name", { ascending: true });
+    if (verifiedError) throw verifiedError;
+
+    const verified = (verifiedContacts || [])
+        .map((contact) => ({
+            user_id: contact.user_id,
+            display_name: String(contact.display_name || "Kontak WhatsApp").trim().slice(0, 120),
+            phone_normalized: toFonntePhone(contact.phone_e164)
+        }))
+        .filter((contact) => contact.user_id && contact.phone_normalized);
+    if (!verified.length) return { found: verifiedContacts?.length || 0, synced: 0, skipped: verifiedContacts?.length || 0 };
+
+    const phoneNumbers = [...new Set(verified.map((contact) => contact.phone_normalized))];
+    const { data: existingContacts, error: existingError } = await supabase
+        .from("wa_marketing_contacts")
+        .select("phone_normalized, marketing_opt_in, opted_out_at")
+        .in("phone_normalized", phoneNumbers);
+    if (existingError) throw existingError;
+    const existingByPhone = new Map((existingContacts || []).map((contact) => [contact.phone_normalized, contact]));
+
+    const uniqueByPhone = new Map();
+    for (const contact of verified) {
+        if (!uniqueByPhone.has(contact.phone_normalized)) uniqueByPhone.set(contact.phone_normalized, contact);
+    }
+    const rows = [...uniqueByPhone.values()].map((contact) => {
+        const existing = existingByPhone.get(contact.phone_normalized);
+        return {
+            user_id: contact.user_id,
+            phone_normalized: contact.phone_normalized,
+            display_name: contact.display_name,
+            marketing_opt_in: existing ? Boolean(existing.marketing_opt_in) : false,
+            opted_out_at: existing?.opted_out_at || null,
+            updated_at: new Date().toISOString()
+        };
+    });
+
+    const { error: syncError } = await supabase
+        .from("wa_marketing_contacts")
+        .upsert(rows, { onConflict: "phone_normalized" });
+    if (syncError) throw syncError;
+    return { found: verifiedContacts?.length || 0, synced: rows.length, skipped: (verifiedContacts?.length || 0) - rows.length };
+}
+
 async function setContactOptIn(id, marketingOptIn) {
     const optIn = Boolean(marketingOptIn);
     const payload = { marketing_opt_in: optIn, opted_out_at: optIn ? null : new Date().toISOString(), updated_at: new Date().toISOString() };
@@ -286,6 +333,7 @@ module.exports = {
     createCampaign,
     listCampaigns,
     listContacts,
+    syncVerifiedContacts,
     setContactOptIn,
     handleInboundMessage,
     runDueCampaigns

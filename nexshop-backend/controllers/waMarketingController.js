@@ -55,6 +55,17 @@ exports.listContacts = async (req, res) => {
     }
 };
 
+exports.syncVerifiedContacts = async (req, res) => {
+    try {
+        const result = await waMarketing.syncVerifiedContacts();
+        return res.json({ success: true, ...result, message: `${result.synced} kontak terverifikasi masuk ke registry WA API.` });
+    } catch (error) {
+        if (isSchemaMissing(error)) return res.status(503).json({ success: false, code: "WA_CONTACT_SYNC_NOT_SETUP", message: "Migration 018_create_wa_marketing.sql dan 022_create_whatsapp_contacts.sql harus tersedia sebelum sinkronisasi." });
+        console.error("WA verified contact sync error:", error.message);
+        return res.status(500).json({ success: false, message: "Gagal menyinkronkan kontak terverifikasi ke WA API." });
+    }
+};
+
 exports.updateContactOptIn = async (req, res) => {
     try {
         const contact = await waMarketing.setContactOptIn(req.params.id, req.body?.marketing_opt_in);

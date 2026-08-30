@@ -284,8 +284,8 @@ selectProductCategory('E-Money', this)
 "h87f35682d87b64": function(event) {
 loadProducts()
 },
-"h8830f30d17f50c": function(event) {
-syncWhatsAppContactsToMobile()
+"hwaSyncVerifiedContacts": function(event) {
+ syncVerifiedContactsToWaApi(event)
 },
 "h8939b0441258e0": function(event) {
 onAiModelSelectChange(this.value)
