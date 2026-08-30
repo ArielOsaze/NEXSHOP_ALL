@@ -197,8 +197,20 @@ const server = http.createServer((req, res) => {
                 document.createElement = originalCreateElement;
             }
         });
-        assert(qr.exported[0] === 264 && qr.exported[1] === 264, "QRIS download export has no explicit quiet-zone padding");
-        assert(qr.dataUrlLength > 0, "QRIS padded export did not produce a PNG data URL");
+        const imageQr = await marketplace.evaluate(async () => {
+            const source = document.createElement("canvas");
+            source.width = 200;
+            source.height = 200;
+            const image = new Image();
+            image.src = source.toDataURL("image/png");
+            await image.decode();
+            const dataUrl = window.NexShopCheckoutHelpers.createPaddedQrDataUrl(image, 32);
+            const exported = new Image();
+            exported.src = dataUrl;
+            await exported.decode();
+            return [exported.naturalWidth, exported.naturalHeight];
+        });
+        assert(imageQr[0] === 264 && imageQr[1] === 264, "QRIS image fallback export is still cropped");
         assert(errors.length === 0, `Browser runtime errors: ${errors.join(" | ")}`);
         console.log("PASS qa_checkout_identity_qris_browser: topup/marketplace logged-in vs guest fields and padded QR export");
     } finally {

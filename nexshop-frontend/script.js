@@ -4237,7 +4237,7 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
                 const img = qrCodeDiv.querySelector("img");
                 const dataUrl = canvas
                     ? window.NexShopCheckoutHelpers?.createPaddedQrDataUrl(canvas, 32)
-                    : (img ? img.src : null);
+                    : (img ? window.NexShopCheckoutHelpers?.createPaddedQrDataUrl(img, 32) : null);
                 if (!dataUrl) {
                     toast("QR belum siap, coba lagi sebentar.", "error");
                     return;

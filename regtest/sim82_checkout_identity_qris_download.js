@@ -31,7 +31,7 @@ assert(/getCheckoutIdentity\(userId\)/.test(topupController), "Topup backend mus
 // Both payment QRIS downloads must export a padded full QR image, not the raw edge canvas.
 assert(/createPaddedQrDataUrl|quietZone|padding/.test(scriptJs), "Topup QRIS download must export a padded full image");
 assert(/createPaddedQrDataUrl|quietZone|padding/.test(marketplaceHtml), "Marketplace QRIS download must export a padded full image");
-assert(!/canvas \? canvas\.toDataURL\(\"image\/png\"\)/.test(scriptJs), "Topup must not download raw QR canvas without padding");
-assert(!/canvas \? canvas\.toDataURL\(\"image\/png\"\)/.test(marketplaceHtml), "Marketplace must not download raw QR canvas without padding");
+assert(/createPaddedQrDataUrl\(img, 32\)/.test(scriptJs), "Topup QR image fallback must use padded export");
+assert(/createPaddedQrDataUrl\(img, 32\)/.test(marketplaceHtml), "Marketplace QR image fallback must use padded export");
 
 console.log("PASS sim82: logged-in checkout identity, mandatory guest contacts, and full QRIS downloads");

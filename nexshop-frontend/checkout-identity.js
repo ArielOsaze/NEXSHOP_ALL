@@ -52,18 +52,25 @@
 
     // QRCode.js renders a tight canvas. Add an explicit white quiet zone when
     // exporting so the downloaded PNG always contains the complete QR edges.
-    function createPaddedQrDataUrl(sourceCanvas, padding = 32) {
-        if (!sourceCanvas || !sourceCanvas.width || !sourceCanvas.height) return null;
+    function createPaddedQrDataUrl(source, padding = 32) {
+        if (!source) return null;
+        const width = Number(source.naturalWidth || source.width || 0);
+        const height = Number(source.naturalHeight || source.height || 0);
+        if (!width || !height) return source.src || null;
         const exportCanvas = document.createElement("canvas");
-        exportCanvas.width = sourceCanvas.width + padding * 2;
-        exportCanvas.height = sourceCanvas.height + padding * 2;
+        exportCanvas.width = width + padding * 2;
+        exportCanvas.height = height + padding * 2;
         const context = exportCanvas.getContext("2d");
-        if (!context) return null;
+        if (!context) return source.src || null;
         context.fillStyle = "#ffffff";
         context.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
         context.imageSmoothingEnabled = false;
-        context.drawImage(sourceCanvas, padding, padding);
-        return exportCanvas.toDataURL("image/png");
+        try {
+            context.drawImage(source, padding, padding, width, height);
+            return exportCanvas.toDataURL("image/png");
+        } catch (error) {
+            return source.src || null;
+        }
     }
 
     window.NexShopCheckoutHelpers = Object.freeze({
