@@ -2554,13 +2554,27 @@ async function loadTvBalance() {
     }
 }
 
+function syncTvDepositNominalLimits() {
+    const select = document.getElementById("tvDepositKode");
+    const nominal = document.getElementById("tvDepositNominal");
+    const option = select?.selectedOptions?.[0];
+    if (!nominal || !option) return;
+    const min = Number(option.dataset.min || 100000);
+    const max = Number(option.dataset.max || 100000000);
+    nominal.min = String(min);
+    nominal.max = String(max);
+    if (Number(nominal.value) < min) nominal.value = String(min);
+    if (Number(nominal.value) > max) nominal.value = String(max);
+}
+
 function openTvDepositModal() {
     const modalEl = document.getElementById("tvDepositModal");
     if (!modalEl) return;
     document.getElementById("tvDepositError")?.classList.add("d-none");
     document.getElementById("tvDepositResult")?.classList.add("d-none");
-    document.getElementById("tvDepositNominal").value = "10000";
+    document.getElementById("tvDepositNominal").value = "100000";
     document.getElementById("tvDepositKode").value = "qris";
+    syncTvDepositNominalLimits();
     bootstrap.Modal.getOrCreateInstance(modalEl).show();
 }
 
@@ -2612,15 +2626,19 @@ function renderTvDepositResult(result) {
 
 async function submitTvDeposit() {
     const nominal = Number(document.getElementById("tvDepositNominal")?.value);
-    const kode = document.getElementById("tvDepositKode")?.value.trim() || "";
+    const kodeSelect = document.getElementById("tvDepositKode");
+    const kode = kodeSelect?.value.trim() || "";
+    const methodOption = kodeSelect?.selectedOptions?.[0];
+    const minNominal = Number(methodOption?.dataset.min || 100000);
+    const maxNominal = Number(methodOption?.dataset.max || 100000000);
     const button = document.getElementById("tvDepositSubmit");
     const errorEl = document.getElementById("tvDepositError");
     const resultEl = document.getElementById("tvDepositResult");
 
     errorEl.classList.add("d-none");
     resultEl.classList.add("d-none");
-    if (!Number.isSafeInteger(nominal) || nominal < 1000 || nominal > 100000000) {
-        errorEl.textContent = "Nominal harus bilangan bulat Rp1.000–Rp100.000.000.";
+    if (!Number.isSafeInteger(nominal) || nominal < minNominal || nominal > maxNominal) {
+        errorEl.textContent = `Nominal harus bilangan bulat Rp${minNominal.toLocaleString("id-ID")}–Rp${maxNominal.toLocaleString("id-ID")}.`;
         errorEl.classList.remove("d-none");
         return;
     }
@@ -4047,6 +4065,8 @@ document.addEventListener("DOMContentLoaded", () => {
     loadCurrentUser();
     initThemeToggle();
     loadSystemHealth();
+    document.getElementById("tvDepositKode")?.addEventListener("change", syncTvDepositNominalLimits);
+    syncTvDepositNominalLimits();
 });
 
 // ================================

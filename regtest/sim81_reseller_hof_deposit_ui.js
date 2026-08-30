@@ -31,10 +31,12 @@ assert(/hof-podium-card--2[\s\S]*?(?:silver|cbd5e1|94a3b8|e2e8f0)/i.test(homepag
 assert(/hof-podium-card--1[\s\S]*?(?:gold|fbbf24|f59e0b|amber)/i.test(homepageCss), "Hall of Fame rank 1 must have an explicit gold frame palette");
 assert(/hof-podium-card--3[\s\S]*?(?:bronze|f97316|ea580c|orange)/i.test(homepageCss), "Hall of Fame rank 3 must have an explicit bronze frame palette");
 
+assert(/id="tvDepositNominal"[^>]+min="100000"[^>]+value="100000"/.test(adminHtml), "Deposit nominal must follow current provider minimum");
 assert(/id="tvDepositKode"[\s\S]*?<\/select>/.test(adminHtml), "Deposit payment method must be an option select");
 assert(/<option[^>]+value="qris"/i.test(adminHtml), "Deposit select must include QRIS option");
+assert(/syncTvDepositNominalLimits/.test(adminJs), "Deposit nominal limits must follow the selected provider method");
 assert(/<option[^>]+value="[A-Za-z0-9_-]+"/.test(adminHtml), "Deposit select must contain provider method codes");
-assert(/const kode = document\.getElementById\("tvDepositKode"\)\?\.value/.test(adminJs), "Deposit submit must read selected payment code");
+assert(/const kodeSelect = document\.getElementById\("tvDepositKode"\)/.test(adminJs), "Deposit submit must read selected payment code");
 assert(/JSON\.stringify\(\{\s*nominal,\s*kode,\s*security_pin\s*\}\)/.test(adminJs), "Deposit submit must send the selected kode to backend");
 assert(/tvDepositPaymentMethod|data\.metode/.test(adminJs), "Deposit result must show payment method");
 assert(/tvDepositNominalResult|data\.nominal/.test(adminJs), "Deposit result must show requested nominal");
