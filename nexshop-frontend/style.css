@@ -7867,6 +7867,14 @@ input::placeholder {
     padding: 4px;
 }
 
+/* Rank 2 keeps a visible metallic avatar frame, not only a card accent. */
+.hof-avatar.hof-avatar--2 {
+    padding: 6px !important;
+    border: 1px solid #94a3b8;
+    background: linear-gradient(145deg, #f8fafc 0%, #cbd5e1 38%, #94a3b8 68%, #64748b 100%) !important;
+    box-shadow: 0 0 0 2px rgba(226, 232, 240, 0.9), 0 8px 22px rgba(100, 116, 139, 0.32);
+}
+
 @media (min-width:768px) {
     .hof-avatar--1 {
         width: 144px;
@@ -7895,10 +7903,10 @@ input::placeholder {
 }
 
 .hof-podium-card--2 {
-    /* Rank 2: sapphire, deliberately distinct from gold and bronze. */
-    border-color: rgba(37, 99, 235, 0.62) !important;
-    border-top-color: #2563eb !important;
-    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.14), 0 14px 30px rgba(37, 99, 235, 0.2);
+    /* Rank 2: silver/titanium, deliberately neutral between gold and bronze. */
+    border-color: rgba(148, 163, 184, 0.78) !important;
+    border-top-color: #94a3b8 !important;
+    box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.76), 0 14px 30px rgba(100, 116, 139, 0.22);
 }
 
 .hof-podium-card--3 {

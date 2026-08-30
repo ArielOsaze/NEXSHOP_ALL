@@ -12,13 +12,13 @@ function assert(ok, message) {
     if (!ok) throw new Error(message);
 }
 
-// Rank 2 must be a distinct premium sapphire/indigo treatment, not silver/slate.
+// Rank 2 must be a visible silver/titanium treatment, not blue or indigo.
 const rank2Css = homepageCss.match(/\.hof-podium-card--2\s*\{[\s\S]*?\n\}/)?.[0] || "";
 assert(rank2Css, "Hall of Fame rank 2 frame style missing");
-assert(/2563eb|1d4ed8|4f46e5|6366f1|sapphire|indigo/i.test(rank2Css), "Hall of Fame rank 2 must use a sapphire/indigo frame palette");
-assert(!/cbd5e1|e2e8f0|94a3b8|slate|silver/i.test(rank2Css), "Hall of Fame rank 2 must not use silver/slate palette");
-assert(/from-(?:blue|indigo)|2563eb|1d4ed8|4f46e5|6366f1/i.test(homepageJs), "Hall of Fame rank 2 avatar/badge must use the new non-silver palette");
-assert(!/top3\[1\][\s\S]*?from-slate|top3\[1\][\s\S]*?rgba\(148,163,184/i.test(homepageJs), "Hall of Fame rank 2 runtime markup must not use silver styling");
+assert(/94a3b8|cbd5e1|e2e8f0|slate|silver|titanium/i.test(rank2Css), "Hall of Fame rank 2 must use a silver/titanium frame palette");
+assert(!/2563eb|1d4ed8|4f46e5|6366f1|sapphire|indigo/i.test(rank2Css), "Hall of Fame rank 2 must not use a blue/indigo frame palette");
+assert(/hof-avatar\.hof-avatar--2[\s\S]*?(94a3b8|cbd5e1|e2e8f0|slate|silver|titanium)/i.test(homepageCss), "Hall of Fame rank 2 avatar must retain a visible titanium frame");
+assert(/from-slate|to-slate|rgba\(100,116,139/i.test(homepageJs), "Hall of Fame rank 2 avatar/badge must use a titanium runtime palette");
 
 // Reseller landing must be full-bleed while preserving a readable inner rhythm.
 assert(/\.rs-hero\s*\{[\s\S]*?width\s*:\s*100%[\s\S]*?max-width\s*:\s*none[\s\S]*?padding(?:-inline)?/i.test(resellerCss), "Reseller hero must be full-bleed with responsive inline padding");

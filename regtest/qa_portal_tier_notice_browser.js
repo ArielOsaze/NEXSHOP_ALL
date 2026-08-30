@@ -111,7 +111,25 @@ const tiers = [
         const expected = ["Belum ada minimum transaksi bulanan.", "Rata-rata transaksi per bulan minimal Rp50.000.000.", "Rata-rata transaksi per bulan di atas Rp100.000.000."];
         if (JSON.stringify(tierState) !== JSON.stringify(expected)) throw new Error(`Portal tier requirement mismatch: ${JSON.stringify(tierState)}`);
 
-        console.log("PASS qa_portal_tier_notice_browser: pending notice readable and Silver/Gold/Platinum transaction requirements render");
+        const tierVisualState = await page.$$eval("#tvTierGrid .tv-portal-tier-card", (nodes) => nodes.map((node) => {
+            const style = getComputedStyle(node);
+            return {
+                className: [...node.classList].find((name) => name.startsWith("tv-tier-")),
+                top: style.borderTopColor,
+                background: style.backgroundImage
+            };
+        }));
+        const silverVisual = tierVisualState.find((tier) => tier.className === "tv-tier-silver");
+        const platinumVisual = tierVisualState.find((tier) => tier.className === "tv-tier-platinum");
+        if (!silverVisual || !platinumVisual || silverVisual.top === platinumVisual.top || silverVisual.background === platinumVisual.background) {
+            throw new Error(`Portal Silver dan Platinum masih memakai visual yang sama: ${JSON.stringify(tierVisualState)}`);
+        }
+        await page.screenshot({ path: path.join(__dirname, "qa_portal_tier_palette_390.png"), fullPage: false });
+        await page.$eval("#view-tiers", (element) => element.scrollIntoView({ block: "start", behavior: "instant" }));
+        await new Promise((resolve) => setTimeout(resolve, 250));
+        await page.screenshot({ path: path.join(__dirname, "qa_portal_tier_palette_viewport_390.png"), fullPage: false });
+
+        console.log("PASS qa_portal_tier_notice_browser: pending notice readable and Silver/Gold/Platinum transaction requirements render with distinct palettes");
     } finally {
         await browser.close();
         await new Promise((resolve) => server.close(resolve));

@@ -1344,7 +1344,7 @@
         }
     </style>
 <link rel="stylesheet" href="/inline-styles.css?v=20260829-visual-regression-1">
-<link rel="stylesheet" href="/portal-reseller.css?v=20260830-portal-tier-notice-3">
+<link rel="stylesheet" href="/portal-reseller.css?v=20260830-portal-tier-notice-4">
 <script defer src="/csp-legacy-handlers.js?v=20260829-visual-regression-1"></script>
 <script defer src="/portal-reseller-ui.js?v=20260829-portal-reseller-redesign-1"></script>
 </head>
@@ -3681,20 +3681,25 @@
                     gold: "Rata-rata transaksi per bulan minimal Rp50.000.000.",
                     platinum: "Rata-rata transaksi per bulan di atas Rp100.000.000."
                 };
-                const aksen = ["#475467", "#075fd3", "#f59e0b", "#a855f7", "#10b981"];
+                const visualByCode = {
+                    silver: { accent: "#94a3b8", className: "tv-tier-silver" },
+                    gold: { accent: "#d97706", className: "tv-tier-gold" },
+                    platinum: { accent: "#6d5bd0", className: "tv-tier-platinum" }
+                };
                 const kodeAktif = activeTierInfo && activeTierInfo.code ? String(activeTierInfo.code) : null;
                 const namaAktif = activeTierInfo && activeTierInfo.name ? String(activeTierInfo.name) : null;
 
-                grid.innerHTML = tiers.map((t, i) => {
-                    const warna = aksen[i % aksen.length];
+                grid.innerHTML = tiers.map((t) => {
                     const kode = String(t.code || "").toLowerCase();
+                    const visual = visualByCode[kode] || { accent: "#475467", className: "tv-tier-default" };
+                    const warna = visual.accent;
                     const ini = (kodeAktif && String(t.code) === kodeAktif)
                         || (namaAktif && String(t.name) === namaAktif);
                     const diskon = Number(t.discount_percent) || 0;
                     const requirement = t.eligibility?.requirement || fallbackRequirements[kode] || "Syarat ditentukan oleh admin berdasarkan riwayat transaksi.";
 
                     return `
-                <div class="tv-section-card tv-portal-tier-card" style="border-top:4px solid ${warna};${ini ? "box-shadow:0 0 0 1px " + warna + ";" : ""}">
+                <div class="tv-section-card tv-portal-tier-card ${visual.className}" style="border-top:4px solid ${warna};${ini ? "box-shadow:0 0 0 1px " + warna + ";" : ""}">
                     <div class="tv-portal-tier-heading">
                         <h4 class="tv-portal-tier-title">${escapeHtml(t.name || t.code || "-")}</h4>
                         ${ini ? '<span class="tv-badge-status tv-badge-sukses">Tingkatan kamu</span>' : ""}

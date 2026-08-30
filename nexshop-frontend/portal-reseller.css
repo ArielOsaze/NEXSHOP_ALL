@@ -913,6 +913,28 @@ body.rs-portal-page::after {
     background: #fff;
 }
 
+.rs-portal-page .tv-portal-tier-card.tv-tier-silver {
+    border-color: #cbd5e1 !important;
+    border-top-color: #94a3b8 !important;
+    background: linear-gradient(160deg, #f8fafc 0%, #fff 74%) !important;
+}
+
+.rs-portal-page .tv-portal-tier-card.tv-tier-gold {
+    border-color: #f2c56b !important;
+    border-top-color: #d97706 !important;
+    background: linear-gradient(160deg, #fffaf0 0%, #fff 74%) !important;
+}
+
+.rs-portal-page .tv-portal-tier-card.tv-tier-platinum {
+    border-color: #c4b5fd !important;
+    border-top-color: #6d5bd0 !important;
+    background: linear-gradient(160deg, #f5f3ff 0%, #fff 74%) !important;
+}
+
+.rs-portal-page .tv-portal-tier-card.tv-tier-platinum .tv-portal-tier-discount {
+    color: #5b4ab8 !important;
+}
+
 .rs-portal-page .tv-portal-tier-heading {
     display: flex;
     align-items: center;

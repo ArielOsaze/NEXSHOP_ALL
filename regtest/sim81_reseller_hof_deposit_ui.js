@@ -28,8 +28,8 @@ for (const rank of [1, 2, 3]) {
     assert(new RegExp(`\\.hof-podium-card--${rank}\\s*\\{[\\s\\S]*?(?:border|box-shadow)`).test(homepageCss), `Hall of Fame rank ${rank} frame style missing`);
 }
 const rank2Frame = homepageCss.match(/\.hof-podium-card--2\s*\{[\s\S]*?\n\}/)?.[0] || "";
-assert(/2563eb|1d4ed8|4f46e5|6366f1|sapphire|indigo/i.test(rank2Frame), "Hall of Fame rank 2 must have an explicit sapphire/indigo frame palette");
-assert(!/silver|cbd5e1|94a3b8|e2e8f0|slate/i.test(rank2Frame), "Hall of Fame rank 2 must not use a silver/slate frame palette");
+assert(/silver|titanium|cbd5e1|94a3b8|e2e8f0|slate/i.test(rank2Frame), "Hall of Fame rank 2 must have an explicit silver/titanium frame palette");
+assert(!/2563eb|1d4ed8|4f46e5|6366f1|sapphire|indigo|from-blue|to-blue/i.test(rank2Frame), "Hall of Fame rank 2 must not use a blue/indigo frame palette");
 assert(/hof-podium-card--1[\s\S]*?(?:gold|fbbf24|f59e0b|amber)/i.test(homepageCss), "Hall of Fame rank 1 must have an explicit gold frame palette");
 assert(/hof-podium-card--3[\s\S]*?(?:bronze|f97316|ea580c|orange)/i.test(homepageCss), "Hall of Fame rank 3 must have an explicit bronze frame palette");
 

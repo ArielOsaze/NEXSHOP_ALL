@@ -812,10 +812,10 @@ body.rs-page::after {
 }
 
 .rs-tier-card-platinum {
-    border-color: #cbd5e1;
-    border-top: 4px solid #64748b;
-    background: linear-gradient(160deg, #f1f5f9 0%, #fff 72%);
-    box-shadow: 0 16px 34px rgba(71, 85, 105, 0.12);
+    border-color: #c4b5fd;
+    border-top: 4px solid #6d5bd0;
+    background: linear-gradient(160deg, #f5f3ff 0%, #fff 72%);
+    box-shadow: 0 16px 34px rgba(109, 91, 208, 0.14);
 }
 
 .rs-tier-card-silver .rs-discount,
@@ -830,7 +830,7 @@ body.rs-page::after {
 
 .rs-tier-card-platinum .rs-discount,
 .rs-tier-card-platinum li i {
-    color: #475569;
+    color: #5b4ab8;
 }
 
 .rs-tier-label {
