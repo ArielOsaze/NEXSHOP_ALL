@@ -3597,6 +3597,7 @@ async function openGameDetail(kategori, overrideGame = null, returnView = 'grid'
         return;
     }
 
+    const checkoutUser = getAuthenticatedCheckoutUser();
     twState = {
         kategori: game.kategori,
         step: 1,
@@ -3604,8 +3605,8 @@ async function openGameDetail(kategori, overrideGame = null, returnView = 'grid'
         needsServerId: game.products.some(p => p.butuh_server_id),
         userId: "",
         serverId: "",
-        email: currentUser ? currentUser.email : "",
-        phone: "",
+        email: checkoutUser ? checkoutUser.email : "",
+        phone: checkoutUser ? toLocalPhoneDisplay(checkoutUser.phone_normalized || checkoutUser.phone) : "",
         nickname: null,
         nicknameSupported: false,
         nicknameCheckDisabledReason: null,
@@ -3633,28 +3634,8 @@ async function openGameDetail(kategori, overrideGame = null, returnView = 'grid'
 
     document.getElementById("twUserId").value = "";
     document.getElementById("twServerId").value = "";
-    document.getElementById("twEmail").value = twState.email;
+    toggleCheckoutIdentityFields();
 
-    let cleanPhone = "";
-    if (currentUser && currentUser.phone) {
-        cleanPhone = currentUser.phone.replace(/[^0-9]/g, "");
-        if (cleanPhone.startsWith("62")) {
-            // Keep 62
-        } else if (!cleanPhone.startsWith("0") && cleanPhone.length > 5) {
-            cleanPhone = "0" + cleanPhone;
-        }
-    }
-
-    if (currentUser && cleanPhone && /^(0|62)[0-9]{8,14}$/.test(cleanPhone)) {
-        document.getElementById("twPhone").value = cleanPhone;
-        document.getElementById("twPhone").closest(".tw-field-group").classList.add("hidden");
-    } else if (currentUser) {
-        document.getElementById("twPhone").value = currentUser.phone || "";
-        document.getElementById("twPhone").closest(".tw-field-group").classList.remove("hidden");
-    } else {
-        document.getElementById("twPhone").value = "";
-        document.getElementById("twPhone").closest(".tw-field-group").classList.remove("hidden");
-    }
     document.getElementById("twServerWrap").classList.toggle("hidden", !twState.needsServerId);
     document.getElementById("twAccountResult").className = "tw-account-result hidden";
     document.getElementById("twAccountResult").innerHTML = "";
@@ -3739,14 +3720,20 @@ document.getElementById("twPrevBtn").addEventListener("click", () => {
 
 document.getElementById("twNextBtn").addEventListener("click", async () => {
     if (twState.step === 1) {
-        if (currentUser && !hasVerifiedPhone(currentUser)) {
+        const checkoutUser = getAuthenticatedCheckoutUser();
+        if (checkoutUser && !hasVerifiedPhone(checkoutUser)) {
             openPhoneOnboarding();
             return;
         }
         const userId = document.getElementById("twUserId").value.trim();
         const serverId = document.getElementById("twServerId").value.trim();
-        const email = document.getElementById("twEmail").value.trim();
-        const phone = document.getElementById("twPhone").value.trim();
+        const checkoutIdentity = toggleCheckoutIdentityFields();
+        const email = checkoutIdentity.authenticated
+            ? checkoutIdentity.email
+            : document.getElementById("twEmail").value.trim();
+        const phone = checkoutIdentity.authenticated
+            ? checkoutIdentity.phone
+            : document.getElementById("twPhone").value.trim();
         const errorEl = document.getElementById("twStep1Error");
         errorEl.textContent = "";
 
@@ -4078,6 +4065,27 @@ function renderTwSummary() {
     }
 }
 
+function getAuthenticatedCheckoutUser() {
+    const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+    return token && currentUser ? currentUser : null;
+}
+
+function toggleCheckoutIdentityFields() {
+    const user = getAuthenticatedCheckoutUser();
+    if (window.NexShopCheckoutHelpers?.toggleCheckoutIdentityFields) {
+        return window.NexShopCheckoutHelpers.toggleCheckoutIdentityFields({
+            user,
+            emailId: "twEmail",
+            phoneId: "twPhone"
+        });
+    }
+    return {
+        authenticated: Boolean(user),
+        email: user?.email || "",
+        phone: toLocalPhoneDisplay(user?.phone_normalized || user?.phone || "")
+    };
+}
+
 // Submit topup lalu buka iPaymu dengan kanal yang sudah dipilih user di web.
 async function submitTopupOrder() {
     const errorEl = document.getElementById("twStep3Error");
@@ -4097,6 +4105,13 @@ async function submitTopupOrder() {
         const headers = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
+        const checkoutIdentity = toggleCheckoutIdentityFields();
+        const identityPayload = checkoutIdentity.authenticated
+            ? {}
+            : {
+                recipient_email: twState.email,
+                recipient_phone: twState.phone
+            };
         const res = await fetch(`${API_BASE}/topup`, {
             method: "POST",
             headers,
@@ -4104,8 +4119,7 @@ async function submitTopupOrder() {
                 kode_produk: twState.product.kode_produk,
                 tujuan: twState.userId,
                 server_id: twState.serverId || undefined,
-                recipient_email: twState.email,
-                recipient_phone: twState.phone,
+                ...identityPayload,
                 promo_code: twState.promo ? twState.promo.code : undefined,
                 payment_method: twState.payment,
                 payment_channel: twState.vaBank
@@ -4221,7 +4235,9 @@ function showDirectPaymentModal(paymentData, orderId, isTopup) {
             downloadBtn.onclick = () => {
                 const canvas = qrCodeDiv.querySelector("canvas");
                 const img = qrCodeDiv.querySelector("img");
-                const dataUrl = canvas ? canvas.toDataURL("image/png") : (img ? img.src : null);
+                const dataUrl = canvas
+                    ? window.NexShopCheckoutHelpers?.createPaddedQrDataUrl(canvas, 32)
+                    : (img ? img.src : null);
                 if (!dataUrl) {
                     toast("QR belum siap, coba lagi sebentar.", "error");
                     return;

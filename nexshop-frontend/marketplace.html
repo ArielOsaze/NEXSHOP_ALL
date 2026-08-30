@@ -609,12 +609,12 @@
                     </button>
                     <div class="mkt-inquiry-result hidden" id="mktCheckoutInquiryResult"></div>
                 </div>
-                <label>Nomor HP Aktif (untuk notifikasi &amp; pembayaran)
-                    <input type="tel" id="mktCheckoutPhone" required placeholder="08xxxxxxxxxx" pattern="0[0-9]{8,14}">
-                </label>
-                <label><span>Email <span class="mkt-optional">(opsional)</span></span>
-                    <input type="email" id="mktCheckoutEmail" placeholder="kamu@email.com">
-                </label>
+                <label id="mktCheckoutPhoneGroup">Nomor HP Aktif (untuk notifikasi &amp; pembayaran)
+                                    <input type="tel" id="mktCheckoutPhone" required placeholder="08xxxxxxxxxx" pattern="0[0-9]{8,14}" autocomplete="tel">
+                                </label>
+                                <label id="mktCheckoutEmailGroup">Email
+                                    <input type="email" id="mktCheckoutEmail" required placeholder="kamu@email.com" autocomplete="email">
+                                </label>
                 <div class="mkt-pay-group">
                     <div class="mkt-pay-label">Metode Pembayaran</div>
                     <div class="mkt-pay-options" id="mktCheckoutPaymentMethod" role="radiogroup"
@@ -703,7 +703,8 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
-    <script>
+        <script src="/checkout-identity.js?v=20260830-checkout-identity-1"></script>
+        <script>
         // NexShop Marketplace — marketplace.html client-side logic
         const API_BASE = (() => {
             const hostname = window.location.hostname;
@@ -1275,6 +1276,53 @@
 
         // ── Checkout ─────────────────────────────────────────────────────
         let currentMktCheckoutProduct = null;
+        let mktCurrentUser = (() => {
+            try {
+                return localStorage.getItem("nexshop-public-token")
+                    ? JSON.parse(localStorage.getItem("nexshop_user") || "null")
+                    : null;
+            } catch (_) {
+                return null;
+            }
+        })();
+
+        async function loadMarketplaceCurrentUser() {
+            const token = localStorage.getItem("nexshop-public-token") || localStorage.getItem("token");
+            if (!token) {
+                mktCurrentUser = null;
+                return null;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/users/me`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (!res.ok || !data.user) return mktCurrentUser;
+                mktCurrentUser = data.user;
+                localStorage.setItem("nexshop_user", JSON.stringify(mktCurrentUser));
+                return mktCurrentUser;
+            } catch (_) {
+                return mktCurrentUser;
+            }
+        }
+
+        function getAuthenticatedMarketplaceUser() {
+            const token = localStorage.getItem("nexshop-public-token") || localStorage.getItem("token");
+            return token && mktCurrentUser ? mktCurrentUser : null;
+        }
+
+        function toggleCheckoutIdentityFields() {
+            const user = getAuthenticatedMarketplaceUser();
+            if (window.NexShopCheckoutHelpers?.toggleCheckoutIdentityFields) {
+                return window.NexShopCheckoutHelpers.toggleCheckoutIdentityFields({
+                    user,
+                    emailId: "mktCheckoutEmail",
+                    phoneId: "mktCheckoutPhone",
+                    wrapperSelector: "label"
+                });
+            }
+            return { authenticated: Boolean(user), email: user?.email || "", phone: user?.phone || "" };
+        }
 
         // ── Database Kode Bank Indonesia (Standar ATM Bersama / BI 2026) ──
         const INDONESIA_BANKS = [
@@ -1569,8 +1617,7 @@
 
             document.getElementById("mktCheckoutTarget").value = "";
             document.getElementById("mktCheckoutServer").value = "";
-            document.getElementById("mktCheckoutPhone").value = "";
-            document.getElementById("mktCheckoutEmail").value = "";
+            toggleCheckoutIdentityFields();
             document.querySelectorAll("input[name=\"mktPaymentMethod\"]").forEach((radio) => { radio.checked = false; });
             document.getElementById("mktCheckoutVaBank").value = "bca";
             document.getElementById("mktCheckoutVaGroup").classList.add("hidden");
@@ -1717,6 +1764,19 @@
 
             const btn = document.getElementById("mktCheckoutSubmitBtn");
             const errEl = document.getElementById("mktCheckoutError");
+            const checkoutIdentity = toggleCheckoutIdentityFields();
+            if (!checkoutIdentity.authenticated) {
+                const guestEmail = document.getElementById("mktCheckoutEmail").value.trim();
+                const guestPhone = document.getElementById("mktCheckoutPhone").value.trim();
+                if (!guestEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) {
+                    errEl.textContent = "Email wajib diisi dengan format yang benar.";
+                    return;
+                }
+                if (!/^(0|62)[0-9]{8,14}$/.test(guestPhone)) {
+                    errEl.textContent = "Nomor WhatsApp wajib diisi dengan format yang benar (contoh: 08... atau 628...).";
+                    return;
+                }
+            }
             const selectedPayment = document.querySelector("input[name=\"mktPaymentMethod\"]:checked");
             const paymentMethod = selectedPayment ? selectedPayment.value : "";
 
@@ -1761,12 +1821,17 @@
             errEl.textContent = "";
 
             try {
+                const identityPayload = checkoutIdentity.authenticated
+                    ? {}
+                    : {
+                        recipient_phone: document.getElementById("mktCheckoutPhone").value.trim(),
+                        recipient_email: document.getElementById("mktCheckoutEmail").value.trim()
+                    };
                 const payload = {
                     kode_produk: currentMktCheckoutProduct.kode_produk,
                     tujuan: targetValue,
                     server_id: serverIdValue,
-                    recipient_phone: document.getElementById("mktCheckoutPhone").value.trim(),
-                    recipient_email: document.getElementById("mktCheckoutEmail").value.trim() || undefined,
+                    ...identityPayload,
                     payment_method: paymentMethod,
                     payment_channel: paymentMethod === "va" ? document.getElementById("mktCheckoutVaBank").value : undefined
                 };
@@ -1839,7 +1904,9 @@
                 downloadBtn.onclick = () => {
                     const canvas = qrDiv.querySelector("canvas");
                     const img = qrDiv.querySelector("img");
-                    const dataUrl = canvas ? canvas.toDataURL("image/png") : (img ? img.src : null);
+                    const dataUrl = canvas
+                        ? window.NexShopCheckoutHelpers?.createPaddedQrDataUrl(canvas, 32)
+                        : (img ? img.src : null);
                     if (!dataUrl) return;
                     const link = document.createElement("a");
                     link.href = dataUrl;
@@ -3040,6 +3107,7 @@
             fetchUserWallet();
         }
 
+        document.addEventListener("DOMContentLoaded", loadMarketplaceCurrentUser);
         document.addEventListener("DOMContentLoaded", loadCatalog);
         document.addEventListener("DOMContentLoaded", loadMktStoreSettings);
         document.addEventListener("DOMContentLoaded", initMarketplaceWalletUI);

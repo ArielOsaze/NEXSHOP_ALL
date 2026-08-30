@@ -2301,9 +2301,9 @@
                     <label class="form-label" for="portalPurchaseServer">Server ID / Zona</label>
                     <input id="portalPurchaseServer" name="server_id" autocomplete="off" placeholder="Masukkan Server ID jika diperlukan">
                 </div>
-                <div class="tv-purchase-form-row">
-                    <label class="form-label" for="portalPurchasePhone">Nomor WhatsApp pembeli</label>
-                    <input id="portalPurchasePhone" name="recipient_phone" type="tel" required inputmode="tel" placeholder="08xxxxxxxxxx">
+                <div class="tv-purchase-form-row" id="portalPurchasePhoneRow" hidden>
+                                    <label class="form-label" for="portalPurchasePhone">Nomor WhatsApp pembeli</label>
+                                    <input id="portalPurchasePhone" name="recipient_phone" type="tel" inputmode="tel" placeholder="08xxxxxxxxxx">
                     <p class="tv-purchase-help">Dipakai untuk informasi status transaksi.</p>
                 </div>
                 <p class="tv-purchase-error" id="portalPurchaseError" role="alert"></p>
@@ -3238,7 +3238,6 @@
             const error = document.getElementById("portalPurchaseError");
             const tujuan = document.getElementById("portalPurchaseTarget").value.trim();
             const serverId = document.getElementById("portalPurchaseServer").value.trim();
-            const phone = document.getElementById("portalPurchasePhone").value.trim();
             error.textContent = "";
             submit.disabled = true;
             submit.innerHTML = '<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> Memproses';
@@ -3255,7 +3254,7 @@
                         tujuan,
                         server_id: serverId || undefined,
                         recipient_email: currentResellerProfile.email || undefined,
-                        recipient_phone: phone,
+                        recipient_phone: currentResellerProfile.phone_normalized || currentResellerProfile.phone || "",
                         payment_method: "wallet"
                     })
                 });
