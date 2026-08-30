@@ -7895,9 +7895,10 @@ input::placeholder {
 }
 
 .hof-podium-card--2 {
-    border-color: rgba(203, 213, 225, 0.62) !important;
-    border-top-color: #cbd5e1 !important;
-    box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.1), 0 14px 30px rgba(148, 163, 184, 0.16);
+    /* Rank 2: sapphire, deliberately distinct from gold and bronze. */
+    border-color: rgba(37, 99, 235, 0.62) !important;
+    border-top-color: #2563eb !important;
+    box-shadow: 0 0 0 1px rgba(96, 165, 250, 0.14), 0 14px 30px rgba(37, 99, 235, 0.2);
 }
 
 .hof-podium-card--3 {

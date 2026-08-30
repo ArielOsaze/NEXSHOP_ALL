@@ -4710,7 +4710,7 @@ function renderLeaderboard(data) {
     // Helper untuk rank badge
     const getRankBadge = (rank) => {
         if (rank === 1) return '<div class="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 border-2 border-white dark:border-gray-900 flex items-center justify-center text-gray-900 font-bold text-sm shadow-[0_0_15px_rgba(251,191,36,0.5)] z-20">1</div>';
-        if (rank === 2) return '<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-gradient-to-br from-slate-200 to-slate-400 dark:from-slate-300 dark:to-slate-500 border-2 border-white dark:border-gray-900 flex items-center justify-center text-gray-900 font-bold text-xs shadow-lg z-20">2</div>';
+        if (rank === 2) return '<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-gradient-to-br from-blue-300 to-blue-600 dark:from-blue-400 dark:to-indigo-700 border-2 border-white dark:border-gray-900 flex items-center justify-center text-white font-bold text-xs shadow-[0_0_14px_rgba(37,99,235,0.45)] z-20">2</div>';
         if (rank === 3) return '<div class="absolute -bottom-3 left-1/2 -translate-x-1/2 w-7 h-7 rounded-full bg-gradient-to-br from-orange-300 to-orange-500 dark:from-orange-400 dark:to-orange-700 border-2 border-white dark:border-gray-900 flex items-center justify-center text-gray-900 font-bold text-xs shadow-lg z-20">3</div>';
         return '';
     };
@@ -4719,14 +4719,14 @@ function renderLeaderboard(data) {
     if (top3[1]) {
         podiumHtml += `
         <div class="flex flex-col items-center w-1/3 px-1 md:px-0 transform hover:-translate-y-2 transition-transform duration-300">
-            <div class="hof-avatar hof-avatar--2 rounded-full p-1 bg-gradient-to-b from-slate-300 to-slate-200 dark:from-slate-400 dark:to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(148,163,184,0.3)]">
+            <div class="hof-avatar hof-avatar--2 rounded-full p-1 bg-gradient-to-b from-blue-500 via-indigo-400 to-blue-200 dark:from-blue-600 dark:to-gray-800 mb-2 md:mb-4 shadow-[0_0_20px_rgba(37,99,235,0.35)]">
                 <div data-csp-style="s44d93e31176999" class="w-full h-full rounded-full overflow-hidden border-2 border-white dark:border-gray-900 relative z-10 bg-white dark:bg-gray-900 flex-shrink-0">
                     ${getAvatar(top3[1])}
                 </div>
                 ${getRankBadge(2)}
             </div>
-            <div class="hof-podium-card hof-podium-card--2 glass-panel w-full p-2 md:p-6 text-center border-t-4 border-slate-300 relative overflow-hidden group">
-                <div class="absolute inset-0 bg-slate-400/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            <div class="hof-podium-card hof-podium-card--2 glass-panel w-full p-2 md:p-6 text-center border-t-4 border-blue-500 relative overflow-hidden group">
+                <div class="absolute inset-0 bg-blue-600/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                 <div class="font-bold text-gray-900 dark:text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[1].name)}</div>
                 ${top3[1].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/10 dark:bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/20 dark:border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[1].badge)}</div>` : ''}
                 <div class="text-gray-600 dark:text-gray-300 font-medium text-[10px] md:text-sm mt-1 relative z-10">${rupiah(top3[1].total_spent)}</div>

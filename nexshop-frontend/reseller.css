@@ -35,6 +35,14 @@ body.rs-page {
     -webkit-font-smoothing: antialiased;
 }
 
+/* Sora is reserved for display hierarchy; body copy stays Plus Jakarta Sans. */
+.rs-page h1,
+.rs-page h2,
+.rs-page h3,
+.rs-page .rs-brand-copy strong {
+    font-family: "Sora", "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
+}
+
 /* The shared public stylesheet paints a theme-aware fixed background on
    body::before. This standalone marketing page intentionally stays white in
    either saved site theme; the API section supplies its own dark surface. */
@@ -266,13 +274,15 @@ body.rs-page::after {
 }
 
 .rs-hero {
+    width: 100%;
+    max-width: none;
     min-height: 660px;
     display: grid;
     grid-template-columns: minmax(0, 0.94fr) minmax(480px, 1.06fr);
     align-items: center;
     gap: clamp(38px, 7vw, 92px);
-    padding-top: 78px;
-    padding-bottom: 80px;
+    margin-inline: 0;
+    padding: 78px max(24px, calc((100vw - var(--rs-container)) / 2)) 80px;
 }
 
 .rs-hero-copy {
@@ -311,9 +321,9 @@ body.rs-page::after {
     margin: 0;
     color: var(--rs-ink);
     font-size: clamp(2.7rem, 5.2vw, 4.7rem);
-    font-weight: 800;
-    letter-spacing: -0.065em;
-    line-height: 1.02;
+    font-weight: 780;
+    letter-spacing: -0.052em;
+    line-height: 1.04;
 }
 
 .rs-hero-lead {
@@ -321,7 +331,7 @@ body.rs-page::after {
     margin: 28px 0 0;
     color: var(--rs-muted);
     font-size: clamp(1rem, 1.5vw, 1.13rem);
-    line-height: 1.75;
+    line-height: 1.72;
 }
 
 .rs-hero-actions {
@@ -348,6 +358,7 @@ body.rs-page::after {
 
 .rs-hero-visual {
     position: relative;
+    min-width: 0;
     min-height: 460px;
     display: grid;
     place-items: center;
@@ -641,11 +652,11 @@ body.rs-page::after {
 
 .rs-hero-float-top {
     top: 12%;
-    left: -5%;
+    left: 0;
 }
 
 .rs-hero-float-bottom {
-    right: -3%;
+    right: 0;
     bottom: 11%;
 }
 
@@ -1359,6 +1370,13 @@ body.rs-page::after {
         width: min(calc(100% - 32px), var(--rs-container));
     }
 
+    .rs-hero {
+        width: 100%;
+        max-width: none;
+        margin-inline: 0;
+        padding-inline: 16px;
+    }
+
     .rs-nav {
         min-height: 68px;
     }
@@ -1461,11 +1479,11 @@ body.rs-page::after {
 
     .rs-hero-float-top {
         top: 1%;
-        left: -2%;
+        left: 0;
     }
 
     .rs-hero-float-bottom {
-        right: -2%;
+        right: 0;
         bottom: 1%;
     }
 
