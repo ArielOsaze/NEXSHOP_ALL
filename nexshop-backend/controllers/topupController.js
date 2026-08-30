@@ -2756,6 +2756,10 @@ exports.getBalance = async (req, res) => {
     }
 };
 
+// Kode yang ditampilkan sebagai opsi di dashboard dan terdaftar pada
+// endpoint metode deposit TokoVoucher saat integrasi ini diperbarui.
+const TOKOVOUCHER_DEPOSIT_CODES = new Set(["qris", "bca", "briva", "bniva", "MANDIRI", "BNI"]);
+
 // ADMIN — buat tiket deposit saldo TokoVoucher (Admin + Security PIN)
 exports.createDeposit = async (req, res) => {
     if (req.user.role !== "admin") {
@@ -2767,8 +2771,8 @@ exports.createDeposit = async (req, res) => {
     if (!Number.isSafeInteger(nominal) || nominal < 1000 || nominal > 100000000) {
         return res.status(400).json({ message: "Nominal deposit harus bilangan bulat antara Rp1.000 dan Rp100.000.000." });
     }
-    if (!/^[A-Za-z0-9_-]{1,32}$/.test(kode)) {
-        return res.status(400).json({ message: "Kode metode pembayaran tidak valid." });
+    if (!TOKOVOUCHER_DEPOSIT_CODES.has(kode)) {
+        return res.status(400).json({ message: "Pilih metode pembayaran deposit yang tersedia." });
     }
 
     try {

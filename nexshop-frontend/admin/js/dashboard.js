@@ -2569,19 +2569,33 @@ function renderTvDepositResult(result) {
     const resultEl = document.getElementById("tvDepositResult");
     const errorEl = document.getElementById("tvDepositError");
     const messageEl = document.getElementById("tvDepositResultMessage");
+    const methodEl = document.getElementById("tvDepositPaymentMethod");
     const payEl = document.getElementById("tvDepositPaymentInfo");
     const payNameEl = document.getElementById("tvDepositPaymentName");
+    const nominalEl = document.getElementById("tvDepositNominalResult");
     const totalEl = document.getElementById("tvDepositTotal");
+    const uniqueCodeEl = document.getElementById("tvDepositUniqueCode");
+    const adminFeeEl = document.getElementById("tvDepositAdminFee");
     const expiredEl = document.getElementById("tvDepositExpired");
     const qrEl = document.getElementById("tvDepositQr");
 
     errorEl?.classList.add("d-none");
     resultEl?.classList.remove("d-none");
     messageEl.textContent = result?.message || "Tiket deposit berhasil dibuat.";
+    methodEl.textContent = data.metode ? `Metode: ${data.metode}` : "Metode pembayaran";
     payEl.textContent = data.pay ? String(data.pay) : "Instruksi pembayaran belum tersedia.";
-    payNameEl.textContent = data.pay_name ? `Atas nama: ${data.pay_name}` : (data.metode ? `Metode: ${data.metode}` : "");
+    payNameEl.textContent = data.pay_name ? `Atas nama: ${data.pay_name}` : "";
+    nominalEl.textContent = data.nominal != null
+        ? `Nominal deposit: Rp ${Number(data.nominal).toLocaleString("id-ID")}`
+        : "";
     totalEl.textContent = data.total_transfer != null
         ? `Total transfer: Rp ${Number(data.total_transfer).toLocaleString("id-ID")}`
+        : "";
+    uniqueCodeEl.textContent = data.kode_unik != null
+        ? `Kode unik: Rp ${Number(data.kode_unik).toLocaleString("id-ID")}`
+        : "";
+    adminFeeEl.textContent = data.biaya_admin != null
+        ? `Biaya admin: Rp ${Number(data.biaya_admin).toLocaleString("id-ID")}`
         : "";
     expiredEl.textContent = data.expired_at ? `Berlaku sampai: ${data.expired_at}` : "";
 

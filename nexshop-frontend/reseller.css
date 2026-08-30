@@ -106,6 +106,8 @@ body.rs-page::after {
     width: 40px;
     height: 40px;
     object-fit: contain;
+    /* Rounded-square: tetap kotak, tetapi sudut tidak lagi lancip. */
+    border-radius: 9px;
 }
 
 .rs-brand-copy {

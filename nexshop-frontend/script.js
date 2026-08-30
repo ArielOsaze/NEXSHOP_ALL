@@ -4709,7 +4709,7 @@ function renderLeaderboard(data) {
                 </div>
                 ${getRankBadge(2)}
             </div>
-            <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-slate-300 relative overflow-hidden group">
+            <div class="hof-podium-card hof-podium-card--2 glass-panel w-full p-2 md:p-6 text-center border-t-4 border-slate-300 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-slate-400/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                 <div class="font-bold text-gray-900 dark:text-white text-xs md:text-xl mb-1 truncate relative z-10">${escapeHtml(top3[1].name)}</div>
                 ${top3[1].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold bg-brand-indigo/10 dark:bg-brand-indigo/20 text-brand-indigo mb-1 md:mb-2 border border-brand-indigo/20 dark:border-brand-indigo/30 uppercase tracking-wider relative z-10">${escapeHtml(top3[1].badge)}</div>` : ''}
@@ -4731,7 +4731,7 @@ function renderLeaderboard(data) {
                     <i class="fa-solid fa-crown drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]"></i>
                 </div>
             </div>
-            <div class="glass-panel w-full p-3 md:p-8 text-center border-t-4 border-amber-400 relative overflow-hidden group shadow-[0_0_30px_rgba(139,92,246,0.1)]">
+            <div class="hof-podium-card hof-podium-card--1 glass-panel w-full p-3 md:p-8 text-center border-t-4 border-amber-400 relative overflow-hidden group shadow-[0_0_30px_rgba(139,92,246,0.1)]">
                 <div class="absolute inset-0 bg-gradient-to-t from-amber-400/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <div class="font-bold text-sm md:text-2xl mb-1 truncate relative z-10" data-csp-style="s797a9e27e87fbf">${escapeHtml(top3[0].name)}</div>
                 ${top3[0].badge ? `<div class="inline-block px-1 md:px-2.5 py-0.5 md:py-1 rounded text-[8px] md:text-xs font-bold mb-1 md:mb-2 border uppercase tracking-wider relative z-10" data-csp-style="s2f156018aebc31">${escapeHtml(top3[0].badge)}</div>` : ''}
@@ -4750,7 +4750,7 @@ function renderLeaderboard(data) {
                 </div>
                 ${getRankBadge(3)}
             </div>
-            <div class="glass-panel w-full p-2 md:p-6 text-center border-t-4 border-orange-500 dark:border-orange-600 relative overflow-hidden group">
+            <div class="hof-podium-card hof-podium-card--3 glass-panel w-full p-2 md:p-6 text-center border-t-4 border-orange-500 dark:border-orange-600 relative overflow-hidden group">
                 <div class="absolute inset-0 bg-orange-600/5 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                 <div class="font-bold text-xs md:text-xl mb-1 truncate relative z-10" data-csp-style="s77e1c160b15c54">${escapeHtml(top3[2].name)}</div>
                 ${top3[2].badge ? `<div class="inline-block px-1 md:px-2 py-0.5 rounded text-[8px] md:text-[10px] font-bold mb-1 md:mb-2 border uppercase tracking-wider relative z-10" data-csp-style="s6341cce4399c4e">${escapeHtml(top3[2].badge)}</div>` : ''}

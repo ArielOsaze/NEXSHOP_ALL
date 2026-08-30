@@ -7882,6 +7882,30 @@ input::placeholder {
     }
 }
 
+/* Hall of Fame podium frames: one rank palette for card, border and glow. */
+.hof-podium-card {
+    border-style: solid;
+    border-width: 1px 1px 1px 1px;
+}
+
+.hof-podium-card--1 {
+    border-color: rgba(251, 191, 36, 0.55) !important;
+    border-top-color: #fbbf24 !important;
+    box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.12), 0 14px 36px rgba(245, 158, 11, 0.14);
+}
+
+.hof-podium-card--2 {
+    border-color: rgba(203, 213, 225, 0.62) !important;
+    border-top-color: #cbd5e1 !important;
+    box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.1), 0 14px 30px rgba(148, 163, 184, 0.16);
+}
+
+.hof-podium-card--3 {
+    border-color: rgba(249, 115, 22, 0.58) !important;
+    border-top-color: #f97316 !important;
+    box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.12), 0 14px 30px rgba(234, 88, 12, 0.14);
+}
+
 /* Music Player Animations */
 .animate-spin-slow {
     animation: spin 3s linear infinite;

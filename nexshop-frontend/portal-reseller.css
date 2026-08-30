@@ -202,6 +202,7 @@ body.rs-portal-page::after {
     width: 48px;
     height: 48px;
     object-fit: contain;
+    border-radius: 9px;
     filter: none;
 }
 
@@ -474,6 +475,7 @@ body.rs-portal-page::after {
     flex: 0 0 40px;
     display: block;
     object-fit: contain;
+    border-radius: 9px;
 }
 
 .rs-portal-page .tv-brand-title {
