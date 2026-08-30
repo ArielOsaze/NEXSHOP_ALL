@@ -669,7 +669,8 @@ exports.getPublicTiers = async (req, res) => {
                 code: t.code,
                 name: t.name,
                 discount_percent: t.discount_percent,
-                description: t.description || null
+                description: t.description || null,
+                eligibility: t.eligibility || null
             }))
         );
     } catch (err) {

@@ -14,6 +14,16 @@ const supabase = require("../config/db");
 // ===========================================================
 
 const TIER_CACHE_TTL_MS = 60 * 1000;
+const TIER_ELIGIBILITY = Object.freeze({
+    silver: Object.freeze({ metric: "monthly_transaction_average", operator: "none", minimum: 0, requirement: "Belum ada minimum transaksi bulanan." }),
+    gold: Object.freeze({ metric: "monthly_transaction_average", operator: "gte", minimum: 50000000, requirement: "Rata-rata transaksi per bulan minimal Rp50.000.000." }),
+    platinum: Object.freeze({ metric: "monthly_transaction_average", operator: "gt", minimum: 100000000, requirement: "Rata-rata transaksi per bulan di atas Rp100.000.000." })
+});
+
+function getTierEligibility(code) {
+    return TIER_ELIGIBILITY[String(code || "").toLowerCase()] || null;
+}
+
 let tierCache = null;
 let tierCacheAt = 0;
 
@@ -49,7 +59,7 @@ async function getTiers({ activeOnly = true } = {}) {
         throw error;
     }
 
-    tierCache = (data || []).map((t) => ({ ...t, discount_percent: Number(t.discount_percent) || 0 }));
+    tierCache = (data || []).map((t) => ({ ...t, discount_percent: Number(t.discount_percent) || 0, eligibility: getTierEligibility(t.code) }));
     tierCacheAt = now;
     return activeOnly ? tierCache.filter((t) => t.is_active) : tierCache;
 }

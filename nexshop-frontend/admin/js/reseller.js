@@ -87,7 +87,7 @@ async function loadResellerTiers() {
                         <span class="input-group-text">%</span>
                     </div>
                 </td>
-                <td class="small text-muted">${escapeHtml(t.description || "-")}</td>
+                <td class="small text-muted">${escapeHtml(t.description || "-")}<div class="mt-1 fw-semibold text-body-secondary">Syarat: ${escapeHtml(t.eligibility?.requirement || "-")}</div></td>
                 <td><span class="badge bg-secondary">${t.jumlah_reseller || 0}</span></td>
                 <td>
                     <div class="form-check form-switch m-0">
