@@ -2330,9 +2330,20 @@
     <!-- =============================================================== -->
     <!-- JAVASCRIPT LOGIC & INTERACTIONS                                -->
     <!-- =============================================================== -->
-    <script src="/auth-security.js?v=20260825"></script>
+    <script src="/auth-security.js?v=20260830-mobile-login-timeout-1"></script>
     <script>
         const API_BASE = window.location.origin + "/api";
+        const PORTAL_AUTH_REQUEST_TIMEOUT_MS = 15000;
+        function portalFetchWithTimeout(url, options = {}) {
+            const controller = new AbortController();
+            const timeoutId = window.setTimeout(() => controller.abort(), PORTAL_AUTH_REQUEST_TIMEOUT_MS);
+            return fetch(url, { ...options, signal: controller.signal })
+                .catch((error) => {
+                    if (error?.name === "AbortError") throw new Error("Server NexShop belum merespons dalam batas waktu. Coba lagi.");
+                    throw error;
+                })
+                .finally(() => window.clearTimeout(timeoutId));
+        }
         let uploadedKtpUrl = "";
         let cachedSecret = "";
         let isSecretRevealed = false;
@@ -2444,7 +2455,7 @@
             // bahwa orang ini sudah mendaftar sebagai reseller. Kalau di-fallback,
             // SEMUA orang yang sekadar login belanja bakal otomatis "masuk" ke
             // portal reseller tanpa pernah daftar/login lewat form reseller.
-            return localStorage.getItem("nexshop-reseller-token") || "";
+            return sessionStorage.getItem("nexshop-reseller-token") || "";
         }
 
         function setResellerSession(token, user) {
@@ -2452,16 +2463,22 @@
                 // Simpan cuma di key khusus reseller. JANGAN ikut nulis ke "token"
                 // biasa -- itu punya sesi customer di toko utama, kalau ketimpa
                 // token reseller, sesi belanja normal user bisa ikut kacau.
-                localStorage.setItem("nexshop-reseller-token", token);
+                sessionStorage.setItem("nexshop-reseller-token", token);
             }
             if (user) {
-                localStorage.setItem("nexshop-reseller-user", JSON.stringify(user));
+                sessionStorage.setItem("nexshop-reseller-user", JSON.stringify(user));
             }
         }
 
-        function clearResellerSession() {
+        function clearLegacyResellerSession() {
             localStorage.removeItem("nexshop-reseller-token");
             localStorage.removeItem("nexshop-reseller-user");
+        }
+
+        function clearResellerSession() {
+            sessionStorage.removeItem("nexshop-reseller-token");
+            sessionStorage.removeItem("nexshop-reseller-user");
+            clearLegacyResellerSession();
         }
 
         let portalTwoFactorChallenge = "";
@@ -3399,7 +3416,7 @@
                         : ""
                 };
 
-                const res = await fetch(`${API_BASE}/reseller/auth/login`, {
+                const res = await portalFetchWithTimeout(`${API_BASE}/reseller/auth/login`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
@@ -3450,7 +3467,7 @@
             if (elLastM) elLastM.textContent = `Bulan lalu, ${lastM.toLocaleDateString("id-ID", { month: "long" })}`;
 
             try {
-                const cachedUser = JSON.parse(localStorage.getItem("nexshop-reseller-user") || "{}");
+                const cachedUser = JSON.parse(sessionStorage.getItem("nexshop-reseller-user") || "{}");
                 if (cachedUser.fullname) {
                     document.getElementById("topWidgetFullName").textContent = cachedUser.fullname;
                     document.getElementById("sidebarUserName").textContent = cachedUser.fullname;
@@ -4241,6 +4258,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", () => {
+            clearLegacyResellerSession();
             window.NexShopAuthSecurity?.mountCaptcha("reseller-login", "resellerLoginTurnstile", "resellerLoginTurnstileStatus");
             window.NexShopAuthSecurity?.mountCaptcha("reseller-register", "resellerRegisterTurnstile", "resellerRegisterTurnstileStatus");
             document.getElementById("formTwoFactorVerify")?.addEventListener("submit", submitPortalTwoFactorVerification);

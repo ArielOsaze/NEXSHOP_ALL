@@ -196,17 +196,17 @@ fs.writeFileSync(fixturePath, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAA
         }, { timeout: 10000 });
         assert(state.uploads.length === 1 && state.uploads[0].query === "?type=kyc", `request upload KYC salah: ${JSON.stringify(state.uploads)}`);
         assert(state.registers.length === 0, "register tidak boleh dipanggil jika upload KYC gagal");
-        assert(await page.evaluate(() => localStorage.getItem("nexshop-reseller-token")) === null, "error KYC tidak boleh membuat sesi portal");
+        assert(await page.evaluate(() => sessionStorage.getItem("nexshop-reseller-token")) === null, "error KYC tidak boleh membuat sesi portal");
 
         state.uploadMode = "success";
-        await page.evaluate(() => localStorage.clear());
+        await page.evaluate(() => sessionStorage.clear());
         await page.reload({ waitUntil: "domcontentloaded" });
         await page.waitForSelector("#formResellerRegister");
         await fillRegisterForm();
         await page.$eval("#formResellerRegister", (form) => form.requestSubmit());
         await page.waitForFunction(() => {
             const err = document.getElementById("loginErrorMsg");
-            return localStorage.getItem("nexshop-reseller-token") === null
+            return sessionStorage.getItem("nexshop-reseller-token") === null
                 && document.getElementById("authPaneLogin")?.style.display === "block"
                 && err?.textContent.includes("Pendaftaran berhasil");
         }, { timeout: 10000 });
@@ -214,7 +214,7 @@ fs.writeFileSync(fixturePath, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAA
         assert(state.registers[0].captcha_token === "local-captcha", "register harus mengirim captcha token");
         assert(state.registers[0].ktp_url === "kyc:kyc/2026-08/local-fixture.bin", "register harus mengirim referensi KTP terenkripsi");
 
-        await page.evaluate(() => localStorage.clear());
+        await page.evaluate(() => sessionStorage.clear());
         await page.goto(`${baseUrl}/portal-reseller`, { waitUntil: "domcontentloaded", timeout: 30000 });
         await page.waitForSelector("#formResellerLogin");
         await page.$eval("#tabBtnRegister", (button) => button.click());
@@ -223,7 +223,7 @@ fs.writeFileSync(fixturePath, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAA
         await setValue("#loginEmail", "mitra.qa@example.test");
         await setValue("#loginPassword", "PortalPass123!");
         await page.$eval("#formResellerLogin", (form) => form.requestSubmit());
-        await page.waitForFunction(() => localStorage.getItem("nexshop-reseller-token") === "local-login-token", { timeout: 10000 });
+        await page.waitForFunction(() => sessionStorage.getItem("nexshop-reseller-token") === "local-login-token", { timeout: 10000 });
         assert(state.logins.length === 1, "login endpoint tidak dipanggil");
         assert(state.logins[0].captcha_token === "local-captcha", "login harus mengirim captcha token");
         assert(state.logins[0].email === "mitra.qa@example.test", "login harus memakai email portal");

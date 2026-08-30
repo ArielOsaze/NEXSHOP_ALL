@@ -43,6 +43,28 @@ body.reseller-docs-page .docs-table-wrap {
     page-break-inside: avoid;
 }
 
+body.reseller-docs-page .nexshop-cookie-banner,
+body.reseller-docs-page .nexshop-cookie-manage {
+    display: none !important;
+}
+
+body.reseller-docs-page .docs-code-block,
+body.reseller-docs-page .docs-code-wrap,
+body.reseller-docs-page .docs-card:has(.docs-code-block),
+body.reseller-docs-page .docs-api-card:has(.docs-code-block) {
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+    overflow: visible !important;
+}
+
+body.reseller-docs-page .docs-code-content {
+    max-height: none !important;
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
 body.reseller-docs-page .docs-section {
     margin: 0 0 24px !important;
     padding-top: 0 !important;

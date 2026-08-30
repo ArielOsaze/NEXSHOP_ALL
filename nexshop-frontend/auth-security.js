@@ -5,15 +5,23 @@
     "use strict";
 
     const API_BASE = "/api";
+    const AUTH_REQUEST_TIMEOUT_MS = 10000;
+    const TURNSTILE_LOAD_TIMEOUT_MS = 12000;
     const widgets = new Map();
     let configPromise;
     let scriptPromise;
 
+    function fetchWithTimeout(url, options = {}, timeoutMs = AUTH_REQUEST_TIMEOUT_MS) {
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
+        return fetch(url, { ...options, signal: controller.signal }).finally(() => window.clearTimeout(timeoutId));
+    }
+
     async function getConfig() {
         if (!configPromise) {
-            configPromise = fetch(`${API_BASE}/auth/public-config`, { credentials: "same-origin" })
-                .then((response) => response.ok ? response.json() : {})
-                .catch(() => ({}));
+            configPromise = fetchWithTimeout(`${API_BASE}/auth/public-config`, { credentials: "same-origin" })
+                .then((response) => response.ok ? response.json() : { __unavailable: true })
+                .catch(() => ({ __unavailable: true }));
         }
         return configPromise;
     }
@@ -23,10 +31,27 @@
         if (!scriptPromise) {
             scriptPromise = new Promise((resolve, reject) => {
                 const script = document.createElement("script");
+                let timeoutId;
+                const finish = (error, value) => {
+                    window.clearTimeout(timeoutId);
+                    script.removeEventListener("load", onLoad);
+                    script.removeEventListener("error", onError);
+                    if (error) {
+                        scriptPromise = null;
+                        reject(error);
+                    } else {
+                        resolve(value);
+                    }
+                };
+                const onLoad = () => window.turnstile
+                    ? finish(null, window.turnstile)
+                    : finish(new Error("Turnstile tidak tersedia"));
+                const onError = () => finish(new Error("Gagal memuat verifikasi keamanan"));
                 script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
                 script.async = true;
-                script.onload = () => window.turnstile ? resolve(window.turnstile) : reject(new Error("Turnstile tidak tersedia"));
-                script.onerror = () => reject(new Error("Gagal memuat verifikasi keamanan"));
+                script.addEventListener("load", onLoad, { once: true });
+                script.addEventListener("error", onError, { once: true });
+                timeoutId = window.setTimeout(() => finish(new Error("Gagal memuat verifikasi keamanan dalam batas waktu")), TURNSTILE_LOAD_TIMEOUT_MS);
                 document.head.append(script);
             });
         }
@@ -44,6 +69,12 @@
         const status = document.getElementById(statusId);
         if (!container) return;
         const config = await getConfig();
+        if (config.__unavailable) {
+            container.hidden = true;
+            setStatus(status, "Verifikasi keamanan tidak dapat terhubung. Muat ulang halaman lalu coba lagi.");
+            widgets.set(name, { widgetId: null, token: "", configured: false, unavailable: true, status });
+            return;
+        }
         if (!config.turnstile_site_key) {
             container.hidden = true;
             if (config.turnstile_required && !allowUnconfigured) setStatus(status, "Verifikasi keamanan belum tersedia. Coba lagi nanti.");
@@ -77,6 +108,7 @@
 
     async function captchaToken(name, { allowUnconfigured = false } = {}) {
         const config = await getConfig();
+        if (config.__unavailable) throw new Error("Verifikasi keamanan tidak dapat terhubung. Muat ulang halaman lalu coba lagi.");
         if (!config.turnstile_site_key) {
             if (config.turnstile_required && !allowUnconfigured) throw new Error("Verifikasi keamanan belum tersedia. Coba lagi nanti.");
             return "";
