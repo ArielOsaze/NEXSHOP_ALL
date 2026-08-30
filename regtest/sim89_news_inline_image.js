@@ -22,6 +22,8 @@ assert(/\/upload\/image\?type=product/.test(editorialJs), "Inline image upload m
 assert(/new FormData\(\)/.test(editorialJs), "Inline image upload must use multipart FormData");
 assert(/article-inline-image/.test(editorialJs), "Inline image must be stored as a dedicated figure block");
 assert(/articleImageUrls/.test(articleHtml), "Public SEO must collect hero and inline image URLs");
+assert(/\.article-body \.article-inline-image img[\s\S]*?width:\s*auto[\s\S]*?max-width:\s*100%[\s\S]*?height:\s*auto/.test(articleHtml), "Inline image must preserve uploaded aspect ratio without forced frame sizing");
+assert(!/\.article-body \.article-inline-image img[\s\S]*?object-fit:\s*contain/.test(articleHtml), "Inline image must not letterbox uploaded photos inside a forced box");
 assert(/startsWith\(["']\/["']\)/.test(articleHtml), "SEO image collection must normalize legacy root-relative image URLs");
 assert(/figure/.test(newsController) && /img/.test(newsController), "Backend sanitizer must preserve figure and img content blocks");
 assert(/router\.post\("\/image"/.test(uploadRoutes), "Protected image upload route must remain available");
