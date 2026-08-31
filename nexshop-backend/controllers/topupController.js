@@ -1708,6 +1708,20 @@ exports.create = async (req, res) => {
     try {
         let buyerName = "NexShop Customer";
         const isPortalSession = Boolean(userId && req.user?.auth_context === "reseller_portal" && req.user?.portal_account_id);
+        if (isPortalSession) {
+            const { data: portalAccount, error: portalAccountError } = await supabase
+                .from("reseller_portal_accounts")
+                .select("id, user_id, status")
+                .eq("id", req.user.portal_account_id)
+                .eq("user_id", userId)
+                .maybeSingle();
+            if (portalAccountError) {
+                return res.status(503).json({ code: "PORTAL_IDENTITY_UNAVAILABLE", message: "Identity Portal Reseller belum dapat diverifikasi." });
+            }
+            if (!portalAccount || ["suspended", "disabled", "rejected"].includes(String(portalAccount.status || "").toLowerCase())) {
+                return res.status(403).json({ code: "PORTAL_ACCOUNT_INACTIVE", message: "Akun Portal Reseller tidak aktif." });
+            }
+        }
         if (userId) {
             const checkoutProfile = isPortalSession
                 ? await getPortalCheckoutIdentity(userId)

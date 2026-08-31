@@ -1856,24 +1856,24 @@ exports.getResellerPriceList = async (req, res) => {
         const kategoriFilter = String(req.query.kategori || "").trim();
         const format = String(req.query.format || "csv").toLowerCase();
 
-        let query = supabase
-            .from("topup_products")
-            .select("id, nama, kode_produk, kategori, source_operator_name, harga_beli, harga_jual, butuh_server_id, is_active")
-            .eq("is_active", true)
-            .order("kategori", { ascending: true })
-            .order("harga_jual", { ascending: true })
-            .limit(5000);
-
-        if (kategoriFilter && kategoriFilter !== "all") {
-            query = query.ilike("kategori", "%" + kategoriFilter + "%");
-        }
-
-        const { data: products, error } = await query;
-        if (error) throw error;
+        const allRows = await fetchAllRows((from, to) =>
+            supabase
+                .from("topup_products")
+                .select(PORTAL_PRODUCT_COLUMNS)
+                .eq("is_active", true)
+                .order("kategori", { ascending: true })
+                .order("harga_jual", { ascending: true })
+                .order("id", { ascending: true })
+                .range(from, to)
+        );
+        const products = filterSellablePortalProducts(allRows);
+        const filteredProducts = kategoriFilter && kategoriFilter !== "all"
+            ? products.filter((product) => String(product.kategori || "").toLowerCase().includes(kategoriFilter.toLowerCase()))
+            : products;
 
         const tierAktifKode = user.reseller_tier || null;
 
-        const baris = (products || []).map((p) => {
+        const baris = (filteredProducts || []).map((p) => {
             let hargaNormal = Number(p.harga_jual) || 0;
             if (hargaNormal <= 0) {
                 hargaNormal = hitungMarkupWajar(p.harga_beli || 0, p.kategori, p.source_operator_name);

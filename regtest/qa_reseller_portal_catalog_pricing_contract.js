@@ -27,6 +27,10 @@ const portalHtmlSource = fs.readFileSync(
     path.join(__dirname, "..", "nexshop-frontend", "portal-reseller.html"),
     "utf8"
 );
+const priceListBlock = controllerSource.slice(
+    controllerSource.indexOf("exports.getResellerPriceList"),
+    controllerSource.indexOf("exports.getKycDocument")
+);
 
 function run() {
     assert.strictEqual(typeof catalogService.formatPortalProduct, "function", "formatter harga portal wajib tersedia");
@@ -82,6 +86,9 @@ function run() {
     assert.match(apiControllerSource, /fetchAllRows/, "Open API reseller juga harus membaca seluruh katalog");
     assert.match(portalHtmlSource, /searchParams\.set\("page"/, "frontend portal harus meminta halaman katalog berikutnya");
     assert.match(portalHtmlSource, /tvProductCatalogProgress/, "frontend harus menampilkan progres katalog agar hasil parsial tidak disangka lengkap");
+    assert.match(priceListBlock, /fetchAllRows/, "download price list harus membaca seluruh katalog");
+    assert.doesNotMatch(priceListBlock, /\.limit\(5000\)/, "download price list tidak boleh berhenti di 5000 produk");
+    assert.match(topupControllerSource, /reseller_portal_accounts/, "checkout portal harus merevalidasi dedicated portal account");
 
     console.log("PASS qa_reseller_portal_catalog_pricing_contract: tier pricing server-side dan katalog >1000 terjaga");
 }
