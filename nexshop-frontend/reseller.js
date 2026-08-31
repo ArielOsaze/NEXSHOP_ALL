@@ -345,11 +345,12 @@
     const initUniverseMotion = () => {
         const stage = document.querySelector("[data-universe-stage]");
         const nodes = [...document.querySelectorAll(".rs-universe-node")];
+        const routes = stage ? [...stage.querySelectorAll(".rs-universe-route")] : [];
         if (!stage || !nodes.length) return;
         let timer = null;
         let index = 0;
         const stop = () => { if (timer) window.clearInterval(timer); timer = null; stage.classList.remove("rs-universe-in-viewport"); };
-        const tick = () => { nodes.forEach((node, nodeIndex) => node.classList.toggle("is-active", nodeIndex === index)); index = (index + 1) % nodes.length; };
+        const tick = () => { nodes.forEach((node, nodeIndex) => node.classList.toggle("is-active", nodeIndex === index)); routes.forEach((route, routeIndex) => route.classList.toggle("is-active", routeIndex === index)); index = (index + 1) % nodes.length; };
         const start = () => {
             stage.classList.add("rs-universe-in-viewport");
             if (reducedMotion.matches) { nodes.forEach((node) => node.classList.add("is-active")); return; }
