@@ -4898,10 +4898,10 @@ function scheduleNonCriticalHomepageWork() {
             window.addEventListener("load", run, { once: true });
         }
     };
-    schedule(loadPromo, 1600);
+    void runBackgroundTask(loadPromo).catch((error) => console.error("Deferred homepage promo failed:", error));
+    void runBackgroundTask(initMusicPlayer).catch((error) => console.error("Deferred homepage music failed:", error));
     schedule(loadStoreSettings, 600);
     schedule(loadTrustStats, 600);
-    schedule(initMusicPlayer, 0);
 }
 
 function initDeferredHomepageData() {
