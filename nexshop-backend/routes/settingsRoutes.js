@@ -26,7 +26,7 @@ router.get("/store", settingsController.getStoreSettingsPublic);
 
 // Admin
 router.put("/store", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.updateStoreSettingsAdmin);
-router.get("/security-pin", authMiddleware, adminMiddleware, settingsController.getAdminPinStatus);
+router.get("/security-pin", authMiddleware, superAdminMiddleware, settingsController.getAdminPinStatus);
 router.post("/security-pin/setup", authMiddleware, superAdminMiddleware, settingsController.setupAdminPin);
 router.post("/security-pin/verify", authMiddleware, superAdminMiddleware, adminPinVerifyLimiter, settingsController.verifyAdminPin);
 router.post("/security-pin/change/request", authMiddleware, superAdminMiddleware, requireAdminPin, pinChangeRequestLimiter, settingsController.requestAdminPinChangeOtp);
@@ -41,15 +41,14 @@ router.put("/runtime-config", authMiddleware, superAdminMiddleware, requireAdmin
 router.post("/test-whatsapp", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.testWhatsAppAdmin);
 router.post("/test-user-whatsapp", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.testUserWhatsApp);
 
-// QR adalah kredensial login WhatsApp. Status boleh dibaca oleh admin yang
-// sudah login, sedangkan reset sesi tetap membutuhkan Security PIN.
+// Status gateway dan QR adalah kredensial/konfigurasi WhatsApp; hanya Admin.
 router.get("/wa-api/status", authMiddleware, superAdminMiddleware, settingsController.getWaApiStatus);
 router.post("/wa-api/provision", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.provisionWaApiGatewayAdmin);
 router.post("/wa-api/rescan", authMiddleware, superAdminMiddleware, requireAdminPin, settingsController.forceWaRescan);
 router.post("/apigames/test", authMiddleware, superAdminMiddleware, requireAdminPin, testApiGamesLimiter, settingsController.testApiGamesAdmin);
 
 // Profil admin yang sedang login
-router.get("/me", authMiddleware, settingsController.getMe);
-router.put("/me", authMiddleware, settingsController.updateMe);
+router.get("/me", authMiddleware, adminMiddleware, settingsController.getMe);
+router.put("/me", authMiddleware, adminMiddleware, settingsController.updateMe);
 
 module.exports = router;

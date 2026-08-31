@@ -71,7 +71,7 @@ router.delete("/admin/products", authMiddleware, adminMiddleware, topupControlle
 router.put("/admin/category-logo", authMiddleware, adminMiddleware, topupController.updateCategoryLogo); // set logo game utk 1 kategori sekaligus
 router.get("/admin/orders", authMiddleware, adminMiddleware, topupController.getAllOrders);
 router.post("/admin/orders/:id/actions", authMiddleware, adminMiddleware, topupController.adminOrderAction);
-router.get("/admin/balance", authMiddleware, adminMiddleware, topupController.getBalance);
+router.get("/admin/balance", authMiddleware, superAdminMiddleware, topupController.getBalance);
 router.post("/admin/deposit", authMiddleware, superAdminMiddleware, requireAdminPin, adminDepositLimiter, topupController.createDeposit);
 router.post("/admin/sync-full", authMiddleware, adminMiddleware, topupController.syncFullCatalog);
 router.get("/admin/sync-status", authMiddleware, adminMiddleware, topupController.getSyncStatus);

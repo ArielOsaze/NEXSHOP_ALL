@@ -4,6 +4,7 @@ const resellerController = require("../controllers/resellerController");
 const authMiddleware = require("../middleware/authMiddleware");
 const resellerPortalAuthMiddleware = require("../middleware/resellerPortalAuthMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
+const superAdminMiddleware = require("../middleware/superAdminMiddleware");
 const {
     resellerApplyLimiter,
     resellerLoginLimiter,
@@ -44,15 +45,14 @@ router.get("/portal/orders", resellerPortalAuthMiddleware, resellerController.ge
 router.get("/portal/price-list", resellerPortalAuthMiddleware, resellerController.getResellerPriceList);
 router.post("/portal/test-webhook", resellerPortalAuthMiddleware, resellerWebhookTestLimiter, resellerController.testPortalWebhook);
 
-// Admin & staff
-// Foto KTP hanya bisa dilihat lewat endpoint ini (didekripsi on-the-fly,
-// tidak pernah punya URL publik). Lihat getKycDocument().
-router.get("/admin/kyc-document", authMiddleware, adminMiddleware, resellerController.getKycDocument);
+// Admin/staff may read operational queue data, while KYC documents, decisions,
+// account changes, and tier changes are sensitive user/config management.
+router.get("/admin/kyc-document", authMiddleware, superAdminMiddleware, resellerController.getKycDocument);
 router.get("/admin/applications", authMiddleware, adminMiddleware, resellerController.listApplications);
-router.post("/admin/applications/:id/decision", authMiddleware, adminMiddleware, resellerController.decideApplication);
+router.post("/admin/applications/:id/decision", authMiddleware, superAdminMiddleware, resellerController.decideApplication);
 router.get("/admin/resellers", authMiddleware, adminMiddleware, resellerController.listResellers);
-router.put("/admin/resellers/:id", authMiddleware, adminMiddleware, resellerController.updateResellerUser);
+router.put("/admin/resellers/:id", authMiddleware, superAdminMiddleware, resellerController.updateResellerUser);
 router.get("/admin/tiers", authMiddleware, adminMiddleware, resellerController.listTiersAdmin);
-router.put("/admin/tiers/:code", authMiddleware, adminMiddleware, resellerController.updateTier);
+router.put("/admin/tiers/:code", authMiddleware, superAdminMiddleware, resellerController.updateTier);
 
 module.exports = router;

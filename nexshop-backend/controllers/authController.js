@@ -10,6 +10,7 @@ const { startPhoneOtp, verifyPhoneOtp, generateOtp, OTP_EXPIRY_MINUTES, assertPh
 const { toPublicProfile, backfillLegacyPhone } = require("../services/userProfileService");
 const { notify } = require("../config/notify");
 const { resetLoginLimiter, getBlockedLoginIps } = require("../middleware/rateLimiter");
+const { rolesFor } = require("../middleware/adminRoles");
 const { resetAdminSession } = require("../middleware/adminSession");
 const { getTurnstileConfig, isTurnstileRequired, verifyTurnstile } = require("../services/turnstileService");
 const { getRuntimeConfig } = require("../services/runtimeConfigService");
@@ -560,7 +561,7 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Email atau password salah" });
         }
 
-        if (loginContext === "admin" && !["admin", "staff"].includes(user.role)) {
+        if (loginContext === "admin" && !rolesFor("dashboard").includes(user.role)) {
             return res.status(403).json({ message: "Akun ini tidak memiliki akses administrator atau staff." });
         }
         // Admin/staff tetap boleh masuk ke web utama sebagai sesi storefront.
@@ -570,8 +571,8 @@ exports.login = async (req, res) => {
         // Turnstile diperiksa setelah password valid agar super admin bisa
         // bootstrap konfigurasi pertama dari dashboard. Endpoint tetap dibatasi
         // loginLimiter, dan customer tidak mendapat bypass ini.
-        const isSuperAdminUser = ["admin", "staff"].includes(user.role);
-        if (!await requireHumanVerification(req, res, { allowAdminBootstrap: isSuperAdminUser })) return;
+        const isAdminDashboardUser = rolesFor("dashboard").includes(user.role);
+        if (!await requireHumanVerification(req, res, { allowAdminBootstrap: isAdminDashboardUser })) return;
 
         if (!user.email_verified && user.role !== "admin") {
             return res.status(403).json({

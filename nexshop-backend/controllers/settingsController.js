@@ -128,7 +128,7 @@ exports.getStoreSettingsPublic = async (req, res) => {
 
 // Admin only
 exports.updateStoreSettingsAdmin = async (req, res) => {
-    if (!["admin", "staff"].includes(req.user.role)) {
+    if (req.user.role !== "admin") {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -298,7 +298,7 @@ exports.changeAdminPin = async (req, res) => {
 };
 
 exports.getApiKeysAdmin = async (req, res) => {
-    if (!["admin", "staff"].includes(req.user.role)) {
+    if (req.user.role !== "admin") {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -350,7 +350,7 @@ exports.getApiKeysAdmin = async (req, res) => {
 };
 
 exports.revealApiKeysAdmin = async (req, res) => {
-    if (!["admin", "staff"].includes(req.user.role)) return res.status(403).json({ message: "Akses ditolak, khusus admin" });
+    if (req.user.role !== "admin") return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     try {
         const keys = await getApiKeys({ fresh: true });
         const key = typeof req.body.key === "string" ? req.body.key : "";
@@ -367,7 +367,7 @@ exports.revealApiKeysAdmin = async (req, res) => {
 };
 
 exports.updateApiKeysAdmin = async (req, res) => {
-    if (!["admin", "staff"].includes(req.user.role)) {
+    if (req.user.role !== "admin") {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -461,7 +461,7 @@ exports.updateApiKeysAdmin = async (req, res) => {
  * menyimpan key yang sama di tabel api_keys.
  */
 exports.provisionWaApiGatewayAdmin = async (req, res) => {
-    if (!["admin", "staff"].includes(req.user.role)) {
+    if (req.user.role !== "admin") {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
     try {
@@ -586,7 +586,7 @@ exports.updateRuntimeConfigAdmin = async (req, res) => {
 // (gateway Baileys privat), jadi test button ini menguji jalur produksi yang
 // sama dengan OTP, notifikasi transaksi, dan notifikasi admin.
 exports.testWhatsAppAdmin = async (req, res) => {
-    if (!["admin", "staff"].includes(req.user.role)) {
+    if (req.user.role !== "admin") {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -648,7 +648,7 @@ exports.testWhatsAppAdmin = async (req, res) => {
 };
 
 exports.testUserWhatsApp = async (req, res) => {
-    if (!["admin", "staff"].includes(req.user.role)) {
+    if (req.user.role !== "admin") {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 
@@ -681,7 +681,7 @@ exports.testUserWhatsApp = async (req, res) => {
 };
 
 exports.testApiGamesAdmin = async (req, res) => {
-    if (!["admin", "staff"].includes(req.user.role)) {
+    if (req.user.role !== "admin") {
         return res.status(403).json({ message: "Akses ditolak, khusus admin" });
     }
 

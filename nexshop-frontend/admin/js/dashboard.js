@@ -63,11 +63,14 @@ async function loadCurrentUser() {
                 document.querySelectorAll('.nav-link[data-view="waApi"], .nav-link[data-view="aimgmt"], .nav-link[data-view="musicplayer"]').forEach(el => {
                     el.closest('.nav-item').style.display = 'none';
                 });
+                document.querySelectorAll('.nav-link[data-view="users"]').forEach(el => el.closest('.nav-item')?.classList.add("d-none"));
+                document.getElementById("tvBalanceBadge")?.classList.add("d-none");
+                document.querySelector('button[data-csp-onclick="hb10d6602cce09c"]')?.classList.add("d-none");
                 document.getElementById("staffSettingsApprovalNotice")?.classList.remove("d-none");
                 const logoInput = document.getElementById("storeLogoInput");
                 if (logoInput) logoInput.disabled = true;
-                document.querySelectorAll('#settingsTabApiKeys, #settingsTabAuthconfig, #settingsTabSecurity, #settingsTabMascot').forEach(el => el.classList.add("d-none"));
-                document.querySelectorAll('[data-settings-tab="apikeys"], [data-settings-tab="authconfig"], [data-settings-tab="security"], [data-settings-tab="mascot"]').forEach(el => el.closest(".nav-item")?.classList.add("d-none"));
+                document.querySelectorAll('#settingsTabApiKeys, #settingsTabAuthconfig, #settingsTabSecurity, #settingsTabMascot, #settingsTabWebhooks').forEach(el => el.classList.add("d-none"));
+                document.querySelectorAll('[data-settings-tab="apikeys"], [data-settings-tab="authconfig"], [data-settings-tab="security"], [data-settings-tab="mascot"], [data-settings-tab="webhooks"]').forEach(el => el.closest(".nav-item")?.classList.add("d-none"));
                 document.querySelectorAll('#storeForm button[data-csp-onclick="saveStoreSettings()"], #contentForm button[data-csp-onclick="saveContentSettings()"], button[data-csp-onclick="saveMascotSettings()"]').forEach(button => {
                     button.innerHTML = '<i class="bi bi-send me-1"></i> Ajukan Approval Admin';
                 });
@@ -212,6 +215,9 @@ function requestAdminPin(setup, purpose = "melanjutkan tindakan sensitif ini") {
 }
 
 async function withAdminPin(action, purpose) {
+    if (currentUser?.role === "staff") {
+        throw new Error("Akses ditolak. Security PIN global hanya untuk Admin.");
+    }
     const status = await getAdminPinStatus();
     if (!status.configured) {
         await requestAdminPin(true, purpose);
@@ -259,8 +265,9 @@ async function submitAdminPin() {
 // login password lagi. Sebelum gerbang ini kebuka:
 //   1. role user diambil ULANG dari server (/settings/me) dan harus
 //      admin/staff -- bukan cuma ngandelin isi token;
-//   2. Security PIN 6 digit wajib diverifikasi ke server (kalau belum
-//      pernah dibuat, admin dipaksa bikin dulu).
+//   2. Staff langsung membuka dashboard operasional setelah role diverifikasi;
+//   3. Admin wajib melewati Security PIN (kalau belum dibuat, admin dipaksa
+//      membuatnya dulu).
 //
 // Selama gerbang belum kebuka, apiFetch() nahan SEMUA permintaan data, jadi
 // isi dashboard gak pernah ke-load apalagi kelihatan di layar.
@@ -340,13 +347,17 @@ async function bootAdminGate() {
     }
     currentUser = me;
 
-    // ── Security PIN ────────────────────────────────────────────────────
-    // Gerbang PIN JANGAN sampai bikin admin ke-lock permanen. Kalau
-    // subsistem PIN-nya sendiri lagi bermasalah (mis. kolom
-    // security_pin_hash belum ada karena migration Security PIN belum
-    // dijalankan), dashboard tetap boleh dibuka setelah role terverifikasi
-    // -- endpoint sensitif TETAP minta PIN satu per satu di server, jadi
-    // gak ada penurunan keamanan yang berarti.
+    // Staff hanya membutuhkan token + role live yang sudah diverifikasi.
+    // Jangan pernah memanggil endpoint Security PIN global untuk Staff.
+    if (me.role === "staff") {
+        setAdminGateStatus("Membuka dashboard operasional…");
+        unlockAdminDashboard();
+        return;
+    }
+
+    // ── Security PIN Admin ──────────────────────────────────────────────
+    // Hanya Admin yang boleh melewati gerbang ini. Endpoint sensitif tetap
+    // memverifikasi role + PIN kembali di server pada setiap aksi.
     let statusPin = null;
     try {
         statusPin = await getAdminPinStatus();
@@ -386,19 +397,16 @@ function retryAdminGate() {
     bootAdminGate();
 }
 
-// Ditampilkan HANYA kalau pemeriksaan Security PIN sendiri gagal (bukan
-// karena PIN salah). Role admin/staff-nya sudah terverifikasi ke server
-// sebelum tombol ini muncul, dan semua endpoint sensitif tetap minta PIN
-// per aksi -- jadi ini pintu darurat, bukan bypass keamanan.
+// Kegagalan pemeriksaan PIN tidak boleh menjadi bypass. Admin tetap terkunci
+// dan hanya dapat mencoba kembali atau keluar.
 function tampilkanLewatiPin(pesan) {
     setAdminGateStatus(escapeHtml(pesan), true);
-    const skip = document.getElementById("adminGateSkip");
-    if (skip) skip.classList.remove("d-none");
 }
 
+// Kompatibilitas terhadap HTML lama/cache lama: handler ini sengaja tidak
+// membuka dashboard tanpa Security PIN.
 function lewatiGerbangPin() {
-    showToast("Masuk tanpa Security PIN. Aksi sensitif tetap minta PIN.", true);
-    unlockAdminDashboard();
+    setAdminGateStatus("Security PIN wajib diverifikasi oleh Admin sebelum dashboard dibuka.", true);
 }
 
 function unlockAdminDashboard() {
@@ -660,6 +668,12 @@ function openNavGroupForView(view) {
     if (group) setNavGroupState(group, true);
 }
 
+const STAFF_BLOCKED_VIEWS = new Set(["users", "waApi", "aimgmt", "musicplayer"]);
+
+function isStaffBlockedView(view) {
+    return currentUser?.role === "staff" && STAFF_BLOCKED_VIEWS.has(view);
+}
+
 setupSidebarGroups();
 
 document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
@@ -670,6 +684,10 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         closeMobileSidebar();
 
         const view = link.dataset.view;
+        if (isStaffBlockedView(view)) {
+            showToast("Akses ditolak. Fitur ini hanya untuk Admin.", true);
+            return;
+        }
         openNavGroupForView(view);
         document.querySelectorAll(".view-section").forEach(sec => sec.classList.add("d-none"));
         document.getElementById(`view-${view}`).classList.remove("d-none");
@@ -678,7 +696,10 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
         if (view === "users") openUsersSecurely();
         if (view === "promo" && !promoLoaded) loadPromo();
         if (view === "promocodes" && !promoCodesLoaded) loadPromoCodes();
-        if (view === "topup") { window.initTopupCatalog?.(); loadTvBalance(); }
+        if (view === "topup") {
+            window.initTopupCatalog?.();
+            if (currentUser?.role !== "staff") loadTvBalance();
+        }
         if (view === "ratings" && !ratingsLoaded) { loadAdminRatings(1); loadAdminRatingSummary(); loadCustomTestimonials(); ratingsLoaded = true; }
         if (view === "settings" && !settingsLoaded) loadSettings();
         if (view === "waApi" && !waApiManagerLoaded) loadWaApiManager();
@@ -691,7 +712,7 @@ document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
 });
 
 function switchView(view) {
-    if (currentUser && currentUser.role === "staff" && (view === "waApi" || view === "aimgmt" || view === "musicplayer")) {
+    if (isStaffBlockedView(view)) {
         showToast("Akses ditolak. Fitur ini hanya untuk Admin.", true);
         return;
     }
@@ -1757,7 +1778,8 @@ async function deletePromoSlide(id) {
 // Settings — Profil Admin / Toko / API Keys
 // ================================
 
-const SENSITIVE_SETTINGS_TABS = new Set(["apikeys", "authconfig", "security", "store", "mascot"]);
+const SENSITIVE_SETTINGS_TABS = new Set(["apikeys", "authconfig", "security", "store", "mascot", "webhooks"]);
+const STAFF_ALLOWED_SETTINGS_TABS = new Set(["profile", "store", "content"]);
 
 function scrubSensitiveSettings() {
     hideRevealedSecrets();
@@ -1808,6 +1830,10 @@ function activateSettingsTab(tab, button) {
 document.querySelectorAll("#settingsTabs [data-settings-tab]").forEach(btn => {
     btn.addEventListener("click", async () => {
         const tab = btn.dataset.settingsTab;
+        if (currentUser?.role === "staff" && !STAFF_ALLOWED_SETTINGS_TABS.has(tab)) {
+            showToast("Akses ditolak. Pengaturan ini hanya untuk Admin.", true);
+            return;
+        }
         const previousTab = document.querySelector("#settingsTabs .nav-link.active")?.dataset.settingsTab;
         if (!SENSITIVE_SETTINGS_TABS.has(tab)) {
             if (SENSITIVE_SETTINGS_TABS.has(previousTab)) scrubSensitiveSettings();

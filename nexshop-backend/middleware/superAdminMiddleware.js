@@ -1,6 +1,5 @@
 const { buildAdminGuard } = require("./adminSession");
+const { rolesFor } = require("./adminRoles");
 
-// Aksi paling sensitif (API key, hapus user, ubah settings toko): khusus
-// Super Admin. Sama seperti adminMiddleware, role dicek ulang ke database
-// dan sesi idle ikut ditegakkan di server.
-module.exports = buildAdminGuard(["admin"], "Akses ditolak, khusus Super Admin", "SUPERADMIN_REQUIRED");
+// Sensitive dashboard areas: explicitly Admin/Super Admin only.
+module.exports = buildAdminGuard(rolesFor("sensitive"), "Akses ditolak, khusus Super Admin", "SUPERADMIN_REQUIRED");

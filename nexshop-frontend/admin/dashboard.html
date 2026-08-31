@@ -19,10 +19,11 @@
 
 <!-- ===================================================================
      GERBANG AKSES DASHBOARD
-     Overlay ini tampil DULUAN (sebelum JS jalan) dan baru dibuka setelah
-     server mengonfirmasi role admin/staff DAN Security PIN diverifikasi.
-     Semua pemanggilan data di dashboard.js nunggu gerbang ini kebuka,
-     jadi isi dashboard gak pernah ke-load sebelum identitasnya kebukti.
+     Overlay ini tampil DULUAN (sebelum JS jalan). Server harus mengonfirmasi
+     role admin/staff; Staff lalu membuka dashboard operasional, sedangkan
+     Admin wajib melewati Security PIN. Semua pemanggilan data di dashboard.js
+     nunggu gerbang ini kebuka, jadi isi dashboard gak pernah ke-load sebelum
+     identitas dan gerbang role-nya terbukti.
      =================================================================== -->
 <div id="adminGateOverlay" class="admin-gate">
     <div class="admin-gate-card">
@@ -35,9 +36,7 @@
             <button type="button" class="btn btn-primary btn-sm" data-csp-onclick="he19e8f7cdfa81c">
                 <i class="bi bi-arrow-clockwise me-1"></i> Coba lagi
             </button>
-            <button type="button" class="btn btn-outline-warning btn-sm d-none" id="adminGateSkip" data-csp-onclick="he018e584361444">
-                Masuk tanpa PIN
-            </button>
+
             <button type="button" class="btn btn-outline-secondary btn-sm" data-csp-onclick="h90feacea1087ce">
                 Keluar
             </button>

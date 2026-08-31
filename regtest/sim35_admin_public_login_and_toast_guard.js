@@ -8,7 +8,7 @@ const auth = fs.readFileSync(path.join(root, "nexshop-backend/controllers/authCo
 const script = fs.readFileSync(path.join(root, "nexshop-frontend/script.js"), "utf8").replace(/\r\n/g, "\n");
 const index = fs.readFileSync(path.join(root, "nexshop-frontend/index.html"), "utf8").replace(/\r\n/g, "\n");
 
-assert.match(auth, /if \(loginContext === "admin" && !\["admin", "staff"\]\.includes\(user\.role\)\)/);
+assert.match(auth, /rolesFor\("dashboard"\)\.includes\(user\.role\)/);
 assert.doesNotMatch(auth, /if \(loginContext === "user" && \["admin", "staff"\]\.includes\(user\.role\)\)/, "admin/staff harus boleh login web utama");
 assert.match(script, /body: JSON\.stringify\(\{ email, password, captcha_token, login_context: "user" \}\)/);
 assert.match(script, /function getToastContainer\(\)/);
