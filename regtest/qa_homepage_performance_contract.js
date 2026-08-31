@@ -56,4 +56,9 @@ assert.match(nginx, /location ~\* \\.\(\?:css\|js\|mjs\|woff2\?\|svg\|webp\|png\
 assert.match(nginx, /add_header Cache-Control "public, max-age=2592000, immutable" always;/,
     "asset berversi harus dikirim dengan cache immutable");
 
+for (const scriptName of ["nexbot.js", "auth-security.js", "checkout-identity.js", "script.js"]) {
+    assert.match(html, new RegExp(`<script[^>]*defer[^>]*src="/${scriptName}`),
+        `${scriptName} harus defer agar parser tidak terblokir`);
+}
+
 console.log("qa_homepage_performance_contract: passed");
