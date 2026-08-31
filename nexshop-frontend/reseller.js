@@ -89,34 +89,13 @@
             pending.push(timer);
             timers.set(card, pending);
         };
-        const reset = (card) => {
-            const story = card.dataset.showcaseStory;
-            delete card.dataset.storyStarted;
-            delete card.dataset.storyBeat;
-            card.classList.remove("rs-story-is-active");
-            if (story === "transactions") {
-                card.querySelectorAll(".rs-transaction-status b").forEach((status, index) => { status.textContent = index < 2 ? "Diproses" : "Berhasil"; });
-                write(card, "[data-story-metric]", "124");
-            } else if (story === "bills") {
-                card.querySelector(".rs-bill-result")?.classList.remove("is-current");
-                write(card, "[data-story-status]", "Pembayaran berhasil");
-            } else if (story === "catalog") {
-                write(card, ".rs-catalog-state", "Pilih nominal");
-            } else if (story === "pricing") {
-                write(card, ".rs-margin-note [data-story-status]", "Margin contoh terhitung");
-            } else if (story === "wallet") {
-                write(card, ".rs-wallet-status", "Siap disalurkan");
-            } else if (story === "api") {
-                write(card, ".rs-api-response", "status: SUCCESS");
-            }
-        };
         const stop = (card) => {
             (timers.get(card) || []).forEach((timer) => {
                 window.clearTimeout(timer);
                 window.clearInterval(timer);
             });
             timers.delete(card);
-            reset(card);
+            delete card.dataset.storyRepeatStarted;
             card.classList.remove("rs-story-in-viewport");
         };
         const finalState = (card) => {
@@ -137,15 +116,10 @@
                 write(card, ".rs-api-response", "status: SUCCESS");
             }
         };
-        const play = (card) => {
-            if (card.dataset.storyStarted === "true") return;
-            card.dataset.storyStarted = "true";
-            card.classList.add("rs-story-is-active");
-            const story = card.dataset.showcaseStory;
-
+        const startRepeatingMotion = (card, story) => {
+            if (card.dataset.storyRepeatStarted === "true") return;
+            card.dataset.storyRepeatStarted = "true";
             if (story === "transactions") {
-                schedule(card, () => write(card, ".rs-transaction-status b", "Berhasil"), 700);
-                schedule(card, () => write(card, "[data-story-metric]", "125"), 1300);
                 repeat(card, () => {
                     const statuses = [...card.querySelectorAll(".rs-transaction-status b")];
                     const successFirst = card.dataset.storyBeat !== "success-first";
@@ -153,30 +127,50 @@
                     card.dataset.storyBeat = successFirst ? "success-first" : "success-second";
                 }, 3400);
             }
+            if (story === "catalog") {
+                repeat(card, () => {
+                    const state = card.querySelector(".rs-catalog-state");
+                    if (state) state.textContent = state.textContent === state.dataset.after ? state.dataset.before : state.dataset.after;
+                }, 4200);
+            }
+            if (story === "wallet") {
+                repeat(card, () => {
+                    const status = card.querySelector(".rs-wallet-status");
+                    if (status) status.textContent = status.textContent === "Transaksi tersalur" ? "Siap disalurkan" : "Transaksi tersalur";
+                }, 4200);
+            }
+        };
+        const play = (card) => {
+            const story = card.dataset.showcaseStory;
+            const alreadyStarted = card.dataset.storyStarted === "true";
+            card.classList.add("rs-story-is-active");
+            if (alreadyStarted) {
+                startRepeatingMotion(card, story);
+                return;
+            }
+            card.dataset.storyStarted = "true";
+
+            if (story === "transactions") {
+                schedule(card, () => write(card, ".rs-transaction-status b", "Berhasil"), 700);
+                schedule(card, () => write(card, "[data-story-metric]", "125"), 1300);
+            }
             if (story === "bills") {
                 schedule(card, () => card.querySelector(".rs-bill-result")?.classList.add("is-current"), 550);
             }
             if (story === "catalog") {
                 schedule(card, () => write(card, ".rs-catalog-state", "Berhasil dikirim"), 800);
-                repeat(card, () => {
-                    const state = card.querySelector(".rs-catalog-state");
-                    if (state) state.textContent = state.textContent === state.dataset.after ? state.dataset.before : state.dataset.after;
-                }, 4200);
             }
             if (story === "pricing") {
                 schedule(card, () => write(card, ".rs-margin-note [data-story-status]", "Margin contoh terhitung"), 850);
             }
             if (story === "wallet") {
                 schedule(card, () => write(card, ".rs-wallet-status", "Transaksi tersalur"), 1000);
-                repeat(card, () => {
-                    const status = card.querySelector(".rs-wallet-status");
-                    if (status) status.textContent = status.textContent === "Transaksi tersalur" ? "Siap disalurkan" : "Transaksi tersalur";
-                }, 4200);
             }
             if (story === "api") {
                 schedule(card, () => write(card, ".rs-api-response", "status: REQUEST"), 450);
                 schedule(card, () => write(card, ".rs-api-response", "status: SUCCESS"), 1350);
             }
+            startRepeatingMotion(card, story);
         };
         const activate = (card) => {
             card.classList.add("rs-story-in-viewport");
@@ -197,7 +191,7 @@
                 if (entry.isIntersecting) activate(entry.target);
                 else stop(entry.target);
             });
-        }, { rootMargin: "0px 0px -12%", threshold: 0.18 });
+        }, { rootMargin: "0px", threshold: 0.08 });
         cards.forEach((card) => observer.observe(card));
     };
 
