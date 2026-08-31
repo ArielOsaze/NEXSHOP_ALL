@@ -17,6 +17,10 @@ assert.match(script, /getResponsiveImageUrl\(coverUrl/,
     "cover musik harus memakai transformasi ukuran");
 assert.match(script, /getResponsiveImageSrcset\(mobileImage/,
     "gambar promo mobile harus memakai transformasi ukuran");
+assert.match(script, /Number\(height\) > 0 \? "cover" : "contain"/,
+    "transformasi desktop tidak boleh memotong banner rasio lebar");
+assert.match(script, /getResponsiveImageUrl\(desktopImage, 1280, 0/,
+    "banner desktop harus mempertahankan rasio asset asli");
 
 // Only the first visible promo is eligible for initial loading. Other slides
 // remain lazy and continue to hydrate when selected/near the carousel.

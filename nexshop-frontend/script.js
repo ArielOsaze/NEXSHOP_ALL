@@ -32,7 +32,7 @@ function getResponsiveImageUrl(url, width, height, quality) {
         if (Number.isFinite(Number(width)) && Number(width) > 0) source.searchParams.set("width", String(Math.round(width)));
         if (Number.isFinite(Number(height)) && Number(height) > 0) source.searchParams.set("height", String(Math.round(height)));
         if (Number.isFinite(Number(quality)) && Number(quality) > 0) source.searchParams.set("quality", String(Math.round(quality)));
-        source.searchParams.set("resize", "cover");
+        source.searchParams.set("resize", Number(height) > 0 ? "cover" : "contain");
         source.searchParams.set("format", "webp");
         return source.toString();
     } catch (_) {
@@ -43,8 +43,9 @@ function getResponsiveImageUrl(url, width, height, quality) {
 function getResponsiveImageSrcset(url, width, height, quality) {
     const sizes = [160, 320, 480, 640, 768, 960, 1280].filter((candidate) => candidate <= Number(width) * 2 || candidate === 1280);
     return sizes.map((candidate) => {
-        const ratio = Number(width) > 0 && Number(height) > 0 ? Number(height) / Number(width) : 1;
-        return `${getResponsiveImageUrl(url, candidate, Math.round(candidate * ratio), quality)} ${candidate}w`;
+        const hasAspect = Number(width) > 0 && Number(height) > 0;
+        const ratio = hasAspect ? Number(height) / Number(width) : 0;
+        return `${getResponsiveImageUrl(url, candidate, hasAspect ? Math.round(candidate * ratio) : 0, quality)} ${candidate}w`;
     }).join(", ");
 }
 
@@ -502,7 +503,7 @@ function renderPromoCarousel() {
         const pictureMarkup = (alt, className, isFirstSlide) => `
             <picture>
                     <source media="(max-width: 768px)" ${isFirstSlide ? `srcset="${getResponsiveImageSrcset(mobileImage, 768, 432, 76)}"` : `data-srcset="${getResponsiveImageSrcset(mobileImage, 768, 432, 76)}"`}>
-                    <img ${isFirstSlide ? `src="${getResponsiveImageUrl(desktopImage, 1280, 720, 76)}" srcset="${getResponsiveImageSrcset(desktopImage, 1280, 720, 76)}" fetchpriority="high"` : `data-src="${getResponsiveImageUrl(desktopImage, 1280, 720, 76)}"`} data-promo-image alt="${alt}" class="${className}" loading="${isFirstSlide ? 'eager' : 'lazy'}" decoding="async">
+                    <img ${isFirstSlide ? `src="${getResponsiveImageUrl(desktopImage, 1280, 0, 76)}" srcset="${getResponsiveImageSrcset(desktopImage, 1280, 0, 76)}" fetchpriority="high"` : `data-src="${getResponsiveImageUrl(desktopImage, 1280, 0, 76)}"`} data-promo-image alt="${alt}" class="${className}" loading="${isFirstSlide ? 'eager' : 'lazy'}" decoding="async">
                 </picture>
             `;
         if (slide.full_image) {
