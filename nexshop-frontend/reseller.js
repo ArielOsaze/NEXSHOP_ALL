@@ -299,8 +299,83 @@
         });
     };
 
+    const initHeroCommandCenter = () => {
+        const visual = document.querySelector(".rs-hero-visual");
+        const flow = document.querySelector(".rs-command-flow");
+        const balance = document.querySelector("[data-hero-balance]");
+        if (!visual || !flow || !balance || reducedMotion.matches) return;
+        const steps = [...flow.querySelectorAll("span")];
+        let timer = null;
+        let index = 0;
+        const stop = () => { if (timer) window.clearInterval(timer); timer = null; visual.classList.remove("rs-command-in-viewport"); };
+        const tick = () => {
+            steps.forEach((step, stepIndex) => step.classList.toggle("is-current", stepIndex === index));
+            balance.textContent = index === 2 ? "Rp1.300.000" : "Rp1.250.000";
+            index = (index + 1) % steps.length;
+        };
+        const start = () => { if (timer) return; visual.classList.add("rs-command-in-viewport"); tick(); timer = window.setInterval(tick, 2200); };
+        if (supportsObserver) {
+            const observer = new IntersectionObserver(([entry]) => entry.isIntersecting ? start() : stop(), { threshold: 0.2 });
+            observer.observe(visual);
+        } else start();
+    };
+
+    const initUniverseMotion = () => {
+        const stage = document.querySelector("[data-universe-stage]");
+        const nodes = [...document.querySelectorAll(".rs-universe-node")];
+        if (!stage || !nodes.length) return;
+        let timer = null;
+        let index = 0;
+        const stop = () => { if (timer) window.clearInterval(timer); timer = null; stage.classList.remove("rs-universe-in-viewport"); };
+        const tick = () => { nodes.forEach((node, nodeIndex) => node.classList.toggle("is-active", nodeIndex === index)); index = (index + 1) % nodes.length; };
+        const start = () => {
+            stage.classList.add("rs-universe-in-viewport");
+            if (reducedMotion.matches) { nodes.forEach((node) => node.classList.add("is-active")); return; }
+            if (timer) return; tick(); timer = window.setInterval(tick, 1800);
+        };
+        if (reducedMotion.matches || !supportsObserver) start();
+        else { const observer = new IntersectionObserver(([entry]) => entry.isIntersecting ? start() : stop(), { threshold: 0.18 }); observer.observe(stage); }
+    };
+
+    const initPartnerSimulator = () => {
+        const shell = document.querySelector(".rs-simulator-shell");
+        if (!shell) return;
+        const product = shell.querySelector("[data-simulator-product]");
+        const target = shell.querySelector("[data-simulator-target]");
+        const price = shell.querySelector("[data-simulator-price]");
+        const status = shell.querySelector("[data-simulator-status]");
+        const icon = shell.querySelector(".rs-simulator-icon i");
+        const data = {
+            "Pulsa": { product: "Pulsa Telkomsel 50.000", target: "Tujuan: 08••••••21", price: "Rp50.850", icon: "fa-mobile-screen-button" },
+            "PLN": { product: "Token PLN 100.000", target: "Meter: 5123••••890", price: "Rp101.200", icon: "fa-plug" },
+            "E-wallet": { product: "DANA Top Up 100.000", target: "Tujuan: 08••••••21", price: "Rp99.500", icon: "fa-wallet" },
+            "Game": { product: "ML Diamond 86", target: "User ID: 1234••••", price: "Rp21.340", icon: "fa-gamepad" }
+        };
+        let pending = null;
+        const setCategory = (category) => {
+            const item = data[category] || data.Pulsa;
+            shell.querySelectorAll("[data-simulator-category]").forEach((button) => {
+                const active = button.dataset.simulatorCategory === category;
+                button.classList.toggle("is-active", active);
+                button.setAttribute("aria-selected", String(active));
+            });
+            product.textContent = item.product;
+            target.textContent = item.target;
+            price.textContent = item.price;
+            if (icon) icon.className = `fa-solid ${item.icon}`;
+            status.innerHTML = '<i class="fa-solid fa-spinner" aria-hidden="true"></i> Mengirim contoh transaksi';
+            shell.classList.add("is-processing");
+            if (pending) window.clearTimeout(pending);
+            pending = window.setTimeout(() => { status.innerHTML = '<i class="fa-solid fa-circle-check" aria-hidden="true"></i> Transaksi berhasil'; shell.classList.remove("is-processing"); }, reducedMotion.matches ? 0 : 650);
+        };
+        shell.querySelectorAll("[data-simulator-category]").forEach((button) => button.addEventListener("click", () => setCategory(button.dataset.simulatorCategory)));
+    };
+
     initMotion();
     initShowcaseStories();
+    initHeroCommandCenter();
+    initUniverseMotion();
+    initPartnerSimulator();
     initHeroTilt();
     initMenu();
     initAnchors();
