@@ -1087,10 +1087,20 @@ body.rs-portal-page::after {
     overflow: hidden;
 }
 
+.rs-portal-page .nexshop-cookie-banner {
+    pointer-events: none;
+}
+
+.rs-portal-page .nexshop-cookie-banner .nexshop-cookie-actions,
+.rs-portal-page .nexshop-cookie-banner .nexshop-cookie-actions button {
+    pointer-events: auto;
+}
+
 .rs-portal-page .tv-table-header-bar {
     padding: 20px;
     border-bottom-color: var(--portal-line) !important;
 }
+
 
 .rs-portal-page .tv-table-header-bar h3,
 .rs-portal-page .tv-table-header-bar h2,

@@ -2826,25 +2826,36 @@
             }
 
             let html = `
-                <button type="button" class="tv-operator-pill ${activeOperator === 'all' ? 'active' : ''}" onclick="selectOperator('all', this)">
+                <button type="button" class="tv-operator-pill ${activeOperator === 'all' ? 'active' : ''}" data-operator-index="0">
                         <img src="/images/nexshop-logo.webp" class="tv-operator-thumb" alt="Semua">
                     <span style="flex:1;">Semua Operator</span>
                     <span style="font-size:0.7rem;opacity:0.7;">(${filteredByCat.length})</span>
                 </button>
             `;
 
-            operators.forEach(op => {
+            operators.forEach((op, index) => {
                 const isActive = activeOperator === op.name ? 'active' : '';
                 html += `
-                    <button type="button" class="tv-operator-pill ${isActive}" onclick="selectOperator('${escapeHtml(op.name)}', this)">
-                                <img src="${op.logo}" class="tv-operator-thumb" alt="${op.name}" onerror="this.src='/images/nexshop-logo.webp'">
-                        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${op.name}</span>
+                    <button type="button" class="tv-operator-pill ${isActive}" data-operator-index="${index + 1}">
+                                <img src="${escapeHtml(op.logo)}" class="tv-operator-thumb" alt="${escapeHtml(op.name)}" data-operator-image>
+                        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(op.name)}</span>
                         <span style="font-size:0.7rem;opacity:0.7;">(${op.count})</span>
                     </button>
                 `;
             });
 
             gridBox.innerHTML = html;
+            gridBox.querySelectorAll("[data-operator-index]").forEach((button) => {
+                const index = Number(button.dataset.operatorIndex);
+                const operatorName = index === 0 ? "all" : operators[index - 1]?.name;
+                if (operatorName) button.addEventListener("click", () => selectOperator(operatorName, button));
+            });
+            gridBox.querySelectorAll("img[data-operator-image]").forEach((image) => {
+                image.addEventListener("error", () => {
+                    image.src = "/images/nexshop-logo.webp";
+                    image.removeAttribute("data-operator-image");
+                }, { once: true });
+            });
         }
 
         function selectProductCategory(catName, btnEl) {
@@ -2893,12 +2904,17 @@
             });
 
             if (detectedVariants.size > 1) {
-                let html = `<button type="button" class="tv-subvariant-btn ${activeSubvariant === 'all' ? 'active' : ''}" onclick="selectSubvariant('all', this)">Semua Varian</button>`;
-                detectedVariants.forEach(v => {
-                    html += `<button type="button" class="tv-subvariant-btn ${activeSubvariant === v ? 'active' : ''}" onclick="selectSubvariant('${v}', this)">${v}</button>`;
+                let html = `<button type="button" class="tv-subvariant-btn ${activeSubvariant === 'all' ? 'active' : ''}" data-subvariant-index="0">Semua Varian</button>`;
+                Array.from(detectedVariants).forEach((variant, index) => {
+                    html += `<button type="button" class="tv-subvariant-btn ${activeSubvariant === variant ? 'active' : ''}" data-subvariant-index="${index + 1}">${escapeHtml(variant)}</button>`;
                 });
                 subBar.innerHTML = html;
                 subBar.style.display = "flex";
+                subBar.querySelectorAll("[data-subvariant-index]").forEach((button) => {
+                    const index = Number(button.dataset.subvariantIndex);
+                    const variant = index === 0 ? "all" : Array.from(detectedVariants)[index - 1];
+                    if (variant) button.addEventListener("click", () => selectSubvariant(variant, button));
+                });
             } else {
                 subBar.style.display = "none";
             }
@@ -2975,12 +2991,12 @@
                 return;
             }
 
-            gridView.innerHTML = products.map(p => {
+            gridView.innerHTML = products.map((p, index) => {
                 const photo = getProductPhoto(p);
                 return `
                     <div class="tv-product-card-item">
                         <div class="tv-prod-photo-wrap">
-                            <img src="${photo}" class="tv-product-photo" alt="${p.nama}" onerror="this.src='/images/nexshop-logo.webp'">
+                            <img src="${escapeHtml(photo)}" class="tv-product-photo" alt="${escapeHtml(p.nama)}" data-product-image>
                             <div style="min-width:0;flex:1;">
                                 <div style="display:flex;align-items:center;justify-content:space-between;">
                                     <code style="font-weight:800;color:#60a5fa;font-size:0.8rem;">${p.kode_produk}</code>
@@ -3002,11 +3018,11 @@
                                 <span style="font-size:1.15rem;font-weight:900;color:#075fd3;">Rp ${(p.harga_modal_reseller || 0).toLocaleString("id-ID")}</span>
                             </div>
                             <div class="tv-product-actions">
-                                <button type="button" class="tv-btn-deposit-action tv-btn-buy" onclick="openPortalPurchase('${encodeURIComponent(p.kode_produk)}')">
+                                <button type="button" class="tv-btn-deposit-action tv-btn-buy" data-product-index="${index}" data-product-action="buy">
                                     <i class="fa-solid fa-cart-shopping" aria-hidden="true"></i>
                                     <span>Beli</span>
                                 </button>
-                                <button type="button" class="tv-btn-deposit-action" aria-label="Salin SKU ${escapeHtml(p.kode_produk)}" onclick="copyPortalSku('${encodeURIComponent(p.kode_produk)}')">
+                                <button type="button" class="tv-btn-deposit-action" aria-label="Salin SKU ${escapeHtml(p.kode_produk)}" data-product-index="${index}" data-product-action="copy">
                                     <i class="fa-regular fa-copy" aria-hidden="true"></i>
                                 </button>
                             </div>
@@ -3014,6 +3030,21 @@
                     </div>
                 `;
             }).join("");
+            gridView.querySelectorAll("[data-product-action]").forEach((button) => {
+                const product = products[Number(button.dataset.productIndex)];
+                if (!product) return;
+                if (button.dataset.productAction === "buy") {
+                    button.addEventListener("click", () => openPortalPurchase(encodeURIComponent(product.kode_produk)));
+                } else {
+                    button.addEventListener("click", () => copyPortalSku(encodeURIComponent(product.kode_produk)));
+                }
+            });
+            gridView.querySelectorAll("img[data-product-image]").forEach((image) => {
+                image.addEventListener("error", () => {
+                    image.src = "/images/nexshop-logo.webp";
+                    image.removeAttribute("data-product-image");
+                }, { once: true });
+            });
         }
 
         function renderTableRows(products) {
@@ -3025,11 +3056,11 @@
                 return;
             }
 
-            tbody.innerHTML = products.map(p => {
+            tbody.innerHTML = products.map((p, index) => {
                 const photo = getProductPhoto(p);
                 return `
                     <tr>
-                            <td><img src="${photo}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;background:#0f172a;" onerror="this.src='/images/nexshop-logo.webp'"></td>
+                            <td><img src="${escapeHtml(photo)}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;background:#0f172a;" data-table-product-image></td>
                         <td><code style="font-weight:700;color:#60a5fa;">${p.kode_produk}</code></td>
                         <td style="font-weight:700;color:#ffffff;">${p.nama}</td>
                         <td><span class="tv-stat-nominal-pill">${p.operator || p.kategori}</span></td>
@@ -3040,13 +3071,23 @@
                             : '<span class="tv-badge-status">Harga umum</span>'}</td>
                         <td><span class="tv-badge-status tv-badge-sukses">Tersedia</span></td>
                         <td>
-                            <button type="button" class="tv-btn-deposit-action tv-btn-buy" onclick="openPortalPurchase('${encodeURIComponent(p.kode_produk)}')">
+                            <button type="button" class="tv-btn-deposit-action tv-btn-buy" data-product-index="${index}" data-product-action="buy">
                                 Beli
                             </button>
                         </td>
                     </tr>
                 `;
             }).join("");
+            tbody.querySelectorAll("[data-product-action]").forEach((button) => {
+                const product = products[Number(button.dataset.productIndex)];
+                if (product) button.addEventListener("click", () => openPortalPurchase(encodeURIComponent(product.kode_produk)));
+            });
+            tbody.querySelectorAll("img[data-table-product-image]").forEach((image) => {
+                image.addEventListener("error", () => {
+                    image.src = "/images/nexshop-logo.webp";
+                    image.removeAttribute("data-table-product-image");
+                }, { once: true });
+            });
         }
 
         // ── Download Excel / CSV ──
@@ -3717,8 +3758,10 @@
             <div class="tv-section-card" style="color:#b42318;font-size:0.86rem;">
                 <i class="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
                 Gagal memuat tingkatan reseller.
-                <button type="button" class="tv-btn-deposit-action" style="margin-top:0.75rem;" onclick="loadTiers()">Coba lagi</button>
+                <button type="button" class="tv-btn-deposit-action" style="margin-top:0.75rem;" data-tier-retry>Coba lagi</button>
             </div>`;
+                const retryButton = grid.querySelector("[data-tier-retry]");
+                if (retryButton) retryButton.addEventListener("click", loadTiers);
             }
         }
 
@@ -3784,11 +3827,17 @@
                         <span>${escapeHtml(b.label)}</span>
                     </span>`;
                 }
-                return `<a href="javascript:void(0)" onclick="switchConsoleView('${b.view}')" class="tv-security-link-item">
+                return `<a href="#" data-security-view="${b.view}" class="tv-security-link-item">
                     <i class="${ikon}" style="font-size:0.85rem;color:${warna};" aria-hidden="true"></i>
                     <span>${escapeHtml(b.label)}</span>
                 </a>`;
             }).join("");
+            wrap.querySelectorAll("[data-security-view]").forEach((link) => {
+                link.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    switchConsoleView(link.dataset.securityView);
+                });
+            });
         }
 
         // ── Render Dynamic Chart From Real Data ──

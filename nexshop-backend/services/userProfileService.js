@@ -1,6 +1,6 @@
 const supabase = require("../config/db");
 
-const PROFILE_COLUMNS = "id, fullname, email, role, avatar_url, phone, phone_normalized, phone_verified_at, onboarding_completed, google_subject, auth_provider, is_blacklisted, security_pin_hash, avatar_updated_at";
+const PROFILE_COLUMNS = "id, fullname, email, role, avatar_url, phone, phone_normalized, phone_verified_at, onboarding_completed, google_subject, auth_provider, is_blacklisted, security_pin_hash, avatar_updated_at, account_scope";
 
 const { normalizePhoneNumber } = require("../utils/phoneNumber");
 
@@ -66,4 +66,36 @@ async function getCheckoutIdentity(userId) {
     };
 }
 
-module.exports = { PROFILE_COLUMNS, toPublicProfile, getUserProfile, getCheckoutIdentity, backfillLegacyPhone };
+async function getPortalCheckoutIdentity(userId) {
+    const user = await getUserProfile(userId);
+    if (!user) return { error: "USER_NOT_FOUND" };
+    if (user.is_blacklisted) return { error: "USER_BLOCKED" };
+    if (user.account_scope !== "portal_only") return { error: "PORTAL_ACCOUNT_REQUIRED" };
+
+    // Persetujuan Admin pada pengajuan KYC adalah boundary trust Portal.
+    // Nomor tujuan tetap dibaca server-side, bukan dari body browser.
+    const { data: application, error } = await supabase
+        .from("reseller_applications")
+        .select("fullname, whatsapp, status")
+        .eq("user_id", userId)
+        .eq("status", "approved")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+    if (error) throw error;
+
+    const phone = normalizePhoneNumber(application?.whatsapp || "");
+    if (!application || !phone || !user.fullname || !user.email) {
+        return { error: "PORTAL_CHECKOUT_IDENTITY_REQUIRED" };
+    }
+    return {
+        user,
+        identity: {
+            name: user.fullname,
+            email: user.email,
+            phone
+        }
+    };
+}
+
+module.exports = { PROFILE_COLUMNS, toPublicProfile, getUserProfile, getCheckoutIdentity, getPortalCheckoutIdentity, backfillLegacyPhone };

@@ -10,7 +10,7 @@ const { checkNickname } = require("../config/apigames");
 const { notify } = require("../config/notify");
 const { sendUserWhatsApp } = require("../services/userWhatsAppService");
 const { normalizePhoneNumber } = require("../utils/phoneNumber");
-const { getCheckoutIdentity } = require("../services/userProfileService");
+const { getCheckoutIdentity, getPortalCheckoutIdentity } = require("../services/userProfileService");
 const { sendTopupInvoiceEmail } = require("../config/mailer");
 const { sendTelegramNotification } = require("../config/telegram");
 const { sendWhatsAppNotification } = require("../config/whatsapp");
@@ -1708,9 +1708,15 @@ exports.create = async (req, res) => {
     try {
         let buyerName = "NexShop Customer";
         if (userId) {
-            const checkoutProfile = await getCheckoutIdentity(userId);
+            const isPortalSession = req.user?.auth_context === "reseller_portal" && Boolean(req.user?.portal_account_id);
+            const checkoutProfile = isPortalSession
+                ? await getPortalCheckoutIdentity(userId)
+                : await getCheckoutIdentity(userId);
             if (checkoutProfile.error === "PHONE_ONBOARDING_REQUIRED") {
                 return res.status(403).json({ code: "PHONE_ONBOARDING_REQUIRED", message: "Verifikasi nomor WhatsApp di profil terlebih dahulu sebelum checkout." });
+            }
+            if (checkoutProfile.error === "PORTAL_CHECKOUT_IDENTITY_REQUIRED") {
+                return res.status(403).json({ code: "PORTAL_CHECKOUT_IDENTITY_REQUIRED", message: "Nomor WhatsApp pada pengajuan Portal Reseller yang disetujui belum tersedia." });
             }
             if (checkoutProfile.error) return res.status(401).json({ message: "Sesi akun tidak valid." });
             recipient_email = checkoutProfile.identity.email;
