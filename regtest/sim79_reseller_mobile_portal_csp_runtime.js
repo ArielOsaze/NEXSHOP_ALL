@@ -48,7 +48,7 @@ function serve() {
     assert(chrome, "Chrome/Edge executable tidak ditemukan");
     const allHashes = [...inlineHashes(portalHtml, "script"), ...inlineHashes(portalHtml, "style")];
     assert(allHashes.length > 0, "portal harus memiliki hash CSP yang diaudit");
-    assert(allHashes.every((hash) => csp.includes(hash)), "RED: CSP belum mencakup inline script/style portal terbaru");
+    assert(allHashes.every((hash) => csp.includes(hash)), "RED: CSP belum mencakup inline script/style portal terbaru dengan hash terkutip");
 
     const server = await serve();
     const port = server.address().port;
