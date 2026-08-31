@@ -3,6 +3,8 @@ const supabase = require("../config/db");
 const walletService = require("../services/walletService");
 const tokovoucher = require("../config/tokovoucher");
 const { getResellerContext } = require("../services/resellerService");
+const { fetchAllRows } = require("../utils/supabasePaginate");
+const { filterSellablePortalProducts, formatPortalProduct } = require("../services/resellerCatalogService");
 // BUG FIX: hitungMarkupWajar TIDAK diekspor oleh utils/resellerPricing --
 // dia ada di utils/topupHelpers. Impor lama bikin nilainya undefined,
 // jadi tiap produk yang harga_jual-nya kosong/0 melempar
@@ -446,39 +448,34 @@ exports.getBalance = async (req, res) => {
 exports.getProducts = async (req, res) => {
     const userId = req.user.id;
     try {
-        const { data: products, error } = await supabase
-            .from("topup_products")
-            .select("kode_produk, nama, kategori, source_operator_name, harga_beli, harga_jual, butuh_server_id, is_active")
-            .eq("is_active", true)
-            .order("kategori", { ascending: true });
-
-        if (error) throw error;
+        const allRows = await fetchAllRows((from, to) =>
+            supabase
+                .from("topup_products")
+                .select("id, kode_produk, nama, kategori, source_operator_name, harga_beli, harga_jual, butuh_server_id, is_active, source_status, operator_logo, item_icon")
+                .eq("is_active", true)
+                .order("kategori", { ascending: true })
+                .order("harga_jual", { ascending: true })
+                .order("id", { ascending: true })
+                .range(from, to)
+        );
 
         const konteksReseller = await getResellerContext(userId);
-        // JANGAN mengarang diskon. Nilai lama `|| 3.5` bikin akun yang
-        // tier-nya 0% (atau yang konteks reseller-nya gagal dimuat) tetap
-        // dikirimi "harga reseller" berdiskon 3,5% yang tidak pernah
-        // disetujui admin -- angka di API jadi tidak cocok dengan yang
-        // benar-benar ditagih saat order.
+        if (String(req.user.reseller_status || "").toLowerCase() === "approved" && !konteksReseller.isReseller) {
+            return res.status(503).json({ success: false, code: "RESELLER_PRICING_UNAVAILABLE", message: "Tier reseller belum tersedia" });
+        }
         const discountPercent = Number(konteksReseller.discountPercent) || 0;
-
-        const formatted = (products || []).map(p => {
-            let basePrice = Number(p.harga_jual) || 0;
-            if (basePrice <= 0) {
-                basePrice = hitungMarkupWajar(p.harga_beli || 0, p.kategori, p.source_operator_name);
-            }
-            const { harga: resellerPrice, hemat } = hitungHargaReseller(basePrice, p.harga_beli || 0, discountPercent);
-
+        const formatted = filterSellablePortalProducts(allRows).map((product) => {
+            const portalProduct = formatPortalProduct(product, konteksReseller);
             return {
-                kode_produk: p.kode_produk,
-                nama: p.nama,
-                kategori: p.kategori,
-                operator: p.source_operator_name || p.kategori,
-                harga_normal: basePrice,
-                harga_reseller: resellerPrice,
+                kode_produk: portalProduct.kode_produk,
+                nama: portalProduct.nama,
+                kategori: portalProduct.kategori,
+                operator: portalProduct.operator,
+                harga_normal: portalProduct.harga_normal,
+                harga_reseller: portalProduct.harga_modal_reseller,
                 diskon_persen: discountPercent,
-                hemat: hemat,
-                butuh_server_id: !!p.butuh_server_id,
+                hemat: portalProduct.hemat,
+                butuh_server_id: portalProduct.butuh_server_id,
                 status: "ACTIVE"
             };
         });

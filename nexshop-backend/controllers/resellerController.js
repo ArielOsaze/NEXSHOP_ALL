@@ -6,6 +6,15 @@ const jwt = require("jsonwebtoken");
 const supabase = require("../config/db");
 const { notify } = require("../config/notify");
 const { getTiers, getTier, getResellerContext, invalidateTierCache, isMissingTableError } = require("../services/resellerService");
+const { fetchAllRows } = require("../utils/supabasePaginate");
+const {
+    PORTAL_PRODUCT_COLUMNS,
+    filterSellablePortalProducts,
+    formatPortalProduct,
+    filterPortalProducts,
+    paginatePortalProducts,
+    buildPortalFacets
+} = require("../services/resellerCatalogService");
 const { hitungHargaReseller } = require("../utils/resellerPricing");
 const { hitungMarkupWajar, cleanProductName } = require("../utils/topupHelpers");
 const { validateWebhookUrlShape, assertSafeOutboundUrl } = require("../utils/safeOutboundUrl");
@@ -1607,70 +1616,49 @@ exports.updatePortalSettings = async (req, res) => {
 exports.getPortalProducts = async (req, res) => {
     try {
         const konteksReseller = await getResellerContext(req.user.id);
-        const searchQuery = String(req.query.q || "").toLowerCase().trim();
-        const categoryFilter = String(req.query.kategori || "").trim();
-
-        let query = supabase
-            .from("topup_products")
-            .select("id, nama, kode_produk, kategori, source_operator_name, harga_beli, harga_jual, butuh_server_id, is_active, operator_logo, item_icon")
-            .eq("is_active", true)
-            .order("kategori")
-            .order("harga_jual")
-            .limit(1000);
-
-        if (categoryFilter && categoryFilter !== "all") {
-            query = query.ilike("kategori", `%${categoryFilter}%`);
+        // Portal approved tidak boleh diam-diam jatuh ke harga retail jika
+        // tier/account context gagal dibaca. Fail closed agar checkout juga aman.
+        if (String(req.user.reseller_status || "").toLowerCase() === "approved" && !konteksReseller.isReseller) {
+            return res.status(503).json({ code: "RESELLER_PRICING_UNAVAILABLE", message: "Tier reseller belum tersedia, katalog ditahan sementara" });
         }
 
-        const { data: products, error } = await query;
-        if (error) throw error;
-
-        const results = (products || []).map((p) => {
-            let hargaNormal = p.harga_jual;
-            if (!hargaNormal || hargaNormal === 0) {
-                hargaNormal = hitungMarkupWajar(p.harga_beli || 0, p.kategori, p.source_operator_name);
-            }
-
-            const rCalc = hitungHargaReseller(hargaNormal, p.harga_beli || 0, konteksReseller.discountPercent || 0);
-
-            return {
-                id: p.id,
-                kode_produk: p.kode_produk,
-                nama: cleanProductName(p.nama),
-                kategori: p.kategori,
-                operator: p.source_operator_name || p.kategori,
-                harga_normal: rCalc.harga_normal,
-                harga_modal_reseller: rCalc.harga,
-                diskon_persen: konteksReseller.discountPercent,
-                butuh_server_id: !!p.butuh_server_id,
-                status: "tersedia",
-                operator_logo: p.operator_logo,
-                item_icon: p.item_icon
-            };
+        const allRows = await fetchAllRows((from, to) =>
+            supabase
+                .from("topup_products")
+                .select(PORTAL_PRODUCT_COLUMNS)
+                .eq("is_active", true)
+                .order("kategori", { ascending: true })
+                .order("harga_jual", { ascending: true })
+                .order("id", { ascending: true })
+                .range(from, to)
+        );
+        const sellable = filterSellablePortalProducts(allRows);
+        const priced = sellable.map((product) => formatPortalProduct(product, konteksReseller));
+        const facets = buildPortalFacets(priced);
+        const filtered = filterPortalProducts(priced, {
+            q: req.query.q,
+            kategori: req.query.kategori,
+            operator: req.query.operator
+        });
+        const page = paginatePortalProducts(filtered, {
+            page: req.query.page,
+            limit: req.query.limit
         });
 
-        // Client search filter
-        const filtered = searchQuery
-            ? results.filter(
-                  (p) =>
-                      p.kode_produk.toLowerCase().includes(searchQuery) ||
-                      p.nama.toLowerCase().includes(searchQuery) ||
-                      p.operator.toLowerCase().includes(searchQuery)
-              )
-            : results;
-
-        // BUG FIX: dulu baris ini membaca `konteksReseller.tierName` --
-        // properti yang TIDAK PERNAH ada di objek hasil getResellerContext
-        // (bentuknya {isReseller, tier, discountPercent}). Nilainya selalu
-        // undefined, jadi portal selamanya menampilkan label generik
-        // "Reseller" alih-alih nama tier asli milik akun.
         res.json({
             is_reseller: konteksReseller.isReseller,
             tier: konteksReseller.tier ? konteksReseller.tier.name : null,
             tier_code: konteksReseller.tier ? konteksReseller.tier.code : null,
             discount_percent: Number(konteksReseller.discountPercent) || 0,
-            total_products: filtered.length,
-            products: filtered
+            total_products: page.total,
+            catalog_total_products: priced.length,
+            page: page.page,
+            limit: page.limit,
+            total_pages: page.total_pages,
+            has_more: page.has_more,
+            categories: facets.categories,
+            operators: facets.operators,
+            products: page.items
         });
     } catch (err) {
         console.error("getPortalProducts:", err.message);

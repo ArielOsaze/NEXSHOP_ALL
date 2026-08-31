@@ -67,7 +67,7 @@ async function getTiers({ activeOnly = true } = {}) {
 async function getTier(code) {
     if (!code) return null;
     const tiers = await getTiers({ activeOnly: false });
-    return tiers.find((t) => t.code === code) || null;
+    return tiers.find((t) => String(t.code || "").toLowerCase() === String(code).toLowerCase()) || null;
 }
 
 // Konteks harga buat SATU user. Selalu balik objek (gak pernah null) biar

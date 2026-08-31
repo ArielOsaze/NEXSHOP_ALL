@@ -1707,8 +1707,8 @@ exports.create = async (req, res) => {
 
     try {
         let buyerName = "NexShop Customer";
+        const isPortalSession = Boolean(userId && req.user?.auth_context === "reseller_portal" && req.user?.portal_account_id);
         if (userId) {
-            const isPortalSession = req.user?.auth_context === "reseller_portal" && Boolean(req.user?.portal_account_id);
             const checkoutProfile = isPortalSession
                 ? await getPortalCheckoutIdentity(userId)
                 : await getCheckoutIdentity(userId);
@@ -1779,6 +1779,9 @@ exports.create = async (req, res) => {
         // dihitung, jadi semua turunannya (subtotal, item iPaymu, potongan
         // promo) otomatis ikut harga reseller.
         const konteksReseller = await getResellerContext(userId);
+        if (isPortalSession && String(req.user?.reseller_status || "").toLowerCase() === "approved" && !konteksReseller.isReseller) {
+            return res.status(503).json({ code: "RESELLER_PRICING_UNAVAILABLE", message: "Tier reseller belum tersedia, checkout ditahan sementara" });
+        }
         let hargaNormal = product.harga_jual;
         let hematReseller = 0;
         if (konteksReseller.isReseller) {

@@ -1344,7 +1344,7 @@
         }
     </style>
 <link rel="stylesheet" href="/inline-styles.css?v=20260829-visual-regression-1">
-<link rel="stylesheet" href="/portal-reseller.css?v=20260830-portal-tier-notice-4">
+<link rel="stylesheet" href="/portal-reseller.css?v=20260831-catalog-pricing-1">
 <script defer src="/csp-legacy-handlers.js?v=20260829-visual-regression-1"></script>
 <script defer src="/portal-reseller-ui.js?v=20260829-portal-reseller-redesign-1"></script>
 </head>
@@ -1893,6 +1893,7 @@
                     </div>
 
                     <!-- 7. Product Cards Grid View -->
+                    <div id="tvProductCatalogProgress" class="tv-product-catalog-progress" aria-live="polite">Katalog akan dimuat saat tab dibuka.</div>
                     <div id="tvProductsGridView" class="tv-product-cards-grid">
                         <div data-csp-style="s4e223036c3bb3f">Memuat katalog produk dengan foto...</div>
                     </div>
@@ -2752,20 +2753,45 @@
         async function loadPortalProducts() {
             const token = getResellerToken();
             const gridView = document.getElementById("tvProductsGridView");
+            const progressEl = document.getElementById("tvProductCatalogProgress");
             if (!gridView) return;
 
             try {
-                const res = await fetch(`${API_BASE}/reseller/portal/products`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                });
-                const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.message || "Gagal memuat katalog produk");
-                allProducts = data.products || [];
+                const pageSize = 250;
+                const collected = new Map();
+                let page = 1;
+                let total = 0;
+                let hasMore = false;
+                if (progressEl) progressEl.textContent = "Menyiapkan katalog NexShop…";
 
+                do {
+                    const url = new URL(`${API_BASE}/reseller/portal/products`, window.location.origin);
+                    url.searchParams.set("page", String(page));
+                    url.searchParams.set("limit", String(pageSize));
+                    const res = await fetch(url.toString(), {
+                        headers: { Authorization: `Bearer ${token}` }
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) throw new Error(data.message || "Gagal memuat katalog produk");
+
+                    (data.products || []).forEach((product) => {
+                        const key = String(product.kode_produk || product.id || "");
+                        if (key && !collected.has(key)) collected.set(key, product);
+                    });
+                    total = Number(data.catalog_total_products ?? data.total_products ?? collected.size) || collected.size;
+                    hasMore = Boolean(data.has_more);
+                    if (progressEl) progressEl.textContent = `Memuat katalog NexShop… ${collected.size.toLocaleString("id-ID")} dari ${total.toLocaleString("id-ID")} produk`;
+                    page += 1;
+                    if (page > 1000) throw new Error("Pagination katalog tidak valid");
+                } while (hasMore);
+
+                allProducts = Array.from(collected.values());
+                if (progressEl) progressEl.textContent = `${allProducts.length.toLocaleString("id-ID")} produk NexShop tersedia`;
                 buildCategoryTabs();
                 buildOperatorGrid();
                 filterAndRenderProducts();
             } catch (e) {
+                if (progressEl) progressEl.textContent = "Katalog belum dapat dimuat";
                 gridView.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#ef4444;padding:2rem;">Gagal memuat produk: ${escapeHtml(e.message)}</div>`;
             }
         }

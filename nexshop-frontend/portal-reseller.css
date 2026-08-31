@@ -1188,6 +1188,14 @@ body.rs-portal-page::after {
     box-shadow: none !important;
 }
 
+.rs-portal-page .tv-product-catalog-progress {
+    min-height: 20px;
+    margin: 8px 0 10px;
+    color: var(--portal-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
 .rs-portal-page .tv-product-cards-grid {
     gap: 12px;
 }
