@@ -20,6 +20,34 @@ const API_BASE = (window.location.hostname === "localhost" || window.location.ho
 const THEME_STORAGE_KEY = "nexshop-public-theme";
 const PUBLIC_TOKEN_STORAGE_KEY = "nexshop-public-token";
 
+function getResponsiveImageUrl(url, width, height, quality) {
+    if (typeof url !== "string" || !url.trim()) return "";
+    try {
+        const source = new URL(url, window.location.origin);
+        const storageMarker = "/storage/v1/object/public/";
+        if (!source.hostname.endsWith(".supabase.co") || !source.pathname.includes(storageMarker)) {
+            return url;
+        }
+        source.pathname = source.pathname.replace(storageMarker, "/storage/v1/render/image/public/");
+        if (Number.isFinite(Number(width)) && Number(width) > 0) source.searchParams.set("width", String(Math.round(width)));
+        if (Number.isFinite(Number(height)) && Number(height) > 0) source.searchParams.set("height", String(Math.round(height)));
+        if (Number.isFinite(Number(quality)) && Number(quality) > 0) source.searchParams.set("quality", String(Math.round(quality)));
+        source.searchParams.set("resize", "cover");
+        source.searchParams.set("format", "webp");
+        return source.toString();
+    } catch (_) {
+        return url;
+    }
+}
+
+function getResponsiveImageSrcset(url, width, height, quality) {
+    const sizes = [320, 640, 1280].filter((candidate) => candidate <= Number(width) * 2 || candidate === 1280);
+    return sizes.map((candidate) => {
+        const ratio = Number(width) > 0 && Number(height) > 0 ? Number(height) / Number(width) : 1;
+        return `${getResponsiveImageUrl(url, candidate, Math.round(candidate * ratio), quality)} ${candidate}w`;
+    }).join(", ");
+}
+
 const PAYMENT_METHODS = [
     { id: "wallet", label: "NexShop Wallet", desc: "Bayar instan pakai Saldo Akun", icon: "fa-wallet" },
     { id: "qris", label: "QRIS", desc: "Scan dengan m-banking atau e-wallet", icon: "fa-qrcode" },
@@ -436,7 +464,6 @@ function watchPromoVisibility() {
     if (!section) return;
     const hydrateVisibleSlides = () => {
         hydratePromoSlide(promoIndex);
-        hydratePromoSlide((promoIndex + 1) % promoSlides.length);
     };
     if (!("IntersectionObserver" in window)) {
         hydrateVisibleSlides();
@@ -459,23 +486,23 @@ function renderPromoCarousel() {
     inner.innerHTML = promoSlides.map((slide, i) => {
         const desktopImage = slide.image_url || "";
         const mobileImage = slide.mobile_image_url || desktopImage;
-        const pictureMarkup = (alt, className) => `
+        const pictureMarkup = (alt, className, isFirstSlide) => `
             <picture>
-                <source media="(max-width: 768px)" data-srcset="${mobileImage}">
-                <img data-src="${desktopImage}" data-promo-image alt="${alt}" class="${className}" loading="lazy" decoding="async">
-            </picture>
-        `;
+                    <source media="(max-width: 768px)" ${isFirstSlide ? `srcset="${getResponsiveImageSrcset(mobileImage, 768, 432, 76)}"` : `data-srcset="${getResponsiveImageSrcset(mobileImage, 768, 432, 76)}"`}>
+                    <img ${isFirstSlide ? `src="${getResponsiveImageUrl(desktopImage, 1280, 720, 76)}" srcset="${getResponsiveImageSrcset(desktopImage, 1280, 720, 76)}" fetchpriority="high"` : `data-src="${getResponsiveImageUrl(desktopImage, 1280, 720, 76)}"`} data-promo-image alt="${alt}" class="${className}" loading="${isFirstSlide ? 'eager' : 'lazy'}" decoding="async">
+                </picture>
+            `;
         if (slide.full_image) {
             return `
                 <a href="${slide.cta_link || '#'}" class="min-w-full h-full shrink-0 relative block">
-                    ${pictureMarkup(slide.title, "absolute inset-0 w-full h-full object-cover")}
+                    ${pictureMarkup(slide.title, "absolute inset-0 w-full h-full object-cover", i === 0)}
                 </a>
             `;
         }
 
         return `
             <div class="min-w-full h-full shrink-0 relative flex items-center p-6 sm:p-12">
-                ${pictureMarkup("", "absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay")}
+                ${pictureMarkup("", "absolute inset-0 w-full h-full object-cover opacity-50 mix-blend-overlay", i === 0)}
                 <div class="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/80 to-transparent"></div>
                 <div class="relative z-10 max-w-lg">
                     ${slide.badge_text ? `<span class="inline-block px-3 py-1 bg-brand-indigo text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3">${escapeHtml(slide.badge_text)}</span>` : ''}
@@ -500,8 +527,6 @@ function goToPromoSlide(index) {
     if (promoSlides.length === 0) return;
     promoIndex = (index + promoSlides.length) % promoSlides.length;
     hydratePromoSlide(promoIndex);
-    hydratePromoSlide((promoIndex + 1) % promoSlides.length);
-
     const inner = document.getElementById("promoCarouselInner");
     if (inner) {
         inner.style.transform = `translateX(-${promoIndex * 100}%)`;
@@ -519,8 +544,11 @@ function goToPromoSlide(index) {
 
 function startPromoAutoplay() {
     if (promoSlides.length <= 1) return;
-    clearInterval(promoTimer);
-    promoTimer = setInterval(() => goToPromoSlide(promoIndex + 1), 5000);
+    clearTimeout(promoTimer);
+    promoTimer = setTimeout(() => {
+        goToPromoSlide(promoIndex + 1);
+        startPromoAutoplay();
+    }, 8000);
 }
 
 document.getElementById("promoPrev")?.addEventListener("click", () => {
@@ -2851,7 +2879,10 @@ async function loadStoreSettings() {
         }
         if (s.logo_url) {
             const logoEl = document.getElementById("storeLogoImg");
-            if (logoEl) logoEl.src = s.logo_url;
+            if (logoEl) {
+                logoEl.src = getResponsiveImageUrl(s.logo_url, 192, 192, 78);
+                logoEl.srcset = getResponsiveImageSrcset(s.logo_url, 192, 192, 78);
+            }
         }
         if (s.contact_whatsapp) {
             const cleanWa = s.contact_whatsapp.replace(/\D/g, "");
@@ -4856,6 +4887,23 @@ function loadSectionWhenNear(selector, loader) {
     observer.observe(section);
 }
 
+function scheduleNonCriticalHomepageWork() {
+    const schedule = (task, delay = 0) => {
+        const run = () => window.setTimeout(() => {
+            void runBackgroundTask(task).catch((error) => console.error("Deferred homepage task failed:", error));
+        }, delay);
+        if ("requestIdleCallback" in window) {
+            window.requestIdleCallback(run, { timeout: 2500 });
+        } else {
+            window.addEventListener("load", run, { once: true });
+        }
+    };
+    schedule(loadPromo, 1600);
+    schedule(loadStoreSettings, 600);
+    schedule(loadTrustStats, 600);
+    schedule(initMusicPlayer, 0);
+}
+
 function initDeferredHomepageData() {
     loadSectionWhenNear("#leaderboardSection", loadLeaderboard);
     loadSectionWhenNear("#topup", loadTopupProducts);
@@ -4880,24 +4928,21 @@ async function bootstrapApp() {
     checkForgotPasswordLink();
     refreshAccountUI();
 
-    // Data akun, trust bar, promo, dan musik memberi konteks di hero. Katalog,
-    // berita, testimoni, dan leaderboard dimuat saat section-nya mendekat.
+    // Data akun dan payment-return tetap berada di jalur startup. Media,
+    // settings, dan statistik sekunder dijadwalkan setelah shell siap.
     const refreshedUserPromise = refreshCurrentUserProfile();
     initNexBotChat();
     initDeferredHomepageData();
 
     const initialRequests = Promise.allSettled([
         refreshedUserPromise,
-        loadPromo(),
-        loadStoreSettings(),
-        loadTrustStats(),
-        checkPaymentReturn(),
-        initMusicPlayer()
+        checkPaymentReturn()
     ]);
 
     // Keep every visual animation intact, but expose the pre-rendered shell
     // immediately. Startup requests remain non-blocking in the background.
     hideAppLoader();
+    scheduleNonCriticalHomepageWork();
     initialRequests.finally(() => finishInitialLoading(true));
 
     refreshedUserPromise
@@ -5000,7 +5045,11 @@ async function initMusicPlayer() {
                     musicCoverImg.removeAttribute("src");
                     musicCoverImg.classList.remove("is-loaded");
                 };
-                if (coverUrl) musicCoverImg.src = coverUrl;
+                if (coverUrl) {
+                    musicCoverImg.srcset = getResponsiveImageSrcset(coverUrl, 640, 640, 76);
+                    musicCoverImg.sizes = "(max-width: 768px) 160px, 50vw";
+                    musicCoverImg.src = getResponsiveImageUrl(coverUrl, 640, 640, 76);
+                }
             }
 
             // asli, tetapi unduh hanya saat pengguna memang menekan Play.

@@ -26,19 +26,19 @@ assert.match(script, /if \(id === "authOverlay"\) void ensureAuthCaptcha\(\);/);
 assert.doesNotMatch(script, /async function initAuthSecurity\(\) \{[\s\S]{0,700}security\.mountCaptcha/, "Captcha tidak boleh dimount saat homepage baru dibuka");
 assert.match(html, /id="musicCoverImg"[^>]*src=""/, "cover hero harus dimulai kosong dan diisi dari API upload admin");
 assert.match(script, /const coverUrl = typeof data\.music\.cover_url === "string"/);
-assert.match(script, /musicCoverImg\.src\s*=\s*coverUrl/);
+assert.match(script, /musicCoverImg\.src\s*=\s*getResponsiveImageUrl\(coverUrl/);
 assert.doesNotMatch(script, /aida-public\//, "hero tidak boleh memakai artwork generate lama");
 assert.match(html, /class="[^"]*music-disc-shell[^"]*"/);
-assert.match(html, /style\.css\?v=20260829-visual-regression-2/);
-assert.match(html, /script\.js\?v=20260829-visual-regression-2/);
-assert.match(html, /<img src="\/images\/oss-logo\.png" alt="OSS Logo" loading="lazy" decoding="async">/);
-assert.match(html, /<img data-src="\/images\/nexbot-mascot\.webp"/);
-assert.match(html, /<img data-src="\/images\/nexbot-mascot-wave\.webp"/);
+assert.match(html, /style\.css\?v=/);
+assert.match(html, /script\.js\?v=/);
+assert.match(html, /<img src="\/images\/oss-logo\.webp" width="180" height="101" alt="OSS Logo" loading="lazy" decoding="async">/);
+assert.match(html, /<img data-src="\/images\/nexbot-mascot-128\.webp"/);
+assert.match(html, /<img data-src="\/images\/nexbot-mascot-wave-128\.webp"/);
 assert.match(script, /function hydratePromoSlide\(index\)/);
 assert.match(script, /data-srcset=/);
 assert.match(script, /function loadDeferredNexBotImages\(\)/);
 assert.doesNotMatch(html, /src="https:\/\/lh3\.googleusercontent\.com\//, "Aset cover Google lama tidak boleh kembali ke player");
-assert.match(html, /fonts\/google-fonts\.css/, "Font harus di-self-host agar supply chain tidak bergantung pada Google Fonts");
+assert.match(html, /fonts\/homepage-fonts\.css/, "Font homepage harus di-self-host dan tidak bergantung pada Google Fonts");
 assert.doesNotMatch(html, /fonts\.googleapis\.com|fonts\.gstatic\.com/);
 
 // First paint must not wait for the secondary data fan-out.

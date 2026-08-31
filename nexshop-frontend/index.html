@@ -7,6 +7,8 @@
 <meta name="description" content="Top up game murah dan instan di NexShop. Diamond MLBB, Free Fire, PUBG, Valorant, Game Pass, voucher digital, dan PPOB aman 24/7.">
 <link rel="canonical" href="https://nexshop.cloud/">
 <meta name="author" content="Ariel">
+<link rel="preconnect" href="https://cauklmkpjwsdwqoazqlx.supabase.co" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 
 <!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
@@ -67,8 +69,10 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/fonts/google-fonts.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha384-nRgPTkuX86pH8yjPJUAFuASXQSSl2/bBUiNV47vSYpKFxHJhbcrGnmlYpYJMeD7a" crossorigin="anonymous">
+<link rel="preload" href="/fonts/font-153fc85b70298bee.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/homepage-fonts.css?v=20260831-performance-1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" media="print" data-lazy-stylesheet integrity="sha384-nRgPTkuX86pH8yjPJUAFuASXQSSl2/bBUiNV47vSYpKFxHJhbcrGnmlYpYJMeD7a" crossorigin="anonymous">
+<script defer src="/lazy-styles.js?v=20260831-performance-1"></script>
 <script src="/theme-init.js?v=20260812-otp-security"></script>
 <script defer src="/clean-url.js?v=20260825"></script>
 <script defer src="/cookie-consent.js?v=20260825-no-float"></script>
@@ -138,7 +142,7 @@
         <div class="app-loader-logo-wrap">
             <span class="app-loader-orbit app-loader-orbit--one"></span>
             <span class="app-loader-orbit app-loader-orbit--two"></span>
-            <img class="app-loader-logo" src="/images/nexshop-logo.webp" alt="NexShop">
+            <img class="app-loader-logo" src="/images/nexshop-logo-192.webp" width="192" height="192" alt="NexShop">
         </div>
         <div class="app-loader-brand">Nex<span>Shop</span></div>
         <p class="app-loader-message" id="appLoaderMessage">Menyiapkan pengalaman gaming kamu...</p>
@@ -213,7 +217,7 @@
 <div class="flex items-center gap-2 sm:gap-3 group cursor-pointer shrink-0 nx-brand-lockup">
 <div class="nx-topup-brand-mark nx-brand-mark w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-indigo to-brand-cyan p-[1px] group-hover:rotate-90 transition-transform duration-500 shrink-0">
 <div class="w-full h-full bg-brand-light dark:bg-[var(--bg-void)] rounded-xl flex items-center justify-center">
-<img id="storeLogoImg" src="/images/nexshop-logo.webp" alt="NexShop" class="w-full h-full object-contain rounded-lg">
+<img id="storeLogoImg" src="/images/nexshop-logo-192.webp" width="192" height="192" alt="NexShop" class="w-full h-full object-contain rounded-lg">
 </div>
 </div>
 <span class="font-extrabold text-base sm:text-xl tracking-tighter text-gray-900 dark:text-white uppercase shrink-0 nx-brand-name" id="storeNameText">NexShop</span>
@@ -326,7 +330,7 @@ Cek Transaksi
     <div class="relative w-full h-full rounded-full animate-float-slow">
         <div id="musicDisc" class="music-disc-shell relative w-full h-full rounded-full flex items-center justify-center overflow-hidden group transition-transform duration-700 ease-linear">
     
-            <img id="musicCoverImg" class="music-cover-image" src="" alt="Cover lagu aktif" loading="eager" fetchpriority="high" decoding="async">
+            <img id="musicCoverImg" class="music-cover-image" src="" width="640" height="640" alt="Cover lagu aktif" loading="eager" fetchpriority="high" decoding="async">
             <div class="absolute inset-[10%] rounded-full border border-white/5"></div>
             <div class="absolute inset-[15%] rounded-full border border-white/5"></div>
             <div class="absolute inset-[20%] rounded-full border border-white/5"></div>
@@ -647,7 +651,7 @@ Cek Transaksi
             <!-- Brand -->
             <div>
                 <div class="nx-footer__brand-logo">
-                    <img src="/images/nexshop-logo.webp" alt="NexShop Logo" class="nx-footer__brand-icon"> NexShop
+                    <img src="/images/nexshop-logo-192.webp" width="192" height="192" alt="NexShop Logo" class="nx-footer__brand-icon"> NexShop
                 </div>
                 <p class="nx-footer__brand-desc">
                     Marketplace gaming digital terpercaya. Transaksi aman, proses cepat.
@@ -702,7 +706,7 @@ Cek Transaksi
                 </div>
                 
                 <div class="nx-footer__legal-oss">
-                    <img src="/images/oss-logo.png" alt="OSS Logo" loading="lazy" decoding="async">
+                    <img src="/images/oss-logo.webp" width="180" height="101" alt="OSS Logo" loading="lazy" decoding="async">
                     <span>Terdaftar melalui OSS</span>
                 </div>
 
@@ -1192,8 +1196,8 @@ Cek Transaksi
         <span class="nexbot-pet-sparks" aria-hidden="true"></span>
         <span class="nexbot-float-btn-icon">
             <span class="nexbot-mascot-frame-stack" aria-hidden="true">
-                <img data-src="/images/nexbot-mascot.webp" class="nexbot-mascot-image nexbot-mascot-image--float nexbot-mascot-frame--rest" alt="" aria-hidden="true" draggable="false">
-                <img data-src="/images/nexbot-mascot-wave.webp" class="nexbot-mascot-image nexbot-mascot-image--float nexbot-mascot-frame--wave" alt="" aria-hidden="true" draggable="false">
+                <img data-src="/images/nexbot-mascot-128.webp" width="128" height="128" class="nexbot-mascot-image nexbot-mascot-image--float nexbot-mascot-frame--rest" alt="" aria-hidden="true" draggable="false">
+                <img data-src="/images/nexbot-mascot-wave-128.webp" width="128" height="128" class="nexbot-mascot-image nexbot-mascot-image--float nexbot-mascot-frame--wave" alt="" aria-hidden="true" draggable="false">
             </span>
         </span>
     </button>
@@ -1201,7 +1205,7 @@ Cek Transaksi
     <div class="nexbot-window hidden" id="nexbotWindow">
         <div class="nexbot-header">
             <div class="nexbot-header-info">
-                <div class="nexbot-avatar"><img src="/images/nexbot-mascot.webp" class="nexbot-mascot-image" alt="" aria-hidden="true" draggable="false"></div>
+                <div class="nexbot-avatar"><img src="/images/nexbot-mascot-128.webp" width="128" height="128" class="nexbot-mascot-image" alt="" aria-hidden="true" draggable="false"></div>
                 <div>
                     <strong>NexBot <span class="nexbot-badge">Official</span></strong>
                     <div class="nexbot-status"><span class="nexbot-status-dot"></span> Online 24/7</div>
@@ -1213,7 +1217,7 @@ Cek Transaksi
         <div class="nexbot-body" id="nexbotBody">
             <div class="nexbot-msg nexbot-msg--bot">
                 <div class="nexbot-msg-meta">
-                    <span class="nexbot-msg-avatar" aria-hidden="true"><img src="/images/nexbot-mascot.webp" class="nexbot-mascot-image" alt="" aria-hidden="true" draggable="false"></span>
+                    <span class="nexbot-msg-avatar" aria-hidden="true"><img src="/images/nexbot-mascot-128.webp" width="128" height="128" class="nexbot-mascot-image" alt="" aria-hidden="true" draggable="false"></span>
                     <span class="nexbot-msg-name">NexBot</span>
                     <span class="nexbot-msg-time">Online</span>
                 </div>
@@ -1518,6 +1522,6 @@ Cek Transaksi
 <script src="/nexbot.js?v=20260825-production"></script>
 <script src="/auth-security.js?v=20260825"></script>
 <script src="/checkout-identity.js?v=20260830-checkout-identity-1"></script>
-<script src="/script.js?v=20260830-hof-titanium-rank2-2"></script>
+<script src="/script.js?v=20260831-performance-1"></script>
 </body>
 </html>
