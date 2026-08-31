@@ -48,6 +48,8 @@ assert.match(html, /<link[^>]*rel="preload"[^>]*font-153fc85b70298bee\.woff2[^>]
     "font inti homepage harus dipreload secara eksplisit");
 assert.match(html, /<link[^>]*as="font"[^>]*type="font\/woff2"[^>]*>/,
     "preload harus ditandai sebagai font WOFF2");
+assert.match(html, /<link[^>]*rel="preload"[^>]*href="\/api\/promo"[^>]*as="fetch"[^>]*crossorigin[^>]*>/,
+    "API promo harus bisa ditemukan sebelum bundle selesai dieksekusi");
 assert.doesNotMatch(html, /fonts\/google-fonts\.css/,
     "homepage tidak boleh memuat manifest semua halaman");
 
