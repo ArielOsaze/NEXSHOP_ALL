@@ -45,8 +45,8 @@
     <script defer src="/legal-modal.js?v=20260825"></script>
     <script defer src="/cookie-consent.js?v=20260825-no-float"></script>
     <link rel="stylesheet" href="/style.css?v=20260830-reseller-visual-2">
-    <link rel="stylesheet" href="/reseller.css?v=20260830-reseller-professional-3">
-    <script defer src="/reseller.js?v=20260829-reseller-motion-1"></script>
+    <link rel="stylesheet" href="/reseller.css?v=20260831-reseller-showcase-1">
+    <script defer src="/reseller.js?v=20260831-reseller-showcase-1"></script>
 </head>
 <body class="rs-page" data-nexbot="auto">
     <header class="rs-header">
@@ -118,18 +118,95 @@
             </div>
         </section>
 
-        <section class="rs-section rs-section-border" id="benefits" aria-labelledby="benefits-title">
+        <section class="rs-section rs-section-border rs-showcase-section" id="benefits" aria-labelledby="benefits-title">
             <div class="rs-container">
-                <div class="rs-section-heading">
-                    <p class="rs-kicker">Dibuat untuk bertumbuh</p>
-                    <h2 id="benefits-title">Semua fondasi bisnis reseller, tanpa kerumitan.</h2>
-                    <p>Gunakan jalur transaksi yang sesuai kebutuhan—langsung dari portal atau melalui integrasi API.</p>
+                <div class="rs-section-heading rs-showcase-heading">
+                    <p class="rs-kicker">Alur PPOB NexShop</p>
+                    <h2 id="benefits-title">Semua kebutuhan PPOB, dalam satu jalur transaksi.</h2>
+                    <p>Jual pulsa, token listrik, top up game, e-wallet, dan pembayaran tagihan dengan harga partner, saldo terpusat, serta integrasi API.</p>
                 </div>
-                <div class="rs-feature-grid">
-                    <article class="rs-feature-card"><span class="rs-feature-icon"><i class="fa-solid fa-tag" aria-hidden="true"></i></span><h3>Harga reseller otomatis</h3><p>Setelah disetujui, harga reseller melekat pada akun Portal Reseller dan diterapkan otomatis saat bertransaksi.</p></article>
-                    <article class="rs-feature-card"><span class="rs-feature-icon"><i class="fa-solid fa-layer-group" aria-hidden="true"></i></span><h3>Produk digital lengkap</h3><p>Jual top up game, e-wallet, pulsa, paket data, PLN, voucher, dan berbagai kebutuhan tagihan.</p></article>
-                    <article class="rs-feature-card"><span class="rs-feature-icon"><i class="fa-solid fa-code" aria-hidden="true"></i></span><h3>Siap diintegrasikan</h3><p>Kelola API Key, Secret Key, IP Whitelist, dan Webhook Relay dari Partner Portal terpisah.</p></article>
-                    <article class="rs-feature-card"><span class="rs-feature-icon"><i class="fa-solid fa-headset" aria-hidden="true"></i></span><h3>Jalur bantuan khusus</h3><p>Kendala transaksi reseller ditangani melalui jalur bantuan yang terhubung dengan data pendaftaranmu.</p></article>
+                <div class="rs-showcase-grid">
+                    <article class="rs-showcase-card rs-showcase-card--wide" data-showcase-story="transactions" aria-labelledby="showcase-transactions-title">
+                        <div class="rs-showcase-copy">
+                            <div class="rs-showcase-meta"><span>01</span><span class="rs-showcase-type">Partner Portal</span></div>
+                            <h3 id="showcase-transactions-title">Transaksi masuk, status langsung jelas.</h3>
+                            <p>Pantau pesanan, nominal, dan status produk digital dari satu portal.</p>
+                        </div>
+                        <div class="rs-story-visual rs-story-transactions" aria-label="Contoh dashboard transaksi reseller">
+                            <div class="rs-story-toolbar"><span class="rs-story-window-label"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Ringkasan transaksi</span><span class="rs-story-sample">Data contoh</span></div>
+                            <div class="rs-story-metric-row"><span><small>Total hari ini</small><strong data-story-metric>124</strong> transaksi</span><span class="rs-story-live"><i class="rs-story-loop" aria-hidden="true"></i> Live monitor</span></div>
+                            <ul class="rs-transaction-list">
+                                <li class="rs-transaction-row"><span class="rs-transaction-product"><i class="fa-solid fa-gem" aria-hidden="true"></i><span>ML Diamond 86<small>TOPUP GAME</small></span></span><span class="rs-transaction-status"><i aria-hidden="true"></i><b>Diproses</b></span></li>
+                                <li class="rs-transaction-row"><span class="rs-transaction-product"><i class="fa-solid fa-plug" aria-hidden="true"></i><span>Token PLN 100.000<small>PLN PRABAYAR</small></span></span><span class="rs-transaction-status"><i aria-hidden="true"></i><b>Diproses</b></span></li>
+                                <li class="rs-transaction-row"><span class="rs-transaction-product"><i class="fa-solid fa-mobile-screen-button" aria-hidden="true"></i><span>Pulsa Telkomsel 50.000<small>PULSA</small></span></span><span class="rs-transaction-status"><i aria-hidden="true"></i><b>Berhasil</b></span></li>
+                                <li class="rs-transaction-row"><span class="rs-transaction-product"><i class="fa-solid fa-wallet" aria-hidden="true"></i><span>DANA Top Up<small>E-WALLET</small></span></span><span class="rs-transaction-status"><i aria-hidden="true"></i><b>Berhasil</b></span></li>
+                            </ul>
+                        </div>
+                    </article>
+
+                    <article class="rs-showcase-card" data-showcase-story="bills" aria-labelledby="showcase-bills-title">
+                        <div class="rs-showcase-copy"><div class="rs-showcase-meta"><span>02</span><span class="rs-showcase-type">Tagihan</span></div><h3 id="showcase-bills-title">Bayar tagihan tanpa pindah platform.</h3><p>Layani token listrik dan pembayaran tagihan harian dengan alur yang ringkas.</p></div>
+                        <div class="rs-story-visual rs-story-bills" aria-label="Contoh alur tagihan PLN">
+                            <div class="rs-bill-head"><span class="rs-bill-brand"><i class="fa-solid fa-plug" aria-hidden="true"></i> PLN Prabayar</span><span class="rs-story-sample">Data contoh</span></div>
+                            <div class="rs-bill-number"><small>Nomor meter</small><strong>5123 •••• •••• 890</strong></div>
+                            <div class="rs-bill-amount"><span>Nominal token</span><strong>Rp100.000</strong></div>
+                            <div class="rs-bill-categories"><span class="is-selected">PLN</span><span>PDAM</span><span>BPJS</span></div>
+                            <div class="rs-bill-flow"><span class="rs-bill-flow-line" aria-hidden="true"></span><span class="rs-bill-step is-done"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i><b>Tagihan</b></span><span class="rs-bill-step is-done"><i class="fa-solid fa-credit-card" aria-hidden="true"></i><b>Bayar</b></span><span class="rs-bill-step rs-bill-result"><i class="fa-solid fa-receipt" aria-hidden="true"></i><b data-story-status>Pembayaran berhasil</b></span></div>
+                            <div class="rs-bill-receipt"><span><i class="fa-solid fa-circle-check" aria-hidden="true"></i> Receipt terbit</span><strong>Token •••• 8291</strong></div>
+                        </div>
+                    </article>
+
+                    <article class="rs-showcase-card" data-showcase-story="catalog" aria-labelledby="showcase-catalog-title">
+                        <div class="rs-showcase-copy"><div class="rs-showcase-meta"><span>03</span><span class="rs-showcase-type">Katalog harian</span></div><h3 id="showcase-catalog-title">Produk digital yang paling dicari.</h3><p>Dari isi pulsa hingga top up e-wallet, sediakan produk sehari-hari untuk pelangganmu.</p></div>
+                        <div class="rs-story-visual rs-story-catalog" aria-label="Contoh katalog pulsa data dan e-wallet">
+                            <div class="rs-story-toolbar"><span class="rs-story-window-label"><i class="fa-solid fa-grid-2" aria-hidden="true"></i> Pilih produk</span><span class="rs-story-sample">Data contoh</span></div>
+                            <div class="rs-catalog-grid">
+                                <div class="rs-catalog-tile rs-catalog-tile-telkomsel"><b>Telkomsel</b><small>Pulsa &amp; data</small></div>
+                                <div class="rs-catalog-tile rs-catalog-tile-xl"><b>XL</b><small>Pulsa &amp; data</small></div>
+                                <div class="rs-catalog-tile rs-catalog-tile-indosat"><b>Indosat</b><small>Pulsa &amp; data</small></div>
+                                <div class="rs-catalog-tile rs-catalog-tile-dana"><b>DANA</b><small>Top up</small></div>
+                                <div class="rs-catalog-tile rs-catalog-tile-gopay"><b>GoPay</b><small>Top up</small></div>
+                                <div class="rs-catalog-tile rs-catalog-tile-ovo is-active"><b>OVO</b><small class="rs-catalog-state" data-before="Pilih nominal" data-after="Berhasil dikirim">Pilih nominal</small></div>
+                            </div>
+                            <div class="rs-data-meter"><span><i aria-hidden="true"></i> Saldo produk siap disalurkan</span><b aria-hidden="true"><em class="rs-story-loop"></em></b></div>
+                        </div>
+                    </article>
+
+                    <article class="rs-showcase-card" data-showcase-story="pricing" aria-labelledby="showcase-pricing-title">
+                        <div class="rs-showcase-copy"><div class="rs-showcase-meta"><span>04</span><span class="rs-showcase-type">Harga tier</span></div><h3 id="showcase-pricing-title">Harga partner yang siap dijual ulang.</h3><p>Harga khusus diterapkan otomatis sesuai level akun partner.</p></div>
+                        <div class="rs-story-visual rs-story-pricing" aria-label="Contoh perbandingan harga publik dan harga partner">
+                            <div class="rs-price-banner"><i class="fa-solid fa-tag" aria-hidden="true"></i><span>Harga partner aktif</span><b>Gold</b></div>
+                            <div class="rs-price-list">
+                                <div class="rs-price-row"><span><b>Pulsa 50.000</b><small>Produk digital</small></span><span><s>Rp51.500</s><strong class="rs-story-loop">Rp50.850</strong></span></div>
+                                <div class="rs-price-row"><span><b>Token PLN 100.000</b><small>PLN prabayar</small></span><span><s>Rp102.000</s><strong>Rp101.200</strong></span></div>
+                                <div class="rs-price-row"><span><b>ML Diamond 86</b><small>Top up game</small></span><span><s>Rp22.000</s><strong>Rp21.340</strong></span></div>
+                            </div>
+                            <div class="rs-margin-note"><span><i class="fa-solid fa-arrow-trend-down" aria-hidden="true"></i> Harga tier diterapkan server</span><b data-story-status>Margin contoh terhitung</b></div>
+                        </div>
+                    </article>
+
+                    <article class="rs-showcase-card rs-showcase-card--wide" data-showcase-story="wallet" aria-labelledby="showcase-wallet-title">
+                        <div class="rs-showcase-copy"><div class="rs-showcase-meta"><span>05</span><span class="rs-showcase-type">Saldo &amp; biller</span></div><h3 id="showcase-wallet-title">Satu saldo untuk banyak layanan.</h3><p>Kelola saldo bisnis dan salurkan transaksi ke berbagai produk PPOB.</p></div>
+                        <div class="rs-story-visual rs-story-wallet" aria-label="Contoh jalur saldo ke layanan PPOB">
+                            <div class="rs-wallet-source"><small>Saldo Partner Portal</small><strong>Rp480.700</strong><span class="rs-wallet-status" data-story-status>Siap disalurkan</span></div>
+                            <div class="rs-wallet-network" aria-hidden="true"><span class="rs-wallet-line rs-wallet-line-1"></span><span class="rs-wallet-line rs-wallet-line-2"></span><span class="rs-wallet-line rs-wallet-line-3"></span><span class="rs-wallet-line rs-wallet-line-4"></span><span class="rs-wallet-flow rs-story-loop"></span><span class="rs-wallet-node rs-wallet-node-pulsa"><i class="fa-solid fa-mobile-screen-button"></i><b>Pulsa</b></span><span class="rs-wallet-node rs-wallet-node-pln"><i class="fa-solid fa-plug"></i><b>PLN</b></span><span class="rs-wallet-node rs-wallet-node-game"><i class="fa-solid fa-gamepad"></i><b>Game</b></span><span class="rs-wallet-node rs-wallet-node-ewallet"><i class="fa-solid fa-wallet"></i><b>E-wallet</b></span><span class="rs-wallet-node rs-wallet-node-bill"><i class="fa-solid fa-file-invoice"></i><b>Tagihan</b></span></div>
+                            <div class="rs-wallet-funding"><span><i class="fa-solid fa-qrcode" aria-hidden="true"></i> Top up QRIS</span><span><i class="fa-solid fa-building-columns" aria-hidden="true"></i> Virtual Account</span></div>
+                        </div>
+                    </article>
+
+                    <article class="rs-showcase-card" data-showcase-story="api" aria-labelledby="showcase-api-title">
+                        <div class="rs-showcase-copy"><div class="rs-showcase-meta"><span>06</span><span class="rs-showcase-type">Developer API</span></div><h3 id="showcase-api-title">Hubungkan sistemmu ke NexShop.</h3><p>Otomatiskan transaksi PPOB untuk website, aplikasi, atau sistem tokomu.</p></div>
+                        <div class="rs-story-visual rs-story-api" aria-label="Contoh alur request API dan webhook reseller">
+                            <div class="rs-api-flow-labels"><span>Website / Toko</span><span>API NexShop</span><span>Biller</span><span>Webhook</span></div>
+                            <div class="rs-api-route" aria-hidden="true"><span class="rs-api-route-line rs-api-route-line-1"></span><span class="rs-api-route-line rs-api-route-line-2"></span><span class="rs-api-route-line rs-api-route-line-3"></span><span class="rs-api-route-pulse rs-story-loop"></span><i class="rs-api-node rs-api-node-shop fa-solid fa-store"></i><i class="rs-api-node rs-api-node-api fa-solid fa-code"></i><i class="rs-api-node rs-api-node-biller fa-solid fa-server"></i><i class="rs-api-node rs-api-node-hook fa-solid fa-plug"></i></div>
+                            <pre class="rs-api-snippet"><code><span class="rs-api-method">POST</span> /api/v1/reseller/orders
+{ <b>"kode_produk"</b>: <em>"PLN50"</em>,
+  <b>"tujuan"</b>: <em>"5123••••890"</em>,
+  <b>"ref_id"</b>: <em>"TOKO-10003"</em> }
+<span class="rs-api-response">status: SUCCESS</span></code></pre>
+                            <div class="rs-api-tags"><span>API Key</span><span>IP Whitelist</span><span>Webhook</span></div>
+                        </div>
+                    </article>
                 </div>
             </div>
         </section>
@@ -163,15 +240,17 @@
                 <div class="rs-api-copy"><p class="rs-kicker">Untuk developer</p><h2 id="api-title">Integrasi tanpa menebak-nebak.</h2><p>Partner Portal menyediakan API Key, Secret Key, IP Whitelist, dan Webhook Relay. Detail kontrak tersedia di dokumentasi resmi.</p><a class="rs-text-link" href="/docs-reseller">Baca Dokumentasi API <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div>
                 <div class="rs-code-card" aria-label="Preview kode API dengan placeholder">
                     <div class="rs-code-header"><span><i class="fa-solid fa-terminal" aria-hidden="true"></i> API preview</span><span class="rs-code-dot">NexShop</span></div>
-                    <pre><code><span class="rs-code-method">POST</span> /api/v2/transaction/create
-<span class="rs-code-key">Authorization:</span> Bearer {API_KEY}
+                    <pre><code><span class="rs-code-method">POST</span> /api/v1/reseller/orders
+<span class="rs-code-key">X-NexShop-Api-Key:</span> {API_KEY}
 <span class="rs-code-key">X-NexShop-Secret:</span> {SECRET_KEY}
 
 {
-  <span class="rs-code-key">"product_code"</span>: <span class="rs-code-string">"PRODUCT_CODE"</span>,
-  <span class="rs-code-key">"target"</span>: <span class="rs-code-string">"TARGET_PLACEHOLDER"</span>,
-  <span class="rs-code-key">"ref_id"</span>: <span class="rs-code-string">"YOUR_REFERENCE_ID"</span>
-}</code></pre>
+  <span class="rs-code-key">"kode_produk"</span>: <span class="rs-code-string">"ML86"</span>,
+  <span class="rs-code-key">"tujuan"</span>: <span class="rs-code-string">"USER_ID_PELANGGAN"</span>,
+  <span class="rs-code-key">"ref_id"</span>: <span class="rs-code-string">"TOKO-REFERENCE-001"</span>
+}
+
+<span class="rs-code-status">webhook: SUCCESS</span></code></pre>
                 </div>
             </div>
         </section>

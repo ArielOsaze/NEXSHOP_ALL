@@ -34,8 +34,8 @@ body.reseller-docs-page main {
     padding: 0 !important;
 }
 
-body.reseller-docs-page .docs-section,
 body.reseller-docs-page .docs-card,
+body.reseller-docs-page .docs-quick-start,
 body.reseller-docs-page .docs-api-card,
 body.reseller-docs-page .docs-code-wrap,
 body.reseller-docs-page .docs-table-wrap {
@@ -97,6 +97,44 @@ body.reseller-docs-page th,
 body.reseller-docs-page td {
     color: #101828 !important;
     border-color: #d0d5dd !important;
+}
+
+body.reseller-docs-page .nx-footer {
+    margin-top: 6mm !important;
+    padding-top: 6mm !important;
+    padding-bottom: 0 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+}
+
+body.reseller-docs-page .nx-footer__grid {
+    grid-template-columns: 1.35fr 1fr 1fr !important;
+    gap: 8mm !important;
+    margin-bottom: 5mm !important;
+}
+
+body.reseller-docs-page .nx-footer__brand-desc,
+body.reseller-docs-page .nx-footer__link,
+body.reseller-docs-page .nx-footer__legal-name,
+body.reseller-docs-page .nx-footer__legal-ids,
+body.reseller-docs-page .nx-footer__legal-link,
+body.reseller-docs-page .nx-footer__bottom p {
+    font-size: 0.68rem !important;
+    line-height: 1.35 !important;
+}
+
+body.reseller-docs-page .nx-footer__heading {
+    margin-bottom: 3mm !important;
+    font-size: 0.68rem !important;
+}
+
+body.reseller-docs-page .nx-footer__link-list {
+    gap: 2mm !important;
+}
+
+body.reseller-docs-page .nx-footer__bottom {
+    padding-top: 4mm !important;
+    gap: 2mm !important;
 }
 
 @page {

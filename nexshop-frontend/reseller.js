@@ -35,7 +35,7 @@
         add(".rs-hero-visual", "rs-reveal-visual", 250);
 
         add(".rs-section-heading", "rs-reveal-heading", 0);
-        add(".rs-feature-card", "rs-reveal-card", 80, true);
+        add(".rs-showcase-card", "rs-reveal-card", 80, true);
         add(".rs-tier-card", "rs-reveal-card", 90, true);
         add(".rs-caption", "rs-reveal-caption", 160);
         add(".rs-step", "rs-reveal-step", 90, true);
@@ -66,6 +66,117 @@
         } else {
             document.querySelector(".rs-steps-grid")?.classList.add("rs-steps-progress");
         }
+    };
+
+    const initShowcaseStories = () => {
+        const cards = [...document.querySelectorAll(".rs-showcase-card[data-showcase-story]")];
+        if (!cards.length) return;
+
+        const timers = new WeakMap();
+        const write = (card, selector, value) => {
+            const element = card.querySelector(selector);
+            if (element) element.textContent = value;
+        };
+        const schedule = (card, callback, delay) => {
+            const pending = timers.get(card) || [];
+            const timer = window.setTimeout(callback, delay);
+            pending.push(timer);
+            timers.set(card, pending);
+        };
+        const repeat = (card, callback, delay) => {
+            const pending = timers.get(card) || [];
+            const timer = window.setInterval(callback, delay);
+            pending.push(timer);
+            timers.set(card, pending);
+        };
+        const stop = (card) => {
+            (timers.get(card) || []).forEach((timer) => {
+                window.clearTimeout(timer);
+                window.clearInterval(timer);
+            });
+            timers.delete(card);
+            card.classList.remove("rs-story-in-viewport");
+        };
+        const finalState = (card) => {
+            const story = card.dataset.showcaseStory;
+            card.classList.add("rs-story-is-active");
+            if (story === "transactions") {
+                card.querySelectorAll(".rs-transaction-status b").forEach((status) => { status.textContent = "Berhasil"; });
+                write(card, "[data-story-metric]", "125");
+            } else if (story === "bills") {
+                write(card, "[data-story-status]", "Pembayaran berhasil");
+            } else if (story === "catalog") {
+                write(card, ".rs-catalog-state", "Berhasil dikirim");
+            } else if (story === "pricing") {
+                write(card, ".rs-margin-note [data-story-status]", "Margin contoh terhitung");
+            } else if (story === "wallet") {
+                write(card, ".rs-wallet-status", "Transaksi tersalur");
+            } else if (story === "api") {
+                write(card, ".rs-api-response", "status: SUCCESS");
+            }
+        };
+        const play = (card) => {
+            if (card.dataset.storyStarted === "true") return;
+            card.dataset.storyStarted = "true";
+            card.classList.add("rs-story-is-active");
+            const story = card.dataset.showcaseStory;
+
+            if (story === "transactions") {
+                schedule(card, () => write(card, ".rs-transaction-status b", "Berhasil"), 700);
+                schedule(card, () => write(card, "[data-story-metric]", "125"), 1300);
+                repeat(card, () => {
+                    const statuses = [...card.querySelectorAll(".rs-transaction-status b")];
+                    const successFirst = card.dataset.storyBeat !== "success-first";
+                    statuses.forEach((status, index) => { status.textContent = (successFirst ? index % 2 === 0 : index % 2 !== 0) ? "Berhasil" : "Diproses"; });
+                    card.dataset.storyBeat = successFirst ? "success-first" : "success-second";
+                }, 3400);
+            }
+            if (story === "bills") {
+                schedule(card, () => card.querySelector(".rs-bill-result")?.classList.add("is-current"), 550);
+            }
+            if (story === "catalog") {
+                schedule(card, () => write(card, ".rs-catalog-state", "Berhasil dikirim"), 800);
+                repeat(card, () => {
+                    const state = card.querySelector(".rs-catalog-state");
+                    if (state) state.textContent = state.textContent === state.dataset.after ? state.dataset.before : state.dataset.after;
+                }, 4200);
+            }
+            if (story === "pricing") {
+                schedule(card, () => write(card, ".rs-margin-note [data-story-status]", "Margin contoh terhitung"), 850);
+            }
+            if (story === "wallet") {
+                schedule(card, () => write(card, ".rs-wallet-status", "Transaksi tersalur"), 1000);
+                repeat(card, () => {
+                    const status = card.querySelector(".rs-wallet-status");
+                    if (status) status.textContent = status.textContent === "Transaksi tersalur" ? "Siap disalurkan" : "Transaksi tersalur";
+                }, 4200);
+            }
+            if (story === "api") {
+                schedule(card, () => write(card, ".rs-api-response", "status: REQUEST"), 450);
+                schedule(card, () => write(card, ".rs-api-response", "status: SUCCESS"), 1350);
+            }
+        };
+        const activate = (card) => {
+            card.classList.add("rs-story-in-viewport");
+            if (reducedMotion.matches) finalState(card);
+            else play(card);
+        };
+
+        if (reducedMotion.matches || !supportsObserver) {
+            cards.forEach((card) => {
+                card.classList.add("rs-story-in-viewport");
+                finalState(card);
+            });
+            return;
+        }
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) activate(entry.target);
+                else stop(entry.target);
+            });
+        }, { rootMargin: "0px 0px -12%", threshold: 0.18 });
+        cards.forEach((card) => observer.observe(card));
     };
 
     const initHeroTilt = () => {
@@ -189,6 +300,7 @@
     };
 
     initMotion();
+    initShowcaseStories();
     initHeroTilt();
     initMenu();
     initAnchors();

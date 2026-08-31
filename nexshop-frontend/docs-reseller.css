@@ -348,6 +348,29 @@ body.reseller-docs-page::after {
     background: linear-gradient(135deg, #effcff, #f3f8ff) !important;
 }
 
+.reseller-docs-page .docs-quick-start {
+    border-color: #b8e8ee !important;
+    background: linear-gradient(135deg, #fbfeff, #f3f8ff) !important;
+    box-shadow: 0 18px 42px rgba(23, 95, 132, 0.08);
+}
+
+.reseller-docs-page .docs-quick-start h3 i {
+    margin-right: 8px;
+    color: var(--docs-cyan);
+}
+
+.reseller-docs-page .docs-quick-start-note {
+    padding: 12px 14px;
+    border-left: 3px solid var(--docs-cyan);
+    background: #effcff;
+}
+
+@media (max-width: 640px) {
+    .reseller-docs-page .docs-quick-start-note {
+        padding: 10px 11px;
+    }
+}
+
 @media (max-width: 900px) {
     .reseller-docs-page > header,
     .reseller-docs-page .docs-layout {

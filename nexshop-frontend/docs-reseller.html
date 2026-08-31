@@ -795,8 +795,8 @@
         }
     </style>
 <link rel="stylesheet" href="/inline-styles.css?v=20260829-visual-regression-1">
-<link rel="stylesheet" href="/docs-reseller.css?v=20260830-reseller-theme-1">
-<link rel="stylesheet" media="print" href="/docs-reseller-print.css?v=20260830-pdf-1">
+<link rel="stylesheet" href="/docs-reseller.css?v=20260831-api-quickstart-1">
+<link rel="stylesheet" media="print" href="/docs-reseller-print.css?v=20260831-api-quickstart-1">
 <script defer src="/csp-legacy-handlers.js?v=20260829-visual-regression-1"></script>
 </head>
 
@@ -1245,6 +1245,26 @@
                 <p>
                     Jika Anda ingin membangun website toko topup atau bot jualan sendiri, berikut adalah arsitektur integrasi standar yang direkomendasikan:
                 </p>
+
+                <div class="docs-card docs-quick-start">
+                    <h3><i class="fa-solid fa-rocket" aria-hidden="true"></i> Quick start: satu transaksi PPOB</h3>
+                    <p>Mulai dari backend toko: uji kredensial lewat saldo, ambil katalog, lalu kirim satu order dengan <span class="docs-code">ref_id</span> yang tetap sama saat retry.</p>
+                    <div class="docs-code-block">
+                        <div class="docs-code-header"><span>1. Cek saldo</span><span>GET /api/v1/reseller/balance</span></div>
+                        <pre class="docs-code-content"><code>curl https://nexshop.cloud/api/v1/reseller/balance \
+  -H <span class="string">"X-NexShop-Api-Key: $NEXSHOP_API_KEY"</span> \
+  -H <span class="string">"X-NexShop-Secret: $NEXSHOP_SECRET_KEY"</span></code></pre>
+                    </div>
+                    <div class="docs-code-block">
+                        <div class="docs-code-header"><span>2. Buat order token PLN</span><span>POST /api/v1/reseller/orders</span></div>
+                        <pre class="docs-code-content"><code>{
+  <span class="property">"kode_produk"</span>: <span class="string">"PLN50"</span>,
+  <span class="property">"tujuan"</span>: <span class="string">"51234567890"</span>,
+  <span class="property">"ref_id"</span>: <span class="string">"TOKO-10003"</span>
+}</code></pre>
+                    </div>
+                    <p class="docs-quick-start-note"><strong>Alur status:</strong> order dapat berawal dari <span class="docs-code">PROCESSING</span>, lalu menjadi <span class="docs-code">SUCCESS</span> atau <span class="docs-code">FAILED</span>. Terima perubahan melalui webhook dan verifikasi <span class="docs-code">X-NexShop-Signature</span> sebagai HMAC SHA-256 sebelum membalas HTTP 200.</p>
+                </div>
 
                 <div class="docs-card">
                     <h3><i class="fa-solid fa-diagram-project" aria-hidden="true"></i> Siklus Alur Transaksi Toko Anda</h3>
