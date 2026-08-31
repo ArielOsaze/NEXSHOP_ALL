@@ -17,6 +17,15 @@
     --rs-radius-lg: 24px;
     --rs-shadow-soft: 0 16px 40px rgba(16, 24, 40, 0.07);
     --rs-container: 1180px;
+
+    /* Design tokens shared with the read-only API documentation PDF. */
+    --rs-pdf-navy: #101828;
+    --rs-pdf-blue: #075fd3;
+    --rs-pdf-cyan: #00a8c7;
+    --rs-pdf-text: #475467;
+    --rs-pdf-line: #d0d5dd;
+    --rs-pdf-surface: #ffffff;
+    --rs-pdf-surface-soft: #f6fbff;
 }
 
 .rs-page,
@@ -3107,5 +3116,108 @@ body.rs-page::after {
     .rs-universe-more b,
     .rs-universe-more small {
         color: #607b8b;
+    }
+}
+
+/* PDF-aligned visual language: light documentation surfaces with a
+   more energetic marketing expression around the existing live demos. */
+.rs-page .rs-eyebrow,
+.rs-page .rs-kicker {
+    padding: 7px 12px;
+    border: 1px solid rgba(0, 168, 199, 0.38);
+    border-radius: 999px;
+    background: var(--rs-pdf-surface-soft);
+    color: var(--rs-pdf-blue);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.96);
+    letter-spacing: 0.08em;
+}
+
+.rs-page .rs-eyebrow {
+    width: fit-content;
+}
+
+.rs-page .rs-eyebrow-icon {
+    border-color: rgba(0, 168, 199, 0.42);
+    background: #fff;
+    color: var(--rs-pdf-blue);
+}
+
+.rs-page .rs-kicker-light {
+    border-color: rgba(105, 220, 232, 0.62);
+    background: rgba(0, 168, 199, 0.1);
+    color: #b9f5f7;
+}
+
+.rs-page .rs-hero h1 {
+    color: var(--rs-pdf-navy);
+    background: linear-gradient(105deg, var(--rs-pdf-navy) 0%, var(--rs-pdf-blue) 62%, var(--rs-pdf-cyan) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.rs-page .rs-section-heading h2,
+.rs-page .rs-api-copy h2,
+.rs-page .rs-final-cta h2 {
+    color: var(--rs-pdf-navy);
+}
+
+.rs-page .rs-showcase-card,
+.rs-page .rs-simulator-shell,
+.rs-page .rs-universe-stage,
+.rs-page .rs-faq-layout {
+    border: 1px solid var(--rs-pdf-line);
+    background-color: var(--rs-pdf-surface);
+    box-shadow: 0 16px 42px rgba(16, 24, 40, 0.055);
+}
+
+.rs-page .rs-showcase-card:hover,
+.rs-page .rs-tier-card:hover {
+    border-color: rgba(0, 168, 199, 0.48);
+    box-shadow: 0 22px 52px rgba(16, 24, 40, 0.09);
+}
+
+.rs-page .rs-universe-stage,
+.rs-page .rs-simulator-shell {
+    background: var(--rs-pdf-surface-soft);
+}
+
+.rs-page .rs-universe-node,
+.rs-page .rs-simulator-picker,
+.rs-page .rs-simulator-result {
+    border-color: rgba(208, 213, 221, 0.86);
+    background: var(--rs-pdf-surface);
+    box-shadow: 0 10px 28px rgba(16, 24, 40, 0.045);
+}
+
+.rs-page .rs-universe-node.is-active,
+.rs-page .rs-simulator-shell.is-processing .rs-simulator-result {
+    border-color: rgba(0, 168, 199, 0.62);
+}
+
+.rs-page .rs-trust-strip {
+    border-color: rgba(0, 168, 199, 0.2);
+    background: var(--rs-pdf-surface-soft);
+}
+
+.rs-page .rs-code-card {
+    border-color: rgba(0, 168, 199, 0.34);
+    box-shadow: 0 20px 46px rgba(16, 24, 40, 0.14);
+}
+
+.rs-page .rs-code-method,
+.rs-page .rs-code-status {
+    color: #69dce8;
+}
+
+.rs-page .rs-showcase-disclosure {
+    color: var(--rs-pdf-text);
+}
+
+@media (max-width: 680px) {
+    .rs-page .rs-eyebrow,
+    .rs-page .rs-kicker {
+        padding: 6px 10px;
+        font-size: 0.66rem;
     }
 }
