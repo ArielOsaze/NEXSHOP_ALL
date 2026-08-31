@@ -2749,50 +2749,98 @@
             });
         }
 
-        // ── Load Products Catalog & Build Matrix ──
+        // Load the first catalog page immediately, then hydrate the rest in parallel.
+        let portalProductsLoadPromise = null;
         async function loadPortalProducts() {
-            const token = getResellerToken();
-            const gridView = document.getElementById("tvProductsGridView");
-            const progressEl = document.getElementById("tvProductCatalogProgress");
-            if (!gridView) return;
+            if (portalProductsLoadPromise) return portalProductsLoadPromise;
+
+            portalProductsLoadPromise = (async () => {
+                const gridView = document.getElementById("tvProductsGridView");
+                const progressEl = document.getElementById("tvProductCatalogProgress");
+                if (!gridView) return;
+
+                try {
+                    const pageSize = 250;
+                    const concurrency = 4;
+                    const collected = new Map();
+                    let total = 0;
+                    let hasMore = false;
+                    let renderedOnce = false;
+                    if (progressEl) progressEl.textContent = "Menyiapkan katalog NexShop…";
+
+                    const fetchPage = async (page) => {
+                        const url = new URL(`${API_BASE}/reseller/portal/products`, window.location.origin);
+                        url.searchParams.set("page", String(page));
+                        url.searchParams.set("limit", String(pageSize));
+                        const res = await fetch(url.toString(), { headers: portalJsonHeaders() });
+                        const data = await res.json().catch(() => ({}));
+                        if (!res.ok) throw new Error(data.message || "Gagal memuat katalog produk");
+                        return data;
+                    };
+
+                    const addPage = (data) => {
+                        (data.products || []).forEach((product) => {
+                            const key = String(product.kode_produk || product.id || "");
+                            if (key && !collected.has(key)) collected.set(key, product);
+                        });
+                        total = Number(data.catalog_total_products ?? data.total_products ?? collected.size) || collected.size;
+                        hasMore = Boolean(data.has_more);
+                    };
+
+                    const renderCatalog = (complete = false) => {
+                        allProducts = Array.from(collected.values());
+                        buildCategoryTabs();
+                        buildOperatorGrid();
+                        filterAndRenderProducts();
+                        renderedOnce = true;
+                        if (!progressEl) return;
+                        if (complete) {
+                            progressEl.textContent = `${allProducts.length.toLocaleString("id-ID")} produk NexShop tersedia`;
+                        } else if (total) {
+                            progressEl.textContent = `Menampilkan ${allProducts.length.toLocaleString("id-ID")} dari ${total.toLocaleString("id-ID")} produk, katalog lainnya sedang dimuat`;
+                        } else {
+                            progressEl.textContent = `Menampilkan ${allProducts.length.toLocaleString("id-ID")} produk, katalog lainnya sedang dimuat`;
+                        }
+                    };
+
+                    const firstPage = await fetchPage(1);
+                    addPage(firstPage);
+                    renderCatalog(!hasMore);
+                    if (!hasMore) return;
+
+                    const totalPages = Number(firstPage.total_pages ?? firstPage.totalPages) || (total > pageSize ? Math.ceil(total / pageSize) : 0);
+                    if (totalPages > 1) {
+                        let nextPage = 2;
+                        const worker = async () => {
+                            while (nextPage <= totalPages) {
+                                const page = nextPage++;
+                                const data = await fetchPage(page);
+                                addPage(data);
+                                renderCatalog(false);
+                            }
+                        };
+                        await Promise.all(Array.from({ length: Math.min(concurrency, totalPages - 1) }, worker));
+                    } else {
+                        let page = 2;
+                        while (hasMore) {
+                            const data = await fetchPage(page++);
+                            addPage(data);
+                            renderCatalog(false);
+                            if (page > 1000) throw new Error("Pagination katalog tidak valid");
+                        }
+                    }
+                    if (!renderedOnce) renderCatalog(true);
+                    else if (progressEl) progressEl.textContent = `${allProducts.length.toLocaleString("id-ID")} produk NexShop tersedia`;
+                } catch (e) {
+                    if (progressEl) progressEl.textContent = "Katalog belum dapat dimuat";
+                    gridView.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#ef4444;padding:2rem;">Gagal memuat produk: ${escapeHtml(e.message)}</div>`;
+                }
+            })();
 
             try {
-                const pageSize = 250;
-                const collected = new Map();
-                let page = 1;
-                let total = 0;
-                let hasMore = false;
-                if (progressEl) progressEl.textContent = "Menyiapkan katalog NexShop…";
-
-                do {
-                    const url = new URL(`${API_BASE}/reseller/portal/products`, window.location.origin);
-                    url.searchParams.set("page", String(page));
-                    url.searchParams.set("limit", String(pageSize));
-                    const res = await fetch(url.toString(), {
-                        headers: { Authorization: `Bearer ${token}` }
-                    });
-                    const data = await res.json().catch(() => ({}));
-                    if (!res.ok) throw new Error(data.message || "Gagal memuat katalog produk");
-
-                    (data.products || []).forEach((product) => {
-                        const key = String(product.kode_produk || product.id || "");
-                        if (key && !collected.has(key)) collected.set(key, product);
-                    });
-                    total = Number(data.catalog_total_products ?? data.total_products ?? collected.size) || collected.size;
-                    hasMore = Boolean(data.has_more);
-                    if (progressEl) progressEl.textContent = `Memuat katalog NexShop… ${collected.size.toLocaleString("id-ID")} dari ${total.toLocaleString("id-ID")} produk`;
-                    page += 1;
-                    if (page > 1000) throw new Error("Pagination katalog tidak valid");
-                } while (hasMore);
-
-                allProducts = Array.from(collected.values());
-                if (progressEl) progressEl.textContent = `${allProducts.length.toLocaleString("id-ID")} produk NexShop tersedia`;
-                buildCategoryTabs();
-                buildOperatorGrid();
-                filterAndRenderProducts();
-            } catch (e) {
-                if (progressEl) progressEl.textContent = "Katalog belum dapat dimuat";
-                gridView.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:#ef4444;padding:2rem;">Gagal memuat produk: ${escapeHtml(e.message)}</div>`;
+                return await portalProductsLoadPromise;
+            } finally {
+                portalProductsLoadPromise = null;
             }
         }
 

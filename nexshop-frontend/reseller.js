@@ -89,12 +89,34 @@
             pending.push(timer);
             timers.set(card, pending);
         };
+        const reset = (card) => {
+            const story = card.dataset.showcaseStory;
+            delete card.dataset.storyStarted;
+            delete card.dataset.storyBeat;
+            card.classList.remove("rs-story-is-active");
+            if (story === "transactions") {
+                card.querySelectorAll(".rs-transaction-status b").forEach((status, index) => { status.textContent = index < 2 ? "Diproses" : "Berhasil"; });
+                write(card, "[data-story-metric]", "124");
+            } else if (story === "bills") {
+                card.querySelector(".rs-bill-result")?.classList.remove("is-current");
+                write(card, "[data-story-status]", "Pembayaran berhasil");
+            } else if (story === "catalog") {
+                write(card, ".rs-catalog-state", "Pilih nominal");
+            } else if (story === "pricing") {
+                write(card, ".rs-margin-note [data-story-status]", "Margin contoh terhitung");
+            } else if (story === "wallet") {
+                write(card, ".rs-wallet-status", "Siap disalurkan");
+            } else if (story === "api") {
+                write(card, ".rs-api-response", "status: SUCCESS");
+            }
+        };
         const stop = (card) => {
             (timers.get(card) || []).forEach((timer) => {
                 window.clearTimeout(timer);
                 window.clearInterval(timer);
             });
             timers.delete(card);
+            reset(card);
             card.classList.remove("rs-story-in-viewport");
         };
         const finalState = (card) => {
