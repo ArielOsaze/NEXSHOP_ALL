@@ -34,8 +34,8 @@ body.reseller-docs-page main {
     padding: 0 !important;
 }
 
+body.reseller-docs-page .docs-section,
 body.reseller-docs-page .docs-card,
-body.reseller-docs-page .docs-quick-start,
 body.reseller-docs-page .docs-api-card,
 body.reseller-docs-page .docs-code-wrap,
 body.reseller-docs-page .docs-table-wrap {
@@ -97,137 +97,6 @@ body.reseller-docs-page th,
 body.reseller-docs-page td {
     color: #101828 !important;
     border-color: #d0d5dd !important;
-}
-
-body.reseller-docs-page .nx-footer {
-    margin-top: 2mm !important;
-    padding-top: 2mm !important;
-    padding-bottom: 0 !important;
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-    zoom: 0.72;
-}
-
-body.reseller-docs-page .nx-footer__grid {
-    grid-template-columns: 1.35fr 1fr 1fr !important;
-    gap: 3mm !important;
-    margin-bottom: 2mm !important;
-}
-
-body.reseller-docs-page .nx-footer__brand-logo {
-    font-size: 1rem !important;
-    gap: 2mm !important;
-    margin-bottom: 2mm !important;
-}
-
-body.reseller-docs-page .nx-footer__brand-desc,
-body.reseller-docs-page .nx-footer__link,
-body.reseller-docs-page .nx-footer__legal-name,
-body.reseller-docs-page .nx-footer__legal-ids,
-body.reseller-docs-page .nx-footer__legal-link,
-body.reseller-docs-page .nx-footer__bottom p {
-    font-size: 0.68rem !important;
-    line-height: 1.25 !important;
-}
-
-body.reseller-docs-page .nx-footer__heading {
-    margin-bottom: 2mm !important;
-    font-size: 0.68rem !important;
-}
-
-body.reseller-docs-page .nx-footer__link-list {
-    gap: 1mm !important;
-}
-
-body.reseller-docs-page .nx-footer__legal-name {
-    margin-bottom: 1mm !important;
-}
-
-body.reseller-docs-page .nx-footer__legal-ids {
-    margin-bottom: 2mm !important;
-}
-
-body.reseller-docs-page .nx-footer__bottom {
-    padding-top: 2mm !important;
-    gap: 1mm !important;
-}
-
-body.reseller-docs-page .nx-footer__brand {
-    gap: 1.5mm !important;
-    margin-bottom: 1mm !important;
-}
-
-body.reseller-docs-page .nx-footer__brand-mark {
-    width: 24px !important;
-    height: 24px !important;
-    border-radius: 6px !important;
-}
-
-body.reseller-docs-page .nx-footer__brand-logo {
-    font-size: 0.9rem !important;
-    gap: 1mm !important;
-    margin-bottom: 1mm !important;
-}
-
-body.reseller-docs-page .nx-footer__brand-logo span {
-    font-size: 0.45rem !important;
-    letter-spacing: 0.16em !important;
-}
-
-body.reseller-docs-page .nx-footer__brand-desc {
-    max-width: 17rem !important;
-}
-
-body.reseller-docs-page .nx-footer__legal {
-    max-width: 13rem !important;
-}
-
-body.reseller-docs-page .nx-footer__legal-name strong,
-body.reseller-docs-page .nx-footer__legal-name span,
-body.reseller-docs-page .nx-footer__legal-ids,
-body.reseller-docs-page .nx-footer__legal-link {
-    font-size: 0.62rem !important;
-    line-height: 1.2 !important;
-}
-
-body.reseller-docs-page .nx-footer__legal-name {
-    gap: 1.5mm !important;
-    margin-bottom: 1mm !important;
-}
-
-body.reseller-docs-page .nx-footer__legal-ids {
-    gap: 0 !important;
-    margin-bottom: 1mm !important;
-}
-
-body.reseller-docs-page .nx-footer__legal-link {
-    gap: 1.5mm !important;
-}
-
-body.reseller-docs-page .nx-footer__grid {
-    align-items: start !important;
-}
-
-body.reseller-docs-page .docs-layout {
-    zoom: 0.92;
-}
-
-body.reseller-docs-page #faq,
-body.reseller-docs-page #kontak {
-    margin-bottom: 8px !important;
-}
-
-body.reseller-docs-page #faq .docs-faq {
-    gap: 0.5rem !important;
-}
-
-body.reseller-docs-page #kontak .docs-cta-banner {
-    padding: 1rem !important;
-    gap: 0.75rem !important;
-}
-
-body.reseller-docs-page #kontak .docs-back-top {
-    margin-top: 0.5rem !important;
 }
 
 @page {
