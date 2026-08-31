@@ -41,11 +41,24 @@ function getResponsiveImageUrl(url, width, height, quality) {
 }
 
 function getResponsiveImageSrcset(url, width, height, quality) {
-    const sizes = [320, 640, 1280].filter((candidate) => candidate <= Number(width) * 2 || candidate === 1280);
+    const sizes = [160, 320, 480, 640, 768, 960, 1280].filter((candidate) => candidate <= Number(width) * 2 || candidate === 1280);
     return sizes.map((candidate) => {
         const ratio = Number(width) > 0 && Number(height) > 0 ? Number(height) / Number(width) : 1;
         return `${getResponsiveImageUrl(url, candidate, Math.round(candidate * ratio), quality)} ${candidate}w`;
     }).join(", ");
+}
+
+function getLeaderboardAvatarUrl(url) {
+    if (!url) return "";
+    try {
+        const source = new URL(url);
+        if (source.hostname === "i.pinimg.com") {
+            source.pathname = source.pathname.replace(/^\/(?:\d+x|\d+)\//, "/170x/");
+        }
+        return source.toString();
+    } catch (_) {
+        return url;
+    }
 }
 
 const PAYMENT_METHODS = [
@@ -4731,11 +4744,11 @@ function renderLeaderboard(data) {
     // Helper untuk avatar. Invalid atau diblokir CSP tidak boleh menghilangkan
     // profil: fallback tetap terlihat dan avatar URL dibatasi ke http(s).
     const getAvatar = (user) => {
-        const avatarUrl = safeUrl(user?.avatar_url || "");
+        const avatarUrl = getLeaderboardAvatarUrl(safeUrl(user?.avatar_url || ""));
         if (!avatarUrl) {
             return '<span class="hof-avatar-media"><span class="hof-avatar-fallback" aria-hidden="true"><i class="fa-solid fa-user"></i></span></span>';
         }
-        return `<span class="hof-avatar-media"><img src="${escapeHtml(avatarUrl)}" class="hof-avatar-image fallback-remove" alt="" loading="lazy" decoding="async"><span class="hof-avatar-fallback" aria-hidden="true"><i class="fa-solid fa-user"></i></span></span>`;
+        return `<span class="hof-avatar-media"><img src="${escapeHtml(avatarUrl)}" width="170" height="170" sizes="170px" class="hof-avatar-image fallback-remove" alt="" loading="lazy" decoding="async"><span class="hof-avatar-fallback" aria-hidden="true"><i class="fa-solid fa-user"></i></span></span>`;
     };
 
     // Helper untuk rank badge
