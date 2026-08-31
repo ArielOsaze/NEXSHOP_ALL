@@ -1332,9 +1332,21 @@ exports.getPortalOverview = async (req, res) => {
             });
         }
 
+        const { data: wallet, error: walletErr } = await supabase
+            .from("wallets")
+            .select("balance")
+            .eq("user_id", user.id)
+            .maybeSingle();
+        if (walletErr) {
+            if (isMissingTableError(walletErr)) {
+                return res.status(503).json({ message: "Wallet Portal Reseller belum siap di server.", code: "WALLET_NOT_SETUP" });
+            }
+            throw walletErr;
+        }
+
         const memberCode = getResellerMemberCode(user);
         const metrics = await getResellerDashboardMetrics(user.id);
-        const balance = Number(user.balance) || 0;
+        const balance = Number(wallet?.balance) || 0;
         const portalNews = await getResellerPortalNews();
 
         // Jika akun sudah pernah mendaftar tapi belum approved (pending / rejected
