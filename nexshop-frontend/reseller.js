@@ -54,7 +54,7 @@
                     entry.target.classList.add("rs-motion-seen");
                     currentObserver.unobserve(entry.target);
                 });
-            }, { rootMargin: "0px 0px -10%", threshold: 0.12 });
+            }, { rootMargin: "0px 0px 8%", threshold: 0.12 });
 
             document.querySelectorAll(".rs-reveal").forEach((element) => observer.observe(element));
         }
