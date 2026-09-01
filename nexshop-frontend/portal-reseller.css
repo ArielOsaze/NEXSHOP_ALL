@@ -55,6 +55,25 @@ body.rs-portal-page {
     -webkit-font-smoothing: antialiased;
 }
 
+html.dark body.rs-portal-page {
+    --portal-bg: #080f1c;
+    --portal-surface: #111827;
+    --portal-surface-soft: #172235;
+    --portal-surface-blue: #123047;
+    --portal-ink: #f8fafc;
+    --portal-ink-soft: #e2e8f0;
+    --portal-muted: #cbd5e1;
+    --portal-faint: #94a3b8;
+    --portal-line: #334155;
+    --portal-line-strong: #475569;
+    --portal-blue: #67e8f9;
+    --portal-blue-dark: #a5f3fc;
+    --portal-cyan: #67e8f9;
+    background: var(--portal-bg) !important;
+    color-scheme: dark;
+}
+
+
 body.rs-portal-page::before,
 body.rs-portal-page::after {
     display: none !important;
@@ -1664,6 +1683,127 @@ body.rs-portal-page::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
+    }
+}
+
+/* Mobile portal navigation: one readable, horizontally scrollable tab rail. */
+@media (max-width: 992px) {
+    .rs-portal-page .tv-sidebar {
+        left: 0;
+        top: auto;
+        bottom: 0;
+        width: 100%;
+        height: auto;
+        max-height: 88px;
+        border-top: 1px solid var(--portal-line) !important;
+        border-right: 0;
+        background: var(--portal-surface) !important;
+        box-shadow: 0 -10px 30px rgba(16, 24, 40, .12);
+        z-index: 60;
+    }
+
+    .rs-portal-page .tv-sidebar-brand,
+    .rs-portal-page .tv-sidebar-user,
+    .rs-portal-page .tv-mobile-menu-button,
+    .rs-portal-page .tv-sidebar-scrim {
+        display: none !important;
+    }
+
+    .rs-portal-page .tv-sidebar-menu {
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        gap: 4px;
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+        scrollbar-width: none;
+        overscroll-behavior-x: contain;
+    }
+
+    .rs-portal-page .tv-sidebar-menu::-webkit-scrollbar { display: none; }
+    .rs-portal-page .tv-nav-secondary-group { display: contents !important; }
+
+    .rs-portal-page .tv-nav-link,
+    .rs-portal-page .tv-nav-more {
+        flex: 0 0 auto;
+        width: max-content;
+        min-width: 70px;
+        min-height: 66px;
+        justify-content: center;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 12px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        background: transparent;
+        color: #475467 !important;
+        font-size: .72rem;
+        font-weight: 700;
+        line-height: 1.15;
+        text-align: center;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    .rs-portal-page .tv-nav-link > i[class*="fa-"],
+    .rs-portal-page .tv-nav-more > i[class*="fa-"] {
+        flex: 0 0 auto;
+        color: #475467 !important;
+        font-size: 1.15rem;
+    }
+
+    .rs-portal-page .tv-nav-link.active {
+        background: #e0f2fe !important;
+        border-color: #7dd3fc !important;
+        color: #0c4a6e !important;
+    }
+
+    .rs-portal-page .tv-nav-link.active > i[class*="fa-"] {
+        color: #0369a1 !important;
+    }
+
+    .rs-portal-page .tv-nav-more .tv-nav-more-chevron { display: none; }
+    .rs-portal-page .tv-nav-link:hover,
+    .rs-portal-page .tv-nav-more:hover,
+    .rs-portal-page .tv-nav-link:focus-visible,
+    .rs-portal-page .tv-nav-more:focus-visible {
+        background: #f0f9ff !important;
+        color: #0c4a6e !important;
+        outline: 2px solid #38bdf8;
+        outline-offset: -2px;
+    }
+}
+
+html.dark .rs-portal-page .tv-nav-link,
+html.dark .rs-portal-page .tv-nav-more {
+    color: #cbd5e1 !important;
+}
+
+html.dark .rs-portal-page .tv-nav-link > i[class*="fa-"],
+html.dark .rs-portal-page .tv-nav-more > i[class*="fa-"] {
+    color: #cbd5e1 !important;
+}
+
+@media (max-width: 992px) {
+    html.dark .rs-portal-page .tv-nav-link.active {
+        background: #164e63 !important;
+        border-color: #22d3ee !important;
+        color: #ecfeff !important;
+    }
+
+    html.dark .rs-portal-page .tv-nav-link.active > i[class*="fa-"] {
+        color: #67e8f9 !important;
+    }
+
+    html.dark .rs-portal-page .tv-nav-link:hover,
+    html.dark .rs-portal-page .tv-nav-more:hover,
+    html.dark .rs-portal-page .tv-nav-link:focus-visible,
+    html.dark .rs-portal-page .tv-nav-more:focus-visible {
+        background: #1e293b !important;
+        color: #ecfeff !important;
     }
 }
 

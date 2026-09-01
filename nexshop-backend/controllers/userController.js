@@ -415,7 +415,10 @@ exports.updateOwnPhone = async (req, res) => {
         res.json({ message: "Kode OTP telah dikirim ke WhatsApp. Nomor lama tetap aktif sampai verifikasi selesai.", ...result, needs_verification: true });
     } catch (err) {
         const status = ["PHONE_INVALID", "PHONE_ALREADY_IN_USE"].includes(err.code) ? 400 : (err.code === "OTP_COOLDOWN" ? 429 : 503);
-        res.status(status).json({ message: err.message || "Gagal memulai verifikasi nomor telepon." });
+        res.status(status).json({
+            code: err.code || "OTP_DELIVERY_FAILED",
+            message: err.message || "Gagal memulai verifikasi nomor telepon."
+        });
     }
 };
 
@@ -425,7 +428,10 @@ exports.verifyOwnPhone = async (req, res) => {
         res.json({ message: "Nomor WhatsApp berhasil diverifikasi.", user: toPublicProfile(user) });
     } catch (err) {
         const status = ["OTP_INVALID", "OTP_NOT_ACTIVE", "OTP_EXPIRED", "OTP_ATTEMPTS_EXCEEDED", "OTP_MISMATCH", "PHONE_ALREADY_IN_USE"].includes(err.code) || err.code === "23505" ? 400 : 500;
-        res.status(status).json({ message: err.code === "23505" ? "Nomor WhatsApp tersebut sudah terverifikasi pada akun lain." : (err.message || "Verifikasi nomor gagal.") });
+        res.status(status).json({
+            code: err.code === "23505" ? "PHONE_ALREADY_IN_USE" : (err.code || "OTP_VERIFY_FAILED"),
+            message: err.code === "23505" ? "Nomor WhatsApp tersebut sudah terverifikasi pada akun lain." : (err.message || "Verifikasi nomor gagal.")
+        });
     }
 };
 

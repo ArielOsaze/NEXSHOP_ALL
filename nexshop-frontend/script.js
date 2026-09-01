@@ -249,6 +249,9 @@ function safeJSONParse(value, fallback) {
 
 /* ---------- State (persisted) ---------- */
 let currentUser = safeJSONParse(localStorage.getItem("nexshop_user"), null);
+let authSessionReady = false;
+let currentUserProfileReady = false;
+let currentUserProfilePromise = null;
 
 // Cart disimpan per-akun (key beda tiap user_id), plus 1 key terpisah buat
 // guest (belum login). Jadi logout/ganti akun gak nyampur keranjang orang lain.
@@ -984,6 +987,12 @@ function hasVerifiedPhone(user = currentUser) {
     return Boolean(user?.has_verified_phone || (user?.phone_verified_at && (user?.phone_normalized || user?.phone)));
 }
 
+function validateCheckoutEmail(rawEmail) {
+    const validator = window.NexShopCheckoutHelpers?.validateEmail;
+    if (validator) return validator(rawEmail);
+    return { valid: false, value: String(rawEmail ?? "").trim(), message: "Validasi email belum siap. Muat ulang halaman lalu coba lagi." };
+}
+
 // Backend menyimpan nomor HP sebagai E.164 ("+628..."), tapi seluruh input &
 // placeholder di frontend pakai format lokal ("08..."). Dipakai di mana pun
 // nomor dari currentUser ditampilkan/prefill supaya formatnya konsisten.
@@ -1023,18 +1032,47 @@ function renderAvatar(target, user, { header = false } = {}) {
 
 async function refreshCurrentUserProfile() {
     const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
-    if (!token || !currentUser) return null;
-    try {
-        const res = await fetch(`${API_BASE}/users/me`, { headers: { Authorization: `Bearer ${token}` } });
-        const data = await res.json();
-        if (!res.ok || !data.user) return null;
-        currentUser = { ...currentUser, ...data.user };
-        saveUser();
-        refreshAccountUI();
-        return currentUser;
-    } catch (_) {
+    if (!token) {
+        currentUser = null;
+        authSessionReady = true;
+        currentUserProfileReady = true;
         return null;
     }
+    if (currentUserProfilePromise) return currentUserProfilePromise;
+
+    authSessionReady = false;
+    currentUserProfileReady = false;
+    currentUserProfilePromise = (async () => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 12000);
+        try {
+            const res = await fetch(`${API_BASE}/users/me`, {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: controller.signal
+            });
+            const data = await res.json().catch(() => ({}));
+            if (res.status === 401) {
+                currentUser = null;
+                localStorage.removeItem(PUBLIC_TOKEN_STORAGE_KEY);
+                saveUser();
+                refreshAccountUI();
+                return null;
+            }
+            if (!res.ok || !data.user) return null;
+            currentUser = { ...(currentUser || {}), ...data.user };
+            currentUserProfileReady = true;
+            saveUser();
+            refreshAccountUI();
+            return currentUser;
+        } catch (_) {
+            return null;
+        } finally {
+            clearTimeout(timeout);
+            authSessionReady = true;
+            currentUserProfilePromise = null;
+        }
+    })();
+    return currentUserProfilePromise;
 }
 
 function refreshAccountUI() {
@@ -1219,20 +1257,26 @@ async function initAuthSecurity() {
         }
     });
 
-    await security.consumeGoogleCallback((data, mode) => {
+    await security.consumeGoogleCallback(async (data, mode) => {
         localStorage.setItem(PUBLIC_TOKEN_STORAGE_KEY, data.token);
         currentUser = data.user;
+        currentUserProfileReady = false;
         saveUser();
         switchCartContext();
         refreshAccountUI();
+        const refreshedUser = await refreshCurrentUserProfile();
         if (mode === "link") {
             toast("Akun Google berhasil dihubungkan.", "success");
             return;
         }
-        if (!hasVerifiedPhone(currentUser)) {
+        if (!refreshedUser) {
+            toast("Login Google berhasil, tetapi profil belum dapat dimuat. Coba lagi sebentar.", "error");
+            return;
+        }
+        if (!hasVerifiedPhone(refreshedUser)) {
             openPhoneOnboarding();
         } else {
-            toast(`Berhasil masuk. Selamat datang, ${currentUser.fullname}!`, "success");
+            toast(`Berhasil masuk. Selamat datang, ${refreshedUser.fullname}!`, "success");
         }
     }, (error) => {
         const errorEl = document.getElementById("loginError");
@@ -1547,16 +1591,23 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => {
         };
         localStorage.setItem(PUBLIC_TOKEN_STORAGE_KEY, data.token);
         currentUser = safeUser;
+        currentUserProfileReady = false;
         saveUser();
         switchCartContext();
         refreshAccountUI();
 
-        if (!hasVerifiedPhone(currentUser)) {
+        const refreshedUser = await refreshCurrentUserProfile();
+        if (!refreshedUser) {
+            closeOverlay("authOverlay");
+            toast("Login berhasil, tetapi profil belum dapat dimuat. Coba lagi sebentar.", "error");
+            return;
+        }
+        if (!hasVerifiedPhone(refreshedUser)) {
             closeOverlay("authOverlay");
             openPhoneOnboarding();
         } else {
             closeOverlay("authOverlay");
-            toast(`Berhasil masuk. Selamat datang kembali, ${currentUser.fullname}!`, "success");
+            toast(`Berhasil masuk. Selamat datang kembali, ${refreshedUser.fullname}!`, "success");
         }
         e.target.reset();
     } catch (uiError) {
@@ -1579,51 +1630,103 @@ function openPhoneOnboarding() {
     openOverlay("phoneOverlay");
 }
 
+function phoneApiErrorMessage(res, data, fallback) {
+    if (!res) return "Server tidak dapat dijangkau. Periksa koneksi internet lalu coba lagi.";
+    if (res.status === 401) return "Sesi login sudah berakhir. Silakan login kembali.";
+    if (res.status === 404) return "Route verifikasi WhatsApp tidak ditemukan. Coba muat ulang halaman.";
+    if (res.status === 429) return data?.message || "Terlalu banyak permintaan. Tunggu beberapa menit sebelum mencoba lagi.";
+    if (data?.code === "OTP_EXPIRED") return data.message || "Kode OTP sudah kedaluwarsa. Minta kode baru.";
+    if (data?.code === "OTP_MISMATCH" || data?.code === "OTP_INVALID") return data.message || "Kode OTP salah. Periksa kembali 6 digit kode.";
+    if (data?.code === "OTP_DELIVERY_FAILED") return data.message || "Provider WhatsApp gagal mengirim OTP. Coba lagi nanti.";
+    if (data?.code === "PHONE_ALREADY_IN_USE") return data.message || "Nomor WhatsApp sudah dipakai akun lain.";
+    if (res.status >= 500) return data?.message || "Server sedang bermasalah. Coba lagi nanti.";
+    return data?.message || fallback;
+}
+
+async function readJsonResponse(res) {
+    const text = await res.text();
+    if (!text) return {};
+    try { return JSON.parse(text); } catch (_) { return { message: text.slice(0, 240) }; }
+}
+
+async function requestPhoneOtp(errorEl) {
+    const phone = window.NexShopCheckoutHelpers?.normalizePhone(document.getElementById("userPhoneInput").value.trim())
+        || document.getElementById("userPhoneInput").value.trim();
+    const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
+    if (!token) {
+        errorEl.textContent = "Sesi login tidak ditemukan. Silakan login kembali.";
+        return false;
+    }
+    if (!/^(0|62)[0-9]{8,14}$/.test(phone)) {
+        errorEl.textContent = "Nomor WhatsApp tidak valid. Gunakan format 08xxxxxxxxxx atau 628xxxxxxxxxx.";
+        return false;
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    try {
+        const res = await fetch(`${API_BASE}/users/me/phone`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+            body: JSON.stringify({ phone }),
+            signal: controller.signal
+        });
+        const data = await readJsonResponse(res);
+        if (!res.ok) {
+            errorEl.textContent = phoneApiErrorMessage(res, data, "Gagal mengirim OTP.");
+            return false;
+        }
+        if (data.alreadyVerified) {
+            const refreshed = await refreshCurrentUserProfile();
+            if (refreshed && hasVerifiedPhone(refreshed)) closeOverlay("phoneOverlay");
+            return true;
+        }
+        document.getElementById("phoneForm").classList.add("hidden");
+        document.getElementById("phoneVerifyForm").classList.remove("hidden");
+        toast(data.message || "Kode OTP dikirim ke WhatsApp.", "success");
+        return true;
+    } catch (err) {
+        errorEl.textContent = err.name === "AbortError"
+            ? "Server terlalu lama merespons. Coba lagi."
+            : "Server tidak dapat dijangkau. Periksa koneksi internet lalu coba lagi.";
+        return false;
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
 document.getElementById("phoneForm").addEventListener("submit", async (e) => {
     e.preventDefault();
-    const phone = document.getElementById("userPhoneInput").value.trim();
-    const fullname = document.getElementById("phoneOnboardingName").value.trim();
     const errorEl = document.getElementById("phoneError");
     const btn = document.getElementById("phoneSubmitBtn");
+    const fullname = document.getElementById("phoneOnboardingName").value.trim();
 
     errorEl.textContent = "";
+    if (fullname.length < 2) {
+        errorEl.textContent = "Nama harus terdiri dari minimal 2 karakter.";
+        return;
+    }
     btn.disabled = true;
     btn.textContent = "Mengirim...";
 
     try {
         const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
-        // Nama akun adalah sumber kebenaran berikutnya; nomor baru tidak
-        // menggantikan nomor lama sebelum OTP berhasil diverifikasi.
         const nameRes = await fetch(`${API_BASE}/users/me`, {
             method: "PUT",
             headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
             body: JSON.stringify({ fullname })
         });
-        const nameData = await nameRes.json();
-        if (!nameRes.ok) throw new Error(nameData.message || "Gagal menyimpan nama profil.");
-        currentUser = { ...currentUser, ...nameData.user };
-
-        const res = await fetch(`${API_BASE}/users/me/phone`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`
-            },
-            body: JSON.stringify({ phone })
-        });
-        const data = await res.json();
-
-        if (!res.ok) {
-            errorEl.textContent = data.message || "Gagal menyimpan nomor WA.";
+        const nameData = await readJsonResponse(nameRes);
+        if (!nameRes.ok) {
+            errorEl.textContent = phoneApiErrorMessage(nameRes, nameData, "Gagal menyimpan nama profil.");
             return;
         }
-
-        document.getElementById("phoneForm").classList.add("hidden");
-        document.getElementById("phoneVerifyForm").classList.remove("hidden");
-        toast(data.message || "Kode OTP dikirim ke WhatsApp.", "success");
-
+        currentUser = { ...currentUser, ...nameData.user };
+        await requestPhoneOtp(errorEl);
     } catch (err) {
-        errorEl.textContent = "Gagal terhubung ke server.";
+        errorEl.textContent = err.name === "AbortError"
+            ? "Server terlalu lama merespons. Coba lagi."
+            : "Server tidak dapat dijangkau. Periksa koneksi internet lalu coba lagi.";
     } finally {
         btn.disabled = false;
         btn.textContent = "Kirim Kode OTP";
@@ -1637,28 +1740,59 @@ document.getElementById("phoneVerifyForm").addEventListener("submit", async (e) 
     errorEl.textContent = "";
     btn.disabled = true;
     try {
-        const res = await fetch(`${API_BASE}/users/me/phone/verify`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY)}` },
-            body: JSON.stringify({ otp: document.getElementById("phoneOtpCode").value.trim() })
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.message || "Kode OTP tidak valid.");
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000);
+        let res;
+        try {
+            res = await fetch(`${API_BASE}/users/me/phone/verify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY)}` },
+                body: JSON.stringify({ otp: document.getElementById("phoneOtpCode").value.trim() }),
+                signal: controller.signal
+            });
+        } finally {
+            clearTimeout(timeout);
+        }
+        const data = await readJsonResponse(res);
+        if (!res.ok) {
+            errorEl.textContent = phoneApiErrorMessage(res, data, "Kode OTP tidak dapat diverifikasi.");
+            return;
+        }
         currentUser = { ...currentUser, ...data.user };
         saveUser();
-        refreshAccountUI();
+        const refreshed = await refreshCurrentUserProfile();
+        if (!refreshed || !hasVerifiedPhone(refreshed)) {
+            errorEl.textContent = "Nomor terverifikasi, tetapi profile belum dapat disegarkan. Muat ulang halaman sekali.";
+            return;
+        }
         closeOverlay("phoneOverlay");
         toast("Nomor WhatsApp berhasil diverifikasi.", "success");
     } catch (err) {
-        errorEl.textContent = err.message || "Gagal memverifikasi nomor.";
+        errorEl.textContent = err.name === "AbortError"
+            ? "Server terlalu lama merespons. Coba lagi."
+            : "Server tidak dapat dijangkau. Periksa koneksi internet lalu coba lagi.";
     } finally {
         btn.disabled = false;
     }
 });
 
-document.getElementById("phoneOtpResendBtn").addEventListener("click", () => {
-    document.getElementById("phoneVerifyForm").classList.add("hidden");
-    document.getElementById("phoneForm").classList.remove("hidden");
+document.getElementById("phoneOtpResendBtn").addEventListener("click", async () => {
+    const btn = document.getElementById("phoneOtpResendBtn");
+    const errorEl = document.getElementById("phoneVerifyError");
+    errorEl.textContent = "";
+    btn.disabled = true;
+    try {
+        document.getElementById("phoneForm").classList.remove("hidden");
+        document.getElementById("phoneVerifyForm").classList.add("hidden");
+        const ok = await requestPhoneOtp(document.getElementById("phoneError"));
+        if (!ok) {
+            document.getElementById("phoneForm").classList.add("hidden");
+            document.getElementById("phoneVerifyForm").classList.remove("hidden");
+            errorEl.textContent = document.getElementById("phoneError").textContent;
+        }
+    } finally {
+        btn.disabled = false;
+    }
 });
 
 document.getElementById("logoutBtn").addEventListener("click", async () => {
@@ -1754,7 +1888,15 @@ function renderCheckoutSummary() {
     `;
 }
 
-function openCheckout(items, source = "cart") {
+async function openCheckout(items, source = "cart") {
+    const hasSessionToken = Boolean(localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY));
+    if (hasSessionToken && currentUser && !currentUserProfileReady) {
+        await refreshCurrentUserProfile();
+    }
+    if (hasSessionToken && currentUser && !currentUserProfileReady) {
+        toast("Profil belum dapat dimuat. Coba lagi sebentar.", "error");
+        return;
+    }
     const validItems = (items || []).filter(item => PRODUCTS.some(p => p.id === item.id) && item.qty > 0);
     if (validItems.length === 0) {
         toast("Keranjang masih kosong.", "error");
@@ -1793,7 +1935,7 @@ function openCheckout(items, source = "cart") {
         document.getElementById("checkoutName").value = "";
         document.getElementById("checkoutEmail").value = "";
         document.getElementById("checkoutPhone").value = "";
-        document.getElementById("checkoutPhone").parentElement.classList.remove("hidden");
+        ["checkoutName", "checkoutEmail", "checkoutPhone"].forEach((id) => document.getElementById(id).parentElement.classList.remove("hidden"));
     }
 
     renderCheckoutSummary();
@@ -1826,7 +1968,7 @@ document.getElementById("applyPromoBtn").addEventListener("click", async () => {
         // kirim email juga kalau udah keisi (di form checkout atau dari akun
         // yang login) -- biar preview batas "1x per user" ke-cek dari awal,
         // bukan cuma pas submit order beneran
-        const emailForPromo = document.getElementById("checkoutEmail").value.trim() || (currentUser ? currentUser.email : "");
+        const emailForPromo = window.NexShopCheckoutHelpers.normalizeEmail(document.getElementById("checkoutEmail").value || (currentUser ? currentUser.email : ""));
         const res = await fetch(`${API_BASE}/promo-codes/validate`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -1860,10 +2002,15 @@ document.getElementById("checkoutLoginLink").addEventListener("click", () => {
 document.getElementById("checkoutForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const recipient_name = document.getElementById("checkoutName").value.trim();
-    const recipient_email = document.getElementById("checkoutEmail").value.trim();
+    const emailResult = validateCheckoutEmail(document.getElementById("checkoutEmail").value);
+    const recipient_email = emailResult.value;
     const recipient_phone = document.getElementById("checkoutPhone").value.trim();
     const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
 
+    if (!emailResult.valid) {
+        toast(emailResult.message, "error");
+        return;
+    }
     if (!/^(0|62)[0-9]{8,14}$/.test(recipient_phone)) {
         toast("Masukkan nomor HP yang valid (contoh: 081234567890).", "error");
         return;
@@ -3765,6 +3912,13 @@ document.getElementById("twPrevBtn").addEventListener("click", () => {
 
 document.getElementById("twNextBtn").addEventListener("click", async () => {
     if (twState.step === 1) {
+        if (localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) && currentUser && !currentUserProfileReady) {
+            await refreshCurrentUserProfile();
+        }
+        if (localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) && currentUser && !currentUserProfileReady) {
+            document.getElementById("twStep1Error").textContent = "Profil belum dapat dimuat. Coba lagi sebentar.";
+            return;
+        }
         const checkoutUser = getAuthenticatedCheckoutUser();
         if (checkoutUser && !hasVerifiedPhone(checkoutUser)) {
             openPhoneOnboarding();
@@ -3782,15 +3936,18 @@ document.getElementById("twNextBtn").addEventListener("click", async () => {
         const errorEl = document.getElementById("twStep1Error");
         errorEl.textContent = "";
 
+        const emailInput = document.getElementById("twEmail");
+        const emailResult = validateCheckoutEmail(emailInput?.value || email);
+        if (!emailResult.valid) { errorEl.textContent = emailResult.message; return; }
+        const normalizedEmail = emailResult.value;
         if (!userId) { errorEl.textContent = "User ID wajib diisi"; return; }
         if (twState.needsServerId && !serverId) { errorEl.textContent = "Server ID wajib diisi untuk game ini"; return; }
-        if (!email || !email.includes("@")) { errorEl.textContent = "Email wajib diisi dengan format yang benar"; return; }
-        if (!/^(0|62)[0-9]{8,14}$/.test(phone)) { errorEl.textContent = "Nomor HP wajib diisi dengan format yang benar (contoh: 08... atau 628...)"; return; }
         if (!twState.product) { errorEl.textContent = "Pilih nominal top up dulu ya"; return; }
+        if (!/^(0|62)[0-9]{8,14}$/.test(phone)) { errorEl.textContent = "Nomor HP wajib diisi dengan format yang benar (contoh: 08... atau 628...)"; return; }
 
         twState.userId = userId;
         twState.serverId = serverId;
-        twState.email = email;
+        twState.email = normalizedEmail;
         twState.phone = phone;
         goToTwStep(2);
         return;
@@ -4112,7 +4269,7 @@ function renderTwSummary() {
 
 function getAuthenticatedCheckoutUser() {
     const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY);
-    return token && currentUser ? currentUser : null;
+    return token && currentUser && authSessionReady && currentUserProfileReady ? currentUser : null;
 }
 
 function toggleCheckoutIdentityFields() {
@@ -4961,7 +5118,7 @@ async function bootstrapApp() {
 
     refreshedUserPromise
         .then((refreshedUser) => {
-            if (refreshedUser && currentUser && !hasVerifiedPhone(currentUser)) {
+            if (refreshedUser && authSessionReady && currentUserProfileReady && !hasVerifiedPhone(refreshedUser)) {
                 openPhoneOnboarding();
             }
         })

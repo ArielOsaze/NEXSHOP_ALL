@@ -5551,12 +5551,49 @@ input::placeholder {
     align-items: stretch;
 }
 
-.promo-code-row input {
+.promo-code-row input,
+#twPromoCodeInput,
+#promoCodeInput {
     flex: 1;
     height: 44px;
     padding: 0 14px;
     border-radius: 10px;
+    background: #fff;
+    color: #0F172A;
+    border: 1px solid #22D3EE;
+    caret-color: #0F172A;
 }
+
+.promo-code-row input::placeholder,
+#twPromoCodeInput::placeholder,
+#promoCodeInput::placeholder {
+    color: #64748B;
+    opacity: 1;
+}
+
+.promo-code-row input:focus,
+#twPromoCodeInput:focus,
+#promoCodeInput:focus {
+    outline: none;
+    border-color: #22D3EE;
+    box-shadow: 0 0 0 3px rgba(34, 211, 238, .24);
+}
+
+.promo-code-row input:-webkit-autofill,
+.promo-code-row input:-webkit-autofill:hover,
+.promo-code-row input:-webkit-autofill:focus,
+#twPromoCodeInput:-webkit-autofill,
+#twPromoCodeInput:-webkit-autofill:hover,
+#twPromoCodeInput:-webkit-autofill:focus,
+#promoCodeInput:-webkit-autofill,
+#promoCodeInput:-webkit-autofill:hover,
+#promoCodeInput:-webkit-autofill:focus {
+    -webkit-text-fill-color: #0F172A;
+    -webkit-box-shadow: 0 0 0 1000px #fff inset, 0 0 0 3px rgba(34, 211, 238, .18);
+    box-shadow: 0 0 0 1000px #fff inset, 0 0 0 3px rgba(34, 211, 238, .18);
+    border-color: #22D3EE;
+}
+
 
 .promo-code-row button {
     height: 44px;

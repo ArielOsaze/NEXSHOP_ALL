@@ -11,6 +11,7 @@ const { notify } = require("../config/notify");
 const { sendUserWhatsApp } = require("../services/userWhatsAppService");
 const { normalizePhoneNumber } = require("../utils/phoneNumber");
 const { getCheckoutIdentity, getPortalCheckoutIdentity } = require("../services/userProfileService");
+const { validateEmail } = require("../utils/emailValidation");
 const { sendTopupInvoiceEmail } = require("../config/mailer");
 const { sendTelegramNotification } = require("../config/telegram");
 const { sendWhatsAppNotification } = require("../config/whatsapp");
@@ -1687,9 +1688,11 @@ exports.create = async (req, res) => {
     if (!userId && !normalizedPhone) {
         return res.status(400).json({ message: "Nomor HP tidak valid (contoh: 08... atau 628...)" });
     }
-    if (!userId && (typeof recipient_email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient_email.trim()))) {
-        return res.status(400).json({ message: "Email pembeli tidak valid" });
+    const emailResult = validateEmail(recipient_email);
+    if (!userId && !emailResult.valid) {
+        return res.status(400).json({ code: "EMAIL_INVALID", message: emailResult.message });
     }
+    if (!userId) recipient_email = emailResult.value;
 
     const normalizedPaymentMethod = String(payment_method || "").trim().toLowerCase();
     const isWalletPayment = (normalizedPaymentMethod === "wallet" || normalizedPaymentMethod === "saldo");

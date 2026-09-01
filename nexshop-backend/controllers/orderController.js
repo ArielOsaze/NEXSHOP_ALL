@@ -13,6 +13,7 @@ const { performAdminOrderAction } = require("../services/adminOrderActionService
 const { cariCheckoutProdukPending, responsCheckoutPending } = require("../services/pendingCheckoutService");
 const { normalizePhoneNumber } = require("../utils/phoneNumber");
 const { getCheckoutIdentity } = require("../services/userProfileService");
+const { validateEmail } = require("../utils/emailValidation");
 
 const IPAYMU_PAYMENT_METHODS = Object.freeze({
     qris: "qris",
@@ -38,9 +39,11 @@ exports.create = async (req, res) => {
     if ((!userId && (!recipient_name || !recipient_email || !recipient_phone)) || !Array.isArray(items) || items.length === 0) {
         return res.status(400).json({ message: "Data pesanan tidak lengkap" });
     }
-    if (!userId && (typeof recipient_email !== "string" || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient_email.trim()))) {
-        return res.status(400).json({ message: "Email pembeli tidak valid" });
+    const emailResult = validateEmail(recipient_email);
+    if (!userId && !emailResult.valid) {
+        return res.status(400).json({ code: "EMAIL_INVALID", message: emailResult.message });
     }
+    if (!userId) recipient_email = emailResult.value;
 
     // Nomor HP WAJIB nyata & unik per pembeli -- kalau kosong/default sebelumnya
     // (fallback "08123456789" di ipaymu.js) iPaymu Direct Payment (QRIS/VA)

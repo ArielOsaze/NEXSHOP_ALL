@@ -6,6 +6,7 @@ const { OAuth2Client } = require("google-auth-library");
 const { sendOtpEmail, sendPasswordResetEmail } = require("../config/mailer");
 const { sendUserWhatsApp, sendUserSecurityWhatsApp } = require("../services/userWhatsAppService");
 const { normalizePhoneNumber } = require("../utils/phoneNumber");
+const { validateEmail } = require("../utils/emailValidation");
 const { startPhoneOtp, verifyPhoneOtp, generateOtp, OTP_EXPIRY_MINUTES, assertPhoneAvailable } = require("../services/phoneOtpService");
 const { toPublicProfile, backfillLegacyPhone } = require("../services/userProfileService");
 const { notify } = require("../config/notify");
@@ -31,7 +32,7 @@ const GOOGLE_EXCHANGE_TTL_MS = 2 * 60 * 1000;
 const googleExchangeCodes = new Map();
 
 function isValidEmail(value) {
-    return typeof value === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()) && value.length <= 254;
+    return validateEmail(value).valid;
 }
 
 function authUserPayload(user) {

@@ -81,6 +81,12 @@ async function startPhoneOtp(supabase, { userId, phone, purpose }) {
         email: user.email
     });
     if (!delivery.success) {
+        // Do not leave an undelivered code in cooldown; the normal route limiter
+        // still controls retries, while the OTP itself is never accepted.
+        await supabase.from("users")
+            .update({ pending_phone_normalized: null, otp_code: null, otp_expires_at: null, otp_purpose: null, otp_attempts: 0, otp_sent_at: null })
+            .eq("id", userId)
+            .eq("otp_code", hashOtp(otp));
         const err = new Error("Kode OTP belum dapat dikirim ke WhatsApp. Periksa konfigurasi notifikasi lalu coba lagi.");
         err.code = "OTP_DELIVERY_FAILED";
         throw err;
