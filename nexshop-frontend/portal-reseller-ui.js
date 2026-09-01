@@ -22,6 +22,20 @@
             "view-tiers": ["Tingkatan reseller", "Lihat tingkatan dan potongan yang diterapkan pada katalog akunmu."]
         };
 
+        const syncNavContrast = () => {
+            document.querySelectorAll(".tv-nav-link, .tv-nav-more").forEach((link) => {
+                const active = link.classList.contains("active");
+                link.style.setProperty("color", active ? "var(--portal-nav-active)" : "var(--portal-nav)", "important");
+                link.style.setProperty("opacity", "1", "important");
+                link.querySelector("span")?.style.setProperty("color", "inherit", "important");
+                link.querySelector("span")?.style.setProperty("opacity", "1", "important");
+                link.querySelectorAll("i[class*='fa-']").forEach((icon) => {
+                    icon.style.setProperty("color", active ? "var(--portal-nav-active-icon)" : "var(--portal-nav-icon)", "important");
+                    icon.style.setProperty("opacity", "1", "important");
+                });
+            });
+        };
+
         const syncDrawer = () => {
             if (!shell || !sidebar) return;
             const open = sidebar.classList.contains("open");
@@ -95,11 +109,17 @@
             syncSecondaryNav();
         };
 
-        const activeNavObserver = new MutationObserver(updatePageChrome);
+        const activeNavObserver = new MutationObserver(() => {
+            syncNavContrast();
+            updatePageChrome();
+        });
         document.querySelectorAll(".tv-nav-link").forEach((link) => {
             activeNavObserver.observe(link, { attributes: true, attributeFilter: ["class"] });
         });
 
+        const themeObserver = new MutationObserver(syncNavContrast);
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["class", "data-theme"] });
+        syncNavContrast();
         syncDrawer();
         updatePageChrome();
     };

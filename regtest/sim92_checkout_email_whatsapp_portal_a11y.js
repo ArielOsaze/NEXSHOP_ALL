@@ -68,6 +68,7 @@ assert.match(portalCss, /tv-nav-link[^}]*color:\s*(?!var\(--portal-faint\))/i);
 assert.match(portalCss, /@media\s*\(max-width:\s*\d+px\)[\s\S]*tv-nav-link/);
 assert.match(portalCss, /text-overflow:\s*ellipsis|white-space:\s*nowrap/);
 assert.match(portalUi, /aria-expanded|tvNavSecondary/);
+assert.match(portalUi, /syncNavContrast/);
 
 // Backend uses the same permissive validator and preserves local-part casing.
 assert.match(read("nexshop-backend/utils/emailValidation.js"), /function normalizeEmail/);
