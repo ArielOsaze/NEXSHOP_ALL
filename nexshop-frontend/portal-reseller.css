@@ -510,6 +510,25 @@ body.rs-portal-page::after {
     background: #F8FAFC !important;
 }
 
+/* KYC upload prompt: generated dark-theme rules must remain readable on the portal card. */
+.rs-portal-page #ktpDropzone {
+    border-color: var(--portal-line-strong) !important;
+    background: var(--portal-surface-blue) !important;
+    color: var(--portal-ink-soft) !important;
+}
+
+.rs-portal-page #ktpUploadPrompt > i {
+    color: var(--portal-blue) !important;
+}
+
+.rs-portal-page #ktpUploadPrompt > div:first-of-type {
+    color: var(--portal-ink) !important;
+}
+
+.rs-portal-page #ktpUploadPrompt > div:last-of-type {
+    color: var(--portal-muted) !important;
+}
+
 /* The auth guard owns visibility. This default must stay hidden until overview validation completes. */
 .rs-portal-page #sectionDashboard {
     display: none;
@@ -1703,7 +1722,7 @@ body.rs-portal-page::after {
 
 .rs-portal-page .tv-console-main [style*="color:#60a5fa"],
 .rs-portal-page .tv-console-main [style*="color: #60a5fa"] {
-    color: var(--portal-accent) !important;
+    color: var(--portal-blue) !important;
 }
 
 .rs-portal-page .tv-console-main [style*="color:#38bdf8"],
@@ -1740,7 +1759,7 @@ body.rs-portal-page::after {
 }
 
 .rs-portal-page .tv-console-main .tv-data-table td code {
-    color: var(--portal-accent) !important;
+    color: var(--portal-blue) !important;
 }
 
 @media (prefers-reduced-motion: reduce) {

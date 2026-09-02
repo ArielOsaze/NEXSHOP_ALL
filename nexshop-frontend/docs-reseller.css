@@ -11,7 +11,7 @@ body.reseller-docs-page {
     --docs-line-strong: #d0d5dd;
     --docs-blue: #075fd3;
     --docs-blue-dark: #0647a0;
-    --docs-cyan: #00a8c7;
+    --docs-cyan: #0e7490;
     min-width: 320px;
     background: var(--docs-bg) !important;
     background-image: none !important;
@@ -360,6 +360,47 @@ body.reseller-docs-page::after {
 .reseller-docs-page .docs-cta-banner {
     border-color: #b8e8ee !important;
     background: linear-gradient(135deg, #effcff, #f3f8ff) !important;
+}
+
+/* Endpoint and code tokens use the light documentation surface, not dark marketplace tokens. */
+.reseller-docs-page .docs-http-method--get {
+    border-color: #a9e5cf !important;
+    background: #effcf7 !important;
+    color: #087f69 !important;
+}
+
+.reseller-docs-page .docs-http-method--post {
+    border-color: #b8dbff !important;
+    background: #eff5ff !important;
+    color: #0647a0 !important;
+}
+
+.reseller-docs-page .docs-endpoint-url {
+    color: var(--docs-ink) !important;
+}
+
+.reseller-docs-page .docs-code-content .comment {
+    color: #9ca3af !important;
+}
+
+@media (max-width: 900px) {
+    .reseller-docs-page .mkt-nav-links {
+        border-color: var(--docs-line) !important;
+        background: var(--docs-surface) !important;
+        box-shadow: 0 12px 28px rgba(16, 24, 40, 0.12);
+    }
+}
+
+.reseller-docs-page .docs-cta-actions .mkt-btn-secondary {
+    border-color: var(--docs-line-strong) !important;
+    background: var(--docs-surface) !important;
+    color: var(--docs-blue-dark) !important;
+}
+
+.reseller-docs-page .docs-cta-actions .mkt-btn-secondary:hover {
+    border-color: var(--docs-blue) !important;
+    background: #f3f8ff !important;
+    color: var(--docs-blue-dark) !important;
 }
 
 @media (max-width: 900px) {
