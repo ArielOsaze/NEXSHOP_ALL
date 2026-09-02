@@ -5159,10 +5159,21 @@ function loadSectionWhenNear(selector, loader) {
         start();
         return;
     }
+    const isNearViewport = () => {
+        const rect = section.getBoundingClientRect();
+        const margin = 320;
+        return rect.bottom >= -margin && rect.top <= window.innerHeight + margin;
+    };
+
     observer = new IntersectionObserver((entries) => {
         if (entries.some((entry) => entry.isIntersecting)) start();
-    });
+    }, { rootMargin: "320px 0px" });
     observer.observe(section);
+
+    // IntersectionObserver delivery can be postponed while the shell is
+    // restoring its scroll position. A section already near the viewport must
+    // not remain an empty catalog waiting for a future scroll event.
+    if (isNearViewport()) start();
 }
 
 function scheduleNonCriticalHomepageWork() {
