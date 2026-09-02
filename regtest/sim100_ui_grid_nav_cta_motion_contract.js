@@ -48,6 +48,7 @@ mustMatch(resellerCss, /@media\s*\(hover:\s*hover\)\s*and\s*\(pointer:\s*fine\)[
 mustMatch(resellerCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.rs-showcase-card/,
     "showcase motion must provide a reduced-motion path");
 mustMatch(resellerJs, /const registerViewportSync\s*=\s*\(sync\)\s*=>/, "motion must have a rAF-coalesced scroll/resize fallback when observer delivery is delayed");
+mustMatch(resellerJs, /document\.hidden\s*\?\s*queueMicrotask/, "hidden tabs must settle viewport state without waiting for a throttled animation frame");
 mustMatch(resellerJs, /registerViewportSync\(\(\)\s*=>[\s\S]*?\.rs-reveal/, "reveal cards must be visible through the fallback when they enter the viewport");
 mustMatch(resellerJs, /registerViewportSync\(syncStories\)/, "showcase stories must start and stop through the same viewport fallback");
 mustMatch(resellerJs, /registerViewportSync\(syncCta\)/, "final CTA background motion must follow actual viewport visibility");

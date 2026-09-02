@@ -31,10 +31,12 @@
     };
     const requestViewportSync = () => {
         if (viewportSyncFrame) return;
-        viewportSyncFrame = window.requestAnimationFrame(() => {
+        viewportSyncFrame = true;
+        const flush = () => {
             viewportSyncFrame = null;
             viewportSyncs.forEach((sync) => sync());
-        });
+        };
+        (document.hidden ? queueMicrotask : window.requestAnimationFrame)(flush);
     };
     const registerViewportSync = (sync) => {
         viewportSyncs.add(sync);
