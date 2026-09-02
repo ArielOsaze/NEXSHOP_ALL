@@ -1,0 +1,15 @@
+"use strict";
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const root = path.resolve(__dirname, "..");
+const html = fs.readFileSync(path.join(root, "nexshop-frontend/marketplace.html"), "utf8");
+const nginx = fs.readFileSync(path.join(root, "nginx-nexshop.conf"), "utf8");
+const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+const body = scripts.find((value) => value.includes("const API_BASE") && value.includes("openMarketplaceDetail"));
+assert.ok(body, "Marketplace inline script must exist");
+const normalizedBody = body.replace(/\r\n/g, "\n");
+const hash = `sha256-${crypto.createHash("sha256").update(normalizedBody, "utf8").digest("base64")}`;
+assert.match(nginx, new RegExp(hash.replace(/[+/=]/g, "\\$&")), `CSP must allow the current Marketplace script (${hash})`);
+console.log("sim98_csp_hash_consistency: passed");
