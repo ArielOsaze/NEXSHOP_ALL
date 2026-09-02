@@ -9,6 +9,6 @@ assert.doesNotMatch(reseller, /<span class="rs-sidebar-logo">\s*N\s*<\/span>/i);
 assert.match(reseller, /class="rs-sidebar-logo"[\s\S]*?<img[^>]+src="\/images\/nexshop-logo\.webp"/i);
 assert.match(docs, /\.reseller-docs-page \.docs-content li[\s\S]*?color:\s*#475569/i);
 assert.match(docs, /--docs-muted:\s*#475569/i);
-assert.match(docs, /\.reseller-docs-page \.docs-nav a[\s\S]*?color:\s*var\(--docs-muted\)/i);
+assert.match(docs, /\.reseller-docs-page \.docs-mobile-toc summary[\s\S]*?color:\s*#0f172a/i);
 assert.match(docs, /\.reseller-docs-page \.docs-content td[\s\S]*?color:\s*#475569/i);
 console.log("sim95_reseller_logo_docs_contrast: passed");

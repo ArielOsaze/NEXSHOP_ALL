@@ -423,6 +423,15 @@ body.reseller-docs-page::after {
     }
 }
 
+.reseller-docs-page .docs-mobile-toc summary {
+    color: #0F172A !important;
+}
+
+.reseller-docs-page .docs-mobile-toc summary i,
+.reseller-docs-page .docs-mobile-toc summary svg {
+    color: #075FD3 !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .reseller-docs-page *,
     .reseller-docs-page *::before,
