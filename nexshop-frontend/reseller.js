@@ -214,6 +214,55 @@
         visual.addEventListener("pointerleave", reset);
     };
 
+    const initShowcaseCardTilt = () => {
+        if (reducedMotion.matches || !finePointer.matches) return;
+        document.querySelectorAll(".rs-showcase-card").forEach((card) => {
+            let frame = null;
+            let pointer = null;
+            const reset = () => {
+                if (frame) window.cancelAnimationFrame(frame);
+                frame = null;
+                pointer = null;
+                card.classList.remove("rs-pointer-active");
+                card.style.removeProperty("--rs-card-tilt-x");
+                card.style.removeProperty("--rs-card-tilt-y");
+                card.style.removeProperty("--rs-spotlight-x");
+                card.style.removeProperty("--rs-spotlight-y");
+            };
+            const apply = () => {
+                frame = null;
+                if (!pointer) return;
+                const rect = card.getBoundingClientRect();
+                if (!rect.width || !rect.height) return;
+                const x = Math.max(0, Math.min(1, (pointer.clientX - rect.left) / rect.width));
+                const y = Math.max(0, Math.min(1, (pointer.clientY - rect.top) / rect.height));
+                card.style.setProperty("--rs-card-tilt-x", `${((x - .5) * 3.4).toFixed(2)}deg`);
+                card.style.setProperty("--rs-card-tilt-y", `${((.5 - y) * 3).toFixed(2)}deg`);
+                card.style.setProperty("--rs-spotlight-x", `${(x * 100).toFixed(1)}%`);
+                card.style.setProperty("--rs-spotlight-y", `${(y * 100).toFixed(1)}%`);
+                card.classList.add("rs-pointer-active");
+            };
+            card.addEventListener("pointermove", (event) => {
+                pointer = event;
+                if (!frame) frame = window.requestAnimationFrame(apply);
+            });
+            card.addEventListener("pointerleave", reset);
+        });
+    };
+
+    const initFinalCtaMotion = () => {
+        const cta = document.querySelector(".rs-final-cta");
+        if (!cta) return;
+        if (reducedMotion.matches || !supportsObserver) {
+            cta.classList.add("rs-cta-in-viewport");
+            return;
+        }
+        const observer = new IntersectionObserver(([entry]) => {
+            cta.classList.toggle("rs-cta-in-viewport", entry.isIntersecting);
+        }, { threshold: 0.18 });
+        observer.observe(cta);
+    };
+
     const initMenu = () => {
         const toggle = document.getElementById("resellerNavToggle");
         const menu = document.getElementById("resellerNavMenu");
@@ -394,6 +443,8 @@
     initUniverseMotion();
     initPartnerSimulator();
     initHeroTilt();
+    initShowcaseCardTilt();
+    initFinalCtaMotion();
     initMenu();
     initAnchors();
     initFaq();

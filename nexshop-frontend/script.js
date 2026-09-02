@@ -4145,12 +4145,12 @@ function groupTwProducts(products) {
 
 function renderTwProductCard(p) {
     return `
-        <div class="tw-product-card ${twState.product && twState.product.kode_produk === p.kode_produk ? "selected" : ""}" data-kode="${escapeHtml(p.kode_produk)}">
+        <button type="button" class="tw-product-card ${twState.product && twState.product.kode_produk === p.kode_produk ? "selected" : ""}" data-kode="${escapeHtml(p.kode_produk)}" aria-label="Pilih ${escapeHtml(p.nama)} seharga ${escapeHtml(rupiah(p.harga_jual))}" title="${escapeHtml(p.nama)}">
             ${p.item_icon ? `<img class="tw-product-icon" src="${escapeHtml(safeUrl(p.item_icon))}" alt="${escapeHtml(p.nama)}" loading="lazy">` : `<span class="diamond-icon"><i class="fa-solid fa-gem" aria-hidden="true"></i></span>`}
             <h5>${escapeHtml(p.nama)}</h5>
             <div class="tw-product-price">${rupiah(p.harga_jual)}${hargaResellerHtml(p)}</div>
             <span class="tw-product-check"><i class="fa-solid fa-check" aria-hidden="true"></i></span>
-        </div>
+        </button>
     `;
 }
 

@@ -3170,6 +3170,16 @@ body.rs-page::after {
     color: var(--rs-pdf-navy);
 }
 
+/* CTA uses a dark surface; keep its foreground out of the PDF light-section
+   heading rule above, including WebKit's independent text-fill channel. */
+.rs-page .rs-final-cta h2 {
+    color: #fff;
+    -webkit-text-fill-color: #fff;
+    background: none;
+    background-clip: border-box;
+    opacity: 1;
+}
+
 .rs-page .rs-showcase-card,
 .rs-page .rs-simulator-shell,
 .rs-page .rs-universe-stage,
@@ -3967,4 +3977,52 @@ body.rs-page.rs-motion-ready .rs-hero::before { animation: rs-hero-grid-drift 20
 @media (prefers-reduced-motion: reduce) {
     body.rs-page.rs-motion-ready .rs-hero::before, .rs-page .rs-hero-visual.rs-is-visible .rs-hero-glow, .rs-page .rs-hero-visual.rs-command-in-viewport .rs-portal-window, .rs-page .rs-command-in-viewport .rs-portal-content, .rs-page .rs-command-in-viewport .rs-hero-chips span, .rs-page .rs-command-in-viewport .rs-network-line::after, .rs-page .rs-universe-route.is-active::after { animation: none !important; }
     .rs-page .rs-showcase-grid { scroll-snap-type: none; }
+    .rs-page .rs-showcase-card,
+    .rs-page .rs-final-cta::after { animation: none !important; transform: none !important; transition: none !important; }
+}
+
+/* Fine-pointer depth is opt-in. Motion is driven through CSS variables so the
+   card's existing story animation remains independent from pointer position. */
+@media (hover: hover) and (pointer: fine) {
+    .rs-page .rs-showcase-card {
+        --rs-card-tilt-x: 0deg;
+        --rs-card-tilt-y: 0deg;
+        --rs-spotlight-x: 50%;
+        --rs-spotlight-y: 50%;
+        transform: perspective(1000px) translate3d(0, 0, 0) rotateX(var(--rs-card-tilt-y)) rotateY(var(--rs-card-tilt-x));
+        transform-style: preserve-3d;
+        will-change: transform;
+    }
+
+    .rs-page .rs-showcase-card:hover,
+    .rs-page .rs-showcase-card.rs-pointer-active {
+        transform: perspective(1000px) translate3d(0, -4px, 0) rotateX(var(--rs-card-tilt-y)) rotateY(var(--rs-card-tilt-x));
+        border-color: rgba(105, 220, 232, .62);
+        box-shadow: 0 28px 68px rgba(16, 24, 40, .16), 0 0 0 1px rgba(105, 220, 232, .12);
+    }
+
+    .rs-page .rs-showcase-card::after {
+        content: "";
+        position: absolute;
+        z-index: 0;
+        inset: 0;
+        pointer-events: none;
+        border-radius: inherit;
+        opacity: 0;
+        background: radial-gradient(220px circle at var(--rs-spotlight-x) var(--rs-spotlight-y), rgba(180, 250, 255, .26), transparent 62%);
+        transition: opacity 180ms ease;
+    }
+
+    .rs-page .rs-showcase-card.rs-pointer-active::after { opacity: 1; }
+    .rs-page .rs-showcase-card > * { position: relative; z-index: 1; }
+}
+
+/* The CTA has one slow decorative sweep only while its section is visible. */
+.rs-page .rs-final-cta.rs-cta-in-viewport::after {
+    animation: rs-final-cta-drift 9s ease-in-out infinite alternate;
+}
+
+@keyframes rs-final-cta-drift {
+    from { transform: translate3d(-12%, 0, 0) scale(.98); opacity: .12; }
+    to { transform: translate3d(10%, -2%, 0) scale(1.05); opacity: .25; }
 }
