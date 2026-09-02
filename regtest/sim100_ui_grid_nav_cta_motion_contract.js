@@ -45,8 +45,12 @@ mustMatch(resellerJs, /const initShowcaseCardTilt\s*=\s*\(\)\s*=>/, "showcase ca
 mustMatch(resellerJs, /initShowcaseCardTilt\(\);/, "showcase card motion must be initialized");
 mustMatch(resellerCss, /@media\s*\(hover:\s*hover\)\s*and\s*\(pointer:\s*fine\)[\s\S]*?\.rs-showcase-card/s,
     "showcase tilt must be capability-scoped to fine pointers");
-mustMatch(resellerCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.rs-showcase-card/s,
+mustMatch(resellerCss, /@media\s*\(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.rs-showcase-card/,
     "showcase motion must provide a reduced-motion path");
+mustMatch(resellerJs, /const registerViewportSync\s*=\s*\(sync\)\s*=>/, "motion must have a rAF-coalesced scroll/resize fallback when observer delivery is delayed");
+mustMatch(resellerJs, /registerViewportSync\(\(\)\s*=>[\s\S]*?\.rs-reveal/, "reveal cards must be visible through the fallback when they enter the viewport");
+mustMatch(resellerJs, /registerViewportSync\(syncStories\)/, "showcase stories must start and stop through the same viewport fallback");
+mustMatch(resellerJs, /registerViewportSync\(syncCta\)/, "final CTA background motion must follow actual viewport visibility");
 
 // Preserve the dynamic route and checkout data handoff while changing only visual rules.
 mustMatch(frontend, /await\s+openGameDetail\(data\.name,[\s\S]*?products:\s*data\.products/s,

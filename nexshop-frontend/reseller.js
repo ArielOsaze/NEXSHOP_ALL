@@ -22,6 +22,31 @@
         document.querySelectorAll(".rs-reveal").forEach(show);
     };
 
+    const viewportSyncs = new Set();
+    let viewportSyncFrame = null;
+    let viewportListenersBound = false;
+    const isInViewport = (element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.bottom > 0 && rect.top < window.innerHeight;
+    };
+    const requestViewportSync = () => {
+        if (viewportSyncFrame) return;
+        viewportSyncFrame = window.requestAnimationFrame(() => {
+            viewportSyncFrame = null;
+            viewportSyncs.forEach((sync) => sync());
+        });
+    };
+    const registerViewportSync = (sync) => {
+        viewportSyncs.add(sync);
+        if (!viewportListenersBound) {
+            viewportListenersBound = true;
+            window.addEventListener("scroll", requestViewportSync, { passive: true });
+            window.addEventListener("resize", requestViewportSync, { passive: true });
+        }
+        requestViewportSync();
+        return () => viewportSyncs.delete(sync);
+    };
+
     const initMotion = () => {
         page.classList.add("rs-motion-ready");
 
@@ -57,6 +82,13 @@
             }, { rootMargin: "0px 0px 8%", threshold: 0.12 });
 
             document.querySelectorAll(".rs-reveal").forEach((element) => observer.observe(element));
+            registerViewportSync(() => {
+                document.querySelectorAll(".rs-reveal:not(.rs-is-visible)").forEach((element) => {
+                    if (!isInViewport(element)) return;
+                    show(element);
+                    element.classList.add("rs-motion-seen");
+                });
+            });
         }
 
         if (!reducedMotion.matches) {
@@ -193,6 +225,13 @@
             });
         }, { rootMargin: "0px", threshold: 0.08 });
         cards.forEach((card) => observer.observe(card));
+        const syncStories = () => {
+            cards.forEach((card) => {
+                if (isInViewport(card)) activate(card);
+                else stop(card);
+            });
+        };
+        registerViewportSync(syncStories);
     };
 
     const initHeroTilt = () => {
@@ -261,6 +300,10 @@
             cta.classList.toggle("rs-cta-in-viewport", entry.isIntersecting);
         }, { threshold: 0.18 });
         observer.observe(cta);
+        const syncCta = () => {
+            cta.classList.toggle("rs-cta-in-viewport", isInViewport(cta));
+        };
+        registerViewportSync(syncCta);
     };
 
     const initMenu = () => {
