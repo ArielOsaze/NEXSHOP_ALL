@@ -22,7 +22,12 @@ class SilentIntersectionObserver {
 
 const context = {
     document: { querySelector: (selector) => selector === "#topup" ? section : null },
-    window: { innerHeight: 844, IntersectionObserver: SilentIntersectionObserver },
+    window: {
+        innerHeight: 844,
+        IntersectionObserver: SilentIntersectionObserver,
+        addEventListener: () => {},
+        removeEventListener: () => {}
+    },
     IntersectionObserver: SilentIntersectionObserver,
     runBackgroundTask: (task) => Promise.resolve().then(task),
     console: { error() {} }

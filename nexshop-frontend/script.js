@@ -5146,10 +5146,12 @@ function loadSectionWhenNear(selector, loader) {
 
     let started = false;
     let observer = null;
+    let cleanupFallback = () => {};
     const start = () => {
         if (started) return;
         started = true;
         observer?.disconnect();
+        cleanupFallback();
         void runBackgroundTask(loader).catch((error) => {
             console.error(`Failed to load ${selector}:`, error);
         });
@@ -5170,10 +5172,23 @@ function loadSectionWhenNear(selector, loader) {
     }, { rootMargin: "320px 0px" });
     observer.observe(section);
 
+    // Keep a one-time passive fallback until the observer actually starts the
+    // loader. This covers browser scroll-restoration/embedded-webview cases
+    // where an observer callback is deferred even after the section moves in.
+    const startIfNear = () => {
+        if (isNearViewport()) start();
+    };
+    window.addEventListener("scroll", startIfNear, { passive: true });
+    window.addEventListener("resize", startIfNear, { passive: true });
+    cleanupFallback = () => {
+        window.removeEventListener("scroll", startIfNear);
+        window.removeEventListener("resize", startIfNear);
+    };
+
     // IntersectionObserver delivery can be postponed while the shell is
     // restoring its scroll position. A section already near the viewport must
     // not remain an empty catalog waiting for a future scroll event.
-    if (isNearViewport()) start();
+    startIfNear();
 }
 
 function scheduleNonCriticalHomepageWork() {
