@@ -453,6 +453,14 @@ body.rs-page::after {
     font-weight: 800;
 }
 
+.rs-sidebar-logo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: inherit;
+}
+
 .rs-portal-sidebar > span:not(.rs-sidebar-logo) {
     width: 18px;
     height: 18px;

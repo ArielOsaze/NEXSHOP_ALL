@@ -29,6 +29,7 @@ const adminDepositLimiter = rateLimit({
 // indeks katalog -- jadi produk yang kartunya belum termuat tetap ketemu.
 router.get("/catalog/games", optionalAuthMiddleware, topupController.getCatalogGames);
 router.get("/catalog/operators", optionalAuthMiddleware, topupController.getCatalogOperators);
+router.get("/catalog/group/:jenis/slug/:slug", optionalAuthMiddleware, topupController.getCatalogGroupBySlug);
 router.get("/catalog/group/:jenis/:id/products", optionalAuthMiddleware, topupController.getCatalogGroupProducts);
 
 // Endpoint lama tetap ada supaya integrasi/halaman yang belum dimigrasi

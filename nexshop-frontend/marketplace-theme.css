@@ -5368,5 +5368,45 @@ i[class*="fa-"] {
 }
 
 .sd-general .sd-title i {
-    color: #8b5cf6; /* Violet */
+    color: #8b5cf6;
+}
+
+.mkt-route-status {
+    min-height: 48vh;
+    display: grid;
+    place-items: center;
+    padding: 96px 20px 72px;
+    text-align: center;
+}
+
+.mkt-route-card {
+    max-width: 520px;
+    padding: 36px 24px;
+    border: 1px solid var(--mkt-border);
+    border-radius: 20px;
+    background: var(--mkt-surface);
+}
+
+.mkt-route-card > i {
+    display: block;
+    margin-bottom: 16px;
+    color: var(--mkt-accent);
+    font-size: 2rem;
+}
+
+.mkt-route-card h1 {
+    color: var(--mkt-text);
+    font-size: clamp(1.35rem, 3vw, 2rem);
+    margin-bottom: 8px;
+}
+
+.mkt-route-card p {
+    color: var(--mkt-text-muted);
+    margin-bottom: 20px;
+}
+
+@media (max-width: 767px) {
+    .mkt-route-status {
+        padding-inline: 14px;
+    }
 }

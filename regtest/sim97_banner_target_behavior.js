@@ -1,0 +1,11 @@
+"use strict";
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const source = fs.readFileSync(path.join(__dirname, "..", "nexshop-frontend/script.js"), "utf8");
+assert.match(source, /function getPromoTarget/);
+assert.match(source, /function renderPromoAction/);
+assert.doesNotMatch(source, /cta_link\s*\|\|\s*['"]#['"]/);
+assert.match(source, /promoTarget\s*\?\s*`<a/);
+assert.match(source, /promoTarget\s*\?\s*`<a|promoTarget\s*\?\s*`<div/);
+console.log("sim97_banner_target_behavior: passed");

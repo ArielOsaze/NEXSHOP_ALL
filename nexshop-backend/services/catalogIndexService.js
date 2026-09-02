@@ -106,8 +106,17 @@ async function ambilPetaKategori() {
     return peta;
 }
 
-// Teks yang dipakai mesin pencari sisi server. Digabung jadi satu string
-// huruf kecil supaya pencocokan token tidak perlu menyusuri banyak field.
+function slugifyCatalogName(name) {
+    return String(name || "")
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim()
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+}
+
 function bangunTeksCari(grup) {
     const bagian = [grup.name, grup.category];
     grup.products.forEach((p) => bagian.push(p.nama, p.kode_produk));
@@ -407,5 +416,6 @@ module.exports = {
     urutkanMarketplaceOperators,
     urutkanPopuler,
     urutkanPencarian,
+    slugifyCatalogName,
     TTL_MS
 };

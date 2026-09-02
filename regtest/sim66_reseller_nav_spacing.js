@@ -47,7 +47,7 @@ assert(
     "item navigasi reseller harus punya target sentuh minimum 44px"
 );
 assert(
-    docs.includes("marketplace-theme.css?v=20260829-reseller-nav-spacing-1") &&
+    docs.includes("marketplace-theme.css?v=20260903-marketplace-route-2") &&
         marketplaceTheme.includes(".reseller-docs-page .mkt-nav-links"),
     "halaman docs tetap memakai kontrak navbar legacy yang tidak disentuh"
 );

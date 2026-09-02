@@ -67,6 +67,20 @@
         return identity;
     }
 
+    // Pure/read-only identity snapshot. It never changes field values or DOM
+    // state, so submit/validation can safely read the latest guest input.
+    function readCheckoutIdentity({ user, emailId, phoneId }) {
+        const identity = getIdentity(user);
+        if (identity.authenticated) return identity;
+        const emailInput = document.getElementById(emailId);
+        const phoneInput = document.getElementById(phoneId);
+        return {
+            ...identity,
+            email: String(emailInput?.value ?? ""),
+            phone: String(phoneInput?.value ?? "")
+        };
+    }
+
     // QRCode.js renders a tight canvas. Add an explicit white quiet zone when
     // exporting so the downloaded PNG always contains the complete QR edges.
     function createPaddedQrDataUrl(source, padding = 32) {
@@ -94,6 +108,7 @@
         getIdentity,
         normalizeEmail,
         validateEmail,
+        readCheckoutIdentity,
         normalizePhone,
         toggleCheckoutIdentityFields,
         createPaddedQrDataUrl

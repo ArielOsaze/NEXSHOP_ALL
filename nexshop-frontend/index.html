@@ -78,7 +78,7 @@
 <script defer src="/clean-url.js?v=20260825"></script>
 <script defer src="/cookie-consent.js?v=20260825-no-float"></script>
 <script defer src="/product-description.js?v=20260827-speed-seo"></script>
-<link rel="stylesheet" href="/style.css?v=20260902-checkout-contrast-1">
+<link rel="stylesheet" href="/style.css?v=20260903-audit-1">
 <link rel="stylesheet" href="/tailwind.css?v=20260824-cyan-brand">
 
 <style>
@@ -214,7 +214,7 @@
 </div>
 
 <nav class="fixed w-full z-50 top-0 transition-all duration-300 px-[clamp(12px,3vw,32px)] py-3 sm:py-4 glass-panel border-b-0 border-x-0 border-t-0" id="mainNav">
-<div class="max-w-7xl mx-auto flex justify-between items-center gap-4">
+<div class="nx-nav-inner">
 <div class="flex items-center gap-2 sm:gap-3 group cursor-pointer shrink-0 nx-brand-lockup">
 <div class="nx-topup-brand-mark nx-brand-mark w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-indigo to-brand-cyan p-[1px] group-hover:rotate-90 transition-transform duration-500 shrink-0">
 <div class="w-full h-full bg-brand-light dark:bg-[var(--bg-void)] rounded-xl flex items-center justify-center">
@@ -223,7 +223,7 @@
 </div>
 <span class="font-extrabold text-base sm:text-xl tracking-tighter text-gray-900 dark:text-white uppercase shrink-0 nx-brand-name" id="storeNameText">NexShop</span>
 </div>
-<div class="hidden nx-main-nav-desktop gap-4 xl:gap-10 items-center min-w-0 flex-shrink">
+<div class="nx-main-nav-desktop gap-4 xl:gap-10 items-center min-w-0 flex-shrink">
 <a class="text-sm font-bold text-gray-900 dark:text-white relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-indigo after:scale-x-100 transition-all" href="#games">Katalog</a>
 <a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-cyan after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left" href="#topup">Topup Diamond</a>
 <a class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-brand-indigo after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left" href="/berita">Portal Berita</a>
@@ -429,7 +429,7 @@ Cek Transaksi
             </div>
         </div>
     </div>
-    <div class="topup-game-grid grid grid-cols-3 min-[480px]:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-[clamp(6px,1.5vw,16px)]" id="topupGameGrid">
+    <div class="topup-game-grid grid gap-[clamp(6px,1.5vw,16px)]" id="topupGameGrid">
     </div>
     <!-- Hanya 20 kartu awal yang dirender. Seluruh sisanya baru dimuat dan
          dirender setelah pengguna menekan tombol eksplisit di zona ini. -->
@@ -497,6 +497,7 @@ Cek Transaksi
 </section>
 
 <!-- Topup Detail (halaman penuh, bukan modal) -->
+<section class="topup-route-status hidden" id="topupRouteStatus" aria-live="polite"></section>
 <section class="topup-detail hidden" id="topupDetail">
     <div class="topup-detail-inner">
         <button type="button" class="tw-back" id="twBackBtn">&larr; Kembali ke daftar game</button>
@@ -1522,7 +1523,7 @@ Cek Transaksi
 
 <script defer src="/nexbot.js?v=20260825-production"></script>
 <script defer src="/auth-security.js?v=20260825"></script>
-<script defer src="/checkout-identity.js?v=20260902-checkout-identity-2"></script>
-<script defer src="/script.js?v=20260902-checkout-whatsapp-1"></script>
+<script defer src="/checkout-identity.js?v=20260903-guest-identity-3"></script>
+<script defer src="/script.js?v=20260903-route-grid-banner-2"></script>
 </body>
 </html>

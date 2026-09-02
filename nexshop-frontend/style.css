@@ -1444,6 +1444,61 @@ nav#mainNav.nav-scrolled {
     }
 }
 
+/* The store navbar is a bounded three-area layout: brand, navigation, actions. */
+#mainNav .nx-nav-inner {
+    width: 100%;
+    max-width: 1440px;
+    min-height: 44px;
+    margin-inline: auto;
+    padding-inline: clamp(24px, 2.5vw, 40px);
+    display: flex;
+    align-items: center;
+    gap: 0;
+}
+
+#mainNav .nx-main-nav-desktop {
+    display: none;
+}
+
+#mainNav .nx-main-nav-mobile {
+    display: flex;
+}
+
+@media (min-width: 1024px) {
+    #mainNav .nx-main-nav-desktop {
+        display: flex;
+        flex: 1 1 auto;
+        justify-content: flex-start;
+        align-items: center;
+        gap: clamp(14px, 1.45vw, 28px);
+        min-width: 0;
+        margin-inline: clamp(32px, 3vw, 52px) clamp(16px, 2vw, 32px);
+    }
+
+    #mainNav .nx-main-nav-desktop > a,
+    #mainNav .nx-main-nav-desktop > button {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        overflow: visible;
+        text-overflow: clip;
+    }
+
+    #mainNav .nx-main-nav-mobile {
+        display: none;
+    }
+
+    #mainNav .nx-nav-actions {
+        flex: 0 0 auto;
+        gap: clamp(4px, .55vw, 10px);
+    }
+}
+
+@media (max-width: 1023px) {
+    #mainNav .nx-nav-inner {
+        padding-inline: clamp(12px, 3vw, 24px);
+    }
+}
+
 .cart-count {
     position: absolute;
     top: -6px;
@@ -2560,6 +2615,86 @@ nav#mainNav.nav-scrolled {
    markup barunya gak minta rata tengah sama sekali. Section ini dihapus
    total (bukan cuma text-align-nya) karena elemen yang disasar (.tgc-logo,
    <h5>, .tgc-count, .skeleton) memang sudah gak ada di HTML manapun. */
+
+#topup .topup-game-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (min-width: 768px) {
+    #topup .topup-game-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1280px) {
+    #topup .topup-game-grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767px) {
+    #topup .topup-game-card {
+        min-width: 0;
+        padding: 8px;
+        border-radius: 12px;
+    }
+
+    #topup .topup-game-card .topup-game-card-count {
+        display: none;
+    }
+
+    #topup .topup-game-card h4 {
+        font-size: .72rem;
+        min-height: 2.1em;
+    }
+
+    #topup .topup-game-card .home-glass-badge {
+        top: 5px;
+        left: 5px;
+        padding-inline: 5px;
+        font-size: 8px;
+    }
+}
+
+.topup-route-status {
+    max-width: 900px;
+    min-height: 52vh;
+    margin: 0 auto;
+    padding: 120px 24px 80px;
+    display: grid;
+    place-items: center;
+    text-align: center;
+}
+
+.topup-route-card {
+    max-width: 520px;
+    padding: 36px 24px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: var(--bg-panel);
+}
+
+.topup-route-card > i {
+    display: block;
+    margin-bottom: 16px;
+    color: var(--text-cyan);
+    font-size: 2rem;
+}
+
+.topup-route-card h1 {
+    color: var(--hero-text);
+    font-size: clamp(1.35rem, 3vw, 2rem);
+    margin-bottom: 8px;
+}
+
+.topup-route-card p {
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+.route-home-hidden {
+    display: none !important;
+}
 
 /* ---- Halaman Detail Game (bukan modal) ---- */
 .topup-detail {

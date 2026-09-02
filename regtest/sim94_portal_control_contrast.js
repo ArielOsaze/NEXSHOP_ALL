@@ -1,0 +1,23 @@
+"use strict";
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const root = path.resolve(__dirname, "..");
+const read = (p) => fs.readFileSync(path.join(root, p), "utf8").replace(/\r\n/g, "\n");
+const css = read("nexshop-frontend/portal-reseller.css");
+const html = read("nexshop-frontend/portal-reseller.html");
+
+const controlBlock = css.match(/\.rs-portal-page input\.form-control,[\s\S]*?\n\}/)?.[0] || "";
+assert.match(controlBlock, /background:\s*#fff\s*!important/i);
+assert.match(controlBlock, /color:\s*#0f172a\s*!important/i, "portal white controls must use dark text in both themes");
+assert.match(css, /\.rs-portal-page\s+(?:\.tv-auth-card\s+)?(?:select|select\s+option)[^{]*\{[\s\S]*?background:\s*#fff/i);
+assert.match(css, /select\s+option[^{]*\{[\s\S]*?color:\s*#0f172a/i);
+assert.match(css, /input[^}]*:-webkit-autofill|:-webkit-autofill[^}]*-webkit-text-fill-color/i);
+assert.match(css, /\.rs-portal-page \.tv-auth-primary,[\s\S]*?background:\s*#0f172a/i, "primary portal actions need a stable dark background");
+assert.match(css, /#btnTwoFactorVerify[\s\S]*?background:\s*#0f172a/i);
+assert.match(css, /#btnTwoFactorBack[\s\S]*?background:\s*#ffffff/i);
+assert.match(css, /\.rs-portal-page \.tv-auth-primary:active|#btnLoginSubmit:active/i);
+assert.match(css, /#btnRegisterSubmit:disabled|\.tv-auth-primary:disabled/i);
+assert.doesNotMatch(controlBlock, /color:\s*var\(--portal-ink\)/i);
+assert.match(html, /\.tv-distributor-portal input\.form-control/);
+console.log("sim94_portal_control_contrast: passed");

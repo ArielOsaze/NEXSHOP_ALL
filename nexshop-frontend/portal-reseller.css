@@ -346,7 +346,8 @@ body.rs-portal-page::after {
     border: 1px solid var(--portal-line-strong) !important;
     border-radius: 10px !important;
     background: #fff !important;
-    color: var(--portal-ink) !important;
+    color: #0F172A !important;
+    color-scheme: light;
     box-shadow: none !important;
     font: inherit;
     font-size: 0.86rem;
@@ -356,7 +357,8 @@ body.rs-portal-page::after {
 .rs-portal-page input.form-control::placeholder,
 .rs-portal-page textarea::placeholder,
 .rs-portal-page .tv-auth-card input::placeholder {
-    color: var(--portal-faint) !important;
+    color: #64748B !important;
+    opacity: 1 !important;
 }
 
 .rs-portal-page input.form-control:focus,
@@ -371,9 +373,25 @@ body.rs-portal-page::after {
     outline: none;
 }
 
+.rs-portal-page .tv-auth-card select option,
+.rs-portal-page #sectionAuth select option {
+    background: #FFFFFF;
+    color: #0F172A;
+}
+
+.rs-portal-page #sectionAuth input:-webkit-autofill,
+.rs-portal-page #sectionAuth input:-webkit-autofill:hover,
+.rs-portal-page #sectionAuth input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #0F172A !important;
+    -webkit-box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+    box-shadow: 0 0 0 1000px #FFFFFF inset !important;
+    caret-color: #0F172A;
+}
+
 .rs-portal-page .tv-auth-primary,
 .rs-portal-page #btnLoginSubmit,
-.rs-portal-page #btnRegisterSubmit {
+.rs-portal-page #btnRegisterSubmit,
+.rs-portal-page #btnTwoFactorVerify {
     min-height: 48px;
     width: 100%;
     display: inline-flex;
@@ -381,10 +399,10 @@ body.rs-portal-page::after {
     justify-content: center;
     gap: 9px;
     padding: 12px 16px !important;
-    border: 1px solid var(--portal-ink) !important;
+    border: 1px solid #0F172A !important;
     border-radius: 10px !important;
-    background: var(--portal-ink) !important;
-    color: #fff !important;
+    background: #0F172A !important;
+    color: #FFFFFF !important;
     font: inherit;
     font-size: 0.83rem;
     font-weight: 800;
@@ -398,6 +416,24 @@ body.rs-portal-page::after {
     background: #202939 !important;
     box-shadow: 0 8px 18px rgba(16, 24, 40, 0.14);
     transform: translateY(-1px);
+}
+
+.rs-portal-page .tv-auth-primary:active:not(:disabled),
+.rs-portal-page #btnLoginSubmit:active:not(:disabled),
+.rs-portal-page #btnRegisterSubmit:active:not(:disabled) {
+    background: #020617 !important;
+    border-color: #020617 !important;
+    transform: translateY(0);
+}
+
+.rs-portal-page .tv-auth-primary:disabled,
+.rs-portal-page #btnLoginSubmit:disabled,
+.rs-portal-page #btnRegisterSubmit:disabled {
+    background: #475569 !important;
+    border-color: #475569 !important;
+    color: #FFFFFF !important;
+    cursor: wait;
+    opacity: 1;
 }
 
 .rs-portal-page button:disabled {
@@ -434,25 +470,44 @@ body.rs-portal-page::after {
     line-height: 1.6;
 }
 
-.rs-portal-page #btnTwoFactorVerify,
+.rs-portal-page #btnTwoFactorVerify {
+    background: #0F172A;
+    border-color: #0F172A;
+    color: #FFFFFF;
+}
+
 .rs-portal-page #btnTwoFactorBack {
-    min-height: 44px;
-    width: 100%;
-    border: 1px solid var(--portal-ink);
-    border-radius: 10px;
-    background: var(--portal-ink);
-    color: #fff;
-    font: inherit;
-    font-size: 0.82rem;
-    font-weight: 800;
-    cursor: pointer;
+    background: #FFFFFF;
+    border-color: #475569;
+    color: #0F172A;
 }
 
 .rs-portal-page #btnTwoFactorBack {
     margin-top: 8px;
-    border-color: var(--portal-line-strong);
-    background: #fff;
-    color: var(--portal-ink);
+    border-color: #475569;
+    background: #FFFFFF;
+    color: #0F172A;
+}
+
+.rs-portal-page #btnTwoFactorVerify:hover:not(:disabled) {
+    background: #1E293B !important;
+    border-color: #1E293B !important;
+}
+
+.rs-portal-page #btnTwoFactorVerify:active:not(:disabled) {
+    background: #020617 !important;
+    border-color: #020617 !important;
+}
+
+.rs-portal-page #btnTwoFactorVerify:disabled {
+    background: #475569 !important;
+    border-color: #475569 !important;
+    color: #FFFFFF !important;
+    opacity: 1;
+}
+
+.rs-portal-page #btnTwoFactorBack:hover:not(:disabled) {
+    background: #F8FAFC !important;
 }
 
 /* The auth guard owns visibility. This default must stay hidden until overview validation completes. */

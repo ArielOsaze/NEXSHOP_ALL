@@ -1,0 +1,21 @@
+"use strict";
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const root = path.resolve(__dirname, "..");
+const routes = fs.readFileSync(path.join(root, "nexshop-backend/routes/topupRoutes.js"), "utf8");
+const controller = fs.readFileSync(path.join(root, "nexshop-backend/controllers/topupController.js"), "utf8");
+const index = fs.readFileSync(path.join(root, "nexshop-backend/services/catalogIndexService.js"), "utf8");
+const nginx = fs.readFileSync(path.join(root, "nginx-nexshop.conf"), "utf8");
+const frontend = fs.readFileSync(path.join(root, "nexshop-frontend/script.js"), "utf8");
+
+assert.match(routes, /catalog\/group\/:jenis\/slug\/:slug/);
+assert.match(routes, /getCatalogGroupBySlug/);
+assert.match(controller, /exports\.getCatalogGroupBySlug/);
+assert.match(index, /function slugifyCatalogName/);
+assert.match(frontend, /function getTopupRouteSlug/);
+assert.match(frontend, /navigateToTopupSlug/);
+assert.match(frontend, /catalog\/group\/game\/slug/);
+assert.match(frontend, /history\.pushState|location\.href/);
+assert.match(nginx, /location ~ \^\/topup\//);
+console.log("sim96_dynamic_catalog_routes: passed");

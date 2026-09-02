@@ -2,7 +2,7 @@ const supabase = require("../config/db");
 const crypto = require("crypto");
 const tokovoucher = require("../config/tokovoucher");
 const catalogService = require("../services/catalogService");
-const { getCatalogIndex, halamanGrup, urutkanMarketplaceOperators, urutkanPopuler, urutkanPencarian, invalidateCatalogIndex } = require("../services/catalogIndexService");
+const { getCatalogIndex, halamanGrup, urutkanMarketplaceOperators, urutkanPopuler, urutkanPencarian, slugifyCatalogName, invalidateCatalogIndex } = require("../services/catalogIndexService");
 const webhookRelay = require("../services/webhookRelayService");
 const { createRedirectPayment, checkTransactionStatus, createDirectPayment, isDirectPaymentMethod } = require("../config/ipaymu");
 
@@ -3340,6 +3340,32 @@ exports.getCatalogOperators = async (req, res) => {
  * Produk milik SATU grup, diambil hanya saat kartunya dibuka.
  * Inilah yang membuat payload awal halaman tetap kecil.
  */
+exports.getCatalogGroupBySlug = async (req, res) => {
+    const jenis = String(req.params.jenis || "").toLowerCase();
+    const slug = String(req.params.slug || "").toLowerCase().trim();
+    if (!["game", "operator"].includes(jenis) || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) {
+        return res.status(400).json({ message: "Slug katalog tidak valid." });
+    }
+    try {
+        const konteksReseller = await getResellerContext(req.user && req.user.id);
+        const indeks = await getCatalogIndex();
+        const daftar = jenis === "game" ? indeks.games : indeks.operators;
+        const grup = daftar.find((item) => slugifyCatalogName(item.name) === slug);
+        if (!grup) return res.status(404).json({ message: "Operator tidak ditemukan." });
+        const grupLengkap = jenis === "game"
+            ? indeks.gamesById.get(grup.id)
+            : indeks.operatorsById.get(grup.id);
+        if (!grupLengkap) return res.status(404).json({ message: "Produk operator tidak ditemukan." });
+        const products = grupLengkap.products.map((product) => ({ ...product }));
+        terapkanHargaReseller(products, konteksReseller);
+        res.setHeader("Cache-Control", konteksReseller.isReseller ? "private, no-store" : "public, max-age=60");
+        return res.json({ id: grup.id, name: grup.name, category: grup.category, logo: grup.logo || null, product_count: products.length, butuh_server_id: products.some((product) => product.butuh_server_id), products });
+    } catch (err) {
+        console.error("getCatalogGroupBySlug:", err.message);
+        return res.status(500).json({ message: "Gagal memuat operator." });
+    }
+};
+
 exports.getCatalogGroupProducts = async (req, res) => {
     const jenis = String(req.params.jenis || "").toLowerCase();
     const id = String(req.params.id || "").toLowerCase().trim();

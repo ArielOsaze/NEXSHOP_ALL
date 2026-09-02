@@ -5,8 +5,8 @@ body.reseller-docs-page {
     --docs-surface-soft: #f8fafc;
     --docs-ink: #101828;
     --docs-ink-soft: #344054;
-    --docs-muted: #475467;
-    --docs-faint: #667085;
+    --docs-muted: #475569;
+    --docs-faint: #64748B;
     --docs-line: #e4e7ec;
     --docs-line-strong: #d0d5dd;
     --docs-blue: #075fd3;
@@ -201,6 +201,20 @@ body.reseller-docs-page::after {
 
 .reseller-docs-page .docs-nav-section {
     padding-top: 15px;
+}
+
+.reseller-docs-page .docs-content p,
+.reseller-docs-page .docs-content li,
+.reseller-docs-page .docs-content dd,
+.reseller-docs-page .docs-content td,
+.reseller-docs-page .docs-content th,
+.reseller-docs-page .docs-content small {
+    color: #475569 !important;
+}
+
+.reseller-docs-page .docs-callout p,
+.reseller-docs-page .docs-callout li {
+    color: #475569 !important;
 }
 
 .reseller-docs-page .docs-nav a {

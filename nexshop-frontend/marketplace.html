@@ -56,8 +56,8 @@
     <script defer src="/clean-url.js?v=20260825"></script>
     <script defer src="/legal-modal.js?v=20260825"></script>
     <script defer src="/cookie-consent.js?v=20260825-no-float"></script>
-    <link rel="stylesheet" href="/style.css?v=20260825-nexbot-rigged">
-    <link rel="stylesheet" href="/marketplace-theme.css?v=20260825-marketplace-hub">
+    <link rel="stylesheet" href="/style.css?v=20260903-audit-1">
+    <link rel="stylesheet" href="/marketplace-theme.css?v=20260903-marketplace-route-2">
 <link rel="stylesheet" href="/inline-styles.css?v=20260829-visual-regression-1">
 <script defer src="/csp-legacy-handlers.js?v=20260829-visual-regression-1"></script>
 </head>
@@ -262,6 +262,7 @@
             </ul>
         </section>
 
+        <section class="mkt-route-status hidden" id="mktRouteStatus" aria-live="polite"></section>
         <div class="mkt-columns">
             <!-- Rail kiri: kategori layanan -->
             <aside class="mkt-col-rail" id="mktRail">
@@ -703,7 +704,7 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
-        <script src="/checkout-identity.js?v=20260830-checkout-identity-1"></script>
+        <script src="/checkout-identity.js?v=20260903-guest-identity-3"></script>
         <script>
         // NexShop Marketplace — marketplace.html client-side logic
         const API_BASE = (() => {
@@ -740,6 +741,66 @@
             if (activeCategory) url.searchParams.set("kategori", activeCategory);
             else url.searchParams.delete("kategori");
             window.history.replaceState({ marketplace: true }, "", `${url.pathname}${url.search}${url.hash}`);
+        }
+
+        function slugifyMarketplaceName(name) {
+            return String(name || "")
+                .normalize("NFKD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .trim()
+                .replace(/&/g, "and")
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/^-+|-+$/g, "");
+        }
+
+        function getMarketplaceRouteSlug() {
+            const match = window.location.pathname.match(/^\/marketplace\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/i);
+            return match ? match[1].toLowerCase() : null;
+        }
+
+        function navigateToMarketplaceSlug(slug) {
+            const safeSlug = slugifyMarketplaceName(slug);
+            if (safeSlug) window.location.assign(`/marketplace/${encodeURIComponent(safeSlug)}`);
+        }
+
+        function setMarketplaceRouteStatus(state, message = "") {
+            const status = document.getElementById("mktRouteStatus");
+            const columns = document.querySelector(".mkt-columns");
+            if (!status) return;
+            status.classList.toggle("hidden", state === "ready");
+            if (columns) columns.classList.toggle("route-home-hidden", state !== "ready");
+            if (state === "loading") {
+                status.innerHTML = `<div class="mkt-route-card"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><h1>Memuat operator…</h1><p>Menyiapkan produk dan harga terbaru dari katalog NexShop.</p></div>`;
+            } else if (state === "error") {
+                status.innerHTML = `<div class="mkt-route-card"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><h1>Operator tidak ditemukan</h1><p>${escapeHtml(message || "Layanan ini belum tersedia atau sudah tidak aktif.")}</p><a class="mkt-btn-primary" href="/marketplace">Kembali ke Marketplace</a></div>`;
+            } else {
+                status.innerHTML = "";
+            }
+        }
+
+        async function initMarketplaceOperatorRoute(slug) {
+            document.documentElement.dataset.nexshopRoute = "marketplace-operator";
+            document.body.classList.add("nexshop-marketplace-route");
+            document.querySelector(".mkt-hero")?.classList.add("route-home-hidden");
+            document.querySelector(".mkt-quick-panel")?.classList.add("route-home-hidden");
+            document.querySelector(".mkt-trust-panel")?.classList.add("route-home-hidden");
+            setMarketplaceRouteStatus("loading");
+            try {
+                const response = await fetch(`${API_BASE}/topup/catalog/group/operator/slug/${encodeURIComponent(slug)}`, { headers: mktAuthHeaders() });
+                let data = null;
+                try { data = await response.json(); } catch (_) {}
+                if (!response.ok || !data || !Array.isArray(data.products) || !data.products.length) {
+                    throw new Error(data?.message || "Operator tidak memiliki produk aktif.");
+                }
+                setMarketplaceRouteStatus("ready");
+                await openMarketplaceDetail(data.id, data);
+                hideAppLoader();
+            } catch (error) {
+                console.error("initMarketplaceOperatorRoute:", error);
+                setMarketplaceRouteStatus("error", error.message);
+                hideAppLoader();
+            }
         }
 
         function safeUrl(url, fallback = "") {
@@ -1160,8 +1221,8 @@
             });
         }
 
-        async function openMarketplaceDetail(operatorId) {
-            const ringkas = operators.find((op) => String(op.id) === String(operatorId));
+        async function openMarketplaceDetail(operatorId, ringkasOverride = null) {
+            const ringkas = ringkasOverride || operators.find((op) => String(op.id) === String(operatorId));
             const operatorCategory = ringkas ? ringkas.category : "";
             const operatorName = ringkas ? ringkas.name : "";
             const detailRequestToken = ++mktDetailRequestToken;
@@ -1195,9 +1256,15 @@
     `;
 
             const wrapProduk = document.getElementById("mktDetailProducts");
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            if (!getMarketplaceRouteSlug()) {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            }
 
             let produk = produkOperatorCache.get(String(operatorId));
+            if (!produk && ringkasOverride && Array.isArray(ringkasOverride.products)) {
+                produk = ringkasOverride.products;
+                produkOperatorCache.set(String(operatorId), produk);
+            }
 
             if (!produk) {
                 // Skeleton selama produk diambil -- tanpa ini area detail
@@ -1243,6 +1310,10 @@
         }
 
         function closeMarketplaceDetail() {
+            if (getMarketplaceRouteSlug()) {
+                window.location.href = "/marketplace";
+                return;
+            }
             mktDetailRequestToken++;
             resetMarketplaceDetailSearch();
             activeMktDetail = null;
@@ -1322,6 +1393,22 @@
                 });
             }
             return { authenticated: Boolean(user), email: user?.email || "", phone: user?.phone || "" };
+        }
+
+        function readCheckoutIdentity() {
+            const user = getAuthenticatedMarketplaceUser();
+            if (window.NexShopCheckoutHelpers?.readCheckoutIdentity) {
+                return window.NexShopCheckoutHelpers.readCheckoutIdentity({
+                    user,
+                    emailId: "mktCheckoutEmail",
+                    phoneId: "mktCheckoutPhone"
+                });
+            }
+            return {
+                authenticated: Boolean(user),
+                email: user?.email || document.getElementById("mktCheckoutEmail")?.value || "",
+                phone: user?.phone || document.getElementById("mktCheckoutPhone")?.value || ""
+            };
         }
 
         // ── Database Kode Bank Indonesia (Standar ATM Bersama / BI 2026) ──
@@ -1764,12 +1851,14 @@
 
             const btn = document.getElementById("mktCheckoutSubmitBtn");
             const errEl = document.getElementById("mktCheckoutError");
-            const checkoutIdentity = toggleCheckoutIdentityFields();
+            const checkoutIdentity = readCheckoutIdentity();
+            const guestEmailResult = checkoutIdentity.authenticated
+                ? { valid: true, value: checkoutIdentity.email, message: "" }
+                : (window.NexShopCheckoutHelpers?.validateEmail?.(checkoutIdentity.email) || { valid: false, value: "", message: "Validasi email belum siap. Muat ulang halaman lalu coba lagi." });
+            const guestPhone = checkoutIdentity.phone.trim();
             if (!checkoutIdentity.authenticated) {
-                const guestEmail = document.getElementById("mktCheckoutEmail").value.trim();
-                const guestPhone = document.getElementById("mktCheckoutPhone").value.trim();
-                if (!guestEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail)) {
-                    errEl.textContent = "Email wajib diisi dengan format yang benar.";
+                if (!guestEmailResult.valid) {
+                    errEl.textContent = guestEmailResult.message;
                     return;
                 }
                 if (!/^(0|62)[0-9]{8,14}$/.test(guestPhone)) {
@@ -1824,8 +1913,8 @@
                 const identityPayload = checkoutIdentity.authenticated
                     ? {}
                     : {
-                        recipient_phone: document.getElementById("mktCheckoutPhone").value.trim(),
-                        recipient_email: document.getElementById("mktCheckoutEmail").value.trim()
+                        recipient_phone: guestPhone,
+                        recipient_email: guestEmailResult.value
                     };
                 const payload = {
                     kode_produk: currentMktCheckoutProduct.kode_produk,
@@ -1982,12 +2071,12 @@
         // baris harga termurah + panah. Dibikin satu fungsi karena dipakai
         // dua kali di renderGrid (hasil cocok operator & hasil cocok produk),
         // dan dulu dua salinan itu sempat beda isi.
-        function marketCardHtml({ operatorId, iconHtml, name, countLabel, minPrice }) {
+        function marketCardHtml({ operatorId, slug, iconHtml, name, countLabel, minPrice }) {
             const priceHtml = minPrice !== null && minPrice !== undefined
                 ? `<span class="mkt-price-label">Mulai dari</span><span class="mkt-price">${rupiah(minPrice)}</span>`
                 : `<span class="mkt-price-label">Lihat daftar</span><span class="mkt-price mkt-price--muted">Cek harga</span>`;
             return `
-        <button type="button" class="market-card" data-operator="${operatorId}">
+        <button type="button" class="market-card" data-operator="${operatorId}" data-slug="${escapeHtml(slug || "")}">
             <span class="market-card-sheen" aria-hidden="true"></span>
             <div class="market-card-icon">${iconHtml}</div>
             <div class="market-card-body">
@@ -2053,6 +2142,7 @@
 
                     html += marketCardHtml({
                         operatorId: encodeURIComponent(op.id),
+                        slug: slugifyMarketplaceName(op.name),
                         iconHtml: imgHtml,
                         name: op.name,
                         countLabel: `${op.product_count} Produk`,
@@ -2076,7 +2166,8 @@
 
                     const buka = () => {
                         const id = decodeURIComponent(card.dataset.operator || "");
-                        if (id) openMarketplaceDetail(id);
+                        if (card.dataset.slug) navigateToMarketplaceSlug(card.dataset.slug);
+                        else if (id) openMarketplaceDetail(id);
                     };
                     card.addEventListener("click", buka);
                 });
@@ -3107,8 +3198,17 @@
             fetchUserWallet();
         }
 
+        async function initMarketplacePage() {
+            const slug = getMarketplaceRouteSlug();
+            if (!slug) {
+                await loadCatalog();
+                return;
+            }
+            await initMarketplaceOperatorRoute(slug);
+        }
+
         document.addEventListener("DOMContentLoaded", loadMarketplaceCurrentUser);
-        document.addEventListener("DOMContentLoaded", loadCatalog);
+        document.addEventListener("DOMContentLoaded", initMarketplacePage);
         document.addEventListener("DOMContentLoaded", loadMktStoreSettings);
         document.addEventListener("DOMContentLoaded", initMarketplaceWalletUI);
     </script>

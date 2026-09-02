@@ -1,0 +1,14 @@
+"use strict";
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const root = path.resolve(__dirname, "..");
+const reseller = fs.readFileSync(path.join(root, "nexshop-frontend/reseller.html"), "utf8");
+const docs = fs.readFileSync(path.join(root, "nexshop-frontend/docs-reseller.css"), "utf8");
+assert.doesNotMatch(reseller, /<span class="rs-sidebar-logo">\s*N\s*<\/span>/i);
+assert.match(reseller, /class="rs-sidebar-logo"[\s\S]*?<img[^>]+src="\/images\/nexshop-logo\.webp"/i);
+assert.match(docs, /\.reseller-docs-page \.docs-content li[\s\S]*?color:\s*#475569/i);
+assert.match(docs, /--docs-muted:\s*#475569/i);
+assert.match(docs, /\.reseller-docs-page \.docs-nav a[\s\S]*?color:\s*var\(--docs-muted\)/i);
+assert.match(docs, /\.reseller-docs-page \.docs-content td[\s\S]*?color:\s*#475569/i);
+console.log("sim95_reseller_logo_docs_contrast: passed");

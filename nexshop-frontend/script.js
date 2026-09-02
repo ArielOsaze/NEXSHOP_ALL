@@ -494,6 +494,23 @@ function watchPromoVisibility() {
     observer.observe(section);
 }
 
+function getPromoTarget(rawTarget) {
+    const target = String(rawTarget || "").trim();
+    if (!target || target === "#") return "";
+    if (target.startsWith("/") || target.startsWith("#")) return target;
+    try {
+        const parsed = new URL(target, window.location.origin);
+        return ["http:", "https:"].includes(parsed.protocol) ? parsed.toString() : "";
+    } catch (_) {
+        return "";
+    }
+}
+
+function renderPromoAction(target, innerHtml, className, label = "") {
+    if (target) return `<a href="${escapeHtml(target)}" class="${className}">${innerHtml}</a>`;
+    return `<span class="${className}" aria-disabled="true"${label ? ` aria-label="${escapeHtml(label)}"` : ""}>${innerHtml}</span>`;
+}
+
 function renderPromoCarousel() {
     const inner = document.getElementById("promoCarouselInner");
     const indicators = document.getElementById("promoIndicators");
@@ -509,12 +526,12 @@ function renderPromoCarousel() {
                     <img ${isFirstSlide ? `src="${getResponsiveImageUrl(desktopImage, 1280, 0, 76)}" srcset="${getResponsiveImageSrcset(desktopImage, 1280, 0, 76)}" fetchpriority="high"` : `data-src="${getResponsiveImageUrl(desktopImage, 1280, 0, 76)}"`} data-promo-image alt="${alt}" class="${className}" loading="${isFirstSlide ? 'eager' : 'lazy'}" decoding="async">
                 </picture>
             `;
+        const promoTarget = getPromoTarget(slide.cta_link);
         if (slide.full_image) {
-            return `
-                <a href="${slide.cta_link || '#'}" class="min-w-full h-full shrink-0 relative block">
-                    ${pictureMarkup(slide.title, "absolute inset-0 w-full h-full object-cover", i === 0)}
-                </a>
-            `;
+            const fullImage = pictureMarkup(slide.title, "absolute inset-0 w-full h-full object-cover", i === 0);
+            return promoTarget
+                ? `<a href="${escapeHtml(promoTarget)}" class="min-w-full h-full shrink-0 relative block">${fullImage}</a>`
+                : `<div class="min-w-full h-full shrink-0 relative block" role="img" aria-label="${escapeHtml(slide.title || "Promo NexShop")}">${fullImage}</div>`;
         }
 
         return `
@@ -525,7 +542,7 @@ function renderPromoCarousel() {
                     ${slide.badge_text ? `<span class="inline-block px-3 py-1 bg-brand-indigo text-white text-xs font-bold uppercase tracking-wider rounded-full mb-3">${escapeHtml(slide.badge_text)}</span>` : ''}
                     <h2 class="text-xl sm:text-3xl md:text-4xl font-black text-white mb-2 sm:mb-3 leading-tight">${escapeHtml(slide.title)}</h2>
                     ${slide.description ? `<p class="text-sm sm:text-base text-gray-300 mb-4 sm:mb-6 line-clamp-2">${escapeHtml(slide.description)}</p>` : ''}
-                    ${slide.cta_text ? `<a href="${slide.cta_link || '#'}" class="btn-primary inline-flex text-sm sm:text-base">${escapeHtml(slide.cta_text)}</a>` : ''}
+                    ${slide.cta_text ? renderPromoAction(promoTarget, escapeHtml(slide.cta_text), "btn-primary inline-flex text-sm sm:text-base", slide.title) : ''}
                 </div>
             </div>
         `;
@@ -3618,6 +3635,72 @@ function renderTopupSearchPending() {
     if (countBadge && query) countBadge.textContent = "Mencari…";
 }
 
+function slugifyPublicName(name) {
+    return String(name || "")
+        .normalize("NFKD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim()
+        .replace(/&/g, "and")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+}
+
+function navigateToTopupSlug(slug) {
+    const safeSlug = slugifyPublicName(slug);
+    if (safeSlug) window.location.assign(`/topup/${encodeURIComponent(safeSlug)}`);
+}
+
+function getTopupRouteSlug() {
+    const match = window.location.pathname.match(/^\/topup\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/i);
+    return match ? match[1].toLowerCase() : null;
+}
+
+function setTopupRouteStatus(state, message = "") {
+    const status = document.getElementById("topupRouteStatus");
+    const detail = document.getElementById("topupDetail");
+    if (!status) return;
+    status.classList.toggle("hidden", state === "ready");
+    if (detail) detail.classList.toggle("hidden", state !== "ready");
+    if (state === "loading") {
+        status.innerHTML = `<div class="topup-route-card"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i><h1>Memuat operator…</h1><p>Menyiapkan produk dan harga terbaru dari katalog NexShop.</p></div>`;
+    } else if (state === "error") {
+        status.innerHTML = `<div class="topup-route-card"><i class="fa-solid fa-circle-exclamation" aria-hidden="true"></i><h1>Operator tidak ditemukan</h1><p>${escapeHtml(message || "Operator ini belum tersedia atau sudah tidak aktif.")}</p><a class="btn-primary btn-cyan" href="/">Kembali ke katalog</a></div>`;
+    } else {
+        status.innerHTML = "";
+    }
+}
+
+async function initTopupOperatorRoute(slug) {
+    document.documentElement.dataset.nexshopRoute = "topup";
+    document.body.classList.add("nexshop-topup-route");
+    const hero = document.querySelector("body > header");
+    if (hero) hero.classList.add("route-home-hidden");
+    document.querySelectorAll("main > section").forEach((section) => {
+        if (section.id !== "topupDetail" && section.id !== "topupRouteStatus") section.classList.add("route-home-hidden");
+    });
+    setTopupRouteStatus("loading");
+    try {
+        const response = await fetch(`${API_BASE}/topup/catalog/group/game/slug/${encodeURIComponent(slug)}`, { headers: publicAuthHeaders() });
+        let data = null;
+        try { data = await response.json(); } catch (_) {}
+        if (!response.ok || !data || !Array.isArray(data.products) || !data.products.length) {
+            throw new Error(data?.message || "Operator tidak memiliki produk aktif.");
+        }
+        setTopupRouteStatus("ready");
+        await openGameDetail(data.name, {
+            kategori: data.name,
+            logo: data.logo,
+            products: data.products
+        }, "topup-route");
+        hideAppLoader();
+    } catch (error) {
+        console.error("initTopupOperatorRoute:", error);
+        setTopupRouteStatus("error", error.message);
+        hideAppLoader();
+    }
+}
+
 function renderTopupGameGrid() {
     const grid = document.getElementById("topupGameGrid");
     if (!grid) return;
@@ -3669,13 +3752,15 @@ function renderTopupGameGrid() {
         // dulu dihitung dari array produk lengkap yang harus diunduh dulu.
         const minPrice = g.min_price !== undefined && g.min_price !== null ? g.min_price : null;
         const jumlahProduk = g.product_count || 0;
+        const kategori = g.kategori || g.name || "Lainnya";
+        const slug = g.slug || slugifyPublicName(kategori);
         const logoUrl = g.logo ? escapeHtml(safeUrl(g.logo)) : "";
         return `
-        <div class="topup-game-card group relative home-glass-card rounded-xl sm:rounded-2xl p-[clamp(6px,2vw,16px)] flex flex-col justify-between transition-all duration-300" data-kategori="${escapeHtml(g.kategori)}" tabindex="0" role="button">
+        <div class="topup-game-card group relative home-glass-card rounded-xl sm:rounded-2xl p-[clamp(6px,2vw,16px)] flex flex-col justify-between transition-all duration-300" data-kategori="${escapeHtml(kategori)}" data-slug="${escapeHtml(slug)}" tabindex="0" role="button">
             <div>
                 <div class="relative w-full aspect-square rounded-xl sm:rounded-2xl overflow-hidden mb-2 sm:mb-4 bg-transparent">
                     ${g.logo ? `
-                    <img src="${logoUrl}" alt="${escapeHtml(g.kategori)}" loading="lazy" class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700">
+                    <img src="${logoUrl}" alt="${escapeHtml(kategori)}" loading="lazy" class="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700">
                     ` : `
                     <div class="absolute inset-0 bg-gradient-to-br from-brand-indigo/20 to-brand-cyan/20"></div>
                     <div class="absolute inset-0 flex items-center justify-center">
@@ -3684,9 +3769,9 @@ function renderTopupGameGrid() {
                     `}
                     <span class="absolute top-2 left-2 home-glass-badge !text-[9px] !px-2 !py-0.5 !shadow-sm">INSTAN</span>
                 </div>
-                <h4 class="text-[clamp(0.65rem,2.2vw,0.85rem)] leading-tight font-bold text-gray-900 dark:text-white line-clamp-2 mb-1 sm:mb-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors" title="${escapeHtml(g.kategori)}">${escapeHtml(g.kategori)}</h4>
+                <h4 class="text-[clamp(0.65rem,2.2vw,0.85rem)] leading-tight font-bold text-gray-900 dark:text-white line-clamp-2 mb-1 sm:mb-2 group-hover:text-brand-indigo dark:group-hover:text-brand-cyan transition-colors" title="${escapeHtml(kategori)}">${escapeHtml(kategori)}</h4>
                 <div class="flex items-center gap-1 text-[clamp(0.55rem,1.7vw,0.75rem)] text-gray-500 dark:text-gray-400 mb-2 sm:mb-4 font-medium">
-                    <i class="fa-solid fa-layer-group text-[clamp(0.6rem,1.9vw,0.9rem)]" aria-hidden="true"></i> <span>${jumlahProduk} Produk</span>
+                    <i class="fa-solid fa-layer-group text-[clamp(0.6rem,1.9vw,0.9rem)]" aria-hidden="true"></i> <span class="topup-game-card-count">${jumlahProduk} Produk</span>
                 </div>
             </div>
             <div class="flex items-center justify-between mt-auto">
@@ -3700,9 +3785,9 @@ function renderTopupGameGrid() {
     }).join("");
 
     grid.querySelectorAll(".topup-game-card").forEach(card => {
-        card.addEventListener("click", () => openGameDetail(card.dataset.kategori));
+        card.addEventListener("click", () => navigateToTopupSlug(card.dataset.slug));
         card.addEventListener("keydown", (e) => {
-            if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openGameDetail(card.dataset.kategori); }
+            if (e.key === "Enter" || e.key === " ") { e.preventDefault(); navigateToTopupSlug(card.dataset.slug); }
         });
     });
 
@@ -3845,13 +3930,19 @@ async function openGameDetail(kategori, overrideGame = null, returnView = 'grid'
 
     document.getElementById("topup").classList.add("hidden");
     document.getElementById("topupDetail").classList.remove("hidden");
-    window.scrollTo({ top: document.getElementById("topupDetail").offsetTop - 90, behavior: "smooth" });
+    if (returnView !== "topup-route") {
+        window.scrollTo({ top: document.getElementById("topupDetail").offsetTop - 90, behavior: "smooth" });
+    }
 }
 
 function closeGameDetail() {
     // Kalau checkout ini dibuka dari halaman Marketplace terpisah, balikin
     // ke sana lagi waktu ditutup -- bukan nyangkut di section Topup Diamond
     // di homepage (yang gak ada hubungannya sama alur belanja user).
+    if (twState && twState.returnView === "topup-route") {
+        window.location.href = "/";
+        return;
+    }
     if (twState && twState.returnView === "marketplace") {
         window.location.href = "/marketplace";
         return;
@@ -3926,7 +4017,7 @@ document.getElementById("twNextBtn").addEventListener("click", async () => {
         }
         const userId = document.getElementById("twUserId").value.trim();
         const serverId = document.getElementById("twServerId").value.trim();
-        const checkoutIdentity = toggleCheckoutIdentityFields();
+        const checkoutIdentity = readCheckoutIdentity();
         const email = checkoutIdentity.authenticated
             ? checkoutIdentity.email
             : document.getElementById("twEmail").value.trim();
@@ -4288,6 +4379,22 @@ function toggleCheckoutIdentityFields() {
     };
 }
 
+function readCheckoutIdentity() {
+    const user = getAuthenticatedCheckoutUser();
+    if (window.NexShopCheckoutHelpers?.readCheckoutIdentity) {
+        return window.NexShopCheckoutHelpers.readCheckoutIdentity({
+            user,
+            emailId: "twEmail",
+            phoneId: "twPhone"
+        });
+    }
+    return {
+        authenticated: Boolean(user),
+        email: user?.email || document.getElementById("twEmail")?.value || "",
+        phone: user ? toLocalPhoneDisplay(user.phone_normalized || user.phone || "") : (document.getElementById("twPhone")?.value || "")
+    };
+}
+
 // Submit topup lalu buka iPaymu dengan kanal yang sudah dipilih user di web.
 async function submitTopupOrder() {
     const errorEl = document.getElementById("twStep3Error");
@@ -4307,7 +4414,7 @@ async function submitTopupOrder() {
         const headers = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        const checkoutIdentity = toggleCheckoutIdentityFields();
+        const checkoutIdentity = readCheckoutIdentity();
         const identityPayload = checkoutIdentity.authenticated
             ? {}
             : {
@@ -5103,7 +5210,12 @@ async function bootstrapApp() {
     // settings, dan statistik sekunder dijadwalkan setelah shell siap.
     const refreshedUserPromise = refreshCurrentUserProfile();
     initNexBotChat();
-    initDeferredHomepageData();
+    const topupRouteSlug = getTopupRouteSlug();
+    if (topupRouteSlug) {
+        void runBackgroundTask(() => initTopupOperatorRoute(topupRouteSlug)).catch((error) => console.error("Top-up route failed:", error));
+    } else {
+        initDeferredHomepageData();
+    }
 
     const initialRequests = Promise.allSettled([
         refreshedUserPromise,
