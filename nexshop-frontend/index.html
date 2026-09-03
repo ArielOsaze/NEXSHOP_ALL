@@ -1278,6 +1278,33 @@ Cek Transaksi
         </div>
 
         <div class="modal-body nx-wallet-modal-body">
+            <!-- Guest state: wallet remains a wallet surface; it never opens the account control. -->
+            <div id="walletViewGuest" class="nx-wallet-view">
+                <div class="nx-wallet-balance-card">
+                    <div class="nx-balance-eyebrow">
+                        <span>NexShop Wallet</span>
+                        <span class="nx-verified-badge"><i class="fa-solid fa-wallet"></i> Dompet Resmi</span>
+                    </div>
+                    <div class="nx-balance-val">Rp 0</div>
+                </div>
+                <div class="nx-wallet-security-card">
+                    <div class="nx-security-icon-box">
+                        <i class="fa-solid fa-lock"></i>
+                    </div>
+                    <div class="nx-security-text">
+                        <strong class="nx-security-title">Login diperlukan untuk membuka wallet</strong>
+                        <span class="nx-security-desc">Wallet dan akun adalah menu terpisah. Masuk untuk melihat saldo, mutasi, dan top up.</span>
+                    </div>
+                </div>
+                <div class="nx-wallet-actions-row">
+                    <button type="button" class="nx-btn-wallet-action primary" id="btnWalletGuestLogin">
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        <span>Login ke Akun</span>
+                        <i class="fa-solid fa-arrow-right nx-btn-arrow"></i>
+                    </button>
+                </div>
+            </div>
+
             <!-- View 1: Overview & Mutations -->
             <div id="walletViewOverview" class="nx-wallet-view">
                 <div class="nx-wallet-balance-card">
@@ -1524,6 +1551,6 @@ Cek Transaksi
 <script defer src="/nexbot.js?v=20260825-production"></script>
 <script defer src="/auth-security.js?v=20260825"></script>
 <script defer src="/checkout-identity.js?v=20260903-guest-identity-3"></script>
-<script defer src="/script.js?v=20260903-ui-layout-3"></script>
+<script defer src="/script.js?v=20260903-ui-layout-4"></script>
 </body>
 </html>

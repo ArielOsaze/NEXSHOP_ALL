@@ -6,7 +6,9 @@ const path = require("path");
 const root = path.resolve(__dirname, "..");
 const css = fs.readFileSync(path.join(root, "nexshop-frontend", "style.css"), "utf8").replace(/\r\n/g, "\n");
 const resellerCss = fs.readFileSync(path.join(root, "nexshop-frontend", "reseller.css"), "utf8").replace(/\r\n/g, "\n");
+const resellerJs = fs.readFileSync(path.join(root, "nexshop-frontend", "reseller.js"), "utf8").replace(/\r\n/g, "\n");
 const index = fs.readFileSync(path.join(root, "nexshop-frontend", "index.html"), "utf8").replace(/\r\n/g, "\n");
+const script = fs.readFileSync(path.join(root, "nexshop-frontend", "script.js"), "utf8").replace(/\r\n/g, "\n");
 
 function assert(condition, message) {
     if (!condition) throw new Error(message);
@@ -59,5 +61,14 @@ assert(!/\.rs-page \.rs-section-heading h2,\s*\n\.rs-page \.rs-api-copy h2,/.tes
 assert(/\.rs-page \.rs-api-copy h2\s*\{[\s\S]*?color:\s*#fff/.test(resellerCss), "developer API heading must stay white on navy");
 assert(/\.rs-api-copy > p:not\(\.rs-kicker\)\s*\{[\s\S]*?color:\s*#d8e1ec/.test(resellerCss), "developer API body text must use readable light color");
 assert(/style\.css\?v=20260903-responsive-nav-layout-4/.test(index), "homepage style cache-buster must be bumped");
+assert(/script\.js\?v=20260903-ui-layout-4/.test(index), "wallet script cache-buster must be bumped");
+assert(/id="walletViewGuest"/.test(index), "wallet modal must have a separate guest state");
+assert(/id="btnWalletGuestLogin"/.test(index), "guest wallet state must offer a separate login action");
+assert(/function openWalletModal\([\s\S]*?walletViewGuest/.test(script), "wallet click must control the wallet guest state");
+assert(!/function openWalletModal\([\s\S]*?accBtn\.click\(\)/.test(script), "wallet click must never delegate to the account button");
+assert(/const cardObserver\s*=\s*new IntersectionObserver/.test(resellerJs), "reseller cards need a dedicated in/out observer");
+assert(/entry\.target\.classList\.toggle\("rs-is-visible", entry\.isIntersecting\)/.test(resellerJs), "reseller card visibility must follow viewport entry and exit");
+assert(/cardObserver\.observe\(card\)/.test(resellerJs), "every reseller product card must be observed for repeated motion");
+assert(/\.rs-showcase-card, \.rs-tier-card/.test(resellerJs), "reseller card observer must cover showcase and tier cards");
 
 console.log("sim103_responsive_nav_catalog_layout: passed");

@@ -5918,28 +5918,40 @@ async function loadWalletMutations() {
 function openWalletModal(e) {
     if (e && typeof e.preventDefault === "function") e.preventDefault();
     const token = localStorage.getItem(PUBLIC_TOKEN_STORAGE_KEY) || localStorage.getItem("nexshop-public-token") || localStorage.getItem("token");
-    if (!token) {
-        if (typeof toast === "function") {
-            toast("Silakan login terlebih dahulu untuk mengakses NexShop Wallet.", "info");
-        }
-        const accBtn = document.getElementById("accountBtn");
-        if (accBtn) accBtn.click();
-        return;
-    }
-
     const overlay = document.getElementById("walletModalOverlay");
     if (!overlay) return;
 
-    // Reset views
+    const viewGuest = document.getElementById("walletViewGuest");
     const viewOverview = document.getElementById("walletViewOverview");
     const viewTopup = document.getElementById("walletViewTopup");
     const viewQris = document.getElementById("walletViewQris");
     const viewSuccess = document.getElementById("walletViewSuccess");
+    const viewExpired = document.getElementById("walletViewExpired");
 
+    if (!token) {
+        // A wallet click must stay inside the wallet surface. Do not proxy it
+        // through accountBtn: that made the two controls behave as one.
+        [viewOverview, viewTopup, viewQris, viewSuccess, viewExpired].forEach(view => {
+            if (view) view.style.display = "none";
+        });
+        if (viewGuest) viewGuest.style.display = "block";
+        overlay.style.display = "";
+        if (typeof openOverlay === "function") {
+            openOverlay("walletModalOverlay");
+        } else {
+            overlay.classList.add("active");
+            overlay.classList.add("is-visible");
+            document.body.style.overflow = "hidden";
+        }
+        return;
+    }
+
+    if (viewGuest) viewGuest.style.display = "none";
     if (viewOverview) viewOverview.style.display = "block";
     if (viewTopup) viewTopup.style.display = "none";
     if (viewQris) viewQris.style.display = "none";
     if (viewSuccess) viewSuccess.style.display = "none";
+    if (viewExpired) viewExpired.style.display = "none";
 
     overlay.style.display = "";
     if (typeof openOverlay === "function") {
@@ -6008,6 +6020,16 @@ function initWalletUI() {
     // Close Button
     const closeBtn = document.getElementById("closeWalletModalBtn");
     if (closeBtn) closeBtn.addEventListener("click", closeWalletModal);
+
+    // Login action belongs to the account flow, but it is only reachable from
+    // this wallet guest state; the wallet trigger itself never clicks accountBtn.
+    const guestLoginBtn = document.getElementById("btnWalletGuestLogin");
+    if (guestLoginBtn) {
+        guestLoginBtn.addEventListener("click", () => {
+            closeWalletModal();
+            openOverlay("authOverlay");
+        });
+    }
 
     const overlay = document.getElementById("walletModalOverlay");
     if (overlay) {

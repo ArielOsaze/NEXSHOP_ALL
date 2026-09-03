@@ -93,6 +93,26 @@
             });
         }
 
+        if (!reducedMotion.matches && supportsObserver) {
+            const cardObserver = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    entry.target.classList.toggle("rs-is-visible", entry.isIntersecting);
+                    if (entry.isIntersecting) entry.target.classList.add("rs-motion-seen");
+                });
+            }, { rootMargin: "-8% 0px -8% 0px", threshold: 0.12 });
+
+            document.querySelectorAll(".rs-showcase-card, .rs-tier-card").forEach((card) => {
+                cardObserver.observe(card);
+            });
+            registerViewportSync(() => {
+                document.querySelectorAll(".rs-showcase-card.rs-reveal, .rs-tier-card.rs-reveal").forEach((card) => {
+                    const visible = isInViewport(card);
+                    card.classList.toggle("rs-is-visible", visible);
+                    if (visible) card.classList.add("rs-motion-seen");
+                });
+            });
+        }
+
         if (!reducedMotion.matches) {
             window.setTimeout(() => {
                 document.querySelector(".rs-steps-grid")?.classList.add("rs-steps-progress");

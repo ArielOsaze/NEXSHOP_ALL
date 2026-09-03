@@ -1687,6 +1687,19 @@ body.rs-page::after {
     transform: none;
 }
 
+/* Showcase/tier cards replay a restrained Stripe-like in/out reveal when
+   crossing the viewport. The transform stays local to these card groups. */
+.rs-motion-ready .rs-showcase-card.rs-reveal,
+.rs-motion-ready .rs-tier-card.rs-reveal {
+    transform: translate3d(0, 26px, 0) scale(0.985);
+    transition-duration: 560ms;
+}
+
+.rs-motion-ready .rs-showcase-card.rs-reveal.rs-is-visible,
+.rs-motion-ready .rs-tier-card.rs-reveal.rs-is-visible {
+    transform: translate3d(0, 0, 0) scale(1);
+}
+
 .rs-stagger {
     --rs-stagger-step: 70ms;
 }
