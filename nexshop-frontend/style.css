@@ -9122,11 +9122,16 @@ html:not(.dark) .home-glass-badge {
         overflow: visible;
     }
 
-    #mainNav .nx-nav-actions > button,
+    #mainNav .nx-nav-actions > button:not(.nx-wallet-nav-btn),
     #mainNav .nx-nav-actions > [role="button"] {
         flex: 0 0 40px;
         min-width: 40px;
         min-height: 40px;
+    }
+
+    #mainNav .nx-wallet-nav-btn {
+        flex: 0 0 auto;
+        min-width: max-content;
     }
 
     #mainNav .nx-wallet-nav-btn,

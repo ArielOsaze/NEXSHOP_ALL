@@ -29,6 +29,8 @@ function mediaBlock(source, query) {
 }
 
 const mobile = mediaBlock(css, "(max-width: 767px)");
+const walletCss = css.slice(css.indexOf("NEXSHOP WALLET & MOBILE DRAWER STYLES"));
+const walletTablet = mediaBlock(walletCss, "(max-width: 1023px)");
 const topupRule = selector => new RegExp(`${selector}\\s*\\{[\\s\\S]*?\\}`, "m");
 const topupAt = (min, columns) => new RegExp(`@media\\s*\\(min-width:\\s*${min}px\\)\\s*\\{[\\s\\S]*?#topup \\.topup-game-grid\\s*\\{[\\s\\S]*?grid-template-columns:\\s*repeat\\(${columns},`, "m");
 const mobileSection = /@media\\s*\\(max-width:\\s*767px\\)[\\s\\S]*$/m;
@@ -39,6 +41,7 @@ assert(topupAt(1024, 5).test(css), "desktop top-up grid must use 5 columns");
 assert(topupAt(1280, 6).test(css), "wide top-up grid must use 6 columns");
 
 assert(/#mainNav\s+\.nx-nav-actions/.test(css), "navbar action scope must exist");
+assert(/#mainNav\s+\.nx-nav-actions\s*>\s*button:not\(\.nx-wallet-nav-btn\)/.test(walletTablet), "tablet action sizing must exclude the wallet so its balance cannot overflow into the account button");
 assert(/@media\s*\(max-width:\s*767px\)[\s\S]*?#mainNav\s+#accountBtn\s*\{[\s\S]*?display:\s*none/.test(css), "account action must be hidden below 768px");
 assert(/@media\s*\(max-width:\s*767px\)[\s\S]*?#mainNav\s+\.nx-nav-actions\s*>\s*\.nx-wallet-nav-btn\s*\{[\s\S]*?min-width:\s*70px/.test(css), "mobile wallet must override the legacy 40px flex basis");
 assert(/#mainNav\s+\.nx-nav-inner\s*\{[\s\S]*?padding-inline:\s*0/.test(css), "mobile navbar must not add a second horizontal padding layer");
@@ -55,6 +58,6 @@ assert(/body:has\(\#topupDetail:not\(\.hidden\)\)\s+\.nexbot-widget\s*\{[\s\S]*?
 assert(!/\.rs-page \.rs-section-heading h2,\s*\n\.rs-page \.rs-api-copy h2,/.test(resellerCss), "PDF light-section selector must not override developer API heading");
 assert(/\.rs-page \.rs-api-copy h2\s*\{[\s\S]*?color:\s*#fff/.test(resellerCss), "developer API heading must stay white on navy");
 assert(/\.rs-api-copy > p:not\(\.rs-kicker\)\s*\{[\s\S]*?color:\s*#d8e1ec/.test(resellerCss), "developer API body text must use readable light color");
-assert(/style\.css\?v=20260903-responsive-nav-layout-3/.test(index), "homepage style cache-buster must be bumped");
+assert(/style\.css\?v=20260903-responsive-nav-layout-4/.test(index), "homepage style cache-buster must be bumped");
 
 console.log("sim103_responsive_nav_catalog_layout: passed");
