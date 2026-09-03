@@ -10,7 +10,8 @@ const inScope = [
     "Bisa bayar pakai QRIS?",
     "Lupa password akun, bagaimana?",
     "Mau tanya harga pulsa",
-    "Cara daftar reseller?"
+    "Cara daftar reseller?",
+    "Bagaimana beli voucher game?"
 ];
 
 const outOfScope = [
