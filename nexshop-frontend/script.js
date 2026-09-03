@@ -1033,6 +1033,7 @@ function avatarUrlFor(user) {
 }
 
 function avatarFallback(target, user) {
+    target.classList.toggle("is-empty", !user);
     target.innerHTML = user
         ? escapeHtml((user.fullname || "P").charAt(0).toUpperCase())
         : "";
@@ -1041,6 +1042,7 @@ function avatarFallback(target, user) {
 function renderAvatar(target, user, { header = false } = {}) {
     const url = avatarUrlFor(user);
     if (!url) return avatarFallback(target, user);
+    target.classList.remove("is-empty");
     target.innerHTML = `<img src="${escapeHtml(url)}" alt="Foto profil ${escapeHtml(user.fullname || "pengguna")}" data-csp-style="s0ad25958c28d80">`;
     const image = target.querySelector("img");
     image.addEventListener("error", () => avatarFallback(target, user), { once: true });

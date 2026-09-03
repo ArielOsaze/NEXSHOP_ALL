@@ -44,9 +44,9 @@
     <script defer src="/clean-url.js?v=20260825"></script>
     <script defer src="/legal-modal.js?v=20260825"></script>
     <script defer src="/cookie-consent.js?v=20260825-no-float"></script>
-    <link rel="stylesheet" href="/style.css?v=20260903-responsive-nav-account-avatar-6">
-    <link rel="stylesheet" href="/reseller.css?v=20260903-reseller-tier-mobile-5">
-    <script defer src="/reseller.js?v=20260903-reseller-cta-motion-4"></script>
+    <link rel="stylesheet" href="/style.css?v=20260904-empty-avatar-template-1">
+    <link rel="stylesheet" href="/reseller.css?v=20260904-connection-svg-mobile-1">
+    <script defer src="/reseller.js?v=20260904-connection-svg-mobile-1"></script>
 </head>
 <body class="rs-page" data-nexbot="auto">
     <header class="rs-header">
@@ -110,6 +110,7 @@
                                 <div><span class="rs-mini-icon rs-mini-icon-blue"><i class="fa-solid fa-key" aria-hidden="true"></i></span><small>Integrasi</small><strong>API ready</strong></div>
                             </div>
                             <div class="rs-network-card">
+                                <svg class="rs-flow-svg rs-network-flow-svg" aria-hidden="true" focusable="false"></svg>
                                 <div class="rs-network-line rs-network-line-a" aria-hidden="true"></div>
                                 <div class="rs-network-line rs-network-line-b" aria-hidden="true"></div>
                                 <div class="rs-network-node rs-network-node-center"><i class="fa-solid fa-link" aria-hidden="true"></i><span>API NexShop</span></div>
@@ -134,6 +135,7 @@
             <div class="rs-container">
                 <div class="rs-section-heading rs-section-heading-split"><div><p class="rs-kicker">Jaringan layanan PPOB</p><h2 id="network-title">Satu saldo, satu jaringan produk.</h2></div><p>Saldo partner mengalir ke layanan yang pelangganmu butuhkan, mulai dari pulsa sampai tagihan rutin.</p></div>
                 <div class="rs-universe-stage" data-universe-stage>
+                    <svg class="rs-flow-svg rs-universe-flow-svg" aria-hidden="true" focusable="false"></svg>
                     <div class="rs-universe-orbit rs-universe-orbit-a" aria-hidden="true"></div><div class="rs-universe-orbit rs-universe-orbit-b" aria-hidden="true"></div>
                     <div class="rs-universe-center"><span class="rs-universe-center-icon"><i class="fa-solid fa-wallet" aria-hidden="true"></i></span><small>Saldo Partner</small><strong>Rp1.250.000</strong><span class="rs-universe-pulse" aria-hidden="true"></span></div>
                                         <span class="rs-universe-route rs-universe-route-pulsa" aria-hidden="true"></span><span class="rs-universe-route rs-universe-route-pln" aria-hidden="true"></span><span class="rs-universe-route rs-universe-route-ewallet" aria-hidden="true"></span><span class="rs-universe-route rs-universe-route-game" aria-hidden="true"></span><span class="rs-universe-route rs-universe-route-voucher" aria-hidden="true"></span><span class="rs-universe-route rs-universe-route-bill" aria-hidden="true"></span>
@@ -220,6 +222,7 @@
                     <article class="rs-showcase-card rs-showcase-card--wide" data-showcase-story="wallet" aria-labelledby="showcase-wallet-title">
                         <div class="rs-showcase-copy"><div class="rs-showcase-meta"><span>05</span><span class="rs-showcase-type">Saldo &amp; biller</span></div><h3 id="showcase-wallet-title">Satu saldo untuk banyak layanan.</h3><p>Kelola saldo bisnis dan salurkan transaksi ke berbagai produk PPOB.</p></div>
                         <div class="rs-story-visual rs-story-wallet" aria-label="Contoh jalur saldo ke layanan PPOB">
+                            <svg class="rs-flow-svg rs-wallet-flow-svg" aria-hidden="true" focusable="false"></svg>
                             <div class="rs-wallet-source"><small>Saldo Partner Portal</small><strong>Rp480.700</strong><span class="rs-wallet-status" data-story-status>Siap disalurkan</span></div>
                             <div class="rs-wallet-network" aria-hidden="true"><span class="rs-wallet-line rs-wallet-line-1"></span><span class="rs-wallet-line rs-wallet-line-2"></span><span class="rs-wallet-line rs-wallet-line-3"></span><span class="rs-wallet-line rs-wallet-line-4"></span><span class="rs-wallet-flow rs-story-loop"></span><span class="rs-wallet-node rs-wallet-node-pulsa"><i class="fa-solid fa-mobile-screen-button"></i><b>Pulsa</b></span><span class="rs-wallet-node rs-wallet-node-pln"><i class="fa-solid fa-plug"></i><b>PLN</b></span><span class="rs-wallet-node rs-wallet-node-game"><i class="fa-solid fa-gamepad"></i><b>Game</b></span><span class="rs-wallet-node rs-wallet-node-ewallet"><i class="fa-solid fa-wallet"></i><b>E-wallet</b></span><span class="rs-wallet-node rs-wallet-node-bill"><i class="fa-solid fa-file-invoice"></i><b>Tagihan</b></span></div>
                             <div class="rs-wallet-funding"><span><i class="fa-solid fa-qrcode" aria-hidden="true"></i> Top up QRIS</span><span><i class="fa-solid fa-building-columns" aria-hidden="true"></i> Virtual Account</span></div>
@@ -230,7 +233,7 @@
                         <div class="rs-showcase-copy"><div class="rs-showcase-meta"><span>06</span><span class="rs-showcase-type">Developer API</span></div><h3 id="showcase-api-title">Hubungkan sistemmu ke NexShop.</h3><p>Otomatiskan transaksi PPOB untuk website, aplikasi, atau sistem tokomu.</p></div>
                         <div class="rs-story-visual rs-story-api" aria-label="Contoh alur request API dan webhook reseller">
                             <div class="rs-api-flow-labels"><span>Website / Toko</span><span>API NexShop</span><span>Biller</span><span>Webhook</span></div>
-                            <div class="rs-api-route" aria-hidden="true"><span class="rs-api-route-line rs-api-route-line-1"></span><span class="rs-api-route-line rs-api-route-line-2"></span><span class="rs-api-route-line rs-api-route-line-3"></span><span class="rs-api-route-pulse rs-story-loop"></span><i class="rs-api-node rs-api-node-shop fa-solid fa-store"></i><i class="rs-api-node rs-api-node-api fa-solid fa-code"></i><i class="rs-api-node rs-api-node-biller fa-solid fa-server"></i><i class="rs-api-node rs-api-node-hook fa-solid fa-plug"></i></div>
+                            <div class="rs-api-route" aria-hidden="true"><svg class="rs-flow-svg rs-api-flow-svg" aria-hidden="true" focusable="false"></svg><span class="rs-api-route-line rs-api-route-line-1"></span><span class="rs-api-route-line rs-api-route-line-2"></span><span class="rs-api-route-line rs-api-route-line-3"></span><span class="rs-api-route-pulse rs-story-loop"></span><i class="rs-api-node rs-api-node-shop fa-solid fa-store"></i><i class="rs-api-node rs-api-node-api fa-solid fa-code"></i><i class="rs-api-node rs-api-node-biller fa-solid fa-server"></i><i class="rs-api-node rs-api-node-hook fa-solid fa-plug"></i></div>
                             <pre class="rs-api-snippet"><code><span class="rs-api-method">POST</span> /api/v1/reseller/orders
 { <b>"kode_produk"</b>: <em>"PLN50"</em>,
   <b>"tujuan"</b>: <em>"5123••••890"</em>,

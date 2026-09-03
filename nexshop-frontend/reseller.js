@@ -122,6 +122,129 @@
         }
     };
 
+    const initResponsiveConnectionFlows = () => {
+        const flows = [
+            {
+                host: ".rs-network-card",
+                svg: ".rs-network-flow-svg",
+                source: ".rs-network-node-center i",
+                targets: [".rs-network-node-one i", ".rs-network-node-two i", ".rs-network-node-three i"]
+            },
+            {
+                host: ".rs-story-wallet",
+                svg: ".rs-wallet-flow-svg",
+                source: ".rs-wallet-source",
+                targets: [
+                    ".rs-wallet-node-pulsa i", ".rs-wallet-node-pln i",
+                    ".rs-wallet-node-game i", ".rs-wallet-node-ewallet i", ".rs-wallet-node-bill i"
+                ]
+            },
+            {
+                host: ".rs-api-route",
+                svg: ".rs-api-flow-svg",
+                pairs: [
+                    [".rs-api-node-shop", ".rs-api-node-api"],
+                    [".rs-api-node-api", ".rs-api-node-biller"],
+                    [".rs-api-node-biller", ".rs-api-node-hook"]
+                ]
+            },
+            {
+                host: ".rs-universe-stage",
+                svg: ".rs-universe-flow-svg",
+                source: ".rs-universe-center-icon",
+                targets: [
+                    ".rs-universe-node-pulsa i", ".rs-universe-node-pln i",
+                    ".rs-universe-node-ewallet i", ".rs-universe-node-game i",
+                    ".rs-universe-node-voucher i", ".rs-universe-node-bill i"
+                ]
+            }
+        ];
+        const center = (element, svg) => {
+            const rect = element.getBoundingClientRect();
+            const point = svg.createSVGPoint();
+            point.x = rect.left + rect.width / 2;
+            point.y = rect.top + rect.height / 2;
+            const matrix = svg.getScreenCTM();
+            return matrix ? point.matrixTransform(matrix.inverse()) : { x: point.x, y: point.y };
+        };
+        const redraw = (definition) => {
+            document.querySelectorAll(definition.host).forEach((host) => {
+                const svg = host.querySelector(definition.svg);
+                if (!svg) return;
+                const width = Math.max(1, Math.round(svg.clientWidth));
+                const height = Math.max(1, Math.round(svg.clientHeight));
+                svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+                svg.setAttribute("width", String(width));
+                svg.setAttribute("height", String(height));
+                const pairs = definition.pairs || definition.targets.map((target) => [definition.source, target]);
+                const pathData = [];
+                pairs.forEach(([fromSelector, toSelector], index) => {
+                    const from = host.querySelector(fromSelector);
+                    const to = host.querySelector(toSelector);
+                    if (!from || !to) return;
+                    const start = center(from, svg);
+                    const end = center(to, svg);
+                    pathData.push({ d: `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} L ${end.x.toFixed(2)} ${end.y.toFixed(2)}`, index });
+                });
+                const currentData = [...svg.querySelectorAll(".rs-flow-path")].map((path) => path.getAttribute("d"));
+                const nextData = pathData.map(({ d }) => d);
+                if (currentData.length !== nextData.length || currentData.some((d, index) => d !== nextData[index])) {
+                    svg.querySelectorAll(".rs-flow-path").forEach((path) => path.remove());
+                    pathData.forEach(({ d, index }) => {
+                        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                        path.setAttribute("class", "rs-flow-path");
+                        path.setAttribute("d", d);
+                    path.setAttribute("pathLength", "1");
+                    path.style.setProperty("--rs-flow-delay", `${index * 420}ms`);
+                    svg.appendChild(path);
+                    });
+                }
+                svg.classList.toggle("is-valid", pathData.length === pairs.length);
+            });
+        };
+        const redrawAll = () => flows.forEach(redraw);
+        redrawAll();
+        if ("ResizeObserver" in window) {
+            const observer = new ResizeObserver(redrawAll);
+            flows.forEach(({ host, source, targets, pairs }) => document.querySelectorAll(host).forEach((element) => {
+                observer.observe(element);
+                const selectors = pairs ? pairs.flat() : [source, ...(targets || [])];
+                selectors.filter(Boolean).forEach((selector) => {
+                    const node = element.querySelector(selector);
+                    if (node) observer.observe(node);
+                });
+            }));
+        }
+        window.addEventListener("resize", redrawAll, { passive: true });
+        let trackingFrames = 0;
+        let trackingFrame = null;
+        const trackScroll = () => {
+            trackingFrame = null;
+            redrawAll();
+            if (trackingFrames++ < 45) trackingFrame = window.requestAnimationFrame(trackScroll);
+        };
+        window.addEventListener("scroll", () => {
+            trackingFrames = 0;
+            if (!trackingFrame) trackingFrame = window.requestAnimationFrame(trackScroll);
+        }, { passive: true });
+        if ("MutationObserver" in window) {
+            const mutationObserver = new MutationObserver((records) => {
+                if (records.some(({ target }) => !target.closest("svg"))) redrawAll();
+            });
+            flows.forEach(({ host }) => document.querySelectorAll(host).forEach((element) => {
+                mutationObserver.observe(element, { subtree: true, attributes: true, attributeFilter: ["class", "style"] });
+            }));
+        }
+        [0, 2, 5, 12, 30, 80, 180, 360].forEach((delay) => window.setTimeout(redrawAll, delay));
+        if (document.fonts?.ready) document.fonts.ready.then(redrawAll);
+        let settleFrames = 0;
+        const settle = () => {
+            redrawAll();
+            if (settleFrames++ < 240) window.requestAnimationFrame(settle);
+        };
+        window.requestAnimationFrame(settle);
+    };
+
     const initShowcaseStories = () => {
         const cards = [...document.querySelectorAll(".rs-showcase-card[data-showcase-story]")];
         if (!cards.length) return;
@@ -240,19 +363,25 @@
             return;
         }
 
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach((entry) => {
-                if (entry.isIntersecting) activate(entry.target);
-                else stop(entry.target);
-            });
-        }, { rootMargin: "0px", threshold: 0.08 });
-        cards.forEach((card) => observer.observe(card));
+        const mobileMode = () => window.matchMedia("(max-width: 680px)").matches;
         const syncStories = () => {
+            if (!mobileMode()) {
+                cards.forEach((card) => isInViewport(card) ? activate(card) : stop(card));
+                return;
+            }
+            const centerY = window.innerHeight / 2;
+            let dominant = null;
+            let nearest = Number.POSITIVE_INFINITY;
             cards.forEach((card) => {
-                if (isInViewport(card)) activate(card);
-                else stop(card);
+                if (!isInViewport(card)) return;
+                const rect = card.getBoundingClientRect();
+                const distance = Math.abs((rect.top + rect.bottom) / 2 - centerY);
+                if (distance < nearest) { nearest = distance; dominant = card; }
             });
+            cards.forEach((card) => card === dominant ? activate(card) : stop(card));
         };
+        const observer = new IntersectionObserver(() => syncStories(), { rootMargin: "0px", threshold: 0.08 });
+        cards.forEach((card) => observer.observe(card));
         registerViewportSync(syncStories);
     };
 
@@ -503,6 +632,7 @@
     };
 
     initMotion();
+    initResponsiveConnectionFlows();
     initShowcaseStories();
     initHeroCommandCenter();
     initUniverseMotion();

@@ -8760,6 +8760,32 @@ html:not(.dark) .home-glass-badge {
     display: none !important;
 }
 
+/* Guest account avatar: an intentional empty profile template, not a blank
+   unstyled box and not a login icon. Authenticated images replace this state. */
+#mainNav #accountBtnAvatar.is-empty {
+    position: relative;
+    border: 1px solid rgba(148, 163, 184, 0.28);
+    background: #111827;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+#mainNav #accountBtnAvatar.is-empty::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border: 1px solid rgba(148, 163, 184, 0.34);
+    border-radius: 50%;
+    background: #1f2937;
+}
+
+#mainNav #accountBtnAvatar.is-empty::after {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+}
+
 /* Avatar foto profil harus tetap terukur walau legacy data-csp-style
    belum tersinkron pada tab lama. */
 #accountAvatar img,
