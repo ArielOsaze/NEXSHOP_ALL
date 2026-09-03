@@ -15,7 +15,7 @@ assert(/@media\s*\(min-width\s*:\s*1536px\)[\s\S]*?#mainNav\s+\.nx-brand-lockup\
     'desktop main nav brand needs an explicit 0.75rem logo/text gap');
 assert(/@media\s*\(min-width\s*:\s*1536px\)[\s\S]*?#mainNav\s+\.nx-main-nav-desktop\s*\{[^}]*margin-left\s*:/s.test(css),
     'desktop main nav needs explicit separation between brand and links');
-assert(/style\.css\?v=20260829-visual-regression-2/.test(html),
+assert(/style\.css\?v=20260903-responsive-nav-account-5/.test(html),
     'homepage must bump the shared CSS cache-buster for navbar spacing');
 
 console.log('PASS sim49: desktop homepage navbar keeps readable brand spacing');

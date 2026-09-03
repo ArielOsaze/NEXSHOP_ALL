@@ -1611,6 +1611,45 @@ exports.updatePortalSettings = async (req, res) => {
 };
 
 /**
+ * Katalog mentah tidak bergantung pada identitas reseller. Cache pendek ini
+ * mencegah setiap page request mengulang scan seluruh topup_products. Harga,
+ * tier, filter, dan pagination tetap dihitung per request dari baris mentah.
+ */
+const PORTAL_CATALOG_CACHE_TTL_MS = 15_000;
+let portalCatalogCache = { rows: null, expiresAt: 0, inFlight: null };
+
+async function getCachedPortalCatalogRows() {
+    const now = Date.now();
+    if (portalCatalogCache.rows && portalCatalogCache.expiresAt > now) {
+        return portalCatalogCache.rows;
+    }
+    if (portalCatalogCache.inFlight) return portalCatalogCache.inFlight;
+
+    portalCatalogCache.inFlight = fetchAllRows((from, to) =>
+        supabase
+            .from("topup_products")
+            .select(PORTAL_PRODUCT_COLUMNS)
+            .eq("is_active", true)
+            .order("kategori", { ascending: true })
+            .order("harga_jual", { ascending: true })
+            .order("id", { ascending: true })
+            .range(from, to)
+    ).then((rows) => {
+        portalCatalogCache = {
+            rows,
+            expiresAt: Date.now() + PORTAL_CATALOG_CACHE_TTL_MS,
+            inFlight: null
+        };
+        return rows;
+    }).catch((error) => {
+        portalCatalogCache.inFlight = null;
+        throw error;
+    });
+
+    return portalCatalogCache.inFlight;
+}
+
+/**
  * Daftar Produk & Harga Modal Khusus Reseller untuk Portal
  */
 exports.getPortalProducts = async (req, res) => {
@@ -1622,16 +1661,7 @@ exports.getPortalProducts = async (req, res) => {
             return res.status(503).json({ code: "RESELLER_PRICING_UNAVAILABLE", message: "Tier reseller belum tersedia, katalog ditahan sementara" });
         }
 
-        const allRows = await fetchAllRows((from, to) =>
-            supabase
-                .from("topup_products")
-                .select(PORTAL_PRODUCT_COLUMNS)
-                .eq("is_active", true)
-                .order("kategori", { ascending: true })
-                .order("harga_jual", { ascending: true })
-                .order("id", { ascending: true })
-                .range(from, to)
-        );
+        const allRows = await getCachedPortalCatalogRows();
         const sellable = filterSellablePortalProducts(allRows);
         const priced = sellable.map((product) => formatPortalProduct(product, konteksReseller));
         const facets = buildPortalFacets(priced);

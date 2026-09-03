@@ -6,10 +6,10 @@ const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 const superAdminMiddleware = require("../middleware/superAdminMiddleware");
 const { requireAdminPin } = require("../middleware/adminPinMiddleware");
-const { loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter } = require("../middleware/rateLimiter");
+const { loginLimiter, adminLoginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter } = require("../middleware/rateLimiter");
 
 router.post("/register", registerLimiter, authController.register);
-router.post("/login", loginLimiter, authController.login);
+router.post("/login", loginLimiter, adminLoginLimiter, authController.login);
 router.get("/public-config", authController.publicAuthConfig);
 router.get("/google/start", authController.googleStart);
 router.get("/google/callback", authController.googleCallback);

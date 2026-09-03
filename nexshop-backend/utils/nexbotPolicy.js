@@ -3,6 +3,7 @@
 const OUT_OF_SCOPE_REPLY = "Maaf, NexBot hanya dapat membantu pertanyaan tentang produk, layanan, transaksi, akun, Marketplace, dan program reseller NexShop. Silakan kirim pertanyaan yang berkaitan dengan NexShop.";
 
 const DOMAIN_PATTERN = /\b(?:nexshop|nexbot|top\s?up|diamond|game\s?pass|mobile\s+legends|mlbb|free\s+fire|pubg|valorant|steam|playstation|nintendo|xbox|marketplace|ppob|e-?wallet|dana|ovo|gopay|shopeepay|linkaja|pulsa|paket\s+data|kuota|pln|token\s+listrik|pdam|bpjs|ipaymu|qris|virtual\s+account|checkout|keranjang|pesanan|order\s+id|refund|escrow|wallet|saldo|reseller|partner\s+portal|portal\s+reseller|kyc|tier|customer\s+service|whatsapp\s+admin|user\s+id|zone\s+id|pengembalian\s+dana|uang\s+kembali|2fa|authenticator|recovery\s+code|ktp|nik|(?:menghubungi|hubungi)\s+(?:cs|customer\s+service|admin|kami|siapa))\b/i;
+const CUSTOMER_CARE_PATTERN = /\b(?:produk(?:\s+digital)?|barang|cara\s+(?:checkout|top\s*up)|(?:beli|membeli|pesan)\s+(?:produk|barang)|checkout|keranjang|pesanan|order|pembayaran|transaksi|akun|login|masuk|password|harga\s+produk|bantuan|customer\s+care)\b/i;
 const OUTSIDE_PATTERN = /\b(?:presiden|menteri|pemilu|politik|cuaca|prakiraan\s+cuaca|resep|masak|nasi\s+goreng|sepak\s*bola|pertandingan|liga\s+(?:inggris|spanyol|italia)|diagnosis|diagnosa|obat|sakit\s+kepala|kode\s+(?:python|javascript|java|php)|program\s+python|scraping|skripsi|puisi|lirik\s+lagu|zodiak|horoskop|wisata|hotel|tiket\s+pesawat)\b/i;
 const GREETING_PATTERN = /^(?:halo|hai|hi|hello|hey|selamat\s+(?:pagi|siang|sore|malam)|terima\s+kasih|makasih|thanks)\b/i;
 
@@ -20,7 +21,7 @@ function isNexShopScope(message, context = {}) {
     // resep, politik, kesehatan, atau pembuatan kode. Bila user menyebut
     // NexShop dalam konteks tersebut, tetap arahkan kembali ke scope produk.
     if (OUTSIDE_PATTERN.test(text)) return false;
-    if (DOMAIN_PATTERN.test(text)) return true;
+    if (DOMAIN_PATTERN.test(text) || CUSTOMER_CARE_PATTERN.test(text)) return true;
     if (Array.isArray(context.entities) && context.entities.length > 0) return true;
 
     // Pertanyaan lanjutan pendek seperti "kalau yang itu gimana?" hanya boleh
@@ -64,6 +65,7 @@ function formatProfessionalReply(value) {
 
 module.exports = {
     DOMAIN_PATTERN,
+    CUSTOMER_CARE_PATTERN,
     OUTSIDE_PATTERN,
     OUT_OF_SCOPE_REPLY,
     isNexShopScope,

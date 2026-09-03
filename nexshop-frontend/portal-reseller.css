@@ -1022,23 +1022,27 @@ body.rs-portal-page::after {
 .rs-portal-page .tv-portal-tier-card.tv-tier-silver {
     border-color: #cbd5e1 !important;
     border-top-color: #94a3b8 !important;
-    background: linear-gradient(160deg, #f8fafc 0%, #fff 74%) !important;
+    background: linear-gradient(160deg, #f3f5f7 0%, #fff 74%) !important;
 }
 
 .rs-portal-page .tv-portal-tier-card.tv-tier-gold {
-    border-color: #f2c56b !important;
-    border-top-color: #d97706 !important;
+    border-color: #e5c66b !important;
+    border-top-color: #d4af37 !important;
     background: linear-gradient(160deg, #fffaf0 0%, #fff 74%) !important;
 }
 
 .rs-portal-page .tv-portal-tier-card.tv-tier-platinum {
-    border-color: #c4b5fd !important;
-    border-top-color: #6d5bd0 !important;
-    background: linear-gradient(160deg, #f5f3ff 0%, #fff 74%) !important;
+    border-color: #c8ced4 !important;
+    border-top-color: #a7b0bb !important;
+    background: linear-gradient(160deg, #e5e4e2 0%, #fff 74%) !important;
+}
+
+.rs-portal-page .tv-portal-tier-card.tv-tier-gold .tv-portal-tier-discount {
+    color: #9a7410 !important;
 }
 
 .rs-portal-page .tv-portal-tier-card.tv-tier-platinum .tv-portal-tier-discount {
-    color: #5b4ab8 !important;
+    color: #66737f !important;
 }
 
 .rs-portal-page .tv-portal-tier-heading {
@@ -1321,6 +1325,77 @@ body.rs-portal-page::after {
     background: #fff !important;
     box-shadow: var(--portal-shadow-sm) !important;
     transform: translateY(-2px);
+}
+
+.rs-portal-page .tv-product-meta-row,
+.rs-portal-page .tv-product-price-line {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    min-width: 0;
+}
+
+.rs-portal-page .tv-product-meta-row code {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--portal-blue) !important;
+    font-size: 0.76rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rs-portal-page .tv-product-operator {
+    margin-top: 3px;
+    overflow: hidden;
+    color: var(--portal-muted);
+    font-size: 0.72rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rs-portal-page .tv-product-name {
+    min-height: 2.55em;
+    margin: 12px 0 8px;
+    overflow-wrap: anywhere;
+    color: var(--portal-ink) !important;
+    font-size: 0.92rem;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+.rs-portal-page .tv-product-price-compare {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--portal-line);
+}
+
+.rs-portal-page .tv-product-price-line {
+    margin-bottom: 5px;
+    font-size: 0.72rem;
+}
+
+.rs-portal-page .tv-product-price-line span {
+    color: var(--portal-muted);
+}
+
+.rs-portal-page .tv-product-price-line s {
+    color: var(--portal-muted);
+}
+
+.rs-portal-page .tv-product-price-line-reseller strong {
+    color: var(--portal-blue);
+    font-size: 1.12rem;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.rs-portal-page .tv-product-saving {
+    display: block;
+    color: var(--portal-green);
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 1.4;
 }
 
 .rs-portal-page .tv-product-card-item code,

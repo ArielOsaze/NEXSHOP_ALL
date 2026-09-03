@@ -125,7 +125,7 @@ function ensureNexBotWidget() {
             </div>
             <div class="nexbot-footer">
                 <form id="nexbotForm" class="nexbot-input-row">
-                    <input type="text" id="nexbotInput" placeholder="Tanyakan apa saja kepada NexBot..." autocomplete="off">
+                    <input type="text" id="nexbotInput" placeholder="Tanyakan seputar produk, transaksi, akun, atau layanan..." autocomplete="off">
                     <button type="submit" id="nexbotSendBtn" aria-label="Kirim"><i class="fa-solid fa-paper-plane"></i></button>
                 </form>
             </div>

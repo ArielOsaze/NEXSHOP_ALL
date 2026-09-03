@@ -7,12 +7,12 @@
 //
 // Pengaman:
 // 1. Harga reseller dibentuk dari harga jual normal - diskon tier.
-// 2. Lantai harga: modal supplier + margin keuntungan minimum (1.5% atau min Rp 150).
+// 2. Lantai harga: modal supplier + margin keuntungan minimum (1% atau min Rp 100).
 // 3. Harga reseller tidak akan pernah menyentuh atau berada di bawah harga modal supplier.
 // ===========================================================
 
-const MIN_MARGIN_PERSEN = 1.5; // Minimal margin 1.5% dari modal
-const MIN_MARGIN_FLAT = 150;    // Minimal untung flat Rp 150 untuk produk nominal kecil
+const MIN_MARGIN_PERSEN = 1.0; // Minimal margin 1% dari modal
+const MIN_MARGIN_FLAT = 100;   // Minimal untung flat Rp 100 untuk produk nominal kecil
 
 function bulatkanRupiah(nilai) {
     return Math.round(Number(nilai) || 0);

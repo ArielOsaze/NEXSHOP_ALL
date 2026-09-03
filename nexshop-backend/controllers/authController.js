@@ -646,8 +646,15 @@ function redirectGoogleFailure(res, returnPath, error) {
     return res.redirect(302, frontendRedirect(returnPath, { oauth_error: error }));
 }
 
+function normalizeGooglePicture(picture) {
+    return typeof picture === "string" && /^https:\/\//i.test(picture)
+        ? picture.slice(0, 2048)
+        : null;
+}
+
 async function findOrCreateGoogleUser(googleProfile) {
     const { sub, email, email_verified: emailVerified, name, picture } = googleProfile;
+    const googlePicture = normalizeGooglePicture(picture);
     if (!sub || !email || !emailVerified) {
         return { error: "google_email_unverified" };
     }
@@ -661,7 +668,21 @@ async function findOrCreateGoogleUser(googleProfile) {
         if (isProviderSchemaError(linkedErr)) return { error: "provider_schema_missing" };
         throw linkedErr;
     }
-    if (linkedUser) return { user: linkedUser };
+    if (linkedUser) {
+        // Google hanya menjadi fallback avatar. Foto upload NexShop tidak pernah
+        // ditimpa oleh login OAuth berikutnya.
+        if (!linkedUser.avatar_url && googlePicture) {
+            const { data: hydratedUser, error: avatarErr } = await supabase
+                .from("users")
+                .update({ avatar_url: googlePicture })
+                .eq("id", linkedUser.id)
+                .select("*")
+                .maybeSingle();
+            if (avatarErr) throw avatarErr;
+            return { user: hydratedUser || linkedUser };
+        }
+        return { user: linkedUser };
+    }
 
     const { data: sameEmailUser, error: emailErr } = await supabase
         .from("users")
@@ -687,7 +708,7 @@ async function findOrCreateGoogleUser(googleProfile) {
             onboarding_completed: false,
             // Hanya nilai awal saat akun dibuat. Login berikutnya tidak pernah
             // menimpa avatar NexShop yang dipilih pengguna.
-            avatar_url: typeof picture === "string" && /^https:\/\//i.test(picture) ? picture.slice(0, 2048) : null
+            avatar_url: googlePicture
         }])
         .select("*")
         .maybeSingle();
@@ -700,11 +721,12 @@ async function findOrCreateGoogleUser(googleProfile) {
 }
 
 async function linkGoogleUser(userId, googleProfile) {
-    const { sub, email, email_verified: emailVerified } = googleProfile;
+    const { sub, email, email_verified: emailVerified, picture } = googleProfile;
+    const googlePicture = normalizeGooglePicture(picture);
     if (!sub || !email || !emailVerified) return { error: "google_email_unverified" };
 
     const [{ data: localUser, error: localErr }, { data: linkedUser, error: linkedErr }] = await Promise.all([
-        supabase.from("users").select("id, email, auth_provider").eq("id", userId).maybeSingle(),
+        supabase.from("users").select("id, email, auth_provider, avatar_url").eq("id", userId).maybeSingle(),
         supabase.from("users").select("id").eq("google_subject", sub).maybeSingle()
     ]);
     if (localErr || linkedErr) {
@@ -719,9 +741,11 @@ async function linkGoogleUser(userId, googleProfile) {
     }
 
     const provider = localUser.auth_provider === "google" ? "google" : "password_google";
+    const profileUpdate = { google_subject: sub, auth_provider: provider };
+    if (!localUser.avatar_url && googlePicture) profileUpdate.avatar_url = googlePicture;
     const { error: updateErr } = await supabase
         .from("users")
-        .update({ google_subject: sub, auth_provider: provider })
+        .update(profileUpdate)
         .eq("id", userId);
     if (updateErr) {
         if (isProviderSchemaError(updateErr)) return { error: "provider_schema_missing" };

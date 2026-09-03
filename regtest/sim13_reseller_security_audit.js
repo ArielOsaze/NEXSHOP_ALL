@@ -272,11 +272,11 @@ test("diskon 0% (bukan reseller) mengembalikan harga normal apa adanya", () => {
     assert.strictEqual(hasil.persen_efektif, 0);
 });
 
-test("lantai harga = maksimum dari (modal + 1,5%) dan (modal + Rp 150)", () => {
+test("lantai harga = maksimum dari (modal + 1%) dan (modal + Rp 100)", () => {
     // Produk nominal kecil: margin flat yang menang.
-    assert.strictEqual(lantaiHargaReseller(1000), 1150);
+    assert.strictEqual(lantaiHargaReseller(1000), 1100);
     // Produk nominal besar: margin persen yang menang.
-    assert.strictEqual(lantaiHargaReseller(100000), 101500);
+    assert.strictEqual(lantaiHargaReseller(100000), 101000);
 });
 
 test("hemat + harga reseller selalu sama dengan harga normal", () => {

@@ -63,6 +63,19 @@ async function resetLoginLimiter(ip) {
     blockedLoginIps.delete(ip);
 }
 
+// Dashboard admin memakai kuota lebih ketat daripada login storefront.
+// skip() menjaga login user biasa tetap pada limit umum; request admin dari
+// satu IP berhenti lebih cepat sebelum membebani bcrypt/database.
+const adminLoginLimiter = rateLimit({
+    windowMs: LOGIN_WINDOW_MS,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: (req) => String(req.body?.login_context || "").trim().toLowerCase() !== "admin"
+        && !/\/admin(?:\/|$)/i.test(String(req.get("referer") || "")),
+    message: { message: "Terlalu banyak percobaan login admin dari perangkat ini. Coba lagi dalam beberapa menit." }
+});
+
 // Register — cegah spam bikin akun / spam kirim OTP ke email orang lain.
 const registerLimiter = rateLimit({
     windowMs: 60 * 60 * 1000,
@@ -229,4 +242,4 @@ const walletNotificationLimiter = rateLimit({
     message: { message: "Terlalu banyak notifikasi masuk." }
 });
 
-module.exports = { resellerLoginLimiter, resellerApiLimiter, resellerWebhookTestLimiter, walletNotificationLimiter, loginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter, kycUploadLimiter, resellerTwoFactorVerifyLimiter };
+module.exports = { resellerLoginLimiter, resellerApiLimiter, resellerWebhookTestLimiter, walletNotificationLimiter, loginLimiter, adminLoginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter, kycUploadLimiter, resellerTwoFactorVerifyLimiter };

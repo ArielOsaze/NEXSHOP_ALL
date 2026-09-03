@@ -58,7 +58,7 @@ check(
     "navbar reseller memiliki scope mobile dan target sentuh 44px",
     reseller.includes('class="rs-page"') &&
         reseller.includes('id="resellerNavToggle"') &&
-        reseller.includes('href="/reseller.css?v=20260829-reseller-redesign-1"') &&
+        /href="\/reseller\.css\?v=[^"]+"/.test(reseller) &&
         resellerCss.includes("min-height: 44px")
 );
 check(

@@ -2617,7 +2617,7 @@ nav#mainNav.nav-scrolled {
    <h5>, .tgc-count, .skeleton) memang sudah gak ada di HTML manapun. */
 
 #topup .topup-game-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 @media (min-width: 768px) {
@@ -9153,8 +9153,22 @@ html:not(.dark) .home-glass-badge {
         gap: 6px;
     }
 
-    #mainNav #accountBtn {
-        display: none;
+    #mainNav #accountBtn,
+    #mainNav .nx-account-nav-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 44px;
+        min-width: 44px;
+        padding: 0;
+        border-radius: 999px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    #mainNav #accountBtnAvatar {
+        width: 32px;
+        height: 32px;
     }
 
     #mainNav .nx-nav-actions > button:not(.nx-wallet-nav-btn) {
