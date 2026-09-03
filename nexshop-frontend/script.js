@@ -1035,7 +1035,7 @@ function avatarUrlFor(user) {
 function avatarFallback(target, user) {
     target.innerHTML = user
         ? escapeHtml((user.fullname || "P").charAt(0).toUpperCase())
-        : '<i class="fa-solid fa-circle-user text-sm sm:text-base opacity-70" aria-hidden="true"></i>';
+        : "";
 }
 
 function renderAvatar(target, user, { header = false } = {}) {

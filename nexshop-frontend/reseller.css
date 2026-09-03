@@ -2829,6 +2829,9 @@ body.rs-page::after {
     animation: rs-api-pulse 3.4s linear infinite;
 }
 
+/* The pulse follows the four route nodes. Percentage-based left positions
+   keep the direction correct when the card changes width. */
+
 .rs-api-snippet {
     position: relative;
     margin: 0;
@@ -2883,11 +2886,12 @@ body.rs-page::after {
 }
 
 @keyframes rs-api-pulse {
-    0% { opacity: 0; transform: translateX(0) scale(0.7); }
-    8% { opacity: 1; }
-    31% { opacity: 1; transform: translateX(94px) scale(1); }
-    62% { opacity: 1; transform: translateX(198px) scale(0.9); }
-    92%, 100% { opacity: 0; transform: translateX(276px) scale(0.7); }
+    0%, 5% { opacity: 0; left: 8%; transform: scale(0.7); }
+    12% { opacity: 1; left: 8%; transform: scale(1); }
+    34% { opacity: 1; left: calc(33% - 4px); transform: scale(1); }
+    64% { opacity: 1; left: calc(64% - 4px); transform: scale(0.9); }
+    88% { opacity: 1; left: calc(92% - 4px); transform: scale(0.82); }
+    96%, 100% { opacity: 0; left: calc(98% - 4px); transform: scale(0.7); }
 }
 
 @media (max-width: 1100px) and (min-width: 681px) {
@@ -2901,6 +2905,10 @@ body.rs-page::after {
         grid-template-columns: 1fr;
         gap: 14px;
         margin-top: 34px;
+    }
+
+    .rs-catalog-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .rs-showcase-card {

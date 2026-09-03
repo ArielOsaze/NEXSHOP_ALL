@@ -1,0 +1,21 @@
+const fs = require("fs");
+const path = require("path");
+const root = path.resolve(__dirname, "..");
+const read = (file) => fs.readFileSync(path.join(root, file), "utf8").replace(/\r\n/g, "\n");
+const css = read("nexshop-frontend/reseller.css");
+const portalCss = read("nexshop-frontend/portal-reseller.css");
+const html = read("nexshop-frontend/reseller.html");
+const mobileStart = css.indexOf("@media (max-width: 680px)");
+const mobileEnd = css.indexOf("@media (prefers-reduced-motion", mobileStart);
+const mobile = css.slice(mobileStart, mobileEnd);
+const assert = (condition, message) => { if (!condition) throw new Error(message); };
+
+assert(/\.rs-showcase-grid[\s\S]*?grid-template-columns:\s*1fr/.test(mobile), "mobile reseller showcase must use a dedicated one-column layout");
+assert(/\.rs-showcase-card[\s\S]*?min-height:\s*0|\.rs-showcase-card[\s\S]*?min-height:\s*478px/.test(mobile), "mobile reseller cards must define an explicit mobile height strategy");
+assert(/\.rs-catalog-grid[\s\S]*?repeat\(2/.test(mobile), "mobile mini catalog must use a readable two-column grid");
+assert(/rs-tier-card-silver[\s\S]*#(?:e2e8f0|c0c0c0|94a3b8|f3f5f7)/i.test(css), "Silver must retain a cool metallic token");
+assert(/rs-tier-card-platinum[\s\S]*#(?:f4efe6|e5e4e2|b7a98d|a7b0bb)/i.test(css), "Platinum must use a pearl token");
+assert(/tv-tier-silver[\s\S]*#(?:e2e8f0|c0c0c0|94a3b8)/i.test(portalCss), "Portal Silver must use the cool metallic token");
+assert(/tv-tier-platinum[\s\S]*#(?:f4efe6|e5e4e2|b7a98d|a7b0bb)/i.test(portalCss), "Portal Platinum must use the pearl token");
+assert(/style\.css\?v=20260903-responsive-nav-account-avatar-6/.test(html), "reseller page must use the current shared style cache-buster");
+console.log("sim106_reseller_mobile_card_variant: PASS");

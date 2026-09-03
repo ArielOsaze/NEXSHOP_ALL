@@ -60,8 +60,8 @@ assert(/body:has\(\#topupDetail:not\(\.hidden\)\)\s+\.nexbot-widget\s*\{[\s\S]*?
 assert(!/\.rs-page \.rs-section-heading h2,\s*\n\.rs-page \.rs-api-copy h2,/.test(resellerCss), "PDF light-section selector must not override developer API heading");
 assert(/\.rs-page \.rs-api-copy h2\s*\{[\s\S]*?color:\s*#fff/.test(resellerCss), "developer API heading must stay white on navy");
 assert(/\.rs-api-copy > p:not\(\.rs-kicker\)\s*\{[\s\S]*?color:\s*#d8e1ec/.test(resellerCss), "developer API body text must use readable light color");
-assert(/style\.css\?v=20260903-responsive-nav-account-5/.test(index), "homepage style cache-buster must be bumped");
-assert(/script\.js\?v=20260903-ui-layout-4/.test(index), "wallet script cache-buster must be bumped");
+assert(/style\.css\?v=20260903-responsive-nav-account-avatar-6/.test(index), "homepage style cache-buster must be bumped");
+assert(/script\.js\?v=20260903-ui-account-avatar-5/.test(index), "wallet script cache-buster must be bumped");
 assert(/id="walletViewGuest"/.test(index), "wallet modal must have a separate guest state");
 assert(/id="btnWalletGuestLogin"/.test(index), "guest wallet state must offer a separate login action");
 assert(/function openWalletModal\([\s\S]*?walletViewGuest/.test(script), "wallet click must control the wallet guest state");

@@ -1,0 +1,14 @@
+const fs = require("fs");
+const path = require("path");
+const root = path.resolve(__dirname, "..");
+const css = fs.readFileSync(path.join(root, "nexshop-frontend/reseller.css"), "utf8").replace(/\r\n/g, "\n");
+const html = fs.readFileSync(path.join(root, "nexshop-frontend/reseller.html"), "utf8").replace(/\r\n/g, "\n");
+const assert = (condition, message) => { if (!condition) throw new Error(message); };
+const pulse = css.match(/\.rs-api-route-pulse\s*\{[\s\S]*?\n\}/)?.[0] || "";
+const keyframe = css.match(/@keyframes\s+rs-api-pulse\s*\{[\s\S]*?\n\}/)?.[0] || "";
+assert(/left:\s*8%/.test(pulse), "API pulse must begin at the first route segment");
+assert(/left:\s*8%/.test(keyframe) || /translateX\(0\)/.test(keyframe), "API pulse keyframe must have a left-origin start");
+assert(/translateX\(276px\)/.test(keyframe) === false, "API pulse must not use a fixed desktop-only endpoint");
+assert(/left:\s*calc\(33%\s*-\s*4px\)/.test(keyframe) && /left:\s*calc\(98%\s*-\s*4px\)/.test(keyframe), "API pulse travel must use responsive node-relative positions");
+assert(/rs-api-route-line-1[\s\S]*rs-api-route-line-2[\s\S]*rs-api-route-line-3/.test(html), "API route must remain ordered left-to-right");
+console.log("sim107_reseller_api_motion_direction: PASS");

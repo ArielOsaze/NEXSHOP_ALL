@@ -38,5 +38,7 @@ assert(/normalizeGooglePicture/.test(authController) && /if \(!linkedUser\.avata
 assert(/if \(!localUser\.avatar_url && googlePicture\) profileUpdate\.avatar_url/.test(authController), 'Google link must not overwrite an uploaded avatar');
 assert(/avatar_url: googlePicture/.test(authController), 'new Google accounts must receive the provider photo');
 assert(/avatar_url/.test(storefrontJs) && /google/i.test(storefrontJs), 'existing avatar upload/Google profile data contract must remain present');
+assert(/#mainNav\s+#accountBtnLabel\s*\{[\s\S]*?display:\s*none\s*!important/.test(styleCss), 'account label must be hidden while avatar remains visible');
+assert(/: ''/.test(storefrontJs) || /: ""/.test(storefrontJs), 'guest account avatar fallback must be empty');
 
 console.log('sim104_reseller_auth_catalog_ux_contract: PASS');

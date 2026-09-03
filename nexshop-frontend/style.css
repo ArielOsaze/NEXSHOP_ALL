@@ -8744,6 +8744,22 @@ html:not(.dark) .home-glass-badge {
     min-width: 0;
 }
 
+#mainNav .nx-account-nav-btn,
+#mainNav #accountBtn {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#mainNav #accountBtnLabel {
+    display: none !important;
+}
+
 /* Avatar foto profil harus tetap terukur walau legacy data-csp-style
    belum tersinkron pada tab lama. */
 #accountAvatar img,
