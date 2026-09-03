@@ -952,14 +952,17 @@ body.rs-page::after {
     color: #69dce8;
 }
 
-.rs-api-copy h2 {
+.rs-page .rs-api-copy h2 {
     color: #fff;
+    -webkit-text-fill-color: #fff;
+    background: none;
+    background-clip: border-box;
 }
 
 .rs-api-copy > p:not(.rs-kicker) {
     max-width: 450px;
     margin: 22px 0 0;
-    color: #b4c0d1;
+    color: #d8e1ec;
 }
 
 .rs-text-link {
@@ -3165,7 +3168,6 @@ body.rs-page::after {
 }
 
 .rs-page .rs-section-heading h2,
-.rs-page .rs-api-copy h2,
 .rs-page .rs-final-cta h2 {
     color: var(--rs-pdf-navy);
 }

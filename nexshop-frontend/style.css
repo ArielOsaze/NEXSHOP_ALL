@@ -1450,7 +1450,7 @@ nav#mainNav.nav-scrolled {
     max-width: 1440px;
     min-height: 44px;
     margin-inline: auto;
-    padding-inline: clamp(24px, 2.5vw, 40px);
+    padding-inline: 0;
     display: flex;
     align-items: center;
     gap: 0;
@@ -1495,7 +1495,7 @@ nav#mainNav.nav-scrolled {
 
 @media (max-width: 1023px) {
     #mainNav .nx-nav-inner {
-        padding-inline: clamp(12px, 3vw, 24px);
+        padding-inline: 0;
     }
 }
 
@@ -2617,7 +2617,7 @@ nav#mainNav.nav-scrolled {
    <h5>, .tgc-count, .skeleton) memang sudah gak ada di HTML manapun. */
 
 #topup .topup-game-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 @media (min-width: 768px) {
@@ -2641,8 +2641,14 @@ nav#mainNav.nav-scrolled {
 @media (max-width: 767px) {
     #topup .topup-game-card {
         min-width: 0;
-        padding: 8px;
+        min-height: 0;
+        padding: 6px;
         border-radius: 12px;
+    }
+
+    #topup .topup-game-card > div:first-child > .relative {
+        margin-bottom: 6px;
+        border-radius: 9px;
     }
 
     #topup .topup-game-card .topup-game-card-count {
@@ -2650,15 +2656,37 @@ nav#mainNav.nav-scrolled {
     }
 
     #topup .topup-game-card h4 {
-        font-size: .72rem;
-        min-height: 2.1em;
+        min-height: 2.3em;
+        margin-bottom: 4px;
+        font-size: clamp(.62rem, 2.6vw, .75rem);
+        line-height: 1.15;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+    }
+
+    #topup .topup-game-card > div:first-child + div {
+        margin-top: 0;
+    }
+
+    #topup .topup-game-card > div:last-child > div:first-child {
+        min-width: 0;
+        font-size: clamp(.56rem, 2vw, .68rem);
+        line-height: 1.15;
+        white-space: nowrap;
+    }
+
+    #topup .topup-game-card > div:last-child > div:last-child {
+        display: none;
     }
 
     #topup .topup-game-card .home-glass-badge {
-        top: 5px;
-        left: 5px;
-        padding-inline: 5px;
-        font-size: 8px;
+        top: 4px;
+        left: 4px;
+        padding: 2px 4px;
+        font-size: 7px;
+        letter-spacing: .06em;
     }
 }
 
@@ -2710,6 +2738,24 @@ nav#mainNav.nav-scrolled {
     position: relative;
     z-index: 1;
     animation: tw-fade-in .35s ease;
+}
+
+@media (max-width: 767px) {
+    .topup-detail {
+        width: calc(100% + 20px);
+        max-width: none;
+        margin-inline: -10px;
+        padding: 16px 16px 140px;
+    }
+
+    .topup-detail .topup-detail-inner {
+        width: 100%;
+        max-width: none;
+    }
+
+    body:has(#topupDetail:not(.hidden)) .nexbot-widget {
+        display: none;
+    }
 }
 
 @keyframes tw-fade-in {
@@ -3132,6 +3178,64 @@ nav#mainNav.nav-scrolled {
     color: var(--text);
     font: inherit;
     transition: transform .2s, border-color .2s, box-shadow .2s, background .2s;
+}
+
+@media (max-width: 767px) {
+    .topup-detail .tw-panels {
+        padding: 20px 12px;
+    }
+
+    .topup-detail .tw-account-card {
+        padding: 16px;
+    }
+
+    .tw-product-group-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .topup-detail .tw-product-group-grid > .tw-product-card:only-child {
+        grid-column: span 1;
+    }
+
+    .tw-product-card {
+        min-height: 96px;
+        padding: 8px 4px 7px;
+        border-radius: 11px;
+    }
+
+    .tw-product-icon,
+    .tw-product-card .diamond-icon {
+        width: 22px;
+        height: 22px;
+        margin-bottom: 4px;
+    }
+
+    .tw-product-card .diamond-icon {
+        font-size: .82rem;
+    }
+
+    .tw-product-card h5 {
+        min-height: 3.75em;
+        margin-bottom: 4px;
+        font-size: clamp(.62rem, 2.5vw, .72rem);
+        line-height: 1.25;
+        -webkit-line-clamp: 3;
+    }
+
+    .tw-product-price {
+        font-size: clamp(.58rem, 2.15vw, .68rem);
+        line-height: 1.15;
+        overflow-wrap: anywhere;
+    }
+
+    .tw-product-check {
+        top: 5px;
+        right: 5px;
+        width: 16px;
+        height: 16px;
+        font-size: 9px;
+    }
 }
 
 .tw-product-group-grid > .tw-product-card:only-child {
@@ -7805,8 +7909,8 @@ input::placeholder {
 
 @media (max-width: 768px) {
     .nexbot-widget {
-        bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
-        right: 16px;
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+        right: 12px;
         z-index: 10000;
     }
 
@@ -7819,13 +7923,13 @@ input::placeholder {
     }
 
     .nexbot-float-btn {
-        width: 60px;
-        height: 60px;
+        width: 48px;
+        height: 48px;
     }
 
     .nexbot-float-btn-icon {
-        width: 57px;
-        height: 57px;
+        width: 46px;
+        height: 46px;
     }
 
     .nexbot-window {
@@ -9028,6 +9132,74 @@ html:not(.dark) .home-glass-badge {
     #mainNav .nx-wallet-nav-btn,
     #mainNav #accountBtn {
         height: 40px;
+    }
+}
+
+@media (max-width: 767px) {
+    #mainNav .nx-nav-inner {
+        gap: 12px;
+    }
+
+    #mainNav .nx-brand-lockup {
+        flex: 1 1 auto;
+    }
+
+    #mainNav .nx-nav-actions {
+        gap: 6px;
+    }
+
+    #mainNav #accountBtn {
+        display: none;
+    }
+
+    #mainNav .nx-nav-actions > button:not(.nx-wallet-nav-btn) {
+        flex: 0 0 44px;
+        width: 44px;
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    #mainNav .nx-nav-actions > .nx-wallet-nav-btn {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 70px;
+        min-height: 44px;
+        height: 44px;
+        padding: .3rem .55rem .3rem .4rem;
+        gap: .32rem;
+    }
+
+    #mainNav .nx-wallet-nav-icon-wrap {
+        width: 24px;
+        height: 24px;
+    }
+
+    #mainNav .nx-wallet-nav-label,
+    #mainNav .nx-wallet-nav-chevron {
+        display: none;
+    }
+
+    #mainNav .nx-wallet-nav-info {
+        display: flex;
+    }
+
+    #mainNav .nx-wallet-nav-val {
+        font-size: .7rem;
+    }
+}
+
+@media (max-width: 380px) {
+    #mainNav .nx-nav-inner {
+        gap: 8px;
+    }
+
+    #mainNav .nx-nav-actions {
+        gap: 4px;
+    }
+
+    #mainNav .nx-wallet-nav-btn {
+        min-width: 66px;
+        padding-inline: .35rem;
     }
 }
 
