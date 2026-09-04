@@ -8760,30 +8760,43 @@ html:not(.dark) .home-glass-badge {
     display: none !important;
 }
 
-/* Guest account avatar: an intentional empty profile template, not a blank
-   unstyled box and not a login icon. Authenticated images replace this state. */
+/* Guest avatar: a visible empty-profile template with head and shoulders,
+   so the account target is recognizable without Login text or a glyph. */
 #mainNav #accountBtnAvatar.is-empty {
     position: relative;
-    border: 1px solid rgba(148, 163, 184, 0.28);
-    background: #111827;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    isolation: isolate;
+    border: 1px solid rgba(56, 189, 248, 0.72);
+    background: radial-gradient(circle at 50% 36%, #273b61 0 18%, transparent 19%), linear-gradient(145deg, #0b1224, #18284a);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06), 0 0 0 3px rgba(56, 189, 248, 0.1), 0 0 14px rgba(34, 211, 238, 0.18);
 }
 
 #mainNav #accountBtnAvatar.is-empty::before {
     content: "";
     position: absolute;
-    inset: 5px;
-    border: 1px solid rgba(148, 163, 184, 0.34);
+    z-index: 1;
+    top: 20%;
+    left: 50%;
+    width: 25%;
+    height: 25%;
+    border: 1px solid #a5e9f5;
     border-radius: 50%;
-    background: #1f2937;
+    background: #4d668e;
+    box-shadow: 0 0 7px rgba(105, 220, 232, 0.3);
+    transform: translateX(-50%);
 }
 
 #mainNav #accountBtnAvatar.is-empty::after {
     content: "";
     position: absolute;
-    inset: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 50%;
+    z-index: 1;
+    right: 22%;
+    bottom: 15%;
+    left: 22%;
+    height: 35%;
+    border: 1px solid #a5e9f5;
+    border-radius: 55% 55% 35% 35%;
+    background: linear-gradient(180deg, #4d668e, #2b426a);
+    box-shadow: 0 0 8px rgba(105, 220, 232, 0.24);
 }
 
 /* Avatar foto profil harus tetap terukur walau legacy data-csp-style

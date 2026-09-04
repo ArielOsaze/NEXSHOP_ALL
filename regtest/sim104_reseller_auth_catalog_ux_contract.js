@@ -38,6 +38,8 @@ assert(/normalizeGooglePicture/.test(authController) && /if \(!linkedUser\.avata
 assert(/if \(!localUser\.avatar_url && googlePicture\) profileUpdate\.avatar_url/.test(authController), 'Google link must not overwrite an uploaded avatar');
 assert(/avatar_url: googlePicture/.test(authController), 'new Google accounts must receive the provider photo');
 assert(/avatar_url/.test(storefrontJs) && /google/i.test(storefrontJs), 'existing avatar upload/Google profile data contract must remain present');
+assert(/#mainNav\s+#accountBtnAvatar\.is-empty[\s\S]*?background/.test(styleCss), 'guest avatar must have a visible template surface');
+assert(/#mainNav\s+#accountBtnAvatar\.is-empty::before[\s\S]*?border-radius/.test(styleCss) && /#mainNav\s+#accountBtnAvatar\.is-empty::after[\s\S]*?border-radius/.test(styleCss), 'guest avatar template must render head and shoulders');
 assert(/#mainNav\s+#accountBtnLabel\s*\{[\s\S]*?display:\s*none\s*!important/.test(styleCss), 'account label must be hidden while avatar remains visible');
 assert(/: ''/.test(storefrontJs) || /: ""/.test(storefrontJs), 'guest account avatar fallback must be empty');
 

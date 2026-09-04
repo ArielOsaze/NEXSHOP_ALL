@@ -4084,33 +4084,108 @@ body.rs-page.rs-motion-ready .rs-hero::before { animation: rs-hero-grid-drift 20
     .rs-page .rs-hero-float-top { top: 0; left: 0; }
     .rs-page .rs-hero-float-bottom { right: 0; bottom: 0; }
     .rs-page .rs-portal-content { padding: 18px; }
-    .rs-page .rs-showcase-grid { grid-template-columns: 1fr; grid-template-areas: "transactions" "bills" "catalog" "pricing" "api" "wallet"; grid-auto-flow: row; gap: 14px; overflow: visible; padding: 0; }
-    .rs-page .rs-showcase-card, .rs-page .rs-showcase-card[data-showcase-story="transactions"], .rs-page .rs-showcase-card[data-showcase-story="bills"], .rs-page .rs-showcase-card[data-showcase-story="catalog"], .rs-page .rs-showcase-card[data-showcase-story="pricing"], .rs-page .rs-showcase-card[data-showcase-story="api"], .rs-page .rs-showcase-card[data-showcase-story="wallet"] { grid-column: auto; min-height: 0; padding: 22px; }
-    .rs-page .rs-network-card { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; gap: 10px; min-height: 238px; padding: 18px 14px; overflow: hidden; }
-    .rs-page .rs-network-card .rs-network-node { position: relative; inset: auto !important; translate: none !important; transform: none !important; min-width: 0; width: 100%; justify-self: stretch; }
-    .rs-page .rs-network-card .rs-network-node-center { grid-column: 1 / -1; width: min(100%, 126px); justify-self: center; }
-    .rs-page .rs-network-card .rs-network-node i { flex: 0 0 auto; }
-    .rs-page .rs-story-wallet { min-height: 334px; padding: 18px; overflow: hidden; }
-    .rs-page .rs-story-wallet .rs-wallet-source { width: min(166px, 100%); margin: 2px auto 8px; }
-    .rs-page .rs-story-wallet .rs-wallet-network { height: 216px; max-width: 100%; margin: 0; overflow: visible; }
-    .rs-page .rs-story-wallet .rs-wallet-node { position: absolute; inset: auto; width: 64px; min-width: 0; transform: none !important; }
-    .rs-page .rs-story-wallet .rs-wallet-node-pulsa { top: 10px !important; right: auto !important; bottom: auto !important; left: 2% !important; }
-    .rs-page .rs-story-wallet .rs-wallet-node-ewallet { top: 10px !important; right: 2% !important; bottom: auto !important; left: auto !important; }
-    .rs-page .rs-story-wallet .rs-wallet-node-pln { top: 112px !important; right: auto !important; bottom: auto !important; left: 2% !important; }
-    .rs-page .rs-story-wallet .rs-wallet-node-game { top: 112px !important; right: 2% !important; bottom: auto !important; left: auto !important; }
-    .rs-page .rs-story-wallet .rs-wallet-node-bill { top: 58px !important; right: auto !important; bottom: auto !important; left: 50% !important; transform: translateX(-50%) !important; }
-    .rs-page .rs-story-wallet .rs-wallet-node b { max-width: 64px; overflow-wrap: anywhere; text-align: center; }
-    .rs-page .rs-story-wallet .rs-wallet-funding { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; min-width: 0; }
-    .rs-page .rs-story-wallet .rs-wallet-funding span { min-width: 0; padding-inline: 4px; overflow-wrap: anywhere; text-align: center; }
-    .rs-page .rs-story-api { min-height: 326px; padding: 18px; overflow: hidden; }
-    .rs-page .rs-api-flow-labels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; align-items: start; width: 100%; font-size: 0.47rem; line-height: 1.25; }
+    /* Mobile card system: a deliberate single-column composition. Each card
+       uses its own compact visual frame instead of inheriting the desktop
+       dashboard proportions. */
+    .rs-page .rs-showcase-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        grid-template-areas: "transactions" "bills" "catalog" "pricing" "api" "wallet";
+        grid-auto-flow: row;
+        gap: 16px;
+        margin-top: 30px;
+        overflow: visible;
+        padding: 0;
+    }
+    .rs-page .rs-showcase-card,
+    .rs-page .rs-showcase-card[data-showcase-story="transactions"],
+    .rs-page .rs-showcase-card[data-showcase-story="bills"],
+    .rs-page .rs-showcase-card[data-showcase-story="catalog"],
+    .rs-page .rs-showcase-card[data-showcase-story="pricing"],
+    .rs-page .rs-showcase-card[data-showcase-story="api"],
+    .rs-page .rs-showcase-card[data-showcase-story="wallet"] {
+        grid-column: auto;
+        min-height: auto;
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 18px;
+        border-radius: 22px;
+        transform: none;
+    }
+    .rs-page .rs-showcase-copy { min-width: 0; }
+    .rs-page .rs-showcase-meta { gap: 8px; font-size: 0.61rem; }
+    .rs-page .rs-showcase-copy h3 { max-width: none; margin-top: 11px; font-size: 1.28rem; line-height: 1.14; }
+    .rs-page .rs-showcase-copy p { max-width: none; margin-top: 9px; font-size: 0.81rem; line-height: 1.5; }
+    .rs-page .rs-story-visual {
+        width: 100%;
+        min-width: 0;
+        min-height: auto;
+        margin-top: 0;
+        padding: 14px;
+        border-radius: 16px;
+    }
+    .rs-page .rs-story-transactions { min-height: 252px; }
+    .rs-page .rs-story-transactions .rs-story-metric-row { margin: 14px 0 8px; }
+    .rs-page .rs-story-transactions .rs-story-metric-row strong { font-size: 1.32rem; }
+    .rs-page .rs-story-transactions .rs-transaction-bars { height: 30px; margin-bottom: 5px; }
+    .rs-page .rs-story-transactions .rs-transaction-row { min-height: 32px; padding: 5px 0; }
+    .rs-page .rs-story-transactions .rs-transaction-product { gap: 6px; }
+    .rs-page .rs-story-transactions .rs-transaction-product > i { width: 22px; height: 22px; flex-basis: 22px; font-size: 0.58rem; }
+    .rs-page .rs-story-transactions .rs-transaction-product span { font-size: 0.61rem; }
+    .rs-page .rs-story-transactions .rs-transaction-status { font-size: 0.51rem; }
+    .rs-page .rs-story-bills { min-height: 270px; }
+    .rs-page .rs-story-bills .rs-bill-number { margin: 14px 0 10px; padding: 9px 10px; }
+    .rs-page .rs-story-bills .rs-bill-number strong { font-size: 0.74rem; }
+    .rs-page .rs-story-bills .rs-bill-categories { margin-top: 12px; }
+    .rs-page .rs-story-bills .rs-bill-flow { margin-top: 16px; gap: 4px; }
+    .rs-page .rs-story-bills .rs-bill-step { gap: 4px; font-size: 0.5rem; }
+    .rs-page .rs-story-bills .rs-bill-step i { width: 24px; height: 24px; font-size: 0.58rem; }
+    .rs-page .rs-story-bills .rs-bill-receipt { margin-top: 9px; padding: 7px 8px; }
+    .rs-page .rs-story-catalog { min-height: 230px; }
+    .rs-page .rs-story-catalog .rs-catalog-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; margin-top: 16px; }
+    .rs-page .rs-story-catalog .rs-catalog-tile { min-height: 48px; padding: 8px; border-radius: 9px; }
+    .rs-page .rs-story-catalog .rs-catalog-tile b { font-size: 0.61rem; }
+    .rs-page .rs-story-catalog .rs-catalog-tile small { margin-top: 3px; font-size: 0.49rem; }
+    .rs-page .rs-story-catalog .rs-data-meter { margin-top: 12px; font-size: 0.54rem; }
+    .rs-page .rs-story-pricing { min-height: 230px; }
+    .rs-page .rs-story-pricing .rs-price-list { margin-top: 12px; }
+    .rs-page .rs-story-pricing .rs-price-row { min-height: 42px; gap: 8px; padding: 7px 0; }
+    .rs-page .rs-story-pricing .rs-price-row b { font-size: 0.61rem; }
+    .rs-page .rs-story-pricing .rs-price-row small { margin-top: 2px; font-size: 0.49rem; }
+    .rs-page .rs-story-pricing .rs-price-row s { font-size: 0.5rem; }
+    .rs-page .rs-story-pricing .rs-price-row strong { font-size: 0.66rem; }
+    .rs-page .rs-story-pricing .rs-margin-note { margin-top: 9px; font-size: 0.51rem; }
+    .rs-page .rs-story-wallet { min-height: 252px; padding: 14px; }
+    .rs-page .rs-story-wallet .rs-wallet-source { width: min(160px, 100%); margin: 0 auto 5px; padding: 9px; }
+    .rs-page .rs-story-wallet .rs-wallet-source strong { font-size: 0.92rem; }
+    .rs-page .rs-story-wallet .rs-wallet-network { height: 128px; max-width: 100%; margin: 0; overflow: visible; }
+    .rs-page .rs-story-wallet .rs-wallet-node { position: absolute; inset: auto; width: 58px; min-width: 0; transform: none !important; font-size: 0.47rem; }
+    .rs-page .rs-story-wallet .rs-wallet-node-pulsa { top: 6px !important; right: auto !important; bottom: auto !important; left: 0 !important; }
+    .rs-page .rs-story-wallet .rs-wallet-node-ewallet { top: 6px !important; right: 0 !important; bottom: auto !important; left: auto !important; }
+    .rs-page .rs-story-wallet .rs-wallet-node-pln { top: 70px !important; right: auto !important; bottom: auto !important; left: 0 !important; }
+    .rs-page .rs-story-wallet .rs-wallet-node-game { top: 70px !important; right: 0 !important; bottom: auto !important; left: auto !important; }
+    .rs-page .rs-story-wallet .rs-wallet-node-bill { top: 37px !important; right: auto !important; bottom: auto !important; left: 50% !important; transform: translateX(-50%) !important; }
+    .rs-page .rs-story-wallet .rs-wallet-node b { max-width: 58px; overflow-wrap: anywhere; text-align: center; }
+    .rs-page .rs-story-wallet .rs-wallet-node i { width: 22px; height: 22px; font-size: 0.55rem; }
+    .rs-page .rs-story-wallet .rs-wallet-funding { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px; min-width: 0; }
+    .rs-page .rs-story-wallet .rs-wallet-funding span { min-width: 0; padding: 5px 3px; overflow-wrap: anywhere; font-size: 0.49rem; line-height: 1.2; text-align: center; }
+    .rs-page .rs-story-api { min-height: 264px; padding: 14px; }
+    .rs-page .rs-api-flow-labels { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 3px; align-items: start; width: 100%; font-size: 0.44rem; line-height: 1.2; }
     .rs-page .rs-api-flow-labels span { min-width: 0; overflow-wrap: anywhere; text-align: center; }
-    .rs-page .rs-api-route { height: 72px; margin: 8px 0 10px; overflow: hidden; }
-    .rs-page .rs-api-node { top: 24px; width: 26px; height: 26px; transform: translateX(-50%) !important; }
+    .rs-page .rs-api-route { height: 58px; margin: 7px 0 8px; overflow: hidden; }
+    .rs-page .rs-api-node { top: 17px; width: 24px; height: 24px; transform: translateX(-50%) !important; }
     .rs-page .rs-api-node-shop { left: 10%; }
     .rs-page .rs-api-node-api { left: 36.5%; }
     .rs-page .rs-api-node-biller { left: 63.5%; }
     .rs-page .rs-api-node-hook { right: auto; left: 90%; }
+    .rs-page .rs-api-snippet { padding: 10px; font-size: 0.5rem; line-height: 1.55; }
+    .rs-page .rs-api-tags { gap: 5px; margin-top: 8px; }
+    .rs-page .rs-api-tags span { padding: 4px 6px; font-size: 0.49rem; }
+    .rs-page .rs-network-card { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: center; gap: 10px; min-height: 238px; padding: 18px 14px; overflow: hidden; }
+    .rs-page .rs-network-card .rs-network-node { position: relative; inset: auto !important; translate: none !important; transform: none !important; min-width: 0; width: 100%; justify-self: stretch; }
+    .rs-page .rs-network-card .rs-network-node-center { grid-column: 1 / -1; width: min(100%, 126px); justify-self: center; }
+    .rs-page .rs-network-card .rs-network-node i { flex: 0 0 auto; }
     .rs-page .rs-universe-stage { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(64px, auto); gap: 10px; min-height: 470px; padding: 104px 12px 42px; overflow: hidden; }
     .rs-page .rs-universe-orbit, .rs-page .rs-universe-route { display: none; }
     .rs-page .rs-universe-center { position: absolute; top: 20px; left: 50%; width: min(190px, calc(100% - 28px)); min-width: 0; padding: 12px; transform: translateX(-50%) !important; }
