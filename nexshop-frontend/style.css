@@ -2639,6 +2639,10 @@ nav#mainNav.nav-scrolled {
 }
 
 @media (max-width: 767px) {
+    #topup .topup-game-grid {
+        grid-template-columns: repeat(1, minmax(0, 1fr));
+    }
+
     #topup .topup-game-card {
         min-width: 0;
         min-height: 0;
