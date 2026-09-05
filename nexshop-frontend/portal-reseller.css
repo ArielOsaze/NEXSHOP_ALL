@@ -2011,3 +2011,63 @@ html[data-theme="dark"] .rs-portal-page .tv-nav-more > i[class*="fa-"] {
 .rs-portal-page .tv-console-view.active > * {
     animation: portal-view-in 280ms var(--portal-ease) both;
 }
+
+/* Dark console: keep every dashboard surface and action readable. */
+html.dark .rs-portal-page .tv-sidebar-brand,
+html[data-theme="dark"] .rs-portal-page .tv-sidebar-brand {
+    background: var(--portal-surface) !important;
+    border-color: var(--portal-line) !important;
+}
+
+html.dark .rs-portal-page .tv-brand-logo-wrap,
+html.dark .rs-portal-page .tv-brand-title,
+html.dark .rs-portal-page .tv-brand-sub,
+html[data-theme="dark"] .rs-portal-page .tv-brand-logo-wrap,
+html[data-theme="dark"] .rs-portal-page .tv-brand-title,
+html[data-theme="dark"] .rs-portal-page .tv-brand-sub {
+    color: var(--portal-ink) !important;
+}
+
+html.dark .rs-portal-page .tv-topbar-link,
+html.dark .rs-portal-page .tv-btn-deposit-action,
+html.dark .rs-portal-page .tv-cat-tab-btn,
+html.dark .rs-portal-page .tv-subvariant-btn,
+html[data-theme="dark"] .rs-portal-page .tv-topbar-link,
+html[data-theme="dark"] .rs-portal-page .tv-btn-deposit-action,
+html[data-theme="dark"] .rs-portal-page .tv-cat-tab-btn,
+html[data-theme="dark"] .rs-portal-page .tv-subvariant-btn {
+    background: var(--portal-surface-soft) !important;
+    border-color: var(--portal-line-strong) !important;
+    color: var(--portal-ink) !important;
+}
+
+html.dark .rs-portal-page .tv-topbar-link:hover,
+html.dark .rs-portal-page .tv-btn-deposit-action:hover:not(:disabled),
+html.dark .rs-portal-page .tv-cat-tab-btn:hover,
+html.dark .rs-portal-page .tv-subvariant-btn:hover,
+html[data-theme="dark"] .rs-portal-page .tv-topbar-link:hover,
+html[data-theme="dark"] .rs-portal-page .tv-btn-deposit-action:hover:not(:disabled),
+html[data-theme="dark"] .rs-portal-page .tv-cat-tab-btn:hover,
+html[data-theme="dark"] .rs-portal-page .tv-subvariant-btn:hover {
+    background: var(--portal-surface-blue) !important;
+    border-color: var(--portal-blue) !important;
+    color: var(--portal-blue) !important;
+}
+
+html.dark .rs-portal-page .tv-btn-deposit-action i,
+html[data-theme="dark"] .rs-portal-page .tv-btn-deposit-action i {
+    color: var(--portal-blue) !important;
+}
+
+html.dark .rs-portal-page .tv-chart-container,
+html[data-theme="dark"] .rs-portal-page .tv-chart-container {
+    background: var(--portal-surface-soft) !important;
+    border-color: var(--portal-line) !important;
+}
+
+html.dark .rs-portal-page #mktToast,
+html[data-theme="dark"] .rs-portal-page #mktToast {
+    background: var(--portal-surface-soft) !important;
+    border-color: var(--portal-line-strong) !important;
+    color: var(--portal-ink) !important;
+}

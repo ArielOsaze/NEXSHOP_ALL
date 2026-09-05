@@ -8,7 +8,7 @@ const mobile = css.match(/@media\s*\(max-width:\s*767px\)[\s\S]*?(?=\n@media\b|\
 
 assert(mobile, "Blok responsive topup mobile harus tersedia");
 assert(
-    /#topup\s+\.topup-game-grid\s*\{[\s\S]*?grid-template-columns\s*:\s*repeat\(1\s*,\s*minmax\(0\s*,\s*1fr\)\)/i.test(mobile),
-    "RED: grid topup mobile harus satu kolom agar kartu tidak terpecah menjadi dua kolom"
+    /#topup\s+\.topup-game-grid\s*\{[\s\S]*?grid-template-columns\s*:\s*repeat\(4\s*,\s*minmax\(0\s*,\s*1fr\)\)/i.test(mobile),
+    "RED: grid topup mobile harus empat kolom agar empat card tampil per baris"
 );
-console.log("sim109_topup_mobile_single_column: PASS");
+console.log("sim109_topup_mobile_four_columns: PASS");
