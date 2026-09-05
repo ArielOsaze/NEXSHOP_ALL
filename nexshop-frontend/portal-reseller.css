@@ -2124,6 +2124,35 @@ html[data-theme="dark"] .rs-portal-page #view-api input::placeholder {
     opacity: 1;
 }
 
+html.dark .rs-portal-page #btnSubmitDeposit,
+html.dark .rs-portal-page #btnSaveSettings,
+html[data-theme="dark"] .rs-portal-page #btnSubmitDeposit,
+html[data-theme="dark"] .rs-portal-page #btnSaveSettings {
+    background: var(--portal-blue) !important;
+    border-color: var(--portal-blue) !important;
+    color: #06111f !important;
+}
+
+html.dark .rs-portal-page #btnSubmitDeposit > span,
+html.dark .rs-portal-page #btnSubmitDeposit > i,
+html.dark .rs-portal-page #btnSaveSettings > span,
+html.dark .rs-portal-page #btnSaveSettings > i,
+html[data-theme="dark"] .rs-portal-page #btnSubmitDeposit > span,
+html[data-theme="dark"] .rs-portal-page #btnSubmitDeposit > i,
+html[data-theme="dark"] .rs-portal-page #btnSaveSettings > span,
+html[data-theme="dark"] .rs-portal-page #btnSaveSettings > i {
+    color: #06111f !important;
+}
+
+html.dark .rs-portal-page #btnSubmitDeposit:hover:not(:disabled),
+html.dark .rs-portal-page #btnSaveSettings:hover:not(:disabled),
+html[data-theme="dark"] .rs-portal-page #btnSubmitDeposit:hover:not(:disabled),
+html[data-theme="dark"] .rs-portal-page #btnSaveSettings:hover:not(:disabled) {
+    background: var(--portal-blue-dark) !important;
+    border-color: var(--portal-blue-dark) !important;
+    color: #06111f !important;
+}
+
 html.dark .rs-portal-page #mktToast,
 html[data-theme="dark"] .rs-portal-page #mktToast {
     background: var(--portal-surface-soft) !important;
