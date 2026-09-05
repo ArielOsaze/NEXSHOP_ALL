@@ -2079,6 +2079,51 @@ html[data-theme="dark"] .rs-portal-page .tv-product-card-item:hover {
     box-shadow: var(--portal-shadow-sm) !important;
 }
 
+html.dark .rs-portal-page #view-deposit input.form-control,
+html.dark .rs-portal-page #view-deposit select,
+html.dark .rs-portal-page #view-deposit textarea,
+html.dark .rs-portal-page #view-api #inputApiKey,
+html.dark .rs-portal-page #view-api #inputSecretKey,
+html.dark .rs-portal-page #view-api #inputIpWhitelist,
+html.dark .rs-portal-page #view-api #inputWebhookUrl,
+html[data-theme="dark"] .rs-portal-page #view-deposit input.form-control,
+html[data-theme="dark"] .rs-portal-page #view-deposit select,
+html[data-theme="dark"] .rs-portal-page #view-deposit textarea,
+html[data-theme="dark"] .rs-portal-page #view-api #inputApiKey,
+html[data-theme="dark"] .rs-portal-page #view-api #inputSecretKey,
+html[data-theme="dark"] .rs-portal-page #view-api #inputIpWhitelist,
+html[data-theme="dark"] .rs-portal-page #view-api #inputWebhookUrl {
+    background: var(--portal-surface-soft) !important;
+    border-color: var(--portal-line-strong) !important;
+    color: var(--portal-ink) !important;
+    color-scheme: dark;
+}
+
+html.dark .rs-portal-page #view-deposit input.form-control:focus,
+html.dark .rs-portal-page #view-deposit select:focus,
+html.dark .rs-portal-page #view-deposit textarea:focus,
+html.dark .rs-portal-page #view-api #inputIpWhitelist:focus,
+html.dark .rs-portal-page #view-api #inputWebhookUrl:focus,
+html[data-theme="dark"] .rs-portal-page #view-deposit input.form-control:focus,
+html[data-theme="dark"] .rs-portal-page #view-deposit select:focus,
+html[data-theme="dark"] .rs-portal-page #view-deposit textarea:focus,
+html[data-theme="dark"] .rs-portal-page #view-api #inputIpWhitelist:focus,
+html[data-theme="dark"] .rs-portal-page #view-api #inputWebhookUrl:focus {
+    background: var(--portal-surface-blue) !important;
+    border-color: var(--portal-cyan) !important;
+    color: var(--portal-ink) !important;
+}
+
+html.dark .rs-portal-page #view-deposit input::placeholder,
+html.dark .rs-portal-page #view-deposit textarea::placeholder,
+html.dark .rs-portal-page #view-api input::placeholder,
+html[data-theme="dark"] .rs-portal-page #view-deposit input::placeholder,
+html[data-theme="dark"] .rs-portal-page #view-deposit textarea::placeholder,
+html[data-theme="dark"] .rs-portal-page #view-api input::placeholder {
+    color: var(--portal-muted) !important;
+    opacity: 1;
+}
+
 html.dark .rs-portal-page #mktToast,
 html[data-theme="dark"] .rs-portal-page #mktToast {
     background: var(--portal-surface-soft) !important;
