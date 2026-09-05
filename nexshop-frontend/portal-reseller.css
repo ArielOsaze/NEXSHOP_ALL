@@ -2065,6 +2065,20 @@ html[data-theme="dark"] .rs-portal-page .tv-chart-container {
     border-color: var(--portal-line) !important;
 }
 
+html.dark .rs-portal-page .tv-product-card-item,
+html[data-theme="dark"] .rs-portal-page .tv-product-card-item {
+    background: var(--portal-surface-soft) !important;
+    border-color: var(--portal-line) !important;
+    color: var(--portal-ink) !important;
+}
+
+html.dark .rs-portal-page .tv-product-card-item:hover,
+html[data-theme="dark"] .rs-portal-page .tv-product-card-item:hover {
+    background: var(--portal-surface-blue) !important;
+    border-color: var(--portal-blue) !important;
+    box-shadow: var(--portal-shadow-sm) !important;
+}
+
 html.dark .rs-portal-page #mktToast,
 html[data-theme="dark"] .rs-portal-page #mktToast {
     background: var(--portal-surface-soft) !important;

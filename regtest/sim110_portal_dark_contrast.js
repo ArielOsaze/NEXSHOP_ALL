@@ -10,4 +10,7 @@ const darkChart = /html\.dark\s+\.rs-portal-page\s+\.tv-chart-container\s*,\s*ht
 assert(darkBrand.test(css), "RED: dark portal brand header harus memakai surface tema gelap, bukan background putih");
 assert(darkActions.test(css), "RED: tombol portal dark harus memakai surface soft dan teks kontras");
 assert(darkChart.test(css), "RED: chart dark tidak boleh menjadi panel putih");
+const darkProductCards = /html\.dark\s+\.rs-portal-page\s+\.tv-product-card-item\s*,\s*html\[data-theme="dark"\]\s+\.rs-portal-page\s+\.tv-product-card-item\s*\{[^}]*background:\s*var\(--portal-surface-soft\)\s*!important[^}]*color:\s*var\(--portal-ink\)\s*!important/i;
+assert(darkProductCards.test(css), "RED: kartu katalog produk dark harus memakai surface portal, bukan putih");
+assert(!/html\.dark\s+\.rs-portal-page\s+\.tv-auth-card\s*\{[^}]*background:\s*var\(--portal-surface-soft\)/i.test(css), "login auth card tidak boleh ikut diubah oleh override katalog");
 console.log("sim110_portal_dark_contrast: PASS");
