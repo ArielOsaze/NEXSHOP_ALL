@@ -24,8 +24,8 @@ for (const table of tables) {
     assert.match(sql, new RegExp(`REVOKE ALL ON TABLE public\\.${table} FROM anon, authenticated`, "i"), `${table} tidak boleh terbuka untuk anon/authenticated`);
 }
 
-assert.match(sql, /REVOKE ALL ON FUNCTION public\.credit_wallet_atomic\(/i, "RPC credit wallet wajib ditutup dari PUBLIC");
-assert.match(sql, /REVOKE ALL ON FUNCTION public\.debit_wallet_atomic\(/i, "RPC debit wallet wajib ditutup dari PUBLIC");
+assert.match(sql, /REVOKE EXECUTE ON FUNCTION public\.credit_wallet_atomic\([^;]+\) FROM PUBLIC, anon, authenticated/i, "RPC credit wallet wajib ditutup dari PUBLIC dan role API");
+assert.match(sql, /REVOKE EXECUTE ON FUNCTION public\.debit_wallet_atomic\([^;]+\) FROM PUBLIC, anon, authenticated/i, "RPC debit wallet wajib ditutup dari PUBLIC dan role API");
 assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.credit_wallet_atomic\([^;]+TO service_role/i, "service_role tetap boleh memakai RPC credit");
 assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.debit_wallet_atomic\([^;]+TO service_role/i, "service_role tetap boleh memakai RPC debit");
 

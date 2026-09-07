@@ -33,8 +33,8 @@ REVOKE ALL ON TABLE public.webhook_deliveries FROM anon, authenticated;
 
 -- Backend RPCs remain available only to the service role. Removing PUBLIC
 -- EXECUTE prevents direct balance mutation through an exposed function.
-REVOKE ALL ON FUNCTION public.credit_wallet_atomic(bigint, text, numeric, text, text, text, jsonb) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.debit_wallet_atomic(bigint, text, numeric, text, text, text, jsonb) FROM PUBLIC;
+REVOKE EXECUTE ON FUNCTION public.credit_wallet_atomic(bigint, text, numeric, text, text, text, jsonb) FROM PUBLIC, anon, authenticated;
+REVOKE EXECUTE ON FUNCTION public.debit_wallet_atomic(bigint, text, numeric, text, text, text, jsonb) FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.credit_wallet_atomic(bigint, text, numeric, text, text, text, jsonb) TO service_role;
 GRANT EXECUTE ON FUNCTION public.debit_wallet_atomic(bigint, text, numeric, text, text, text, jsonb) TO service_role;
 
