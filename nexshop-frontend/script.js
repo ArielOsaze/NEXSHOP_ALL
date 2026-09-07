@@ -5331,11 +5331,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+const MUSIC_REQUEST_TIMEOUT_MS = 6000;
+
+async function fetchPublicMusic() {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), MUSIC_REQUEST_TIMEOUT_MS);
+    try {
+        const response = await fetch(`${API_BASE}/music/public`, { signal: controller.signal });
+        if (!response.ok) throw new Error(`Music API unavailable (HTTP ${response.status})`);
+        return await response.json();
+    } finally {
+        window.clearTimeout(timeoutId);
+    }
+}
+
 async function initMusicPlayer() {
     try {
-        const response = await fetch(`${API_BASE}/music/public`);
-        if (!response.ok) return;
-        const data = await response.json();
+        const data = await fetchPublicMusic();
 
         if (data.enabled && data.music) {
             // Setup player UI

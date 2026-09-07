@@ -63,6 +63,8 @@ const server = http.createServer((req, res) => {
                 const stepsBefore = getComputedStyle(steps, "::before");
                 const stepsAfter = getComputedStyle(steps, "::after");
                 const stepNumberStyle = getComputedStyle(stepNumber);
+                const timelineStep = document.querySelector(".rs-step:not(:last-child)");
+                const timelineStepAfter = getComputedStyle(timelineStep, "::after");
                 const rect = (element) => {
                     const box = element?.getBoundingClientRect();
                     return box ? { left: Math.round(box.left), right: Math.round(box.right), width: Math.round(box.width) } : null;
@@ -90,6 +92,8 @@ const server = http.createServer((req, res) => {
                     timelineAfterDisplay: stepsAfter.display,
                     timelineBeforeZ: stepsBefore.zIndex,
                     timelineAfterZ: stepsAfter.zIndex,
+                    stepConnectorDisplay: timelineStepAfter.display,
+                    stepConnectorZ: timelineStepAfter.zIndex,
                     stepNumberZ: stepNumberStyle.zIndex,
                     stepNumberBackground: stepNumberStyle.backgroundColor
                 };
@@ -108,8 +112,8 @@ const server = http.createServer((req, res) => {
             if (compactSteps && (state.timelineBeforeDisplay !== "none" || state.timelineAfterDisplay !== "none")) {
                 throw new Error(`timeline line must be disabled when reseller steps are cards at ${width}px: ${JSON.stringify(state)}`);
             }
-            if (!compactSteps && (state.timelineBeforeZ !== "0" || state.timelineAfterZ !== "0" || state.stepNumberZ !== "2" || /rgba\(0,\s*0,\s*0,\s*0\)|transparent/i.test(state.stepNumberBackground))) {
-                throw new Error(`timeline layer still crosses desktop step numbers at ${width}px: ${JSON.stringify(state)}`);
+            if (!compactSteps && (state.stepConnectorDisplay === "none" || state.stepConnectorZ !== "0" || state.stepNumberZ !== "2" || /rgba\(0,\s*0,\s*0,\s*0\)|transparent/i.test(state.stepNumberBackground))) {
+                throw new Error(`per-step timeline connector is invalid at ${width}px: ${JSON.stringify(state)}`);
             }
             if (!/Sora/i.test(state.h1Font)) throw new Error(`unexpected reseller display font at ${width}px: ${state.h1Font}`);
             if (!/Plus Jakarta Sans/i.test(state.bodyFont) || !/Plus Jakarta Sans/i.test(state.leadFont)) {

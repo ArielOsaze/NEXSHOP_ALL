@@ -68,6 +68,8 @@
         const container = document.getElementById(containerId);
         const status = document.getElementById(statusId);
         if (!container) return;
+        const turnstilePromise = loadTurnstile();
+        void turnstilePromise.catch(() => {});
         const config = await getConfig();
         if (config.__unavailable) {
             container.hidden = true;
@@ -82,7 +84,7 @@
         }
         container.hidden = false;
         try {
-            const turnstile = await loadTurnstile();
+            const turnstile = await turnstilePromise;
             const widgetId = turnstile.render(container, {
                 sitekey: config.turnstile_site_key,
                 theme: document.documentElement.classList.contains("dark") ? "dark" : "light",

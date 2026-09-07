@@ -1,11 +1,57 @@
+const fs = require("fs");
+const path = require("path");
 const supabase = require("../config/db");
 
 const PUBLIC_MUSIC_CACHE_TTL_MS = 60 * 1000;
-let publicMusicCache = { payload: null, cachedAt: 0 };
+const PUBLIC_MUSIC_STALE_CACHE_MAX_AGE_MS = PUBLIC_MUSIC_CACHE_TTL_MS * 10;
+const PUBLIC_MUSIC_QUERY_TIMEOUT_MS = 3500;
+const PUBLIC_MUSIC_CACHE_FILE = path.join(__dirname, "../.runtime-cache/public-music.json");
+
+function loadPersistedPublicMusicCache() {
+    try {
+        const record = JSON.parse(fs.readFileSync(PUBLIC_MUSIC_CACHE_FILE, "utf8"));
+        if (!record || !record.payload || !Number.isFinite(Number(record.cachedAt))) return { payload: null, cachedAt: 0 };
+        return { payload: record.payload, cachedAt: Number(record.cachedAt) };
+    } catch (_) {
+        return { payload: null, cachedAt: 0 };
+    }
+}
+
+let publicMusicCache = loadPersistedPublicMusicCache();
+
+function persistPublicMusicCache() {
+    try {
+        fs.mkdirSync(path.dirname(PUBLIC_MUSIC_CACHE_FILE), { recursive: true });
+        const temporaryFile = `${PUBLIC_MUSIC_CACHE_FILE}.tmp`;
+        fs.writeFileSync(temporaryFile, JSON.stringify(publicMusicCache), { encoding: "utf8", mode: 0o600 });
+        fs.renameSync(temporaryFile, PUBLIC_MUSIC_CACHE_FILE);
+    } catch (error) {
+        console.warn("Gagal menyimpan cache musik publik:", error.message);
+    }
+}
+
+function setPublicMusicCache(payload) {
+    publicMusicCache = { payload, cachedAt: Date.now() };
+    persistPublicMusicCache();
+}
+
+function timeoutError(label, timeoutMs) {
+    const error = new Error(`${label} timeout setelah ${timeoutMs}ms`);
+    error.code = "UPSTREAM_TIMEOUT";
+    return error;
+}
+
+function withTimeout(promise, timeoutMs, label) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(timeoutError(label, timeoutMs)), timeoutMs);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
 
 function serveCachedPublicMusic(res, { stale = false } = {}) {
     if (!publicMusicCache.payload) return false;
-    if (stale && Date.now() - publicMusicCache.cachedAt > PUBLIC_MUSIC_CACHE_TTL_MS * 10) return false;
+    if (stale && Date.now() - publicMusicCache.cachedAt > PUBLIC_MUSIC_STALE_CACHE_MAX_AGE_MS) return false;
     res.setHeader("X-NexShop-Config-Source", stale ? "stale-cache" : "memory-cache");
     res.json(publicMusicCache.payload);
     return true;
@@ -18,11 +64,15 @@ exports.getPublicMusic = async (req, res) => {
             if (serveCachedPublicMusic(res)) return;
         }
         // Cek master toggle dari store_settings
-        const { data: settings, error: settingsError } = await supabase
-            .from("store_settings")
-            .select("music_player_enabled")
-            .eq("id", 1)
-            .maybeSingle();
+        const { data: settings, error: settingsError } = await withTimeout(
+            supabase
+                .from("store_settings")
+                .select("music_player_enabled")
+                .eq("id", 1)
+                .maybeSingle(),
+            PUBLIC_MUSIC_QUERY_TIMEOUT_MS,
+            "store_settings"
+        );
 
         if (settingsError) {
             console.error("Error fetching store_settings:", settingsError);
@@ -32,16 +82,20 @@ exports.getPublicMusic = async (req, res) => {
 
         if (!settings || !settings.music_player_enabled) {
             const payload = { enabled: false, music: null };
-            publicMusicCache = { payload, cachedAt: Date.now() };
+            setPublicMusicCache(payload);
             return res.json(payload);
         }
 
         // Ambil lagu yang aktif
-        const { data: music, error: musicError } = await supabase
-            .from("music_player")
-            .select("id, title, audio_url, cover_url")
-            .eq("is_active", true)
-            .maybeSingle();
+        const { data: music, error: musicError } = await withTimeout(
+            supabase
+                .from("music_player")
+                .select("id, title, audio_url, cover_url")
+                .eq("is_active", true)
+                .maybeSingle(),
+            PUBLIC_MUSIC_QUERY_TIMEOUT_MS,
+            "music_player"
+        );
 
         if (musicError) {
             console.error("Error fetching active music:", musicError);
@@ -53,7 +107,7 @@ exports.getPublicMusic = async (req, res) => {
             enabled: true,
             music: music || null
         };
-        publicMusicCache = { payload, cachedAt: Date.now() };
+        setPublicMusicCache(payload);
         res.json(payload);
     } catch (err) {
         console.error("getPublicMusic error:", err);

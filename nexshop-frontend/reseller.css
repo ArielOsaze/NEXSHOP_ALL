@@ -3959,7 +3959,7 @@ body.rs-page.rs-motion-ready .rs-hero::before { animation: rs-hero-grid-drift 20
 .rs-page .rs-universe-node-pln { top: 10%; right: 8%; }
 .rs-page .rs-universe-node-ewallet { bottom: 10%; left: 8%; }
 .rs-page .rs-universe-node-game { right: 8%; bottom: 10%; }
-.rs-page .rs-universe-node-voucher { top: 50%; right: auto; left: 4%; transform: translateY(-50%); }
+.rs-page .rs-universe-node-voucher { top: 50%; right: auto; bottom: auto; left: 4%; transform: translateY(-50%); }
 .rs-page .rs-universe-node-bill { top: 50%; right: 4%; left: auto; transform: translateY(-50%); }
 .rs-page .rs-universe-node-voucher.is-active, .rs-page .rs-universe-node-bill.is-active { transform: translateY(-50%) translateY(-4px); }
 .rs-page .rs-universe-route { position: absolute; z-index: 0; top: 50%; left: 50%; width: 32%; height: 1px; transform-origin: left center; background: linear-gradient(90deg, rgba(72, 177, 198, 0.16), rgba(72, 177, 198, 0.52)); opacity: 0.22; transition: opacity 300ms ease, box-shadow 300ms ease; }
@@ -4033,6 +4033,40 @@ body.rs-page.rs-motion-ready .rs-hero::before { animation: rs-hero-grid-drift 20
 .rs-page .rs-universe-node,
 .rs-page .rs-wallet-node {
     animation: none !important;
+}
+
+@keyframes rs-card-liveness {
+    0%, 100% { box-shadow: 0 4px 10px rgba(16, 24, 40, 0.06); filter: saturate(0.96); }
+    50% { box-shadow: 0 9px 20px rgba(0, 168, 199, 0.14); filter: saturate(1.06); }
+}
+
+/* Keep the legacy node motion only where it cannot override a positioning
+   transform. Universe/wallet nodes use a shadow-only pulse below. */
+.rs-page .rs-hero-visual.rs-command-in-viewport .rs-network-node-one,
+.rs-page .rs-hero-visual.rs-command-in-viewport .rs-network-node-two,
+.rs-page .rs-hero-visual.rs-command-in-viewport .rs-network-node-three {
+    animation: rs-node-breathe 4.2s ease-in-out var(--rs-node-delay, 0ms) infinite !important;
+}
+.rs-page .rs-universe-stage.rs-universe-in-viewport .rs-universe-node,
+.rs-page .rs-showcase-card[data-showcase-story="wallet"].rs-story-in-viewport .rs-wallet-node {
+    animation: rs-card-liveness 4.8s ease-in-out var(--rs-node-delay, 0ms) infinite !important;
+}
+.rs-page .rs-universe-node-pulsa { --rs-node-delay: 0ms; }
+.rs-page .rs-universe-node-pln { --rs-node-delay: 650ms; }
+.rs-page .rs-universe-node-ewallet { --rs-node-delay: 1300ms; }
+.rs-page .rs-universe-node-game { --rs-node-delay: 1950ms; }
+.rs-page .rs-universe-node-voucher { --rs-node-delay: 2600ms; }
+.rs-page .rs-universe-node-bill { --rs-node-delay: 3250ms; }
+.rs-page .rs-wallet-node { --rs-node-delay: 850ms; }
+
+@media (prefers-reduced-motion: reduce) {
+    .rs-page .rs-hero-visual.rs-command-in-viewport .rs-network-node-one,
+    .rs-page .rs-hero-visual.rs-command-in-viewport .rs-network-node-two,
+    .rs-page .rs-hero-visual.rs-command-in-viewport .rs-network-node-three,
+    .rs-page .rs-universe-stage.rs-universe-in-viewport .rs-universe-node,
+    .rs-page .rs-showcase-card[data-showcase-story="wallet"].rs-story-in-viewport .rs-wallet-node {
+        animation: none !important;
+    }
 }
 
 @keyframes rs-flow-glow {

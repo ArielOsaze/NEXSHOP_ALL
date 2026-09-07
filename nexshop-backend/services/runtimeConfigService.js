@@ -55,7 +55,9 @@ const RUNTIME_CONFIG_FIELDS = Object.freeze({
 });
 
 const CACHE_TTL_MS = 30 * 1000;
+const RUNTIME_CONFIG_QUERY_TIMEOUT_MS = 3500;
 let runtimeConfigCache = { data: null, ts: 0 };
+let runtimeConfigRequest = null;
 
 function envFallback() {
     const fallback = {};
@@ -66,19 +68,45 @@ function envFallback() {
     return fallback;
 }
 
-async function getRuntimeConfig({ fresh = false, strict = false } = {}) {
+function timeoutError(label, timeoutMs) {
+    const error = new Error(`${label} timeout setelah ${timeoutMs}ms`);
+    error.code = "UPSTREAM_TIMEOUT";
+    return error;
+}
+
+function withTimeout(promise, timeoutMs, label) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(timeoutError(label, timeoutMs)), timeoutMs);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+async function readRuntimeConfig({ strict = false } = {}) {
     const now = Date.now();
-    if (!fresh && runtimeConfigCache.data && now - runtimeConfigCache.ts < CACHE_TTL_MS) {
-        return runtimeConfigCache.data;
-    }
+    try {
+        const { data, error } = await withTimeout(
+            supabase
+                .from("runtime_config")
+                .select("config")
+                .eq("id", 1)
+                .maybeSingle(),
+            RUNTIME_CONFIG_QUERY_TIMEOUT_MS,
+            "runtime_config"
+        );
 
-    const { data, error } = await supabase
-        .from("runtime_config")
-        .select("config")
-        .eq("id", 1)
-        .maybeSingle();
+        if (error) throw error;
 
-    if (error) {
+        const stored = data && data.config && typeof data.config === "object" ? data.config : {};
+        const merged = envFallback();
+        for (const [key, field] of Object.entries(RUNTIME_CONFIG_FIELDS)) {
+            if (stored[key] === undefined || stored[key] === null || stored[key] === "") continue;
+            merged[key] = field.type === "boolean" ? stored[key] === true || stored[key] === "true" : String(stored[key]).trim();
+        }
+
+        runtimeConfigCache = { data: merged, ts: now };
+        return merged;
+    } catch (error) {
         console.warn("Gagal mengambil runtime_config, memakai cache/fallback .env:", error.message);
         if (strict) throw error;
         if (runtimeConfigCache.data) return runtimeConfigCache.data;
@@ -86,16 +114,21 @@ async function getRuntimeConfig({ fresh = false, strict = false } = {}) {
         runtimeConfigCache = { data: fallback, ts: now };
         return fallback;
     }
+}
 
-    const stored = data && data.config && typeof data.config === "object" ? data.config : {};
-    const merged = envFallback();
-    for (const [key, field] of Object.entries(RUNTIME_CONFIG_FIELDS)) {
-        if (stored[key] === undefined || stored[key] === null || stored[key] === "") continue;
-        merged[key] = field.type === "boolean" ? stored[key] === true || stored[key] === "true" : String(stored[key]).trim();
+async function getRuntimeConfig({ fresh = false, strict = false } = {}) {
+    const now = Date.now();
+    if (!fresh && runtimeConfigCache.data && now - runtimeConfigCache.ts < CACHE_TTL_MS) {
+        return runtimeConfigCache.data;
     }
+    if (!fresh && runtimeConfigRequest) return runtimeConfigRequest;
 
-    runtimeConfigCache = { data: merged, ts: now };
-    return merged;
+    let request;
+    request = readRuntimeConfig({ strict }).finally(() => {
+        if (runtimeConfigRequest === request) runtimeConfigRequest = null;
+    });
+    if (!fresh) runtimeConfigRequest = request;
+    return request;
 }
 
 function normalizeHostnameList(value) {
