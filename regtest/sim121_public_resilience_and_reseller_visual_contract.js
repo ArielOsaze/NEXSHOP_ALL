@@ -15,6 +15,8 @@ const resellerCss = read("nexshop-frontend/reseller.css");
 
 assert.match(runtimeConfig, /RUNTIME_CONFIG_QUERY_TIMEOUT_MS/,
     "runtime config public harus memiliki batas waktu query");
+assert.match(runtimeConfig, /FALLBACK_CACHE_TTL_MS = 5 \* 1000/,
+    "fallback runtime config tidak boleh mengunci Turnstile terlalu lama");
 assert.match(runtimeConfig, /runtimeConfigRequest/,
     "runtime config harus mendeduplikasi query bersamaan");
 assert.match(music, /PUBLIC_MUSIC_QUERY_TIMEOUT_MS/,

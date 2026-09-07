@@ -55,8 +55,9 @@ const RUNTIME_CONFIG_FIELDS = Object.freeze({
 });
 
 const CACHE_TTL_MS = 30 * 1000;
+const FALLBACK_CACHE_TTL_MS = 5 * 1000;
 const RUNTIME_CONFIG_QUERY_TIMEOUT_MS = 3500;
-let runtimeConfigCache = { data: null, ts: 0 };
+let runtimeConfigCache = { data: null, ts: 0, source: "empty" };
 let runtimeConfigRequest = null;
 
 function envFallback() {
@@ -104,21 +105,22 @@ async function readRuntimeConfig({ strict = false } = {}) {
             merged[key] = field.type === "boolean" ? stored[key] === true || stored[key] === "true" : String(stored[key]).trim();
         }
 
-        runtimeConfigCache = { data: merged, ts: now };
+        runtimeConfigCache = { data: merged, ts: now, source: "database" };
         return merged;
     } catch (error) {
         console.warn("Gagal mengambil runtime_config, memakai cache/fallback .env:", error.message);
         if (strict) throw error;
         if (runtimeConfigCache.data) return runtimeConfigCache.data;
         const fallback = envFallback();
-        runtimeConfigCache = { data: fallback, ts: now };
+        runtimeConfigCache = { data: fallback, ts: now, source: "fallback" };
         return fallback;
     }
 }
 
 async function getRuntimeConfig({ fresh = false, strict = false } = {}) {
     const now = Date.now();
-    if (!fresh && runtimeConfigCache.data && now - runtimeConfigCache.ts < CACHE_TTL_MS) {
+    const cacheTtl = runtimeConfigCache.source === "fallback" ? FALLBACK_CACHE_TTL_MS : CACHE_TTL_MS;
+    if (!fresh && runtimeConfigCache.data && now - runtimeConfigCache.ts < cacheTtl) {
         return runtimeConfigCache.data;
     }
     if (!fresh && runtimeConfigRequest) return runtimeConfigRequest;
@@ -206,7 +208,7 @@ async function updateRuntimeConfig(values, clearKeys = []) {
     const { error } = await supabase
         .from("runtime_config")
         .upsert({ id: 1, config, updated_at: new Date().toISOString() }, { onConflict: "id" });
-    if (!error) runtimeConfigCache = { data: null, ts: 0 };
+    if (!error) runtimeConfigCache = { data: null, ts: 0, source: "empty" };
     return { error, changedKeys: [...new Set(changedKeys)] };
 }
 
