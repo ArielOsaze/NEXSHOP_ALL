@@ -4181,10 +4181,23 @@
             if (!isSecretRevealed) {
                 if (!cachedSecret) {
                     try {
+                        const password = window.prompt("Konfirmasi password Portal Reseller untuk membuka Secret Key:");
+                        if (!password) return;
+                        const stepUpRes = await fetch(`${API_BASE}/reseller/portal/secret/step-up`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                            body: JSON.stringify({ password })
+                        });
+                        const stepUpData = await stepUpRes.json();
+                        if (!stepUpRes.ok || !stepUpData.step_up_token) throw new Error(stepUpData.message || "Verifikasi ulang gagal");
                         const res = await fetch(`${API_BASE}/reseller/portal/secret`, {
-                            headers: { Authorization: `Bearer ${token}` }
+                            headers: {
+                                Authorization: `Bearer ${token}`,
+                                "X-Portal-Step-Up": stepUpData.step_up_token
+                            }
                         });
                         const data = await res.json();
+                        if (!res.ok || !data.secret_key) throw new Error(data.message || "Secret Key tidak tersedia");
                         if (data.secret_key) cachedSecret = data.secret_key;
                     } catch (e) {
                         showToast("Gagal mengambil Secret Key: " + e.message);

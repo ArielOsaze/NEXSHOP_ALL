@@ -33,31 +33,52 @@ function hitungHargaReseller(hargaJual, hargaBeli, persen) {
     const modal = bulatkanRupiah(hargaBeli);
     const diskonPersen = Number(persen) || 0;
 
-    if (diskonPersen <= 0 || normal <= 0) {
-        return { harga: normal, harga_normal: normal, hemat: 0, persen_efektif: 0, kena_lantai: false };
+    // Produk yang harga umumnya sudah menyentuh/menembus modal tidak boleh
+    // dijual melalui jalur reseller. Jangan mengembalikan harga normal yang
+    // tampak valid tetapi sebenarnya rugi.
+    if (normal <= 0 || (modal > 0 && normal <= modal)) {
+        return {
+            harga: null,
+            harga_normal: normal,
+            hemat: 0,
+            persen_efektif: 0,
+            kena_lantai: false,
+            sellable: false,
+            reason: "Harga jual tidak di atas modal supplier"
+        };
+    }
+
+    if (diskonPersen <= 0) {
+        return { harga: normal, harga_normal: normal, hemat: 0, persen_efektif: 0, kena_lantai: false, sellable: true };
     }
 
     const lantai = lantaiHargaReseller(modal);
-    let harga = bulatkanRupiah(normal * (1 - diskonPersen / 100));
-    let kenaLantai = false;
+    const hargaDiskon = bulatkanRupiah(normal * (1 - diskonPersen / 100));
 
-    // Pastikan harga reseller tidak tembus di bawah lantai modal + untung
-    if (harga < lantai) {
-        harga = Math.max(lantai, modal > 0 ? modal + 100 : normal);
-        // Jangan sampai harga lantai melebihi harga normal
-        if (harga > normal) {
-            harga = normal;
-        }
-        kenaLantai = true;
+    // Kalau lantai margin lebih tinggi dari harga normal, tidak ada harga
+    // reseller yang memenuhi aturan margin. Fail closed; jangan clamp kembali
+    // ke harga normal karena itu bisa tetap di bawah modal + margin.
+    if (hargaDiskon < lantai && lantai > normal) {
+        return {
+            harga: null,
+            harga_normal: normal,
+            hemat: 0,
+            persen_efektif: 0,
+            kena_lantai: true,
+            sellable: false,
+            reason: "Harga normal tidak cukup untuk memenuhi lantai margin NexShop"
+        };
     }
 
+    const harga = hargaDiskon < lantai ? lantai : hargaDiskon;
     const hemat = Math.max(normal - harga, 0);
     return {
         harga,
         harga_normal: normal,
         hemat,
         persen_efektif: normal > 0 ? Number(((hemat / normal) * 100).toFixed(2)) : 0,
-        kena_lantai: kenaLantai
+        kena_lantai: hargaDiskon < lantai,
+        sellable: true
     };
 }
 

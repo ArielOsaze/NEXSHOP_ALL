@@ -79,8 +79,12 @@ async function getRuntimeConfig({ fresh = false, strict = false } = {}) {
         .maybeSingle();
 
     if (error) {
-        console.warn("Gagal mengambil runtime_config, memakai fallback .env:", error.message);
+        console.warn("Gagal mengambil runtime_config, memakai cache/fallback .env:", error.message);
         if (strict) throw error;
+        if (runtimeConfigCache.data) return runtimeConfigCache.data;
+        const fallback = envFallback();
+        runtimeConfigCache = { data: fallback, ts: now };
+        return fallback;
     }
 
     const stored = data && data.config && typeof data.config === "object" ? data.config : {};

@@ -25,7 +25,11 @@ module.exports = (req, res, next) => {
     if (!process.env.JWT_SECRET) return next();
 
     try {
-        req.user = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        if (decoded.kind === "portal_2fa_challenge") {
+            return res.status(401).json({ message: "Challenge 2FA belum menjadi sesi autentikasi" });
+        }
+        req.user = decoded;
     } catch (_) {
         req.user = null;
     }

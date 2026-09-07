@@ -35,6 +35,7 @@ router.post("/portal/2fa/setup", resellerPortalAuthMiddleware, resellerControlle
 router.post("/portal/2fa/enable", resellerPortalAuthMiddleware, resellerController.enableResellerTwoFactor);
 router.post("/portal/2fa/disable", resellerPortalAuthMiddleware, resellerController.disableResellerTwoFactor);
 router.get("/portal/secret", resellerPortalAuthMiddleware, resellerController.revealSecretKey);
+router.post("/portal/secret/step-up", resellerPortalAuthMiddleware, resellerLoginLimiter, resellerController.issuePortalSecretStepUp);
 router.post("/portal/api-key/generate", resellerPortalAuthMiddleware, resellerController.generateOrRotateApiKey);
 router.put("/portal/settings", resellerPortalAuthMiddleware, resellerController.updatePortalSettings);
 router.get("/portal/products", resellerPortalAuthMiddleware, resellerController.getPortalProducts);

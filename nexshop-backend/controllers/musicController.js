@@ -1,8 +1,22 @@
 const supabase = require("../config/db");
 
+const PUBLIC_MUSIC_CACHE_TTL_MS = 60 * 1000;
+let publicMusicCache = { payload: null, cachedAt: 0 };
+
+function serveCachedPublicMusic(res, { stale = false } = {}) {
+    if (!publicMusicCache.payload) return false;
+    if (stale && Date.now() - publicMusicCache.cachedAt > PUBLIC_MUSIC_CACHE_TTL_MS * 10) return false;
+    res.setHeader("X-NexShop-Config-Source", stale ? "stale-cache" : "memory-cache");
+    res.json(publicMusicCache.payload);
+    return true;
+}
+
 // Ambil konfigurasi public (Hanya yang aktif)
 exports.getPublicMusic = async (req, res) => {
     try {
+        if (publicMusicCache.payload && Date.now() - publicMusicCache.cachedAt < PUBLIC_MUSIC_CACHE_TTL_MS) {
+            if (serveCachedPublicMusic(res)) return;
+        }
         // Cek master toggle dari store_settings
         const { data: settings, error: settingsError } = await supabase
             .from("store_settings")
@@ -12,11 +26,14 @@ exports.getPublicMusic = async (req, res) => {
 
         if (settingsError) {
             console.error("Error fetching store_settings:", settingsError);
-            return res.status(500).json({ message: "Gagal mengambil konfigurasi toko" });
+            if (serveCachedPublicMusic(res, { stale: true })) return;
+            return res.status(503).json({ message: "Konfigurasi musik sedang tidak tersedia" });
         }
 
         if (!settings || !settings.music_player_enabled) {
-            return res.json({ enabled: false, music: null });
+            const payload = { enabled: false, music: null };
+            publicMusicCache = { payload, cachedAt: Date.now() };
+            return res.json(payload);
         }
 
         // Ambil lagu yang aktif
@@ -28,16 +45,20 @@ exports.getPublicMusic = async (req, res) => {
 
         if (musicError) {
             console.error("Error fetching active music:", musicError);
-            return res.status(500).json({ message: "Gagal mengambil lagu aktif" });
+            if (serveCachedPublicMusic(res, { stale: true })) return;
+            return res.status(503).json({ message: "Lagu aktif sedang tidak tersedia" });
         }
 
-        res.json({
+        const payload = {
             enabled: true,
             music: music || null
-        });
+        };
+        publicMusicCache = { payload, cachedAt: Date.now() };
+        res.json(payload);
     } catch (err) {
         console.error("getPublicMusic error:", err);
-        res.status(500).json({ message: "Server Error" });
+        if (serveCachedPublicMusic(res, { stale: true })) return;
+        res.status(503).json({ message: "Layanan musik sedang tidak tersedia" });
     }
 };
 

@@ -44,6 +44,7 @@ function formatPortalProduct(product, resellerContext) {
     const isReseller = Boolean(resellerContext?.isReseller);
     const discountPercent = isReseller ? Number(resellerContext.discountPercent) || 0 : 0;
     const calculated = hitungHargaReseller(hargaNormal, product.harga_beli || 0, discountPercent);
+    if (!calculated.sellable) return null;
 
     return {
         id: product.id,

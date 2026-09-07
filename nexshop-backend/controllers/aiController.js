@@ -312,17 +312,21 @@ async function handlePriceQuery(message, user) {
 
     const hargaFinal = (row) => {
         if (!diskon) return Number(row.harga_jual);
-        return hitungHargaReseller(Number(row.harga_jual), Number(row.harga_beli), diskon);
+        const calculated = hitungHargaReseller(Number(row.harga_jual), Number(row.harga_beli), diskon);
+        return calculated.sellable ? calculated.harga : null;
     };
+
+    const pricedRows = rows.filter((row) => hargaFinal(row) != null);
+    if (!pricedRows.length) return null;
 
     const label = target.type === "operator"
         ? target.value
         : target.type === "game"
             ? target.value
             : `kategori ${target.value}`;
-    const termurah = hargaFinal(rows[0]);
+    const termurah = hargaFinal(pricedRows[0]);
 
-    const daftar = rows
+    const daftar = pricedRows
         .map((row) => `- ${row.nama}: **${nexbotCatalog.rupiah(hargaFinal(row))}**`)
         .join("\n");
 

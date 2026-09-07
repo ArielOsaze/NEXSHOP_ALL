@@ -9,7 +9,7 @@ const optionalAuthMiddleware = require("../middleware/optionalAuthMiddleware");
 const portalCheckoutAuthMiddleware = require("../middleware/portalCheckoutAuthMiddleware");
 const rateLimit = require("express-rate-limit");
 
-const { checkNicknameLimiter, inquiryLimiter } = require("../middleware/rateLimiter");
+const { checkNicknameLimiter, inquiryLimiter, publicCatalogLimiter, promoValidationLimiter, checkoutLimiter, providerWebhookLimiter } = require("../middleware/rateLimiter");
 
 const adminDepositLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -28,24 +28,24 @@ const adminDepositLimiter = rateLimit({
 // Tiga route ini menggantikan pola "tarik seluruh katalog sekali jalan".
 // Kartu dikirim per halaman, dan pencariannya dijalankan server atas SELURUH
 // indeks katalog -- jadi produk yang kartunya belum termuat tetap ketemu.
-router.get("/catalog/games", optionalAuthMiddleware, topupController.getCatalogGames);
-router.get("/catalog/operators", optionalAuthMiddleware, topupController.getCatalogOperators);
-router.get("/catalog/group/:jenis/slug/:slug", optionalAuthMiddleware, topupController.getCatalogGroupBySlug);
-router.get("/catalog/group/:jenis/:id/products", optionalAuthMiddleware, topupController.getCatalogGroupProducts);
+router.get("/catalog/games", publicCatalogLimiter, optionalAuthMiddleware, topupController.getCatalogGames);
+router.get("/catalog/operators", publicCatalogLimiter, optionalAuthMiddleware, topupController.getCatalogOperators);
+router.get("/catalog/group/:jenis/slug/:slug", publicCatalogLimiter, optionalAuthMiddleware, topupController.getCatalogGroupBySlug);
+router.get("/catalog/group/:jenis/:id/products", publicCatalogLimiter, optionalAuthMiddleware, topupController.getCatalogGroupProducts);
 
 // Endpoint lama tetap ada supaya integrasi/halaman yang belum dimigrasi
 // tidak rusak mendadak.
-router.get("/public-catalog", optionalAuthMiddleware, topupController.getPublicCatalog);
+router.get("/public-catalog", publicCatalogLimiter, optionalAuthMiddleware, topupController.getPublicCatalog);
 
-router.get("/products", optionalAuthMiddleware, topupController.getProducts);
+router.get("/products", publicCatalogLimiter, optionalAuthMiddleware, topupController.getProducts);
 router.post("/check-nickname", checkNicknameLimiter, topupController.checkNicknameHandler); // publik — cek akun sebelum checkout
-router.post("/validate-promo", topupController.validatePromo); // publik — tombol "Terapkan" kode promo di halaman topup
+router.post("/validate-promo", promoValidationLimiter, topupController.validatePromo); // publik — tombol "Terapkan" kode promo di halaman topup
 // Publik tapi di-rate-limit KETAT: tiap cek tagihan motong saldo TokoVoucher
 // kita, walaupun customer-nya gak jadi bayar.
 router.post("/inquiry-pascabayar", inquiryLimiter, topupController.inquiryPascabayarHandler); // publik — tombol "Cek Tagihan" di checkout Marketplace
 
 // Checkout — boleh guest atau login, sama seperti /api/orders
-router.post("/", optionalAuthMiddleware, portalCheckoutAuthMiddleware, topupController.create);
+router.post("/", checkoutLimiter, optionalAuthMiddleware, portalCheckoutAuthMiddleware, topupController.create);
 
 // User
 router.get("/my", authMiddleware, topupController.getMyOrders);
@@ -86,7 +86,7 @@ router.get("/status/:id", authMiddleware, adminMiddleware, topupController.check
 
 // Webhooks — SENGAJA tanpa authMiddleware (dipanggil server iPaymu/TokoVoucher),
 // masing-masing diverifikasi keasliannya di dalam controller.
-router.post("/notification", topupController.handleIpaymuNotification);
-router.post("/tokovoucher-webhook", topupController.handleTokoVoucherWebhook);
+router.post("/notification", providerWebhookLimiter, topupController.handleIpaymuNotification);
+router.post("/tokovoucher-webhook", providerWebhookLimiter, topupController.handleTokoVoucherWebhook);
 
 module.exports = router;

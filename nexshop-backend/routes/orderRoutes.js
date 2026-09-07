@@ -5,6 +5,8 @@ const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 const optionalAuthMiddleware = require("../middleware/optionalAuthMiddleware");
 
+const { providerWebhookLimiter } = require("../middleware/rateLimiter");
+
 // pakai optionalAuthMiddleware: checkout boleh dari guest (tanpa login) ATAU user login
 router.post("/", optionalAuthMiddleware, orderController.create);
 
@@ -18,6 +20,6 @@ router.post("/:id/actions", authMiddleware, adminMiddleware, orderController.adm
 // Webhook dari server iPaymu — SENGAJA tanpa authMiddleware, karena yang
 // memanggil endpoint ini adalah server iPaymu, bukan user yang login.
 // Keasliannya diverifikasi ulang server-to-server di dalam orderController.handleNotification.
-router.post("/notification", orderController.handleNotification);
+router.post("/notification", providerWebhookLimiter, orderController.handleNotification);
 
 module.exports = router;

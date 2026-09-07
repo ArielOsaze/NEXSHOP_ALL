@@ -224,7 +224,7 @@ async function refundWallet({
     type = "REFUND",
     refundReferenceId = null
 }) {
-    const refundRefId = refundReferenceId || `RF-${referenceId || originalOrderId}-${Date.now()}`;
+    const refundRefId = refundReferenceId || `REFUND-${originalOrderId}`;
     return await creditWallet({
         userId,
         type,

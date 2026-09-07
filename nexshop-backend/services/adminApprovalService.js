@@ -1,6 +1,7 @@
 const supabase = require("../config/db");
 const { updateStoreSettings } = require("../config/settings");
 const { notify } = require("../config/notify");
+const walletService = require("./walletService");
 
 const APPROVABLE_STORE_FIELDS = Object.freeze([
     "store_name",
@@ -99,6 +100,62 @@ async function createStoreSettingsApproval({ requester, payload, note }) {
     return data;
 }
 
+async function createWalletAdjustmentApproval({ requester, payload, note }) {
+    if (!requester || requester.role !== "staff") {
+        const error = new Error("Hanya staff yang dapat mengajukan approval.");
+        error.status = 403;
+        throw error;
+    }
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) {
+        throw new Error("Data penyesuaian wallet tidak valid.");
+    }
+    const userId = Number(payload.user_id);
+    const amount = Number(payload.amount);
+    const direction = String(payload.direction || "").toUpperCase();
+    const reason = String(payload.reason || "").trim().slice(0, 500);
+    if (!Number.isSafeInteger(userId) || userId <= 0 || !Number.isFinite(amount) || amount <= 0 || amount > 1000000000 || !["IN", "OUT"].includes(direction) || reason.length < 5) {
+        throw new Error("user_id, amount, direction, dan reason penyesuaian wallet wajib valid.");
+    }
+
+    const proposedChanges = { user_id: userId, amount, direction, reason };
+    const { data, error } = await supabase
+        .from("admin_approval_requests")
+        .insert([{
+            requester_id: requester.id,
+            request_type: "wallet_adjustment",
+            proposed_changes: proposedChanges,
+            request_note: String(note || "").trim().slice(0, 1000) || null,
+            status: "pending"
+        }])
+        .select("*")
+        .single();
+    if (error) {
+        if (error.code === "23505") {
+            const duplicate = new Error("Masih ada pengajuan wallet yang menunggu approval admin.");
+            duplicate.status = 409;
+            throw duplicate;
+        }
+        throw error;
+    }
+
+    notify("approval", `🛂 *Approval Penyesuaian Wallet Baru*\\n\\nStaff: ${String(requester.fullname || requester.email || "Staff").slice(0, 100)}\\nTarget user ID: ${userId}\\nArah: ${direction}\\nNominal: ${amount}\\nAlasan: ${reason}\\n\\nBuka Dashboard > Approval untuk meninjau.`, { recipientRole: "admin" }).catch((notifyError) => {
+        console.log("Gagal mengirim notif approval wallet:", notifyError.message);
+    });
+    return data;
+}
+
+async function normalizeWalletApprovalPayload(payload) {
+    const candidate = payload && typeof payload === "object" && !Array.isArray(payload) ? payload : {};
+    const userId = Number(candidate.user_id);
+    const amount = Number(candidate.amount);
+    const direction = String(candidate.direction || "").toUpperCase();
+    const reason = String(candidate.reason || "").trim().slice(0, 500);
+    if (!Number.isSafeInteger(userId) || userId <= 0 || !Number.isFinite(amount) || amount <= 0 || amount > 1000000000 || !["IN", "OUT"].includes(direction) || reason.length < 5) {
+        throw new Error("Data penyesuaian wallet tidak valid.");
+    }
+    return { userId, amount, direction, reason };
+}
+
 async function getApprovalById(id) {
     const { data, error } = await supabase
         .from("admin_approval_requests")
@@ -110,10 +167,33 @@ async function getApprovalById(id) {
 }
 
 async function applyApprovedRequest(request, reviewer) {
-    if (!request || request.request_type !== "store_settings") throw new Error("Jenis approval tidak didukung.");
-    const proposedChanges = normalizeStoreSettingsPayload(request.proposed_changes);
-    const { error: applyError } = await updateStoreSettings(proposedChanges);
-    if (applyError) throw applyError;
+    if (!request || !["store_settings", "wallet_adjustment"].includes(request.request_type)) throw new Error("Jenis approval tidak didukung.");
+    if (request.request_type === "wallet_adjustment") {
+        const { userId, amount, direction, reason } = await normalizeWalletApprovalPayload(request.proposed_changes);
+        const referenceId = `APPROVAL-WALLET-${request.id}`;
+        const mutation = direction === "IN"
+            ? walletService.creditWallet({
+                userId,
+                type: "ADMIN_ADJUSTMENT",
+                amount,
+                referenceId,
+                description: `Penyesuaian saldo melalui approval Admin: ${reason}`,
+                metadata: { approval_id: request.id, requester_id: request.requester_id, reviewer_id: reviewer.id, reason }
+            })
+            : walletService.debitWallet({
+                userId,
+                type: "ADMIN_ADJUSTMENT",
+                amount,
+                referenceId,
+                description: `Pengurangan saldo melalui approval Admin: ${reason}`,
+                metadata: { approval_id: request.id, requester_id: request.requester_id, reviewer_id: reviewer.id, reason }
+            });
+        await mutation;
+    } else {
+        const proposedChanges = normalizeStoreSettingsPayload(request.proposed_changes);
+        const { error: applyError } = await updateStoreSettings(proposedChanges);
+        if (applyError) throw applyError;
+    }
 
     const { data, error } = await supabase
         .from("admin_approval_requests")
@@ -157,6 +237,7 @@ module.exports = {
     normalizeStoreSettingsPayload,
     summarizeChanges,
     createStoreSettingsApproval,
+    createWalletAdjustmentApproval,
     getApprovalById,
     applyApprovedRequest,
     rejectRequest

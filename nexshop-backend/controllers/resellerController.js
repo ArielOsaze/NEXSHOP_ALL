@@ -878,7 +878,7 @@ exports.decideApplication = async (req, res) => {
         }
 
         const now = new Date().toISOString();
-        const { error: updErr } = await supabase
+        const { data: updatedApplication, error: updErr } = await supabase
             .from("reseller_applications")
             .update({
                 status: action === "approve" ? "approved" : "rejected",
@@ -888,8 +888,12 @@ exports.decideApplication = async (req, res) => {
                 reviewed_at: now
             })
             .eq("id", id)
-            .eq("status", "pending");
+            .eq("status", "pending")
+            .select("id, status");
         if (updErr) throw updErr;
+        if (!Array.isArray(updatedApplication) || updatedApplication.length !== 1) {
+            return res.status(409).json({ message: "Pengajuan sudah diproses admin lain. Muat ulang daftar pengajuan.", code: "APPLICATION_ALREADY_REVIEWED" });
+        }
 
         const userPayload = action === "approve"
             ? { reseller_status: "approved", reseller_tier: tier.code, reseller_since: now }
@@ -1478,9 +1482,50 @@ exports.getPortalOverview = async (req, res) => {
 };
 
 /**
+ * Re-authenticate immediately before revealing API secrets. The password is
+ * verified server-side and never placed in a token or persisted in storage.
+ */
+exports.issuePortalSecretStepUp = async (req, res) => {
+    const password = String(req.body?.password || "");
+    if (!password) return res.status(400).json({ message: "Password Portal Reseller wajib dikonfirmasi.", code: "PORTAL_REAUTH_REQUIRED" });
+    try {
+        const account = await verifyPortalPassword(req.user.portal_account_id, password);
+        if (account?.setupMissing) return res.status(503).json({ message: "Portal Reseller belum siap di server.", code: "RESELLER_PORTAL_NOT_SETUP" });
+        if (!account) return res.status(401).json({ message: "Password Portal Reseller salah.", code: "PORTAL_REAUTH_REQUIRED" });
+        if (account.status === "suspended") return res.status(403).json({ message: "Akun sedang dibekukan.", code: "RESELLER_PORTAL_SUSPENDED" });
+
+        const stepUpToken = jwt.sign({
+            kind: "portal_secret_step_up",
+            auth_context: "reseller_portal",
+            id: req.user.id,
+            portal_account_id: req.user.portal_account_id,
+            aud: "portal_secret"
+        }, process.env.JWT_SECRET, { expiresIn: "5m" });
+        return res.json({ step_up_token: stepUpToken, expires_in: 300 });
+    } catch (err) {
+        if (isMissingTableError(err)) return res.status(503).json({ message: "Portal Reseller belum siap di server.", code: "RESELLER_PORTAL_NOT_SETUP" });
+        console.error("issuePortalSecretStepUp:", err.message);
+        return res.status(500).json({ message: "Verifikasi ulang gagal diproses." });
+    }
+};
+
+/**
  * Buka Kunci / Reveal Secret Key (Unmasked)
  */
 exports.revealSecretKey = async (req, res) => {
+    const stepUpToken = String(req.headers["x-portal-step-up"] || "");
+    try {
+        const stepUp = jwt.verify(stepUpToken, process.env.JWT_SECRET, { audience: "portal_secret" });
+        if (stepUp.kind !== "portal_secret_step_up"
+            || stepUp.auth_context !== "reseller_portal"
+            || stepUp.id !== req.user.id
+            || stepUp.portal_account_id !== req.user.portal_account_id) {
+            return res.status(401).json({ message: "Verifikasi ulang Secret Key tidak valid.", code: "PORTAL_REAUTH_REQUIRED" });
+        }
+    } catch (_) {
+        return res.status(401).json({ message: "Verifikasi ulang diperlukan sebelum Secret Key dibuka.", code: "PORTAL_REAUTH_REQUIRED" });
+    }
+
     try {
         const { data: user } = await supabase.from("users").select("reseller_status").eq("id", req.user.id).maybeSingle();
         if (!user || user.reseller_status !== "approved") {
@@ -1611,42 +1656,35 @@ exports.updatePortalSettings = async (req, res) => {
 };
 
 /**
- * Katalog mentah tidak bergantung pada identitas reseller. Cache pendek ini
- * mencegah setiap page request mengulang scan seluruh topup_products. Harga,
- * tier, filter, dan pagination tetap dihitung per request dari baris mentah.
+ * Fetch one bounded catalog page. The count is calculated by PostgREST, while
+ * product rows are transported only for the requested range. This keeps the
+ * first Portal paint independent of the total catalog size.
  */
-const PORTAL_CATALOG_CACHE_TTL_MS = 15_000;
-let portalCatalogCache = { rows: null, expiresAt: 0, inFlight: null };
-
-async function getCachedPortalCatalogRows() {
-    const now = Date.now();
-    if (portalCatalogCache.rows && portalCatalogCache.expiresAt > now) {
-        return portalCatalogCache.rows;
-    }
-    if (portalCatalogCache.inFlight) return portalCatalogCache.inFlight;
-
-    portalCatalogCache.inFlight = fetchAllRows((from, to) =>
-        supabase
-            .from("topup_products")
-            .select(PORTAL_PRODUCT_COLUMNS)
-            .eq("is_active", true)
-            .order("kategori", { ascending: true })
-            .order("harga_jual", { ascending: true })
-            .order("id", { ascending: true })
-            .range(from, to)
-    ).then((rows) => {
-        portalCatalogCache = {
-            rows,
-            expiresAt: Date.now() + PORTAL_CATALOG_CACHE_TTL_MS,
-            inFlight: null
-        };
-        return rows;
-    }).catch((error) => {
-        portalCatalogCache.inFlight = null;
-        throw error;
-    });
-
-    return portalCatalogCache.inFlight;
+async function getPortalCatalogPage({ page = 1, limit = 100 } = {}) {
+    const safePage = Math.max(1, Number(page) || 1);
+    const safeLimit = Math.min(250, Math.max(1, Number(limit) || 100));
+    const from = (safePage - 1) * safeLimit;
+    const to = from + safeLimit - 1;
+    let query = supabase
+        .from("topup_products")
+        .select(PORTAL_PRODUCT_COLUMNS, { count: "exact" })
+        .eq("is_active", true)
+        .or("source_status.is.null,source_status.eq.active")
+        .order("kategori", { ascending: true })
+        .order("harga_jual", { ascending: true })
+        .order("id", { ascending: true })
+        .range(from, to);
+    const { data, count, error } = await query;
+    if (error) throw error;
+    const total = Number(count) || 0;
+    return {
+        rows: data || [],
+        total,
+        page: safePage,
+        limit: safeLimit,
+        total_pages: Math.ceil(total / safeLimit),
+        has_more: to + 1 < total
+    };
 }
 
 /**
@@ -1661,18 +1699,17 @@ exports.getPortalProducts = async (req, res) => {
             return res.status(503).json({ code: "RESELLER_PRICING_UNAVAILABLE", message: "Tier reseller belum tersedia, katalog ditahan sementara" });
         }
 
-        const allRows = await getCachedPortalCatalogRows();
-        const sellable = filterSellablePortalProducts(allRows);
-        const priced = sellable.map((product) => formatPortalProduct(product, konteksReseller));
+        const rawPage = await getPortalCatalogPage({
+            page: req.query.page,
+            limit: req.query.limit
+        });
+        const sellable = filterSellablePortalProducts(rawPage.rows);
+        const priced = sellable.map((product) => formatPortalProduct(product, konteksReseller)).filter(Boolean);
         const facets = buildPortalFacets(priced);
         const filtered = filterPortalProducts(priced, {
             q: req.query.q,
             kategori: req.query.kategori,
             operator: req.query.operator
-        });
-        const page = paginatePortalProducts(filtered, {
-            page: req.query.page,
-            limit: req.query.limit
         });
 
         res.json({
@@ -1680,15 +1717,15 @@ exports.getPortalProducts = async (req, res) => {
             tier: konteksReseller.tier ? konteksReseller.tier.name : null,
             tier_code: konteksReseller.tier ? konteksReseller.tier.code : null,
             discount_percent: Number(konteksReseller.discountPercent) || 0,
-            total_products: page.total,
-            catalog_total_products: priced.length,
-            page: page.page,
-            limit: page.limit,
-            total_pages: page.total_pages,
-            has_more: page.has_more,
+            total_products: rawPage.total,
+            catalog_total_products: rawPage.total,
+            page: rawPage.page,
+            limit: rawPage.limit,
+            total_pages: rawPage.total_pages,
+            has_more: rawPage.has_more,
             categories: facets.categories,
             operators: facets.operators,
-            products: page.items
+            products: filtered
         });
     } catch (err) {
         console.error("getPortalProducts:", err.message);
@@ -1916,6 +1953,7 @@ exports.getResellerPriceList = async (req, res) => {
                     tier_name: t.name,
                     diskon_persen: t.discount_percent,
                     harga: hasil.harga,
+                    tersedia: hasil.sellable,
                     hemat: hasil.hemat,
                     // persen_efektif bisa lebih kecil daripada diskon_persen
                     // kalau harga menyentuh lantai margin minimum NexShop.

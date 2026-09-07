@@ -85,6 +85,16 @@ exports.createOrder = async (req, res) => {
             .maybeSingle();
 
         if (existingOrder) {
+            const samePayload = existingOrder.kode_produk === kodeProduk
+                && existingOrder.tujuan === tujuanBersih
+                && (existingOrder.server_id || null) === (serverIdBersih || null);
+            if (!samePayload) {
+                return res.status(409).json({
+                    success: false,
+                    code: "REF_ID_CONFLICT",
+                    message: "ref_id sudah digunakan untuk payload pesanan yang berbeda"
+                });
+            }
             const currentBalance = await walletService.getWalletBalance(userId);
             return res.status(200).json({
                 success: true,
@@ -136,6 +146,13 @@ exports.createOrder = async (req, res) => {
         let finalResellerPrice = product.harga_jual;
         if (konteksReseller.isReseller) {
             const hasil = hitungHargaReseller(product.harga_jual, product.harga_beli, konteksReseller.discountPercent);
+            if (!hasil.sellable) {
+                return res.status(409).json({
+                    success: false,
+                    code: "PRODUCT_PRICING_UNAVAILABLE",
+                    message: "Produk ini sementara tidak dapat dijual dengan margin reseller yang aman"
+                });
+            }
             finalResellerPrice = hasil.harga;
         }
 
@@ -225,6 +242,16 @@ exports.createOrder = async (req, res) => {
                     .maybeSingle();
 
                 if (kembar) {
+                    const samePayload = kembar.kode_produk === kodeProduk
+                        && kembar.tujuan === tujuanBersih
+                        && (kembar.server_id || null) === (serverIdBersih || null);
+                    if (!samePayload) {
+                        return res.status(409).json({
+                            success: false,
+                            code: "REF_ID_CONFLICT",
+                            message: "ref_id sudah digunakan untuk payload pesanan yang berbeda"
+                        });
+                    }
                     return res.status(200).json({
                         success: true,
                         idempotent: true,
@@ -252,8 +279,9 @@ exports.createOrder = async (req, res) => {
             await walletService.refundWallet({
                 userId,
                 amount: finalResellerPrice,
-                referenceId: `REFUND-INS-${orderId}`,
+                referenceId: `REFUND-${orderId}`,
                 originalOrderId: orderId,
+                refundReferenceId: `REFUND-${orderId}`,
                 reason: "Gagal membuat baris pesanan reseller di database"
             });
             return res.status(500).json({
@@ -279,10 +307,17 @@ exports.createOrder = async (req, res) => {
                 await walletService.refundWallet({
                     userId,
                     amount: finalResellerPrice,
-                    referenceId: `REFUND-TV0-${orderId}`,
+                    referenceId: `REFUND-${orderId}`,
                     originalOrderId: orderId,
+                    refundReferenceId: `REFUND-${orderId}`,
                     reason: tvResult.error_msg || tvResult.message || "Ditolak oleh provider TokoVoucher"
                 });
+                const { error: refundMarkError } = await supabase
+                    .from("topup_orders")
+                    .update({ refunded_at: new Date().toISOString() })
+                    .eq("id", orderId)
+                    .is("refunded_at", null);
+                if (refundMarkError) throw refundMarkError;
             } else {
                 finalStatus = TOKOVOUCHER_STATUS_MAP[tvResult.status] || "processing";
             }
@@ -471,9 +506,10 @@ exports.getProducts = async (req, res) => {
             return res.status(503).json({ success: false, code: "RESELLER_PRICING_UNAVAILABLE", message: "Tier reseller belum tersedia" });
         }
         const discountPercent = Number(konteksReseller.discountPercent) || 0;
-        const formatted = filterSellablePortalProducts(allRows).map((product) => {
-            const portalProduct = formatPortalProduct(product, konteksReseller);
-            return {
+        const formatted = filterSellablePortalProducts(allRows)
+            .map((product) => formatPortalProduct(product, konteksReseller))
+            .filter(Boolean)
+            .map((portalProduct) => ({
                 kode_produk: portalProduct.kode_produk,
                 nama: portalProduct.nama,
                 kategori: portalProduct.kategori,
@@ -484,8 +520,7 @@ exports.getProducts = async (req, res) => {
                 hemat: portalProduct.hemat,
                 butuh_server_id: portalProduct.butuh_server_id,
                 status: "ACTIVE"
-            };
-        });
+            }));
 
         res.json({
             success: true,

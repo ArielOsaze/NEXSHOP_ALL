@@ -1,6 +1,7 @@
 const supabase = require("../config/db");
 const {
     createStoreSettingsApproval,
+    createWalletAdjustmentApproval,
     getApprovalById,
     applyApprovedRequest,
     rejectRequest
@@ -65,11 +66,21 @@ exports.list = async (req, res) => {
 
 exports.create = async (req, res) => {
     try {
-        const request = await createStoreSettingsApproval({
-            requester: req.user,
-            payload: req.body?.proposed_changes,
-            note: req.body?.request_note
-        });
+        const requestType = String(req.body?.request_type || "store_settings");
+        if (!["store_settings", "wallet_adjustment"].includes(requestType)) {
+            return res.status(400).json({ message: "Jenis approval tidak didukung." });
+        }
+        const request = requestType === "wallet_adjustment"
+            ? await createWalletAdjustmentApproval({
+                requester: req.user,
+                payload: req.body?.proposed_changes,
+                note: req.body?.request_note
+            })
+            : await createStoreSettingsApproval({
+                requester: req.user,
+                payload: req.body?.proposed_changes,
+                note: req.body?.request_note
+            });
         return res.status(201).json({ message: "Pengajuan berhasil dikirim ke admin.", request: visibleRequest(request, new Map(), new Map()) });
     } catch (error) {
         const status = Number(error.status) || 500;

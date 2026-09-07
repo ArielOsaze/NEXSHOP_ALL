@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const rateLimit = require("express-rate-limit");
 // ipKeyGenerator menormalkan alamat IPv6 ke prefix /64 sebelum dipakai
 // sebagai kunci. Tanpa itu, satu klien IPv6 bisa berpindah-pindah
@@ -13,6 +14,28 @@ const { notify } = require("../config/notify");
 // alamat IP.
 
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+function identityBucket(value) {
+    return crypto.createHash("sha256").update(String(value || "").trim().toLowerCase()).digest("hex");
+}
+
+const loginAccountLimiter = rateLimit({
+    windowMs: LOGIN_WINDOW_MS,
+    limit: 20,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => `account:${identityBucket(req.body?.email)}`,
+    message: { message: "Terlalu banyak percobaan login untuk akun ini. Coba lagi beberapa menit." }
+});
+
+const forgotPasswordAccountLimiter = rateLimit({
+    windowMs: LOGIN_WINDOW_MS,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => `account:${identityBucket(req.body?.email)}`,
+    message: { message: "Terlalu banyak permintaan reset untuk akun ini. Coba lagi beberapa menit." }
+});
 
 // IP yang lagi diblokir loginLimiter, dicatat di sini juga (selain di tabel
 // notifikasi) supaya dashboard admin bisa nampilin daftarnya langsung —
@@ -200,6 +223,14 @@ const resellerTwoFactorVerifyLimiter = rateLimit({
 // IP: satu mitra biasanya memanggil dari satu server, jadi kunci per-IP
 // akan salah sasaran begitu beberapa mitra berbagi jaringan/NAT yang sama.
 // Kalau kunci API belum terbaca, jatuh ke IP.
+const resellerApiIpLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 180,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { success: false, message: "Terlalu banyak request Open API dari alamat ini.", code: "RATE_LIMITED" }
+});
+
 const resellerApiLimiter = rateLimit({
     windowMs: 60 * 1000,
     limit: 120,
@@ -207,9 +238,9 @@ const resellerApiLimiter = rateLimit({
     legacyHeaders: false,
     keyGenerator: (req) => {
         const key = req.headers["x-nexshop-api-key"] || req.headers["x-api-key"];
-        if (key) return "apikey:" + String(key).slice(0, 64);
+        if (key) return "apikey:" + identityBucket(key);
         const auth = String(req.headers["authorization"] || "");
-        if (auth.startsWith("Bearer nx_live_")) return "apikey:" + auth.slice(7, 71);
+        if (auth.startsWith("Bearer nx_live_")) return "apikey:" + identityBucket(auth.slice(7));
         return "ip:" + ipKeyGenerator(req.ip || "unknown");
     },
     message: {
@@ -242,4 +273,40 @@ const walletNotificationLimiter = rateLimit({
     message: { message: "Terlalu banyak notifikasi masuk." }
 });
 
-module.exports = { resellerLoginLimiter, resellerApiLimiter, resellerWebhookTestLimiter, walletNotificationLimiter, loginLimiter, adminLoginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter, kycUploadLimiter, resellerTwoFactorVerifyLimiter };
+// Public catalog reads are cheap individually but attractive to scrapers.
+// Keep a separate budget so a crawler cannot exhaust the global API budget.
+const publicCatalogLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 90,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak permintaan katalog. Tunggu sebentar." }
+});
+
+const promoValidationLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak validasi promo. Tunggu sebentar." }
+});
+
+const checkoutLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000,
+    limit: 40,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak percobaan checkout. Tunggu sebentar lalu coba lagi." }
+});
+
+// These paths bypass the broad API limiter because provider retries must not
+// consume the public-client budget. They still need their own flood guard.
+const providerWebhookLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    limit: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak notifikasi provider." }
+});
+
+module.exports = { resellerLoginLimiter, resellerApiLimiter, resellerApiIpLimiter, resellerWebhookTestLimiter, walletNotificationLimiter, providerWebhookLimiter, publicCatalogLimiter, promoValidationLimiter, checkoutLimiter, loginLimiter, loginAccountLimiter, adminLoginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, forgotPasswordAccountLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter, kycUploadLimiter, resellerTwoFactorVerifyLimiter };

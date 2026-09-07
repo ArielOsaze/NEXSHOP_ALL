@@ -2330,15 +2330,20 @@ async function fulfillOrder(order) {
 
             // FINAL FAILURE seketika dari provider: refund saldo wallet jika dibayar via saldo
             if (order.user_id && (order.payment_method === "wallet" || order.payment_method === "reseller_wallet")) {
-                const refundRef = `RF-TV0-${order.id}-${Date.now()}`;
                 await walletService.refundWallet({
                     userId: order.user_id,
                     amount: order.harga,
-                    referenceId: refundRef,
+                    referenceId: `REFUND-${order.id}`,
                     originalOrderId: order.id,
+                    refundReferenceId: `REFUND-${order.id}`,
                     reason: result.error_msg || result.message || "Ditolak oleh provider TokoVoucher"
-                }).then(() => {
-                    supabase.from("topup_orders").update({ refunded_at: new Date().toISOString() }).eq("id", order.id);
+                }).then(async () => {
+                    const { error: refundMarkError } = await supabase
+                        .from("topup_orders")
+                        .update({ refunded_at: new Date().toISOString() })
+                        .eq("id", order.id)
+                        .is("refunded_at", null);
+                    if (refundMarkError) throw refundMarkError;
                 }).catch(e => console.log("Refund wallet gagal:", e.message));
             }
         } else {

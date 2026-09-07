@@ -650,20 +650,22 @@ exports.adminRefundOrder = async (req, res) => {
             return res.status(400).json({ message: "Pesanan ini sudah pernah di-refund sebelumnya" });
         }
 
-        const refundRef = `RF-ADM-${order.id}-${Date.now()}`;
+        const refundRef = `REFUND-ADMIN-${order.id}`;
         const refundResult = await walletService.refundWallet({
             userId: order.user_id,
             amount: order.harga,
             referenceId: refundRef,
             originalOrderId: order.id,
+            refundReferenceId: refundRef,
             reason: reason || `Manual refund oleh admin (${req.user.email})`
         });
 
-        await supabase.from("topup_orders").update({
+        const { error: refundMarkError } = await supabase.from("topup_orders").update({
             status: "gagal",
             refunded_at: new Date().toISOString(),
             tv_message: `Refund oleh admin: ${reason || "Pesanan dibatalkan"}`
-        }).eq("id", order.id);
+        }).eq("id", order.id).is("refunded_at", null);
+        if (refundMarkError) throw refundMarkError;
 
         const refundName = resolveUserDisplayName({ fullname: order.recipient_name, email: order.recipient_email });
         notify("wallet", `↩️ Refund order ${order.id} berhasil ke user ${refundName} (${order.recipient_email || "-"}), nominal ${rupiahLog(order.harga)}. Admin: ${req.user.email}`);
