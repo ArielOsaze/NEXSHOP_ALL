@@ -5,10 +5,10 @@ const authMiddleware = require("../middleware/authMiddleware");
 const adminMiddleware = require("../middleware/adminMiddleware");
 const optionalAuthMiddleware = require("../middleware/optionalAuthMiddleware");
 
-const { providerWebhookLimiter } = require("../middleware/rateLimiter");
+const { providerWebhookLimiter, checkoutLimiter } = require("../middleware/rateLimiter");
 
 // pakai optionalAuthMiddleware: checkout boleh dari guest (tanpa login) ATAU user login
-router.post("/", optionalAuthMiddleware, orderController.create);
+router.post("/", checkoutLimiter, optionalAuthMiddleware, orderController.create);
 
 router.get("/my", authMiddleware, orderController.getMyOrders);
 router.get("/status/:id", orderController.getPublicStatus); // publik — buat halaman kembali dari pembayaran

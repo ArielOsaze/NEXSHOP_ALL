@@ -29,6 +29,7 @@ assert.match(topupRoutes, /publicCatalogLimiter/);
 assert.match(topupRoutes, /promoValidationLimiter/);
 assert.match(topupRoutes, /checkoutLimiter/);
 assert.match(topupRoutes, /providerWebhookLimiter/);
+assert.match(orderRoutes, /checkoutLimiter/);
 assert.match(orderRoutes, /providerWebhookLimiter/);
 
 assert.match(runtimeConfig, /if \(runtimeConfigCache\.data\) return runtimeConfigCache\.data/);
