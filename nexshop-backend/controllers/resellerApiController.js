@@ -109,7 +109,7 @@ exports.createOrder = async (req, res) => {
         // 2. Ambil master produk & hitung harga reseller di backend
         const { data: product, error: prodErr } = await supabase
             .from("topup_products")
-            .select("nama, kode_produk, harga_beli, harga_jual, butuh_server_id, kategori, source_operator_name")
+            .select("nama, kode_produk, harga_beli, harga_jual, butuh_server_id, kategori, source_operator_name, is_active, source_status")
             .eq("kode_produk", kodeProduk)
             .eq("is_active", true)
             .maybeSingle();
@@ -118,6 +118,13 @@ exports.createOrder = async (req, res) => {
             return res.status(404).json({
                 success: false,
                 message: `Produk dengan kode '${kodeProduk}' tidak ditemukan atau sedang tidak aktif`
+            });
+        }
+
+        if (filterSellablePortalProducts([product]).length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: "Produk ini tidak tersedia untuk pemesanan reseller"
             });
         }
 

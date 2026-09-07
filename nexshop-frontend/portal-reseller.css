@@ -2511,3 +2511,44 @@ html[data-theme="dark"] body.rs-portal-page .tv-purchase-dialog .tv-purchase-err
         padding: 10px;
     }
 }
+
+.rs-portal-page .tv-product-render-more {
+    display: block;
+    width: min(100%, 360px);
+    min-height: 44px;
+    margin: 18px auto 0;
+    padding: 10px 16px;
+    border: 1px solid var(--portal-blue);
+    border-radius: 10px;
+    background: var(--portal-surface-blue);
+    color: var(--portal-blue);
+    font: inherit;
+    font-size: 0.78rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+.rs-portal-page .tv-product-render-more:hover,
+.rs-portal-page .tv-product-render-more:focus-visible {
+    background: var(--portal-blue);
+    color: #fff;
+}
+
+.rs-portal-page .tv-product-render-more[hidden] {
+    display: none;
+}
+
+html.dark body.rs-portal-page .tv-product-render-more,
+html[data-theme="dark"] body.rs-portal-page .tv-product-render-more {
+    border-color: #67e8f9;
+    background: rgba(14, 116, 144, 0.28);
+    color: #a5f3fc;
+}
+
+html.dark body.rs-portal-page .tv-product-render-more:hover,
+html.dark body.rs-portal-page .tv-product-render-more:focus-visible,
+html[data-theme="dark"] body.rs-portal-page .tv-product-render-more:hover,
+html[data-theme="dark"] body.rs-portal-page .tv-product-render-more:focus-visible {
+    background: #67e8f9;
+    color: #06111f;
+}

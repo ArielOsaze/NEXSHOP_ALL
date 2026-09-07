@@ -6,6 +6,7 @@ const { sendTelegramNotification } = require("../config/telegram");
 const { notify } = require("../config/notify");
 const { sendUserWhatsApp } = require("../services/userWhatsAppService");
 const { resolveUserDisplayName } = require("../services/userNotificationHelpers");
+const { verifyIpaymuTransactionForTopup } = require("../utils/ipaymuPaymentVerification");
 
 function rupiahLog(n) {
     return "Rp " + Number(n || 0).toLocaleString("id-ID");
@@ -322,12 +323,15 @@ exports.handleIpaymuWalletNotification = async (req, res) => {
             return res.status(200).json({ message: "OK (Already PAID)" });
         }
 
-        // Verifikasi Ulang Langsung ke Server iPaymu (Server-to-Server)
+        // Verifikasi ulang langsung ke server iPaymu (server-to-server). Status
+        // paid saja belum cukup: transaksi gateway harus menunjuk invoice yang
+        // sama dan nominalnya harus sama persis.
+        let verifiedTransaction = null;
         let verifiedStatus = null;
         if (trxId) {
             try {
-                const trx = await checkTransactionStatus(trxId);
-                verifiedStatus = String(trx.Status || trx.status || "").toLowerCase();
+                verifiedTransaction = await checkTransactionStatus(trxId);
+                verifiedStatus = String(verifiedTransaction.Status || verifiedTransaction.status || "").toLowerCase();
             } catch (verifyErr) {
                 console.log("Gagal verifikasi status topup ke iPaymu:", verifyErr.message);
             }
@@ -335,6 +339,12 @@ exports.handleIpaymuWalletNotification = async (req, res) => {
 
         if (!verifiedStatus) {
             return res.status(200).json({ message: "Diterima, menunggu verifikasi iPaymu" });
+        }
+
+        const correlation = verifyIpaymuTransactionForTopup(verifiedTransaction, topup, trxId);
+        if (!correlation.ok) {
+            console.warn("Notifikasi iPaymu tidak cocok dengan invoice:", correlation.code);
+            return res.status(400).json({ message: "Data transaksi iPaymu tidak cocok dengan invoice" });
         }
 
         const isPaid = ["berhasil", "success", "1", "paid", "settlement"].includes(verifiedStatus);

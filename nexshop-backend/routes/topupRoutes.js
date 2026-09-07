@@ -6,6 +6,7 @@ const adminMiddleware = require("../middleware/adminMiddleware");
 const superAdminMiddleware = require("../middleware/superAdminMiddleware");
 const { requireAdminPin } = require("../middleware/adminPinMiddleware");
 const optionalAuthMiddleware = require("../middleware/optionalAuthMiddleware");
+const portalCheckoutAuthMiddleware = require("../middleware/portalCheckoutAuthMiddleware");
 const rateLimit = require("express-rate-limit");
 
 const { checkNicknameLimiter, inquiryLimiter } = require("../middleware/rateLimiter");
@@ -44,7 +45,7 @@ router.post("/validate-promo", topupController.validatePromo); // publik — tom
 router.post("/inquiry-pascabayar", inquiryLimiter, topupController.inquiryPascabayarHandler); // publik — tombol "Cek Tagihan" di checkout Marketplace
 
 // Checkout — boleh guest atau login, sama seperti /api/orders
-router.post("/", optionalAuthMiddleware, topupController.create);
+router.post("/", optionalAuthMiddleware, portalCheckoutAuthMiddleware, topupController.create);
 
 // User
 router.get("/my", authMiddleware, topupController.getMyOrders);

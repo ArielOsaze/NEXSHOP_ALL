@@ -1905,6 +1905,7 @@
                     <div id="tvProductsGridView" class="tv-product-cards-grid">
                         <div data-csp-style="s4e223036c3bb3f">Memuat katalog produk dengan foto...</div>
                     </div>
+                    <button type="button" id="tvProductRenderMoreButton" class="tv-product-render-more" hidden>Muat produk berikutnya</button>
 
                     <!-- 8. Dense Table View -->
                     <div id="tvProductsTableView" data-csp-style="s947a090cd01e76">
@@ -1922,11 +1923,7 @@
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
-                            <tbody id="tvProductsTableBody">
-                                <tr>
-                                    <td colspan="9" data-csp-style="sd2b55713109ca5">Memuat katalog produk...</td>
-                                </tr>
-                            </tbody>
+                            <tbody id="tvProductsTableBody"></tbody>
                         </table>
                     </div>
 
@@ -2361,6 +2358,10 @@
         let lastDailyChartData = [];
         
         let allProducts = [];
+        const PORTAL_PRODUCT_RENDER_PAGE_SIZE = 48;
+        const PORTAL_CATALOG_CACHE_PREFIX = "nexshop-reseller-catalog-v2";
+        const PORTAL_CATALOG_CACHE_TTL_MS = 5 * 60 * 1000;
+        let portalProductVisibleLimit = PORTAL_PRODUCT_RENDER_PAGE_SIZE;
         let allOrders = [];
         let activeCategory = "all";
         let activeOperator = "all";
@@ -2488,6 +2489,9 @@
         function clearResellerSession() {
             sessionStorage.removeItem("nexshop-reseller-token");
             sessionStorage.removeItem("nexshop-reseller-user");
+            Object.keys(sessionStorage)
+                .filter((key) => key.startsWith(`${PORTAL_CATALOG_CACHE_PREFIX}:`))
+                .forEach((key) => sessionStorage.removeItem(key));
             clearLegacyResellerSession();
         }
 
@@ -2813,8 +2817,28 @@
                         }
                     };
 
+                    const cacheTier = String(activeTierInfo?.code || activeTierInfo?.name || "default").trim().toLowerCase() || "default";
+                    const cacheKey = `${PORTAL_CATALOG_CACHE_PREFIX}:${cacheTier}`;
+                    try {
+                        const cached = JSON.parse(sessionStorage.getItem(cacheKey) || "null");
+                        if (cached && Date.now() - Number(cached.cached_at) <= PORTAL_CATALOG_CACHE_TTL_MS && cached.page?.products?.length) {
+                            addPage(cached.page);
+                            renderCatalog(false);
+                        } else if (cached) {
+                            sessionStorage.removeItem(cacheKey);
+                        }
+                    } catch (_) {
+                        // Cache hanya optimasi paint; kegagalan storage tidak boleh
+                        // menghentikan pemuatan katalog dari server.
+                    }
+
                     const firstPage = await fetchPage(1);
                     addPage(firstPage);
+                    try {
+                        sessionStorage.setItem(cacheKey, JSON.stringify({ cached_at: Date.now(), page: firstPage }));
+                    } catch (_) {
+                        // Quota/privacy mode: lanjutkan tanpa cache.
+                    }
                     renderCatalog(!hasMore);
                     if (!hasMore) return;
 
@@ -2946,6 +2970,7 @@
             activeCategory = catName;
             activeOperator = "all";
             activeSubvariant = "all";
+            portalProductVisibleLimit = PORTAL_PRODUCT_RENDER_PAGE_SIZE;
 
             document.querySelectorAll(".tv-cat-tab-btn").forEach(b => b.classList.remove("active"));
             if (btnEl) btnEl.classList.add("active");
@@ -2958,6 +2983,7 @@
         function selectOperator(opName, btnEl) {
             activeOperator = opName;
             activeSubvariant = "all";
+            portalProductVisibleLimit = PORTAL_PRODUCT_RENDER_PAGE_SIZE;
 
             document.querySelectorAll(".tv-operator-pill").forEach(b => b.classList.remove("active"));
             if (btnEl) btnEl.classList.add("active");
@@ -3006,6 +3032,7 @@
 
         function selectSubvariant(variantName, btnEl) {
             activeSubvariant = variantName;
+            portalProductVisibleLimit = PORTAL_PRODUCT_RENDER_PAGE_SIZE;
             document.querySelectorAll(".tv-subvariant-btn").forEach(b => b.classList.remove("active"));
             if (btnEl) btnEl.classList.add("active");
             filterAndRenderProducts();
@@ -3045,7 +3072,22 @@
         }
 
         function filterPortalProducts() {
+            portalProductVisibleLimit = PORTAL_PRODUCT_RENDER_PAGE_SIZE;
             filterAndRenderProducts();
+        }
+
+        function updateProductRenderMoreControl(total) {
+            const button = document.getElementById("tvProductRenderMoreButton");
+            if (!button) return;
+            const remaining = Math.max(0, total - portalProductVisibleLimit);
+            button.hidden = remaining === 0;
+            if (!remaining) return;
+            button.textContent = `Muat ${Math.min(PORTAL_PRODUCT_RENDER_PAGE_SIZE, remaining).toLocaleString("id-ID")} produk berikutnya (${remaining.toLocaleString("id-ID")} tersisa)`;
+            button.onclick = () => {
+                portalProductVisibleLimit += PORTAL_PRODUCT_RENDER_PAGE_SIZE;
+                filterAndRenderProducts();
+                button.focus();
+            };
         }
 
         function filterAndRenderProducts() {
@@ -3062,8 +3104,18 @@
             const countEl = document.getElementById("labelTotalFilteredProducts");
             if (countEl) countEl.textContent = `${filtered.length} Produk Ditemukan`;
 
-            renderGridCards(filtered);
-            renderTableRows(filtered);
+            const visibleProducts = filtered.slice(0, portalProductVisibleLimit);
+            updateProductRenderMoreControl(filtered.length);
+
+            if (productDisplayMode === "table") {
+                const gridView = document.getElementById("tvProductsGridView");
+                if (gridView) gridView.innerHTML = "";
+                renderTableRows(visibleProducts);
+            } else {
+                const tbody = document.getElementById("tvProductsTableBody");
+                if (tbody) tbody.innerHTML = "";
+                renderGridCards(visibleProducts);
+            }
         }
 
         function renderGridCards(products) {

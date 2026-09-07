@@ -1,13 +1,8 @@
 const { flushPendingDeliveries, RelayNotSetupError } = require("../services/webhookRelayService");
+const { flushResellerWebhookDeliveries, isWebhookQueueMissing } = require("../services/resellerWebhookService");
 
 // ===========================================================
-// Retry pengiriman Webhook Relay.
-//
-// Pengiriman pertama dicoba langsung begitu callback TokoVoucher masuk.
-// Poller ini yang ngurus sisanya: server toko penerima yang lagi mati,
-// timeout, atau balasan 5xx. Jadwal mundurnya (1m, 5m, 15m, 1j, 3j) diatur
-// di webhookRelayService.js -- di sini cuma dibangunkan tiap menit dan
-// baris yang sudah jatuh tempo yang bakal keambil.
+// Retry pengiriman Webhook Relay dan callback langsung reseller.
 // ===========================================================
 const INTERVAL_MS = 60 * 1000;
 
@@ -17,8 +12,18 @@ async function runWebhookRelayPoller() {
     } catch (err) {
         // Tabel belum dibuat (migration 009 belum jalan) itu kondisi normal
         // di instalasi baru -- jangan spam log tiap menit.
-        if (err instanceof RelayNotSetupError) return;
-        console.error("[webhook-relay-poller] error:", err.message);
+        if (!(err instanceof RelayNotSetupError)) {
+            console.error("[webhook-relay-poller] error:", err.message);
+        }
+    }
+
+    try {
+        await flushResellerWebhookDeliveries();
+    } catch (err) {
+        // Migration 026 boleh diterapkan setelah deploy kode.
+        if (!isWebhookQueueMissing(err)) {
+            console.error("[reseller-webhook-poller] error:", err.message);
+        }
     }
 }
 
