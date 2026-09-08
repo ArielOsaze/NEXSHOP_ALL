@@ -45,9 +45,24 @@ function serve() {
         if (url.pathname === "/api/reseller/tiers") return json(200, []);
         if (url.pathname === "/api/settings/store") return json(200, { store_name: "NexShop", contact_whatsapp: "628123456789" });
         if (url.pathname === "/api/wallet/topup" && req.method === "POST") {
-            return json(201, { topup_id: "WT-FIXTURE", amount: 100000, is_direct: true, qr_image: fixtureToken, qr_content: null, payment_no: null });
+            let body = "";
+            req.setEncoding("utf8");
+            req.on("data", (chunk) => { body += chunk; });
+            req.on("end", () => {
+                const payload = JSON.parse(body || "{}");
+                if (payload.payment_method === "bca") {
+                    return json(201, { topup_id: "WT-FIXTURE-BCA", amount: 100000, is_direct: true, payment_no: "8801000000012345", payment_name: "BCA Virtual Account", expired: "2099-12-31 23:59:59" });
+                }
+                if (payload.payment_method === "mandiri") {
+                    return json(201, { topup_id: "WT-FIXTURE-MANDIRI", amount: 100000, is_direct: true, payment_no: "8950800000012345", payment_name: "Mandiri Virtual Account", expired: "2099-12-31 23:59:59" });
+                }
+                return json(201, { topup_id: "WT-FIXTURE", amount: 100000, is_direct: true, qr_image: fixtureToken, qr_content: null, payment_no: null });
+            });
+            return;
         }
         if (url.pathname === "/api/wallet/topup/WT-FIXTURE") return json(200, { status: "PENDING" });
+        if (url.pathname === "/api/wallet/topup/WT-FIXTURE-BCA") return json(200, { status: "PENDING" });
+        if (url.pathname === "/api/wallet/topup/WT-FIXTURE-MANDIRI") return json(200, { status: "PENDING" });
         if (url.pathname.startsWith("/api/")) return json(200, {});
 
         const clean = url.pathname === "/portal-reseller" ? "/portal-reseller.html" : url.pathname;
@@ -118,6 +133,30 @@ function serve() {
         assert(qrisState.image.includes("api.qrserver.com"), "token mentah harus dirender menjadi QR image");
         assert.strictEqual(qrisState.qrisSelected, true);
         assert.strictEqual(qrisState.bcaSelected, false);
+
+        await page.click('#depositQrisCard [data-csp-onclick="h97c31caad6d751"]');
+        await page.click('#formDepositSimulator [data-deposit-method="bca"]');
+        await page.evaluate(() => document.getElementById("formDepositSimulator").requestSubmit());
+        await page.waitForFunction(() => document.querySelector("#depositVaCard")?.hidden === false, { timeout: 5000 });
+        const bcaVa = await page.evaluate(() => ({
+            number: document.querySelector("#resellerVaNumber")?.textContent,
+            bank: document.querySelector("#resellerVaBank")?.textContent,
+            amount: document.querySelector("#resellerVaAmount")?.textContent
+        }));
+        assert.strictEqual(bcaVa.number, "8801000000012345");
+        assert.strictEqual(bcaVa.bank, "BCA Virtual Account");
+        assert.strictEqual(bcaVa.amount, "Rp 100.000");
+
+        await page.click('#depositVaCard [data-csp-onclick="h97c31caad6d751"]');
+        await page.click('#formDepositSimulator [data-deposit-method="mandiri"]');
+        await page.evaluate(() => document.getElementById("formDepositSimulator").requestSubmit());
+        await page.waitForFunction(() => document.querySelector("#depositVaCard")?.hidden === false, { timeout: 5000 });
+        const mandiriVa = await page.evaluate(() => ({
+            number: document.querySelector("#resellerVaNumber")?.textContent,
+            bank: document.querySelector("#resellerVaBank")?.textContent
+        }));
+        assert.strictEqual(mandiriVa.number, "8950800000012345");
+        assert.strictEqual(mandiriVa.bank, "Mandiri Virtual Account");
         console.log("PASS qa_portal_deposit_qris_browser: selected outline dan token QRIS terlihat pada fixture browser");
     } finally {
         await browser.close();

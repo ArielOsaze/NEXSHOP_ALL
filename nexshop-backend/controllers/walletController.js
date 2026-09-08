@@ -16,17 +16,17 @@ const BACKEND_URL = (process.env.BACKEND_URL || "http://localhost:3000").replace
 const FRONTEND_URL = (process.env.FRONTEND_URL || "http://localhost:3000").replace(/\/$/, "");
 
 const IPAYMU_TOPUP_METHODS = Object.freeze({
-    qris: "qris",
-    va: "va",
-    bca: "va",
-    mandiri: "va",
-    bni: "va",
-    bri: "va",
-    cimb: "va",
-    bsi: "va",
-    cstore: "cstore",
-    indomaret: "cstore",
-    alfamart: "cstore"
+    qris: { method: "qris", channel: "qris" },
+    va: { method: "va", channel: "bni" },
+    bca: { method: "va", channel: "bca" },
+    mandiri: { method: "va", channel: "mandiri" },
+    bni: { method: "va", channel: "bni" },
+    bri: { method: "va", channel: "bri" },
+    cimb: { method: "va", channel: "cimb" },
+    bsi: { method: "va", channel: "bsi" },
+    cstore: { method: "cstore", channel: "cstore" },
+    indomaret: { method: "cstore", channel: "indomaret" },
+    alfamart: { method: "cstore", channel: "alfamart" }
 });
 
 /**
@@ -114,7 +114,9 @@ exports.createTopup = async (req, res) => {
         const wallet = await walletService.getOrCreateWallet(req.user.id);
         const topupId = "WT" + crypto.randomBytes(10).toString("hex").toUpperCase();
 
-        const ipaymuMethod = IPAYMU_TOPUP_METHODS[paymentMethod] || "qris";
+        const paymentConfig = IPAYMU_TOPUP_METHODS[paymentMethod] || IPAYMU_TOPUP_METHODS.qris;
+        const ipaymuMethod = paymentConfig.method;
+        const resolvedPaymentChannel = paymentConfig.channel;
         const isDirect = isDirectPaymentMethod(ipaymuMethod);
 
         // Ambil info user
@@ -138,7 +140,7 @@ exports.createTopup = async (req, res) => {
             fee: 0,
             total: amount,
             payment_method: paymentMethod,
-            payment_channel: paymentChannel || null,
+            payment_channel: resolvedPaymentChannel || null,
             status: "PENDING"
         }]);
 
@@ -171,7 +173,7 @@ exports.createTopup = async (req, res) => {
                     buyerEmail,
                     buyerPhone,
                     paymentMethod: ipaymuMethod,
-                    paymentChannel: paymentChannel || (ipaymuMethod === "qris" ? "qris" : "bni"),
+                    paymentChannel: resolvedPaymentChannel,
                     notifyUrl
                 });
 
@@ -182,7 +184,9 @@ exports.createTopup = async (req, res) => {
                     qr_content: directRes.qrContent,
                     qr_image: directRes.qrImage,
                     expired: directRes.expired,
-                    payment_url: directRes.url
+                    payment_url: directRes.url,
+                    payment_name: directRes.paymentName,
+                    payment_channel: directRes.channel || resolvedPaymentChannel
                 };
 
                 await supabase.from("wallet_topups").update({
@@ -193,6 +197,9 @@ exports.createTopup = async (req, res) => {
                     payment_url: directRes.url
                 }).eq("id", topupId);
             } catch (dirErr) {
+                if (paymentMethod === "bca" || paymentMethod === "mandiri") {
+                    throw dirErr;
+                }
                 console.log("Direct payment topup failed, fallback to redirect:", dirErr.message);
                 // Fallback ke redirect
                 const redirRes = await createRedirectPayment({

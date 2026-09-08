@@ -1352,7 +1352,7 @@
         }
     </style>
 <link rel="stylesheet" href="/inline-styles.css?v=20260829-visual-regression-1">
-<link rel="stylesheet" href="/portal-reseller.css?v=20260909-portal-qris-selection-1">
+<link rel="stylesheet" href="/portal-reseller.css?v=20260909-portal-va-2">
 <script defer src="/csp-legacy-handlers.js?v=20260909-portal-qris-selection-1"></script>
 <script defer src="/portal-reseller-ui.js?v=20260903-portal-mobile-nav-3"></script>
 </head>
@@ -2026,6 +2026,24 @@
                             Buka aplikasi BCA Mobile, GoPay, OVO, Dana, ShopeePay atau mobile banking apa saja lalu scan QR di atas.
                         </div>
                         <button type="button" class="tv-btn-deposit-action" data-csp-onclick="h97c31caad6d751" data-csp-style="sd118e0f2f104e0">
+                            Batalkan Deposit
+                        </button>
+                    </div>
+
+                    <!-- CARD 3: DIRECT VIRTUAL ACCOUNT DISPLAY -->
+                    <div class="tv-section-card portal-deposit-va-card" id="depositVaCard" hidden>
+                        <div class="tv-section-title">
+                            <span id="resellerVaTitle">Virtual Account untuk Deposit Saldo</span>
+                        </div>
+                        <div class="portal-deposit-va-bank" id="resellerVaBank">Virtual Account</div>
+                        <div class="portal-deposit-va-amount" id="resellerVaAmount">Rp 0</div>
+                        <div class="portal-deposit-va-label">Nomor VA</div>
+                        <code class="portal-deposit-va-number" id="resellerVaNumber"></code>
+                        <div class="portal-deposit-va-expiry" id="resellerVaExpiry">Masa berlaku mengikuti invoice provider.</div>
+                        <div class="portal-deposit-va-instruction">
+                            Transfer tepat sesuai nominal ke nomor Virtual Account di atas. Status deposit akan diverifikasi otomatis setelah pembayaran diterima.
+                        </div>
+                        <button type="button" class="tv-btn-deposit-action" data-csp-onclick="h97c31caad6d751">
                             Batalkan Deposit
                         </button>
                     </div>
@@ -4358,9 +4376,11 @@
                 activeResellerTopupPoll = null;
             }
             document.getElementById("depositQrisCard").style.display = "none";
+            document.getElementById("depositVaCard").hidden = true;
+            document.getElementById("depositVaCard").style.display = "none";
             document.getElementById("depositSuccessCard").style.display = "none";
             document.getElementById("depositFormCard").style.display = "block";
-            showToast("Deposit QRIS dibatalkan");
+            showToast("Deposit dibatalkan");
         }
 
         function resetDepositView() {
@@ -4369,9 +4389,50 @@
                 activeResellerTopupPoll = null;
             }
             document.getElementById("depositQrisCard").style.display = "none";
+            document.getElementById("depositVaCard").hidden = true;
+            document.getElementById("depositVaCard").style.display = "none";
             document.getElementById("depositSuccessCard").style.display = "none";
             document.getElementById("depositFormCard").style.display = "block";
             switchConsoleView("view-overview");
+        }
+
+        function startResellerTopupPolling({ topupId, amount, token, methodLabel }) {
+            if (activeResellerTopupPoll) clearInterval(activeResellerTopupPoll);
+            let pollCount = 0;
+            activeResellerTopupPoll = setInterval(async () => {
+                pollCount++;
+                if (pollCount > 60) {
+                    clearInterval(activeResellerTopupPoll);
+                    activeResellerTopupPoll = null;
+                    showToast("Waktu menunggu pembayaran habis. Silakan coba lagi.");
+                    return;
+                }
+                try {
+                    const checkRes = await fetch(`${API_BASE}/wallet/topup/${topupId}`, {
+                        headers: { "Authorization": `Bearer ${token}` }
+                    });
+                    const checkData = await checkRes.json();
+                    if (checkData.status === "PAID") {
+                        clearInterval(activeResellerTopupPoll);
+                        activeResellerTopupPoll = null;
+
+                        document.getElementById("depositQrisCard").style.display = "none";
+                        document.getElementById("depositVaCard").hidden = true;
+                        document.getElementById("depositVaCard").style.display = "none";
+                        document.getElementById("depositSuccessCard").style.display = "block";
+                        document.getElementById("resellerDepositSuccessMsg").textContent = `Deposit saldo sebesar Rp ${Number(amount).toLocaleString('id-ID')} berhasil diverifikasi.`;
+
+                        loadPortalOverview();
+                        loadPortalMutations();
+                        showToast(`Pembayaran ${methodLabel} berhasil. Saldo deposit sudah masuk.`);
+                    } else if (checkData.status === "FAILED" || checkData.status === "EXPIRED" || checkData.status === "CANCELLED") {
+                        clearInterval(activeResellerTopupPoll);
+                        activeResellerTopupPoll = null;
+                        showToast("Status deposit: " + checkData.status);
+                        cancelDepositQris();
+                    }
+                } catch (_) {}
+            }, 3500);
         }
 
         async function handleDepositSubmit(e) {
@@ -4409,7 +4470,33 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.message || "Gagal membuat invoice deposit");
 
-                if (selectedDepositMethod === "qris" || (data.is_direct && (data.qr_content || data.qr_image))) {
+                const paymentNo = String(data.payment_no || data.va || data.virtual_account || "").trim();
+                const hasQrPayload = Boolean(data.qr_content || data.qr_image || paymentNo);
+
+                if (selectedDepositMethod !== "qris" && paymentNo) {
+                    const bankName = String(data.payment_name || "").trim() || (selectedDepositMethod === "bca" ? "BCA Virtual Account" : "Mandiri Virtual Account");
+                    document.getElementById("resellerVaTitle").textContent = `${bankName} untuk Deposit Saldo`;
+                    document.getElementById("resellerVaBank").textContent = bankName;
+                    document.getElementById("resellerVaAmount").textContent = "Rp " + Number(amount).toLocaleString("id-ID");
+                    document.getElementById("resellerVaNumber").textContent = paymentNo;
+                    document.getElementById("resellerVaExpiry").textContent = data.expired
+                        ? "Berlaku sampai: " + String(data.expired)
+                        : "Masa berlaku mengikuti invoice provider.";
+
+                    document.getElementById("depositFormCard").style.display = "none";
+                    document.getElementById("depositQrisCard").style.display = "none";
+                    document.getElementById("depositSuccessCard").style.display = "none";
+                    document.getElementById("depositVaCard").hidden = false;
+                    document.getElementById("depositVaCard").style.display = "block";
+
+                    showToast(`${bankName} berhasil dibuat. Silakan transfer ke nomor VA.`);
+                    startResellerTopupPolling({
+                        topupId: data.topup_id,
+                        amount,
+                        token,
+                        methodLabel: selectedDepositMethod === "bca" ? "BCA VA" : "Mandiri VA"
+                    });
+                } else if (selectedDepositMethod === "qris" && hasQrPayload) {
                     // Provider bisa mengembalikan URL gambar atau token QR mentah.
                     // Token tidak boleh langsung dimasukkan ke img.src karena akan
                     // dianggap URL dan menghasilkan kartu putih.
@@ -4445,44 +4532,16 @@
 
                     showToast("QRIS berhasil dibuat! Silakan scan untuk membayar.");
 
-                    // Mulai polling status pembayaran ke /api/wallet/topup/:id
-                    if (activeResellerTopupPoll) clearInterval(activeResellerTopupPoll);
-                    let pollCount = 0;
-                    activeResellerTopupPoll = setInterval(async () => {
-                        pollCount++;
-                        if (pollCount > 60) {
-                            clearInterval(activeResellerTopupPoll);
-                            activeResellerTopupPoll = null;
-                            showToast("Waktu menunggu pembayaran habis. Silakan coba lagi.");
-                            return;
-                        }
-                        try {
-                            const checkRes = await fetch(`${API_BASE}/wallet/topup/${data.topup_id}`, {
-                                headers: { "Authorization": `Bearer ${token}` }
-                            });
-                            const checkData = await checkRes.json();
-                            if (checkData.status === "PAID") {
-                                clearInterval(activeResellerTopupPoll);
-                                activeResellerTopupPoll = null;
-
-                                // Tampilkan layar sukses
-                                document.getElementById("depositQrisCard").style.display = "none";
-                                document.getElementById("depositSuccessCard").style.display = "block";
-                                document.getElementById("resellerDepositSuccessMsg").textContent = `Deposit saldo sebesar Rp ${Number(amount).toLocaleString('id-ID')} berhasil diverifikasi.`;
-
-                                loadPortalOverview();
-                                loadPortalMutations();
-                                showToast("Pembayaran QRIS berhasil. Saldo deposit sudah masuk.");
-                            } else if (checkData.status === "FAILED" || checkData.status === "EXPIRED" || checkData.status === "CANCELLED") {
-                                clearInterval(activeResellerTopupPoll);
-                                activeResellerTopupPoll = null;
-                                showToast("Status deposit: " + checkData.status);
-                                cancelDepositQris();
-                            }
-                        } catch (_) {}
-                    }, 3500);
+                    startResellerTopupPolling({
+                        topupId: data.topup_id,
+                        amount,
+                        token,
+                        methodLabel: "QRIS"
+                    });
                 } else if (data.payment_url) {
                     window.location.href = data.payment_url;
+                } else {
+                    throw new Error(data.message || `Provider tidak mengembalikan nomor ${selectedDepositMethod.toUpperCase()} VA.`);
                 }
 
             } catch (err) {

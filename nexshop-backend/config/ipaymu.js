@@ -231,10 +231,18 @@ async function createDirectPayment({ referenceId, amount, buyerName, buyerEmail,
     const rawQrImage = data.Data.QrImage || data.Data.QrTemplate || data.Data.qrImage || null;
     const qrImage = /^(?:https?:\/\/|data:image\/|\/\/)/i.test(String(rawQrImage || "").trim()) ? rawQrImage : null;
     const qrContent = rawQrContent || (qrImage ? null : rawQrImage);
+    const paymentNo = data.Data.PaymentNo || data.Data.paymentNo || data.Data.Va || data.Data.va || data.Data.VaNumber || data.Data.vaNumber || data.Data.VirtualAccount || data.Data.virtualAccount || data.Data.AccountNumber || data.Data.accountNumber || data.Data.PaymentCode || data.Data.paymentCode;
+    if (paymentMethod === "va" && !String(paymentNo || "").trim()) {
+        const err = new Error("Provider tidak mengembalikan nomor Virtual Account.");
+        err.ipaymuResponse = { Status: data.Status, Message: data.Message };
+        throw err;
+    }
 
     return {
-        transactionId: data.Data.TransactionId || data.Data.transactionId,
-        paymentNo: data.Data.PaymentNo || data.Data.paymentNo,
+        transactionId: data.Data.TransactionId || data.Data.transactionId || data.Data.TrxId || data.Data.trxId,
+        paymentNo,
+        paymentName: data.Data.PaymentName || data.Data.paymentName || data.Data.BankName || data.Data.bankName || data.Data.Name || data.Data.name,
+        channel: data.Data.Channel || data.Data.channel || data.Data.PaymentChannel || data.Data.paymentChannel,
         qrContent,
         qrImage,
         expired: data.Data.Expired || data.Data.expired,

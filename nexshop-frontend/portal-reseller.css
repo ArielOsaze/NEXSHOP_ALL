@@ -2695,3 +2695,73 @@ html.dark body.rs-portal-page .portal-qris-token code,
 html[data-theme="dark"] body.rs-portal-page .portal-qris-token code {
     color: #f8fafc !important;
 }
+
+.rs-portal-page .portal-deposit-va-card {
+    text-align: center;
+}
+
+.rs-portal-page .portal-deposit-va-bank {
+    margin-top: 4px;
+    color: var(--portal-blue);
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.rs-portal-page .portal-deposit-va-amount {
+    margin: 8px 0 18px;
+    color: var(--portal-blue);
+    font-size: clamp(1.5rem, 4vw, 2rem);
+    font-weight: 900;
+}
+
+.rs-portal-page .portal-deposit-va-label {
+    margin-bottom: 7px;
+    color: var(--portal-muted);
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.rs-portal-page .portal-deposit-va-number {
+    display: block;
+    width: min(100%, 440px);
+    margin: 0 auto;
+    padding: 15px 16px;
+    border: 1px solid var(--portal-line-strong);
+    border-radius: 12px;
+    background: var(--portal-surface-blue);
+    color: var(--portal-ink) !important;
+    font: 900 clamp(1.1rem, 4vw, 1.55rem)/1.35 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: 0.06em;
+    overflow-wrap: anywhere;
+    user-select: text;
+}
+
+.rs-portal-page .portal-deposit-va-expiry {
+    margin-top: 12px;
+    color: var(--portal-muted);
+    font-size: 0.82rem;
+}
+
+.rs-portal-page .portal-deposit-va-instruction {
+    width: min(100%, 560px);
+    margin: 14px auto 18px;
+    color: var(--portal-muted);
+    font-size: 0.86rem;
+    line-height: 1.55;
+}
+
+html.dark body.rs-portal-page .portal-deposit-va-card,
+html[data-theme="dark"] body.rs-portal-page .portal-deposit-va-card {
+    background: var(--portal-surface-soft) !important;
+    border-color: var(--portal-line) !important;
+    color: var(--portal-ink) !important;
+}
+
+html.dark body.rs-portal-page .portal-deposit-va-number,
+html[data-theme="dark"] body.rs-portal-page .portal-deposit-va-number {
+    background: #0f2238 !important;
+    border-color: var(--portal-line-strong) !important;
+    color: #f8fafc !important;
+}
