@@ -227,11 +227,16 @@ async function createDirectPayment({ referenceId, amount, buyerName, buyerEmail,
         throw err;
     }
 
+    const rawQrContent = data.Data.QrString || data.Data.QrContent || data.Data.QrCode || data.Data.qrString || data.Data.qrContent || null;
+    const rawQrImage = data.Data.QrImage || data.Data.QrTemplate || data.Data.qrImage || null;
+    const qrImage = /^(?:https?:\/\/|data:image\/|\/\/)/i.test(String(rawQrImage || "").trim()) ? rawQrImage : null;
+    const qrContent = rawQrContent || (qrImage ? null : rawQrImage);
+
     return {
         transactionId: data.Data.TransactionId || data.Data.transactionId,
         paymentNo: data.Data.PaymentNo || data.Data.paymentNo,
-        qrContent: data.Data.QrString || data.Data.QrContent || data.Data.QrCode || data.Data.qrString || data.Data.qrContent || null,
-        qrImage: data.Data.QrImage || data.Data.QrTemplate || data.Data.qrImage || null,
+        qrContent,
+        qrImage,
         expired: data.Data.Expired || data.Data.expired,
         amount: data.Data.Amount || data.Data.amount,
         fee: data.Data.Fee || data.Data.fee || 0,

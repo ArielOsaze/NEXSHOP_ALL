@@ -2635,3 +2635,63 @@ html[data-theme="dark"] body.rs-portal-page .tv-portal-password-message {
         padding-inline: 2px;
     }
 }
+
+.rs-portal-page .tv-deposit-method-option.is-selected {
+    border-color: #0ea5e9 !important;
+    background: #e0f2fe !important;
+    color: #075985 !important;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.28) !important;
+}
+
+.rs-portal-page .portal-qris-token {
+    width: min(100%, 420px);
+    margin: 12px auto 0;
+    padding: 10px 12px;
+    border: 1px solid var(--portal-line-strong);
+    border-radius: 10px;
+    background: var(--portal-surface-blue);
+    color: var(--portal-ink);
+    text-align: left;
+}
+
+.rs-portal-page .portal-qris-token-label {
+    margin-bottom: 6px;
+    color: var(--portal-muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.rs-portal-page .portal-qris-token code {
+    display: block;
+    color: var(--portal-ink) !important;
+    font: 700 0.72rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow-wrap: anywhere;
+    user-select: text;
+}
+
+html.dark body.rs-portal-page .tv-deposit-method-option.is-selected,
+html[data-theme="dark"] body.rs-portal-page .tv-deposit-method-option.is-selected {
+    border-color: #38bdf8 !important;
+    background: #0c4a6e !important;
+    color: #e0f2fe !important;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35) !important;
+}
+
+html.dark body.rs-portal-page .portal-qris-token,
+html[data-theme="dark"] body.rs-portal-page .portal-qris-token {
+    border-color: var(--portal-line-strong) !important;
+    background: #0f2238 !important;
+    color: #f8fafc !important;
+}
+
+html.dark body.rs-portal-page .portal-qris-token-label,
+html[data-theme="dark"] body.rs-portal-page .portal-qris-token-label {
+    color: #93c5fd !important;
+}
+
+html.dark body.rs-portal-page .portal-qris-token code,
+html[data-theme="dark"] body.rs-portal-page .portal-qris-token code {
+    color: #f8fafc !important;
+}

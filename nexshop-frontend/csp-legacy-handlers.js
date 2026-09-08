@@ -87,7 +87,7 @@ setDepositPreset(100000)
 openProductModal()
 },
 "h24f25a7b763944": function(event) {
-selectPaymentMethod('mandiri')
+selectPaymentMethod('mandiri', event)
 },
 "h263c44d693bf1d": function(event) {
 selectProductCategory('Paket Data', this)
@@ -114,7 +114,7 @@ submitTvDeposit()
 setProductDisplayMode('table')
 },
 "h373653e602c3e6": function(event) {
-selectPaymentMethod('qris')
+selectPaymentMethod('qris', event)
 },
 "h37a42970c29ca5": function(event) {
 removeKtpFile(event)
@@ -519,7 +519,7 @@ saveRuntimeConfig()
 loadMultiAiStatus()
 },
 "he620e4e5448e33": function(event) {
-selectPaymentMethod('bca')
+selectPaymentMethod('bca', event)
 },
 "he6a7823da8b7b4": function(event) {
 downloadProductsExcel()

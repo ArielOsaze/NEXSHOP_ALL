@@ -1352,8 +1352,8 @@
         }
     </style>
 <link rel="stylesheet" href="/inline-styles.css?v=20260829-visual-regression-1">
-<link rel="stylesheet" href="/portal-reseller.css?v=20260905-portal-mobile-dark-views-2">
-<script defer src="/csp-legacy-handlers.js?v=20260829-visual-regression-1"></script>
+<link rel="stylesheet" href="/portal-reseller.css?v=20260909-portal-qris-selection-1">
+<script defer src="/csp-legacy-handlers.js?v=20260909-portal-qris-selection-1"></script>
 <script defer src="/portal-reseller-ui.js?v=20260903-portal-mobile-nav-3"></script>
 </head>
 
@@ -1973,13 +1973,13 @@
                             <div data-csp-style="se7da744a288024">
                                 <label class="form-label">Pilih Metode Pembayaran Deposit</label>
                                 <div data-csp-style="s5d40a7605a1b80">
-                                    <button type="button" class="tv-btn-deposit-action" data-csp-style="s43a0ebe61b9298" data-csp-onclick="h373653e602c3e6">
+                                    <button type="button" class="tv-btn-deposit-action tv-deposit-method-option is-selected" data-deposit-method="qris" aria-pressed="true" data-csp-style="s43a0ebe61b9298" data-csp-onclick="h373653e602c3e6">
                                         <i class="fa-solid fa-qrcode" data-csp-style="s628542215071ba" aria-hidden="true"></i> QRIS Instan
                                     </button>
-                                    <button type="button" class="tv-btn-deposit-action" data-csp-style="s4421161b980868" data-csp-onclick="he620e4e5448e33">
+                                    <button type="button" class="tv-btn-deposit-action tv-deposit-method-option" data-deposit-method="bca" aria-pressed="false" data-csp-style="s4421161b980868" data-csp-onclick="he620e4e5448e33">
                                         BCA VA
                                     </button>
-                                    <button type="button" class="tv-btn-deposit-action" data-csp-style="s4421161b980868" data-csp-onclick="h24f25a7b763944">
+                                    <button type="button" class="tv-btn-deposit-action tv-deposit-method-option" data-deposit-method="mandiri" aria-pressed="false" data-csp-style="s4421161b980868" data-csp-onclick="h24f25a7b763944">
                                         Mandiri VA
                                     </button>
                                 </div>
@@ -2013,6 +2013,10 @@
                         <div data-csp-style="s5cf23e2936c94a" id="resellerQrisAmount">Rp 0</div>
                         <div data-csp-style="sad14f7b3412f07">
                             <img id="resellerQrisImage" src="" alt="QRIS Code" data-csp-style="s23c16aeacaf8c8">
+                        </div>
+                        <div id="resellerQrisToken" class="portal-qris-token" hidden>
+                            <div class="portal-qris-token-label">Token / kode QRIS</div>
+                            <code id="resellerQrisTokenValue"></code>
                         </div>
                         <div data-csp-style="sb116fe9a5e28aa">
                             <i class="fa-solid fa-hourglass-half mkt-spin" data-csp-style="s9c527edffcab84" aria-hidden="true"></i>
@@ -4331,16 +4335,15 @@
         let selectedDepositMethod = "qris";
         let activeResellerTopupPoll = null;
 
-        function selectPaymentMethod(method) {
+        function selectPaymentMethod(method, triggerEvent) {
+            const allowedMethods = ["qris", "bca", "mandiri"];
+            if (!allowedMethods.includes(method)) return;
             selectedDepositMethod = method;
-            document.querySelectorAll("#formDepositSimulator .tv-btn-deposit-action").forEach(btn => {
-                btn.style.borderColor = "rgba(16,24,40,0.12)";
-                btn.style.background = "rgba(16,24,40,0.06)";
+            document.querySelectorAll("#formDepositSimulator .tv-deposit-method-option").forEach((btn) => {
+                const selected = btn.dataset.depositMethod === method;
+                btn.classList.toggle("is-selected", selected);
+                btn.setAttribute("aria-pressed", String(selected));
             });
-            if (event && event.currentTarget) {
-                event.currentTarget.style.borderColor = "#3b82f6";
-                event.currentTarget.style.background = "rgba(37,99,235,0.25)";
-            }
             showToast("Metode deposit dipilih: " + method.toUpperCase());
         }
 
@@ -4406,10 +4409,34 @@
                 const data = await res.json();
                 if (!res.ok) throw new Error(data.message || "Gagal membuat invoice deposit");
 
-                if (selectedDepositMethod === "qris" || (data.is_direct && data.qr_content)) {
-                    // DIRECT QRIS — Tampilkan langsung di dalam kartu view deposit tanpa redirect/window.open!
-                    const qrUrl = data.qr_image || `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.qr_content)}`;
-                    document.getElementById("resellerQrisImage").src = qrUrl;
+                if (selectedDepositMethod === "qris" || (data.is_direct && (data.qr_content || data.qr_image))) {
+                    // Provider bisa mengembalikan URL gambar atau token QR mentah.
+                    // Token tidak boleh langsung dimasukkan ke img.src karena akan
+                    // dianggap URL dan menghasilkan kartu putih.
+                    const rawImage = String(data.qr_image || "").trim();
+                    const imageSource = /^(?:https?:\/\/|data:image\/|\/\/)/i.test(rawImage) ? rawImage : "";
+                    const qrToken = String(data.qr_content || data.payment_no || (imageSource ? "" : data.qr_image || ""));
+                    const qrUrl = imageSource || (qrToken
+                        ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrToken)}`
+                        : "");
+                    const qrImage = document.getElementById("resellerQrisImage");
+                    const qrTokenWrap = document.getElementById("resellerQrisToken");
+                    const qrTokenValue = document.getElementById("resellerQrisTokenValue");
+                    if (qrUrl) {
+                        qrImage.src = qrUrl;
+                        qrImage.alt = qrToken ? "QRIS Code dari token pembayaran" : "QRIS Code";
+                        qrImage.hidden = false;
+                    } else {
+                        qrImage.removeAttribute("src");
+                        qrImage.hidden = true;
+                    }
+                    if (qrToken) {
+                        qrTokenValue.textContent = qrToken;
+                        qrTokenWrap.hidden = false;
+                    } else {
+                        qrTokenValue.textContent = "";
+                        qrTokenWrap.hidden = true;
+                    }
                     document.getElementById("resellerQrisAmount").textContent = "Rp " + Number(amount).toLocaleString("id-ID");
 
                     document.getElementById("depositFormCard").style.display = "none";
