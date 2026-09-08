@@ -1419,7 +1419,36 @@
                         <i class="fa-solid fa-right-to-bracket" aria-hidden="true"></i>
                         <span>Masuk ke Konsol Distributor</span>
                     </button>
+                    <button type="button" id="btnPortalForgotPassword" class="tv-portal-password-link">Lupa password Portal Reseller?</button>
                 </form>
+            </div>
+
+            <div id="portalForgotPasswordPane" class="tv-portal-password-pane" hidden>
+                <h3>Lupa password Portal Reseller?</h3>
+                <p>Masukkan email Portal Reseller. Jika terdaftar dan memiliki nomor WhatsApp, link reset satu kali akan dikirim ke WhatsApp tersebut.</p>
+                <form id="formPortalForgotPassword">
+                    <label class="form-label" for="portalForgotEmail">Email Portal Reseller</label>
+                    <input type="email" id="portalForgotEmail" required autocomplete="email" class="form-control" placeholder="nama@domain.com">
+                    <div id="resellerForgotTurnstile" class="auth-turnstile" hidden></div>
+                    <p id="resellerForgotTurnstileStatus" class="auth-error hidden" role="alert" aria-live="polite"></p>
+                    <p id="portalForgotPasswordMessage" class="tv-portal-password-message" role="status" aria-live="polite"></p>
+                    <button type="submit" id="btnPortalForgotPasswordSubmit" class="tv-auth-primary">Kirim link reset ke WhatsApp</button>
+                </form>
+                <button type="button" id="btnPortalForgotPasswordBack" class="tv-portal-password-link">Kembali ke login</button>
+            </div>
+
+            <div id="portalResetPasswordPane" class="tv-portal-password-pane" hidden>
+                <h3>Buat password Portal Reseller baru</h3>
+                <p>Link reset ini hanya dapat digunakan sekali dan berlaku 5 menit.</p>
+                <form id="formPortalResetPassword">
+                    <label class="form-label" for="portalResetPassword">Password baru</label>
+                    <input type="password" id="portalResetPassword" required minlength="8" maxlength="128" autocomplete="new-password" class="form-control" placeholder="Minimal 8 karakter">
+                    <label class="form-label" for="portalResetPasswordConfirm">Ulangi password baru</label>
+                    <input type="password" id="portalResetPasswordConfirm" required minlength="8" maxlength="128" autocomplete="new-password" class="form-control" placeholder="Ulangi password baru">
+                    <p id="portalResetPasswordMessage" class="tv-portal-password-message" role="status" aria-live="polite"></p>
+                    <button type="submit" id="btnPortalResetPasswordSubmit" class="tv-auth-primary">Simpan password baru</button>
+                </form>
+                <button type="button" id="btnPortalResetPasswordBack" class="tv-portal-password-link">Kembali ke login</button>
             </div>
 
             <div id="portalTwoFactorChallenge" hidden data-csp-style="sd77065eea06b50">
@@ -2337,6 +2366,7 @@
     <!-- =============================================================== -->
     <!-- JAVASCRIPT LOGIC & INTERACTIONS                                -->
     <!-- =============================================================== -->
+    <script src="/portal-password-reset.js?v=20260909-portal-reset-1"></script>
     <script src="/auth-security.js?v=20260908-auth-resilience-1"></script>
     <script>
         const API_BASE = window.location.origin + "/api";

@@ -2552,3 +2552,86 @@ html[data-theme="dark"] body.rs-portal-page .tv-product-render-more:focus-visibl
     background: #67e8f9;
     color: #06111f;
 }
+
+/* One-time Portal Reseller password recovery. */
+.rs-portal-page .tv-portal-password-link {
+    display: block;
+    width: 100%;
+    margin: 10px 0 0;
+    border: 0;
+    background: transparent;
+    color: var(--portal-blue);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-align: center;
+    cursor: pointer;
+}
+
+.rs-portal-page .tv-portal-password-link:hover,
+.rs-portal-page .tv-portal-password-link:focus-visible {
+    color: var(--portal-blue-dark);
+    text-decoration: underline;
+}
+
+.rs-portal-page .tv-portal-password-pane {
+    padding: 4px 0 0;
+}
+
+.rs-portal-page .tv-portal-password-pane[hidden] {
+    display: none;
+}
+
+.rs-portal-page .tv-portal-password-pane h3 {
+    margin: 0 0 8px;
+    color: var(--portal-ink);
+    font-size: 1.05rem;
+}
+
+.rs-portal-page .tv-portal-password-pane p {
+    color: var(--portal-muted);
+    font-size: 0.84rem;
+    line-height: 1.55;
+}
+
+.rs-portal-page .tv-portal-password-pane .form-label {
+    display: block;
+    margin: 14px 0 6px;
+}
+
+.rs-portal-page .tv-portal-password-message {
+    min-height: 1.35em;
+    margin: 10px 0;
+    color: var(--portal-muted);
+}
+
+.rs-portal-page .tv-portal-password-message[data-state="error"] {
+    color: var(--portal-red);
+}
+
+.rs-portal-page .tv-portal-password-message[data-state="success"] {
+    color: var(--portal-green);
+}
+
+html.dark body.rs-portal-page .tv-portal-password-link,
+html[data-theme="dark"] body.rs-portal-page .tv-portal-password-link {
+    color: #67e8f9;
+}
+
+html.dark body.rs-portal-page .tv-portal-password-pane h3,
+html[data-theme="dark"] body.rs-portal-page .tv-portal-password-pane h3 {
+    color: #f8fafc;
+}
+
+html.dark body.rs-portal-page .tv-portal-password-pane p,
+html[data-theme="dark"] body.rs-portal-page .tv-portal-password-pane p,
+html.dark body.rs-portal-page .tv-portal-password-message,
+html[data-theme="dark"] body.rs-portal-page .tv-portal-password-message {
+    color: #cbd5e1;
+}
+
+@media (max-width: 520px) {
+    .rs-portal-page .tv-portal-password-pane {
+        padding-inline: 2px;
+    }
+}

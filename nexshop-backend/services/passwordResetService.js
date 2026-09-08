@@ -21,6 +21,11 @@ function buildPasswordResetLink(frontendUrl, token) {
     return `${base}/#/reset-password?token=${encodeURIComponent(token)}`;
 }
 
+function buildPortalPasswordResetLink(frontendUrl, token) {
+    const base = String(frontendUrl || "").replace(/\/$/, "") || "http://localhost:5500";
+    return `${base}/portal-reseller?reset_password=1&token=${encodeURIComponent(token)}`;
+}
+
 function buildPasswordResetWhatsAppMessage({ fullname, email, resetLink }) {
     const name = String(fullname || email || "Kak").trim().slice(0, 120) || "Kak";
     return [
@@ -34,10 +39,25 @@ function buildPasswordResetWhatsAppMessage({ fullname, email, resetLink }) {
     ].join("\n");
 }
 
+function buildPortalPasswordResetWhatsAppMessage({ fullname, email, resetLink }) {
+    const name = String(fullname || email || "Kak").trim().slice(0, 120) || "Kak";
+    return [
+        "🔐 Reset Password Partner Portal NexShop",
+        "",
+        `Halo ${name}, gunakan link berikut untuk membuat password Portal Reseller yang baru:`,
+        resetLink,
+        "",
+        "Link berlaku 5 menit dan hanya dapat digunakan satu kali.",
+        "Jangan teruskan link ini kepada siapa pun. Jika kamu tidak meminta reset password, abaikan pesan ini dan hubungi admin NexShop."
+    ].join("\n");
+}
+
 module.exports = {
     PASSWORD_RESET_EXPIRY_MINUTES,
     hashResetToken,
     createPasswordResetToken,
     buildPasswordResetLink,
-    buildPasswordResetWhatsAppMessage
+    buildPortalPasswordResetLink,
+    buildPasswordResetWhatsAppMessage,
+    buildPortalPasswordResetWhatsAppMessage
 };

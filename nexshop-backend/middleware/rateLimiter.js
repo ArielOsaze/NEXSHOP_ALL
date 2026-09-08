@@ -147,6 +147,23 @@ const resetPasswordLimiter = rateLimit({
     message: { message: "Terlalu banyak percobaan reset password. Coba lagi beberapa menit." }
 });
 
+const resellerForgotPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req) => `portal-reset:${identityBucket(req.body?.email)}`,
+    message: { message: "Terlalu banyak permintaan reset Portal Reseller. Coba lagi beberapa menit." }
+});
+
+const resellerResetPasswordLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { message: "Terlalu banyak percobaan reset Portal Reseller. Coba lagi beberapa menit." }
+});
+
 // Chat can trigger database retrieval and optional personalization. Keep it
 // separate from the broad API limiter so one client cannot exhaust the worker.
 const aiChatLimiter = rateLimit({
@@ -309,4 +326,4 @@ const providerWebhookLimiter = rateLimit({
     message: { message: "Terlalu banyak notifikasi provider." }
 });
 
-module.exports = { resellerLoginLimiter, resellerApiLimiter, resellerApiIpLimiter, resellerWebhookTestLimiter, walletNotificationLimiter, providerWebhookLimiter, publicCatalogLimiter, promoValidationLimiter, checkoutLimiter, loginLimiter, loginAccountLimiter, adminLoginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, forgotPasswordAccountLimiter, resetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter, kycUploadLimiter, resellerTwoFactorVerifyLimiter };
+module.exports = { resellerLoginLimiter, resellerApiLimiter, resellerApiIpLimiter, resellerWebhookTestLimiter, walletNotificationLimiter, providerWebhookLimiter, publicCatalogLimiter, promoValidationLimiter, checkoutLimiter, loginLimiter, loginAccountLimiter, adminLoginLimiter, registerLimiter, otpVerifyLimiter, otpResendLimiter, forgotPasswordLimiter, forgotPasswordAccountLimiter, resetPasswordLimiter, resellerForgotPasswordLimiter, resellerResetPasswordLimiter, aiChatLimiter, resetLoginLimiter, getBlockedLoginIps, checkNicknameLimiter, inquiryLimiter, resellerApplyLimiter, kycUploadLimiter, resellerTwoFactorVerifyLimiter };

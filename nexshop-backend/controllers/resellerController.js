@@ -22,6 +22,13 @@ const { decryptDocument, parseDocumentRef, isDocumentRef } = require("../utils/s
 const { generateWebhookSignature } = require("../services/resellerWebhookService");
 const { getTurnstileConfig, isTurnstileRequired, verifyTurnstile } = require("../services/turnstileService");
 const {
+    hashResetToken,
+    createPasswordResetToken,
+    buildPortalPasswordResetLink,
+    buildPortalPasswordResetWhatsAppMessage
+} = require("../services/passwordResetService");
+const { sendUserSecurityWhatsApp } = require("../services/userWhatsAppService");
+const {
     buildOtpAuthUri,
     decryptSecret,
     encryptSecret,
@@ -46,6 +53,7 @@ const {
 // ===========================================================
 
 const BELUM_SETUP = "Fitur kemitraan NexShop saat ini sedang tidak tersedia. Silakan coba lagi nanti.";
+const FRONTEND_URL = (process.env.FRONTEND_URL || "").replace(/\/$/, "");
 
 async function requireResellerHumanVerification(req, res) {
     const { secretKey } = await getTurnstileConfig();
@@ -514,6 +522,120 @@ exports.resellerLogin = async (req, res) => {
     } catch (err) {
         console.error("resellerLogin error:", err);
         return res.status(500).json({ message: "Terjadi kesalahan server saat login Portal Reseller" });
+    }
+};
+
+exports.resellerForgotPassword = async (req, res) => {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ message: "Email Portal Reseller wajib diisi dengan format yang valid." });
+    }
+    if (!await requireResellerHumanVerification(req, res)) return;
+
+    const genericResponse = {
+        message: "Jika email Portal Reseller dan nomor WhatsApp kamu terdaftar, link reset akan dikirim ke WhatsApp tersebut. Link berlaku 5 menit."
+    };
+
+    try {
+        const { data: portalAccount, error: portalErr } = await supabase
+            .from("reseller_portal_accounts")
+            .select("id, user_id, email, status")
+            .eq("email", email)
+            .maybeSingle();
+        if (portalErr) {
+            if (isMissingTableError(portalErr)) {
+                return res.status(503).json({ message: "Fitur reset Portal Reseller belum siap di server.", code: "RESELLER_PORTAL_RESET_NOT_SETUP" });
+            }
+            throw portalErr;
+        }
+        if (!portalAccount || portalAccount.status === "suspended") return res.json(genericResponse);
+
+        const { data: user, error: userErr } = await supabase
+            .from("users")
+            .select("id, fullname, email, phone, account_scope")
+            .eq("id", portalAccount.user_id)
+            .maybeSingle();
+        if (userErr) throw userErr;
+        if (!user || user.account_scope !== "portal_only" || !normalisasiWhatsApp(user.phone)) {
+            return res.json(genericResponse);
+        }
+
+        const resetToken = createPasswordResetToken();
+        const resetLink = buildPortalPasswordResetLink(FRONTEND_URL, resetToken.token);
+        const message = buildPortalPasswordResetWhatsAppMessage({
+            fullname: user.fullname,
+            email: portalAccount.email,
+            resetLink
+        });
+        const { error: updateErr } = await supabase
+            .from("reseller_portal_accounts")
+            .update({
+                reset_password_token: resetToken.tokenHash,
+                reset_password_expires_at: resetToken.expiresAt,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", portalAccount.id);
+        if (updateErr) throw updateErr;
+
+        const delivery = await sendUserSecurityWhatsApp(user.phone, message);
+        if (!delivery?.success) {
+            console.warn("Portal password reset WhatsApp delivery failed:", delivery?.reason || "unknown");
+        }
+        return res.json(genericResponse);
+    } catch (err) {
+        console.error("resellerForgotPassword:", err.message);
+        return res.status(500).json({ message: "Permintaan reset password belum dapat diproses. Coba lagi sebentar." });
+    }
+};
+
+exports.resellerResetPassword = async (req, res) => {
+    const token = typeof req.body?.token === "string" ? req.body.token : "";
+    const newPassword = typeof req.body?.newPassword === "string" ? req.body.newPassword : "";
+    if (!/^[a-f0-9]{64}$/i.test(token) || newPassword.length < 8 || newPassword.length > 128) {
+        return res.status(400).json({ message: "Token atau password baru tidak valid. Password minimal 8 karakter." });
+    }
+
+    try {
+        const tokenHash = hashResetToken(token);
+        const { data: portalAccount, error: findErr } = await supabase
+            .from("reseller_portal_accounts")
+            .select("id, status, reset_password_token, reset_password_expires_at")
+            .eq("reset_password_token", tokenHash)
+            .maybeSingle();
+        if (findErr) {
+            if (isMissingTableError(findErr)) {
+                return res.status(503).json({ message: "Fitur reset Portal Reseller belum siap di server.", code: "RESELLER_PORTAL_RESET_NOT_SETUP" });
+            }
+            throw findErr;
+        }
+        if (!portalAccount || portalAccount.status === "suspended" || !portalAccount.reset_password_expires_at || new Date(portalAccount.reset_password_expires_at) <= new Date()) {
+            return res.status(400).json({ message: "Link reset Portal Reseller tidak valid atau sudah kedaluwarsa. Minta link baru." });
+        }
+
+        const passwordHash = await bcrypt.hash(newPassword, 12);
+        const { data: consumed, error: updateErr } = await supabase
+            .from("reseller_portal_accounts")
+            .update({
+                password_hash: passwordHash,
+                reset_password_token: null,
+                reset_password_expires_at: null,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", portalAccount.id)
+            .eq("reset_password_token", tokenHash)
+            .eq("reset_password_expires_at", portalAccount.reset_password_expires_at)
+            .select("id")
+            .maybeSingle();
+        if (updateErr) throw updateErr;
+        if (!consumed) {
+            return res.status(400).json({ message: "Link reset Portal Reseller tidak valid atau sudah dipakai. Minta link baru." });
+        }
+
+        notify("reseller", `🔑 Password Portal Reseller (account ${portalAccount.id}) berhasil direset melalui link satu kali`);
+        return res.json({ message: "Password Portal Reseller berhasil diganti. Silakan login dengan password baru." });
+    } catch (err) {
+        console.error("resellerResetPassword:", err.message);
+        return res.status(500).json({ message: "Password belum dapat diganti. Coba lagi sebentar." });
     }
 };
 
