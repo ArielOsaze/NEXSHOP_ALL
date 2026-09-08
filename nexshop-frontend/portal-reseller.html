@@ -4503,9 +4503,7 @@
                     const rawImage = String(data.qr_image || "").trim();
                     const imageSource = /^(?:https?:\/\/|data:image\/|\/\/)/i.test(rawImage) ? rawImage : "";
                     const qrToken = String(data.qr_content || data.payment_no || (imageSource ? "" : data.qr_image || ""));
-                    const qrUrl = imageSource || (qrToken
-                        ? `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrToken)}`
-                        : "");
+                    const qrUrl = imageSource;
                     const qrImage = document.getElementById("resellerQrisImage");
                     const qrTokenWrap = document.getElementById("resellerQrisToken");
                     const qrTokenValue = document.getElementById("resellerQrisTokenValue");

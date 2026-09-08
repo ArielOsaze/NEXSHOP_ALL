@@ -5,6 +5,7 @@ const fs = require("fs");
 const http = require("http");
 const path = require("path");
 const puppeteer = require(path.join(__dirname, "..", "nexshop-backend", "node_modules", "puppeteer-core"));
+const QRCode = require(path.join(__dirname, "..", "nexshop-backend", "node_modules", "qrcode"));
 
 const root = path.join(__dirname, "..");
 const frontend = path.join(root, "nexshop-frontend");
@@ -33,7 +34,7 @@ const overview = {
     news: []
 };
 
-function serve() {
+function serve(fixtureQrImage) {
     return http.createServer((req, res) => {
         const url = new URL(req.url, "http://127.0.0.1");
         const json = (status, body) => {
@@ -56,7 +57,7 @@ function serve() {
                 if (payload.payment_method === "mandiri") {
                     return json(201, { topup_id: "WT-FIXTURE-MANDIRI", amount: 100000, is_direct: true, payment_no: "8950800000012345", payment_name: "Mandiri Virtual Account", expired: "2099-12-31 23:59:59" });
                 }
-                return json(201, { topup_id: "WT-FIXTURE", amount: 100000, is_direct: true, qr_image: fixtureToken, qr_content: null, payment_no: null });
+                return json(201, { topup_id: "WT-FIXTURE", amount: 100000, is_direct: true, qr_image: fixtureQrImage, qr_content: fixtureToken, payment_no: null });
             });
             return;
         }
@@ -80,7 +81,8 @@ function serve() {
 
 (async () => {
     assert(chrome, "Chrome/Edge executable tidak ditemukan");
-    const server = serve();
+    const fixtureQrImage = await QRCode.toDataURL(fixtureToken, { errorCorrectionLevel: "M", margin: 2, width: 320 });
+    const server = serve(fixtureQrImage);
     await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
     const port = server.address().port;
     const browser = await puppeteer.launch({ executablePath: chrome, headless: true, args: ["--no-sandbox"] });
@@ -121,16 +123,22 @@ function serve() {
             }));
             throw new Error(`${error.message}; snapshot=${JSON.stringify(snapshot)} pageErrors=${JSON.stringify(pageErrors)}`);
         }
+        await page.waitForFunction(() => {
+            const image = document.querySelector("#resellerQrisImage");
+            return image?.complete && image.naturalWidth > 0;
+        }, { timeout: 5000 });
         const qrisState = await page.evaluate(() => ({
             token: document.querySelector("#resellerQrisTokenValue")?.textContent,
             tokenVisible: !document.querySelector("#resellerQrisToken")?.hidden,
             image: document.querySelector("#resellerQrisImage")?.getAttribute("src"),
+            naturalWidth: document.querySelector("#resellerQrisImage")?.naturalWidth,
             qrisSelected: document.querySelector('#formDepositSimulator [data-deposit-method="qris"]')?.classList.contains("is-selected"),
             bcaSelected: document.querySelector('#formDepositSimulator [data-deposit-method="bca"]')?.classList.contains("is-selected")
         }));
         assert.strictEqual(qrisState.token, fixtureToken);
         assert.strictEqual(qrisState.tokenVisible, true);
-        assert(qrisState.image.includes("api.qrserver.com"), "token mentah harus dirender menjadi QR image");
+        assert(qrisState.image.startsWith("data:image/png;base64,"), "QR harus berupa PNG data URL lokal");
+        assert(qrisState.naturalWidth > 0, "PNG QR harus benar-benar ter-load di browser");
         assert.strictEqual(qrisState.qrisSelected, true);
         assert.strictEqual(qrisState.bcaSelected, false);
 

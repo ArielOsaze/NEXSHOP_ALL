@@ -1,6 +1,7 @@
 const crypto = require("crypto");
 const axios = require("axios");
 const https = require("https");
+const QRCode = require("qrcode");
 const { getApiKeys } = require("./settings");
 const { toIpaymuPhone } = require("../utils/phoneNumber");
 
@@ -231,6 +232,9 @@ async function createDirectPayment({ referenceId, amount, buyerName, buyerEmail,
     const rawQrImage = data.Data.QrImage || data.Data.QrTemplate || data.Data.qrImage || null;
     const qrImage = /^(?:https?:\/\/|data:image\/|\/\/)/i.test(String(rawQrImage || "").trim()) ? rawQrImage : null;
     const qrContent = rawQrContent || (qrImage ? null : rawQrImage);
+    const localQrImage = qrContent
+        ? await QRCode.toDataURL(String(qrContent), { errorCorrectionLevel: "M", margin: 2, width: 320 })
+        : null;
     const paymentNo = data.Data.PaymentNo || data.Data.paymentNo || data.Data.Va || data.Data.va || data.Data.VaNumber || data.Data.vaNumber || data.Data.VirtualAccount || data.Data.virtualAccount || data.Data.AccountNumber || data.Data.accountNumber || data.Data.PaymentCode || data.Data.paymentCode;
     if (paymentMethod === "va" && !String(paymentNo || "").trim()) {
         const err = new Error("Provider tidak mengembalikan nomor Virtual Account.");
@@ -244,7 +248,7 @@ async function createDirectPayment({ referenceId, amount, buyerName, buyerEmail,
         paymentName: data.Data.PaymentName || data.Data.paymentName || data.Data.BankName || data.Data.bankName || data.Data.Name || data.Data.name,
         channel: data.Data.Channel || data.Data.channel || data.Data.PaymentChannel || data.Data.paymentChannel,
         qrContent,
-        qrImage,
+        qrImage: localQrImage || qrImage,
         expired: data.Data.Expired || data.Data.expired,
         amount: data.Data.Amount || data.Data.amount,
         fee: data.Data.Fee || data.Data.fee || 0,
