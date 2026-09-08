@@ -28,6 +28,7 @@ const {
     buildPortalPasswordResetWhatsAppMessage
 } = require("../services/passwordResetService");
 const { sendUserSecurityWhatsApp } = require("../services/userWhatsAppService");
+const { sendPasswordResetEmail } = require("../config/mailer");
 const {
     buildOtpAuthUri,
     decryptSecret,
@@ -533,7 +534,7 @@ exports.resellerForgotPassword = async (req, res) => {
     if (!await requireResellerHumanVerification(req, res)) return;
 
     const genericResponse = {
-        message: "Jika email Portal Reseller dan nomor WhatsApp kamu terdaftar, link reset akan dikirim ke WhatsApp tersebut. Link berlaku 5 menit."
+        message: "Jika data Portal Reseller terdaftar, link reset akan dikirim melalui email dan WhatsApp. Link berlaku 5 menit. Cek inbox, folder spam, dan WhatsApp."
     };
 
     try {
@@ -577,9 +578,23 @@ exports.resellerForgotPassword = async (req, res) => {
             .eq("id", portalAccount.id);
         if (updateErr) throw updateErr;
 
-        const delivery = await sendUserSecurityWhatsApp(user.phone, message);
-        if (!delivery?.success) {
-            console.warn("Portal password reset WhatsApp delivery failed:", delivery?.reason || "unknown");
+        const deliveries = await Promise.allSettled([
+            sendPasswordResetEmail(portalAccount.email, resetLink, user.fullname),
+            sendUserSecurityWhatsApp(user.phone, message)
+        ]);
+        const emailDelivery = deliveries[0];
+        const whatsappDelivery = deliveries[1];
+        const emailSent = emailDelivery.status === "fulfilled";
+        const whatsappSent = whatsappDelivery.status === "fulfilled" && whatsappDelivery.value?.success === true;
+        console.info("resellerForgotPassword delivery result:", { email: emailSent ? "sent" : "failed", whatsapp: whatsappSent ? "sent" : "failed" });
+        if (!emailSent) {
+            console.error("resellerForgotPassword email delivery failed:", emailDelivery.reason?.message || "provider_error");
+        }
+        if (!whatsappSent) {
+            const reason = whatsappDelivery.status === "rejected"
+                ? whatsappDelivery.reason?.message
+                : whatsappDelivery.value?.error || whatsappDelivery.value?.reason;
+            console.error("resellerForgotPassword WhatsApp delivery failed:", reason || "provider_error");
         }
         return res.json(genericResponse);
     } catch (err) {

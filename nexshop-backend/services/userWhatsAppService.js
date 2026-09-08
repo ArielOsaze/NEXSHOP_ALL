@@ -180,9 +180,10 @@ async function sendUserSecurityWhatsApp(targetNumber, message) {
             headers: { "Content-Type": "application/json", "X-API-Key": key },
             timeout: 15000
         });
-        return response.data?.success === false
-            ? { success: false, reason: "api_error", error: response.data.message || "gateway_rejected" }
-            : { success: true, status: "sent", response: response.data };
+        if (response.data?.success !== true) {
+            return { success: false, reason: "api_error", error: response.data?.message || "gateway_rejected" };
+        }
+        return { success: true, status: "sent", response: response.data };
     } catch (error) {
         return {
             success: false,

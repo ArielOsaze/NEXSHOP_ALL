@@ -18,7 +18,7 @@ const { resolveUserDisplayName } = require("../services/userNotificationHelpers"
 // getApiKeys() sendiri tetap fallback ke .env kalau kolom di DB masih kosong,
 // jadi VPS lama yang cuma isi .env tetap jalan seperti biasa.
 async function getBrevoConfig() {
-    const keys = await getApiKeys();
+    const keys = await getApiKeys({ fresh: true });
     const apiKey = keys.brevo_api_key;
     const senderEmail = keys.brevo_sender_email;
     const senderName = keys.brevo_sender_name || "NexShop";
