@@ -1546,6 +1546,26 @@ i[class*="fa-"] {
     animation: mkt-shimmer 1.4s ease infinite;
 }
 
+.mkt-skeleton--icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    margin-bottom: 0.75rem;
+}
+
+.mkt-skeleton--title {
+    width: 80%;
+    height: 12px;
+    border-radius: 6px;
+    margin-bottom: 0.4rem;
+}
+
+.mkt-skeleton--meta {
+    width: 50%;
+    height: 10px;
+    border-radius: 6px;
+}
+
 @keyframes mkt-shimmer {
     0% {
         background-position: 100% 50%;

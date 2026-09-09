@@ -902,9 +902,9 @@
         function mktSkeletonHtml(jumlah) {
             return Array(jumlah).fill(`
         <div class="market-card is-skeleton" aria-hidden="true">
-            <div class="mkt-skeleton" style="width:56px;height:56px;border-radius:16px;margin-bottom:0.75rem;"></div>
-            <div class="mkt-skeleton" style="width:80%;height:12px;border-radius:6px;margin-bottom:0.4rem;"></div>
-            <div class="mkt-skeleton" style="width:50%;height:10px;border-radius:6px;"></div>
+            <div class="mkt-skeleton mkt-skeleton--icon"></div>
+            <div class="mkt-skeleton mkt-skeleton--title"></div>
+            <div class="mkt-skeleton mkt-skeleton--meta"></div>
         </div>
     `).join("");
         }
