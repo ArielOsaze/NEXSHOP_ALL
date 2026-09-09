@@ -16,6 +16,7 @@ assert(html.includes('id="resellerQrisToken"'), "Portal harus menyediakan fallba
 assert(html.includes('id="resellerQrisTokenValue"'), "nilai token QRIS harus punya node aman untuk textContent");
 assert(html.includes("const qrToken = String(data.qr_content || data.payment_no || (imageSource ? \"\" : data.qr_image || \"\"));"), "token QRIS harus dipakai saat qr_image bukan URL");
 assert(html.includes("const qrUrl = imageSource;"), "frontend harus memakai image QR yang sudah dinormalisasi backend");
+assert(html.includes("qrImage.onerror = () =>"), "image QR rusak harus jatuh ke fallback token tanpa broken image");
 assert(ipaymu.includes('require("qrcode")'), "backend harus memiliki renderer QR lokal");
 assert(ipaymu.includes("QRCode.toDataURL"), "token QRIS harus dirender menjadi data URL lokal");
 assert(html.includes("function selectPaymentMethod(method, triggerEvent)"), "handler payment harus menerima event eksplisit");

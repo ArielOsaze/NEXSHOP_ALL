@@ -4507,10 +4507,19 @@
                     const qrImage = document.getElementById("resellerQrisImage");
                     const qrTokenWrap = document.getElementById("resellerQrisToken");
                     const qrTokenValue = document.getElementById("resellerQrisTokenValue");
+                    qrImage.onerror = () => {
+                        qrImage.hidden = true;
+                        qrImage.removeAttribute("src");
+                        if (qrToken) qrTokenWrap.hidden = false;
+                        showToast("Gambar QR gagal dimuat. Gunakan token QRIS yang tampil di bawah.");
+                    };
+                    qrImage.onload = () => {
+                        qrImage.hidden = false;
+                    };
                     if (qrUrl) {
+                        qrImage.hidden = true;
                         qrImage.src = qrUrl;
                         qrImage.alt = qrToken ? "QRIS Code dari token pembayaran" : "QRIS Code";
-                        qrImage.hidden = false;
                     } else {
                         qrImage.removeAttribute("src");
                         qrImage.hidden = true;

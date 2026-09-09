@@ -142,6 +142,19 @@ function serve(fixtureQrImage) {
         assert.strictEqual(qrisState.qrisSelected, true);
         assert.strictEqual(qrisState.bcaSelected, false);
 
+        await page.evaluate(() => {
+            const image = document.querySelector("#resellerQrisImage");
+            image.onerror?.();
+        });
+        const brokenImageFallback = await page.evaluate(() => ({
+            hidden: document.querySelector("#resellerQrisImage")?.hidden,
+            src: document.querySelector("#resellerQrisImage")?.getAttribute("src"),
+            tokenVisible: !document.querySelector("#resellerQrisToken")?.hidden
+        }));
+        assert.strictEqual(brokenImageFallback.hidden, true);
+        assert.strictEqual(brokenImageFallback.src, null);
+        assert.strictEqual(brokenImageFallback.tokenVisible, true);
+
         await page.click('#depositQrisCard [data-csp-onclick="h97c31caad6d751"]');
         await page.click('#formDepositSimulator [data-deposit-method="bca"]');
         await page.evaluate(() => document.getElementById("formDepositSimulator").requestSubmit());
